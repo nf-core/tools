@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+""" nf-core: Helper tools for use with nf-core Nextflow pipelines. """
+
+from __future__ import print_function
+
+import click
+import sys
+
+import nf_core
+import nf_core.lint
+
+import logging
+logging.basicConfig(level=logging.INFO)
+
+@click.group()
+@click.version_option(nf_core.__version__)
+def nf_core_cli():
+    pass
+
+@nf_core_cli.command()
+@click.argument(
+    'pipeline_dir',
+    type = click.Path(exists=True),
+    required = True,
+    metavar = "<pipeline directory>"
+)
+def lint(pipeline_dir):
+    """Check pipeline against nf-core guidelines"""
+    # Create the lint object
+    lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
+
+    # Run the linting tests
+    try:
+        lint_obj.lint_pipeline()
+    except AssertionError as e:
+        logging.critical("Critical error: {}".format(e))
+        logging.info("Stopping tests...")
+        sys.exit(1)
+
+    # Print the results
+    lint_obj.print_results()
+
+    # Exit code
+    if len(lint_obj.failed) > 0:
+        logging.info("Sorry, some tests failed - exiting with a non-zero error code...")
+        sys.exit(1)
+
+
+if __name__ == '__main__':
+    nf_core_cli()
