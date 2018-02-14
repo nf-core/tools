@@ -58,18 +58,17 @@ class PipelineLint(object):
 
         # NB: Should all be files, not directories
         files_fail = [
-            'LICENSE',
-            'README.md',
             'nextflow.config',
             'Dockerfile',
-            'docs/README.md',
-            'nextflow.config'
-        ]
-        files_warn = [
+            'LICENSE',
+            'README.md',
             'CHANGELOG.md',
-            'main.nf',
+            'docs/README.md',
             'docs/output.md',
             'docs/usage.md',
+        ]
+        files_warn = [
+            'main.nf',
             'conf/base.config',
             'tests/run_test.sh'
         ]
