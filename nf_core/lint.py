@@ -60,7 +60,6 @@ class PipelineLint(object):
         files_fail = [
             'LICENSE',
             'README.md',
-            'nextflow.config',
             'Dockerfile',
             'docs/README.md',
             'nextflow.config'
