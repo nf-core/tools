@@ -5,6 +5,7 @@ Tests Nextflow pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
+import click
 import logging
 import os
 import subprocess
@@ -47,15 +48,15 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-
-        self.check_files_exist()
-        self.check_licence()
-        self.check_pipeline()
+        funcnames = ['check_files_exist', 'check_licence', 'check_pipeline']
+        with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
+            for fname in fnames:
+                getattr(self, fname)()
 
     def check_files_exist (self):
         """ Check a given pipeline directory for required files. """
 
-        logging.info('Checking required files exist')
+        logging.debug('Checking required files exist')
 
         # NB: Should all be files, not directories
         # Supplying a list means if any are present it's a pass
@@ -103,20 +104,23 @@ class PipelineLint(object):
 
 
     def check_licence(self):
-        logging.info('Checking licence file is MIT')
+        logging.debug('Checking licence file is MIT')
         for l in ['LICENSE', 'LICENSE.md']:
             fn = os.path.join(self.path, l)
             if os.path.isfile(fn):
                 if 'MIT' in open(fn).read():
                     self.passed.append((2, "Licence check passed"))
+                    return
                 else:
                     self.failed.append((2, "Licence file did not look like MIT: {}".format(fn)))
+                    return
+        self.failed.append((2, "Couldn't find MIT licence file"))
 
 
     def check_pipeline (self):
         """ Check a given pipeline for required config variables. """
 
-        logging.info('Checking pipeline config variables')
+        logging.debug('Checking pipeline config variables')
 
         # NB: Should all be files, not directories
         config_fail = [
@@ -132,7 +136,7 @@ class PipelineLint(object):
         with open(os.devnull, 'w') as devnull:
             nfconfig_raw = subprocess.check_output(['nextflow', 'config', self.path], stderr=devnull)
 
-        logging.info("{} lines of pipeline config found!".format(len(nfconfig_raw.splitlines())))
+        logging.debug("{} lines of pipeline config found!".format(len(nfconfig_raw.splitlines())))
 
 
     def print_results(self):
