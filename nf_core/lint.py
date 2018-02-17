@@ -49,6 +49,7 @@ class PipelineLint(object):
         """
 
         self.check_files_exist()
+        self.check_licence()
         self.check_pipeline()
 
     def check_files_exist (self):
@@ -57,10 +58,12 @@ class PipelineLint(object):
         logging.info('Checking required files exist')
 
         # NB: Should all be files, not directories
+        # Supplying a list means if any are present it's a pass
         files_fail = [
             'nextflow.config',
             'Dockerfile',
-            'LICENSE',
+            ['.travis.yml', 'circle.yml'],
+            ['LICENSE', 'LICENSE.md'],
             'README.md',
             'CHANGELOG.md',
             'docs/README.md',
@@ -81,18 +84,33 @@ class PipelineLint(object):
             raise AssertionError('Neither nextflow.config or main.nf found! Is this a Nextflow pipeline?')
 
         # Files that cause an error
-        for f in files_fail:
-            if os.path.isfile(pf(f)):
-                self.passed.append((1, "File found: {}".format(f)))
+        for files in files_fail:
+            if not isinstance(files, list):
+                files = [files]
+            if any([os.path.isfile(pf(f)) for f in files]):
+                self.passed.append((1, "File found: {}".format(files)))
             else:
-                self.failed.append((1, "File not found: {}".format(f)))
+                self.failed.append((1, "File not found: {}".format(files)))
 
         # Files that cause a warning
-        for f in files_warn:
-            if os.path.isfile(pf(f)):
-                self.passed.append((1, "File found: {}".format(f)))
+        for files in files_warn:
+            if not isinstance(files, list):
+                files = [files]
+            if any([os.path.isfile(pf(f)) for f in files]):
+                self.passed.append((1, "File found: {}".format(files)))
             else:
-                self.warned.append((1, "File not found: {}".format(f)))
+                self.warned.append((1, "File not found: {}".format(files)))
+
+
+    def check_licence(self):
+        logging.info('Checking licence file is MIT')
+        for l in ['LICENSE', 'LICENSE.md']:
+            fn = os.path.join(self.path, l)
+            if os.path.isfile(fn):
+                if 'MIT' in open(fn).read():
+                    self.passed.append((2, "Licence check passed"))
+                else:
+                    self.failed.append((2, "Licence file did not look like MIT: {}".format(fn)))
 
 
     def check_pipeline (self):
@@ -124,7 +142,7 @@ class PipelineLint(object):
         print("{0:>4} tests had warnings".format(len(self.warned)))
         print("{0:>4} tests failed".format(len(self.failed)))
         if len(self.warned) > 0:
-            print("\nWarnings:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(id, msg) for id, msg in self.warned])))
+            print("\nWarnings:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
         if len(self.failed) > 0:
-            print("\nFailures:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(id, msg) for id, msg in self.failed])))
+            print("\nFAILURES:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))
         print("\n")

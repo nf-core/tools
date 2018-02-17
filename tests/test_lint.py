@@ -2,13 +2,13 @@
 """Some tests covering the linting code.
 Provide example wokflow directory contents like:
 
-    --tests 
+    --tests
         |--lint_examples
         |     |--missing_license
         |     |     |...<files here>
         |     |--missing_config
         |     |     |....<files here>
-        |     |...  
+        |     |...
         |--test_lint.py
 """
 import os
