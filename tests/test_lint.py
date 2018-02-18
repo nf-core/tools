@@ -13,7 +13,6 @@ Provide example wokflow directory contents like:
 """
 import os
 import unittest
-import nf_core
 import nf_core.lint
 from nose.tools import raises
 
@@ -31,7 +30,7 @@ class TestLint(unittest.TestCase):
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
         lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
-        lint_obj.check_files_exist()
+        lint_obj.lint_pipeline()
 
     def test_failing_missingfiles_example(self):
         """Tests for missing files like Dockerfile or LICENSE"""
