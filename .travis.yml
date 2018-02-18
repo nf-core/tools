@@ -5,7 +5,7 @@ python:
     - "3.6"
 
 install: 
-  - pip install -e --user .
+  - pip install --user -e .
   - pip install --user codecov
 
 script: nosetests --with-coverage
