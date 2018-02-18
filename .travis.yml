@@ -4,7 +4,11 @@ python:
     - "3.5"
     - "3.6"
 
-install: python setup.py install
+install: 
+  - python setup.py install
+  - pip install codecov
 
-script: nosetests
+script: nosetests --with-coverage
 
+after_success:
+  - codecov
