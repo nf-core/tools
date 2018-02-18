@@ -17,6 +17,8 @@ Alternatively, if you would like to edit the files locally:
 git clone https://github.com/nf-core/tools.git nf-core-tools
 cd nf-core-tools
 python setup.py develop
+# Or with pip
+pip install -e .
 ```
 
 ## Linting
