@@ -9,7 +9,7 @@ install:
   - pip install --user codecov
   - pip install --user nose
 
-script: nosetests --with-coverage
+script: nosetests --with-coverage --cover-package=nf_core
 
 after_success:
   - codecov
