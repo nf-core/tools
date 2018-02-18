@@ -4,9 +4,10 @@ python:
     - "3.5"
     - "3.6"
 
-install: 
+install:
   - pip install --user -e .
   - pip install --user codecov
+  - pip install --user nose
 
 script: nosetests --with-coverage
 

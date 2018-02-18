@@ -30,7 +30,7 @@ class TestLint(unittest.TestCase):
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
         lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
-        lint_obj.lint_pipeline()
+        lint_obj.check_files_exist()
 
     def test_failing_missingfiles_example(self):
         """Tests for missing files like Dockerfile or LICENSE"""
