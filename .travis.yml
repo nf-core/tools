@@ -5,8 +5,8 @@ python:
     - "3.6"
 
 install: 
-  - python setup.py install
-  - pip install codecov
+  - pip install -e --user .
+  - pip install --user codecov
 
 script: nosetests --with-coverage
 
