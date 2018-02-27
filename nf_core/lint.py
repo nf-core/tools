@@ -64,7 +64,7 @@ class PipelineLint(object):
             'nextflow.config',
             'Dockerfile',
             ['.travis.yml', 'circle.yml'],
-            ['LICENSE', 'LICENSE.md'],
+            ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
             'docs/README.md',
@@ -105,7 +105,7 @@ class PipelineLint(object):
 
     def check_licence(self):
         logging.debug('Checking licence file is MIT')
-        for l in ['LICENSE', 'LICENSE.md']:
+        for l in ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md']:
             fn = os.path.join(self.path, l)
             if os.path.isfile(fn):
                 if 'MIT' in open(fn).read():
