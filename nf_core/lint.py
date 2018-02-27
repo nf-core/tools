@@ -133,10 +133,13 @@ class PipelineLint(object):
         ]
 
         # Call `nextflow config` and pipe stderr to /dev/null
-        with open(os.devnull, 'w') as devnull:
-            nfconfig_raw = subprocess.check_output(['nextflow', 'config', self.path], stderr=devnull)
-
-        logging.debug("{} lines of pipeline config found!".format(len(nfconfig_raw.splitlines())))
+        try:
+            with open(os.devnull, 'w') as devnull:
+                nfconfig_raw = subprocess.check_output(['nextflow', 'config', self.path], stderr=devnull)
+        except subprocess.CalledProcessError as e:
+            logging.error("Nextflow config returned non-zero error code: {},\n   {}".format(e.returncode, e.output))
+        else:
+            logging.debug("{} lines of pipeline config found!".format(len(nfconfig_raw.splitlines())))
 
 
     def print_results(self):
