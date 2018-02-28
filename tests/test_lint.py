@@ -36,7 +36,12 @@ class TestLint(unittest.TestCase):
         assert len(lint_obj.failed) == 0, "Expected 0 missing file FAIL, but found %r" % len(lint_obj.failed)
         assert len(lint_obj.warned) == 0, "Expected 0 missing file WARN, but found %r" % len(lint_obj.warned)
         assert len(lint_obj.passed) == 14, "Expected 14 missing file PASS, but found %r" % len(lint_obj.passed)
-        
+
+    def test_failing_dockerfile_example(self):
+        """Tests for empty Dockerfile"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.check_docker()
+        assert len(lint_obj.failed) == 1, "Expected 1 missing file FAIL, but found %r" % len(lint_obj.failed)
 
     @raises(AssertionError)
     def test_critical_missingfiles_example(self):
@@ -48,7 +53,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        assert len(lint_obj.failed) == 7, "Expected 7 missing file FAIL, but found %r" % len(lint_obj.failed)
+        assert len(lint_obj.failed) == 6, "Expected 6 missing file FAIL, but found %r" % len(lint_obj.failed)
         assert len(lint_obj.warned) == 2, "Expected 2 missing file WARN, but found %r" % len(lint_obj.warned)
         assert len(lint_obj.passed) == 3, "Expected 3 missing file PASS, but found %r" % len(lint_obj.passed)
 
