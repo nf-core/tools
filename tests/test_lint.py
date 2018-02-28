@@ -13,7 +13,6 @@ Provide example wokflow directory contents like:
 """
 import os
 import unittest
-import nf_core
 import nf_core.lint
 from nose.tools import raises
 
@@ -37,26 +36,22 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-<<<<<<< HEAD:test/test_lint.py
-        assert len(lint_obj.failed) == 7, "Expected 6 files missing, but found %r" % len(lint_obj.failed)
-        assert len(lint_obj.passed) == 2, "Expected 6 files missing, but found %r" % len(lint_obj.passed)
-    
-    
-=======
         assert len(lint_obj.failed) == 7, "Expected 7 missing file FAIL, but found %r" % len(lint_obj.failed)
         assert len(lint_obj.warned) == 2, "Expected 2 missing file WARN, but found %r" % len(lint_obj.passed)
         assert len(lint_obj.passed) == 3, "Expected 3 missing file PASS, but found %r" % len(lint_obj.passed)
 
     def test_mit_licence_example_pass(self):
-        """Tests that MIT test works with good and bad MIT licences"""
+        """Tests that MIT test works with good MIT licences"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
         good_lint_obj.check_licence()
         assert len(good_lint_obj.failed) == 0, "Expected 0 MIT FAIL, but found %r" % len(good_lint_obj.failed)
         assert len(good_lint_obj.warned) == 0, "Expected 0 MIT WARN, but found %r" % len(good_lint_obj.passed)
         assert len(good_lint_obj.passed) == 1, "Expected 1 MIT PASS, but found %r" % len(good_lint_obj.passed)
+        
+    def test_mit_license_example_with_failed(self):
+        """Tests that MIT test works with bad MIT licences"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_licence()
         assert len(bad_lint_obj.failed) == 1, "Expected 1 MIT FAIL, but found %r" % len(bad_lint_obj.failed)
         assert len(bad_lint_obj.warned) == 0, "Expected 0 MIT WARN, but found %r" % len(bad_lint_obj.passed)
         assert len(bad_lint_obj.passed) == 0, "Expected 0 MIT PASS, but found %r" % len(bad_lint_obj.passed)
->>>>>>> upstream/master:tests/test_lint.py

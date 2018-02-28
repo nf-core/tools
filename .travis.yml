@@ -1,20 +1,15 @@
-language: python
-sudo: false
-
 python:
-  - "2.7"
+    - "2.7"
+    - "3.4"
+    - "3.5"
+    - "3.6"
 
 install:
-  - pip install codecov
-  - pip install -r requirements.txt
+  - pip install --user -e .
+  - pip install --user codecov
+  - pip install --user nose
 
-script: 
-  - nosetests --with-coverage
+script: nosetests --with-coverage --cover-package=nf_core
 
 after_success:
   - codecov
-
-# safelist
-branches:
-  only:
-  - master
