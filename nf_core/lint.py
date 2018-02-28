@@ -5,12 +5,13 @@ Tests Nextflow pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
-import click
 import logging
 import os
 import subprocess
 
-import nf_core
+import click
+
+#import nf_core
 
 class PipelineLint(object):
     """ Object to hold linting info and results """
@@ -48,12 +49,12 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-        funcnames = ['check_files_exist', 'check_licence', 'check_pipeline']
+        funcnames = ['check_files_exist', 'check_licence', 'check_pipeline', 'check_docker']
         with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
 
-    def check_files_exist (self):
+    def check_files_exist(self):
         """ Check a given pipeline directory for required files. """
 
         logging.debug('Checking required files exist')
@@ -64,7 +65,7 @@ class PipelineLint(object):
             'nextflow.config',
             'Dockerfile',
             ['.travis.yml', 'circle.yml'],
-            ['LICENSE', 'LICENSE.md'],
+            ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
             'docs/README.md',
@@ -103,21 +104,59 @@ class PipelineLint(object):
                 self.warned.append((1, "File not found: {}".format(files)))
 
 
+    def check_docker(self):
+        """minimal tests only"""
+        logging.debug('Checking Dockerfile')
+        fn = os.path.join(self.path, "Dockerfile")
+        with open(fn, 'r') as fh: content = fh.read()
+
+        # Implicitely also checks if empty.
+        if 'FROM ' in content:
+            self.passed.append((2, "Dockerfile check passed"))
+            return
+
+        self.failed.append((2, "Dockerfile check failed"))
+
+
     def check_licence(self):
         logging.debug('Checking licence file is MIT')
-        for l in ['LICENSE', 'LICENSE.md']:
+        for l in ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md']:
             fn = os.path.join(self.path, l)
             if os.path.isfile(fn):
-                if 'MIT' in open(fn).read():
-                    self.passed.append((2, "Licence check passed"))
+                with open(fn, 'r') as fh: content = fh.read()
+
+                # needs at least copyright, permission, notice and "as-is" lines
+                nl = content.count("\n")
+                if nl < 4:
+                    self.failed.append((2, "Number of lines too small for a valid MIT license file: {}".format(fn)))
                     return
-                else:
+
+                # determine whether this is indeed an MIT
+                # license. Most variations actually don't contain the
+                # string MIT Searching for 'without restriction'
+                # instead (a crutch).
+                if not 'without restriction' in content:
                     self.failed.append((2, "Licence file did not look like MIT: {}".format(fn)))
                     return
+
+                # check for placeholders present in
+                # - https://choosealicense.com/licenses/mit/
+                # - https://opensource.org/licenses/MIT
+                # - https://en.wikipedia.org/wiki/MIT_License
+                placeholders = set(['[year]', '[fullname]',
+                                    '<YEAR>', '<COPYRIGHT HOLDER>',
+                                    '<year>', '<copyright holders>'])
+                if any([ph in content for ph in placeholders]):
+                    self.failed.append((2, "Licence file contains placeholders: {}".format(fn)))
+                    return
+
+                self.passed.append((2, "Licence check passed"))
+                return
+
         self.failed.append((2, "Couldn't find MIT licence file"))
 
 
-    def check_pipeline (self):
+    def check_pipeline(self):
         """ Check a given pipeline for required config variables. """
 
         logging.debug('Checking pipeline config variables')
@@ -133,10 +172,13 @@ class PipelineLint(object):
         ]
 
         # Call `nextflow config` and pipe stderr to /dev/null
-        with open(os.devnull, 'w') as devnull:
-            nfconfig_raw = subprocess.check_output(['nextflow', 'config', self.path], stderr=devnull)
-
-        logging.debug("{} lines of pipeline config found!".format(len(nfconfig_raw.splitlines())))
+        try:
+            with open(os.devnull, 'w') as devnull:
+                nfconfig_raw = subprocess.check_output(['nextflow', 'config', self.path], stderr=devnull)
+        except subprocess.CalledProcessError as e:
+            logging.error("Nextflow config returned non-zero error code: %s,\n   %s", e.returncode, e.output)
+        else:
+            logging.debug("%s lines of pipeline config found!", len(nfconfig_raw.splitlines()))
 
 
     def print_results(self):
