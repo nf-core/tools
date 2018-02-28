@@ -29,8 +29,8 @@ class TestLint(unittest.TestCase):
 
     def test_call_lint_pipeline(self):
         """Test the main execution function of PipelineLint
-        This should not result in any exception for the FAILING
-        EXAMPLE"""
+        This should not result in any exception for the minimal
+        working example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline()
         assert len(lint_obj.failed) == 0, "Expected 0 missing file FAIL, but found %r" % len(lint_obj.failed)
