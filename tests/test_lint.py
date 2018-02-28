@@ -39,7 +39,7 @@ class TestLint(unittest.TestCase):
 
     def test_failing_dockerfile_example(self):
         """Tests for empty Dockerfile"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_docker()
         assert len(lint_obj.failed) == 1, "Expected 1 missing file FAIL, but found %r" % len(lint_obj.failed)
 
@@ -55,7 +55,7 @@ class TestLint(unittest.TestCase):
         lint_obj.check_files_exist()
         assert len(lint_obj.failed) == 6, "Expected 6 missing file FAIL, but found %r" % len(lint_obj.failed)
         assert len(lint_obj.warned) == 2, "Expected 2 missing file WARN, but found %r" % len(lint_obj.warned)
-        assert len(lint_obj.passed) == 3, "Expected 3 missing file PASS, but found %r" % len(lint_obj.passed)
+        assert len(lint_obj.passed) == 4, "Expected 3 missing file PASS, but found %r" % len(lint_obj.passed)
 
     def test_mit_licence_example_pass(self):
         """Tests that MIT test works with good MIT licences"""
