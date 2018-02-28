@@ -22,6 +22,7 @@ def pf(wd, path):
 WD = os.path.dirname(__file__)
 PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
+PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
 
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
@@ -30,7 +31,7 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint
         This should not result in any exception for the FAILING
         EXAMPLE"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline()
 
     @raises(AssertionError)
