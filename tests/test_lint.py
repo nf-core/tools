@@ -26,6 +26,13 @@ PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
 
+    def test_call_lint_pipeline(self):
+        """Test the main execution function of PipelineLint
+        This should not result in any exception for the FAILING
+        EXAMPLE"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.lint_pipeline()
+
     @raises(AssertionError)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
