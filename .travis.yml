@@ -1,3 +1,5 @@
+sudo: required
+jdk: openjdk8
 python:
     - "2.7"
     - "3.4"
@@ -5,6 +7,12 @@ python:
     - "3.6"
 
 install:
+  # Install Nextflow
+  - mkdir /tmp/nextflow
+  - cd /tmp/nextflow
+  - wget -qO- get.nextflow.io | bash
+  - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+  # Set up nf-core and test/coverage modules
   - pip install --user -e .
   - pip install --user codecov
   - pip install --user nose
