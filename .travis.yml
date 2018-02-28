@@ -14,6 +14,7 @@ install:
   - wget -qO- get.nextflow.io | bash
   - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
   # Set up nf-core and test/coverage modules
+  - cd ${TRAVIS_BUILD_DIR}
   - pip install --user -e .
   - pip install --user codecov
   - pip install --user nose
