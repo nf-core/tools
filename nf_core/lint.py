@@ -108,7 +108,12 @@ class PipelineLint(object):
         """minimal tests only"""
         logging.debug('Checking Dockerfile')
         fn = os.path.join(self.path, "Dockerfile")
-        with open(fn, 'r') as fh: content = fh.read()
+        content = ""
+        try:
+            with open(fn, 'r') as fh: content = fh.read()
+        except Exception as exc:
+            logging.error("Dockerfile check failed.")
+            logging.error(exc)
 
         # Implicitely also checks if empty.
         if 'FROM ' in content:
@@ -123,7 +128,12 @@ class PipelineLint(object):
         for l in ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md']:
             fn = os.path.join(self.path, l)
             if os.path.isfile(fn):
-                with open(fn, 'r') as fh: content = fh.read()
+                content = ""
+                try:
+                    with open(fn, 'r') as fh: content = fh.read()
+                except Exception as exc:
+                    logging.error("License check failed.")
+                    logging.error(exc)
 
                 # needs at least copyright, permission, notice and "as-is" lines
                 nl = content.count("\n")
