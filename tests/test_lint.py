@@ -16,6 +16,12 @@ import unittest
 import nf_core.lint
 from nose.tools import raises
 
+def listfiles(path):
+    files_found = []
+    for (_,_,files) in os.walk(path):
+        files_found.extend(files)
+    return files_found
+
 def pf(wd, path):
     return os.path.join(wd, path)
 
@@ -24,8 +30,17 @@ PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
 
+MAX_PASS_CHECKS = 14
+
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
+
+    def assess_lint_status(self, lint_obj, **expected):
+        """Little helper function for assessing the lint
+        object status lists"""
+        for list_type, expect in expected.items():
+            observed = len(getattr(lint_obj, list_type))
+            self.assertEqual(observed, expect, "Expected {} files in \'{}\', but found {}.".format(expect, list_type.upper(), observed))
 
     def test_call_lint_pipeline(self):
         """Test the main execution function of PipelineLint
@@ -33,16 +48,15 @@ class TestLint(unittest.TestCase):
         working example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline()
-        assert len(lint_obj.failed) == 0, "Expected 0 missing file FAIL, but found %r" % len(lint_obj.failed)
-        assert len(lint_obj.warned) == 0, "Expected 0 missing file WARN, but found %r" % len(lint_obj.warned)
-        assert len(lint_obj.passed) == 14, "Expected 14 missing file PASS, but found %r" % len(lint_obj.passed)
+        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
+        self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
         """Tests for empty Dockerfile"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_docker()
-        assert len(lint_obj.failed) == 1, "Expected 1 missing file FAIL, but found %r" % len(lint_obj.failed)
-
+        self.assess_lint_status(lint_obj, failed=1)
+    
     @raises(AssertionError)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
@@ -53,22 +67,19 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        assert len(lint_obj.failed) == 6, "Expected 6 missing file FAIL, but found %r" % len(lint_obj.failed)
-        assert len(lint_obj.warned) == 2, "Expected 2 missing file WARN, but found %r" % len(lint_obj.warned)
-        assert len(lint_obj.passed) == 4, "Expected 3 missing file PASS, but found %r" % len(lint_obj.passed)
+        expectations = {"failed": 6, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 6 - 2}
+        self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
         """Tests that MIT test works with good MIT licences"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
         good_lint_obj.check_licence()
-        assert len(good_lint_obj.failed) == 0, "Expected 0 MIT FAIL, but found %r" % len(good_lint_obj.failed)
-        assert len(good_lint_obj.warned) == 0, "Expected 0 MIT WARN, but found %r" % len(good_lint_obj.warned)
-        assert len(good_lint_obj.passed) == 1, "Expected 1 MIT PASS, but found %r" % len(good_lint_obj.passed)
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(good_lint_obj, **expectations)
         
     def test_mit_license_example_with_failed(self):
         """Tests that MIT test works with bad MIT licences"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_licence()
-        assert len(bad_lint_obj.failed) == 1, "Expected 1 MIT FAIL, but found %r" % len(bad_lint_obj.failed)
-        assert len(bad_lint_obj.warned) == 0, "Expected 0 MIT WARN, but found %r" % len(bad_lint_obj.warned)
-        assert len(bad_lint_obj.passed) == 0, "Expected 0 MIT PASS, but found %r" % len(bad_lint_obj.passed)
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        self.assess_lint_status(bad_lint_obj, **expectations)
