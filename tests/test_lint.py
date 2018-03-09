@@ -30,7 +30,7 @@ PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
 
-MAX_PASS_CHECKS = 25
+MAX_PASS_CHECKS = 34
 
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
@@ -40,7 +40,7 @@ class TestLint(unittest.TestCase):
         object status lists"""
         for list_type, expect in expected.items():
             observed = len(getattr(lint_obj, list_type))
-            self.assertEqual(observed, expect, "Expected {} tests in '{}', but found {}.".format(expect, list_type.upper(), observed))
+            self.assertEqual(observed, expect, "Expected {} tests in '{}', but found {}.\n{}".format(expect, list_type.upper(), observed, getattr(lint_obj, list_type)))
 
     def test_call_lint_pipeline(self):
         """Test the main execution function of PipelineLint
@@ -67,7 +67,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 6, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 6 - 2}
+        expectations = {"failed": 5, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 5 - 2}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -88,12 +88,26 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test works with good pipeline example"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         good_lint_obj.check_config_vars()
-        expectations = {"failed": 0, "warned": 0, "passed": 11}
+        expectations = {"failed": 0, "warned": 0, "passed": 18}
         self.assess_lint_status(good_lint_obj, **expectations)
 
     def test_config_variable_example_with_failed(self):
         """Tests that config variable existence test works with bad pipeline example"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_config_vars()
-        expectations = {"failed": 7, "warned": 4, "passed": 0}
+        expectations = {"failed": 11, "warned": 7, "passed": 0}
         self.assess_lint_status(bad_lint_obj, **expectations)
+
+    def test_ci_conf_pass(self):
+        """Tests that the continous integration config checks work with a good example"""
+        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        good_lint_obj.check_ci_config()
+        expectations = {"failed": 0, "warned": 0, "passed": 2}
+        self.assess_lint_status(good_lint_obj, **expectations)
+
+    def test_ci_conf_pass(self):
+        """Tests that the continous integration config checks work with a bad example"""
+        good_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        good_lint_obj.check_ci_config()
+        expectations = {"failed": 2, "warned": 0, "passed": 0}
+        self.assess_lint_status(good_lint_obj, **expectations)
