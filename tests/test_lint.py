@@ -29,8 +29,10 @@ WD = os.path.dirname(__file__)
 PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
+PATH_MISSING_LICENSE_EXAMPLE = pf(WD, 'lint_examples/missing_license_example')
 PATHS_WRONG_LINENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'), 
     pf(WD, 'lint_examples/license_incomplete_example')]
+
 
 MAX_PASS_CHECKS = 25
 
@@ -86,7 +88,6 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
-
     def test_config_variable_example_pass(self):
         """Tests that config variable existence test works with good pipeline example"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -101,7 +102,6 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 7, "warned": 4, "passed": 0}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
-
     def test_wrong_license_examples_with_failed(self):
         """Tests for checking the license test behavior"""
         for example in PATHS_WRONG_LINENSE_EXAMPLE:
@@ -109,3 +109,10 @@ class TestLint(unittest.TestCase):
             lint_obj.check_licence()
             expectations = {"failed": 1, "warned": 0, "passed": 0}
             self.assess_lint_status(lint_obj, **expectations)
+
+    def test_missing_license_example(self):
+        """Tests for missing license behavior"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_MISSING_LICENSE_EXAMPLE)
+        lint_obj.check_licence()
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
