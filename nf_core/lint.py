@@ -108,11 +108,7 @@ class PipelineLint(object):
         logging.debug('Checking Dockerfile')
         fn = os.path.join(self.path, "Dockerfile")
         content = ""
-        try:
-            with open(fn, 'r') as fh: content = fh.read()
-        except Exception as exc:
-            logging.error("Dockerfile check failed.")
-            logging.error(exc)
+        with open(fn, 'r') as fh: content = fh.read()
 
         # Implicitely also checks if empty.
         if 'FROM ' in content:
