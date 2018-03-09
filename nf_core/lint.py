@@ -11,8 +11,6 @@ import subprocess
 
 import click
 
-#import nf_core
-
 class PipelineLint(object):
     """ Object to hold linting info and results """
 
@@ -50,7 +48,7 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-        funcnames = ['check_files_exist', 'check_licence', 'check_pipeline', 'check_docker']
+        funcnames = ['check_files_exist', 'check_licence', 'check_config_vars', 'check_docker']
         with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
@@ -166,7 +164,7 @@ class PipelineLint(object):
         self.failed.append((3, "Couldn't find MIT licence file"))
 
 
-    def check_pipeline(self):
+    def check_config_vars(self):
         """ Check a given pipeline for required config variables. """
 
         logging.debug('Checking pipeline config variables')
