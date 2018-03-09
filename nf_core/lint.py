@@ -128,11 +128,8 @@ class PipelineLint(object):
             fn = os.path.join(self.path, l)
             if os.path.isfile(fn):
                 content = ""
-                try:
-                    with open(fn, 'r') as fh: content = fh.read()
-                except Exception as e:
-                    raise AssertionError("Could not open licence file: %s,\n   %s", e.returncode, e.output)
-
+                with open(fn, 'r') as fh: content = fh.read()
+                
                 # needs at least copyright, permission, notice and "as-is" lines
                 nl = content.count("\n")
                 if nl < 4:

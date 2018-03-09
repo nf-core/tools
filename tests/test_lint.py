@@ -90,10 +90,6 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
-    def test_missing_license(self):
-        """Mimics exception for file handler error on the the License"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_HILARIOUS_EXAMPLE)
-        lint_obj.check_licence()
 
     def test_config_variable_example_pass(self):
         """Tests that config variable existence test works with good pipeline example"""
