@@ -48,7 +48,7 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-        funcnames = ['check_files_exist', 'check_licence', 'check_config_vars', 'check_docker']
+        funcnames = ['check_files_exist', 'check_licence', 'check_docker', 'check_config_vars']
         with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
@@ -178,12 +178,19 @@ class PipelineLint(object):
             'timeline.enabled',
             'trace.enabled',
             'report.enabled',
+            'process.cpus',
+            'process.memory',
+            'process.time',
+            'params.outdir'
         ]
         config_warn = [
             'manifest.mainScript',
             'timeline.file',
             'trace.file',
             'report.file',
+            'process.container',
+            'params.reads',
+            'params.singleEnd'
         ]
 
         # Call `nextflow config` and pipe stderr to /dev/null
