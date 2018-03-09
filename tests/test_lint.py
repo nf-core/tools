@@ -100,14 +100,15 @@ class TestLint(unittest.TestCase):
 
     def test_ci_conf_pass(self):
         """Tests that the continous integration config checks work with a good example"""
-        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        good_lint_obj.check_ci_config()
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config['nf_required_version'] = '0.27.0'
+        lint_obj.check_ci_config()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
-        self.assess_lint_status(good_lint_obj, **expectations)
+        self.assess_lint_status(lint_obj, **expectations)
 
-    def test_ci_conf_pass(self):
+    def test_ci_conf_fail(self):
         """Tests that the continous integration config checks work with a bad example"""
-        good_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-        good_lint_obj.check_ci_config()
+        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.check_ci_config()
         expectations = {"failed": 2, "warned": 0, "passed": 0}
-        self.assess_lint_status(good_lint_obj, **expectations)
+        self.assess_lint_status(lint_obj, **expectations)

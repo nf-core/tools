@@ -228,9 +228,9 @@ class PipelineLint(object):
                 try:
                     assert('nf-core lint ${TRAVIS_BUILD_DIR}' in ciconf['script'])
                 except AssertionError:
-                    self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(cf)))
+                    self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
                 else:
-                    self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(cf)))
+                    self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
                 # Check that we're testing the nf_required_version
                 nf_required_version_tested = False
                 for e in ciconf.get('env', []):
@@ -243,9 +243,9 @@ class PipelineLint(object):
                             except KeyError:
                                 pass
                 if nf_required_version_tested:
-                    self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(cf)))
+                    self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
                 else:
-                    self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(cf)))
+                    self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
 
 
     def print_results(self):
