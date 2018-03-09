@@ -29,7 +29,6 @@ WD = os.path.dirname(__file__)
 PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
-PATH_HILARIOUS_EXAMPLE = pf(WD, 'lint_examples/hilarious_example')
 
 MAX_PASS_CHECKS = 25
 
