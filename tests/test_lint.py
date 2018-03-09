@@ -29,6 +29,7 @@ WD = os.path.dirname(__file__)
 PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
+PATH_HILARIOUS_EXAMPLE = pf(WD, 'lint_examples/hilarious_example')
 
 MAX_PASS_CHECKS = 14
 
@@ -57,7 +58,6 @@ class TestLint(unittest.TestCase):
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
     
-    @raises(IOError)
     def test_missing_dockerfile_example(self):
         """Mimics exception for file handler error on the Dockerfile"""
         lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
@@ -89,3 +89,9 @@ class TestLint(unittest.TestCase):
         bad_lint_obj.check_licence()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(bad_lint_obj, **expectations)
+
+    def test_missing_license(self):
+        """Mimics exception for file handler error on the the License"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_HILARIOUS_EXAMPLE)
+        lint_obj.check_licence()
+
