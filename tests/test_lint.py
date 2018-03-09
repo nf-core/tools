@@ -54,6 +54,7 @@ class TestLint(unittest.TestCase):
         lint_obj.lint_pipeline()
         expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
+        lint_obj.print_results()
 
     def test_failing_dockerfile_example(self):
         """Tests for empty Dockerfile"""
