@@ -19,6 +19,7 @@ class PipelineLint(object):
     def __init__(self, pipeline_dir):
         """ Initialise linting object """
         self.path = pipeline_dir
+        self.config = {}
         self.passed = []
         self.warned = []
         self.failed = []
@@ -131,14 +132,13 @@ class PipelineLint(object):
                 content = ""
                 try:
                     with open(fn, 'r') as fh: content = fh.read()
-                except Exception as exc:
-                    logging.error("License check failed.")
-                    logging.error(exc)
+                except Exception as e:
+                    raise AssertionError("Could not open licence file: %s,\n   %s", e.returncode, e.output)
 
                 # needs at least copyright, permission, notice and "as-is" lines
                 nl = content.count("\n")
                 if nl < 4:
-                    self.failed.append((2, "Number of lines too small for a valid MIT license file: {}".format(fn)))
+                    self.failed.append((3, "Number of lines too small for a valid MIT license file: {}".format(fn)))
                     return
 
                 # determine whether this is indeed an MIT
@@ -146,7 +146,7 @@ class PipelineLint(object):
                 # string MIT Searching for 'without restriction'
                 # instead (a crutch).
                 if not 'without restriction' in content:
-                    self.failed.append((2, "Licence file did not look like MIT: {}".format(fn)))
+                    self.failed.append((3, "Licence file did not look like MIT: {}".format(fn)))
                     return
 
                 # check for placeholders present in
@@ -157,13 +157,13 @@ class PipelineLint(object):
                                     '<YEAR>', '<COPYRIGHT HOLDER>',
                                     '<year>', '<copyright holders>'])
                 if any([ph in content for ph in placeholders]):
-                    self.failed.append((2, "Licence file contains placeholders: {}".format(fn)))
+                    self.failed.append((3, "Licence file contains placeholders: {}".format(fn)))
                     return
 
-                self.passed.append((2, "Licence check passed"))
+                self.passed.append((3, "Licence check passed"))
                 return
 
-        self.failed.append((2, "Couldn't find MIT licence file"))
+        self.failed.append((3, "Couldn't find MIT licence file"))
 
 
     def check_pipeline(self):
@@ -173,22 +173,41 @@ class PipelineLint(object):
 
         # NB: Should all be files, not directories
         config_fail = [
-            'manifest',
             'version',
+            'nf_required_version',
+            'manifest.description',
+            'manifest.homePage',
+            'timeline.enabled',
+            'trace.enabled',
+            'report.enabled',
         ]
         config_warn = [
-            'timeline',
-            'trace'
+            'manifest.mainScript',
+            'timeline.file',
+            'trace.file',
+            'report.file',
         ]
 
         # Call `nextflow config` and pipe stderr to /dev/null
         try:
             with open(os.devnull, 'w') as devnull:
-                nfconfig_raw = subprocess.check_output(['nextflow', 'config', self.path], stderr=devnull)
+                nfconfig_raw = subprocess.check_output(['nextflow', 'config', '-flat', self.path], stderr=devnull)
         except subprocess.CalledProcessError as e:
-            logging.error("Nextflow config returned non-zero error code: %s,\n   %s", e.returncode, e.output)
+            raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
         else:
-            logging.debug("%s lines of pipeline config found!", len(nfconfig_raw.splitlines()))
+            for l in nfconfig_raw.splitlines():
+                k, v = l.split(' = ', 1)
+                self.config[k] = v
+            for cf in config_fail:
+                if cf in self.config.keys():
+                    self.passed.append((4, "Config variable found: {}".format(cf)))
+                else:
+                    self.failed.append((4, "Config variable not found: {}".format(cf)))
+            for cf in config_warn:
+                if cf in self.config.keys():
+                    self.passed.append((4, "Config variable found: {}".format(cf)))
+                else:
+                    self.warned.append((4, "Config variable not found: {}".format(cf)))
 
 
     def print_results(self):
