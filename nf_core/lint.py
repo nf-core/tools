@@ -237,8 +237,11 @@ class PipelineLint(object):
                     for s in e.split():
                         k,v = s.split('=')
                         if k == 'NXF_VER':
-                            if v.strip("'") == self.config['nf_required_version'].strip("'"):
-                                nf_required_version_tested = True
+                            try:
+                                if v.strip("'") == self.config['nf_required_version'].strip("'"):
+                                    nf_required_version_tested = True
+                            except KeyError:
+                                pass
                 if nf_required_version_tested:
                     self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(cf)))
                 else:
