@@ -8,6 +8,7 @@ the nf-core community guidelines.
 import logging
 import os
 import subprocess
+import yaml
 
 import click
 
@@ -48,7 +49,7 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-        funcnames = ['check_files_exist', 'check_licence', 'check_config_vars', 'check_docker']
+        funcnames = ['check_files_exist', 'check_licence', 'check_docker', 'check_config_vars', 'check_ci_config']
         with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
@@ -63,7 +64,7 @@ class PipelineLint(object):
         files_fail = [
             'nextflow.config',
             'Dockerfile',
-            ['.travis.yml', 'circle.yml'],
+            ['.travis.yml', '.circle.yml'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
@@ -171,12 +172,19 @@ class PipelineLint(object):
             'timeline.enabled',
             'trace.enabled',
             'report.enabled',
+            'process.cpus',
+            'process.memory',
+            'process.time',
+            'params.outdir'
         ]
         config_warn = [
             'manifest.mainScript',
             'timeline.file',
             'trace.file',
             'report.file',
+            'process.container',
+            'params.reads',
+            'params.singleEnd'
         ]
 
         # Call `nextflow config` and pipe stderr to /dev/null
@@ -199,6 +207,38 @@ class PipelineLint(object):
                     self.passed.append((4, "Config variable found: {}".format(cf)))
                 else:
                     self.warned.append((4, "Config variable not found: {}".format(cf)))
+
+
+    def check_ci_config(self):
+        """ Check that the Travis or Circle CI YAML config is valid """
+        logging.debug('Checking continuous integration testing config')
+        for cf in ['.travis.yml', 'circle.yml']:
+            fn = os.path.join(self.path, cf)
+            if os.path.isfile(fn):
+                with open(fn, 'r') as fh:
+                    ciconf = yaml.load(fh)
+                # Check that the nf-core linting runs
+                try:
+                    assert('nf-core lint ${TRAVIS_BUILD_DIR}' in ciconf['script'])
+                except AssertionError:
+                    self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
+                else:
+                    self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
+                # Check that we're testing the nf_required_version
+                nf_required_version_tested = False
+                for e in ciconf.get('env', []):
+                    for s in e.split():
+                        k,v = s.split('=')
+                        if k == 'NXF_VER':
+                            try:
+                                if v.strip("'") == self.config['nf_required_version'].strip("'"):
+                                    nf_required_version_tested = True
+                            except KeyError:
+                                pass
+                if nf_required_version_tested:
+                    self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
+                else:
+                    self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
 
 
     def print_results(self):
