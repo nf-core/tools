@@ -31,7 +31,7 @@ PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
 PATH_HILARIOUS_EXAMPLE = pf(WD, 'lint_examples/hilarious_example')
 
-MAX_PASS_CHECKS = 14
+MAX_PASS_CHECKS = 25
 
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
@@ -41,7 +41,7 @@ class TestLint(unittest.TestCase):
         object status lists"""
         for list_type, expect in expected.items():
             observed = len(getattr(lint_obj, list_type))
-            self.assertEqual(observed, expect, "Expected {} files in \'{}\', but found {}.".format(expect, list_type.upper(), observed))
+            self.assertEqual(observed, expect, "Expected {} tests in '{}', but found {}.".format(expect, list_type.upper(), observed))
 
     def test_call_lint_pipeline(self):
         """Test the main execution function of PipelineLint
@@ -82,7 +82,7 @@ class TestLint(unittest.TestCase):
         good_lint_obj.check_licence()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(good_lint_obj, **expectations)
-        
+
     def test_mit_license_example_with_failed(self):
         """Tests that MIT test works with bad MIT licences"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
@@ -94,4 +94,18 @@ class TestLint(unittest.TestCase):
         """Mimics exception for file handler error on the the License"""
         lint_obj = nf_core.lint.PipelineLint(PATH_HILARIOUS_EXAMPLE)
         lint_obj.check_licence()
+
+    def test_config_variable_example_pass(self):
+        """Tests that config variable existence test works with good pipeline example"""
+        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        good_lint_obj.check_config_vars()
+        expectations = {"failed": 0, "warned": 0, "passed": 11}
+        self.assess_lint_status(good_lint_obj, **expectations)
+
+    def test_config_variable_example_with_failed(self):
+        """Tests that config variable existence test works with bad pipeline example"""
+        bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        bad_lint_obj.check_config_vars()
+        expectations = {"failed": 7, "warned": 4, "passed": 0}
+        self.assess_lint_status(bad_lint_obj, **expectations)
 
