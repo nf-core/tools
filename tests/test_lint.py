@@ -57,11 +57,6 @@ class TestLint(unittest.TestCase):
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
     
-    def test_missing_dockerfile_example(self):
-        """Mimics exception for file handler error on the Dockerfile"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
-        lint_obj.check_docker()
-    
     @raises(AssertionError)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
