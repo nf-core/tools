@@ -56,6 +56,14 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
         lint_obj.print_results()
 
+    def test_call_lint_pipeline(self):
+        """Test the main execution function of PipelineLint
+        This should fail after the first test and halt execution """
+        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.lint_pipeline()
+        expectations = {"failed": 4, "warned": 2, "passed": 6}
+        self.assess_lint_status(lint_obj, **expectations)
+
     def test_failing_dockerfile_example(self):
         """Tests for empty Dockerfile"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
