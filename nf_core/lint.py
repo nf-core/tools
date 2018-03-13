@@ -8,6 +8,7 @@ the nf-core community guidelines.
 import logging
 import os
 import subprocess
+import re
 import yaml
 
 import click
@@ -49,10 +50,20 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-        funcnames = ['check_files_exist', 'check_licence', 'check_docker', 'check_config_vars', 'check_ci_config']
+        funcnames = [
+            'check_files_exist',
+            'check_licence',
+            'check_docker',
+            'check_config_vars',
+            'check_ci_config',
+            'check_readme'
+        ]
         with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
+                if len(self.failed) > 0:
+                    logging.info("\nFound test failures in '{}', halting lint run.".format(fname))
+                    break
 
     def check_files_exist(self):
         """ Check a given pipeline directory for required files. """
@@ -126,7 +137,7 @@ class PipelineLint(object):
             if os.path.isfile(fn):
                 content = ""
                 with open(fn, 'r') as fh: content = fh.read()
-                
+
                 # needs at least copyright, permission, notice and "as-is" lines
                 nl = content.count("\n")
                 if nl < 4:
@@ -165,8 +176,8 @@ class PipelineLint(object):
 
         # NB: Should all be files, not directories
         config_fail = [
-            'version',
-            'nf_required_version',
+            'params.version',
+            'params.nf_required_version',
             'manifest.description',
             'manifest.homePage',
             'timeline.enabled',
@@ -230,15 +241,37 @@ class PipelineLint(object):
                     for s in e.split():
                         k,v = s.split('=')
                         if k == 'NXF_VER':
-                            try:
-                                if v.strip("'") == self.config['nf_required_version'].strip("'"):
-                                    nf_required_version_tested = True
-                            except KeyError:
-                                pass
-                if nf_required_version_tested:
-                    self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
-                else:
+                            ci_ver = v.strip('\'"')
+                            cv = self.config.get('params.nf_required_version', '').strip('\'"')
+                            if ci_ver == cv:
+                                nf_required_version_tested = True
+                                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
+                if not nf_required_version_tested:
                     self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
+
+
+    def check_readme(self):
+        """ Check the repository README file for errors """
+        logging.debug('Checking the repository README')
+        with open(os.path.join(self.path, 'README.md'), 'r') as fh:
+            content = fh.read()
+
+        # Check that there is a readme badge showing the minimum required version of Nextflow
+        # and that it has the correct version
+        nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow-%E2%89%A5([\d\.]+)-brightgreen\.svg\)\]\(https://www\.nextflow\.io/\)"
+        match = re.search(nf_badge_re, content)
+        if match:
+            nf_badge_version = match.group(1).strip('\'"')
+            nf_config_version = self.config.get('params.nf_required_version').strip('\'"')
+            try:
+                assert nf_badge_version == nf_config_version
+            except AssertionError, KeyError:
+                self.failed.append((6, "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
+            else:
+                self.passed.append((6, "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
+        else:
+            self.warned.append((6, "README did not have a Nextflow minimum version badge."))
+
 
 
     def print_results(self):
