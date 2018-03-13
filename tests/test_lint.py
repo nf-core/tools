@@ -30,7 +30,7 @@ PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
 PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
 PATH_MISSING_LICENSE_EXAMPLE = pf(WD, 'lint_examples/missing_license_example')
-PATHS_WRONG_LINENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'), 
+PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 
@@ -61,7 +61,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
-    
+
     @raises(AssertionError)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
@@ -119,7 +119,7 @@ class TestLint(unittest.TestCase):
 
     def test_wrong_license_examples_with_failed(self):
         """Tests for checking the license test behavior"""
-        for example in PATHS_WRONG_LINENSE_EXAMPLE:
+        for example in PATHS_WRONG_LICENSE_EXAMPLE:
             lint_obj = nf_core.lint.PipelineLint(example)
             lint_obj.check_licence()
             expectations = {"failed": 1, "warned": 0, "passed": 0}
@@ -140,8 +140,16 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
 
+    def test_readme_warn(self):
+        """Tests that the pipeline README file checks fail  """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config['params.nf_required_version'] = '0.28.0'
+        lint_obj.check_readme()
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
     def test_readme_fail(self):
-        """Tests that the pipeline README file checks work with a bad example"""
+        """Tests that the pipeline README file checks give warnings with a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_readme()
         expectations = {"failed": 0, "warned": 1, "passed": 0}

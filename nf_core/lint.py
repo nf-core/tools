@@ -61,6 +61,9 @@ class PipelineLint(object):
         with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
+                if len(self.failed) > 0:
+                    logging.info("\nFound test failures in '{}', halting lint run.".format(fname))
+                    break
 
     def check_files_exist(self):
         """ Check a given pipeline directory for required files. """
@@ -134,7 +137,7 @@ class PipelineLint(object):
             if os.path.isfile(fn):
                 content = ""
                 with open(fn, 'r') as fh: content = fh.read()
-                
+
                 # needs at least copyright, permission, notice and "as-is" lines
                 nl = content.count("\n")
                 if nl < 4:
@@ -252,10 +255,8 @@ class PipelineLint(object):
     def check_readme(self):
         """ Check the repository README file for errors """
         logging.debug('Checking the repository README')
-        try:
-            with open(os.path.join(self.path, 'README.md'), 'r') as fh: content = fh.read()
-        except Exception as e:
-            raise AssertionError("Could not open README.md file")
+        with open(os.path.join(self.path, 'README.md'), 'r') as fh:
+            content = fh.read()
 
         # Check that there is a readme badge showing the minimum required version of Nextflow
         # and that it has the correct version
