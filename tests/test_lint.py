@@ -111,6 +111,14 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 0, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
 
+    def test_ci_conf_fail_wrong_nf_version(self):
+        """Tests that the CI check fails with the wrong NXF version"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config['params.nf_required_version'] = '0.28.0'
+        lint_obj.check_ci_config()
+        expectations = {"failed": 1, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+
     def test_ci_conf_fail(self):
         """Tests that the continous integration config checks work with a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
