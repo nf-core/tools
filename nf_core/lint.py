@@ -282,7 +282,7 @@ class PipelineLint(object):
             if bioconda_badge in content:
                 self.passed.append((6, "README had a bioconda badge"))
             else:
-                self.warned.append((6, "Found a bioconda environment.yml file but no badge in the README"))
+                self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
 
 
     def print_results(self):
