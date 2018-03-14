@@ -34,7 +34,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 
-MAX_PASS_CHECKS = 35
+MAX_PASS_CHECKS = 36
 
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
@@ -47,7 +47,7 @@ class TestLint(unittest.TestCase):
             self.assertEqual(observed, expect, "Expected {} tests in '{}', but found {}.\n{}".format(expect, list_type.upper(), observed, getattr(lint_obj, list_type)))
 
     def test_call_lint_pipeline(self):
-        """Test the main execution function of PipelineLint
+        """Test the main execution function of PipelineLint (pass)
         This should not result in any exception for the minimal
         working example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -57,11 +57,11 @@ class TestLint(unittest.TestCase):
         lint_obj.print_results()
 
     def test_call_lint_pipeline(self):
-        """Test the main execution function of PipelineLint
+        """Test the main execution function of PipelineLint (fail)
         This should fail after the first test and halt execution """
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.lint_pipeline()
-        expectations = {"failed": 4, "warned": 2, "passed": 6}
+        expectations = {"failed": 4, "warned": 2, "passed": 7}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
@@ -80,7 +80,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 4, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 4 - 2}
+        expectations = {"failed": 4, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 4 - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -167,6 +167,7 @@ class TestLint(unittest.TestCase):
     def test_readme_fail(self):
         """Tests that the pipeline README file checks give warnings with a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
         lint_obj.check_readme()
-        expectations = {"failed": 0, "warned": 1, "passed": 0}
+        expectations = {"failed": 0, "warned": 2, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
