@@ -152,8 +152,9 @@ class TestLint(unittest.TestCase):
         """Tests that the pipeline README file checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config['params.nf_required_version'] = '0.27.0'
+        lint_obj.files = ['environment.yml']
         lint_obj.check_readme()
-        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        expectations = {"failed": 0, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_readme_warn(self):
