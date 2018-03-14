@@ -278,12 +278,11 @@ class PipelineLint(object):
 
         # Check that we have a bioconda badge if we have a bioconda environment file
         if 'environment.yml' in self.files:
-            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/)'
+            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)'
             if bioconda_badge in content:
                 self.passed.append((6, "README had a bioconda badge"))
             else:
                 self.warned.append((6, "Found a bioconda environment.yml file but no badge in the README"))
-
 
 
     def print_results(self):
