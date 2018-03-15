@@ -19,6 +19,7 @@ class PipelineLint(object):
     def __init__(self, pipeline_dir):
         """ Initialise linting object """
         self.path = pipeline_dir
+        self.files = []
         self.config = {}
         self.passed = []
         self.warned = []
@@ -85,6 +86,7 @@ class PipelineLint(object):
         ]
         files_warn = [
             'main.nf',
+            'environment.yml',
             'conf/base.config',
             'tests/run_test.sh'
         ]
@@ -102,6 +104,7 @@ class PipelineLint(object):
                 files = [files]
             if any([os.path.isfile(pf(f)) for f in files]):
                 self.passed.append((1, "File found: {}".format(files)))
+                self.files.append(f)
             else:
                 self.failed.append((1, "File not found: {}".format(files)))
 
@@ -111,6 +114,7 @@ class PipelineLint(object):
                 files = [files]
             if any([os.path.isfile(pf(f)) for f in files]):
                 self.passed.append((1, "File found: {}".format(files)))
+                self.files.append(f)
             else:
                 self.warned.append((1, "File not found: {}".format(files)))
 
@@ -272,6 +276,13 @@ class PipelineLint(object):
         else:
             self.warned.append((6, "README did not have a Nextflow minimum version badge."))
 
+        # Check that we have a bioconda badge if we have a bioconda environment file
+        if 'environment.yml' in self.files:
+            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)'
+            if bioconda_badge in content:
+                self.passed.append((6, "README had a bioconda badge"))
+            else:
+                self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
 
 
     def print_results(self):
