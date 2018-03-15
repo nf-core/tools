@@ -53,9 +53,9 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline()
         expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
-        self.assess_lint_status(lint_obj, **expectations)
         lint_obj.print_results()
-
+        self.assess_lint_status(lint_obj, **expectations)
+        
     def test_call_lint_pipeline(self):
         """Test the main execution function of PipelineLint (fail)
         This should fail after the first test and halt execution """
