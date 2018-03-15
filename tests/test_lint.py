@@ -14,6 +14,7 @@ Provide example wokflow directory contents like:
 import os
 import unittest
 import nf_core.lint
+import io
 from nose.tools import raises
 
 def listfiles(path):
@@ -54,7 +55,12 @@ class TestLint(unittest.TestCase):
         lint_obj.lint_pipeline()
         expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
+        captured_output = io.StringIO()
+        sys.stdout = captured_output
         lint_obj.print_results()
+        sys.stdout = sys.__stdout__
+        assert captured_output.getvalue()      
+
 
     def test_call_lint_pipeline(self):
         """Test the main execution function of PipelineLint (fail)
