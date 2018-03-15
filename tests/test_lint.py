@@ -172,3 +172,10 @@ class TestLint(unittest.TestCase):
         lint_obj.check_readme()
         expectations = {"failed": 1, "warned": 1, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
+
+    def test_dockerfile_pass(self):
+        """Tests if a valid Dockerfile passes the lint checks"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.check_docker()
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
