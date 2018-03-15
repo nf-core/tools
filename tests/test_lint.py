@@ -14,7 +14,6 @@ Provide example wokflow directory contents like:
 import os
 import unittest
 import nf_core.lint
-import io
 from nose.tools import raises
 
 def listfiles(path):
@@ -34,7 +33,7 @@ PATH_MISSING_LICENSE_EXAMPLE = pf(WD, 'lint_examples/missing_license_example')
 PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
-
+# The maximum sum of passed tests currently possible
 MAX_PASS_CHECKS = 36
 
 class TestLint(unittest.TestCase):
@@ -47,22 +46,18 @@ class TestLint(unittest.TestCase):
             observed = len(getattr(lint_obj, list_type))
             self.assertEqual(observed, expect, "Expected {} tests in '{}', but found {}.\n{}".format(expect, list_type.upper(), observed, getattr(lint_obj, list_type)))
 
-    def test_call_lint_pipeline(self):
+    def test_call_lint_pipeline_pass(self):
         """Test the main execution function of PipelineLint (pass)
         This should not result in any exception for the minimal
         working example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline()
-        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
+        # Minimal example has no environment.yml
+        expectations = {"failed": 0, "warned": 1, "passed": MAX_PASS_CHECKS-1}
         self.assess_lint_status(lint_obj, **expectations)
-        captured_output = io.StringIO()
-        sys.stdout = captured_output
         lint_obj.print_results()
-        sys.stdout = sys.__stdout__
-        assert captured_output.getvalue()      
 
-
-    def test_call_lint_pipeline(self):
+    def test_call_lint_pipeline_fail(self):
         """Test the main execution function of PipelineLint (fail)
         This should fail after the first test and halt execution """
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
