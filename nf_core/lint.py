@@ -210,7 +210,8 @@ class PipelineLint(object):
             raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
         else:
             for l in nfconfig_raw.splitlines():
-                k, v = str(l).split(' = ', 1)
+                ul = l.decode()
+                k, v = ul.split(' = ', 1)
                 self.config[k] = v
             for cf in config_fail:
                 if cf in self.config.keys():
