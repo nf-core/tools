@@ -17,8 +17,7 @@ install:
   - cd ${TRAVIS_BUILD_DIR}
   - sudo pip install .
   - sudo pip install -r requirements.txt
-  - sudo pip install codecov
-  - sudo pip install nose2
+  - sudo pip install codecov nose nose2
 
 script: nose2 --with-coverage --coverage nf_core
 
