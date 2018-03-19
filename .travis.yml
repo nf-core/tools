@@ -16,6 +16,7 @@ install:
   # Set up nf-core and test/coverage modules
   - cd ${TRAVIS_BUILD_DIR}
   - sudo pip install -e .
+  - sudo pip install -r requirements.txt
   - sudo pip install codecov
   - sudo pip install nose
 
