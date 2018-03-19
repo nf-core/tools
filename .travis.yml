@@ -15,9 +15,9 @@ install:
   - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
   # Set up nf-core and test/coverage modules
   - cd ${TRAVIS_BUILD_DIR}
-  - pip install --user -e .
-  - pip install --user codecov
-  - pip install --user nose
+  - sudo pip install -e .
+  - sudo pip install codecov
+  - sudo pip install user nose
 
 script: nosetests --with-coverage --cover-package=nf_core
 
