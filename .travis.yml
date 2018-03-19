@@ -18,9 +18,9 @@ install:
   - sudo pip install -e .
   - sudo pip install -r requirements.txt
   - sudo pip install codecov
-  - sudo pip install nose
+  - sudo pip install nose2
 
-script: python -m nose --with-coverage --cover-package=nf_core
+script: nose2 --with-coverage --coverage nf_core
 
 after_success:
   - codecov
