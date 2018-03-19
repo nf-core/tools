@@ -104,7 +104,7 @@ class PipelineLint(object):
                 files = [files]
             if any([os.path.isfile(pf(f)) for f in files]):
                 self.passed.append((1, "File found: {}".format(files)))
-                self.files.append(files)
+                self.files.extend(files)
             else:
                 self.failed.append((1, "File not found: {}".format(files)))
 
@@ -114,7 +114,7 @@ class PipelineLint(object):
                 files = [files]
             if any([os.path.isfile(pf(f)) for f in files]):
                 self.passed.append((1, "File found: {}".format(files)))
-                self.files.append(files)
+                self.files.extend(files)
             else:
                 self.warned.append((1, "File not found: {}".format(files)))
 
@@ -270,7 +270,7 @@ class PipelineLint(object):
             nf_config_version = self.config.get('params.nf_required_version').strip('\'"')
             try:
                 assert nf_badge_version == nf_config_version
-            except (AssertionError, KeyError) as e:
+            except (AssertionError, KeyError):
                 self.failed.append((6, "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
             else:
                 self.passed.append((6, "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
