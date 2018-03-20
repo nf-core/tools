@@ -24,14 +24,19 @@ def nf_core_cli():
     required = True,
     metavar = "<pipeline directory>"
 )
-def lint(pipeline_dir):
+@click.option(
+    '--release', 
+    is_flag=True,
+    help = "Execute additional checks for release-ready workflows."
+)
+def lint(pipeline_dir, release):
     """Check pipeline against nf-core guidelines"""
     # Create the lint object
     lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
 
     # Run the linting tests
     try:
-        lint_obj.lint_pipeline()
+        lint_obj.lint_pipeline(release)
     except AssertionError as e:
         logging.critical("Critical error: {}".format(e))
         logging.info("Stopping tests...")
