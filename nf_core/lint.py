@@ -25,7 +25,7 @@ class PipelineLint(object):
         self.warned = []
         self.failed = []
 
-    def lint_pipeline(self):
+    def lint_pipeline(self, release=False):
         """ Main linting function.
 
         Takes the pipeline directory as the primary input and iterates through
@@ -51,7 +51,7 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-        funcnames = [
+        normalchecks = [
             'check_files_exist',
             'check_licence',
             'check_docker',
@@ -59,7 +59,13 @@ class PipelineLint(object):
             'check_ci_config',
             'check_readme'
         ]
-        with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
+        releasechecks = [
+            'check_version_is_numeric',
+            'check_docker_slug_not_latest',
+            'check_tag_consistency'
+        ]
+        if release: normalchecks.extend(releasechecks)
+        with click.progressbar(normalchecks, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
                 if len(self.failed) > 0:
@@ -284,6 +290,21 @@ class PipelineLint(object):
                 self.passed.append((6, "README had a bioconda badge"))
             else:
                 self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
+
+
+    def check_version_is_numeric(self):
+        """ Check that the version variable value is numeric """
+        pass
+    
+    
+    def check_docker_slug_not_latest(self):
+        """ Check that the docker slug is not latest """
+        pass
+
+    
+    def check_tag_consistency(self):
+        """ Check that the tag/version is consistent """
+        pass
 
 
     def print_results(self):
