@@ -62,6 +62,7 @@ class PipelineLint(object):
         releasechecks = [
             'check_version_consistency'
         ]
+        if os.environ.get('TRAVIS_TAG'): release=True
         if release: normalchecks.extend(releasechecks)
         with click.progressbar(normalchecks, label='Running pipeline tests') as fnames:
             for fname in fnames:
