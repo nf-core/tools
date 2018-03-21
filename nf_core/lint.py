@@ -62,7 +62,6 @@ class PipelineLint(object):
         releasechecks = [
             'check_version_consistency'
         ]
-        if os.environ.get('TRAVIS_TAG'): release=True
         if release: normalchecks.extend(releasechecks)
         with click.progressbar(normalchecks, label='Running pipeline tests') as fnames:
             for fname in fnames:
@@ -292,28 +291,26 @@ class PipelineLint(object):
 
 
     def check_version_consistency(self):
-        """ Check that the version variable value is numeric """
-        logging.debug('Checking if version is numeric')
+        """ Checking if versions are consistent between container,
+        release tag and config and numeric """
+        
+        logging.debug('Checking if versions are consistent between container, release tag and config and numeric')
         versions = {}
         # Get the version definitions
-        # First, from the TRAVIS_TAG env var
-        versions['travis_tag'] = os.environ.get('TRAVIS_TAG')
-        if not versions['travis_tag']:
-            self.failed.append((7, "Could not determine the release tag, TRAVIS_TAG env var was not set."))
-            return
-        
-        # Second, get version from nextflow.config
-        if not 'params.version' in self.config.keys():
-            self.failed.append((7, "Could not determine a pipeline version in the nextflow.config."))
-            return
+        # Get version from nextflow.config
         versions['pipeline_version'] = self.config['params.version']
 
-        # Third, from the docker slug
-        if not 'process.container':
-            self.failed.append((7, "Could not determine a container version in the workflow configuration."))
+        # Get version from the docker slug
+        if not ':' in self.config['process.container']:
+            self.failed.append((7, "Docker slug seems not to have "
+                "a version tag: {}".format(self.config['process.container'])))
             return
         versions['container_version'] = self.config['process.container'].split(':')[-1]
 
+        # Get version from the TRAVIS_TAG env var
+        if os.environ.get('TRAVIS_TAG'):
+            versions['travis_tag'] = os.environ.get('TRAVIS_TAG')
+        
         # Check if they are all numeric
         for v_type, version in versions.items():
             if not version.replace('.', '').isdigit():
@@ -322,7 +319,10 @@ class PipelineLint(object):
 
         # Check if they are consistent
         if len(set(versions.values())) != 1:
-            self.failed.append((7, "The versioning is not consistent between container, release tag and config."))
+            self.failed.append((7, "The versioning is not consistent between container, release tag "
+                "and config. Found {}".format(
+                    ", ".join(["{} = {}".format(k, v) for k,v in versions.items()])
+                )))
             return
             
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))

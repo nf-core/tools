@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import click
 import sys
+import os
 
 import nf_core
 import nf_core.lint
@@ -27,6 +28,7 @@ def nf_core_cli():
 @click.option(
     '--release', 
     is_flag=True,
+    default = os.environ.get('TRAVIS_BRANCH') == 'master',
     help = "Execute additional checks for release-ready workflows."
 )
 def lint(pipeline_dir, release):
