@@ -60,9 +60,7 @@ class PipelineLint(object):
             'check_readme'
         ]
         releasechecks = [
-            'check_version_is_numeric',
-            'check_docker_slug_not_latest',
-            'check_tag_consistency'
+            'check_version_consistency'
         ]
         if release: normalchecks.extend(releasechecks)
         with click.progressbar(normalchecks, label='Running pipeline tests') as fnames:
@@ -292,19 +290,41 @@ class PipelineLint(object):
                 self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
 
 
-    def check_version_is_numeric(self):
+    def check_version_consistency(self):
         """ Check that the version variable value is numeric """
-        pass
-    
-    
-    def check_docker_slug_not_latest(self):
-        """ Check that the docker slug is not latest """
-        pass
+        logging.debug('Checking if version is numeric')
+        versions = {}
+        # Get the version definitions
+        # First, from the TRAVIS_TAG env var
+        versions['travis_tag'] = os.environ.get('TRAVIS_TAG')
+        if not versions['travis_tag']:
+            self.failed.append((7, "Could not determine the release tag, TRAVIS_TAG env var was not set."))
+            return
+        
+        # Second, get version from nextflow.config
+        if not 'params.version' in self.config.keys():
+            self.failed.append((7, "Could not determine a pipeline version in the nextflow.config."))
+            return
+        versions['pipeline_version'] = self.config['params.version']
 
-    
-    def check_tag_consistency(self):
-        """ Check that the tag/version is consistent """
-        pass
+        # Third, from the docker slug
+        if not 'process.container':
+            self.failed.append((7, "Could not determine a container version in the workflow configuration."))
+            return
+        versions['container_version'] = self.config['process.container'].split(':')[-1]
+
+        # Check if they are all numeric
+        for v_type, version in versions.items():
+            if not version.replace('.', '').isdigit():
+                self.failed.append((7, "{} was not numeric: {}!".format(v_type, version)))
+                return
+
+        # Check if they are consistent
+        if len(set(versions.values())) != 1:
+            self.failed.append((7, "The versioning is not consistent between container, release tag and config."))
+            return
+            
+        self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
 
     def print_results(self):
