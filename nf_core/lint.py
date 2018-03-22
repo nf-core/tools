@@ -201,8 +201,9 @@ class PipelineLint(object):
             'timeline.file',
             'trace.file',
             'report.file',
-            'params.container',
             'params.reads',
+            'process.container',
+            'params.container',
             'params.singleEnd'
         ]
 
@@ -301,12 +302,25 @@ class PipelineLint(object):
         versions['pipeline_version'] = self.config['params.version'].strip()
 
         # Get version from the docker slug
-        if not ':' in self.config['params.container']:
+        if self.config.get('params.container') and \
+                not ':' in self.config['params.container']:
             self.failed.append((7, "Docker slug seems not to have "
                 "a version tag: {}".format(self.config['params.container'])))
             return
-        versions['container_version'] = self.config['params.container'].strip().split(':')[-1]
+        # Avoid key error, as this parameter is not mandatory
+        if self.config.get('params.container'):
+            versions['container_version'] = self.config['params.container'].strip().split(':')[-1]
 
+        # Check, if the process.container variable is set properly
+        if self.config.get('process.container') and \
+                not self.config['process.container'] == 'params.container':
+            # At least have a tagged slug there
+            if not ':' in self.config['process.container']:
+                self.failed.append((7, "Docker slug seems not to have "
+                    "a version tag: {}".format(self.config['process.container'])))
+                return
+            versions['process_container_version'] = self.config['process.container'].strip().split(':')[-1]
+        
         # Get version from the TRAVIS_TAG env var
         if os.environ.get('TRAVIS_TAG'):
             versions['travis_tag'] = os.environ.get('TRAVIS_TAG').strip()
