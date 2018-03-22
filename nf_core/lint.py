@@ -301,11 +301,11 @@ class PipelineLint(object):
         versions['pipeline_version'] = self.config['params.version'].strip()
 
         # Get version from the docker slug
-        if not ':' in self.config['process.container']:
+        if not ':' in self.config['params.container']:
             self.failed.append((7, "Docker slug seems not to have "
-                "a version tag: {}".format(self.config['process.container'])))
+                "a version tag: {}".format(self.config['params.container'])))
             return
-        versions['container_version'] = self.config['process.container'].strip().split(':')[-1]
+        versions['container_version'] = self.config['params.container'].strip().split(':')[-1]
 
         # Get version from the TRAVIS_TAG env var
         if os.environ.get('TRAVIS_TAG'):
