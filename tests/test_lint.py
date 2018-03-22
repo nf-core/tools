@@ -83,7 +83,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 4, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 4 - 2}
+        expectations = {"failed": 4, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 4 - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
