@@ -201,7 +201,7 @@ class PipelineLint(object):
             'timeline.file',
             'trace.file',
             'report.file',
-            'process.container',
+            'params.container',
             'params.reads',
             'params.singleEnd'
         ]
