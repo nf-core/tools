@@ -211,6 +211,17 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
+    def test_version_consistency_with_numeric_fail(self):
+        """Tests the behaviour, when a git activity is a release
+        and simulate wrong release tag"""
+        os.environ["TRAVIS_TAG"] = "0.5dev"
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config["params.version"] = "0.4"
+        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.check_version_consistency()
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
     def test_version_consistency_with_env_pass(self):
         """Tests the behaviour, when a git activity is a release
         and simulate correct release tag"""       
