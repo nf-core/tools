@@ -206,9 +206,7 @@ class PipelineLint(object):
             'trace.enabled',
             'trace.file',
             'dag.enabled',
-            'dag.file',
-            'manifest.homePage',
-            'manifest.description'
+            'dag.file'
         ]
         config_warn = [
             'manifest.mainScript',
@@ -218,8 +216,7 @@ class PipelineLint(object):
             'params.reads',
             'process.container',
             'params.container',
-            'params.singleEnd',
-            'manifest.mainScript'
+            'params.singleEnd'
         ]
 
         # Call `nextflow config` and pipe stderr to /dev/null
