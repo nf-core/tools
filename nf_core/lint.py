@@ -129,6 +129,11 @@ class PipelineLint(object):
             else:
                 self.warned.append((1, "File not found: {}".format(files)))
 
+        # Load and parse files for later
+        if 'environment.yml' in self.files:
+            with open(os.path.join(self.path, 'environment.yml'), 'r') as fh:
+                self.conda_config = yaml.load(fh)
+
 
     def check_docker(self):
         """Check Dockerfile"""
@@ -365,9 +370,6 @@ class PipelineLint(object):
 
         if 'environment.yml' not in self.files:
             return
-
-        with open(os.path.join(self.path, 'environment.yml'), 'r') as fh:
-            self.conda_config = yaml.load(fh)
 
         # Check that the environment name matches the pipeline name
         if self.conda_config['name'] != 'nfcore-{}'.format(self.pipeline_name):

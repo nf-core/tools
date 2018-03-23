@@ -13,6 +13,7 @@ Provide example wokflow directory contents like:
 """
 import os
 import unittest
+import yaml
 import nf_core.lint
 from nose.tools import raises
 
@@ -34,7 +35,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 50
+MAX_PASS_CHECKS = 55
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -55,7 +56,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline()
         # Minimal example has no environment.yml
-        expectations = {"failed": 0, "warned": 1, "passed": MAX_PASS_CHECKS-1}
+        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS-1}
         self.assess_lint_status(lint_obj, **expectations)
         lint_obj.print_results()
 
@@ -65,6 +66,14 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.lint_pipeline()
         expectations = {"failed": 4, "warned": 2, "passed": 7}
+        self.assess_lint_status(lint_obj, **expectations)
+        lint_obj.print_results()
+
+    def test_call_lint_pipeline_release(self):
+        """Test the main execution function of PipelineLint when running with --release"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.lint_pipeline(release=True)
+        expectations = {"failed": 1, "warned": 0, "passed": MAX_PASS_CHECKS - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
@@ -83,7 +92,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 4, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 4 - 1}
+        expectations = {"failed": 4, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 4 - 2}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -183,14 +192,6 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
 
-    def test_version_consistency_fail(self):
-        """Tests the version consistency and should fail, because
-        the Docker slug has no version tag in the minimal working example"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.lint_pipeline(release=True)
-        expectations = {"failed": 1, "warned": 1, "passed": MAX_PASS_CHECKS - 1}
-        self.assess_lint_status(lint_obj, **expectations)
-
     def test_version_consistency_pass(self):
         """Tests the workflow version and container version sucessfully"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -231,4 +232,27 @@ class TestLint(unittest.TestCase):
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_env_pass(self):
+        """ Tests the conda environment config checks with a working example """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
+            lint_obj.conda_config = yaml.load(fh)
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 0, "passed": 3}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_env_fail(self):
+        """ Tests the conda environment config fails with a bad example """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
+            lint_obj.conda_config = yaml.load(fh)
+        lint_obj.conda_config['dependencies'] = ['fastqc', 'multiqc=0.9', 'notapackaage=0.4']
+        lint_obj.pipeline_name = 'not_tools'
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 2, "warned": 2, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)

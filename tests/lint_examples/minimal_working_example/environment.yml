@@ -1,0 +1,9 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
+name: nfcore-tools
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - multiqc=1.5
