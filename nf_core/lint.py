@@ -313,13 +313,9 @@ class PipelineLint(object):
 
         # Check, if the process.container variable is set properly
         if self.config.get('process.container') and \
-                not self.config['process.container'] == 'params.container':
-            # At least have a tagged slug there
-            if not ':' in self.config['process.container']:
-                self.failed.append((7, "Docker slug seems not to have "
-                    "a version tag: {}".format(self.config['process.container'])))
-                return
-            versions['process_container_version'] = self.config['process.container'].strip().split(':')[-1]
+            not self.config['process.container'] == 'params.container':
+            self.failed.append((7, "\'process.container\' should be \'== params.container"))
+            return
         
         # Get version from the TRAVIS_TAG env var
         if os.environ.get('TRAVIS_TAG'):
