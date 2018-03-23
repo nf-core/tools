@@ -34,7 +34,9 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 36
+MAX_PASS_CHECKS = 37
+# The additional tests passed for releases
+ADD_PASS_RELEASE = 1
 
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
@@ -102,14 +104,14 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test works with good pipeline example"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         good_lint_obj.check_config_vars()
-        expectations = {"failed": 0, "warned": 0, "passed": 18}
+        expectations = {"failed": 0, "warned": 0, "passed": 19}
         self.assess_lint_status(good_lint_obj, **expectations)
 
     def test_config_variable_example_with_failed(self):
         """Tests that config variable existence test works with bad pipeline example"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_config_vars()
-        expectations = {"failed": 11, "warned": 7, "passed": 0}
+        expectations = {"failed": 11, "warned": 8, "passed": 0}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
     def test_ci_conf_pass(self):
@@ -180,3 +182,54 @@ class TestLint(unittest.TestCase):
         lint_obj.check_docker()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
+
+    def test_version_consistency_fail(self):
+        """Tests the version consistency and should fail, because
+        the Docker slug has no version tag in the minimal working example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.lint_pipeline(release=True)
+        expectations = {"failed": 1, "warned": 1, "passed": MAX_PASS_CHECKS - 1}
+        self.assess_lint_status(lint_obj, **expectations)
+    
+    def test_version_consistency_pass(self):
+        """Tests the workflow version and container version sucessfully"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config["params.version"] = "0.4"
+        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.check_version_consistency()
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+    
+    def test_version_consistency_with_env_fail(self):
+        """Tests the behaviour, when a git activity is a release
+        and simulate wrong release tag"""
+        os.environ["TRAVIS_TAG"] = "0.5"
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config["params.version"] = "0.4"
+        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.check_version_consistency()
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_version_consistency_with_numeric_fail(self):
+        """Tests the behaviour, when a git activity is a release
+        and simulate wrong release tag"""
+        os.environ["TRAVIS_TAG"] = "0.5dev"
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config["params.version"] = "0.4"
+        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.check_version_consistency()
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_version_consistency_with_env_pass(self):
+        """Tests the behaviour, when a git activity is a release
+        and simulate correct release tag"""       
+        os.environ["TRAVIS_TAG"] = "0.4"
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config["params.version"] = "0.4"
+        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.check_version_consistency()
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+    

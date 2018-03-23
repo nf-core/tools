@@ -25,7 +25,7 @@ class PipelineLint(object):
         self.warned = []
         self.failed = []
 
-    def lint_pipeline(self):
+    def lint_pipeline(self, release=False):
         """ Main linting function.
 
         Takes the pipeline directory as the primary input and iterates through
@@ -51,7 +51,7 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an AssertionError is raised.
         """
-        funcnames = [
+        normalchecks = [
             'check_files_exist',
             'check_licence',
             'check_docker',
@@ -59,7 +59,11 @@ class PipelineLint(object):
             'check_ci_config',
             'check_readme'
         ]
-        with click.progressbar(funcnames, label='Running pipeline tests') as fnames:
+        releasechecks = [
+            'check_version_consistency'
+        ]
+        if release: normalchecks.extend(releasechecks)
+        with click.progressbar(normalchecks, label='Running pipeline tests') as fnames:
             for fname in fnames:
                 getattr(self, fname)()
                 if len(self.failed) > 0:
@@ -197,8 +201,9 @@ class PipelineLint(object):
             'timeline.file',
             'trace.file',
             'report.file',
-            'process.container',
             'params.reads',
+            'process.container',
+            'params.container',
             'params.singleEnd'
         ]
 
@@ -284,6 +289,53 @@ class PipelineLint(object):
                 self.passed.append((6, "README had a bioconda badge"))
             else:
                 self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
+
+
+    def check_version_consistency(self):
+        """ Checking if versions are consistent between container,
+        release tag and config and numeric """
+
+        logging.debug('Checking if versions are consistent between container, release tag and config and numeric')
+        versions = {}
+        # Get the version definitions
+        # Get version from nextflow.config
+        versions['pipeline_version'] = self.config['params.version'].strip()
+
+        # Get version from the docker slug
+        if self.config.get('params.container') and \
+                not ':' in self.config['params.container']:
+            self.failed.append((7, "Docker slug seems not to have "
+                "a version tag: {}".format(self.config['params.container'])))
+            return
+        # Avoid key error, as this parameter is not mandatory
+        if self.config.get('params.container'):
+            versions['container_version'] = self.config['params.container'].strip().split(':')[-1]
+
+        # Check, if the process.container variable is set properly
+        if self.config.get('process.container') and \
+            not self.config['process.container'] == 'params.container':
+            self.failed.append((7, "\'process.container\' should be \'== params.container"))
+            return
+        
+        # Get version from the TRAVIS_TAG env var
+        if os.environ.get('TRAVIS_TAG'):
+            versions['travis_tag'] = os.environ.get('TRAVIS_TAG').strip()
+        
+        # Check if they are all numeric
+        for v_type, version in versions.items():
+            if not version.replace('.', '').isdigit():
+                self.failed.append((7, "{} was not numeric: {}!".format(v_type, version)))
+                return
+
+        # Check if they are consistent
+        if len(set(versions.values())) != 1:
+            self.failed.append((7, "The versioning is not consistent between container, release tag "
+                "and config. Found {}".format(
+                    ", ".join(["{} = {}".format(k, v) for k,v in versions.items()])
+                )))
+            return
+            
+        self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
 
     def print_results(self):
