@@ -299,7 +299,7 @@ class PipelineLint(object):
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
-        versions['pipeline_version'] = self.config['params.version'].strip()
+        versions['pipeline'] = self.config['params.version'].strip()
 
         # Get version from the docker slug
         if self.config.get('params.container') and \
@@ -307,20 +307,17 @@ class PipelineLint(object):
             self.failed.append((7, "Docker slug seems not to have "
                 "a version tag: {}".format(self.config['params.container'])))
             return
-        # Avoid key error, as this parameter is not mandatory
-        if self.config.get('params.container'):
-            versions['container_version'] = self.config['params.container'].strip().split(':')[-1]
 
-        # Check, if the process.container variable is set properly
-        if self.config.get('process.container') and \
-            not self.config['process.container'] == 'params.container':
-            self.failed.append((7, "\'process.container\' should be \'== params.container"))
-            return
-        
+        # Get config container slugs, (if set; one container per workflow)
+        if self.config.get('params.container'):
+            versions['params_container'] = self.config['params.container'].strip().split(':')[-1]
+        if self.config.get('process.container'):
+            versions['process_container'] = self.config['process.container'].strip().split(':')[-1]
+
         # Get version from the TRAVIS_TAG env var
         if os.environ.get('TRAVIS_TAG'):
             versions['travis_tag'] = os.environ.get('TRAVIS_TAG').strip()
-        
+
         # Check if they are all numeric
         for v_type, version in versions.items():
             if not version.replace('.', '').isdigit():
@@ -334,7 +331,7 @@ class PipelineLint(object):
                     ", ".join(["{} = {}".format(k, v) for k,v in versions.items()])
                 )))
             return
-            
+
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
 
