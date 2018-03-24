@@ -6,4 +6,7 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - multiqc=1.5
+  - conda-forge::openjdk=8.0.144
+  - fastqc=0.11.7
+  - pip:
+    - multiqc

@@ -390,7 +390,11 @@ class PipelineLint(object):
 
                     # Check if each dependency is the latest available version
                     depname, depver = dep.split('=', 1)
-                    for ch in reversed(self.conda_config.get('channels', [])):
+                    dep_channels = self.conda_config.get('channels', [])
+                    if '::' in depname:
+                        dep_channels = [depname.split('::')[0]]
+                        depname = depname.split('::')[1]
+                    for ch in reversed(dep_channels):
                         response = requests.get('https://api.anaconda.org/package/{}/{}'.format(ch, depname))
                         if response.status_code == 200:
                             dep_json = response.json()
@@ -401,8 +405,7 @@ class PipelineLint(object):
                                 self.passed.append((8, "Conda package is latest available: {}".format(dep)))
                             break
                     else:
-                        self.warned.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
-
+                        self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
 
     def print_results(self):
         # Print results
