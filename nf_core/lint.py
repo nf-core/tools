@@ -249,12 +249,19 @@ class PipelineLint(object):
 
         # Check that the homePage is set to the GitHub URL
         try:
-            assert self.config['manifest.homePage'].strip("'")[0:27] == 'https://github.com/nf-core/'
+            assert self.config['manifest.homePage'].strip('\'"')[0:27] == 'https://github.com/nf-core/'
         except AssertionError, IndexError:
-            self.failed.append((4, "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(self.config['manifest.homePage'].strip("'"))))
+            self.failed.append((4, "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(self.config['manifest.homePage'].strip('\'"'))))
         else:
             self.passed.append((4, "Config variable 'manifest.homePage' began with 'https://github.com/nf-core/'"))
             self.pipeline_name = self.config['manifest.homePage'][28:].rstrip("'")
+
+        # Check that the DAG filename ends in `.svg`
+        if 'dag.file' in self.config:
+            if self.config['dag.file'].strip('\'"').endswith('.svg'):
+                self.passed.append((4, "Config variable 'dag.file' ended with .svg"))
+            else:
+                self.failed.append((4, "Config variable 'dag.file' did not end with .svg"))
 
     def check_ci_config(self):
         """ Check that the Travis or Circle CI YAML config is valid """
