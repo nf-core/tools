@@ -200,24 +200,18 @@ class PipelineLint(object):
             'timeline.enabled',
             'trace.enabled',
             'report.enabled',
+            'dag.enabled',
             'process.cpus',
             'process.memory',
             'process.time',
-            'params.outdir',
-            'timeline.enabled',
-            'timeline.file',
-            'report.enabled',
-            'report.file',
-            'trace.enabled',
-            'trace.file',
-            'dag.enabled',
-            'dag.file'
+            'params.outdir'
         ]
         config_warn = [
             'manifest.mainScript',
             'timeline.file',
             'trace.file',
             'report.file',
+            'dag.file',
             'params.reads',
             'process.container',
             'params.container',
