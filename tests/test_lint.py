@@ -123,6 +123,12 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 23, "warned": 8, "passed": 1}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
+    @raises(AssertionError)
+    def test_config_variable_error(self):
+        """Tests that config variable existence test falls over nicely with nextflow can't run"""
+        bad_lint_obj = nf_core.lint.PipelineLint('/non/existant/path')
+        bad_lint_obj.check_nextflow_config()
+
     def test_ci_conf_pass(self):
         """Tests that the continous integration config checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -208,6 +214,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["params.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
@@ -255,4 +262,11 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'not_tools'
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 2, "warned": 2, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_env_skip(self):
+        """ Tests the conda environment config is skipped when not needed """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
