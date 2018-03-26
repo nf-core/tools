@@ -80,7 +80,11 @@ class PipelineLint(object):
                     break
 
     def check_files_exist(self):
-        """ Check a given pipeline directory for required files. """
+        """ Check a given pipeline directory for required files.
+
+        Throws an AssertionError if neither nextflow.config or main.nf found
+        Gives either test failures or warnings for set of other filenames
+        """
 
         # NB: Should all be files, not directories
         # Supplying a list means if any are present it's a pass
@@ -136,7 +140,7 @@ class PipelineLint(object):
 
 
     def check_docker(self):
-        """Check Dockerfile"""
+        """ Check that Dockerfile contains the string 'FROM ' """
         fn = os.path.join(self.path, "Dockerfile")
         content = ""
         with open(fn, 'r') as fh: content = fh.read()
@@ -150,7 +154,12 @@ class PipelineLint(object):
 
 
     def check_licence(self):
-        """ Check licence file is MIT """
+        """ Check licence file is MIT
+
+        Ensures that Licence file is long enough (4 or more lines)
+        Checks that licence contains the string 'without restriction'
+        Checks that licence doesn't have any placeholder variables
+        """
         for l in ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md']:
             fn = os.path.join(self.path, l)
             if os.path.isfile(fn):
@@ -189,7 +198,12 @@ class PipelineLint(object):
 
 
     def check_nextflow_config(self):
-        """ Check a given pipeline for required config variables. """
+        """ Check a given pipeline for required config variables.
+
+        Uses `nextflow config -flat` to parse pipeline nextflow.config
+        and print all config variables.
+        NB: Does NOT parse contents of main.nf / nextflow script
+        """
 
         # NB: Should all be files, not directories
         config_fail = [
@@ -264,7 +278,11 @@ class PipelineLint(object):
                 self.failed.append((4, "Config variable 'dag.file' did not end with .svg"))
 
     def check_ci_config(self):
-        """ Check that the Travis or Circle CI YAML config is valid """
+        """ Check that the Travis or Circle CI YAML config is valid
+
+        Makes sure that `nf-core lint` runs in travis tests
+        Checks that tests run with the stated nf_required_version
+        """
 
         for cf in ['.travis.yml', 'circle.yml']:
             fn = os.path.join(self.path, cf)
@@ -294,7 +312,10 @@ class PipelineLint(object):
 
 
     def check_readme(self):
-        """ Check the repository README file for errors """
+        """ Check the repository README file for errors
+
+        Currently just checks the badges at the top of the README
+        """
         with open(os.path.join(self.path, 'README.md'), 'r') as fh:
             content = fh.read()
 
@@ -324,8 +345,12 @@ class PipelineLint(object):
 
 
     def check_version_consistency(self):
-        """ Checking if versions are consistent between container,
-        release tag and config and numeric """
+        """ Check container tags versions
+
+        Runs on process.container, params.container and $TRAVIS_TAG (each only if set)
+        Check that the container has a tag
+        Check that the version numbers are numeric
+        Check that the version numbers are the same as one-another """
 
         versions = {}
         # Get the version definitions
@@ -367,7 +392,11 @@ class PipelineLint(object):
 
 
     def check_conda_env_yaml(self):
-        """ Check the conda environment file - that versions are pinned and are the latest version """
+        """ Check that the conda environment file is valid
+
+        Make sure that a name is given and is consistent with the pipeline name
+        Check that depedency versions are pinned
+        Warn if dependency versions are not the latest available """
 
         if 'environment.yml' not in self.files:
             return
