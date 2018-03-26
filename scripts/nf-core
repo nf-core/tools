@@ -11,12 +11,19 @@ import nf_core
 import nf_core.lint
 
 import logging
-logging.basicConfig(level=logging.INFO)
 
 @click.group()
 @click.version_option(nf_core.__version__)
-def nf_core_cli():
-    pass
+@click.option(
+    '-v', '--verbose',
+    is_flag = True,
+    help = "Verbose output (print debug statements)"
+)
+def nf_core_cli(verbose):
+    if verbose:
+        logging.basicConfig(level=logging.DEBUG, format="\n%(levelname)s: %(message)s")
+    else:
+        logging.basicConfig(level=logging.INFO, format="\n%(levelname)s: %(message)s")
 
 @nf_core_cli.command()
 @click.argument(
@@ -26,13 +33,14 @@ def nf_core_cli():
     metavar = "<pipeline directory>"
 )
 @click.option(
-    '--release', 
-    is_flag=True,
+    '--release',
+    is_flag = True,
     default = os.environ.get('TRAVIS_BRANCH') == 'master',
     help = "Execute additional checks for release-ready workflows."
 )
 def lint(pipeline_dir, release):
     """Check pipeline against nf-core guidelines"""
+
     # Create the lint object
     lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
 
@@ -49,7 +57,7 @@ def lint(pipeline_dir, release):
 
     # Exit code
     if len(lint_obj.failed) > 0:
-        logging.info("Sorry, some tests failed - exiting with a non-zero error code...")
+        logging.error("Sorry, some tests failed - exiting with a non-zero error code...\n\n")
         sys.exit(1)
 
 
