@@ -10,6 +10,7 @@ import os
 import subprocess
 import re
 import requests
+import shlex
 import yaml
 
 import click
@@ -299,7 +300,8 @@ class PipelineLint(object):
                 # Check that we're testing the nf_required_version
                 nf_required_version_tested = False
                 for e in ciconf.get('env', []):
-                    for s in e.split():
+                    # Split using shlex so that we don't split "quoted whitespace"
+                    for s in shlex.split(e):
                         k,v = s.split('=')
                         if k == 'NXF_VER':
                             ci_ver = v.strip('\'"')
@@ -402,8 +404,8 @@ class PipelineLint(object):
             return
 
         # Check that the environment name matches the pipeline name
-        if self.conda_config['name'] != 'nfcore-{}'.format(self.pipeline_name):
-            self.failed.append((8, "Conda environment name is not consistent ('{}', should be 'nfcore-{}')".format(self.conda_config['name'], self.pipeline_name)))
+        if self.conda_config['name'] != 'nfcore-{}'.format(self.pipeline_name.lower()):
+            self.failed.append((8, "Conda environment name is not consistent ('{}', should be 'nfcore-{}')".format(self.conda_config['name'], self.pipeline_name.lower())))
         else:
             self.passed.append((8, "Conda environment name was consistent ('{}')".format(self.conda_config['name'])))
 
