@@ -265,7 +265,7 @@ class PipelineLint(object):
         # Check that the homePage is set to the GitHub URL
         try:
             assert self.config['manifest.homePage'].strip('\'"')[0:27] == 'https://github.com/nf-core/'
-        except AssertionError, IndexError:
+        except (AssertionError, IndexError):
             self.failed.append((4, "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(self.config['manifest.homePage'].strip('\'"'))))
         else:
             self.passed.append((4, "Config variable 'manifest.homePage' began with 'https://github.com/nf-core/'"))
