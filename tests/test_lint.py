@@ -47,7 +47,8 @@ class TestLint(unittest.TestCase):
         object status lists"""
         for list_type, expect in expected.items():
             observed = len(getattr(lint_obj, list_type))
-            self.assertEqual(observed, expect, "Expected {} tests in '{}', but found {}.\n{}".format(expect, list_type.upper(), observed, getattr(lint_obj, list_type)))
+            oberved_list = yaml.safe_dump(getattr(lint_obj, list_type))
+            self.assertEqual(observed, expect, "Expected {} tests in '{}', but found {}.\n{}".format(expect, list_type.upper(), observed, oberved_list))
 
     def test_call_lint_pipeline_pass(self):
         """Test the main execution function of PipelineLint (pass)
@@ -262,6 +263,17 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'not_tools'
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 3, "warned": 1, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_env_timeout(self):
+        """ Tests the conda environment handles API timeouts """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
+            lint_obj.conda_config = yaml.load(fh)
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.check_conda_env_yaml(api_timeout=0.0001)
+        expectations = {"failed": 2, "warned": 4, "passed": 3}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_env_skip(self):

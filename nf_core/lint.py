@@ -391,7 +391,7 @@ class PipelineLint(object):
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
 
-    def check_conda_env_yaml(self):
+    def check_conda_env_yaml(self, api_timeout=10):
         """ Check that the conda environment file is valid
 
         Make sure that a name is given and is consistent with the pipeline name
@@ -425,15 +425,20 @@ class PipelineLint(object):
                         dep_channels = [depname.split('::')[0]]
                         depname = depname.split('::')[1]
                     for ch in reversed(dep_channels):
-                        response = requests.get('https://api.anaconda.org/package/{}/{}'.format(ch, depname))
-                        if response.status_code == 200:
-                            dep_json = response.json()
-                            last_ver = dep_json.get('latest_version')
-                            if last_ver is not None and last_ver != depver:
-                                self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
-                            else:
-                                self.passed.append((8, "Conda package is latest available: {}".format(dep)))
-                            break
+                        anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
+                        try:
+                            response = requests.get(anaconda_api_url, timeout=api_timeout)
+                        except (requests.exceptions.Timeout):
+                            self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
+                        else:
+                            if response.status_code == 200:
+                                dep_json = response.json()
+                                last_ver = dep_json.get('latest_version')
+                                if last_ver is not None and last_ver != depver:
+                                    self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
+                                else:
+                                    self.passed.append((8, "Conda package is latest available: {}".format(dep)))
+                                break
                     else:
                         self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
 
