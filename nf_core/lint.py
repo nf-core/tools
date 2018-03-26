@@ -404,8 +404,8 @@ class PipelineLint(object):
             return
 
         # Check that the environment name matches the pipeline name
-        if self.conda_config['name'] != 'nfcore-{}'.format(self.pipeline_name):
-            self.failed.append((8, "Conda environment name is not consistent ('{}', should be 'nfcore-{}')".format(self.conda_config['name'], self.pipeline_name)))
+        if self.conda_config['name'] != 'nfcore-{}'.format(self.pipeline_name.lower()):
+            self.failed.append((8, "Conda environment name is not consistent ('{}', should be 'nfcore-{}')".format(self.conda_config['name'], self.pipeline_name.lower())))
         else:
             self.passed.append((8, "Conda environment name was consistent ('{}')".format(self.conda_config['name'])))
 
