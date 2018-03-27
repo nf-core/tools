@@ -28,6 +28,7 @@ class PipelineLint(object):
         self.files = []
         self.config = {}
         self.pipeline_name = None
+        self.dockerfile = []
         self.conda_config = {}
         self.passed = []
         self.warned = []
@@ -66,7 +67,8 @@ class PipelineLint(object):
             'check_nextflow_config',
             'check_ci_config',
             'check_readme',
-            'check_conda_env_yaml'
+            'check_conda_env_yaml',
+            'check_docker_conda_build'
         ]
         if release:
             logging.info('Using --release linting tests')
@@ -149,6 +151,7 @@ class PipelineLint(object):
         # Implicitely also checks if empty.
         if 'FROM ' in content:
             self.passed.append((2, "Dockerfile check passed"))
+            self.dockerfile = content.splitlines()
             return
 
         self.failed.append((2, "Dockerfile check failed"))
@@ -443,6 +446,36 @@ class PipelineLint(object):
                                 break
                     else:
                         self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
+
+    def check_docker_conda_build(self):
+        """ Check that the Docker build file looks right, if working with conda
+
+        Make sure that a name is given and is consistent with the pipeline name
+        Check that depedency versions are pinned
+        Warn if dependency versions are not the latest available """
+
+        if 'environment.yml' not in self.files or len(self.dockerfile) == 0:
+            return
+
+        expected_strings = [
+            'FROM continuumio/miniconda',
+            'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
+            'COPY environment.yml /',
+            'RUN conda update -n base conda && \\',
+            '    conda env create -f /environment.yml && \\',
+            '    conda clean -a'
+        ]
+        found_strings = [False for x in expected_strings]
+        for l in self.dockerfile:
+            for idx, s in enumerate(expected_strings):
+                if l == s:
+                    found_strings[idx] = True
+        if all(found_strings):
+            self.passed.append((9, "Found all expected strings in Dockerfile"))
+        else:
+            for idx, s in enumerate(expected_strings):
+                if not found_strings[idx]:
+                    self.failed.append((9, "Could not find Dockerfile string: {}".format(s)))
 
     def print_results(self):
         # Print results
