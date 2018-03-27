@@ -68,7 +68,7 @@ class PipelineLint(object):
             'check_ci_config',
             'check_readme',
             'check_conda_env_yaml',
-            'check_docker_conda_build'
+            'check_conda_dockerfile'
         ]
         if release:
             logging.info('Using --release linting tests')
@@ -447,7 +447,7 @@ class PipelineLint(object):
                     else:
                         self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
 
-    def check_docker_conda_build(self):
+    def check_conda_dockerfile(self):
         """ Check that the Docker build file looks right, if working with conda
 
         Make sure that a name is given and is consistent with the pipeline name

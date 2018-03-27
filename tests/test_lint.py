@@ -35,7 +35,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 52
+MAX_PASS_CHECKS = 53
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -280,5 +280,33 @@ class TestLint(unittest.TestCase):
         """ Tests the conda environment config is skipped when not needed """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_dockerfile_pass(self):
+        """ Tests the conda Dockerfile test works with a working example """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        with open(os.path.join(PATH_WORKING_EXAMPLE, 'Dockerfile'), 'r') as fh:
+            lint_obj.dockerfile = fh.read().splitlines()
+        lint_obj.conda_config['name'] = 'nfcore-tools'
+        lint_obj.check_conda_dockerfile()
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_dockerfile_fail(self):
+        """ Tests the conda Dockerfile test fails with a bad example """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.conda_config['name'] = 'nfcore-tools'
+        lint_obj.dockerfile = ['fubar']
+        lint_obj.check_conda_dockerfile()
+        expectations = {"failed": 6, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_dockerfile_skip(self):
+        """ Tests the conda Dockerfile test is skipped when not needed """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.check_conda_dockerfile()
         expectations = {"failed": 0, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
