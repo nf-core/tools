@@ -323,3 +323,42 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 0, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
     
+    def test_pip_no_version_fail(self):
+        """ Tests the pip dependency version definition is present """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pip_package_not_latest_warn(self):
+        """ Tests the pip dependency version definition is present """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc=1.4']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 1, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pypi_connection_error_warn(self):
+        """ Tests the PyPi connection """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.check_conda_env_yaml(api_timeout=0.000001)
+        expectations = {"failed": 0, "warned": 1, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pip_dependency_fail(self):
+        """ Tests the PyPi API package information query """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['notpresent=1.5']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
