@@ -452,7 +452,6 @@ class PipelineLint(object):
                 if dep.get('pip'):
                     for pip_dep in dep.get('pip', []):
                         # Check that each pip dependency has a verion number
-                        print()
                         try:
                             assert pip_dep.count('=') == 1
                         except:
