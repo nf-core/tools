@@ -18,7 +18,7 @@ install:
   - sudo pip install .
   - sudo pip install codecov nose pytest pytest-cov
 
-script: pytest --cov=nf_core .
+script: python -m pytest --cov=nf_core .
 
 after_success:
   - codecov
