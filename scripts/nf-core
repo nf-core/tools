@@ -57,7 +57,10 @@ def lint(pipeline_dir, release):
 
     # Exit code
     if len(lint_obj.failed) > 0:
-        logging.error("Sorry, some tests failed - exiting with a non-zero error code...\n\n")
+        logging.error(
+            "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n"
+            .format("\n       Reminder: Lint tests were run in --release mode." if release else '')
+        )
         sys.exit(1)
 
 

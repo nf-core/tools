@@ -12,10 +12,11 @@ Provide example wokflow directory contents like:
         |--test_lint.py
 """
 import os
-import unittest
 import yaml
+import pytest
+import unittest
 import nf_core.lint
-from nose.tools import raises
+
 
 def listfiles(path):
     files_found = []
@@ -83,7 +84,7 @@ class TestLint(unittest.TestCase):
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
 
-    @raises(AssertionError)
+    @pytest.mark.xfail(raises=AssertionError)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
         lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
@@ -124,7 +125,7 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 17, "warned": 8, "passed": 2}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
-    @raises(AssertionError)
+    @pytest.mark.xfail(raises=AssertionError)
     def test_config_variable_error(self):
         """Tests that config variable existence test falls over nicely with nextflow can't run"""
         bad_lint_obj = nf_core.lint.PipelineLint('/non/existant/path')

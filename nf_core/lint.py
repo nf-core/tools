@@ -24,6 +24,7 @@ class PipelineLint(object):
 
     def __init__(self, pipeline_dir):
         """ Initialise linting object """
+        self.releaseMode = False
         self.path = pipeline_dir
         self.files = []
         self.config = {}
@@ -71,7 +72,7 @@ class PipelineLint(object):
             'check_conda_dockerfile'
         ]
         if release:
-            logging.info('Using --release linting tests')
+            self.releaseMode = True
             check_functions.extend([
                 'check_version_consistency'
             ])
@@ -479,10 +480,11 @@ class PipelineLint(object):
 
     def print_results(self):
         # Print results
+        rl = "\n  Using --release mode linting tests" if self.releaseMode else ''
         logging.info("===========\n LINTING RESULTS\n=================\n" +
             "{0:>4} tests passed".format(len(self.passed)) +
             "{0:>4} tests had warnings".format(len(self.warned)) +
-            "{0:>4} tests failed".format(len(self.failed))
+            "{0:>4} tests failed".format(len(self.failed)) + rl
         )
         if len(self.passed) > 0:
             logging.debug("Test Passed:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
