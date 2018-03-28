@@ -16,7 +16,7 @@ install:
   # Set up nf-core and test/coverage modules
   - cd ${TRAVIS_BUILD_DIR}
   - pip install .
-  - pip install codecov nose pytest pytest-cov
+  - pip install codecov pytest pytest-cov
 
 script: python -m pytest --cov=nf_core .
 
