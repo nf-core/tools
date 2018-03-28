@@ -273,7 +273,7 @@ class TestLint(unittest.TestCase):
         with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
             lint_obj.conda_config = yaml.load(fh)
         lint_obj.pipeline_name = 'tools'
-        lint_obj.check_conda_env_yaml(api_timeout=0.1)
+        lint_obj.check_conda_env_yaml(api_timeout=0.0001)
         expectations = {"failed": 2, "warned": 4, "passed": 5}
         self.assess_lint_status(lint_obj, **expectations)
 

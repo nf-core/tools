@@ -465,6 +465,8 @@ class PipelineLint(object):
                                 response = requests.get(pip_api_url, timeout=api_timeout)
                             except (requests.exceptions.Timeout):
                                 self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
+                            except (requests.exceptions.ConnectionError):
+                                self.warned.append((8, "PyPi API Connection error: {}".format(pip_api_url)))
                             else:
                                 if response.status_code == 200:
                                     pip_dep_json = response.json()
