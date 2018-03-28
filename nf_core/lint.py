@@ -460,7 +460,7 @@ class PipelineLint(object):
                         else:
                             self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
                             pip_depname, pip_depver = pip_dep.split('=', 1)
-                            pip_api_url = 'http://pypi.python.org/pypi/{}/json'.format(pip_depname)
+                            pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
                             try:
                                 response = requests.get(pip_api_url, timeout=api_timeout)
                             except (requests.exceptions.Timeout):
