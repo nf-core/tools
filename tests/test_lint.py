@@ -13,8 +13,10 @@ Provide example wokflow directory contents like:
 """
 import os
 import yaml
+import requests
 import pytest
 import unittest
+import mock
 import nf_core.lint
 
 
@@ -277,14 +279,19 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 3, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
 
-    def test_conda_env_timeout(self):
+    @mock.patch('requests.get')
+    def test_conda_env_timeout(self, mock_get):
         """ Tests the conda environment handles API timeouts """
+        # Define the behaviour of the request get mock
+        timeout = requests.exceptions.Timeout()
+        mock_get.side_effect = timeout
+        # Now do the test
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
             lint_obj.conda_config = yaml.load(fh)
         lint_obj.pipeline_name = 'tools'
-        lint_obj.check_conda_env_yaml(api_timeout=0.0001)
+        lint_obj.check_conda_env_yaml()
         expectations = {"failed": 2, "warned": 5, "passed": 4}
         self.assess_lint_status(lint_obj, **expectations)
 
@@ -343,13 +350,33 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
 
-    def test_pypi_connection_error_warn(self):
+    @mock.patch('requests.get')
+    def test_pypi_timeout_warn(self, mock_get):
         """ Tests the PyPi connection """
+        # Define the behaviour of the request get mock
+        timeout = requests.exceptions.Timeout()
+        mock_get.side_effect = timeout
+        # Now do the test
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc=1.5']}]}
-        lint_obj.check_conda_env_yaml(api_timeout=0.000001)
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 1, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    @mock.patch('requests.get')
+    def test_pypi_connection_error_warn(self, mock_get):
+        """ Tests the PyPi connection """
+        # Define the behaviour of the request get mock
+        connection_error = requests.exceptions.ConnectionError()
+        mock_get.side_effect = connection_error
+        # Now do the test
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
 
