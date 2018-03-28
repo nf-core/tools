@@ -361,7 +361,7 @@ class PipelineLint(object):
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
-        versions['pipeline'] = self.config['params.version'].strip()
+        versions['params.version'] = self.config['params.version'].strip(' \'"')
 
         # Get version from the docker slug
         if self.config.get('params.container') and \
@@ -372,13 +372,13 @@ class PipelineLint(object):
 
         # Get config container slugs, (if set; one container per workflow)
         if self.config.get('params.container'):
-            versions['params_container'] = self.config['params.container'].strip().split(':')[-1]
+            versions['params.container'] = self.config['params.container'].strip(' \'"').split(':')[-1]
         if self.config.get('process.container'):
-            versions['process_container'] = self.config['process.container'].strip().split(':')[-1]
+            versions['process.container'] = self.config['process.container'].strip(' \'"').split(':')[-1]
 
         # Get version from the TRAVIS_TAG env var
         if os.environ.get('TRAVIS_TAG'):
-            versions['travis_tag'] = os.environ.get('TRAVIS_TAG').strip()
+            versions['TRAVIS_TAG'] = os.environ.get('TRAVIS_TAG').strip(' \'"')
 
         # Check if they are all numeric
         for v_type, version in versions.items():
