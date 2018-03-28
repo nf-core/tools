@@ -447,6 +447,34 @@ class PipelineLint(object):
                                 break
                     else:
                         self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
+            if isinstance(dep, dict):
+                # Check if dependency is from packages on PyPi
+                if dep.get('pip'):
+                    for pip_dep in dep.get('pip', []):
+                        # Check that each pip dependency has a verion number
+                        print()
+                        try:
+                            assert pip_dep.count('=') == 1
+                        except:
+                            self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
+                        else:
+                            self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
+                            pip_depname, pip_depver = pip_dep.split('=', 1)
+                            pip_api_url = 'http://pypi.python.org/pypi/{}/json'.format(pip_depname)
+                            try:
+                                response = requests.get(pip_api_url, timeout=api_timeout)
+                            except (requests.exceptions.Timeout):
+                                self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
+                            else:
+                                if response.status_code == 200:
+                                    pip_dep_json = response.json()
+                                    last_ver = pip_dep_json.get('info').get('version')
+                                    if last_ver is not None and last_ver != pip_depver:
+                                        self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
+                                    else:
+                                        self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
+                                    break
+
 
     def check_conda_dockerfile(self):
         """ Check that the Docker build file looks right, if working with conda
