@@ -397,7 +397,7 @@ class PipelineLint(object):
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
 
-    def check_conda_env_yaml(self, api_timeout=10):
+    def check_conda_env_yaml(self):
         """ Check that the conda environment file is valid
 
         Make sure that a name is given and is consistent with the pipeline name
@@ -433,7 +433,7 @@ class PipelineLint(object):
                     for ch in reversed(dep_channels):
                         anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
                         try:
-                            response = requests.get(anaconda_api_url, timeout=api_timeout)
+                            response = requests.get(anaconda_api_url, timeout=10)
                         except (requests.exceptions.Timeout):
                             self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
                         else:
@@ -447,6 +447,34 @@ class PipelineLint(object):
                                 break
                     else:
                         self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
+            if isinstance(dep, dict):
+                for pip_dep in dep.get('pip', []):
+                    # Check that each pip dependency has a verion number
+                    try:
+                        assert pip_dep.count('=') == 1
+                    except:
+                        self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
+                    else:
+                        self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
+                        pip_depname, pip_depver = pip_dep.split('=', 1)
+                        pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
+                        try:
+                            response = requests.get(pip_api_url, timeout=10)
+                        except (requests.exceptions.Timeout):
+                            self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
+                        except (requests.exceptions.ConnectionError):
+                            self.warned.append((8, "PyPi API Connection error: {}".format(pip_api_url)))
+                        else:
+                            if response.status_code == 200:
+                                pip_dep_json = response.json()
+                                last_ver = pip_dep_json.get('info').get('version')
+                                if last_ver is not None and last_ver != pip_depver:
+                                    self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
+                                else:
+                                    self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
+                            else:
+                                self.failed.append((8, "Could not find pip dependency using the PyPi API: {}".format(dep)))
+
 
     def check_conda_dockerfile(self):
         """ Check that the Docker build file looks right, if working with conda
