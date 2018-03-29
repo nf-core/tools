@@ -58,7 +58,6 @@ class TestLint(unittest.TestCase):
         This should not result in any exception for the minimal
         working example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        print(lint_obj.releaseMode)
         lint_obj.lint_pipeline()
         expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
@@ -352,7 +351,8 @@ class TestLint(unittest.TestCase):
 
     @mock.patch('requests.get')
     def test_pypi_timeout_warn(self, mock_get):
-        """ Tests the PyPi connection """
+        """ Tests the PyPi connection and simulates a request timeout, which should
+        return in an addiional warning in the linting """
         # Define the behaviour of the request get mock
         timeout = requests.exceptions.Timeout()
         mock_get.side_effect = timeout
@@ -367,7 +367,8 @@ class TestLint(unittest.TestCase):
 
     @mock.patch('requests.get')
     def test_pypi_connection_error_warn(self, mock_get):
-        """ Tests the PyPi connection """
+        """ Tests the PyPi connection and simulates a connection error, which should
+        result in an additional warning, as we cannot test if dependent module is latest """
         # Define the behaviour of the request get mock
         connection_error = requests.exceptions.ConnectionError()
         mock_get.side_effect = connection_error

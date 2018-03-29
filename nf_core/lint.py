@@ -397,7 +397,7 @@ class PipelineLint(object):
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
 
-    def check_conda_env_yaml(self, api_timeout=10):
+    def check_conda_env_yaml(self):
         """ Check that the conda environment file is valid
 
         Make sure that a name is given and is consistent with the pipeline name
@@ -433,7 +433,7 @@ class PipelineLint(object):
                     for ch in reversed(dep_channels):
                         anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
                         try:
-                            response = requests.get(anaconda_api_url, timeout=api_timeout)
+                            response = requests.get(anaconda_api_url, timeout=10)
                         except (requests.exceptions.Timeout):
                             self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
                         else:
@@ -459,7 +459,7 @@ class PipelineLint(object):
                         pip_depname, pip_depver = pip_dep.split('=', 1)
                         pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
                         try:
-                            response = requests.get(pip_api_url, timeout=api_timeout)
+                            response = requests.get(pip_api_url, timeout=10)
                         except (requests.exceptions.Timeout):
                             self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
                         except (requests.exceptions.ConnectionError):
