@@ -497,7 +497,7 @@ class PipelineLint(object):
         found_strings = [False for x in expected_strings]
         for l in self.dockerfile:
             for idx, s in enumerate(expected_strings):
-                if l == s:
+                if l.strip() == s.strip():
                     found_strings[idx] = True
         if all(found_strings):
             self.passed.append((9, "Found all expected strings in Dockerfile"))
