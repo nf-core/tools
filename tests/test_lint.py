@@ -282,8 +282,7 @@ class TestLint(unittest.TestCase):
     def test_conda_env_timeout(self, mock_get):
         """ Tests the conda environment handles API timeouts """
         # Define the behaviour of the request get mock
-        timeout = requests.exceptions.Timeout()
-        mock_get.side_effect = timeout
+        mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
@@ -354,8 +353,7 @@ class TestLint(unittest.TestCase):
         """ Tests the PyPi connection and simulates a request timeout, which should
         return in an addiional warning in the linting """
         # Define the behaviour of the request get mock
-        timeout = requests.exceptions.Timeout()
-        mock_get.side_effect = timeout
+        mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
@@ -370,8 +368,7 @@ class TestLint(unittest.TestCase):
         """ Tests the PyPi connection and simulates a connection error, which should
         result in an additional warning, as we cannot test if dependent module is latest """
         # Define the behaviour of the request get mock
-        connection_error = requests.exceptions.ConnectionError()
-        mock_get.side_effect = connection_error
+        mock_get.side_effect = requests.exceptions.ConnectionError()
         # Now do the test
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
