@@ -13,8 +13,10 @@ Provide example wokflow directory contents like:
 """
 import os
 import yaml
+import requests
 import pytest
 import unittest
+import mock
 import nf_core.lint
 
 
@@ -36,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 53
+MAX_PASS_CHECKS = 54
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -57,8 +59,7 @@ class TestLint(unittest.TestCase):
         working example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline()
-        # Minimal example has no environment.yml
-        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS-1}
+        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
         lint_obj.print_results()
 
@@ -75,7 +76,7 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline(release=True)
-        expectations = {"failed": 1, "warned": 0, "passed": MAX_PASS_CHECKS - 1}
+        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
@@ -232,6 +233,17 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
+    def test_version_consistency_with_no_docker_version_fail(self):
+        """Tests the behaviour, when a git activity is a release
+        and simulate wrong missing docker version tag"""
+        os.environ["TRAVIS_TAG"] = "0.4"
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.config["params.version"] = "0.4"
+        lint_obj.config["params.container"] = "nfcore/tools"
+        lint_obj.check_version_consistency()
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
     def test_version_consistency_with_env_pass(self):
         """Tests the behaviour, when a git activity is a release
         and simulate correct release tag"""
@@ -251,7 +263,7 @@ class TestLint(unittest.TestCase):
             lint_obj.conda_config = yaml.load(fh)
         lint_obj.pipeline_name = 'tools'
         lint_obj.check_conda_env_yaml()
-        expectations = {"failed": 0, "warned": 0, "passed": 5}
+        expectations = {"failed": 0, "warned": 0, "passed": 7}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_env_fail(self):
@@ -266,15 +278,19 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 3, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
 
-    def test_conda_env_timeout(self):
+    @mock.patch('requests.get')
+    def test_conda_env_timeout(self, mock_get):
         """ Tests the conda environment handles API timeouts """
+        # Define the behaviour of the request get mock
+        mock_get.side_effect = requests.exceptions.Timeout()
+        # Now do the test
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
             lint_obj.conda_config = yaml.load(fh)
         lint_obj.pipeline_name = 'tools'
-        lint_obj.check_conda_env_yaml(api_timeout=0.0001)
-        expectations = {"failed": 2, "warned": 4, "passed": 3}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 2, "warned": 5, "passed": 4}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_env_skip(self):
@@ -310,4 +326,64 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.check_conda_dockerfile()
         expectations = {"failed": 0, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+    
+    def test_pip_no_version_fail(self):
+        """ Tests the pip dependency version definition is present """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pip_package_not_latest_warn(self):
+        """ Tests the pip dependency version definition is present """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc=1.4']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 1, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    @mock.patch('requests.get')
+    def test_pypi_timeout_warn(self, mock_get):
+        """ Tests the PyPi connection and simulates a request timeout, which should
+        return in an addiional warning in the linting """
+        # Define the behaviour of the request get mock
+        mock_get.side_effect = requests.exceptions.Timeout()
+        # Now do the test
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 1, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    @mock.patch('requests.get')
+    def test_pypi_connection_error_warn(self, mock_get):
+        """ Tests the PyPi connection and simulates a connection error, which should
+        result in an additional warning, as we cannot test if dependent module is latest """
+        # Define the behaviour of the request get mock
+        mock_get.side_effect = requests.exceptions.ConnectionError()
+        # Now do the test
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 0, "warned": 1, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pip_dependency_fail(self):
+        """ Tests the PyPi API package information query """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.conda_config = {'name': 'nfcore-tools', 'dependencies': [{'pip': ['notpresent=1.5']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
