@@ -2,10 +2,10 @@ sudo: required
 language: python
 jdk: openjdk8
 python:
-    - "2.7"
-    - "3.4"
-    - "3.5"
-    - "3.6"
+  - "2.7"
+  - "3.4"
+  - "3.5"
+  - "3.6"
 
 install:
   # Install Nextflow
@@ -16,9 +16,13 @@ install:
   # Set up nf-core and test/coverage modules
   - cd ${TRAVIS_BUILD_DIR}
   - pip install .
-  - pip install codecov pytest pytest-cov mock
+  - pip install codecov pytest pytest-cov mock cookiecutter
 
-script: python -m pytest --cov=nf_core .
+script:
+  # Check that we're not diverging from the cookiecutter templates
+  - cookiecutter https://github.com/nf-core/cookiecutter.git --no-input && nf-core lint nfcore-example
+  # Run the package tests
+  - python -m pytest --cov=nf_core .
 
 after_success:
   - codecov
