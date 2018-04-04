@@ -318,7 +318,7 @@ class TestLint(unittest.TestCase):
         lint_obj.conda_config['name'] = 'nfcore-tools'
         lint_obj.dockerfile = ['fubar']
         lint_obj.check_conda_dockerfile()
-        expectations = {"failed": 6, "warned": 0, "passed": 0}
+        expectations = {"failed": 4, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_dockerfile_skip(self):
@@ -327,7 +327,7 @@ class TestLint(unittest.TestCase):
         lint_obj.check_conda_dockerfile()
         expectations = {"failed": 0, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
-    
+
     def test_pip_no_version_fail(self):
         """ Tests the pip dependency version definition is present """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
