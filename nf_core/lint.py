@@ -487,12 +487,10 @@ class PipelineLint(object):
             return
 
         expected_strings = [
-            'FROM continuumio/miniconda',
-            'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
+            'FROM nfcore/base',
             'COPY environment.yml /',
-            'RUN conda update -n base conda && \\',
-            '    conda env create -f /environment.yml && \\',
-            '    conda clean -a'
+            'RUN conda env create -f /environment.yml && conda clean -a',
+            'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
         ]
         found_strings = [False for x in expected_strings]
         for l in self.dockerfile:
