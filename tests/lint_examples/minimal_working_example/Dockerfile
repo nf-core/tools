@@ -5,4 +5,4 @@ LABEL authors="phil.ewels@scilifelab.se" \
 
 COPY environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a
-ENV PATH /opt/conda/envs/nfcore-tools/bin:$PATH
+ENV PATH /opt/conda/envs/nfcore-tools-0.4/bin:$PATH
