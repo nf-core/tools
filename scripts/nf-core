@@ -8,7 +8,7 @@ import sys
 import os
 
 import nf_core
-import nf_core.lint
+import nf_core.lint, nf_core.release
 
 import logging
 
@@ -39,30 +39,32 @@ def nf_core_cli(verbose):
     help = "Execute additional checks for release-ready workflows."
 )
 def lint(pipeline_dir, release):
-    """Check pipeline against nf-core guidelines"""
+    """ Check pipeline against nf-core guidelines """
 
-    # Create the lint object
-    lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
+    # Run the lint tests!
+    nf_core.lint.run_linting(pipeline_dir, release)
 
-    # Run the linting tests
-    try:
-        lint_obj.lint_pipeline(release)
-    except AssertionError as e:
-        logging.critical("Critical error: {}".format(e))
-        logging.info("Stopping tests...")
-        sys.exit(1)
+@nf_core_cli.command()
+@click.argument(
+    'pipeline_dir',
+    type = click.Path(exists=True),
+    required = True,
+    metavar = "<pipeline directory>"
+)
+@click.option(
+    '--version',
+    required = True,
+    help = "New version number (eg. 1.2, 1.3dev, 1.4.2)"
+)
+def release(pipeline_dir, version):
+    """ Update nf-core pipeline version number """
 
-    # Print the results
-    lint_obj.print_results()
+    # First, lint the pipeline to check everything is in order
+    logging.info("Running nf-core lint tests")
+    lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
 
-    # Exit code
-    if len(lint_obj.failed) > 0:
-        logging.error(
-            "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n"
-            .format("\n       Reminder: Lint tests were run in --release mode." if release else '')
-        )
-        sys.exit(1)
-
+    # Bump the version number in relevant files
+    nf_core.release.make_release(lint_obj, version)
 
 if __name__ == '__main__':
     nf_core_cli()
