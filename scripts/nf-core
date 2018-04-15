@@ -42,7 +42,9 @@ def lint(pipeline_dir, release):
     """ Check pipeline against nf-core guidelines """
 
     # Run the lint tests!
-    nf_core.lint.run_linting(pipeline_dir, release)
+    lint_obj = nf_core.lint.run_linting(pipeline_dir, release)
+    if len(lint_obj.failed) > 0:
+        sys.exit(1)
 
 @nf_core_cli.command()
 @click.argument(

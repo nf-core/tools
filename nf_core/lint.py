@@ -31,7 +31,8 @@ def run_linting(pipeline_dir, release):
     except AssertionError as e:
         logging.critical("Critical error: {}".format(e))
         logging.info("Stopping tests...")
-        sys.exit(1)
+        lint_obj.print_results()
+        return lint_obj
 
     # Print the results
     lint_obj.print_results()
@@ -42,7 +43,6 @@ def run_linting(pipeline_dir, release):
             "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n"
             .format("\n       Reminder: Lint tests were run in --release mode." if release else '')
         )
-        sys.exit(1)
 
     return lint_obj
 

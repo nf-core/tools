@@ -60,16 +60,14 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
         expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
-        lint_obj.print_results()
 
+    @pytest.mark.xfail(raises=AssertionError)
     def test_call_lint_pipeline_fail(self):
         """Test the main execution function of PipelineLint (fail)
         This should fail after the first test and halt execution """
-        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-        lint_obj.lint_pipeline()
+        lint_obj = nf_core.lint.run_linting(PATH_FAILING_EXAMPLE, False)
         expectations = {"failed": 4, "warned": 2, "passed": 7}
         self.assess_lint_status(lint_obj, **expectations)
-        lint_obj.print_results()
 
     def test_call_lint_pipeline_release(self):
         """Test the main execution function of PipelineLint when running with --release"""
@@ -87,8 +85,7 @@ class TestLint(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
-        lint_obj.check_files_exist()
+        lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
 
     def test_failing_missingfiles_example(self):
         """Tests for missing files like Dockerfile or LICENSE"""
