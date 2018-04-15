@@ -22,12 +22,12 @@ def test_working_release(datafiles):
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
 def test_dev_release(datafiles):
-    """ Test that making a release works with a dev name """
+    """ Test that making a release works with a dev name and a leading v """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj.pipeline_name = 'tools'
     lint_obj.config['params.version'] = '0.4'
     lint_obj.files = ['nextflow.config', 'Dockerfile', 'environment.yml']
-    nf_core.release.make_release(lint_obj, '1.2dev')
+    nf_core.release.make_release(lint_obj, 'v1.2dev')
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
 @pytest.mark.xfail(raises=SyntaxError)

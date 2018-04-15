@@ -57,8 +57,7 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint (pass)
         This should not result in any exception for the minimal
         working example"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.lint_pipeline()
+        lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
         expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
         lint_obj.print_results()
