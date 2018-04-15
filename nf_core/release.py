@@ -59,11 +59,9 @@ def update_file_version(filename, lint_obj, pattern, newstr):
     # Check that we have exactly one match
     matches = re.findall(pattern, content)
     if len(matches) == 0:
-        logging.error("Could not find version number in {}".format(filename))
-        return None
+        raise SyntaxError ("Could not find version number in {}: '{}'".format(filename, pattern))
     if len(matches) > 1:
-        logging.error("Found more than one version number in {}".format(filename))
-        return None
+        raise SyntaxError ("Found more than one version number in {}: '{}'".format(filename, pattern))
 
     # Replace the match
     logging.info("Updating version in {}\n - {}\n + {}".format(filename, matches[0], newstr))
