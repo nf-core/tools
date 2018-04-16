@@ -303,7 +303,10 @@ class PipelineLint(object):
                     self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
                 # Check that we're testing the nf_required_version
                 nf_required_version_tested = False
-                for e in ciconf.get('env', []):
+                env = ciconf.get('env', [])
+                if type(env) is dict:
+                    env = env.get('matrix', [])
+                for e in env:
                     # Split using shlex so that we don't split "quoted whitespace"
                     for s in shlex.split(e):
                         k,v = s.split('=')
