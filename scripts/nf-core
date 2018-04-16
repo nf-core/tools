@@ -53,12 +53,12 @@ def lint(pipeline_dir, release):
     required = True,
     metavar = "<pipeline directory>"
 )
-@click.option(
-    '--version',
+@click.argument(
+    'new_version',
     required = True,
-    help = "New version number (eg. 1.2, 1.3dev, 1.4.2)"
+    metavar = "<new version number>"
 )
-def release(pipeline_dir, version):
+def release(pipeline_dir, new_version):
     """ Update nf-core pipeline version number """
 
     # First, lint the pipeline to check everything is in order
@@ -66,7 +66,7 @@ def release(pipeline_dir, version):
     lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
 
     # Bump the version number in relevant files
-    nf_core.release.make_release(lint_obj, version)
+    nf_core.release.make_release(lint_obj, new_version)
 
 if __name__ == '__main__':
     nf_core_cli()
