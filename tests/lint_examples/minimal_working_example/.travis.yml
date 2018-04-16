@@ -23,8 +23,9 @@ install:
   - cd ${TRAVIS_BUILD_DIR}
 
 env:
-  - NXF_VER=0.27.0
-  - NXF_VER=''
+  matrix:
+    - NXF_VER=0.27.0
+    - NXF_VER=''
 
 script:
   - "nf-core lint ${TRAVIS_BUILD_DIR}"
