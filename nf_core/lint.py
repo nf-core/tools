@@ -19,6 +19,34 @@ import click
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+def run_linting(pipeline_dir, release):
+    """ Run all linting tests. Called by main script. """
+
+    # Create the lint object
+    lint_obj = PipelineLint(pipeline_dir)
+
+    # Run the linting tests
+    try:
+        lint_obj.lint_pipeline(release)
+    except AssertionError as e:
+        logging.critical("Critical error: {}".format(e))
+        logging.info("Stopping tests...")
+        lint_obj.print_results()
+        return lint_obj
+
+    # Print the results
+    lint_obj.print_results()
+
+    # Exit code
+    if len(lint_obj.failed) > 0:
+        logging.error(
+            "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n"
+            .format("\n       Reminder: Lint tests were run in --release mode." if release else '')
+        )
+
+    return lint_obj
+
+
 class PipelineLint(object):
     """ Object to hold linting info and results """
 
