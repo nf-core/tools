@@ -1,65 +1,17 @@
 #!/usr/bin/env python
 """ List available nf-core pipelines and versions """
 
+import datetime
+import git
 import json
 import logging
 import os
 import subprocess
+import re
 import requests
 
-
-# 1 - Pull pipelines from GitHub, as with website
-# 2 - Pull pipeline release info from GitHub
-# 3 - Run `nextflow list` print currently cached pipeline names
-# 4 - Try to `cd` to cached pipeline and run git commands to fetch:
-#        last commit hash
-#        full remote address
-#        active branch
-#        date of last pull - see https://stackoverflow.com/a/9229377/713980
-# 5 - Compare commit to release info
-# 6 - Print summary of all pipelines
-#        name
-#        latest release (with date?)
-#        last pulled (NA if not pulled)
-#        up to date (tick / cross)
-#        local active branch?
-
-
-# NOTES
-#
-# Write as much functionality as possible to work with functions
-# that work on a single repository - can be reused for a `nf-core update`
-# command. Ideas for function skeleton:
-#
-# get_remote_workflows
-#   - list all repos and create a class object for each
-#   - call https://api.github.com/orgs/nf-core/repos?per_page=100
-# get_workflow_details
-#   - Check object params and only execute if missing key vars
-#   - call https://api.github.com/repos/nf-core/[name]
-# get_workflow_releases
-#   - if repo doesn't exist, get a "message": "Not Found"
-#   - if repo exists but no releases, get an empty list
-#   - if have releases, get a list of dicts with details
-#   - compare dates, add flag `is_latest`
-#   - call https://api.github.com/repos/nf-core/[name]/releases
-#   - use tag_name to get the tag name of the latest release
-#   - call https://api.github.com/repos/nf-core/[name]/tags/[tag_name]
-#   - pull the commit sha
-# get_local_nf_repos
-#   - Run `nextflow list` to get all local workflows
-#   - Filter for nf-core only? (maybe not)
-#   - If we can, get all the info possible here, see https://github.com/nextflow-io/nextflow/issues/657
-# get_local_nf_repo_details
-#   - if needed, attempt to cd to the cache directory to scrape more information
-# print_summary
-#   - print a summary of what we've found
-# print_json
-#   - print JSON output of everything we've found
-
-
 def list_workflows(json=False):
-    """ Function to list all nf-core workflows """
+    """ Main function to list all nf-core workflows """
     wfs = Workflows()
     wfs.get_remote_workflows()
     wfs.get_local_nf_workflows()
@@ -103,7 +55,8 @@ class Workflows(object):
 
     def get_local_nf_workflows(self):
         """ Get local nextflow workflows """
-        # print all local cached pipelines with `nextflow list`
+
+        # Fetch details about local cached pipelines with `nextflow list`
         try:
             with open(os.devnull, 'w') as devnull:
                 nflist_raw = subprocess.check_output(['nextflow', 'list'], stderr=devnull)
@@ -116,15 +69,28 @@ class Workflows(object):
                 else:
                     self.local_workflows.append( LocalWorkflow(wf_name) )
 
+        # Find additional information about each workflow by checking its git history
+        for wf in self.local_workflows:
+            wf.get_local_nf_workflow_details()
+
     def compare_remote_local(self):
         pass
 
     def print_summary(self):
+        """ Print summary of all pipelines """
+        # - name
+        # - latest release (with date?)
+        # - last pulled (NA if not pulled)
+        # - up to date (tick / cross)
+        # - local active branch?
         pass
 
     def print_json(self):
-        print(json.dumps([wf.__dict__ for wf in self.remote_workflows], indent=4))
-        print(json.dumps([wf.__dict__ for wf in self.local_workflows], indent=4))
+        """ Dump JSON of all parsed information """
+        print(json.dumps({
+            'local_workflows': [wf.__dict__ for wf in self.local_workflows],
+            'remote_workflows': [wf.__dict__ for wf in self.remote_workflows]
+        }, indent=4))
 
 
 class RemoteWorkflow(object):
@@ -186,6 +152,88 @@ class LocalWorkflow(object):
     def __init__(self, name):
         """ Initialise the LocalWorkflow object """
         self.full_name = name
+        self.repository = None
+        self.local_path = None
+        self.commit_sha = None
+        self.remote_url = None
+        self.branch = None
+        self.last_pull = None
 
     def get_local_nf_workflow_details(self):
-        pass
+        """ Get full details about a local cached workflow """
+
+        # Use `nextflow info` to get more details about the workflow
+        try:
+            with open(os.devnull, 'w') as devnull:
+                nfinfo_raw = subprocess.check_output(['nextflow', 'info', '-d', self.full_name], stderr=devnull)
+        except subprocess.CalledProcessError as e:
+            raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
+        else:
+            re_patterns = {
+                'repository': r"repository\s*: (.*)",
+                'local_path': r"local path\s*: (.*)"
+            }
+            for key, pattern in re_patterns.items():
+                m = re.search(pattern, nfinfo_raw)
+                if m:
+                    setattr(self, key, m.group(1))
+
+
+        # Try to guess the local cache directory
+        if self.local_path is None:
+            nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', self.full_name)
+            if os.path.isdir(nf_wfdir):
+                self.local_path = nf_wfdir
+
+        # Pull information from the local git repository
+        if self.local_path is not None:
+            repo = git.Repo(self.local_path)
+            self.commit_sha = str(repo.head.commit.hexsha)
+            self.remote_url = str(repo.remotes.origin.url)
+            self.branch = str(repo.active_branch)
+            self.last_pull = os.stat(os.path.join(self.local_path, '.git', 'FETCH_HEAD')).st_mtime
+            self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
+            self.last_pull_pretty = self.pretty_date(self.last_pull)
+
+    def pretty_date(self, time):
+        """
+        Get a datetime object or a int() Epoch timestamp and return a
+        pretty string like 'an hour ago', 'Yesterday', '3 months ago',
+        'just now', etc
+
+        Based on https://stackoverflow.com/a/1551394/713980
+        """
+        from datetime import datetime
+        now = datetime.now()
+        if isinstance(time, datetime):
+            diff = now - time
+        else:
+            diff = now - datetime.fromtimestamp(time)
+        second_diff = diff.seconds
+        day_diff = diff.days
+
+        if day_diff < 0:
+            return ''
+
+        if day_diff == 0:
+            if second_diff < 10:
+                return "just now"
+            if second_diff < 60:
+                return str(second_diff) + " seconds ago"
+            if second_diff < 120:
+                return "a minute ago"
+            if second_diff < 3600:
+                return str(second_diff / 60) + " minutes ago"
+            if second_diff < 7200:
+                return "an hour ago"
+            if second_diff < 86400:
+                return str(second_diff / 3600) + " hours ago"
+        if day_diff == 1:
+            return "Yesterday"
+        if day_diff < 7:
+            return str(day_diff) + " days ago"
+        if day_diff < 31:
+            return str(day_diff / 7) + " weeks ago"
+        if day_diff < 365:
+            return str(day_diff / 30) + " months ago"
+        return str(day_diff / 365) + " years ago"
