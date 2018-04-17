@@ -94,7 +94,7 @@ class Workflows(object):
                 raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
             else:
                 for wf_name in nflist_raw.splitlines():
-                    if not wf_name.startswith('nf-core/'):
+                    if not str(wf_name).startswith('nf-core/'):
                         self.local_unmatched.append(wf_name)
                     else:
                         self.local_workflows.append( LocalWorkflow(wf_name) )
