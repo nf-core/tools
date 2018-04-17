@@ -143,9 +143,9 @@ class Workflows(object):
     def print_json(self):
         """ Dump JSON of all parsed information """
         print(json.dumps({
-            'local_workflows': [wf.__dict__ for wf in self.local_workflows],
-            'remote_workflows': [wf.__dict__ for wf in self.remote_workflows]
-        }, indent=4))
+            'local_workflows': self.local_workflows,
+            'remote_workflows': self.remote_workflows
+        }, default=lambda o: o.__dict__, indent=4))
 
 
 class RemoteWorkflow(object):
