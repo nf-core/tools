@@ -75,7 +75,10 @@ class Workflows(object):
         """ Get local nextflow workflows """
 
         # Try to guess the local cache directory (much faster than calling nextflow)
-        nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', 'nf-core')
+        if os.environ.get('NXF_ASSETS'):
+            nf_wfdir = os.path.join(os.environ.get('NXF_ASSETS'), 'nf-core')
+        else:
+            nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', 'nf-core')
         if os.path.isdir(nf_wfdir):
             logging.debug("Guessed nextflow assets directory - pulling nf-core dirnames")
             for wf_name in os.listdir(nf_wfdir):
@@ -219,7 +222,10 @@ class LocalWorkflow(object):
         if self.local_path is None:
 
             # Try to guess the local cache directory
-            nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', self.full_name)
+            if os.environ.get('NXF_ASSETS'):
+                nf_wfdir = os.path.join(os.environ.get('NXF_ASSETS'), self.full_name)
+            else:
+                nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', self.full_name)
             if os.path.isdir(nf_wfdir):
                 logging.debug("Guessed nextflow assets workflow directory")
                 self.local_path = nf_wfdir
