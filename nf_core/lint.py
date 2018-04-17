@@ -5,15 +5,27 @@ Tests Nextflow pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
+import click
+import datetime
 import logging
 import os
-import subprocess
 import re
 import requests
+import requests_cache
 import shlex
+import subprocess
+import tempfile
 import yaml
 
-import click
+# Set up local caching for requests to speed up remote queries
+cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
+if not os.path.exists(cachedir):
+    os.mkdir(cachedir)
+requests_cache.install_cache(
+    os.path.join(cachedir, 'nfcore_cache'),
+    expire_after=datetime.timedelta(hours=1),
+    backend='sqlite',
+)
 
 # Don't pick up debug logs from the requests package
 logging.getLogger("requests").setLevel(logging.WARNING)
