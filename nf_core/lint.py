@@ -5,16 +5,17 @@ Tests Nextflow pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
-import click
 import datetime
 import logging
 import os
 import re
-import requests
-import requests_cache
 import shlex
 import subprocess
 import tempfile
+
+import click
+import requests
+import requests_cache
 import yaml
 
 # Set up local caching for requests to speed up remote queries

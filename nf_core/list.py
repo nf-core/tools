@@ -4,17 +4,18 @@
 from __future__ import print_function
 
 import datetime
-import git
 import json
 import logging
 import os
 import re
-import requests
-import requests_cache
 import subprocess
 import sys
-import tabulate
 import tempfile
+
+import git
+import requests
+import requests_cache
+import tabulate
 
 # Set up local caching for requests to speed up remote queries
 cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
