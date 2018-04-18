@@ -8,7 +8,7 @@ import sys
 import os
 
 import nf_core
-import nf_core.lint, nf_core.release
+import nf_core.lint, nf_core.list, nf_core.release
 
 import logging
 
@@ -47,6 +47,17 @@ def lint(pipeline_dir, release):
         sys.exit(1)
 
 @nf_core_cli.command()
+@click.option(
+    '--json',
+    is_flag = True,
+    default = False,
+    help = "Print full output as JSON"
+)
+def list(json):
+    """ List nf-core pipelines with local info """
+    nf_core.list.list_workflows(json)
+
+@nf_core_cli.command()
 @click.argument(
     'pipeline_dir',
     type = click.Path(exists=True),
@@ -69,4 +80,11 @@ def release(pipeline_dir, new_version):
     nf_core.release.make_release(lint_obj, new_version)
 
 if __name__ == '__main__':
+    print("""
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+    """, file=sys.stderr)
     nf_core_cli()

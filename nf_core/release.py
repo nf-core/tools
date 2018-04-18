@@ -8,7 +8,6 @@ a nf-core pipeline
 import logging
 import os
 import re
-from distutils.version import StrictVersion
 
 def make_release(lint_obj, new_version):
     """ Function to make the release. Called by the main script """
