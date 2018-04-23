@@ -22,3 +22,7 @@ def test_pretty_datetime():
     nf_core.list.pretty_date(now)
     now_ts = time.mktime(now.timetuple())
     nf_core.list.pretty_date(now_ts)
+
+def test_local_workflows():
+    """ Test that the pretty datetime function works """
+    nf_core.list.LocalWorkflow("myWF")
