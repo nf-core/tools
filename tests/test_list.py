@@ -50,8 +50,20 @@ def test_local_workflows_compare_and_fail_silently():
 
     rwf_ex = nf_core.list.RemoteWorkflow(remote)
     rwf_ex.commit_sha = "aw3s0meh1sh"
+    rwf_ex.full_name = 'my Workflow'
+    rwf_ex.releases = []
+    rwf_ex.releases.append({'tag_sha': "aw3s0meh1sh"})
 
     wfs.local_workflows.append(lwf_ex)
     wfs.remote_workflows.append(rwf_ex)
     wfs.compare_remote_local()
 
+    rwf_ex.releases = []
+    rwf_ex.releases.append({'tag_sha': "noaw3s0meh1sh"})
+    wfs.compare_remote_local()
+
+    rwf_ex.releases = None
+    wfs.compare_remote_local()
+
+    rwf_ex.full_name = "your Workflow"
+    wfs.compare_remote_local()
