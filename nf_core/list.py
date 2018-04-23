@@ -111,13 +111,11 @@ class Workflows(object):
             for lwf in self.local_workflows:
                 if rwf.full_name == lwf.full_name:
                     rwf.local_wf = lwf
-                    try:
+                    if rwf.releases:
                         if rwf.releases[0]['tag_sha'] == lwf.commit_sha:
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
-                    except IndexError:
-                        pass
 
     def print_summary(self):
         """ Print summary of all pipelines """

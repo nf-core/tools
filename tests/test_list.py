@@ -69,3 +69,5 @@ class TestLint(unittest.TestCase):
 
         rwf_ex.full_name = "your Workflow"
         wfs.compare_remote_local()
+
+        rwf_ex.releases = None
