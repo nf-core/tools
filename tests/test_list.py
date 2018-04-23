@@ -35,5 +35,23 @@ def test_local_workflows_compare_and_fail_silently():
     """ Test the workflow class and try to compare local
     and remote workflows """
     wfs = nf_core.list.Workflows()
+    lwf_ex = nf_core.list.LocalWorkflow("myWF")
+    lwf_ex.commit_sha = "aw3s0meh1sh"
+
+    remote = {
+        'name': 'myWF',
+        'full_name': 'my Workflow',
+        'description': '...',
+        'archived': [],
+        'stargazers_count': 42,
+        'watchers_count': 6,
+        'forks_count': 7,
+    }
+
+    rwf_ex = nf_core.list.RemoteWorkflow(remote)
+    rwf_ex.commit_sha = "aw3s0meh1sh"
+
+    wfs.local_workflows.append(lwf_ex)
+    wfs.remote_workflows.append(rwf_ex)
     wfs.compare_remote_local()
 
