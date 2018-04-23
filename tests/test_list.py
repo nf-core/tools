@@ -6,6 +6,7 @@ import time
 import pytest
 import unittest
 import nf_core.list
+from nose.tools import raises
 from datetime import datetime
 
 def test_working_listcall():
@@ -23,6 +24,8 @@ def test_pretty_datetime():
     now_ts = time.mktime(now.timetuple())
     nf_core.list.pretty_date(now_ts)
 
-def test_local_workflows():
+@raises(AssertionError)
+def test_local_workflows_and_fail():
     """ Test that the pretty datetime function works """
-    nf_core.list.LocalWorkflow("myWF")
+    loc_wf = nf_core.list.LocalWorkflow("myWF")
+    loc_wf.get_local_nf_workflow_details()
