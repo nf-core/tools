@@ -26,6 +26,14 @@ def test_pretty_datetime():
 
 @raises(AssertionError)
 def test_local_workflows_and_fail():
-    """ Test that the pretty datetime function works """
+    """ Test the local workflow class and try to get local
+    Nextflow workflow information """
     loc_wf = nf_core.list.LocalWorkflow("myWF")
     loc_wf.get_local_nf_workflow_details()
+
+def test_local_workflows_compare_and_fail_silently():
+    """ Test the workflow class and try to compare local
+    and remote workflows """
+    wfs = nf_core.list.Workflows()
+    wfs.compare_remote_local()
+
