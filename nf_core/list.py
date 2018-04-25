@@ -111,13 +111,11 @@ class Workflows(object):
             for lwf in self.local_workflows:
                 if rwf.full_name == lwf.full_name:
                     rwf.local_wf = lwf
-                    try:
+                    if rwf.releases:
                         if rwf.releases[0]['tag_sha'] == lwf.commit_sha:
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
-                    except IndexError:
-                        pass
 
     def print_summary(self):
         """ Print summary of all pipelines """
@@ -265,6 +263,7 @@ def pretty_date(time):
     'just now', etc
 
     Based on https://stackoverflow.com/a/1551394/713980
+    Adapted by sven1103
     """
     from datetime import datetime
     now = datetime.now()
@@ -275,28 +274,27 @@ def pretty_date(time):
     second_diff = diff.seconds
     day_diff = diff.days
 
-    if day_diff < 0:
-        return ''
-
-    if day_diff == 0:
-        if second_diff < 10:
-            return "just now"
-        if second_diff < 60:
-            return str(second_diff) + " seconds ago"
-        if second_diff < 120:
-            return "a minute ago"
-        if second_diff < 3600:
-            return str(second_diff / 60) + " minutes ago"
-        if second_diff < 7200:
-            return "an hour ago"
-        if second_diff < 86400:
-            return str(second_diff / 3600) + " hours ago"
-    if day_diff == 1:
-        return "Yesterday"
-    if day_diff < 7:
-        return str(day_diff) + " days ago"
-    if day_diff < 31:
-        return str(day_diff / 7) + " weeks ago"
-    if day_diff < 365:
-        return str(day_diff / 30) + " months ago"
-    return str(day_diff / 365) + " years ago"
+    pretty_msg = {
+        0: [(float('inf'), 1, 'from the future')],
+        1: [
+            (10, 1, "just now"),
+            (60, 1, "{sec} seconds ago"),
+            (120, 1, "a minute ago"),
+            (3600, 60, "{sec} minutes ago"),
+            (7200, 1, "an hour ago"),
+            (86400, 3600, "{sec} hours ago")
+        ],
+        2: [(float('inf'), 1, 'yesterday')],
+        7: [(float('inf'), 1, '{days} days ago')],
+        31: [(float('inf'), 7, '{days} weeks ago')],
+        365: [(float('inf'), 30, '{days} months ago')],
+        float('inf'): [(float('inf'), 365, '{days} years ago')]
+    }
+   
+    for days, seconds in pretty_msg.items():
+        if day_diff < days:
+            for sec in seconds:
+                if second_diff < sec[0]:
+                    return sec[2].format(days=round(day_diff/sec[1], 1),
+                        sec=round(second_diff/sec[1], 1))
+    return '... time is relative anyway'
