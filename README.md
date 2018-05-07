@@ -1,4 +1,4 @@
-<img src="https://nf-core.github.io/assets/logo/nf-core-logo.png" width="400">
+<img src="docs/images/nf-core-logo.png" width="400">
 
 # [nf-core/tools](https://github.com/nf-core/tools)
 [![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
