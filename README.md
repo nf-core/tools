@@ -47,10 +47,10 @@ INFO:root:
     1 tests failed
 
 Warnings:
-  https://nf-core.github.io/errors#1: File not found: tests/run_test.sh
+  http://nf-co.re/errors#1: File not found: tests/run_test.sh
 
 Failures:
-  https://nf-core.github.io/errors#1: File not found: LICENSE
+  http://nf-co.re/errors#1: File not found: LICENSE
 
 
 INFO:root:Sorry, some tests failed - exiting with a non-zero error code...

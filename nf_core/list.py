@@ -49,6 +49,7 @@ class Workflows(object):
         self.remote_ignore = [
             'cookiecutter',
             'nf-core.github.io',
+            'nf-co.re',
             'tools',
             'logos',
             'test-datasets'
@@ -290,7 +291,7 @@ def pretty_date(time):
         365: [(float('inf'), 30, '{days} months ago')],
         float('inf'): [(float('inf'), 365, '{days} years ago')]
     }
-   
+
     for days, seconds in pretty_msg.items():
         if day_diff < days:
             for sec in seconds:
