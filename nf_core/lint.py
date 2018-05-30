@@ -559,8 +559,8 @@ class PipelineLint(object):
             "{0:>4} tests failed".format(len(self.failed)) + rl
         )
         if len(self.passed) > 0:
-            logging.debug("Test Passed:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
+            logging.debug("Test Passed:\n  {}".format("\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
         if len(self.warned) > 0:
-            logging.warn("Test Warnings:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
+            logging.warn("Test Warnings:\n  {}".format("\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
         if len(self.failed) > 0:
-            logging.error("Test Failures:\n  {}".format("\n  ".join(["https://nf-core.github.io/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))
+            logging.error("Test Failures:\n  {}".format("\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))
