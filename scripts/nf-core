@@ -8,7 +8,7 @@ import sys
 import os
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.release
+import nf_core.lint, nf_core.list, nf_core.download, nf_core.release
 
 import logging
 
@@ -56,6 +56,31 @@ def lint(pipeline_dir, release):
 def list(json):
     """ List nf-core pipelines with local info """
     nf_core.list.list_workflows(json)
+
+@nf_core_cli.command()
+@click.argument(
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+@click.option(
+    '-r', '--release',
+    type = str,
+    help = "Pipeline release"
+)
+@click.option(
+    '-s', '--singularity',
+    is_flag = True,
+    help = "Pull pipeline singularity containers"
+)
+@click.option(
+    '-o', '--outdir',
+    type = str,
+    help = "Output directory"
+)
+def download(pipeline, release, singularity, outdir):
+    """ Download a nf-core pipeline and singularity container """
+    nf_core.download.download_workflow(pipeline, release, singularity, outdir)
 
 @nf_core_cli.command()
 @click.argument(
