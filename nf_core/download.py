@@ -29,7 +29,12 @@ def download_workflow(pipeline, release=None, singularity=False, outdir=None):
         logging.error("Output directory '{}' already exists".format(wf.outdir))
         sys.exit(1)
     else:
-        logging.info("Saving nf-core/{} to '{}'".format(wf.wf_name, wf.outdir))
+        logging.info(
+            "Saving nf-core/{}".format(wf.wf_name) +
+            "\n Pipeline release: {}".format(wf.release) +
+            "\n Pull singularity containers: {}".format('Yes' if wf.singularity else 'No') +
+            "\n Output directory: {}".format(wf.outdir)
+        )
 
     # Download the pipeline files
     logging.info("Downloading workflow files from GitHub")
@@ -78,6 +83,7 @@ class DownloadWorkflow():
                 if self.release is None and len(wf.releases) > 0:
                     self.release = wf.releases[0]['tag_name']
                     self.wf_sha = wf.releases[0]['tag_sha']
+                    logging.debug("No release specified. Using latest release: {}".format(self.release))
                 # Find specified release hash
                 elif self.release is not None:
                     for r in wf.releases:
@@ -91,6 +97,7 @@ class DownloadWorkflow():
                 elif self.release is None:
                     self.release = 'dev'
                     self.wf_sha = 'master' # Cheating a little, but GitHub download link works
+                    logging.info("Pipeline is in development. Using current code on master branch.")
 
                 # Set outdir name if not defined
                 if self.outdir is None:
