@@ -34,7 +34,7 @@ class DownloadWorkflow():
         """ Main function to download a nf-core workflow """
 
         # Get workflow details
-        if not self.get_workflow():
+        if not self.fetch_workflow_details():
             sys.exit(1)
 
         # Check that the outdir doesn't already exist
@@ -65,7 +65,7 @@ class DownloadWorkflow():
                     self.download_singularity_image(container)
 
 
-    def get_workflow(self):
+    def fetch_workflow_details(self):
         """ Fetch details of nf-core workflow to download """
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
@@ -157,15 +157,16 @@ class DownloadWorkflow():
         """ Download singularity images for workflow """
 
         out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
-        out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
+        out_dir = os.path.abspath(os.path.join(self.outdir, 'singularity-images'))
         address = 'docker://{}'.format(container.replace('docker://', ''))
-        singularity_command = ["singularity", "pull", "--name", out_path, address]
+        singularity_command = ["singularity", "pull", "--name", os.path.join(out_dir, out_name), address]
         docker_command = [
             'docker', 'run',
             '-v', '/var/run/docker.sock:/var/run/docker.sock',
-            '-v', '{}:/output'.format(out_path),
+            '-v', '{}:/output'.format(out_dir),
             '--privileged', '-t', '--rm',
             'singularityware/docker2singularity',
+            '--name', out_name,
             container
         ]
 
