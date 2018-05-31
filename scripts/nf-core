@@ -83,7 +83,8 @@ def list(json):
 )
 def download(pipeline, release, singularity, outdir):
     """ Download a pipeline and singularity container """
-    nf_core.download.download_workflow(pipeline, release, singularity, outdir)
+    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir)
+    dl.download_workflow()
 
 @nf_core_cli.command()
 @click.argument(

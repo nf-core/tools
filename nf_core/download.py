@@ -14,43 +14,6 @@ from zipfile import ZipFile
 
 import nf_core.list, nf_core.utils
 
-def download_workflow(pipeline, release=None, singularity=False, outdir=None):
-    """ Main function to download a nf-core workflow """
-
-    # init
-    wf = DownloadWorkflow(pipeline, release, singularity, outdir)
-
-    # Get workflow details
-    if not wf.get_workflow():
-        sys.exit(1)
-
-    # Check that the outdir doesn't already exist
-    if os.path.exists(wf.outdir):
-        logging.error("Output directory '{}' already exists".format(wf.outdir))
-        sys.exit(1)
-    else:
-        logging.info(
-            "Saving {}".format(wf.pipeline) +
-            "\n Pipeline release: {}".format(wf.release) +
-            "\n Pull singularity containers: {}".format('Yes' if wf.singularity else 'No') +
-            "\n Output directory: {}".format(wf.outdir)
-        )
-
-    # Download the pipeline files
-    logging.info("Downloading workflow files from GitHub")
-    wf.download_wf_files()
-
-    # Download the singularity images
-    if singularity:
-        logging.info("Fetching container names for workflow")
-        wf.find_singularity_images()
-        if len(wf.containers) == 0:
-            logging.info("No container names found in workflow")
-        else:
-            os.mkdir(os.path.join(wf.outdir, 'singularity-images'))
-            for container in wf.containers:
-                wf.download_singularity_image(container)
-
 class DownloadWorkflow():
 
     def __init__(self, pipeline, release=None, singularity=False, outdir=None):
@@ -66,6 +29,40 @@ class DownloadWorkflow():
         self.wf_download_url = None
         self.config = dict()
         self.containers = list()
+
+    def download_workflow(self):
+        """ Main function to download a nf-core workflow """
+
+        # Get workflow details
+        if not self.get_workflow():
+            sys.exit(1)
+
+        # Check that the outdir doesn't already exist
+        if os.path.exists(self.outdir):
+            logging.error("Output directory '{}' already exists".format(self.outdir))
+            sys.exit(1)
+
+        logging.info(
+            "Saving {}".format(self.pipeline) +
+            "\n Pipeline release: {}".format(self.release) +
+            "\n Pull singularity containers: {}".format('Yes' if self.singularity else 'No') +
+            "\n Output directory: {}".format(self.outdir)
+        )
+
+        # Download the pipeline files
+        logging.info("Downloading workflow files from GitHub")
+        self.download_wf_files()
+
+        # Download the singularity images
+        if self.singularity:
+            logging.info("Fetching container names for workflow")
+            self.find_singularity_images()
+            if len(self.containers) == 0:
+                logging.info("No container names found in workflow")
+            else:
+                os.mkdir(os.path.join(self.outdir, 'singularity-images'))
+                for container in self.containers:
+                    self.download_singularity_image(container)
 
 
     def get_workflow(self):
