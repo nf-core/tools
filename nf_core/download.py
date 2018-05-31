@@ -30,7 +30,7 @@ def download_workflow(pipeline, release=None, singularity=False, outdir=None):
         sys.exit(1)
     else:
         logging.info(
-            "Saving nf-core/{}".format(wf.wf_name) +
+            "Saving {}".format(wf.pipeline) +
             "\n Pipeline release: {}".format(wf.release) +
             "\n Pull singularity containers: {}".format('Yes' if wf.singularity else 'No') +
             "\n Output directory: {}".format(wf.outdir)
@@ -105,19 +105,33 @@ class DownloadWorkflow():
                     if self.release is not None:
                         self.outdir += '-{}'.format(self.release)
 
-                # Set the download URL
+                # Set the download URL and return
                 self.wf_download_url = 'https://github.com/{}/archive/{}.zip'.format(wf.full_name, self.wf_sha)
-
-                # Finished
                 return True
 
-        # If we got this far, must have not found the pipeline
-        logging.error("Not able to find pipeline '{}'".format(self.pipeline))
-        logging.info("Available pipelines: {}".format(', '.join([w.name for w in wfs.remote_workflows])))
-        return False
+        # If we got this far, must not be a nf-core pipeline
+        if self.pipeline.count('/') == 1:
+            # Looks like a GitHub address - try working with this repo
+            self.wf_name = self.pipeline
+            if self.release is None:
+                self.release = 'master'
+            self.wf_sha = self.release
+            if self.outdir is None:
+                self.outdir = self.pipeline.replace('/', '-').lower()
+                if self.release is not None:
+                    self.outdir += '-{}'.format(self.release)
+            # Set the download URL and return
+            self.wf_download_url = 'https://github.com/{}/archive/{}.zip'.format(self.pipeline, self.release)
+            return True
+        else:
+            logging.error("Not able to find pipeline '{}'".format(self.pipeline))
+            logging.info("Available pipelines: {}".format(', '.join([w.name for w in wfs.remote_workflows])))
+            return False
+
 
     def download_wf_files(self):
         """ Download workflow files from GitHub - save in outdir """
+        logging.debug("Downloading {}".format(self.wf_download_url))
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
@@ -125,7 +139,7 @@ class DownloadWorkflow():
         zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
-        gh_name = '{}-{}'.format(self.wf_name, self.wf_sha)
+        gh_name = '{}-{}'.format(self.wf_name, self.wf_sha).split('/')[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, 'workflow'))
 
     def find_singularity_images(self):
@@ -156,7 +170,8 @@ class DownloadWorkflow():
             container
         ]
 
-        logging.info("Building singularity image '{}', saving to {}".format(container, out_path))
+        logging.info("Building singularity image '{}'".format(out_name))
+        logging.debug("Singularity command: {}".format(' '.join(singularity_command)))
 
         # Try to use singularity to pull image
         try:
@@ -164,7 +179,8 @@ class DownloadWorkflow():
         except OSError as e:
             if e.errno == os.errno.ENOENT:
                 # Singularity is not installed
-                logging.warn('Singularity is not installed. Attempting to use Docker instead.')
+                logging.debug('Singularity is not installed. Attempting to use Docker instead.')
+                logging.debug("Docker command: {}".format(' '.join(docker_command)))
 
                 # Try to use docker to use singularity to pull image
                 try:

@@ -80,7 +80,7 @@ def list(json):
     help = "Output directory"
 )
 def download(pipeline, release, singularity, outdir):
-    """ Download a nf-core pipeline and singularity container """
+    """ Download a pipeline and singularity container """
     nf_core.download.download_workflow(pipeline, release, singularity, outdir)
 
 @nf_core_cli.command()
