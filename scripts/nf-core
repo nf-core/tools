@@ -69,10 +69,12 @@ def list(json):
     help = "Pipeline release"
 )
 @click.option(
-    '-s/-n', '--singularity/--no-singularity',
+    '-s', '--singularity',
+    type = click.BOOL,
+    metavar = "[y/n]",
     default = None,
     required = True,
-    help = "Pull / don't pull pipeline singularity containers"
+    help = "Download singularity containers?"
 )
 @click.option(
     '-o', '--outdir',

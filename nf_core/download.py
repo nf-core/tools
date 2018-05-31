@@ -12,7 +12,7 @@ import sys
 from zipfile import ZipFile
 
 
-import nf_core.list, nf_core.lint
+import nf_core.list, nf_core.utils
 
 def download_workflow(pipeline, release=None, singularity=False, outdir=None):
     """ Main function to download a nf-core workflow """
@@ -64,6 +64,7 @@ class DownloadWorkflow():
         self.wf_name = None
         self.wf_sha = None
         self.wf_download_url = None
+        self.config = dict()
         self.containers = list()
 
 
@@ -112,6 +113,8 @@ class DownloadWorkflow():
         # If we got this far, must not be a nf-core pipeline
         if self.pipeline.count('/') == 1:
             # Looks like a GitHub address - try working with this repo
+            logging.warn("Pipeline name doesn't match any nf-core workflows")
+            logging.info("Pipeline name looks like a GitHub address - attempting to download anyway")
             self.wf_name = self.pipeline
             if self.release is None:
                 self.release = 'master'
@@ -146,18 +149,17 @@ class DownloadWorkflow():
         """ Find singularity image names for workflow """
 
         # Use linting code to parse the pipeline nextflow config
-        lint_obj = nf_core.lint.PipelineLint(os.path.join(self.outdir, 'workflow'))
-        lint_obj.check_nextflow_config()
+        self.config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, 'workflow'))
 
         # Find any config variables that look like a container
-        for k,v in lint_obj.config.items():
+        for k,v in self.config.items():
             if k.startswith('process.') and k.endswith('.container'):
                 self.containers.append(v.strip('"').strip("'"))
 
     def download_singularity_image(self, container):
         """ Download singularity images for workflow """
 
-        out_name = '{}.simg'.format(container.replace('nfcore/', 'nf-core-').replace(':', '-'))
+        out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
         out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         address = 'docker://{}'.format(container.replace('docker://', ''))
         singularity_command = ["singularity", "pull", "--name", out_path, address]
