@@ -34,7 +34,9 @@ class DownloadWorkflow():
         """ Main function to download a nf-core workflow """
 
         # Get workflow details
-        if not self.fetch_workflow_details():
+        try:
+            self.fetch_workflow_details()
+        except LookupError:
             sys.exit(1)
 
         # Check that the outdir doesn't already exist
@@ -89,23 +91,25 @@ class DownloadWorkflow():
                             self.wf_sha = r['tag_sha']
                             break
                     else:
-                        logging.error("Not able to find release '{}' for {} (found '{}')".format(self.release, wf.full_name, "', '".join([r['tag_name'] for r in wf.releases])))
-                        return False
+                        logging.error("Not able to find release '{}' for {}".format(self.release, wf.full_name))
+                        logging.info("Available {} releases: {}".format(wf.full_name, ', '.join([r['tag_name'] for r in wf.releases])))
+                        raise LookupError("Not able to find release '{}' for {}".format(self.release, wf.full_name))
+
                 # Must be a dev-only pipeline
-                elif self.release is None:
+                elif not self.release:
                     self.release = 'dev'
                     self.wf_sha = 'master' # Cheating a little, but GitHub download link works
                     logging.info("Pipeline is in development. Using current code on master branch.")
 
                 # Set outdir name if not defined
-                if self.outdir is None:
+                if not self.outdir:
                     self.outdir = 'nf-core-{}'.format(wf.name)
                     if self.release is not None:
                         self.outdir += '-{}'.format(self.release)
 
                 # Set the download URL and return
                 self.wf_download_url = 'https://github.com/{}/archive/{}.zip'.format(wf.full_name, self.wf_sha)
-                return True
+                return
 
         # If we got this far, must not be a nf-core pipeline
         if self.pipeline.count('/') == 1:
@@ -113,20 +117,19 @@ class DownloadWorkflow():
             logging.warn("Pipeline name doesn't match any nf-core workflows")
             logging.info("Pipeline name looks like a GitHub address - attempting to download anyway")
             self.wf_name = self.pipeline
-            if self.release is None:
+            if not self.release:
                 self.release = 'master'
             self.wf_sha = self.release
-            if self.outdir is None:
+            if not self.outdir:
                 self.outdir = self.pipeline.replace('/', '-').lower()
                 if self.release is not None:
                     self.outdir += '-{}'.format(self.release)
             # Set the download URL and return
             self.wf_download_url = 'https://github.com/{}/archive/{}.zip'.format(self.pipeline, self.release)
-            return True
         else:
             logging.error("Not able to find pipeline '{}'".format(self.pipeline))
             logging.info("Available pipelines: {}".format(', '.join([w.name for w in wfs.remote_workflows])))
-            return False
+            raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
 
     def download_wf_files(self):
