@@ -163,15 +163,6 @@ class DownloadWorkflow():
         out_dir = os.path.abspath(os.path.join(self.outdir, 'singularity-images'))
         address = 'docker://{}'.format(container.replace('docker://', ''))
         singularity_command = ["singularity", "pull", "--name", os.path.join(out_dir, out_name), address]
-        docker_command = [
-            'docker', 'run',
-            '-v', '/var/run/docker.sock:/var/run/docker.sock',
-            '-v', '{}:/output'.format(out_dir),
-            '--privileged', '-t', '--rm',
-            'singularityware/docker2singularity',
-            '--name', out_name,
-            container
-        ]
 
         logging.info("Building singularity image '{}'".format(out_name))
         logging.debug("Singularity command: {}".format(' '.join(singularity_command)))
@@ -182,19 +173,7 @@ class DownloadWorkflow():
         except OSError as e:
             if e.errno == os.errno.ENOENT:
                 # Singularity is not installed
-                logging.debug('Singularity is not installed. Attempting to use Docker instead.')
-                logging.debug("Docker command: {}".format(' '.join(docker_command)))
-
-                # Try to use docker to use singularity to pull image
-                try:
-                    subprocess.call(docker_command)
-                except OSError as e:
-                    if e.errno == os.errno.ENOENT:
-                        # Docker is not installed
-                        logging.warn('Docker is not installed.')
-                    else:
-                        # Something else went wrong with docker command
-                        raise
+                logging.error('Singularity is not installed!')
             else:
                 # Something else went wrong with singularity command
-                raise
+                raise e
