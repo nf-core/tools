@@ -6,6 +6,7 @@ from __future__ import print_function
 from io import BytesIO
 import logging
 import os
+import re
 import requests
 import subprocess
 import sys
@@ -160,10 +161,53 @@ class DownloadWorkflow():
         """ Download singularity images for workflow """
 
         out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
-        out_dir = os.path.abspath(os.path.join(self.outdir, 'singularity-images'))
+        out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         address = 'docker://{}'.format(container.replace('docker://', ''))
-        singularity_command = ["singularity", "pull", "--name", os.path.join(out_dir, out_name), address]
+        shub_api_url = 'https://www.singularity-hub.org/api/container/{}'.format(container.replace('nfcore', 'nf-core').replace('docker://', ''))
+        shub_api_url = 'https://www.singularity-hub.org/api/container/ewels/nf-core-methylseq:latest'
+        singularity_command = ["singularity", "pull", "--name", out_path, address]
 
+        # Try to download the singularity image from singularity-hub first
+        logging.debug("Checking shub API: {}".format(shub_api_url))
+        response = requests.get(shub_api_url, timeout=10)
+        if response.status_code == 200:
+            shub_response = response.json()
+            logging.info("Downloading singularity image from singularity-hub.org")
+
+            # Strip the ?generation= key in URL, as this breaks the download
+
+            #
+            # TODO: May not need to do this?
+            #
+            dl_url = re.sub(r"\?generation=\d+&", '?', shub_response['image'])
+
+            # Stream the download as it's going to be large
+            logging.debug("Starting download: {}".format(dl_url))
+
+            #
+            # TODO: This next line hangs! WHHYYYYYY?Y???????
+            #
+            dl_request = requests.get(dl_url, stream=True)
+            if dl_request.status_code == 200:
+                logging.debug("Response code 200. Streaming download to disk.")
+                with open(out_path, 'wb') as f:
+                    for chunk in dl_request.iter_content(chunk_size=1024):
+                        if chunk:
+                            f.write(chunk)
+                return
+            else:
+                logging.error("Error with singularity hub API call: {}".format(response.status_code))
+
+#             dl_request = requests.get(shub_response['image'], stream=True)
+#             total_length = int(dl_request.headers.get('content-length'))
+#             logging.debug("Total image file size: {} bytes".format(total_length))
+#             with click.progressbar(dl_request.iter_content(1024), length=total_size) as pbar, open(out_path, 'wb') as f:
+#                 for chunk in pbar:
+#                     if chunk:
+#                         f.write(chunk)
+#                         pbar.update(len(chunk))
+
+        logging.debug("Singularity image not found on singularity-hub")
         logging.info("Building singularity image '{}'".format(out_name))
         logging.debug("Singularity command: {}".format(' '.join(singularity_command)))
 
