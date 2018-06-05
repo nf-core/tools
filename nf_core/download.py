@@ -4,10 +4,12 @@
 from __future__ import print_function
 
 from io import BytesIO
+import click
 import logging
 import os
 import re
 import requests
+import requests_cache
 import subprocess
 import sys
 from zipfile import ZipFile
@@ -58,12 +60,13 @@ class DownloadWorkflow():
 
         # Download the singularity images
         if self.singularity:
-            logging.info("Fetching container names for workflow")
+            logging.debug("Fetching container names for workflow")
             self.find_singularity_images()
             if len(self.containers) == 0:
                 logging.info("No container names found in workflow")
             else:
                 os.mkdir(os.path.join(self.outdir, 'singularity-images'))
+                logging.info("Downloading {} singularity container{}".format(len(self.containers), 's' if len(self.containers) > 1 else ''))
                 for container in self.containers:
                     self.download_singularity_image(container)
 
@@ -100,7 +103,8 @@ class DownloadWorkflow():
                 elif not self.release:
                     self.release = 'dev'
                     self.wf_sha = 'master' # Cheating a little, but GitHub download link works
-                    logging.info("Pipeline is in development. Using current code on master branch.")
+                    logging.warn("Pipeline is in development - downloading current code on master branch.\n" +
+                        "This is likely to change soon should not be considered fully reproducible.")
 
                 # Set outdir name if not defined
                 if not self.outdir:
@@ -162,53 +166,41 @@ class DownloadWorkflow():
 
         out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
         out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
-        address = 'docker://{}'.format(container.replace('docker://', ''))
         shub_api_url = 'https://www.singularity-hub.org/api/container/{}'.format(container.replace('nfcore', 'nf-core').replace('docker://', ''))
-        shub_api_url = 'https://www.singularity-hub.org/api/container/ewels/nf-core-methylseq:latest'
-        singularity_command = ["singularity", "pull", "--name", out_path, address]
 
         # Try to download the singularity image from singularity-hub first
         logging.debug("Checking shub API: {}".format(shub_api_url))
         response = requests.get(shub_api_url, timeout=10)
         if response.status_code == 200:
             shub_response = response.json()
-            logging.info("Downloading singularity image from singularity-hub.org")
-
-            # Strip the ?generation= key in URL, as this breaks the download
-
-            #
-            # TODO: May not need to do this?
-            #
-            dl_url = re.sub(r"\?generation=\d+&", '?', shub_response['image'])
-
             # Stream the download as it's going to be large
-            logging.debug("Starting download: {}".format(dl_url))
+            logging.debug("Starting download: {}".format(shub_response['image']))
 
-            #
-            # TODO: This next line hangs! WHHYYYYYY?Y???????
-            #
-            dl_request = requests.get(dl_url, stream=True)
-            if dl_request.status_code == 200:
-                logging.debug("Response code 200. Streaming download to disk.")
-                with open(out_path, 'wb') as f:
-                    for chunk in dl_request.iter_content(chunk_size=1024):
-                        if chunk:
-                            f.write(chunk)
-                return
-            else:
-                logging.error("Error with singularity hub API call: {}".format(response.status_code))
-
-#             dl_request = requests.get(shub_response['image'], stream=True)
-#             total_length = int(dl_request.headers.get('content-length'))
-#             logging.debug("Total image file size: {} bytes".format(total_length))
-#             with click.progressbar(dl_request.iter_content(1024), length=total_size) as pbar, open(out_path, 'wb') as f:
-#                 for chunk in pbar:
-#                     if chunk:
-#                         f.write(chunk)
-#                         pbar.update(len(chunk))
+            # Don't use the requests cache for the download
+            with requests_cache.disabled():
+                dl_request = requests.get(shub_response['image'], stream=True)
+                # Check that we got a good response code
+                if dl_request.status_code == 200:
+                    total_size = int(dl_request.headers.get('content-length'))
+                    logging.debug("Total image file size: {} bytes".format(total_size))
+                    dl_label = "{} [{:.2f}MB]".format(out_name, total_size/1024.0/1024)
+                    # Open file in bytes mode
+                    with open(out_path, 'wb') as f:
+                        dl_iter = dl_request.iter_content(1024)
+                        # Use a click progress bar whilst we stream the download
+                        with click.progressbar(dl_iter, length=total_size/1024, label=dl_label, show_pos=True) as pbar:
+                            for chunk in pbar:
+                                if chunk:
+                                    f.write(chunk)
+                    return
+                else:
+                    logging.error("Error with singularity hub API call: {}".format(response.status_code))
 
         logging.debug("Singularity image not found on singularity-hub")
-        logging.info("Building singularity image '{}'".format(out_name))
+
+        address = 'docker://{}'.format(container.replace('docker://', ''))
+        singularity_command = ["singularity", "pull", "--name", out_path, address]
+        logging.info("Building singularity image from dockerhub: {}".format(address))
         logging.debug("Singularity command: {}".format(' '.join(singularity_command)))
 
         # Try to use singularity to pull image
