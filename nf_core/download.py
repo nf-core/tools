@@ -6,6 +6,7 @@ from __future__ import print_function
 from io import BytesIO
 import click
 import logging
+import hashlib
 import os
 import re
 import requests
@@ -68,7 +69,12 @@ class DownloadWorkflow():
                 os.mkdir(os.path.join(self.outdir, 'singularity-images'))
                 logging.info("Downloading {} singularity container{}".format(len(self.containers), 's' if len(self.containers) > 1 else ''))
                 for container in self.containers:
-                    self.download_singularity_image(container)
+                    try:
+                        # Download from singularity hub if we can
+                        self.download_shub_image(container)
+                    except RuntimeWarning:
+                        # Try to build from dockerhub
+                        self.pull_singularity_image(container)
 
 
     def fetch_workflow_details(self):
@@ -161,14 +167,13 @@ class DownloadWorkflow():
             if k.startswith('process.') and k.endswith('.container'):
                 self.containers.append(v.strip('"').strip("'"))
 
-    def download_singularity_image(self, container):
-        """ Download singularity images for workflow """
+    def download_shub_image(self, container):
+        """ Download singularity images from singularity-hub """
 
         out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
         out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         shub_api_url = 'https://www.singularity-hub.org/api/container/{}'.format(container.replace('nfcore', 'nf-core').replace('docker://', ''))
 
-        # Try to download the singularity image from singularity-hub first
         logging.debug("Checking shub API: {}".format(shub_api_url))
         response = requests.get(shub_api_url, timeout=10)
         if response.status_code == 200:
@@ -179,6 +184,7 @@ class DownloadWorkflow():
             # Don't use the requests cache for the download
             with requests_cache.disabled():
                 dl_request = requests.get(shub_response['image'], stream=True)
+
                 # Check that we got a good response code
                 if dl_request.status_code == 200:
                     total_size = int(dl_request.headers.get('content-length'))
@@ -192,12 +198,25 @@ class DownloadWorkflow():
                             for chunk in pbar:
                                 if chunk:
                                     f.write(chunk)
-                    return
+                                    f.flush()
+
+                    # Check that the downloaded image has the right md5sum hash
+                    self.validate_md5(out_path, shub_response['version'])
                 else:
                     logging.error("Error with singularity hub API call: {}".format(response.status_code))
+                    raise RuntimeWarning("Error with singularity hub API call: {}".format(response.status_code))
 
-        logging.debug("Singularity image not found on singularity-hub")
+        elif response.status_code == 404:
+            logging.debug("Singularity image not found on singularity-hub")
+            raise RuntimeWarning("Singularity image not found on singularity-hub")
+        else:
+            logging.error("Error with singularity hub API call: {}".format(response.status_code))
+            raise ImportError("Error with singularity hub API call: {}".format(response.status_code))
 
+    def pull_singularity_image(self, container):
+        """ Use a local installation of singularity to pull an image from docker hub """
+        out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
+        out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         address = 'docker://{}'.format(container.replace('docker://', ''))
         singularity_command = ["singularity", "pull", "--name", out_path, address]
         logging.info("Building singularity image from dockerhub: {}".format(address))
@@ -213,3 +232,19 @@ class DownloadWorkflow():
             else:
                 # Something else went wrong with singularity command
                 raise e
+
+    def validate_md5(self, fname, expected):
+        """ Calculate the md5sum for a file on the disk and validate with expected """
+        logging.debug("Validating image hash: {}".format(fname))
+
+        # Calculate the md5 for the file on disk
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        file_hash = hash_md5.hexdigest()
+
+        if file_hash == expected:
+            logging.debug('md5 sum of image matches expected: {}'.format(expected))
+        else:
+            raise IOError ("{} md5 does not match remote: {} - {}".format(out_path, expected, file_hash))
