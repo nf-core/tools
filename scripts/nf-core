@@ -70,11 +70,9 @@ def list(json):
 )
 @click.option(
     '-s', '--singularity',
-    type = click.BOOL,
-    metavar = "[y/n]",
-    default = None,
-    required = True,
-    help = "Download singularity containers?"
+    is_flag = True,
+    default = False,
+    help = "Download singularity containers"
 )
 @click.option(
     '-o', '--outdir',
