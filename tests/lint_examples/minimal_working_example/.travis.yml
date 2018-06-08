@@ -9,6 +9,10 @@ cache: pip
 matrix:
   fast_finish: true
 
+before_install:
+  # Pull the docker image first so the test doesn't wait for this
+  - docker pull nfcore/tools:0.4
+
 install:
   # Install Nextflow
   - mkdir /tmp/nextflow
