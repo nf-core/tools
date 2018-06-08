@@ -73,6 +73,7 @@ class PipelineLint(object):
         self.config = {}
         self.pipeline_name = None
         self.dockerfile = []
+        self.singularityfile = []
         self.conda_config = {}
         self.passed = []
         self.warned = []
@@ -108,11 +109,13 @@ class PipelineLint(object):
             'check_files_exist',
             'check_licence',
             'check_docker',
+            'check_singularity',
             'check_nextflow_config',
             'check_ci_config',
             'check_readme',
             'check_conda_env_yaml',
-            'check_conda_dockerfile'
+            'check_conda_dockerfile',
+            'check_conda_singularityfile'
         ]
         if release:
             self.releaseMode = True
@@ -138,6 +141,7 @@ class PipelineLint(object):
         files_fail = [
             'nextflow.config',
             'Dockerfile',
+            'Singularity',
             ['.travis.yml', '.circle.yml'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
@@ -149,8 +153,7 @@ class PipelineLint(object):
         files_warn = [
             'main.nf',
             'environment.yml',
-            'conf/base.config',
-            'tests/run_test.sh'
+            'conf/base.config'
         ]
 
         def pf(file_path):
@@ -199,6 +202,20 @@ class PipelineLint(object):
             return
 
         self.failed.append((2, "Dockerfile check failed"))
+
+    def check_singularity(self):
+        """ Check that Singularity file contains the string 'FROM ' """
+        fn = os.path.join(self.path, "Singularity")
+        content = ""
+        with open(fn, 'r') as fh: content = fh.read()
+
+        # Implicitely also checks if empty.
+        if 'From:' in content:
+            self.passed.append((2, "Singularity file check passed"))
+            self.singularityfile = content.splitlines()
+            return
+
+        self.failed.append((2, "Singularity file check failed"))
 
 
     def check_licence(self):
@@ -335,6 +352,16 @@ class PipelineLint(object):
                     self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
                 else:
                     self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
+                # Check that we're pulling the right docker image
+                if self.config.get('params.container'):
+                    docker_pull_cmd = 'docker pull {}'.format(self.config['params.container'].strip('"\''))
+                    try:
+                        assert(docker_pull_cmd in ciconf['before_install'])
+                    except AssertionError:
+                        self.failed.append((5, "CI is not pulling the correct docker image: {}".format(docker_pull_cmd)))
+                    else:
+                        self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
+
                 # Check that we're testing the nf_required_version
                 nf_required_version_tested = False
                 env = ciconf.get('env', [])
@@ -542,6 +569,39 @@ class PipelineLint(object):
             for idx, s in enumerate(expected_strings):
                 if not found_strings[idx]:
                     self.failed.append((9, "Could not find Dockerfile string: {}".format(s)))
+
+
+    def check_conda_singularityfile(self):
+        """ Check that the Singularity build file looks right, if working with conda
+
+        Make sure that a name is given and is consistent with the pipeline name
+        Check that depedency versions are pinned
+        Warn if dependency versions are not the latest available """
+
+        if 'environment.yml' not in self.files or len(self.singularityfile) == 0:
+            return
+
+        expected_strings = [
+            'From:nfcore/base',
+            'Bootstrap:docker',
+            'VERSION {}'.format(self.config['params.version'].strip(' \'"')),
+            'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
+            'export PATH',
+            'environment.yml /',
+            '/opt/conda/bin/conda env create -f /environment.yml',
+            '/opt/conda/bin/conda clean -a',
+        ]
+        found_strings = [False for x in expected_strings]
+        for l in self.singularityfile:
+            for idx, s in enumerate(expected_strings):
+                if l.strip() == s.strip():
+                    found_strings[idx] = True
+        if all(found_strings):
+            self.passed.append((10, "Found all expected strings in Singularity file"))
+        else:
+            for idx, s in enumerate(expected_strings):
+                if not found_strings[idx]:
+                    self.failed.append((10, "Could not find Singularity file string: {}".format(s)))
 
     def print_results(self):
         # Print results

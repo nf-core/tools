@@ -9,6 +9,8 @@ nf-core pipelines should adhere to a common file structure for consistency. The 
     * The main nextflow config file
 * `Dockerfile`
     * A docker build script to generate a docker image with the required software
+* `Singularity`
+    * A singularity build script to generate a singularity image with the required software
 * `.travis.yml` or `circle.yml`
     * A config file for automated continuous testing with either [Travis CI](https://travis-ci.org/) or [Circle CI](https://circleci.com/)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
@@ -26,14 +28,12 @@ The following files are suggested but not a hard requirement. If they are missin
     * It's recommended that the main workflow script is called `main.nf`
 * `conf/base.config`
     * A `conf` directory with at least one config called `base.config`
-* `tests/run_test.sh`
-    * A bash script to run the pipeline test run
 
 
-## Error #2 - Docker file check failed ## {#2}
-Pipelines should have a file called `Dockerfile` in their root directory.
-This is used for automated docker image builds. This test checks that the file
-exists and contains at least the string `FROM `.
+## Error #2 - Docker / Singularity file check failed ## {#2}
+Pipelines should have a files called `Dockerfile` and `Singularity` in their root directory.
+These are used for automated docker and singularity image builds. This test checks that the files
+exist and contain at least the string `FROM ` (`Dockerfile`) / `From:` (`Singularity`).
 
 ## Error #3 - Licence check failed ## {#3}
 nf-core pipelines must ship with an open source [MIT licence](https://choosealicense.com/licenses/mit/).
@@ -97,6 +97,8 @@ nf-core pipelines must have CI testing with Travis or Circle CI.
 This test fails if the following happens:
 
 * `.travis.yml` does not contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
+* `.travis.yml` does not contain the string `docker pull <container>` under `before_install`
+    * Where `<container>` is fetched from `params.container` in the `nextflow.config` file
 * `.travis.yml` does not test the Nextflow version specified in the pipeline as `nf_required_version`
     * This is expected in the `env` section of the config, eg:
     ```yaml
@@ -169,7 +171,7 @@ to create the container. Such `Dockerfile`s can usually be very short, eg:
 ```Dockerfile
 FROM nfcore/base
 LABEL authors="your@email.com" \
-      description="Docker image containing all requirements for nf-core/EXAMPLE pipeline"
+      description="Container image containing all requirements for nf-core/EXAMPLE pipeline"
 
 COPY environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a
@@ -181,5 +183,49 @@ that the above template is used.
 Failures are generated if the `FROM`, `COPY`, `RUN` and `ENV` statements above are not present.
 These lines must be an exact copy of the above example, with the exception that
 the `ENV PATH` must reference the name of your pipeline instead of `nfcore-EXAMPLE`.
+
+Additional lines and different metadata can be added without causing the test to fail.
+
+
+## Error #10 - Singularity for use with Conda environments ## {#9}
+
+> This test only runs if there is both `environment.yml`
+> and `Singularity` file present in the workflow.
+
+If a workflow has a conda `environment.yml` file (see above), the `Singularity` build script
+should use this to create the container. Such `Singularity` files can usually be very short, eg:
+
+```
+From:nfcore/base
+Bootstrap:docker
+
+%labels
+    MAINTAINER Your Name <your@email.com>
+    DESCRIPTION Container image containing all requirements for the nf-core/EXAMPLE pipeline
+    VERSION [pipeline version]
+
+%environment
+    PATH=/opt/conda/envs/nfcore-EXAMPLE/bin:$PATH
+    export PATH
+
+%files
+    environment.yml /
+
+%post
+    /opt/conda/bin/conda env create -f /environment.yml
+    /opt/conda/bin/conda clean -a
+```
+
+To enforce this minimal `Singularity` and check for common copy+paste errors, we require
+that the above template is used. Specifically, presence of these lines is checked for:
+
+* `From:nfcore/base`
+* `Bootstrap:docker`
+* `VERSION [pipeline version]`
+* `PATH=/opt/conda/envs/nfcore-EXAMPLE/bin:$PATH`
+* `export PATH`
+* `environment.yml /`
+* `/opt/conda/bin/conda env create -f /environment.yml`
+* `/opt/conda/bin/conda clean -a`
 
 Additional lines and different metadata can be added without causing the test to fail.
