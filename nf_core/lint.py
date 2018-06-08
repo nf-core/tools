@@ -18,6 +18,8 @@ import requests
 import requests_cache
 import yaml
 
+import nf_core.utils
+
 # Set up local caching for requests to speed up remote queries
 cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
 if not os.path.exists(cachedir):
@@ -278,27 +280,18 @@ class PipelineLint(object):
             'params.singleEnd'
         ]
 
-        # Call `nextflow config` and pipe stderr to /dev/null
-        try:
-            with open(os.devnull, 'w') as devnull:
-                nfconfig_raw = subprocess.check_output(['nextflow', 'config', '-flat', self.path], stderr=devnull)
-        except subprocess.CalledProcessError as e:
-            raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
-        else:
-            for l in nfconfig_raw.splitlines():
-                ul = l.decode()
-                k, v = ul.split(' = ', 1)
-                self.config[k] = v
-            for cf in config_fail:
-                if cf in self.config.keys():
-                    self.passed.append((4, "Config variable found: {}".format(cf)))
-                else:
-                    self.failed.append((4, "Config variable not found: {}".format(cf)))
-            for cf in config_warn:
-                if cf in self.config.keys():
-                    self.passed.append((4, "Config variable found: {}".format(cf)))
-                else:
-                    self.warned.append((4, "Config variable not found: {}".format(cf)))
+        # Get the nextflow config for this pipeline
+        self.config = nf_core.utils.fetch_wf_config(self.path)
+        for cf in config_fail:
+            if cf in self.config.keys():
+                self.passed.append((4, "Config variable found: {}".format(cf)))
+            else:
+                self.failed.append((4, "Config variable not found: {}".format(cf)))
+        for cf in config_warn:
+            if cf in self.config.keys():
+                self.passed.append((4, "Config variable found: {}".format(cf)))
+            else:
+                self.warned.append((4, "Config variable not found: {}".format(cf)))
 
         # Check the variables that should be set to 'true'
         for k in ['timeline.enabled', 'report.enabled', 'trace.enabled', 'dag.enabled']:
