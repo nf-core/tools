@@ -59,11 +59,21 @@ class DownloadTest(unittest.TestCase):
         
         download_obj.fetch_workflow_details(mock_workflows)
 
-    @mock.patch('nf_core.list.RemoteWorkflow')
     @mock.patch('nf_core.list.Workflows')
-    def test_fetch_workflow_details_for_unknown_workflow(self, mock_workflows, mock_workflow):
+    def test_fetch_workflow_details_for_unknown_workflow(self, mock_workflows):
         download_obj = DownloadWorkflow(
-            pipeline = "my-server.org/dummy",
+            pipeline = "myorg/dummy",
+            release = "1.2.0"
+            )
+        mock_workflows.remote_workflows = []
+
+        download_obj.fetch_workflow_details(mock_workflows)
+
+    @mock.patch('nf_core.list.Workflows')
+    @pytest.mark.xfail(raises=LookupError)
+    def test_fetch_workflow_details_no_search_result(self, mock_workflows):
+        download_obj = DownloadWorkflow(
+            pipeline = "http://my-server.org/dummy",
             release = "1.2.0"
             )
         mock_workflows.remote_workflows = []
