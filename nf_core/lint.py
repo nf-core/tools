@@ -563,12 +563,13 @@ class PipelineLint(object):
             for idx, s in enumerate(expected_strings):
                 if l.strip() == s.strip():
                     found_strings[idx] = True
-        if all(found_strings):
-            self.passed.append((9, "Found all expected strings in Dockerfile"))
+        # Check if we found everything
+        difference = set(expected_strings) - set(self.singularity_file)
+        if not difference:
+            self.passed.append((10, "Found all expected strings in Dockerfile file"))
         else:
-            for idx, s in enumerate(expected_strings):
-                if not found_strings[idx]:
-                    self.failed.append((9, "Could not find Dockerfile string: {}".format(s)))
+           for missing in difference:
+                self.failed.append((10, "Could not find Dockerfile file string: {}".format(missing)))
 
 
     def check_conda_singularityfile(self):
@@ -596,12 +597,13 @@ class PipelineLint(object):
             for idx, s in enumerate(expected_strings):
                 if l.strip() == s.strip():
                     found_strings[idx] = True
-        if all(found_strings):
+        # Check if we found everything
+        difference = set(expected_strings) - set(self.singularity_file)
+        if not difference:
             self.passed.append((10, "Found all expected strings in Singularity file"))
         else:
-            for idx, s in enumerate(expected_strings):
-                if not found_strings[idx]:
-                    self.failed.append((10, "Could not find Singularity file string: {}".format(s)))
+           for missing in difference:
+                self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
 
     def print_results(self):
         # Print results
