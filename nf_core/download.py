@@ -39,7 +39,7 @@ class DownloadWorkflow():
 
         # Get workflow details
         try:
-            self.fetch_workflow_details()
+            self.fetch_workflow_details(nf_core.list.Workflows())
         except LookupError:
             sys.exit(1)
 
@@ -77,9 +77,12 @@ class DownloadWorkflow():
                         self.pull_singularity_image(container)
 
 
-    def fetch_workflow_details(self):
-        """ Fetch details of nf-core workflow to download """
-        wfs = nf_core.list.Workflows()
+    def fetch_workflow_details(self, wfs):
+        """ Fetch details of nf-core workflow to download 
+        
+        params:
+        - wfs   A nf_core.list.Workflows object
+        """
         wfs.get_remote_workflows()
 
         # Get workflow download details
