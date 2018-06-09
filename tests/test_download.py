@@ -5,12 +5,17 @@
 import nf_core.list
 from nf_core.download import DownloadWorkflow
 
+import io
 import mock
 import pytest
+import requests
 import unittest
 
 class DownloadTest(unittest.TestCase):
 
+    #
+    # Tests for 'fetch_workflow_details()'
+    #
     @mock.patch('nf_core.list.RemoteWorkflow')
     @mock.patch('nf_core.list.Workflows')
     def test_fetch_workflow_details_for_release(self, mock_workflows, mock_workflow):
@@ -90,5 +95,16 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.fetch_workflow_details(mock_workflows)
 
-
-        
+    #
+    # Tests for 'download_wf_files'  
+    #
+    def test_download_wf_files(self):
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            release = "1.2.0",
+            outdir="/tmp"
+            )
+        download_obj.wf_name = "nf-core/methylseq"
+        download_obj.wf_sha = "1.0"
+        download_obj.wf_download_url = "https://github.com/nf-core/methylseq/archive/1.0.zip"
+        download_obj.download_wf_files()
