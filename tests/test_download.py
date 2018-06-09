@@ -59,3 +59,15 @@ class DownloadTest(unittest.TestCase):
         
         download_obj.fetch_workflow_details(mock_workflows)
 
+    @mock.patch('nf_core.list.RemoteWorkflow')
+    @mock.patch('nf_core.list.Workflows')
+    def test_fetch_workflow_details_for_unknown_workflow(self, mock_workflows, mock_workflow):
+        download_obj = DownloadWorkflow(
+            pipeline = "my-server.org/dummy",
+            release = "1.2.0"
+            )
+        mock_workflows.remote_workflows = []
+
+        download_obj.fetch_workflow_details(mock_workflows)
+
+        
