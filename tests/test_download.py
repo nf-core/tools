@@ -29,7 +29,7 @@ class DownloadTest(unittest.TestCase):
     def test_fetch_workflow_details_for_dev_version(self, mock_workflows, mock_workflow):
         download_obj = DownloadWorkflow(pipeline = "dummy")
         mock_workflow.name = "dummy"
-        mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
+        mock_workflow.releases = []
         mock_workflows.remote_workflows = [mock_workflow]
         
         download_obj.fetch_workflow_details(mock_workflows)
