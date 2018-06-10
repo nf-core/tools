@@ -108,3 +108,20 @@ class DownloadTest(unittest.TestCase):
         download_obj.wf_sha = "1.0"
         download_obj.wf_download_url = "https://github.com/nf-core/methylseq/archive/1.0.zip"
         download_obj.download_wf_files()
+
+    #
+    # Tests for 'find_singularity_images'
+    #
+    @mock.patch('nf_core.utils.fetch_wf_config')
+    def test_find_singularity_images(self, mock_fetch_wf_config):
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            outdir = "/tmp")
+        mock_fetch_wf_config.return_value = {
+            'process.mapping.container': 'cutting-edge-container',
+            'process.nocontainer': 'not-so-cutting-edge'
+        }
+        download_obj.find_singularity_images()
+        assert len(download_obj.containers) == 1
+        assert download_obj.containers[0] == 'cutting-edge-container'
+        
