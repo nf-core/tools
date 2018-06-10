@@ -564,7 +564,7 @@ class PipelineLint(object):
             self.passed.append((10, "Found all expected strings in Dockerfile file"))
         else:
             for missing in difference:
-                    self.failed.append((10, "Could not find Dockerfile file string: {}".format(missing)))
+                self.failed.append((10, "Could not find Dockerfile file string: {}".format(missing)))
 
     def check_conda_singularityfile(self):
         """ Check that the Singularity build file looks right, if working with conda
@@ -592,7 +592,7 @@ class PipelineLint(object):
             self.passed.append((10, "Found all expected strings in Singularity file"))
         else:
             for missing in difference:
-                    self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
+                self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
 
     def print_results(self):
         # Print results
