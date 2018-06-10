@@ -8,6 +8,7 @@ from nf_core.download import DownloadWorkflow
 import hashlib
 import io
 import mock
+import os
 import pytest
 import requests
 import unittest
@@ -141,22 +142,30 @@ class DownloadTest(unittest.TestCase):
         mock_progressbar,
         mock_md5):
 
+        # we need this for the fake download
+        tmp_dir = "/tmp/singularity-images"
+        if not os.path.isdir(tmp_dir): os.mkdir(tmp_dir)
+
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
             outdir = "/tmp")
 
-        
+        # simulauates the first response querying the API for the container
+        # information
         resp_shub = requests.Response()
         resp_shub.status_code = 200
         mock_json.side_effect = [{'image': 'my-container', 'version': 'h4sh'}]
 
-
+        # simulates the second response querying the
+        # container download stream
         resp_download = requests.Response()
         resp_download.status_code = 200
         resp_download.headers = {'content-length' : 1024}
         mock_content.side_effect = b"Awesome"
 
+        # assign the response order
         mock_request.side_effect = [resp_shub, resp_download]
+        # test
         download_obj.download_shub_image("awesome-container")
     
     #
