@@ -124,4 +124,18 @@ class DownloadTest(unittest.TestCase):
         download_obj.find_singularity_images()
         assert len(download_obj.containers) == 1
         assert download_obj.containers[0] == 'cutting-edge-container'
-        
+    
+    #
+    # Tests for 'download_shub_image'
+    #
+    @mock.patch('requests.Response')
+    @mock.patch('requests.get')
+    def test_download_shub_image_on_sucess(self, mock_request, mock_response):
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            outdir = "/tmp")
+
+        mock_response.status_code == 200
+        mock_response.side_effect = {'image': 'http://singularity-hub.org/whatever'}
+
+        mock_request.return_value = mock_response
