@@ -5,6 +5,7 @@
 import nf_core.list
 from nf_core.download import DownloadWorkflow
 
+import hashlib
 import io
 import mock
 import pytest
@@ -128,14 +129,58 @@ class DownloadTest(unittest.TestCase):
     #
     # Tests for 'download_shub_image'
     #
-    @mock.patch('requests.Response')
+    @mock.patch('nf_core.download.DownloadWorkflow.validate_md5')
+    @mock.patch('click.progressbar')
+    @mock.patch('requests.Response.iter_content')
+    @mock.patch('requests.Response.json')
     @mock.patch('requests.get')
-    def test_download_shub_image_on_sucess(self, mock_request, mock_response):
+    def test_download_shub_image_on_sucess(self,
+        mock_request,
+        mock_json,
+        mock_content,
+        mock_progressbar,
+        mock_md5):
+
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
             outdir = "/tmp")
 
-        mock_response.status_code == 200
-        mock_response.side_effect = {'image': 'http://singularity-hub.org/whatever'}
+        
+        resp_shub = requests.Response()
+        resp_shub.status_code = 200
+        mock_json.side_effect = [{'image': 'my-container', 'version': 'h4sh'}]
 
-        mock_request.return_value = mock_response
+
+        resp_download = requests.Response()
+        resp_download.status_code = 200
+        resp_download.headers = {'content-length' : 1024}
+        mock_content.side_effect = b"Awesome"
+
+        mock_request.side_effect = [resp_shub, resp_download]
+        download_obj.download_shub_image("awesome-container")
+    
+    #
+    # Tests for 'validate_md5'
+    #
+    def test_matching_md5sums(self):
+        download_obj = DownloadWorkflow(pipeline = "dummy")
+        test_hash = hashlib.md5()
+        test_hash.update(b"test")
+        val_hash = test_hash.hexdigest()
+
+        with open("/tmp/test", "w") as f: f.write("test")
+
+        download_obj.validate_md5("/tmp/test", val_hash)
+
+    @pytest.mark.xfail(raises=IOError)
+    def test_mismatching_md5sums(self):
+        download_obj = DownloadWorkflow(pipeline = "dummy")
+        test_hash = hashlib.md5()
+        test_hash.update(b"other value")
+        val_hash = test_hash.hexdigest()
+
+        with open("/tmp/test", "w") as f: f.write("test")
+
+        download_obj.validate_md5("/tmp/test", val_hash)
+
+    
