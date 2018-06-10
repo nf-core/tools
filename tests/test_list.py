@@ -1,11 +1,15 @@
 #!/usr/bin/env python
 """ Tests covering the workflow listing code.
 """
-import os
-import time
-import pytest
-import unittest
+
 import nf_core.list
+
+import mock
+import os
+import pytest
+import time
+import unittest
+
 from nose.tools import raises
 from datetime import datetime
 
@@ -72,3 +76,14 @@ class TestLint(unittest.TestCase):
         wfs.compare_remote_local()
 
         rwf_ex.releases = None
+    
+    @mock.patch('nf_core.list.LocalWorkflow')
+    def test_parse_local_workflow_and_succeed(self, mock_local_wf):
+        test_path = '/tmp/nxf/nf-core'
+        if not os.path.isdir(test_path): os.makedirs(test_path)
+
+        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f: f.write('dummy')
+        os.environ['NXF_ASSETS'] = '/tmp/nfx'        
+        workflows_obj = nf_core.list.Workflows()
+        workflows_obj.get_local_nf_workflows()
+
