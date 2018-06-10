@@ -284,3 +284,21 @@ class DownloadTest(unittest.TestCase):
             pipeline = "dummy",
             outdir="/tmp")
         download_obj.pull_singularity_image("a-container")
+
+    #
+    # Tests for the main entry method 'download_workflow'
+    #
+    @mock.patch('nf_core.download.DownloadWorkflow.pull_singularity_image')
+    @mock.patch('nf_core.download.DownloadWorkflow.download_shub_image')
+    def test_download_workflow_with_success(self,
+        mock_download_shub,
+        mock_download_image):
+
+        download_obj = DownloadWorkflow(
+            pipeline = "nf-core/methylseq",
+            outdir="/tmp/testdir",
+            singularity=True)
+
+        mock_download_shub.side_effect = RuntimeWarning()
+
+        download_obj.download_workflow()
