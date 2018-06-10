@@ -250,4 +250,4 @@ class DownloadWorkflow():
         if file_hash == expected:
             logging.debug('md5 sum of image matches expected: {}'.format(expected))
         else:
-            raise IOError ("{} md5 does not match remote: {} - {}".format(out_path, expected, file_hash))
+            raise IOError ("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))
