@@ -76,7 +76,6 @@ class DownloadWorkflow():
                         # Try to build from dockerhub
                         self.pull_singularity_image(container)
 
-
     def fetch_workflow_details(self, wfs):
         """ Fetch details of nf-core workflow to download 
         
@@ -144,7 +143,6 @@ class DownloadWorkflow():
             logging.error("Not able to find pipeline '{}'".format(self.pipeline))
             logging.info("Available pipelines: {}".format(', '.join([w.name for w in wfs.remote_workflows])))
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
-
 
     def download_wf_files(self):
         """ Download workflow files from GitHub - save in outdir """
