@@ -6,6 +6,7 @@ import nf_core.list
 
 import mock
 import os
+import git
 import pytest
 import time
 import unittest
@@ -111,4 +112,14 @@ class TestLint(unittest.TestCase):
             f.write('dummy')
         workflows_obj = nf_core.list.Workflows()
         workflows_obj.get_local_nf_workflows()
+    
+    @mock.patch('os.stat')
+    @mock.patch('git.Repo')
+    def test_local_workflow_investigation(self, mock_repo, mock_stat):
+        local_wf = nf_core.list.LocalWorkflow('dummy')
+        local_wf.local_path = '/tmp'
+        mock_repo.head.commit.hexsha = 'h00r4y'
+        mock_stat.st_mode = 1
+        local_wf.get_local_nf_workflow_details()
+    
 
