@@ -198,7 +198,7 @@ class PipelineLint(object):
         # Implicitely also checks if empty.
         if 'FROM ' in content:
             self.passed.append((2, "Dockerfile check passed"))
-            self.dockerfile = content.splitlines()
+            self.dockerfile = [line.strip() for line in content.splitlines()]
             return
 
         self.failed.append((2, "Dockerfile check failed"))
@@ -212,7 +212,7 @@ class PipelineLint(object):
         # Implicitely also checks if empty.
         if 'From:' in content:
             self.passed.append((2, "Singularity file check passed"))
-            self.singularityfile = content.splitlines()
+            self.singularityfile = [line.strip() for line in content.splitlines()]
             return
 
         self.failed.append((2, "Singularity file check failed"))
@@ -558,18 +558,13 @@ class PipelineLint(object):
             'RUN conda env create -f /environment.yml && conda clean -a',
             'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
         ]
-        found_strings = [False for x in expected_strings]
-        for l in self.dockerfile:
-            for idx, s in enumerate(expected_strings):
-                if l.strip() == s.strip():
-                    found_strings[idx] = True
-        if all(found_strings):
-            self.passed.append((9, "Found all expected strings in Dockerfile"))
-        else:
-            for idx, s in enumerate(expected_strings):
-                if not found_strings[idx]:
-                    self.failed.append((9, "Could not find Dockerfile string: {}".format(s)))
 
+        difference = set(expected_strings) - set(self.dockerfile)
+        if not difference:
+            self.passed.append((10, "Found all expected strings in Dockerfile file"))
+        else:
+            for missing in difference:
+                self.failed.append((10, "Could not find Dockerfile file string: {}".format(missing)))
 
     def check_conda_singularityfile(self):
         """ Check that the Singularity build file looks right, if working with conda
@@ -591,17 +586,13 @@ class PipelineLint(object):
             '/opt/conda/bin/conda env create -f /environment.yml',
             '/opt/conda/bin/conda clean -a',
         ]
-        found_strings = [False for x in expected_strings]
-        for l in self.singularityfile:
-            for idx, s in enumerate(expected_strings):
-                if l.strip() == s.strip():
-                    found_strings[idx] = True
-        if all(found_strings):
+
+        difference = set(expected_strings) - set(self.singularityfile)
+        if not difference:
             self.passed.append((10, "Found all expected strings in Singularity file"))
         else:
-            for idx, s in enumerate(expected_strings):
-                if not found_strings[idx]:
-                    self.failed.append((10, "Could not find Singularity file string: {}".format(s)))
+            for missing in difference:
+                self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
 
     def print_results(self):
         # Print results
