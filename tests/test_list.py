@@ -50,6 +50,7 @@ class TestLint(unittest.TestCase):
             'stargazers_count': 42,
             'watchers_count': 6,
             'forks_count': 7,
+            'releases': []
         }
 
         rwf_ex = nf_core.list.RemoteWorkflow(remote)
