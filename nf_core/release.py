@@ -24,7 +24,7 @@ def make_release(lint_obj, new_version):
     nfconfig_newstr = "version = '{}'".format(new_version)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-    # Update Docker tag
+    # Update container tag
     docker_tag = 'latest'
     if new_version.replace('.', '').isdigit():
         docker_tag = new_version
@@ -34,6 +34,10 @@ def make_release(lint_obj, new_version):
     nfconfig_newstr = "container = 'nfcore/{}:{}'".format(lint_obj.pipeline_name.lower(), docker_tag)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
+    # Update Singularity version name
+    nfconfig_pattern = r"VERSION {}".format(current_version.replace('.','\.'))
+    nfconfig_newstr = "VERSION {}".format(new_version)
+    update_file_version("Singularity", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
     if 'environment.yml' in lint_obj.files:
         # Update conda environment.yml
@@ -45,6 +49,11 @@ def make_release(lint_obj, new_version):
         nfconfig_pattern = r"ENV PATH /opt/conda/envs/nfcore-{}-{}/bin:\$PATH".format(lint_obj.pipeline_name.lower(), current_version.replace('.','\.'))
         nfconfig_newstr = "ENV PATH /opt/conda/envs/nfcore-{}-{}/bin:$PATH".format(lint_obj.pipeline_name.lower(), new_version)
         update_file_version("Dockerfile", lint_obj, nfconfig_pattern, nfconfig_newstr)
+
+        # Update Singularity file if based on conda
+        nfconfig_pattern = r"PATH=/opt/conda/envs/nfcore-{}-{}/bin:\$PATH".format(lint_obj.pipeline_name.lower(), current_version.replace('.','\.'))
+        nfconfig_newstr = "PATH=/opt/conda/envs/nfcore-{}-{}/bin:$PATH".format(lint_obj.pipeline_name.lower(), new_version)
+        update_file_version("Singularity", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
 def update_file_version(filename, lint_obj, pattern, newstr):
     """ Update params.version in the nextflow config file """
