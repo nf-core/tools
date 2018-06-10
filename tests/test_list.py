@@ -16,11 +16,17 @@ from datetime import datetime
 class TestLint(unittest.TestCase):
     """Class for list tests"""
 
-    def test_working_listcall(self):
+    @mock.patch('json.dumps')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('nf_core.list.LocalWorkflow')
+    def test_working_listcall(self, mock_loc_wf, mock_subprocess, mock_json):
         """ Test that listing pipelines works """
         nf_core.list.list_workflows()
 
-    def test_working_listcall_json(self):
+    @mock.patch('json.dumps')
+    @mock.patch('subprocess.check_output')
+    @mock.patch('nf_core.list.LocalWorkflow')
+    def test_working_listcall_json(self, mock_loc_wf, mock_subprocess, mock_json):
         """ Test that listing pipelines with JSON works """
         nf_core.list.list_workflows(True)
 
@@ -82,8 +88,27 @@ class TestLint(unittest.TestCase):
         test_path = '/tmp/nxf/nf-core'
         if not os.path.isdir(test_path): os.makedirs(test_path)
 
-        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f: f.write('dummy')
-        os.environ['NXF_ASSETS'] = '/tmp/nfx'        
+        if not os.environ.get('NXF_ASSETS'):
+            os.environ['NXF_ASSETS'] = '/tmp/nxf'
+        assert os.environ['NXF_ASSETS'] == '/tmp/nxf'
+        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f: 
+            f.write('dummy')
+        workflows_obj = nf_core.list.Workflows()
+        workflows_obj.get_local_nf_workflows()
+        assert len(workflows_obj.local_workflows) == 1
+
+    @mock.patch('os.environ.get')
+    @mock.patch('nf_core.list.LocalWorkflow')
+    @mock.patch('subprocess.check_output')
+    def test_parse_local_workflow_home(self, mock_subprocess, mock_local_wf, mock_env):
+        test_path = '/tmp/nxf/nf-core'
+        if not os.path.isdir(test_path): os.makedirs(test_path)
+
+        mock_env.side_effect = '/tmp/nxf'
+
+        assert os.environ['NXF_ASSETS'] == '/tmp/nxf'
+        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f: 
+            f.write('dummy')
         workflows_obj = nf_core.list.Workflows()
         workflows_obj.get_local_nf_workflows()
 
