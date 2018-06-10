@@ -168,6 +168,89 @@ class DownloadTest(unittest.TestCase):
         # test
         download_obj.download_shub_image("awesome-container")
     
+    @mock.patch('requests.get')
+    @pytest.mark.xfail(raises=RuntimeWarning)
+    def test_download_image_shub_without_hit(self,
+        mock_request):
+
+        # we need this for the fake download
+        tmp_dir = "/tmp/singularity-images"
+        if not os.path.isdir(tmp_dir): os.mkdir(tmp_dir)
+
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            outdir = "/tmp")
+
+        # simulauates the first response querying the API for the container
+        # information
+        resp_shub = requests.Response()
+        resp_shub.status_code = 404
+
+        # assign the response order
+        mock_request.side_effect = [resp_shub]
+        
+        # test
+        download_obj.download_shub_image("awesome-container")
+
+    @mock.patch('requests.Response.json')
+    @mock.patch('requests.get')
+    @pytest.mark.xfail(raises=RuntimeWarning)
+    def test_download_image_shub_wrong_url(self,
+        mock_request,
+        mock_json):
+
+        # we need this for the fake download
+        tmp_dir = "/tmp/singularity-images"
+        if not os.path.isdir(tmp_dir): os.mkdir(tmp_dir)
+
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            outdir = "/tmp")
+
+        # simulauates the first response querying the API for the container
+        # information
+        resp_shub = requests.Response()
+        resp_shub.status_code = 200
+        mock_json.side_effect = [{'image': 'my-container', 'version': 'h4sh'}]
+
+         # simulates the second response querying the
+        # container download stream
+        resp_download = requests.Response()
+        resp_download.status_code = 404
+
+        # assign the response order
+        mock_request.side_effect = [resp_shub, resp_download]
+        
+        # test
+        download_obj.download_shub_image("awesome-container")
+
+    @mock.patch('requests.Response.json')
+    @mock.patch('requests.get')
+    @pytest.mark.xfail(raises=ImportError)
+    def test_download_image_shub_unknown_response(self,
+        mock_request,
+        mock_json):
+
+        # we need this for the fake download
+        tmp_dir = "/tmp/singularity-images"
+        if not os.path.isdir(tmp_dir): os.mkdir(tmp_dir)
+
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            outdir = "/tmp")
+
+        # simulauates the first response querying the API for the container
+        # information
+        resp_shub = requests.Response()
+        resp_shub.status_code = 301
+        mock_json.side_effect = [{'image': 'my-container', 'version': 'h4sh'}]
+
+        # assign the response order
+        mock_request.side_effect = [resp_shub]
+        
+        # test
+        download_obj.download_shub_image("awesome-container")
+
     #
     # Tests for 'validate_md5'
     #
