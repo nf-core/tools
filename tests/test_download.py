@@ -275,4 +275,12 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.validate_md5("/tmp/test", val_hash)
 
-    
+    #
+    # Tests for 'pull_singularity_image'
+    #
+    @pytest.mark.xfail(raises=OSError)
+    def test_pull_singularity_image(self):
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            outdir="/tmp")
+        download_obj.pull_singularity_image("a-container")
