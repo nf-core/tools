@@ -60,7 +60,6 @@ class Workflows(object):
 
         # List all repositories at nf-core
         logging.debug("Fetching list of nf-core workflows")
-        #gh_api_url = 'https://api.github.com/orgs/nf-core/repos?per_page=100'
         nfcore_url = 'http://nf-co.re/pipelines.json'
         response = requests.get(nfcore_url, timeout=10)
         if response.status_code == 200:
