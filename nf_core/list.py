@@ -60,19 +60,14 @@ class Workflows(object):
 
         # List all repositories at nf-core
         logging.debug("Fetching list of nf-core workflows")
-        gh_api_url = 'https://api.github.com/orgs/nf-core/repos?per_page=100'
-        response = requests.get(gh_api_url, timeout=10)
+        nfcore_url = 'http://nf-co.re/pipelines.json'
+        response = requests.get(nfcore_url, timeout=10)
         if response.status_code == 200:
-            gh_repos = response.json()
+            gh_repos = response.json()['remote_workflows']
             for gh_repo in gh_repos:
                 if gh_repo['name'] not in self.remote_ignore:
                     self.remote_workflows.append(RemoteWorkflow(gh_repo))
-
-        # Get release information for each fetched workflow
-        logging.debug("Fetching release information for {} workflows".format(len(self.remote_workflows)))
-        for wf in self.remote_workflows:
-            wf.get_workflow_releases()
-
+    
     def get_local_nf_workflows(self):
         """ Get local nextflow workflows """
 
@@ -164,41 +159,17 @@ class RemoteWorkflow(object):
         self.forks_count = data.get('forks_count')
 
         # Placeholder vars for releases info
-        self.releases = list()
+        self.releases = data.get('releases')
 
         # Placeholder vars for local comparison
         self.local_wf = None
         self.local_is_latest = None
 
-    def get_workflow_releases(self):
-        """ Fetch additional information about each release for a workflow """
-
-        # Get information about every release
-        gh_api_url = 'https://api.github.com/repos/{}/releases'.format(self.full_name)
-        response = requests.get(gh_api_url, timeout=10)
-        if response.status_code == 200:
-            for rel in response.json():
-                d = dict()
-                d['name'] = rel.get('name')
-                d['published_at'] = rel.get('published_at')
-                d['published_at_pretty'] = pretty_date(datetime.datetime.strptime(rel.get('published_at'), "%Y-%m-%dT%H:%M:%SZ"))
-                d['tag_name'] = rel.get('tag_name')
-                d['tag_sha'] = None
-                d['draft'] = rel.get('draft')
-                d['prerelease'] = rel.get('prerelease')
-                self.releases.append(d)
-        self.releases.sort(key=lambda item:item['published_at'], reverse=True)
-
-        # Fetch tag information to get the commit hashes
-        if len(self.releases) > 0:
-            gh_api_url = 'https://api.github.com/repos/{}/tags'.format(self.full_name)
-            response = requests.get(gh_api_url, timeout=10)
-            if response.status_code == 200:
-                for rel in self.releases:
-                    for tag in response.json():
-                        if rel['tag_name'] == tag.get('name'):
-                            rel['tag_sha'] = tag.get('commit', {}).get('sha')
-
+        # Beautify date
+        for release in self.releases:
+            release['published_at_pretty'] = pretty_date(
+                datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ")
+            )
 
 
 class LocalWorkflow(object):
