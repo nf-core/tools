@@ -75,6 +75,7 @@ class PipelineLint(object):
         self.dockerfile = []
         self.singularityfile = []
         self.conda_config = {}
+        self.conda_package_info = {}
         self.passed = []
         self.warned = []
         self.failed = []
@@ -490,30 +491,19 @@ class PipelineLint(object):
                 else:
                     self.passed.append((8, "Conda dependency had pinned version number: {}".format(dep)))
 
-                    # Check if each dependency is the latest available version
-                    depname, depver = dep.split('=', 1)
-                    dep_channels = self.conda_config.get('channels', [])
-                    if '::' in depname:
-                        dep_channels = [depname.split('::')[0]]
-                        depname = depname.split('::')[1]
-                    for ch in reversed(dep_channels):
-                        anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
-                        try:
-                            response = requests.get(anaconda_api_url, timeout=10)
-                        except (requests.exceptions.Timeout):
-                            self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
-                        else:
-                            if response.status_code == 200:
-                                dep_json = response.json()
-                                last_ver = dep_json.get('latest_version')
-                                if last_ver is not None and last_ver != depver:
-                                    self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
-                                else:
-                                    self.passed.append((8, "Conda package is latest available: {}".format(dep)))
-                                break
+                    try:
+                        depname, depver = dep.split('=', 1)
+                        self.check_anaconda_package(dep)
+                    except ValueError:
+                        pass
                     else:
-                        self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
-            if isinstance(dep, dict):
+                        last_ver = self.conda_package_info[dep].get('latest_version')
+                        if last_ver is not None and last_ver != depver:
+                            self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
+                        else:
+                            self.passed.append((8, "Conda package is latest available: {}".format(dep)))
+
+            elif isinstance(dep, dict):
                 for pip_dep in dep.get('pip', []):
                     # Check that each pip dependency has a verion number
                     try:
@@ -522,25 +512,59 @@ class PipelineLint(object):
                         self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
                     else:
                         self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
-                        pip_depname, pip_depver = pip_dep.split('=', 1)
-                        pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
-                        try:
-                            response = requests.get(pip_api_url, timeout=10)
-                        except (requests.exceptions.Timeout):
-                            self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
-                        except (requests.exceptions.ConnectionError):
-                            self.warned.append((8, "PyPi API Connection error: {}".format(pip_api_url)))
-                        else:
-                            if response.status_code == 200:
-                                pip_dep_json = response.json()
-                                last_ver = pip_dep_json.get('info').get('version')
-                                if last_ver is not None and last_ver != pip_depver:
-                                    self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
-                                else:
-                                    self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
-                            else:
-                                self.failed.append((8, "Could not find pip dependency using the PyPi API: {}".format(dep)))
 
+                        try:
+                            pip_depname, pip_depver = dep.split('=', 1)
+                            self.check_pip_package(dep)
+                        except ValueError:
+                            pass
+                        else:
+                            last_ver = self.conda_package_info[dep].get('info').get('version')
+                            if last_ver is not None and last_ver != pip_depver:
+                                self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
+                            else:
+                                self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
+
+    def check_anaconda_package(self, dep):
+        """ Call the anaconda API to find details about package """
+        # Check if each dependency is the latest available version
+        depname, depver = dep.split('=', 1)
+        dep_channels = self.conda_config.get('channels', [])
+        if '::' in depname:
+            dep_channels = [depname.split('::')[0]]
+            depname = depname.split('::')[1]
+        for ch in reversed(dep_channels):
+            anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
+            try:
+                response = requests.get(anaconda_api_url, timeout=10)
+            except (requests.exceptions.Timeout):
+                self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
+                raise ValueError
+            else:
+                if response.status_code == 200:
+                    dep_json = response.json()
+                    self.conda_package_info[dep] = dep_json
+                    return
+        else:
+            self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
+            raise ValueError
+
+    def check_pip_package(self, dep):
+        """ Call the PyPI API to find details about package """
+        pip_depname, pip_depver = dep.split('=', 1)
+        pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
+        try:
+            response = requests.get(pip_api_url, timeout=10)
+        except (requests.exceptions.Timeout):
+            self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
+        except (requests.exceptions.ConnectionError):
+            self.warned.append((8, "PyPi API Connection error: {}".format(pip_api_url)))
+        else:
+            if response.status_code == 200:
+                pip_dep_json = response.json()
+                self.conda_package_info[dep] = pip_dep_json
+            else:
+                self.failed.append((8, "Could not find pip dependency using the PyPi API: {}".format(dep)))
 
     def check_conda_dockerfile(self):
         """ Check that the Docker build file looks right, if working with conda
