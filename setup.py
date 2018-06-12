@@ -18,6 +18,7 @@ setup(
     version = version,
     description = 'Helper tools for use with nf-core Nextflow pipelines.',
     long_description = readme,
+    long_description_content_type='text/markdown',
     keywords = ['nf-core', 'nextflow', 'bioinformatics', 'workflow', 'pipeline', 'biology', 'sequencing', 'NGS', 'next generation sequencing'],
     author = 'Phil Ewels',
     author_email = 'phil.ewels@scilifelab.se',
