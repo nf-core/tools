@@ -71,11 +71,6 @@ class TestLint(unittest.TestCase):
 
     def test_call_lint_pipeline_release(self):
         """Test the main execution function of PipelineLint when running with --release"""
-        # Ignore nf-core/tools releases
-        try:
-            del os.environ['TRAVIS_REPO_SLUG']
-        except KeyError:
-            pass
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline(release=True)
         expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
@@ -204,11 +199,6 @@ class TestLint(unittest.TestCase):
 
     def test_version_consistency_pass(self):
         """Tests the workflow version and container version sucessfully"""
-        # Ignore nf-core/tools releases
-        try:
-            del os.environ['TRAVIS_REPO_SLUG']
-        except KeyError:
-            pass
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["params.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
@@ -220,6 +210,7 @@ class TestLint(unittest.TestCase):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong release tag"""
         os.environ["TRAVIS_TAG"] = "0.5"
+        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["params.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
@@ -232,6 +223,7 @@ class TestLint(unittest.TestCase):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong release tag"""
         os.environ["TRAVIS_TAG"] = "0.5dev"
+        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["params.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
@@ -243,6 +235,7 @@ class TestLint(unittest.TestCase):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong missing docker version tag"""
         os.environ["TRAVIS_TAG"] = "0.4"
+        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["params.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools"
@@ -254,6 +247,7 @@ class TestLint(unittest.TestCase):
         """Tests the behaviour, when a git activity is a release
         and simulate correct release tag"""
         os.environ["TRAVIS_TAG"] = "0.4"
+        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["params.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"

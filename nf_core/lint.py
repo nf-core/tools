@@ -441,7 +441,7 @@ class PipelineLint(object):
             versions['process.container'] = self.config['process.container'].strip(' \'"').split(':')[-1]
 
         # Get version from the TRAVIS_TAG env var
-        if os.environ.get('TRAVIS_TAG'):
+        if os.environ.get('TRAVIS_TAG') and os.environ.get('TRAVIS_REPO_SLUG', '') != 'nf-core/tools':
             versions['TRAVIS_TAG'] = os.environ.get('TRAVIS_TAG').strip(' \'"')
 
         # Check if they are all numeric
