@@ -63,9 +63,15 @@ def list(json):
     required = True,
     metavar = "<pipeline name>"
 )
-def licences(pipeline):
+@click.option(
+    '--json',
+    is_flag = True,
+    default = False,
+    help = "Print output as JSON"
+)
+def licences(pipeline, json):
     """ List software licences for a given workflow """
-    lic = nf_core.licences.WorkflowLicences(pipeline)
+    lic = nf_core.licences.WorkflowLicences(pipeline, json)
     lic.fetch_conda_licences()
     lic.print_licences()
 
