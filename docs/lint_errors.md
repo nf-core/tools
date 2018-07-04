@@ -174,15 +174,13 @@ LABEL authors="your@email.com" \
       description="Container image containing all requirements for nf-core/EXAMPLE pipeline"
 
 COPY environment.yml /
-RUN conda env create -f /environment.yml && conda clean -a
-ENV PATH /opt/conda/envs/nfcore-EXAMPLE/bin:$PATH
+RUN conda env update -n root -f /environment.yml && conda clean -a
 ```
 
 To enforce this minimal `Dockerfile` and check for common copy+paste errors, we require
 that the above template is used.
-Failures are generated if the `FROM`, `COPY`, `RUN` and `ENV` statements above are not present.
-These lines must be an exact copy of the above example, with the exception that
-the `ENV PATH` must reference the name of your pipeline instead of `nfcore-EXAMPLE`.
+Failures are generated if the `FROM`, `COPY` and `RUN` statements above are not present.
+These lines must be an exact copy of the above example.
 
 Additional lines and different metadata can be added without causing the test to fail.
 
@@ -204,15 +202,11 @@ Bootstrap:docker
     DESCRIPTION Container image containing all requirements for the nf-core/EXAMPLE pipeline
     VERSION [pipeline version]
 
-%environment
-    PATH=/opt/conda/envs/nfcore-EXAMPLE/bin:$PATH
-    export PATH
-
 %files
     environment.yml /
 
 %post
-    /opt/conda/bin/conda env create -f /environment.yml
+    /opt/conda/bin/conda env update -n root -f /environment.yml
     /opt/conda/bin/conda clean -a
 ```
 
@@ -222,10 +216,8 @@ that the above template is used. Specifically, presence of these lines is checke
 * `From:nfcore/base`
 * `Bootstrap:docker`
 * `VERSION [pipeline version]`
-* `PATH=/opt/conda/envs/nfcore-EXAMPLE/bin:$PATH`
-* `export PATH`
 * `environment.yml /`
-* `/opt/conda/bin/conda env create -f /environment.yml`
+* `/opt/conda/bin/conda env update -n root -f /environment.yml`
 * `/opt/conda/bin/conda clean -a`
 
 Additional lines and different metadata can be added without causing the test to fail.
