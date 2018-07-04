@@ -11,6 +11,7 @@ import mock
 import os
 import pytest
 import requests
+import tempfile
 import unittest
 
 class DownloadTest(unittest.TestCase):
@@ -28,9 +29,9 @@ class DownloadTest(unittest.TestCase):
         mock_workflow.name = "dummy"
         mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
         mock_workflows.remote_workflows = [mock_workflow]
-        
+
         download_obj.fetch_workflow_details(mock_workflows)
-    
+
     @mock.patch('nf_core.list.RemoteWorkflow')
     @mock.patch('nf_core.list.Workflows')
     def test_fetch_workflow_details_for_dev_version(self, mock_workflows, mock_workflow):
@@ -38,7 +39,7 @@ class DownloadTest(unittest.TestCase):
         mock_workflow.name = "dummy"
         mock_workflow.releases = []
         mock_workflows.remote_workflows = [mock_workflow]
-        
+
         download_obj.fetch_workflow_details(mock_workflows)
 
     @mock.patch('nf_core.list.RemoteWorkflow')
@@ -48,7 +49,7 @@ class DownloadTest(unittest.TestCase):
         mock_workflow.name = "dummy"
         mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
         mock_workflows.remote_workflows = [mock_workflow]
-        
+
         download_obj.fetch_workflow_details(mock_workflows)
         assert download_obj.release == "1.0.0"
 
@@ -63,7 +64,7 @@ class DownloadTest(unittest.TestCase):
         mock_workflow.name = "dummy"
         mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
         mock_workflows.remote_workflows = [mock_workflow]
-        
+
         download_obj.fetch_workflow_details(mock_workflows)
 
     @mock.patch('nf_core.list.Workflows')
@@ -98,13 +99,13 @@ class DownloadTest(unittest.TestCase):
         download_obj.fetch_workflow_details(mock_workflows)
 
     #
-    # Tests for 'download_wf_files'  
+    # Tests for 'download_wf_files'
     #
     def test_download_wf_files(self):
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
             release = "1.2.0",
-            outdir="/tmp"
+            outdir = tempfile.mkdtemp()
             )
         download_obj.wf_name = "nf-core/methylseq"
         download_obj.wf_sha = "1.0"
@@ -118,7 +119,7 @@ class DownloadTest(unittest.TestCase):
     def test_find_singularity_images(self, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir = "/tmp")
+            outdir = tempfile.mkdtemp())
         mock_fetch_wf_config.return_value = {
             'process.mapping.container': 'cutting-edge-container',
             'process.nocontainer': 'not-so-cutting-edge'
@@ -126,7 +127,7 @@ class DownloadTest(unittest.TestCase):
         download_obj.find_singularity_images()
         assert len(download_obj.containers) == 1
         assert download_obj.containers[0] == 'cutting-edge-container'
-    
+
     #
     # Tests for 'download_shub_image'
     #
@@ -142,13 +143,12 @@ class DownloadTest(unittest.TestCase):
         mock_progressbar,
         mock_md5):
 
-        # we need this for the fake download
-        tmp_dir = "/tmp/singularity-images"
-        if not os.path.isdir(tmp_dir): os.mkdir(tmp_dir)
+        tmpdir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(tmpdir, 'singularity-images'))
 
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir = "/tmp")
+            outdir = tmpdir)
 
         # simulauates the first response querying the API for the container
         # information
@@ -167,7 +167,7 @@ class DownloadTest(unittest.TestCase):
         mock_request.side_effect = [resp_shub, resp_download]
         # test
         download_obj.download_shub_image("awesome-container")
-    
+
     @mock.patch('requests.get')
     @pytest.mark.xfail(raises=RuntimeWarning)
     def test_download_image_shub_without_hit(self,
@@ -179,7 +179,7 @@ class DownloadTest(unittest.TestCase):
 
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir = "/tmp")
+            outdir = tempfile.mkdtemp())
 
         # simulauates the first response querying the API for the container
         # information
@@ -188,7 +188,7 @@ class DownloadTest(unittest.TestCase):
 
         # assign the response order
         mock_request.side_effect = [resp_shub]
-        
+
         # test
         download_obj.download_shub_image("awesome-container")
 
@@ -205,7 +205,7 @@ class DownloadTest(unittest.TestCase):
 
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir = "/tmp")
+            outdir = tempfile.mkdtemp())
 
         # simulauates the first response querying the API for the container
         # information
@@ -220,7 +220,7 @@ class DownloadTest(unittest.TestCase):
 
         # assign the response order
         mock_request.side_effect = [resp_shub, resp_download]
-        
+
         # test
         download_obj.download_shub_image("awesome-container")
 
@@ -237,7 +237,7 @@ class DownloadTest(unittest.TestCase):
 
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir = "/tmp")
+            outdir = tempfile.mkdtemp())
 
         # simulauates the first response querying the API for the container
         # information
@@ -247,7 +247,7 @@ class DownloadTest(unittest.TestCase):
 
         # assign the response order
         mock_request.side_effect = [resp_shub]
-        
+
         # test
         download_obj.download_shub_image("awesome-container")
 
@@ -259,10 +259,11 @@ class DownloadTest(unittest.TestCase):
         test_hash = hashlib.md5()
         test_hash.update(b"test")
         val_hash = test_hash.hexdigest()
+        tmpfilehandle, tmpfile = tempfile.mkstemp()
 
-        with open("/tmp/test", "w") as f: f.write("test")
+        with open(tmpfile[1], "w") as f: f.write("test")
 
-        download_obj.validate_md5("/tmp/test", val_hash)
+        download_obj.validate_md5(tmpfile[1], val_hash)
 
     @pytest.mark.xfail(raises=IOError)
     def test_mismatching_md5sums(self):
@@ -270,10 +271,11 @@ class DownloadTest(unittest.TestCase):
         test_hash = hashlib.md5()
         test_hash.update(b"other value")
         val_hash = test_hash.hexdigest()
+        tmpfilehandle, tmpfile = tempfile.mkstemp()
 
-        with open("/tmp/test", "w") as f: f.write("test")
+        with open(tmpfile, "w") as f: f.write("test")
 
-        download_obj.validate_md5("/tmp/test", val_hash)
+        download_obj.validate_md5(tmpfile[1], val_hash)
 
     #
     # Tests for 'pull_singularity_image'
@@ -282,7 +284,7 @@ class DownloadTest(unittest.TestCase):
     def test_pull_singularity_image(self):
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir="/tmp")
+            outdir = tempfile.mkdtemp())
         download_obj.pull_singularity_image("a-container")
 
     #
@@ -294,10 +296,12 @@ class DownloadTest(unittest.TestCase):
         mock_download_shub,
         mock_download_image):
 
+        tmpdir = os.path.join(tempfile.mkdtemp(), 'new')
+
         download_obj = DownloadWorkflow(
             pipeline = "nf-core/methylseq",
-            outdir="/tmp/testdir",
-            singularity=True)
+            outdir = tmpdir,
+            singularity = True)
 
         mock_download_shub.side_effect = RuntimeWarning()
 
