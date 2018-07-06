@@ -11,6 +11,7 @@ import mock
 import os
 import pytest
 import requests
+import shutil
 import tempfile
 import unittest
 
@@ -143,12 +144,12 @@ class DownloadTest(unittest.TestCase):
         mock_progressbar,
         mock_md5):
 
-        tmpdir = tempfile.mkdtemp()
-        os.mkdir(os.path.join(tmpdir, 'singularity-images'))
+        tmp_dir = tempfile.mkdtemp()
+        os.mkdir(os.path.join(tmp_dir, 'singularity-images'))
 
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir = tmpdir)
+            outdir = tmp_dir)
 
         # simulauates the first response querying the API for the container
         # information
@@ -167,6 +168,9 @@ class DownloadTest(unittest.TestCase):
         mock_request.side_effect = [resp_shub, resp_download]
         # test
         download_obj.download_shub_image("awesome-container")
+
+        # Clean up
+        shutil.rmtree(tmp_dir)
 
     @mock.patch('requests.get')
     @pytest.mark.xfail(raises=RuntimeWarning)
@@ -191,6 +195,9 @@ class DownloadTest(unittest.TestCase):
 
         # test
         download_obj.download_shub_image("awesome-container")
+
+        # Clean up
+        shutil.rmtree(tmp_dir)
 
     @mock.patch('requests.Response.json')
     @mock.patch('requests.get')
@@ -224,6 +231,9 @@ class DownloadTest(unittest.TestCase):
         # test
         download_obj.download_shub_image("awesome-container")
 
+        # Clean up
+        shutil.rmtree(tmp_dir)
+
     @mock.patch('requests.Response.json')
     @mock.patch('requests.get')
     @pytest.mark.xfail(raises=ImportError)
@@ -251,6 +261,9 @@ class DownloadTest(unittest.TestCase):
         # test
         download_obj.download_shub_image("awesome-container")
 
+        # Clean up
+        shutil.rmtree(tmp_dir)
+
     #
     # Tests for 'validate_md5'
     #
@@ -265,6 +278,9 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.validate_md5(tmpfile[1], val_hash)
 
+        # Clean up
+        shutil.rmtree(tmpfile)
+
     @pytest.mark.xfail(raises=IOError)
     def test_mismatching_md5sums(self):
         download_obj = DownloadWorkflow(pipeline = "dummy")
@@ -277,15 +293,22 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.validate_md5(tmpfile[1], val_hash)
 
+        # Clean up
+        shutil.rmtree(tmpfile)
+
     #
     # Tests for 'pull_singularity_image'
     #
     @pytest.mark.xfail(raises=OSError)
     def test_pull_singularity_image(self):
+        tmp_dir = tempfile.mkdtemp()
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
-            outdir = tempfile.mkdtemp())
+            outdir = tmp_dir)
         download_obj.pull_singularity_image("a-container")
+
+        # Clean up
+        shutil.rmtree(tmp_dir)
 
     #
     # Tests for the main entry method 'download_workflow'
@@ -296,13 +319,16 @@ class DownloadTest(unittest.TestCase):
         mock_download_shub,
         mock_download_image):
 
-        tmpdir = os.path.join(tempfile.mkdtemp(), 'new')
+        tmp_dir = os.path.join(tempfile.mkdtemp(), 'new')
 
         download_obj = DownloadWorkflow(
             pipeline = "nf-core/methylseq",
-            outdir = tmpdir,
+            outdir = tmp_dir,
             singularity = True)
 
         mock_download_shub.side_effect = RuntimeWarning()
 
         download_obj.download_workflow()
+
+        # Clean up
+        shutil.rmtree(tmp_dir)
