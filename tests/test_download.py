@@ -279,7 +279,7 @@ class DownloadTest(unittest.TestCase):
         download_obj.validate_md5(tmpfile[1], val_hash)
 
         # Clean up
-        shutil.rmtree(tmpfile)
+        os.remove(tmpfile)
 
     @pytest.mark.xfail(raises=IOError)
     def test_mismatching_md5sums(self):
@@ -294,7 +294,7 @@ class DownloadTest(unittest.TestCase):
         download_obj.validate_md5(tmpfile[1], val_hash)
 
         # Clean up
-        shutil.rmtree(tmpfile)
+        os.remove(tmpfile)
 
     #
     # Tests for 'pull_singularity_image'
