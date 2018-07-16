@@ -356,7 +356,7 @@ class PipelineLint(object):
                 if self.config.get('params.container'):
                     docker_pull_cmd = 'docker pull {}'.format(self.config['params.container'].strip('"\''))
                     try:
-                        assert(docker_pull_cmd in ciconf['before_install'])
+                        assert(docker_pull_cmd in ciconf.get('before_install'))
                     except AssertionError:
                         self.failed.append((5, "CI is not pulling the correct docker image: {}".format(docker_pull_cmd)))
                     else:
