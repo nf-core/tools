@@ -10,9 +10,6 @@ with open('README.md') as f:
 with open('LICENSE') as f:
     license = f.read()
 
-with open('requirements.txt') as f:
-    required = f.read().splitlines()
-
 setup(
     name = 'nf-core',
     version = version,
@@ -24,7 +21,14 @@ setup(
     url = 'https://github.com/nf-core/tools',
     license = license,
     scripts = ['scripts/nf-core'],
-    install_requires = required,
+    install_requires = [
+        'click',
+        'GitPython',
+        'pyyaml',
+        'requests',
+        'requests_cache',
+        'tabulate'
+    ],
     packages = find_packages(exclude=('docs')),
     include_package_data = True,
     zip_safe = False
