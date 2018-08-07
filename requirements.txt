@@ -1,3 +1,4 @@
+cookiecutter
 click
 GitPython
 pyyaml

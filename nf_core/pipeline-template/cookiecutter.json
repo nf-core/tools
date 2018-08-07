@@ -1,0 +1,16 @@
+{
+    "pipeline_name": "nf-core/example",
+    "pipeline_short_description": "This pipeline takes some data and does something with it.",
+    "github_repo": "{{ cookiecutter.pipeline_name.replace(' ', '-') }}",
+    "pipeline_url": "https://github.com/{{ cookiecutter.github_repo }}",
+    "dockerhub_slug": "{{ cookiecutter.pipeline_name.lower().replace(' ', '-').replace('nf-core', 'nfcore') }}",
+    "pipeline_slug": "{{ cookiecutter.dockerhub_slug.replace('/', '-') }}",
+    "author_name": "Your Name",
+    "author_email": "{{ cookiecutter.author_name.lower().replace(' ', '.') }}@gmail.com",
+    "author_github_username": "{{ cookiecutter.author_name.lower().replace(' ', '') }}",
+    "author_homepage": "https://github.com/{{ cookiecutter.author_github_username }}",
+    "author_affiliation": "Your Institute",
+    "author_affiliation_homepage": "http://www.{{ cookiecutter.author_affiliation.lower().replace(' ', '') }}.com",
+    "copyright_holder": "{{ cookiecutter.author_name }}",
+    "version": "0.1.0"
+}
