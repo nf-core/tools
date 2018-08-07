@@ -29,14 +29,14 @@ mv nextflow ~/bin/
 See [nextflow.io](https://www.nextflow.io/) and [NGI-NextflowDocs](https://github.com/SciLifeLab/NGI-NextflowDocs) for further instructions on how to install and configure Nextflow.
 
 ## 2) Install the Pipeline
-This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `{{ cookiecutter.github_repo }}` is specified as the pipeline name.
+This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `nf-core/{{ cookiecutter.pipeline_name }}` is specified as the pipeline name.
 
 ### Offline use
 
 If you need to run the pipeline on a system with no internet connection, you will need to download the files yourself from GitHub and run them directly:
 
 ```bash
-wget https://github.com/{{ cookiecutter.github_repo }}/archive/master.zip
+wget https://github.com/nf-core/{{ cookiecutter.pipeline_name }}/archive/master.zip
 unzip master.zip -d /my-pipelines/
 cd /my_data/
 nextflow run /my-pipelines/{{ cookiecutter.pipeline_slug }}-master

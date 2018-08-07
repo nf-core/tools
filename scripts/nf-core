@@ -3,7 +3,7 @@
 
 from __future__ import print_function
 
-from cookiecutter.main import cookiecutter
+import cookiecutter.main, cookiecutter.exceptions
 import click
 import sys
 import os
@@ -109,32 +109,37 @@ def release(pipeline_dir, new_version):
 
 @nf_core_cli.command()
 @click.option(
-    '--no-input',
-    is_flag = True,
-    default = False,
-    help = "Do not prompt for parameters and only use default values"
+    '-n', '--name',
+    required = True,
+    type = str,
+    help = 'The name of your new pipeline'
+)
+@click.option(
+    '-d', '--description',
+    required = True,
+    type = str,
+    help = 'A short description of your pipeline'
 )
 @click.option(
     '-f', '--force',
     is_flag = True,
     default = False,
-    help = "Overwrite the contents of the output directory if it already exists"
+    help = "Overwrite output directory if it already exists"
 )
-@click.option(
-    '-o', '--outdir',
-    type = str,
-    help = "Where to output the generated project dir into"
-)
-@click.option(
-    '-c', '--config-file',
-    type = click.Path(exists=True),
-    help = "User configuration file"
-)
-def init(no_input, force, outdir, config_file):
+def init(name, description, force):
     """ Create a new pipeline using the nf-core template """
-    # nf_core.cookiecutter(no_input, overwrite_if_exists, outdir, config_file)
-    ccdir = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
-    cookiecutter(ccdir)
+    logging.info("Initialising new nf-core pipeline: {}".format(name))
+    template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
+    try:
+        cookiecutter.main.cookiecutter (
+            template,
+            extra_context={'pipeline_name':name, 'pipeline_short_description':description},
+            no_input=True,
+            overwrite_if_exists=force
+        )
+    except (cookiecutter.exceptions.OutputDirExistsException) as e:
+        logging.error(e)
+        logging.info("Use -f / --force to overwrite existing files")
 
 
 if __name__ == '__main__':

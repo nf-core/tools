@@ -48,4 +48,4 @@ Pipeline Configuration:
 
 --
 {{ cookiecutter.pipeline_name }}
-{{ cookiecutter.pipeline_url }}
+https://github.com/nf-core/{{ cookiecutter.pipeline_name }}

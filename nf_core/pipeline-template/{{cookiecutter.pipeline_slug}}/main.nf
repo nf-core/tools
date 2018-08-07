@@ -3,11 +3,9 @@
 ========================================================================================
                          {{ cookiecutter.pipeline_name }}
 ========================================================================================
- {{ cookiecutter.pipeline_name }} Analysis Pipeline. Started {% now 'local' %}.
+ {{ cookiecutter.pipeline_name }} Analysis Pipeline.
  #### Homepage / Documentation
- {{ cookiecutter.pipeline_url }}
- #### Authors
- {{ cookiecutter.author_name }} {{ cookiecutter.author_github_username }} <{{ cookiecutter.author_email }}> - {{ cookiecutter.author_homepage }}>
+ https://github.com/nf-core/{{ cookiecutter.pipeline_name }}
 ----------------------------------------------------------------------------------------
 */
 
@@ -21,7 +19,7 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run {{ cookiecutter.github_repo }} --reads '*_R{1,2}.fastq.gz' -profile docker
+    nextflow run nf-core/{{ cookiecutter.pipeline_name }} --reads '*_R{1,2}.fastq.gz' -profile docker
 
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)

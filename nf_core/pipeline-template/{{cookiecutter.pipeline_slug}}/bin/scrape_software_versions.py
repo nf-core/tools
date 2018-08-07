@@ -27,7 +27,7 @@ for k, v in regexes.items():
 print ('''
 id: '{{ cookiecutter.pipeline_name.lower().replace(' ', '-') }}-software-versions'
 section_name: '{{ cookiecutter.pipeline_name }} Software Versions'
-section_href: '{{ cookiecutter.pipeline_url }}'
+section_href: 'https://github.com/nf-core/{{ cookiecutter.pipeline_name }}'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |

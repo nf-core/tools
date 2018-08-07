@@ -43,10 +43,10 @@ First, install docker on your system: [Docker Installation Instructions](https:/
 
 Then, simply run the analysis pipeline:
 ```bash
-nextflow run {{ cookiecutter.github_repo }} -profile docker --reads '<path to your reads>'
+nextflow run nf-core/{{ cookiecutter.pipeline_name }} -profile docker --reads '<path to your reads>'
 ```
 
-Nextflow will recognise `{{ cookiecutter.github_repo }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.dockerhub_slug }}](https://hub.docker.com/r/{{ cookiecutter.dockerhub_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
+Nextflow will recognise `nf-core/{{ cookiecutter.pipeline_name }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.pipeline_slug }}](https://hub.docker.com/r/{{ cookiecutter.pipeline_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
 
 The public docker images are tagged with the same version numbers as the code, which you can use to ensure reproducibility. When running the pipeline, specify the pipeline version with `-r`, for example `-r v1.3`. This uses pipeline code and docker image from this tagged version.
 
@@ -63,12 +63,12 @@ process {
 
 The variable `wf_container` is defined dynamically and automatically specifies the image tag if Nextflow is running with `-r`.
 
-A test suite for docker comes with the pipeline, and can be run by moving to the [`tests` directory](https://github.com/{{ cookiecutter.github_repo }}/tree/master/tests) and running `./run_test.sh`. This will download a small yeast genome and some data, and attempt to run the pipeline through docker on that small dataset. This is automatically run using [Travis](https://travis-ci.org/{{ cookiecutter.github_repo }}/) whenever changes are made to the pipeline.
+A test suite for docker comes with the pipeline, and can be run by moving to the [`tests` directory](https://github.com/nf-core/{{ cookiecutter.pipeline_name }}/tree/master/tests) and running `./run_test.sh`. This will download a small yeast genome and some data, and attempt to run the pipeline through docker on that small dataset. This is automatically run using [Travis](https://travis-ci.org/nf-core/{{ cookiecutter.pipeline_name }}/) whenever changes are made to the pipeline.
 
 ### Singularity image
 Many HPC environments are not able to run Docker due to security issues. [Singularity](http://singularity.lbl.gov/) is a tool designed to run on such HPC systems which is very similar to Docker. Even better, it can use create images directly from dockerhub.
 
-To use the singularity image for a single run, use `-with-singularity 'docker://{{ cookiecutter.github_repo }}'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
+To use the singularity image for a single run, use `-with-singularity 'docker://nf-core/{{ cookiecutter.pipeline_name }}'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
 
 To specify singularity usage in your pipeline config file, add the following:
 
@@ -88,7 +88,7 @@ If you intend to run the pipeline offline, nextflow will not be able to automati
 First, pull the image file where you have an internet connection:
 
 ```bash
-singularity pull --name {{ cookiecutter.pipeline_slug }}.img docker://{{ cookiecutter.github_repo }}
+singularity pull --name {{ cookiecutter.pipeline_slug }}.img docker://nf-core/{{ cookiecutter.pipeline_name }}
 ```
 
 Then transfer this file and run the pipeline with this path:
