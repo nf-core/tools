@@ -1,18 +1,20 @@
 #!/usr/bin/env python
 
-import os
-import sys
-import subprocess
 from cookiecutter.main import cookiecutter
+import json
+import os
 import requests
 from requests.auth import HTTPBasicAuth
-import json
+import sys
+import subprocess
 
+# The GitHub base url or the nf-core project
 GH_BASE_URL = "https://github.com/nf-core"
+# The current cookiecutter template url for nf-core pipelines
 NF_CORE_TEMPLATE = "https://github.com/nf-core/cookiecutter.git"
-# The JSON file is updated on every push event on the nf-core GitHub
-# project
+# The JSON file is updated on every push event on the nf-core GitHub project
 NF_CORE_PIPELINE_INFO = "http://nf-co.re/pipelines.json"
+# The API endpoint for creating pull requests
 GITHUB_PR_URL_TEMPL = "https://api.github.com/repos/nf-core/{pipeline}/pulls"
 
 
@@ -34,7 +36,6 @@ class UpdateTemplate:
                     pipeline=pipeline)
         self.context = context
         self.branch = branch
-
     
     def run(self):
         """Execute the template update.
