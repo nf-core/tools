@@ -7,11 +7,11 @@
 * [Updating the pipeline](#updating-the-pipeline)
 * [Reproducibility](#reproducibility)
 * [Main arguments](#main-arguments)
-    * [`--profile`](#--profile)
-    * [`--docker`](#--docker)
-    * [`--awsbatch`](#--awsbatch)
-    * [`--standard`](#--standard)
-    * [`--none`](#--none)
+    * [`-profile`](#-profile)
+    * [`docker`](#docker)
+    * [`awsbatch`](#awsbatch)
+    * [`standard`](#standard)
+    * [`none`](#none)
     * [`--reads`](#--reads)
     * [`--singleEnd`](#--singleend)
 * [Reference Genomes](#reference-genomes)
@@ -21,15 +21,15 @@
 * [Automatic resubmission](#automatic-resubmission)
 * [Custom resource requests](#custom-resource-requests)
 * [AWS batch specific parameters](#aws-batch-specific-parameters)
-    * [`--awsbatch`](#--awsbatch)
+    * [`-awsbatch`](#-awsbatch)
     * [`--awsqueue`](#--awsqueue)
     * [`--awsregion`](#--awsregion)
 * [Other command line parameters](#other-command-line-parameters)
     * [`--outdir`](#--outdir)
     * [`--email`](#--email)
-    * [`--name`](#--name)
-    * [`--resume`](#--resume)
-    * [`--c`](#--c)
+    * [`-name`](#-name)
+    * [`-resume`](#-resume)
+    * [`-c`](#-c)
     * [`--max_memory`](#--max_memory)
     * [`--max_time`](#--max_time)
     * [`--max_cpus`](#--max_cpus)
@@ -38,7 +38,7 @@
     * [`--multiqc_config`](#--multiqc_config)
 
 
-    
+
 
 ## General Nextflow info
 Nextflow handles job submissions on SLURM or other environments, and supervises running the jobs. Thus the Nextflow process must run until the pipeline is finished. We recommend that you put the process running in the background through `screen` / `tmux` or similar tool. Alternatively you can run nextflow within a cluster job submitted your job scheduler.
