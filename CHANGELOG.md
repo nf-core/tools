@@ -3,6 +3,8 @@
 ## v1.1dev
 * Improved Python readme parsing for PyPI
 * Update linting and release tools to support new style of Docker & Singularity conda installations
+* Merged the cookiecutter template into this tools package
+* Added new subcommand to initialise a new pipeline with a local git repo and an initial commit
 
 ## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - 2018-07-18
 
