@@ -1,15 +1,15 @@
 # nf-core/{{ cookiecutter.pipeline_slug }} Contributing Guidelines
 
-Hi there! Many thanks for taking an interest in improving {{ cookiecutter.pipeline_slug }}.
+Hi there! Many thanks for taking an interest in improving nf-core/{{ cookiecutter.pipeline_slug }}.
 
-We try to manage the required tasks for {{ cookiecutter.pipeline_slug }} using GitHub issues, you probably came to this page when creating one. Please use the prefilled template to save time.
+We try to manage the required tasks for nf-core/{{ cookiecutter.pipeline_slug }} using GitHub issues, you probably came to this page when creating one. Please use the prefilled template to save time.
 
 However, don't be put off by this template - other more general issues and suggestions are welcome! Contributions to the code are even more welcome ;)
 
-> If you need help using {{ cookiecutter.pipeline_slug }} then the best place to go is the Gitter chatroom where you can ask us questions directly: https://gitter.im/nf-core/Lobby
+> If you need help using nf-core/{{ cookiecutter.pipeline_slug }} then the best place to go is the Gitter chatroom where you can ask us questions directly: https://gitter.im/nf-core/Lobby
 
 ## Contribution workflow
-If you'd like to write some code for {{ cookiecutter.pipeline_slug }}, the standard workflow
+If you'd like to write some code for nf-core/{{ cookiecutter.pipeline_slug }}, the standard workflow
 is as follows:
 
 1. Check that there isn't already an issue about your idea in the
