@@ -3,13 +3,12 @@
 
 from __future__ import print_function
 
-import cookiecutter.main, cookiecutter.exceptions
 import click
 import sys
 import os
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.download, nf_core.release
+import nf_core.lint, nf_core.list, nf_core.download, nf_core.release, nf_core.init
 
 import logging
 
@@ -121,25 +120,26 @@ def release(pipeline_dir, new_version):
     help = 'A short description of your pipeline'
 )
 @click.option(
+    '--new-version',
+    type = str,
+    default = '1.0dev',
+    help = 'The initial version number to use'
+)
+@click.option(
+    '--no-git',
+    is_flag = True,
+    default = False,
+    help = "Do not initialise pipeline as new git repository"
+)
+@click.option(
     '-f', '--force',
     is_flag = True,
     default = False,
     help = "Overwrite output directory if it already exists"
 )
-def init(name, description, force):
+def init(name, description, new_version, no_git, force):
     """ Create a new pipeline using the nf-core template """
-    logging.info("Initialising new nf-core pipeline: {}".format(name))
-    template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
-    try:
-        cookiecutter.main.cookiecutter (
-            template,
-            extra_context={'pipeline_name':name, 'pipeline_short_description':description},
-            no_input=True,
-            overwrite_if_exists=force
-        )
-    except (cookiecutter.exceptions.OutputDirExistsException) as e:
-        logging.error(e)
-        logging.info("Use -f / --force to overwrite existing files")
+    nf_core.init.init_pipeline(name, description, new_version, no_git, force)
 
 
 if __name__ == '__main__':

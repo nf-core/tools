@@ -2,5 +2,5 @@
     "pipeline_name": "example",
     "pipeline_short_description": "This pipeline takes some data and does something with it.",
     "pipeline_slug": "{{ cookiecutter.pipeline_name.lower().replace(' ', '-').replace('/', '-') }}",
-    "version": "0.1.0"
+    "version": "1.0dev"
 }
