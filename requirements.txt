@@ -1,7 +1,0 @@
-cookiecutter
-click
-GitPython
-pyyaml
-requests
-requests_cache
-tabulate
