@@ -1,4 +1,4 @@
-# {{ cookiecutter.pipeline_slug }} Contributing Guidelines
+# nf-core/{{ cookiecutter.pipeline_slug }} Contributing Guidelines
 
 Hi there! Many thanks for taking an interest in improving {{ cookiecutter.pipeline_slug }}.
 
@@ -13,13 +13,13 @@ If you'd like to write some code for {{ cookiecutter.pipeline_slug }}, the stand
 is as follows:
 
 1. Check that there isn't already an issue about your idea in the
-   [{{ cookiecutter.pipeline_slug }} issues](https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}/issues) to avoid
+   [nf-core/{{ cookiecutter.pipeline_slug }} issues](https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}/issues) to avoid
    duplicating work.
     * Feel free to add a new issue here for the same reason.
-2. Fork the {{ cookiecutter.pipeline_slug }} repository to your GitHub account
+2. Fork the [nf-core/{{ cookiecutter.pipeline_slug }} repository](https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}) to your GitHub account
 3. Make the necessary changes / additions within your forked repository
 4. Submit a Pull Request against the master branch and wait for the code to be reviewed and merged.
 
 If you're not used to this workflow with git, you can start with some [basic docs from GitHub](https://help.github.com/articles/fork-a-repo/) or even their [excellent interactive tutorial](https://try.github.io/).
 
-For further information/help, please consult the [{{ cookiecutter.pipeline_slug }} documentation](https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}README.md#documentation) and don't hesitate to get in touch on [Gitter](https://gitter.im/nf-core/Lobby)
+For further information/help, please consult the [nf-core/{{ cookiecutter.pipeline_slug }} documentation](https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}README.md#documentation) and don't hesitate to get in touch on [Gitter](https://gitter.im/nf-core/Lobby)
