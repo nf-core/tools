@@ -1,0 +1,38 @@
+sudo: required
+language: java
+jdk: openjdk8
+services:
+  - docker
+python:
+  - "2.7"
+cache: pip
+matrix:
+  fast_finish: true
+
+before_install:
+  # Pull the docker image first so the test doesn't wait for this
+  - docker pull {{ cookiecutter.pipeline_slug }}:{{ cookiecutter.version }}
+
+install:
+  # Install Nextflow
+  - mkdir /tmp/nextflow
+  - cd /tmp/nextflow
+  - wget -qO- get.nextflow.io | bash
+  - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+  # Install nf-core/tools
+  - git clone https://github.com/nf-core/tools.git /tmp/nf-core-tools
+  - cd /tmp/nf-core-tools
+  - pip install --user -e .
+  # Reset
+  - mkdir ${TRAVIS_BUILD_DIR}/tests
+  - cd ${TRAVIS_BUILD_DIR}/tests
+
+env:
+  - NXF_VER=0.30.0
+  - NXF_VER=''
+
+script:
+  # Lint the pipeline code
+  - nf-core lint ${TRAVIS_BUILD_DIR}
+  # Run the pipeline with the test profile
+  - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker
