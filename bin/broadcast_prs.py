@@ -108,9 +108,10 @@ def create_pullrequest(pipeline, origin="master", template="TEMPLATE", token="",
     Returns: An instance of class requests.Response
     """
     content = {}
-    content['title'] = "Important pipeline nf-core update!"
+    content['title'] = "Important pipeline nf-core update! (version {tag})".format(tag=os.environ['TRAVIS_TAG'])
     content['body'] = "Some important changes have been made in the nf-core pipelines templates.\n" \
-    "Please make sure to merge this in ASAP and make a new minor release of your pipeline."
+    "Please make sure to merge this in ASAP and make a new minor release of your pipeline.\n\n" \
+    "Follow the link [nf-core/tools](https://github.com/nf-core/tools/releases/tag/{}".format(os.environ['TRAVIS_TAG'])
     content['head'] = "{}".format(template)
     content['base'] = origin
     return requests.post(url=GITHUB_PR_URL_TEMPL.format(pipeline=pipeline),
@@ -119,7 +120,7 @@ def create_pullrequest(pipeline, origin="master", template="TEMPLATE", token="",
 
 def main():
     # Check that the commit event is a GitHub tag event
-    assert os.environ('TRAVIS_TAG')
+    assert os.environ['TRAVIS_TAG']
     # Get nf-core pipelines info
     res = requests.get(NF_CORE_PIPELINE_INFO)
     pipelines = json.loads(res.content).get('remote_workflows')
@@ -133,7 +134,7 @@ def main():
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
         print("Trying to open pull request for pipeline {}...".format(pipeline['name']))
-        response = create_pullrequest(pipeline['name'], token="117962f70c156268d02a8b8f42be04bf7676141e")
+        response = create_pullrequest(pipeline['name'], token="1cd1cb0721c246346f97e6af38a8332c747a2f79")
         if response.status_code != 201:
             print("Pull-request for pipeline \'{pipeline}\' failed," 
             " got return code {return_code}."
