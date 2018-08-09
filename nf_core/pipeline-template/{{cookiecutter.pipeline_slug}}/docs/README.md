@@ -1,4 +1,4 @@
-# nf-core/{{ cookiecutter.pipeline_slug }} Results
+# nf-core/{{ cookiecutter.pipeline_slug }} 
 
 The nf-core/{{ cookiecutter.pipeline_slug }} documentation is split into a few different files:
 

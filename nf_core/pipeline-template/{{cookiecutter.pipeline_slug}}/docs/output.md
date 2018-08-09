@@ -2,8 +2,6 @@
 
 This document describes the output produced by the pipeline. Most of the plots are taken from the MultiQC report, which summarises results at the end of the pipeline.
 
-Note that nf-core/{{ cookiecutter.pipeline_slug }} contains two workflows - one for Bismark, one for bwa-meth. The results files produced will vary depending on which variant is run.
-
 ## Pipeline overview
 The pipeline is built using [Nextflow](https://www.nextflow.io/)
 and processes data using the following steps:
