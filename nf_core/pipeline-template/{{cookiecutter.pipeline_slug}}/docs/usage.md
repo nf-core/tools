@@ -7,11 +7,11 @@
 * [Updating the pipeline](#updating-the-pipeline)
 * [Reproducibility](#reproducibility)
 * [Main arguments](#main-arguments)
-    * [`-profile`](#-profile)
-    * [`docker`](#docker)
-    * [`awsbatch`](#awsbatch)
-    * [`standard`](#standard)
-    * [`none`](#none)
+    * [`-profile`](#-profile-single-dash)
+        * [`docker`](#docker)
+        * [`awsbatch`](#awsbatch)
+        * [`standard`](#standard)
+        * [`none`](#none)
     * [`--reads`](#--reads)
     * [`--singleEnd`](#--singleend)
 * [Reference Genomes](#reference-genomes)
@@ -27,9 +27,9 @@
 * [Other command line parameters](#other-command-line-parameters)
     * [`--outdir`](#--outdir)
     * [`--email`](#--email)
-    * [`-name`](#-name)
-    * [`-resume`](#-resume)
-    * [`-c`](#-c)
+    * [`-name`](#-name-single-dash)
+    * [`-resume`](#-resume-single-dash)
+    * [`-c`](#-c-single-dash)
     * [`--max_memory`](#--max_memory)
     * [`--max_time`](#--max_time)
     * [`--max_cpus`](#--max_cpus)
@@ -181,6 +181,7 @@ The AWS region to run your job in. Default is set to `eu-west-1` but can be adju
 Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a S3 storage bucket of your choice - you'll get an error message notifying you if you didn't.
 
 ## Other command line parameters
+
 ### `--outdir`
 The output directory where the results will be saved.
 
