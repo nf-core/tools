@@ -11,10 +11,10 @@ First, install docker on your system: [Docker Installation Instructions](https:/
 
 Then, simply run the analysis pipeline:
 ```bash
-nextflow run nf-core/{{ cookiecutter.pipeline_name }} -profile docker --reads '<path to your reads>'
+nextflow run {{ cookiecutter.github_repo }} -profile docker --reads '<path to your reads>'
 ```
 
-Nextflow will recognise `nf-core/{{ cookiecutter.pipeline_name }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.pipeline_slug }}](https://hub.docker.com/r/{{ cookiecutter.pipeline_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
+Nextflow will recognise `{{ cookiecutter.github_repo }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.dockerhub_slug }}](https://hub.docker.com/r/{{ cookiecutter.dockerhub_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
 
 For more information about how to work with reference genomes, see [`docs/configuration/reference_genomes.md`](docs/configuration/reference_genomes.md).
 
@@ -25,14 +25,14 @@ The public docker images are tagged with the same version numbers as the code, w
 ## Singularity image
 Many HPC environments are not able to run Docker due to security issues. [Singularity](http://singularity.lbl.gov/) is a tool designed to run on such HPC systems which is very similar to Docker. Even better, it can use create images directly from dockerhub.
 
-To use the singularity image for a single run, use `-with-singularity 'docker://{{ cookiecutter.pipeline_slug }}'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
+To use the singularity image for a single run, use `-with-singularity 'docker://{{ cookiecutter.dockerhub_slug }}'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
 
 If you intend to run the pipeline offline, nextflow will not be able to automatically download the singularity image for you. Instead, you'll have to do this yourself manually first, transfer the image file and then point to that.
 
 First, pull the image file where you have an internet connection:
 
 ```bash
-singularity pull --name {{ cookiecutter.pipeline_slug }}.img docker://{{ cookiecutter.pipeline_slug }}
+singularity pull --name {{ cookiecutter.pipeline_slug }}.img docker://{{ cookiecutter.dockerhub_slug }}
 ```
 
 Then transfer this file and run the pipeline with this path:
