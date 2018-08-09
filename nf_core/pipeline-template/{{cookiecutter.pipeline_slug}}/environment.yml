@@ -5,4 +5,4 @@ channels:
   - defaults
 dependencies:
   - fastqc=0.11.7
-  - multiqc=1.5
+  - multiqc=1.6
