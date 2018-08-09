@@ -12,6 +12,8 @@ matrix:
 before_install:
   # Pull the docker image first so the test doesn't wait for this
   - docker pull nfcore/tools
+  # Fake the tag locally so that the pipeline runs properly
+  - docker tag nfcore/tools nfcore/tools:0.4
 
 install:
   # Install Nextflow

@@ -369,14 +369,23 @@ class PipelineLint(object):
                     self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
                 # Check that we're pulling the right docker image
                 if self.config.get('params.container'):
-                    docker_pull_cmd = 'docker pull {}'.format(self.config['params.container'].strip('"\''))
-                    docker_pull_cmd = re.sub(r':(?:[\.\d]+|latest)$', '', docker_pull_cmd)
+                    docker_notag = re.sub(r':(?:[\.\d]+|latest)$', '', self.config['params.container'].strip('"\''))
+                    docker_pull_cmd = 'docker pull {}'.format(docker_notag)
                     try:
                         assert(docker_pull_cmd in ciconf.get('before_install'))
                     except AssertionError:
                         self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                     else:
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
+
+                    # Check that we tag the docker image properly
+                    docker_tag_cmd = 'docker tag {} {}'.format(docker_notag, self.config['params.container'].strip('"\''))
+                    try:
+                        assert(docker_tag_cmd in ciconf.get('before_install'))
+                    except AssertionError:
+                        self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
+                    else:
+                        self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
 
                 # Check that we're testing the minimum nextflow version
                 minNextflowVersion_tested = False
