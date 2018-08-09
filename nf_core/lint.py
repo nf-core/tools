@@ -310,6 +310,11 @@ class PipelineLint(object):
                 self.passed.append((4, "Config variable found: {}".format(cf)))
             else:
                 self.warned.append((4, "Config variable not found: {}".format(cf)))
+        
+        # Check and warn if the process configuration is done with deprecated syntax
+        process_with_deprecated_syntax = list(set([re.search('^(process\.\$.*?)\.+.*$', ck).group(1) for ck in self.config.keys() if re.match(r'^(process\.\$.*?)\.+.*$', ck)]))
+        for pd in process_with_deprecated_syntax:
+            self.warned.append((4, "Process configuration is done with deprecated_syntax: {}".format(pd)))
 
         # Check the variables that should be set to 'true'
         for k in ['timeline.enabled', 'report.enabled', 'trace.enabled', 'dag.enabled']:
