@@ -359,6 +359,8 @@ class PipelineLint(object):
                         assert(docker_pull_cmd in ciconf.get('before_install'))
                     except AssertionError:
                         self.failed.append((5, "CI is not pulling the correct docker image: {}".format(docker_pull_cmd)))
+                    except TypeError:
+                        self.failed.append((5, "CI does not contain a before_install step that pulls the docker image"))
                     else:
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
