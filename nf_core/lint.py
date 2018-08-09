@@ -360,6 +360,7 @@ class PipelineLint(object):
                 # Check that we're pulling the right docker image
                 if self.config.get('params.container'):
                     docker_pull_cmd = 'docker pull {}'.format(self.config['params.container'].strip('"\''))
+                    docker_pull_cmd = re.sub(r':(?:[\.\d]+|latest)$', '', docker_pull_cmd)
                     try:
                         assert(docker_pull_cmd in ciconf.get('before_install'))
                     except AssertionError:
