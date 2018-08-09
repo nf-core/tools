@@ -11,7 +11,7 @@ matrix:
 
 before_install:
   # Pull the docker image first so the test doesn't wait for this
-  - docker pull {{ cookiecutter.pipeline_slug }}:{{ cookiecutter.version }}
+  - docker pull nfcore/{{ cookiecutter.pipeline_slug }}:latest
 
 install:
   # Install Nextflow
