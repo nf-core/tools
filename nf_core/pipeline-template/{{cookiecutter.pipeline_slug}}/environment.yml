@@ -1,8 +1,8 @@
-name: {{ cookiecutter.pipeline_slug }}-{{ cookiecutter.version }}
+name: nfcore-{{ cookiecutter.pipeline_slug }}-{{ cookiecutter.version }}
 channels:
   - bioconda
   - conda-forge
   - defaults
 dependencies:
   - fastqc=0.11.7
-  - multiqc=1.5
+  - multiqc=1.6

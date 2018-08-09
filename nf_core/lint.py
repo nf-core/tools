@@ -72,6 +72,7 @@ class PipelineLint(object):
         self.files = []
         self.config = {}
         self.pipeline_name = None
+        self.minNextflowVersion = None
         self.dockerfile = []
         self.singularityfile = []
         self.conda_config = {}
@@ -273,7 +274,7 @@ class PipelineLint(object):
         # NB: Should all be files, not directories
         config_fail = [
             'params.version',
-            'params.nf_required_version',
+            'manifest.nextflowVersion',
             'manifest.description',
             'manifest.homePage',
             'timeline.enabled',
@@ -309,7 +310,7 @@ class PipelineLint(object):
                 self.passed.append((4, "Config variable found: {}".format(cf)))
             else:
                 self.warned.append((4, "Config variable not found: {}".format(cf)))
-        
+
         # Check and warn if the process configuration is done with deprecated syntax
         process_with_deprecated_syntax = list(set([re.search('^(process\.\$.*?)\.+.*$', ck).group(1) for ck in self.config.keys() if re.match(r'^(process\.\$.*?)\.+.*$', ck)]))
         for pd in process_with_deprecated_syntax:
@@ -338,11 +339,20 @@ class PipelineLint(object):
             else:
                 self.failed.append((4, "Config variable 'dag.file' did not end with .svg"))
 
+        # Check that the minimum nextflowVersion is set properly
+        if 'manifest.nextflowVersion' in self.config:
+            if self.config['manifest.nextflowVersion'].strip('"\'').startswith('>='):
+                self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >="))
+                # Save self.minNextflowVersion for convenience
+                self.minNextflowVersion = re.sub(r'[^0-9\.]', '', self.config.get('manifest.nextflowVersion', ''))
+            else:
+                self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config['manifest.nextflowVersion']).strip('"\'')))
+
     def check_ci_config(self):
         """ Check that the Travis or Circle CI YAML config is valid
 
         Makes sure that `nf-core lint` runs in travis tests
-        Checks that tests run with the stated nf_required_version
+        Checks that tests run with the required nextflow version
         """
 
         for cf in ['.travis.yml', 'circle.yml']:
@@ -364,12 +374,12 @@ class PipelineLint(object):
                     try:
                         assert(docker_pull_cmd in ciconf.get('before_install'))
                     except AssertionError:
-                        self.failed.append((5, "CI is not pulling the correct docker image: {}".format(docker_pull_cmd)))
+                        self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                     else:
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
-                # Check that we're testing the nf_required_version
-                nf_required_version_tested = False
+                # Check that we're testing the minimum nextflow version
+                minNextflowVersion_tested = False
                 env = ciconf.get('env', [])
                 if type(env) is dict:
                     env = env.get('matrix', [])
@@ -379,11 +389,10 @@ class PipelineLint(object):
                         k,v = s.split('=')
                         if k == 'NXF_VER':
                             ci_ver = v.strip('\'"')
-                            cv = self.config.get('params.nf_required_version', '').strip('\'"')
-                            if ci_ver == cv:
-                                nf_required_version_tested = True
+                            if ci_ver == self.minNextflowVersion:
+                                minNextflowVersion_tested = True
                                 self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
-                if not nf_required_version_tested:
+                if not minNextflowVersion_tested:
                     self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
 
 
@@ -401,13 +410,12 @@ class PipelineLint(object):
         match = re.search(nf_badge_re, content)
         if match:
             nf_badge_version = match.group(1).strip('\'"')
-            nf_config_version = self.config.get('params.nf_required_version').strip('\'"')
             try:
-                assert nf_badge_version == nf_config_version
+                assert nf_badge_version == self.minNextflowVersion
             except (AssertionError, KeyError):
-                self.failed.append((6, "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
+                self.failed.append((6, "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(nf_badge_version, self.minNextflowVersion)))
             else:
-                self.passed.append((6, "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
+                self.passed.append((6, "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(nf_badge_version, self.minNextflowVersion)))
         else:
             self.warned.append((6, "README did not have a Nextflow minimum version badge."))
 
