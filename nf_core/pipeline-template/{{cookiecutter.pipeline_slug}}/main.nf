@@ -164,9 +164,9 @@ def create_workflow_summary(summary) {
 
     def yaml_file = workDir.resolve('workflow_summary_mqc.yaml')
     yaml_file.text  = """
-    id: '{{ cookiecutter.pipeline_name }}-summary'
+    id: 'nf-core-{{ cookiecutter.pipeline_slug }}-summary'
     description: " - this information is collected when the pipeline is started."
-    section_name: 'nfcore/{{ cookiecutter.pipeline_slug }} Workflow Summary'
+    section_name: 'nf-core/{{ cookiecutter.pipeline_name }} Workflow Summary'
     section_href: 'https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}'
     plot_type: 'html'
     data: |
