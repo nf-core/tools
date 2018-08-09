@@ -17,7 +17,10 @@ install:
   - pip install .
   - pip install codecov pytest pytest-datafiles pytest-cov mock
 
-script: python -m pytest --cov=nf_core .
+script:
+  - python -m pytest --cov=nf_core .
+  - nf-core create -n testpipeline -d "This pipeline is for testing"
+  - nf-core lint testpipeline
 
 after_success:
   - codecov
