@@ -38,7 +38,7 @@
     * [`--multiqc_config`](#--multiqc_config)
 
 
-    
+
 
 ## General Nextflow info
 Nextflow handles job submissions on SLURM or other environments, and supervises running the jobs. Thus the Nextflow process must run until the pipeline is finished. We recommend that you put the process running in the background through `screen` / `tmux` or similar tool. Alternatively you can run nextflow within a cluster job submitted your job scheduler.
@@ -52,7 +52,7 @@ NXF_OPTS='-Xms1g -Xmx4g'
 ## Running the pipeline
 The typical command for running the pipeline is as follows:
 ```bash
-nextflow run {{ cookiecutter.github_repo }} --reads '*_R{1,2}.fastq.gz' -profile docker
+nextflow run nf-core/{{ cookiecutter.pipeline_name }} --reads '*_R{1,2}.fastq.gz' -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -70,13 +70,13 @@ results         # Finished results (configurable, see below)
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
-nextflow pull {{ cookiecutter.github_repo }}
+nextflow pull nf-core/{{ cookiecutter.pipeline_name }}
 ```
 
 ### Reproducibility
 It's a good idea to specify a pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
 
-First, go to the [{{ cookiecutter.pipeline_slug }} releases page](https://github.com/{{ cookiecutter.github_repo }}/releases) and find the latest version number - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`.
+First, go to the [{{ cookiecutter.pipeline_name }} releases page](https://github.com/nf-core/{{ cookiecutter.pipeline_name }}/releases) and find the latest version number - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`.
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future.
 
@@ -88,7 +88,11 @@ Use this parameter to choose a configuration profile. Each profile is designed f
 
 * `docker`
     * A generic configuration profile to be used with [Docker](http://docker.com/)
+<<<<<<< HEAD
     * Runs using the `local` executor and pulls software from dockerhub: [`{{ cookiecutter.dockerhub_slug }}`](http://hub.docker.com/r/{{ cookiecutter.dockerhub_slug }}/)
+=======
+    * Runs using the `local` executor and pulls software from dockerhub: [`{{ cookiecutter.pipeline_slug }}`](http://hub.docker.com/r/{{ cookiecutter.pipeline_slug }}/)
+>>>>>>> 4f7e83b4958ec496a822137b2731e650a1680d3d
 * `awsbatch`
     * A generic configuration profile to be used with AWS Batch.
 * `standard`
