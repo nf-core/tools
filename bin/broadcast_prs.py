@@ -6,17 +6,19 @@ import json
 import os
 import requests
 from requests.auth import HTTPBasicAuth
+import shutil
 import sys
 import subprocess
 import tempfile
 import utils
 
-#run_cookiecutter(self.pipeline_name, self.pipeline_description, self.pipeline_version)
-
 # The GitHub base url or the nf-core project
 GH_BASE_URL = "https://github.com/nf-core"
 # The current cookiecutter template url for nf-core pipelines
-NF_CORE_TEMPLATE = ""
+NF_CORE_TEMPLATE = os.path.join(
+                        os.path.dirname(
+                                os.path.dirname(os.path.realpath(__file__))
+                        ), "nf_core/pipeline-template")
 # The JSON file is updated on every push event on the nf-core GitHub project
 NF_CORE_PIPELINE_INFO = "http://nf-co.re/pipelines.json"
 # The API endpoint for creating pull requests
@@ -41,6 +43,7 @@ class UpdateTemplate:
                     pipeline=pipeline)
         self.branch = branch
         self.tmpdir = tempfile.mkdtemp()
+        self.templatedir = tempfile.mkdtemp()
         self.repo = None
     
     def run(self):
@@ -53,7 +56,6 @@ class UpdateTemplate:
         self._commit_changes()
         self._push_changes()
 
-    
     def _clone_repo(self):
         """Clone the repo and switch to the configured branch.
         """
@@ -72,8 +74,22 @@ class UpdateTemplate:
                      no_input=True,
                      extra_context=context,
                      overwrite_if_exists=True,
-                     output_dir=self.tmpdir)
-    
+                     output_dir=self.templatedir)
+        # Clear the template branch content
+        for f in os.listdir(self.tmpdir):
+            if f == ".git": continue
+            try:
+                shutil.rmtree(os.path.join(self.tmpdir, f))
+            except:
+                os.remove(os.path.join(self.tmpdir, f))
+        # Move the new template content into the template branch
+        template_path = os.path.join(self.templatedir, self.pipeline)
+        for f in os.listdir(template_path):
+            shutil.move(
+                os.path.join(template_path, f), # src
+                os.path.join(self.tmpdir, f), # dest
+            )
+
     def _commit_changes(self):
         """Commits the changes of the new template to the current branch.
         """

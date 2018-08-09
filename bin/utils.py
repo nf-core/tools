@@ -16,7 +16,7 @@ def fetch_wf_config(wf_path):
         for l in nfconfig_raw.splitlines():
             ul = l.decode()
             k, v = ul.split(' = ', 1)
-            config[k] = v
+            config[k] = v.replace("\'", "").replace("\"", "")
     return config
 
 def create_context(config):
@@ -31,8 +31,8 @@ def create_context(config):
         }
     """
     context = {}
-    context["name"] = config.get("manifest.name") if config.get("manifest.name") else get_name_from_url(config.get("manifest.homePage"))
-    context["description"] = config.get("manifest.description") 
+    context["pipeline_name"] = config.get("manifest.name") if config.get("manifest.name") else get_name_from_url(config.get("manifest.homePage"))
+    context["pipeline_short_description"] = config.get("manifest.description") 
     context["version"] = config.get("manifest.version") if config.get("manifest.version") else config.get("params.version")
     return context
 
