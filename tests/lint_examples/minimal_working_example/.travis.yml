@@ -11,7 +11,7 @@ matrix:
 
 before_install:
   # Pull the docker image first so the test doesn't wait for this
-  - docker pull nfcore/tools:0.4
+  - docker pull nfcore/tools
 
 install:
   # Install Nextflow
