@@ -57,15 +57,17 @@ names. This test fails or throws warnings if required variables are not set.
 
 The following variables fail the test if missing:
 
-* `params.version`
-    * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
 * `params.nf_required_version`
     * The minimum version of Nextflow required to run the pipeline.
     * This should correspond to the `NXF_VER` version tested by Travis.
 * `params.outdir`
     * A directory in which all pipeline results should be saved
+* `manifest.name`
+    * The pipeline name. Should begin with `nf-core/`
 * `manifest.description`
     * A description of the pipeline
+* `manifest.version`
+    * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
 * `manifest.homePage`
     * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
       so beginning with `https://github.com/nf-core/`

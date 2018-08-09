@@ -13,7 +13,7 @@
 def helpMessage() {
     log.info"""
     =========================================
-     {{ cookiecutter.pipeline_name }} v${params.version}
+     {{ cookiecutter.pipeline_name }} v${manifest.pipelineVersion}
     =========================================
     Usage:
 
@@ -112,11 +112,11 @@ log.info """=======================================================
     | \\| |       \\__, \\__/ |  \\ |___     \\`-._,-`-,
                                           `._,._,\'
 
-{{ cookiecutter.pipeline_name }} v${params.version}"
+{{ cookiecutter.pipeline_name }} v${manifest.pipelineVersion}"
 ======================================================="""
 def summary = [:]
 summary['Pipeline Name']  = '{{ cookiecutter.pipeline_name }}'
-summary['Pipeline Version'] = params.version
+summary['Pipeline Version'] = manifest.pipelineVersion
 summary['Run Name']     = custom_runName ?: workflow.runName
 summary['Reads']        = params.reads
 summary['Fasta Ref']    = params.fasta
@@ -165,7 +165,7 @@ process get_software_versions {
 
     script:
     """
-    echo $params.version > v_pipeline.txt
+    echo $manifest.pipelineVersion > v_pipeline.txt
     echo $workflow.nextflow.version > v_nextflow.txt
     fastqc --version > v_fastqc.txt
     multiqc --version > v_multiqc.txt
@@ -254,7 +254,7 @@ workflow.onComplete {
       subject = "[{{ cookiecutter.pipeline_name }}] FAILED: $workflow.runName"
     }
     def email_fields = [:]
-    email_fields['version'] = params.version
+    email_fields['version'] = manifest.pipelineVersion
     email_fields['runName'] = custom_runName ?: workflow.runName
     email_fields['success'] = workflow.success
     email_fields['dateComplete'] = workflow.complete
