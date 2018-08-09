@@ -159,6 +159,41 @@ if(params.email) summary['E-mail Address'] = params.email
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
 
+
+def create_workflow_summary(summary) {
+
+    def yaml_file = workDir.resolve('workflow_summary_mqc.yaml')
+    yaml_file.text  = """
+    id: '{{ cookiecutter.pipeline_name }}-summary'
+    description: " - this information is collected when the pipeline is started."
+    section_name: 'nfcore/{{ cookiecutter.pipeline_name }} Workflow Summary'
+    section_href: 'https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}'
+    plot_type: 'html'
+    data: |
+        <dl class=\"dl-horizontal\">
+${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }.join("\n")}
+        </dl>
+    """.stripIndent()
+
+   return yaml_file
+}
+
+
+// Check that Nextflow version is up to date enough
+// try / throw / catch works for NF versions < 0.25 when this was implemented
+try {
+    if( ! nextflow.version.matches(">= $params.nf_required_version") ){
+        throw GroovyException('Nextflow version too old')
+    }
+} catch (all) {
+    log.error "====================================================\n" +
+              "  Nextflow version $params.nf_required_version required! You are running v$workflow.nextflow.version.\n" +
+              "  Pipeline execution will continue, but things may break.\n" +
+              "  Please run `nextflow self-update` to update Nextflow.\n" +
+              "============================================================"
+}
+
+
 /*
  * Parse software version numbers
  */
@@ -211,6 +246,7 @@ process multiqc {
     file multiqc_config
     file ('fastqc/*') from fastqc_results.collect()
     file ('software_versions/*') from software_versions_yaml
+    file workflow_summary from create_workflow_summary(summary)
 
     output:
     file "*multiqc_report.html" into multiqc_report
