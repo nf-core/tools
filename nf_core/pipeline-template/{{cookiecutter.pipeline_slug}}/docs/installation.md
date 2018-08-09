@@ -41,3 +41,9 @@ unzip master.zip -d /my-pipelines/
 cd /my_data/
 nextflow run /my-pipelines/{{ cookiecutter.pipeline_slug }}-master
 ```
+
+To stop nextflow from looking for updates online, you can tell it to run in offline mode by specifying the following environment variable in your ~/.bashrc file:
+
+```bash
+export NXF_OFFLINE='TRUE'
+```
