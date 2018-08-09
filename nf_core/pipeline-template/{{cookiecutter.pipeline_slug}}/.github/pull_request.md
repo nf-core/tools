@@ -8,6 +8,7 @@ Please fill in the appropriate checklist below (delete whatever is not relevant)
  - [ ] If necessary, also make a PR on the [{{ cookiecutter.pipeline_slug }} branch on the nf-core/test-datasets repo]( https://github.com/nf-core/test-datasets/pull/new{{ cookiecutter.pipeline_slug }})
  - [ ] Ensure the test suite passes (`nextflow run . -profile test,docker`).
  - [ ] Make sure your code lints (`nf-core lint .`).
+ - [ ] Documentation in `docs` is updated
  - [ ] `CHANGELOG.md` is updated
  - [ ] `README.md` is updated
 
