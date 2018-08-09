@@ -13,7 +13,7 @@ import tempfile
 import utils
 
 # The GitHub base url or the nf-core project
-GH_BASE_URL = "https://github.com/nf-core"
+GH_BASE_URL = "https://{token}@github.com/nf-core"
 # The current cookiecutter template url for nf-core pipelines
 NF_CORE_TEMPLATE = os.path.join(
                         os.path.dirname(
@@ -30,16 +30,16 @@ class UpdateTemplate:
     its `TEMPLATE` branch.
 
     Args: - pipeline: The pipeline name
-          - context: a parsed dictionary of a cookiecutter.json file
           - branch: The template branch name, default=`TEMPLATE`
+          - token: GitHub auth token
     """
 
-    def __init__(self, pipeline, branch='TEMPLATE'):
+    def __init__(self, pipeline, branch='TEMPLATE', token=""):
         """Basic constructor
         """
         self.pipeline = pipeline
         self.repo_url = "{base_url}/{pipeline}".format(
-                    base_url=GH_BASE_URL,
+                    base_url=GH_BASE_URL.format(token=token),
                     pipeline=pipeline)
         self.branch = branch
         self.tmpdir = tempfile.mkdtemp()
@@ -61,7 +61,6 @@ class UpdateTemplate:
         """
         self.repo = git.Repo.clone_from(self.repo_url, self.tmpdir)
         config = utils.fetch_wf_config(wf_path=self.tmpdir)
-        print(self.branch)
         self.repo.git.checkout("origin/{branch}".format(branch=self.branch),
             b="{branch}".format(branch=self.branch))
         return config
@@ -97,12 +96,11 @@ class UpdateTemplate:
         self.repo.index.commit("Update nf-core pipeline template.")
 
     def _push_changes(self):
-        print("Push it...")
-        #self.repo.git.push() # we need a different way to push otherwise it will ask for credentials
+        self.repo.git.push()
         
 
-def create_pullrequest(pipeline, origin="master", template="TEMPLATE", token="", user="nf-core"):
-    """Create a pull request to a base branch (default: master),
+def create_pullrequest(pipeline, origin="dev", template="TEMPLATE", token="", user="nf-core"):
+    """Create a pull request to a base branch (default: dev),
     from a head branch (default: TEMPLATE)
 
     Returns: An instance of class requests.Response
@@ -127,10 +125,14 @@ def main():
     pipelines = json.loads(res.content).get('remote_workflows')
     if not pipelines:
         print("Pipeline information was empty!")
+    
+    # TODO: Remove this line, once we go for production
     pipelines = [{"name":"hlatyping"}] # just for testing
+    
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
-        UpdateTemplate(pipeline['name']).run()
+        print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
+        UpdateTemplate(pipeline['name'], token=os.environ['NF_CORE_BOT']).run()
     
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
@@ -142,7 +144,8 @@ def main():
             .format(pipeline=pipeline["name"], return_code=response.status_code))
             print(response.content)
         else:
-            print("Created pull-request for pipeline \'{pipeline}\' successfully.".format(pipeline=pipeline))
+            print("Created pull-request for pipeline \'{pipeline}\' successfully."
+                .format(pipeline=pipeline["name"]))
             
 if __name__ == "__main__":
     main()
