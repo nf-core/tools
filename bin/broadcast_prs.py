@@ -111,7 +111,7 @@ def create_pullrequest(pipeline, origin="master", template="TEMPLATE", token="",
     content['title'] = "Important pipeline nf-core update! (version {tag})".format(tag=os.environ['TRAVIS_TAG'])
     content['body'] = "Some important changes have been made in the nf-core pipelines templates.\n" \
     "Please make sure to merge this in ASAP and make a new minor release of your pipeline.\n\n" \
-    "Follow the link [nf-core/tools](https://github.com/nf-core/tools/releases/tag/{}".format(os.environ['TRAVIS_TAG'])
+    "Follow the link [nf-core/tools](https://github.com/nf-core/tools/releases/tag/{})".format(os.environ['TRAVIS_TAG'])
     content['head'] = "{}".format(template)
     content['base'] = origin
     return requests.post(url=GITHUB_PR_URL_TEMPL.format(pipeline=pipeline),
@@ -134,7 +134,7 @@ def main():
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
         print("Trying to open pull request for pipeline {}...".format(pipeline['name']))
-        response = create_pullrequest(pipeline['name'], token="1cd1cb0721c246346f97e6af38a8332c747a2f79")
+        response = create_pullrequest(pipeline['name'], token="")
         if response.status_code != 201:
             print("Pull-request for pipeline \'{pipeline}\' failed," 
             " got return code {return_code}."
