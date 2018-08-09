@@ -118,14 +118,19 @@ def create_pullrequest(pipeline, origin="master", template="TEMPLATE", token="",
                          auth=HTTPBasicAuth(user, token))
 
 def main():
+    # Check that the commit event is a GitHub tag event
+    assert os.environ('TRAVIS_TAG')
+    # Get nf-core pipelines info
     res = requests.get(NF_CORE_PIPELINE_INFO)
     pipelines = json.loads(res.content).get('remote_workflows')
     if not pipelines:
         print("Pipeline information was empty!")
     pipelines = [{"name":"hlatyping"}] # just for testing
+    # Update the template branch of each pipeline repo
     for pipeline in pipelines:
         UpdateTemplate(pipeline['name']).run()
     
+    # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
         print("Trying to open pull request for pipeline {}...".format(pipeline['name']))
         response = create_pullrequest(pipeline['name'], token="117962f70c156268d02a8b8f42be04bf7676141e")
