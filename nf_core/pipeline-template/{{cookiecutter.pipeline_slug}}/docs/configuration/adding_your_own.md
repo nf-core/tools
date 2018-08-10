@@ -63,7 +63,7 @@ process {
 
 The variable `wf_container` is defined dynamically and automatically specifies the image tag if Nextflow is running with `-r`.
 
-A test profile comes with the pipeline and is used by the Travis continuous integration (CI) service to test the pipeline for potential errors. Typically, this downloads a small test dataset from [test data repository](https://github.com/nf-core/test-datasets/) and runs the pipeline automatically using docker using [Travis](https://travis-ci.org/nf-core/{{ cookiecutter.pipeline_name }}/) whenever changes are made to the pipeline.
+A test profile comes with the pipeline and is used by the Travis continuous integration (CI) service to test the pipeline for potential errors. Typically, this downloads a small test dataset from [test data repository](https://github.com/nf-core/test-datasets/) and runs the pipeline automatically using docker using [Travis](https://travis-ci.org/nf-core/{{ cookiecutter.pipeline_name }}/) whenever changes are made to the pipeline. Further information on how to add your own test data for a new pipeline can be found at the link mentioned above. 
 
 ### Singularity image
 Many HPC environments are not able to run Docker due to security issues. [Singularity](http://singularity.lbl.gov/) is a tool designed to run on such HPC systems which is very similar to Docker. Even better, it can use create images directly from dockerhub.
