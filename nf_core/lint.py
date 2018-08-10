@@ -557,7 +557,8 @@ class PipelineLint(object):
         expected_strings = [
             'FROM nfcore/base',
             'COPY environment.yml /',
-            'RUN conda env update -n root -f /environment.yml && conda clean -a'
+            'RUN conda env create -f /environment.yml && conda clean -a',
+            'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
         ]
 
         difference = set(expected_strings) - set(self.dockerfile)
@@ -581,8 +582,10 @@ class PipelineLint(object):
             'From:nfcore/base',
             'Bootstrap:docker',
             'VERSION {}'.format(self.config['params.version'].strip(' \'"')),
+            'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
+            'export PATH',
             'environment.yml /',
-            '/opt/conda/bin/conda env update -n root -f /environment.yml',
+            '/opt/conda/bin/conda env create -f /environment.yml',
             '/opt/conda/bin/conda clean -a',
         ]
 
