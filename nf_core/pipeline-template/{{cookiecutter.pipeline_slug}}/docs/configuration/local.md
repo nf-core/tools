@@ -25,18 +25,18 @@ The public docker images are tagged with the same version numbers as the code, w
 ## Singularity image
 Many HPC environments are not able to run Docker due to security issues. [Singularity](http://singularity.lbl.gov/) is a tool designed to run on such HPC systems which is very similar to Docker. Even better, it can use create images directly from dockerhub.
 
-To use the singularity image for a single run, use `-with-singularity 'docker://{{ cookiecutter.pipeline_slug }}'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
+To use the singularity image for a single run, use `-with-singularity 'shub://{{ cookiecutter.pipeline_slug }}'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
 
 If you intend to run the pipeline offline, nextflow will not be able to automatically download the singularity image for you. Instead, you'll have to do this yourself manually first, transfer the image file and then point to that.
 
 First, pull the image file where you have an internet connection:
 
 ```bash
-singularity pull --name {{ cookiecutter.pipeline_slug }}.img docker://{{ cookiecutter.pipeline_slug }}
+singularity pull --name {{ cookiecutter.pipeline_slug }}.simg shub://{{ cookiecutter.pipeline_slug }}
 ```
 
 Then transfer this file and run the pipeline with this path:
 
 ```bash
-nextflow run /path/to/{{ cookiecutter.pipeline_name }} -with-singularity /path/to/{{ cookiecutter.pipeline_slug }}.img
+nextflow run /path/to/{{ cookiecutter.pipeline_name }} -with-singularity /path/to/{{ cookiecutter.pipeline_slug }}.simg
 ```
