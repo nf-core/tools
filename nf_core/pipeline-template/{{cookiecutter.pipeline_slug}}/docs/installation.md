@@ -36,13 +36,13 @@ See [nextflow.io](https://www.nextflow.io/) for further instructions on how to i
 ## 2) Install the pipeline
 
 #### 2.1) Automatic
-This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `nf-core/{{ cookiecutter.pipeline_slug }}` is specified as the pipeline name.
+This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `nf-core/{{ cookiecutter.pipeline_name }}` is specified as the pipeline name.
 
 #### 2.2) Offline
 The above method requires an internet connection so that Nextflow can download the pipeline files. If you're running on a system that has no internet connection, you'll need to download and transfer the pipeline files manually:
 
 ```bash
-wget https://github.com/{{ cookiecutter.github_repo }}/archive/master.zip
+wget https://github.com/{{ cookiecutter.github_name }}/archive/master.zip
 unzip master.zip -d /my-pipelines/
 cd /my_data/
 nextflow run /my-pipelines/{{ cookiecutter.pipeline_slug }}-master
@@ -53,6 +53,7 @@ To stop nextflow from looking for updates online, you can tell it to run in offl
 ```bash
 export NXF_OFFLINE='TRUE'
 ```
+<<<<<<< HEAD
 
 #### 2.3) Development
 
@@ -128,3 +129,5 @@ params.project = 'project_ID' // eg. b2017123
 ```
 
 Bianca users - see the above docs about using the pipeline and singularity containers offline.
+=======
+>>>>>>> 4f7e83b4958ec496a822137b2731e650a1680d3d

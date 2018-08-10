@@ -50,7 +50,7 @@ NXF_OPTS='-Xms1g -Xmx4g'
 ## Running the pipeline
 The typical command for running the pipeline is as follows:
 ```bash
-nextflow run {{ cookiecutter.github_repo }} --reads '*_R{1,2}.fastq.gz' -profile docker
+nextflow run nf-core/{{ cookiecutter.pipeline_name }} --reads '*_R{1,2}.fastq.gz' -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -68,7 +68,7 @@ results         # Finished results (configurable, see below)
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
-nextflow pull {{ cookiecutter.github_repo }}
+nextflow pull nf-core/{{ cookiecutter.pipeline_name }}
 ```
 
 ### Reproducibility
@@ -87,6 +87,7 @@ Use this parameter to choose a configuration profile. Each profile is designed f
 * `docker`
     * A generic configuration profile to be used with [Docker](http://docker.com/)
     * Runs using the `local` executor and pulls software from dockerhub: [`{{ cookiecutter.dockerhub_slug }}`]
+>>>>>>> e1983df288de86419ae39c86d4b3e2c824cee520
 * `awsbatch`
     * A generic configuration profile to be used with AWS Batch.
 * `standard`

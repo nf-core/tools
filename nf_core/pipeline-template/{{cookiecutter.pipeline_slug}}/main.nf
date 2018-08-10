@@ -24,7 +24,8 @@ def helpMessage() {
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
       --genome                      Name of iGenomes reference
-      -profile                      Hardware config to use. docker / aws
+      -profile                      Configuration profile to use. Can use multiple (comma separated)
+                                    Available: standard, conda, docker, singularity, awsbatch, test
 
     Options:
       --singleEnd                   Specifies that the input is single end reads
@@ -36,6 +37,10 @@ def helpMessage() {
       --outdir                      The output directory where the results will be saved
       --email                       Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits
       -name                         Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
+
+    AWSBatch options:
+      --awsqueue                    The AWSBatch JobQueue that needs to be set when running on AWSBatch
+      --awsregion                   The AWS Region for your AWS Batch job to run on
     """.stripIndent()
 }
 
@@ -64,6 +69,11 @@ if ( params.fasta ){
     fasta = file(params.fasta)
     if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
 }
+// AWSBatch sanity checking
+if(workflow.profile == 'awsbatch'){
+    if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
+    if (!workflow.workDir.startsWith('s3') || !params.outdir.startsWith('s3')) exit 1, "Specify S3 URLs for workDir and outdir parameters on AWSBatch!"
+}
 //
 // NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
 // If you want to use the above in a process, define the following:
@@ -77,6 +87,12 @@ if ( params.fasta ){
 custom_runName = params.name
 if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
   custom_runName = workflow.runName
+}
+
+// Check workDir/outdir paths to be S3 buckets if running on AWSBatch
+// related: https://github.com/nextflow-io/nextflow/issues/813
+if( workflow.profile == 'awsbatch') {
+    if(!workflow.workDir.startsWith('s3:') || !params.outdir.startsWith('s3:')) exit 1, "Workdir or Outdir not on S3 - specify S3 Buckets for each to run on AWSBatch!"
 }
 
 /*
@@ -135,25 +151,13 @@ summary['Working dir']    = workflow.workDir
 summary['Output dir']     = params.outdir
 summary['Script dir']     = workflow.projectDir
 summary['Config Profile'] = workflow.profile
+if(workflow.profile == 'awsbatch'){
+   summary['AWS Region'] = params.awsregion
+   summary['AWS Queue'] = params.awsqueue
+}
 if(params.email) summary['E-mail Address'] = params.email
 log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
 log.info "========================================="
-
-
-// Check that Nextflow version is up to date enough
-// try / throw / catch works for NF versions < 0.25 when this was implemented
-try {
-    if( ! nextflow.version.matches(">= $params.nf_required_version") ){
-        throw GroovyException('Nextflow version too old')
-    }
-} catch (all) {
-    log.error "====================================================\n" +
-              "  Nextflow version $params.nf_required_version required! You are running v$workflow.nextflow.version.\n" +
-              "  Pipeline execution will continue, but things may break.\n" +
-              "  Please run `nextflow self-update` to update Nextflow.\n" +
-              "============================================================"
-}
-
 
 /*
  * Parse software version numbers

@@ -110,6 +110,46 @@ nf-core-methylseq-1.0/
 7 directories, 8 files
 ```
 
+## Creating a new workflow
+The `create` subcommand makes a new workflow using the nf-core base template. With a given pipeline name and description, it gives you a starter pipeline which follows nf-core best practices.
+
+After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
+
+```
+$ nf-core create -n nextbigthing -d "This pipeline analyses data from the next big 'omics technique"
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Creating new nf-core pipeline: nextbigthing
+
+INFO: Initialising pipeline git repository
+
+INFO: Done. Remember to add a remote and push to GitHub!
+```
+
+Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet).
+On your computer, add this repository as a git remote and push to it:
+
+```bash
+git remote add origin https://github.com/ewels/nf-core-nextbigthing.git
+git push --set-upstream origin master
+```
+
+You can then continue to edit, commit and push normally as you build your pipeline.
+When you're ready, create a new repository under the `nf-core` organisation (or ask someone to do this for you on the gitter channel) and make a pull-request.
+
+Final tasks (needs more documentation):
+* Set up travis CI on fork and nf-core repository
+* Create a dockerhub repository
+* Create a singularity hub repository
+* Add a description and keywords to the github repositories
+* Protect the `master` branch on the nf-core repository
+
 ## Linting a workflow
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
 This is the same test that is used on the automated continuous integration tests.
@@ -186,12 +226,4 @@ INFO: Updating version in Singularity
 INFO: Updating version in environment.yml
  - name: nfcore-methylseq-1.3dev
  + name: nfcore-methylseq-1.3
-
-INFO: Updating version in Dockerfile
- - ENV PATH /opt/conda/envs/nfcore-methylseq-1.3dev/bin:$PATH
- + ENV PATH /opt/conda/envs/nfcore-methylseq-1.3/bin:$PATH
-
-INFO: Updating version in Singularity
- - PATH=/opt/conda/envs/nfcore-methylseq-1.3dev/bin:$PATH
- + PATH=/opt/conda/envs/nfcore-methylseq-1.3/bin:$PATH
 ```

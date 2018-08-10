@@ -59,11 +59,12 @@ The following variables fail the test if missing:
 
 * `params.version`
     * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
-* `params.nf_required_version`
-    * The minimum version of Nextflow required to run the pipeline.
-    * This should correspond to the `NXF_VER` version tested by Travis.
 * `params.outdir`
     * A directory in which all pipeline results should be saved
+* `manifest.nextflowVersion`
+    * The minimum version of Nextflow required to run the pipeline.
+    * Should `>=` a version number, eg. `>=0.31.0`
+    * This should correspond to the `NXF_VER` version tested by Travis.
 * `manifest.description`
     * A description of the pipeline
 * `manifest.homePage`
@@ -99,14 +100,14 @@ This test fails if the following happens:
 * `.travis.yml` does not contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
 * `.travis.yml` does not contain the string `docker pull <container>` under `before_install`
     * Where `<container>` is fetched from `params.container` in the `nextflow.config` file
-* `.travis.yml` does not test the Nextflow version specified in the pipeline as `nf_required_version`
+* `.travis.yml` does not test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
     * This is expected in the `env` section of the config, eg:
     ```yaml
     env:
       - NXF_VER=0.27.0
       - NXF_VER=''
     ```
-    * At least one of these `NXF_VER` variables must match the `params.nf_required_version` version specified in the pipeline config
+    * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
     * Other variables can be specified on these lines as long as they are space separated.
 
 ## Error #6 - Repository `README.md` tests ## {#6}

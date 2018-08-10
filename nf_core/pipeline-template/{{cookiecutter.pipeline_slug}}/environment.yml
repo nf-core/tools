@@ -1,4 +1,4 @@
-name: {{ cookiecutter.pipeline_slug }}-{{ cookiecutter.version }}
+name: nfcore-{{ cookiecutter.pipeline_slug }}-{{ cookiecutter.version }}
 channels:
   - bioconda
   - conda-forge
