@@ -325,7 +325,7 @@ class PipelineLint(object):
 
         # Check that the pipeline name starts with nf-core
         try:
-            assert self.config['manifest.name'].strip('\'"')[0:8] == 'nf-core/'
+            assert self.config['manifest.name'].strip('\'"').startswith('nf-core/')
         except (AssertionError, IndexError):
             self.failed.append((4, "Config variable 'manifest.name' did not begin with nf-core/:\n    {}".format(self.config['manifest.name'].strip('\'"'))))
         else:
@@ -334,7 +334,7 @@ class PipelineLint(object):
 
         # Check that the homePage is set to the GitHub URL
         try:
-            assert self.config['manifest.homePage'].strip('\'"')[0:27] == 'https://github.com/nf-core/'
+            assert self.config['manifest.homePage'].startswith('https://github.com/nf-core/')
         except (AssertionError, IndexError):
             self.failed.append((4, "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(self.config['manifest.homePage'].strip('\'"'))))
         else:
