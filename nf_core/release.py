@@ -34,6 +34,11 @@ def make_release(lint_obj, new_version):
     nfconfig_newstr = "container = 'nfcore/{}:{}'".format(lint_obj.pipeline_name.lower(), docker_tag)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
+    # Update travis image tag
+    nfconfig_pattern = r"docker tag nfcore/{name} nfcore/{name}:(?:{tag}|latest)".format(name=lint_obj.pipeline_name.lower(), tag=current_version.replace('.','\.'))
+    nfconfig_newstr = "docker tag nfcore/{name} nfcore/{name}:{tag}".format(name=lint_obj.pipeline_name.lower(), tag=docker_tag)
+    update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
+
     # Update Singularity version name
     nfconfig_pattern = r"VERSION {}".format(current_version.replace('.','\.'))
     nfconfig_newstr = "VERSION {}".format(new_version)
