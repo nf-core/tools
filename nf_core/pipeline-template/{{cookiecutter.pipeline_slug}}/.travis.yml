@@ -11,9 +11,9 @@ matrix:
 
 before_install:
   # Pull the docker image first so the test doesn't wait for this
-  - docker pull nfcore/tools
+  - docker pull nfcore/{{ cookiecutter.pipeline_slug }}
   # Fake the tag locally so that the pipeline runs properly
-  - docker tag nfcore/tools nfcore/tools:0.4
+  - docker tag nfcore/{{ cookiecutter.pipeline_slug }} nfcore/{{ cookiecutter.pipeline_slug }}:latest
 
 install:
   # Install Nextflow
@@ -26,13 +26,15 @@ install:
   - cd /tmp/nf-core-tools
   - pip install --user -e .
   # Reset
-  - cd ${TRAVIS_BUILD_DIR}
+  - mkdir ${TRAVIS_BUILD_DIR}/tests
+  - cd ${TRAVIS_BUILD_DIR}/tests
 
 env:
-  matrix:
-    - NXF_VER=0.27.0
-    - NXF_VER=''
+  - NXF_VER=0.30.0 # Specify a minimum NF version that should be tested and work
+  - NXF_VER='' # Plus: get the latest NF version and check, that it works
 
 script:
-  - "nf-core lint ${TRAVIS_BUILD_DIR}"
-  - "cd ${TRAVIS_BUILD_DIR}/tests && ./run_test.sh"
+  # Lint the pipeline code
+  - nf-core lint ${TRAVIS_BUILD_DIR}
+  # Run the pipeline with the test profile
+  - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker

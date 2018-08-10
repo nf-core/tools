@@ -8,7 +8,7 @@ import sys
 import os
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.download, nf_core.release
+import nf_core.lint, nf_core.list, nf_core.download, nf_core.release, nf_core.create
 
 import logging
 
@@ -105,6 +105,42 @@ def release(pipeline_dir, new_version):
 
     # Bump the version number in relevant files
     nf_core.release.make_release(lint_obj, new_version)
+
+@nf_core_cli.command()
+@click.option(
+    '-n', '--name',
+    required = True,
+    type = str,
+    help = 'The name of your new pipeline'
+)
+@click.option(
+    '-d', '--description',
+    required = True,
+    type = str,
+    help = 'A short description of your pipeline'
+)
+@click.option(
+    '--new-version',
+    type = str,
+    default = '1.0dev',
+    help = 'The initial version number to use'
+)
+@click.option(
+    '--no-git',
+    is_flag = True,
+    default = False,
+    help = "Do not initialise pipeline as new git repository"
+)
+@click.option(
+    '-f', '--force',
+    is_flag = True,
+    default = False,
+    help = "Overwrite output directory if it already exists"
+)
+def create(name, description, new_version, no_git, force):
+    """ Create a new pipeline using the nf-core template """
+    nf_core.create.init_pipeline(name, description, new_version, no_git, force)
+
 
 if __name__ == '__main__':
     print("""

@@ -23,6 +23,7 @@ setup(
     license = license,
     scripts = ['scripts/nf-core'],
     install_requires = [
+        'cookiecutter',
         'click',
         'GitPython',
         'pyyaml',
