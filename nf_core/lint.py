@@ -271,11 +271,11 @@ class PipelineLint(object):
         NB: Does NOT parse contents of main.nf / nextflow script
         """
 
-        # NB: Should all be files, not directories
         config_fail = [
-            'params.version',
+            'manifest.name',
             'manifest.nextflowVersion',
             'manifest.description',
+            'manifest.pipelineVersion',
             'manifest.homePage',
             'timeline.enabled',
             'trace.enabled',
@@ -323,14 +323,22 @@ class PipelineLint(object):
             else:
                 self.failed.append((4, "Config variable '{}' did not have correct value: {}".format(k, self.config.get(k))))
 
+        # Check that the pipeline name starts with nf-core
+        try:
+            assert self.config['manifest.name'].strip('\'"').startswith('nf-core/')
+        except (AssertionError, IndexError):
+            self.failed.append((4, "Config variable 'manifest.name' did not begin with nf-core/:\n    {}".format(self.config['manifest.name'].strip('\'"'))))
+        else:
+            self.passed.append((4, "Config variable 'manifest.name' began with 'nf-core/'"))
+            self.pipeline_name = self.config['manifest.name'].strip("'").replace('nf-core/', '')
+
         # Check that the homePage is set to the GitHub URL
         try:
-            assert self.config['manifest.homePage'].strip('\'"')[0:27] == 'https://github.com/nf-core/'
+            assert self.config['manifest.homePage'].strip('\'"').startswith('https://github.com/nf-core/')
         except (AssertionError, IndexError):
             self.failed.append((4, "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(self.config['manifest.homePage'].strip('\'"'))))
         else:
             self.passed.append((4, "Config variable 'manifest.homePage' began with 'https://github.com/nf-core/'"))
-            self.pipeline_name = self.config['manifest.homePage'][28:].rstrip("'")
 
         # Check that the DAG filename ends in `.svg`
         if 'dag.file' in self.config:
@@ -448,7 +456,7 @@ class PipelineLint(object):
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
-        versions['params.version'] = self.config['params.version'].strip(' \'"')
+        versions['manifest.pipelineVersion'] = self.config['manifest.pipelineVersion'].strip(' \'"')
 
         # Get version from the docker slug
         if self.config.get('params.container') and \
@@ -495,7 +503,7 @@ class PipelineLint(object):
             return
 
         # Check that the environment name matches the pipeline name
-        pipeline_version = self.config['params.version'].strip(' \'"')
+        pipeline_version = self.config['manifest.pipelineVersion'].strip(' \'"')
         expected_env_name = 'nfcore-{}-{}'.format(self.pipeline_name.lower(), pipeline_version)
         if self.conda_config['name'] != expected_env_name:
             self.failed.append((8, "Conda environment name is incorrect ({}, should be {})".format(self.conda_config['name'], expected_env_name)))
@@ -602,7 +610,7 @@ class PipelineLint(object):
         expected_strings = [
             'From:nfcore/base',
             'Bootstrap:docker',
-            'VERSION {}'.format(self.config['params.version'].strip(' \'"')),
+            'VERSION {}'.format(self.config['manifest.pipelineVersion'].strip(' \'"')),
             'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
             'export PATH',
             'environment.yml /',
