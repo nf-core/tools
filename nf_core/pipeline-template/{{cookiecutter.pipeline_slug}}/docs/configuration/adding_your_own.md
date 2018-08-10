@@ -88,7 +88,7 @@ If you intend to run the pipeline offline, nextflow will not be able to automati
 First, pull the image file where you have an internet connection:
 
 ```bash
-singularity pull --name {{ cookiecutter.pipeline_slug }}.img shub://nfcore/{{ cookiecutter.pipeline_name }}
+singularity pull --name {{ cookiecutter.pipeline_slug }}.img shub://nf-core/{{ cookiecutter.pipeline_name }}
 ```
 
 Then transfer this file and run the pipeline with this path:
