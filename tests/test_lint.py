@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 59
+MAX_PASS_CHECKS = 60
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -112,14 +112,14 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test works with good pipeline example"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         good_lint_obj.check_nextflow_config()
-        expectations = {"failed": 0, "warned": 0, "passed": 29}
+        expectations = {"failed": 0, "warned": 0, "passed": 30}
         self.assess_lint_status(good_lint_obj, **expectations)
 
     def test_config_variable_example_with_failed(self):
         """Tests that config variable existence test fails with bad pipeline example"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_nextflow_config()
-        expectations = {"failed": 18, "warned": 9, "passed": 3}
+        expectations = {"failed": 18, "warned": 9, "passed": 4}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
