@@ -68,7 +68,7 @@ A test profile comes with the pipeline and is used by the Travis continuous inte
 ### Singularity image
 Many HPC environments are not able to run Docker due to security issues. [Singularity](http://singularity.lbl.gov/) is a tool designed to run on such HPC systems which is very similar to Docker. Even better, it can use create images directly from dockerhub.
 
-To use the singularity image for a single run, use `-with-singularity 'docker://nf-core/{{ cookiecutter.pipeline_name }}'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
+To use the singularity image for a single run, use `-with-singularity 'shub://nf-core/{{ cookiecutter.pipeline_name }}'`. This will download the Singularity container from Singularity Hub.
 
 To specify singularity usage in your pipeline config file, add the following:
 
