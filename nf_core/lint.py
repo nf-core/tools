@@ -372,7 +372,7 @@ class PipelineLint(object):
                     docker_notag = re.sub(r':(?:[\.\d]+|latest)$', '', self.config['params.container'].strip('"\''))
                     docker_pull_cmd = 'docker pull {}'.format(docker_notag)
                     try:
-                        assert(docker_pull_cmd in ciconf.get('before_install'))
+                        assert(docker_pull_cmd in ciconf.get('before_install', []))
                     except AssertionError:
                         self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                     else:
@@ -578,7 +578,8 @@ class PipelineLint(object):
         expected_strings = [
             'FROM nfcore/base',
             'COPY environment.yml /',
-            'RUN conda env update -n root -f /environment.yml && conda clean -a'
+            'RUN conda env create -f /environment.yml && conda clean -a',
+            'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
         ]
 
         difference = set(expected_strings) - set(self.dockerfile)
@@ -602,8 +603,10 @@ class PipelineLint(object):
             'From:nfcore/base',
             'Bootstrap:docker',
             'VERSION {}'.format(self.config['params.version'].strip(' \'"')),
+            'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
+            'export PATH',
             'environment.yml /',
-            '/opt/conda/bin/conda env update -n root -f /environment.yml',
+            '/opt/conda/bin/conda env create -f /environment.yml',
             '/opt/conda/bin/conda clean -a',
         ]
 
