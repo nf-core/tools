@@ -110,12 +110,9 @@ bash Miniconda3-latest-Linux-x86_64.sh
 
 #### 2) Add the bioconda conda channel (and others)
 ```bash
-conda config --add channels anaconda
+conda config --add channels default
 conda config --add channels conda-forge
-conda config --add channels defaults
-conda config --add channels r
 conda config --add channels bioconda
-conda config --add channels salilab
 ```
 
 #### 3) Create a conda environment, with all necessary packages:
