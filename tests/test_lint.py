@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 57
+MAX_PASS_CHECKS = 58
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -58,7 +58,7 @@ class TestLint(unittest.TestCase):
         This should not result in any exception for the minimal
         working example"""
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
-        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS}
+        expectations = {"failed": 0, "warned": 1, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -73,7 +73,7 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline(release=True)
-        expectations = {"failed": 0, "warned": 0, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
+        expectations = {"failed": 0, "warned": 1, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
@@ -112,14 +112,14 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test works with good pipeline example"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         good_lint_obj.check_nextflow_config()
-        expectations = {"failed": 0, "warned": 0, "passed": 27}
+        expectations = {"failed": 0, "warned": 0, "passed": 28}
         self.assess_lint_status(good_lint_obj, **expectations)
 
     def test_config_variable_example_with_failed(self):
         """Tests that config variable existence test fails with bad pipeline example"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_nextflow_config()
-        expectations = {"failed": 17, "warned": 8, "passed": 2}
+        expectations = {"failed": 17, "warned": 9, "passed": 3}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -131,7 +131,7 @@ class TestLint(unittest.TestCase):
     def test_ci_conf_pass(self):
         """Tests that the continous integration config checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config['params.nf_required_version'] = '0.27.0'
+        lint_obj.minNextflowVersion = '0.27.0'
         lint_obj.check_ci_config()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -139,7 +139,7 @@ class TestLint(unittest.TestCase):
     def test_ci_conf_fail_wrong_nf_version(self):
         """Tests that the CI check fails with the wrong NXF version"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config['params.nf_required_version'] = '0.28.0'
+        lint_obj.minNextflowVersion = '0.28.0'
         lint_obj.check_ci_config()
         expectations = {"failed": 1, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -168,7 +168,7 @@ class TestLint(unittest.TestCase):
     def test_readme_pass(self):
         """Tests that the pipeline README file checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config['params.nf_required_version'] = '0.27.0'
+        lint_obj.minNextflowVersion = '0.27.0'
         lint_obj.files = ['environment.yml']
         lint_obj.check_readme()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
@@ -177,7 +177,7 @@ class TestLint(unittest.TestCase):
     def test_readme_warn(self):
         """Tests that the pipeline README file checks fail  """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config['params.nf_required_version'] = '0.28.0'
+        lint_obj.minNextflowVersion = '0.28.0'
         lint_obj.check_readme()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
@@ -264,7 +264,7 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['params.version'] = '0.4'
         lint_obj.check_conda_env_yaml()
-        expectations = {"failed": 0, "warned": 0, "passed": 7}
+        expectations = {"failed": 0, "warned": 1, "passed": 6}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_env_fail(self):
@@ -321,7 +321,7 @@ class TestLint(unittest.TestCase):
         lint_obj.conda_config['name'] = 'nfcore-tools-0.4'
         lint_obj.dockerfile = ['fubar']
         lint_obj.check_conda_dockerfile()
-        expectations = {"failed": 3, "warned": 0, "passed": 0}
+        expectations = {"failed": 4, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_dockerfile_skip(self):

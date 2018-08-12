@@ -1,0 +1,42 @@
+sudo: required
+language: java
+jdk: openjdk8
+services:
+  - docker
+python:
+  - "2.7"
+cache: pip
+matrix:
+  fast_finish: true
+
+before_install:
+  # PR made to 'master' branch should always orginate from same repo's 'dev' branch or the TRAVIS CI will fail
+  - [ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])
+  # Pull the docker image first so the test doesn't wait for this
+  - docker pull nfcore/{{ cookiecutter.pipeline_slug }}
+  # Fake the tag locally so that the pipeline runs properly
+  - docker tag nfcore/{{ cookiecutter.pipeline_slug }} nfcore/{{ cookiecutter.pipeline_slug }}:latest
+
+install:
+  # Install Nextflow
+  - mkdir /tmp/nextflow
+  - cd /tmp/nextflow
+  - wget -qO- get.nextflow.io | bash
+  - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+  # Install nf-core/tools
+  - git clone https://github.com/nf-core/tools.git /tmp/nf-core-tools
+  - cd /tmp/nf-core-tools
+  - pip install --user -e .
+  # Reset
+  - mkdir ${TRAVIS_BUILD_DIR}/tests
+  - cd ${TRAVIS_BUILD_DIR}/tests
+
+env:
+  - NXF_VER=0.30.0 # Specify a minimum NF version that should be tested and work
+  - NXF_VER='' # Plus: get the latest NF version and check, that it works
+
+script:
+  # Lint the pipeline code
+  - nf-core lint ${TRAVIS_BUILD_DIR}
+  # Run the pipeline with the test profile
+  - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker
