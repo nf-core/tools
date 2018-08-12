@@ -11,7 +11,7 @@ matrix:
 
 before_install:
   # PR made to 'master' branch should always orginate from same repo's 'dev' branch or the TRAVIS CI will fail
-  - test [ "${TRAVIS_PULL_REQUEST}" = "false" ] || [ "${TRAVIS_BRANCH}" != "master" ] || [ "${TRAVIS_PULL_REQUEST_SLUG}" = "${TRAVIS_REPO_SLUG}" ] || [ "${TRAVIS_PULL_REQUEST_BRANCH}" = "dev" ]
+  - [ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])
   # Pull the docker image first so the test doesn't wait for this
   - docker pull nfcore/{{ cookiecutter.pipeline_slug }}
   # Fake the tag locally so that the pipeline runs properly
