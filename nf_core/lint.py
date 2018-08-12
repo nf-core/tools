@@ -72,6 +72,7 @@ class PipelineLint(object):
         self.files = []
         self.config = {}
         self.pipeline_name = None
+        self.minNextflowVersion = None
         self.dockerfile = []
         self.singularityfile = []
         self.conda_config = {}
@@ -270,11 +271,11 @@ class PipelineLint(object):
         NB: Does NOT parse contents of main.nf / nextflow script
         """
 
-        # NB: Should all be files, not directories
         config_fail = [
-            'params.version',
-            'params.nf_required_version',
+            'manifest.name',
+            'manifest.nextflowVersion',
             'manifest.description',
+            'manifest.pipelineVersion',
             'manifest.homePage',
             'timeline.enabled',
             'trace.enabled',
@@ -310,6 +311,11 @@ class PipelineLint(object):
             else:
                 self.warned.append((4, "Config variable not found: {}".format(cf)))
 
+        # Check and warn if the process configuration is done with deprecated syntax
+        process_with_deprecated_syntax = list(set([re.search('^(process\.\$.*?)\.+.*$', ck).group(1) for ck in self.config.keys() if re.match(r'^(process\.\$.*?)\.+.*$', ck)]))
+        for pd in process_with_deprecated_syntax:
+            self.warned.append((4, "Process configuration is done with deprecated_syntax: {}".format(pd)))
+
         # Check the variables that should be set to 'true'
         for k in ['timeline.enabled', 'report.enabled', 'trace.enabled', 'dag.enabled']:
             if self.config.get(k) == 'true':
@@ -317,14 +323,22 @@ class PipelineLint(object):
             else:
                 self.failed.append((4, "Config variable '{}' did not have correct value: {}".format(k, self.config.get(k))))
 
+        # Check that the pipeline name starts with nf-core
+        try:
+            assert self.config['manifest.name'].strip('\'"').startswith('nf-core/')
+        except (AssertionError, IndexError):
+            self.failed.append((4, "Config variable 'manifest.name' did not begin with nf-core/:\n    {}".format(self.config['manifest.name'].strip('\'"'))))
+        else:
+            self.passed.append((4, "Config variable 'manifest.name' began with 'nf-core/'"))
+            self.pipeline_name = self.config['manifest.name'].strip("'").replace('nf-core/', '')
+
         # Check that the homePage is set to the GitHub URL
         try:
-            assert self.config['manifest.homePage'].strip('\'"')[0:27] == 'https://github.com/nf-core/'
+            assert self.config['manifest.homePage'].strip('\'"').startswith('https://github.com/nf-core/')
         except (AssertionError, IndexError):
             self.failed.append((4, "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(self.config['manifest.homePage'].strip('\'"'))))
         else:
             self.passed.append((4, "Config variable 'manifest.homePage' began with 'https://github.com/nf-core/'"))
-            self.pipeline_name = self.config['manifest.homePage'][28:].rstrip("'")
 
         # Check that the DAG filename ends in `.svg`
         if 'dag.file' in self.config:
@@ -333,11 +347,20 @@ class PipelineLint(object):
             else:
                 self.failed.append((4, "Config variable 'dag.file' did not end with .svg"))
 
+        # Check that the minimum nextflowVersion is set properly
+        if 'manifest.nextflowVersion' in self.config:
+            if self.config['manifest.nextflowVersion'].strip('"\'').startswith('>='):
+                self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >="))
+                # Save self.minNextflowVersion for convenience
+                self.minNextflowVersion = re.sub(r'[^0-9\.]', '', self.config.get('manifest.nextflowVersion', ''))
+            else:
+                self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config['manifest.nextflowVersion']).strip('"\'')))
+
     def check_ci_config(self):
         """ Check that the Travis or Circle CI YAML config is valid
 
         Makes sure that `nf-core lint` runs in travis tests
-        Checks that tests run with the stated nf_required_version
+        Checks that tests run with the required nextflow version
         """
 
         for cf in ['.travis.yml', 'circle.yml']:
@@ -354,16 +377,26 @@ class PipelineLint(object):
                     self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
                 # Check that we're pulling the right docker image
                 if self.config.get('params.container'):
-                    docker_pull_cmd = 'docker pull {}'.format(self.config['params.container'].strip('"\''))
+                    docker_notag = re.sub(r':(?:[\.\d]+|latest)$', '', self.config['params.container'].strip('"\''))
+                    docker_pull_cmd = 'docker pull {}'.format(docker_notag)
                     try:
-                        assert(docker_pull_cmd in ciconf.get('before_install'))
+                        assert(docker_pull_cmd in ciconf.get('before_install', []))
                     except AssertionError:
-                        self.failed.append((5, "CI is not pulling the correct docker image: {}".format(docker_pull_cmd)))
+                        self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                     else:
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
-                # Check that we're testing the nf_required_version
-                nf_required_version_tested = False
+                    # Check that we tag the docker image properly
+                    docker_tag_cmd = 'docker tag {} {}'.format(docker_notag, self.config['params.container'].strip('"\''))
+                    try:
+                        assert(docker_tag_cmd in ciconf.get('before_install'))
+                    except AssertionError:
+                        self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
+                    else:
+                        self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
+
+                # Check that we're testing the minimum nextflow version
+                minNextflowVersion_tested = False
                 env = ciconf.get('env', [])
                 if type(env) is dict:
                     env = env.get('matrix', [])
@@ -373,11 +406,10 @@ class PipelineLint(object):
                         k,v = s.split('=')
                         if k == 'NXF_VER':
                             ci_ver = v.strip('\'"')
-                            cv = self.config.get('params.nf_required_version', '').strip('\'"')
-                            if ci_ver == cv:
-                                nf_required_version_tested = True
+                            if ci_ver == self.minNextflowVersion:
+                                minNextflowVersion_tested = True
                                 self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
-                if not nf_required_version_tested:
+                if not minNextflowVersion_tested:
                     self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
 
 
@@ -395,13 +427,12 @@ class PipelineLint(object):
         match = re.search(nf_badge_re, content)
         if match:
             nf_badge_version = match.group(1).strip('\'"')
-            nf_config_version = self.config.get('params.nf_required_version').strip('\'"')
             try:
-                assert nf_badge_version == nf_config_version
+                assert nf_badge_version == self.minNextflowVersion
             except (AssertionError, KeyError):
-                self.failed.append((6, "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
+                self.failed.append((6, "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(nf_badge_version, self.minNextflowVersion)))
             else:
-                self.passed.append((6, "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(nf_badge_version, nf_config_version)))
+                self.passed.append((6, "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(nf_badge_version, self.minNextflowVersion)))
         else:
             self.warned.append((6, "README did not have a Nextflow minimum version badge."))
 
@@ -425,7 +456,7 @@ class PipelineLint(object):
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
-        versions['params.version'] = self.config['params.version'].strip(' \'"')
+        versions['manifest.pipelineVersion'] = self.config['manifest.pipelineVersion'].strip(' \'"')
 
         # Get version from the docker slug
         if self.config.get('params.container') and \
@@ -472,7 +503,7 @@ class PipelineLint(object):
             return
 
         # Check that the environment name matches the pipeline name
-        pipeline_version = self.config['params.version'].strip(' \'"')
+        pipeline_version = self.config['manifest.pipelineVersion'].strip(' \'"')
         expected_env_name = 'nfcore-{}-{}'.format(self.pipeline_name.lower(), pipeline_version)
         if self.conda_config['name'] != expected_env_name:
             self.failed.append((8, "Conda environment name is incorrect ({}, should be {})".format(self.conda_config['name'], expected_env_name)))
@@ -555,7 +586,8 @@ class PipelineLint(object):
         expected_strings = [
             'FROM nfcore/base',
             'COPY environment.yml /',
-            'RUN conda env update -n root -f /environment.yml && conda clean -a'
+            'RUN conda env create -f /environment.yml && conda clean -a',
+            'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
         ]
 
         difference = set(expected_strings) - set(self.dockerfile)
@@ -578,9 +610,11 @@ class PipelineLint(object):
         expected_strings = [
             'From:nfcore/base',
             'Bootstrap:docker',
-            'VERSION {}'.format(self.config['params.version'].strip(' \'"')),
+            'VERSION {}'.format(self.config['manifest.pipelineVersion'].strip(' \'"')),
+            'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
+            'export PATH',
             'environment.yml /',
-            '/opt/conda/bin/conda env update -n root -f /environment.yml',
+            '/opt/conda/bin/conda env create -f /environment.yml',
             '/opt/conda/bin/conda clean -a',
         ]
 
