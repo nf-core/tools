@@ -6,6 +6,15 @@ python:
   - '3.4'
   - '3.5'
   - '3.6'
+
+before_install:
+  # PR made to 'master' branch should always orginate from same repo's 'dev' branch or the TRAVIS CI will fail
+  - echo $TRAVIS_PULL_REQUEST, $TRAVIS_PULL_REQUEST="false"
+  - echo $TRAVIS_BRANCH, $TRAVIS_BRANCH!="master"
+  - echo $TRAVIS_PULL_REQUEST_SLUG, $TRAVIS_REPO_SLUG, $TRAVIS_PULL_REQUEST_SLUG=$TRAVIS_REPO_SLUG
+  - echo $TRAVIS_PULL_REQUEST_BRANCH, $TRAVIS_PULL_REQUEST_BRANCH="dev"
+  - test ["${TRAVIS_PULL_REQUEST}"="false"] || ["${TRAVIS_BRANCH}"!="master"] || (["${TRAVIS_PULL_REQUEST_SLUG}"="${TRAVIS_REPO_SLUG}"] && ["${TRAVIS_PULL_REQUEST_BRANCH}"="dev"])
+
 install:
   # Install Nextflow
   - mkdir /tmp/nextflow
@@ -17,7 +26,8 @@ install:
   - pip install .
   - pip install codecov pytest pytest-datafiles pytest-cov mock
 
-script: python -m pytest --cov=nf_core .
+script:
+  - python -m pytest --cov=nf_core .
 
 after_success:
   - codecov
