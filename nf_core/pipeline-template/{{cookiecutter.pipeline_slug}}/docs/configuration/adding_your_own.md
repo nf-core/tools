@@ -43,10 +43,10 @@ First, install docker on your system: [Docker Installation Instructions](https:/
 
 Then, simply run the analysis pipeline:
 ```bash
-nextflow run nfcore/{{ cookiecutter.pipeline_name }} -profile docker --reads '<path to your reads>'
+nextflow run nf-core/{{ cookiecutter.pipeline_slug }} -profile docker --reads '<path to your reads>'
 ```
 
-Nextflow will recognise `nfcore/{{ cookiecutter.pipeline_name }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.dockerhub_slug }}](https://hub.docker.com/r/{{ cookiecutter.dockerhub_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
+Nextflow will recognise `nf-core/{{ cookiecutter.pipeline_slug }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.pipeline_slug }}](https://hub.docker.com/r/nfcore/{{ cookiecutter.pipeline_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
 
 The public docker images are tagged with the same version numbers as the code, which you can use to ensure reproducibility. When running the pipeline, specify the pipeline version with `-r`, for example `-r v1.3`. This uses pipeline code and docker image from this tagged version.
 
@@ -56,19 +56,13 @@ To add docker support to your own config file (instead of using the `docker` pro
 docker {
   enabled = true
 }
-process {
-  container = wf_container
-}
 ```
 
-The variable `wf_container` is defined dynamically and automatically specifies the image tag if Nextflow is running with `-r`.
-
-A test suite for docker comes with the pipeline, and can be run by moving to the [`tests` directory](https://github.com/nf-core/{{ cookiecutter.pipeline_name }}/tree/master/tests) and running `./run_test.sh`. This will download a small yeast genome and some data, and attempt to run the pipeline through docker on that small dataset. This is automatically run using [Travis](https://travis-ci.org/{{ cookiecutter.github_repo }}/) whenever changes are made to the pipeline.
 
 ### Singularity image
 Many HPC environments are not able to run Docker due to security issues. [Singularity](http://singularity.lbl.gov/) is a tool designed to run on such HPC systems which is very similar to Docker. Even better, it can use create images directly from dockerhub.
 
-To use the singularity image for a single run, use `-profile singularity 'shub://nfcore/tools:[VERSION]'`. This will download the docker container from dockerhub and create a singularity image for you dynamically.
+To use the singularity image for a single run, use `-profile standard,singularity`. This will download the singularity container from singularity hub dynamically.
 
 To specify singularity usage in your pipeline config file, add the following:
 
@@ -76,25 +70,20 @@ To specify singularity usage in your pipeline config file, add the following:
 singularity {
   enabled = true
 }
-process {
-  container = "docker://$wf_container"
-}
 ```
-
-The variable `wf_container` is defined dynamically and automatically specifies the image tag if Nextflow is running with `-r`.
 
 If you intend to run the pipeline offline, nextflow will not be able to automatically download the singularity image for you. Instead, you'll have to do this yourself manually first, transfer the image file and then point to that.
 
 First, pull the image file where you have an internet connection:
 
 ```bash
-singularity pull --name {{ cookiecutter.pipeline_slug }}.simg docker://nfcore/{{ cookiecutter.pipeline_name }}
+singularity pull --name nf-core-{{ cookiecutter.pipeline_slug }}.simg shub://nf-core/{{ cookiecutter.pipeline_slug }}
 ```
 
 Then transfer this file and run the pipeline with this path:
 
 ```bash
-nextflow run /path/to/{{ cookiecutter.pipeline_slug }} -profile singularity /path/to/{{ cookiecutter.pipeline_slug }}.simg
+nextflow run /path/to/{{ cookiecutter.pipeline_slug }} -with-singularity /path/to/nf-core-{{ cookiecutter.pipeline_slug }}.simg
 ```
 
 
