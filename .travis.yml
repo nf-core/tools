@@ -6,6 +6,9 @@ python:
   - '3.4'
   - '3.5'
   - '3.6'
+before_install:
+  # PRs made to 'master' branch should always orginate from another repo or the 'dev' branch
+  - [ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])
 install:
   # Install Nextflow
   - mkdir /tmp/nextflow

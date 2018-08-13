@@ -13,15 +13,15 @@ def make_release(lint_obj, new_version):
     """ Function to make the release. Called by the main script """
 
     # Collect the old and new version numbers
-    current_version = lint_obj.config['params.version'].strip(' \'"')
+    current_version = lint_obj.config['manifest.pipelineVersion'].strip(' \'"')
     if new_version.startswith('v'):
         logging.warn("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
     logging.info("Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(current_version, new_version))
 
     # Update nextflow.config
-    nfconfig_pattern = r"version\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace('.','\.'))
-    nfconfig_newstr = "version = '{}'".format(new_version)
+    nfconfig_pattern = r"pipelineVersion\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace('.','\.'))
+    nfconfig_newstr = "pipelineVersion = '{}'".format(new_version)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
     # Update container tag
@@ -34,9 +34,9 @@ def make_release(lint_obj, new_version):
     nfconfig_newstr = "container = 'nfcore/{}:{}'".format(lint_obj.pipeline_name.lower(), docker_tag)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-    # Update travis image pull
-    nfconfig_pattern = r"docker pull nfcore/{}:(?:{}|latest)".format(lint_obj.pipeline_name.lower(), current_version.replace('.','\.'))
-    nfconfig_newstr = "docker pull nfcore/{}:{}".format(lint_obj.pipeline_name.lower(), docker_tag)
+    # Update travis image tag
+    nfconfig_pattern = r"docker tag nfcore/{name} nfcore/{name}:(?:{tag}|latest)".format(name=lint_obj.pipeline_name.lower(), tag=current_version.replace('.','\.'))
+    nfconfig_newstr = "docker tag nfcore/{name} nfcore/{name}:{tag}".format(name=lint_obj.pipeline_name.lower(), tag=docker_tag)
     update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
     # Update Singularity version name
@@ -51,7 +51,7 @@ def make_release(lint_obj, new_version):
         update_file_version("environment.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
 def update_file_version(filename, lint_obj, pattern, newstr):
-    """ Update params.version in the nextflow config file """
+    """ Update manifest.pipelineVersion in the nextflow config file """
 
     # Load the file
     fn = os.path.join(lint_obj.path, filename)
