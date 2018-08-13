@@ -21,7 +21,7 @@ For further reading and documentation see the [FastQC help](http://www.bioinform
 
 * `sample_fastqc.html`
   * FastQC report, containing quality metrics for your untrimmed raw fastq files
-* `sample_fastqc.zip`
+* `zips/sample_fastqc.zip`
   * zip file containing the FastQC report, tab-delimited data file and plot images
 
 

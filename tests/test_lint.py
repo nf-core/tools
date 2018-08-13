@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 57
+MAX_PASS_CHECKS = 58
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -321,7 +321,7 @@ class TestLint(unittest.TestCase):
         lint_obj.conda_config['name'] = 'nfcore-tools-0.4'
         lint_obj.dockerfile = ['fubar']
         lint_obj.check_conda_dockerfile()
-        expectations = {"failed": 3, "warned": 0, "passed": 0}
+        expectations = {"failed": 4, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_dockerfile_skip(self):

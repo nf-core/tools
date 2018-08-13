@@ -26,7 +26,7 @@ java -version
 curl -fsSL get.nextflow.io | bash
 
 # Add Nextflow binary to your PATH:
-mv nextflow ~/bin
+mv nextflow ~/bin/
 # OR system-wide installation:
 # sudo mv nextflow /usr/local/bin
 ```
@@ -42,7 +42,7 @@ This pipeline itself needs no installation - NextFlow will automatically fetch i
 The above method requires an internet connection so that Nextflow can download the pipeline files. If you're running on a system that has no internet connection, you'll need to download and transfer the pipeline files manually:
 
 ```bash
-wget https://github.com/{{ cookiecutter.github_name }}/archive/master.zip
+wget https://github.com/nf-core/{{ cookiecutter.pipeline_name }}/archive/master.zip
 unzip master.zip -d /my-pipelines/
 cd /my_data/
 nextflow run /my-pipelines/{{ cookiecutter.pipeline_slug }}-master
@@ -53,7 +53,6 @@ To stop nextflow from looking for updates online, you can tell it to run in offl
 ```bash
 export NXF_OFFLINE='TRUE'
 ```
-<<<<<<< HEAD
 
 #### 2.3) Development
 
@@ -71,7 +70,7 @@ Be warned of two important points about this default configuration:
 2. Nextflow will expect all software to be installed and available on the `PATH`
 
 #### 3.1) Software deps: Docker and Singularity
-Running the pipeline with the option `-with-singularity` or `-with-docker` tells Nextflow to enable either [Singularity](http://singularity.lbl.gov/) or Docker for this run. An image containing all of the software requirements will be automatically fetched and used (https://hub.docker.com/r/nf-core/{{ cookiecutter.pipeline_slug }}).
+Running the pipeline with the option `-profile singularity` or `-with-docker` tells Nextflow to enable either [Singularity](http://singularity.lbl.gov/) or Docker for this run. An image containing all of the software requirements will be automatically fetched and used (https://hub.docker.com/r/nf-core/{{ cookiecutter.pipeline_slug }}).
 
 If running offline with Singularity, you'll need to download and transfer the Singularity image first:
 
@@ -79,10 +78,10 @@ If running offline with Singularity, you'll need to download and transfer the Si
 singularity pull --name nfcore-{{ cookiecutter.pipeline_slug }}-[VERSION].simg shub://nfcore/{{ cookiecutter.pipeline_slug }}:[VERSION]
 ```
 
-Once transferred, use `-with-singularity` but specify the path to the image file:
+Once transferred, use `-profile singularity` but specify the path to the image file:
 
 ```bash
-nextflow run /path/to/nf-core-{{ cookiecutter.pipeline_slug }} -with-singularity /path/to/{{ cookiecutter.pipeline_slug }}-[VERSION].simg
+nextflow run /path/to/nf-core-{{ cookiecutter.pipeline_slug }} -profile singularity /path/to/{{ cookiecutter.pipeline_slug }}-[VERSION].simg
 ```
 
 #### 3.2) Software deps: bioconda
@@ -127,7 +126,3 @@ Note that you will need to specify your UPPMAX project ID when running a pipelin
 ```nextflow
 params.project = 'project_ID' // eg. b2017123
 ```
-
-Bianca users - see the above docs about using the pipeline and singularity containers offline.
-=======
->>>>>>> 4f7e83b4958ec496a822137b2731e650a1680d3d
