@@ -5,7 +5,7 @@ The {{ cookiecutter.pipeline_name }} pipeline needs a reference genome for align
 The minimal requirements are a FASTA file.
 
 ## Adding paths to a config file
-Specifying long paths every time you run the pipeline is a pain. To make this easier, the pipeline comes configured to understand reference genome keywords which correspond to preconfigured paths, meaning that you can just specify `--genome ID` when running the pipeline. 
+Specifying long paths every time you run the pipeline is a pain. To make this easier, the pipeline comes configured to understand reference genome keywords which correspond to preconfigured paths, meaning that you can just specify `--genome ID` when running the pipeline.
 
 Note that this genome key can also be specified in a config file if you always use the same genome.
 
