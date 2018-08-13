@@ -46,7 +46,7 @@ Then, simply run the analysis pipeline:
 nextflow run nfcore/{{ cookiecutter.pipeline_name }} -profile docker --reads '<path to your reads>'
 ```
 
-Nextflow will recognise `nf-core/{{ cookiecutter.pipeline_name }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.dockerhub_slug }}](https://hub.docker.com/r/{{ cookiecutter.dockerhub_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
+Nextflow will recognise `nfcore/{{ cookiecutter.pipeline_name }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [{{ cookiecutter.dockerhub_slug }}](https://hub.docker.com/r/{{ cookiecutter.dockerhub_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
 
 The public docker images are tagged with the same version numbers as the code, which you can use to ensure reproducibility. When running the pipeline, specify the pipeline version with `-r`, for example `-r v1.3`. This uses pipeline code and docker image from this tagged version.
 
