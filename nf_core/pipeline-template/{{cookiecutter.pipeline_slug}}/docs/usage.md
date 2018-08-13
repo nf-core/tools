@@ -86,7 +86,11 @@ Use this parameter to choose a configuration profile. Each profile is designed f
 
 * `docker`
     * A generic configuration profile to be used with [Docker](http://docker.com/)
+<<<<<<< HEAD
     * Runs using the `local` executor and pulls software from dockerhub: [`{{ cookiecutter.pipeline_slug }}`](http://hub.docker.com/r/{{ cookiecutter.pipeline_slug }}/)
+=======
+    * Runs using the `local` executor and pulls software from dockerhub: [`{{ cookiecutter.dockerhub_slug }}`]
+>>>>>>> 84056ad456375543df8ed21154a95cc411a37982
 * `awsbatch`
     * A generic configuration profile to be used with AWS Batch.
 * `standard`
@@ -229,6 +233,10 @@ Set to receive plain-text e-mails instead of HTML formatted.
 ### `--sampleLevel`
 Used to turn of the edgeR MDS and heatmap. Set automatically when running on fewer than 3 samples.
 
+<<<<<<< HEAD
 ### `--multiqc_config`
+=======
+### `--multiqc_config`
+>>>>>>> 84056ad456375543df8ed21154a95cc411a37982
 If you would like to supply a custom config file to MultiQC, you can specify a path with `--multiqc_config`.
 This is used instead of the config file specific to the pipeline.
