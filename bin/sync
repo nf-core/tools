@@ -10,10 +10,12 @@ import shutil
 import sys
 import subprocess
 import tempfile
-import utils
+import syncutils.template
 
+# Set the default nf-core pipeline template branch
+DEF_TEMPLATE_BRANCH = "TEMPLATE"
 # The GitHub base url or the nf-core project
-GH_BASE_URL = "https://{token}@github.com/nf-core"
+GH_BASE_URL = "https://{token}@github.com/nf-core/{pipeline}"
 # The current cookiecutter template url for nf-core pipelines
 NF_CORE_TEMPLATE = os.path.join(
                         os.path.dirname(
@@ -24,80 +26,6 @@ NF_CORE_PIPELINE_INFO = "http://nf-co.re/pipelines.json"
 # The API endpoint for creating pull requests
 GITHUB_PR_URL_TEMPL = "https://api.github.com/repos/nf-core/{pipeline}/pulls"
 
-
-class UpdateTemplate:
-    """Updates the template content of an nf-core pipeline in
-    its `TEMPLATE` branch.
-
-    Args: - pipeline: The pipeline name
-          - branch: The template branch name, default=`TEMPLATE`
-          - token: GitHub auth token
-    """
-
-    def __init__(self, pipeline, branch='TEMPLATE', token=""):
-        """Basic constructor
-        """
-        self.pipeline = pipeline
-        self.repo_url = "{base_url}/{pipeline}".format(
-                    base_url=GH_BASE_URL.format(token=token),
-                    pipeline=pipeline)
-        self.branch = branch
-        self.tmpdir = tempfile.mkdtemp()
-        self.templatedir = tempfile.mkdtemp()
-        self.repo = None
-    
-    def run(self):
-        """Execute the template update.
-        """
-        config = self._clone_repo()
-        assert self.repo
-        context = utils.create_context(config)
-        self._apply_changes(context)
-        self._commit_changes()
-        self._push_changes()
-
-    def _clone_repo(self):
-        """Clone the repo and switch to the configured branch.
-        """
-        self.repo = git.Repo.clone_from(self.repo_url, self.tmpdir)
-        config = utils.fetch_wf_config(wf_path=self.tmpdir)
-        self.repo.git.checkout("origin/{branch}".format(branch=self.branch),
-            b="{branch}".format(branch=self.branch))
-        return config
-
-    def _apply_changes(self, context):
-        """Apply the changes of the cookiecutter template
-        to the pipelines template branch.
-        """
-        cookiecutter(NF_CORE_TEMPLATE,
-                     no_input=True,
-                     extra_context=context,
-                     overwrite_if_exists=True,
-                     output_dir=self.templatedir)
-        # Clear the template branch content
-        for f in os.listdir(self.tmpdir):
-            if f == ".git": continue
-            try:
-                shutil.rmtree(os.path.join(self.tmpdir, f))
-            except:
-                os.remove(os.path.join(self.tmpdir, f))
-        # Move the new template content into the template branch
-        template_path = os.path.join(self.templatedir, self.pipeline)
-        for f in os.listdir(template_path):
-            shutil.move(
-                os.path.join(template_path, f), # src
-                os.path.join(self.tmpdir, f), # dest
-            )
-
-    def _commit_changes(self):
-        """Commits the changes of the new template to the current branch.
-        """
-        self.repo.git.add(A=True)
-        self.repo.index.commit("Update nf-core pipeline template.")
-
-    def _push_changes(self):
-        self.repo.git.push()
-        
 
 def create_pullrequest(pipeline, origin="dev", template="TEMPLATE", token="", user="nf-core"):
     """Create a pull request to a base branch (default: dev),
@@ -132,12 +60,16 @@ def main():
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
         print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
-        UpdateTemplate(pipeline['name'], token=os.environ['NF_CORE_BOT']).run()
+        syncutils.template.NfcoreTemplate(
+            pipeline['name'],
+            branch=DEF_TEMPLATE_BRANCH,
+            repo_url=GH_BASE_URL.format(token=os.environ["NF_CORE_BOT"], pipeline=pipeline['name'])
+        ).sync(template_url=NF_CORE_TEMPLATE)
     
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
         print("Trying to open pull request for pipeline {}...".format(pipeline['name']))
-        response = create_pullrequest(pipeline['name'], token=os.environ["NF_CORE_BOT"])
+        response = create_pullrequest(pipeline['name'], os.environ["NF_CORE_BOT"])
         if response.status_code != 201:
             print("Pull-request for pipeline \'{pipeline}\' failed," 
             " got return code {return_code}."
