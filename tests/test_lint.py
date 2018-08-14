@@ -309,7 +309,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         with open(os.path.join(PATH_WORKING_EXAMPLE, 'Dockerfile'), 'r') as fh:
             lint_obj.dockerfile = fh.read().splitlines()
-        lint_obj.conda_config['name'] = 'nfcore-tools-0.4'
+        lint_obj.conda_config['name'] = 'nf-core-tools-0.4'
         lint_obj.check_conda_dockerfile()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -318,7 +318,7 @@ class TestLint(unittest.TestCase):
         """ Tests the conda Dockerfile test fails with a bad example """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
-        lint_obj.conda_config['name'] = 'nfcore-tools-0.4'
+        lint_obj.conda_config['name'] = 'nf-core-tools-0.4'
         lint_obj.dockerfile = ['fubar']
         lint_obj.check_conda_dockerfile()
         expectations = {"failed": 4, "warned": 0, "passed": 0}
@@ -337,7 +337,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.pipelineVersion'] = '0.4'
-        lint_obj.conda_config = {'name': 'nfcore-tools-0.4', 'dependencies': [{'pip': ['multiqc']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -348,7 +348,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.pipelineVersion'] = '0.4'
-        lint_obj.conda_config = {'name': 'nfcore-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.4']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.4']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -364,7 +364,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.pipelineVersion'] = '0.4'
-        lint_obj.conda_config = {'name': 'nfcore-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -380,7 +380,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.pipelineVersion'] = '0.4'
-        lint_obj.conda_config = {'name': 'nfcore-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -391,7 +391,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.pipelineVersion'] = '0.4'
-        lint_obj.conda_config = {'name': 'nfcore-tools-0.4', 'dependencies': [{'pip': ['notpresent=1.5']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['notpresent=1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
