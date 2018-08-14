@@ -47,9 +47,14 @@ class PipelineCreate(object):
 
         # Check if the output directory exists
         if os.path.exists(self.outdir):
-            logging.error("Output directory '{}' exists!".format(self.outdir))
-            logging.info("Use -f / --force to overwrite existing files")
-            sys.exit(1)
+            if self.force:
+                logging.warn("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
+            else:
+                logging.error("Output directory '{}' exists!".format(self.outdir))
+                logging.info("Use -f / --force to overwrite existing files")
+                sys.exit(1)
+        else:
+            os.makedirs(self.outdir)
 
         # Build the template in a temporary directory
         tmpdir = tempfile.mkdtemp()
@@ -63,7 +68,6 @@ class PipelineCreate(object):
         )
 
         # Move the template to the output directory
-        os.makedirs(self.outdir)
         for f in os.listdir(os.path.join(tmpdir, self.name)):
             shutil.move(os.path.join(tmpdir, self.name, f), self.outdir)
 
