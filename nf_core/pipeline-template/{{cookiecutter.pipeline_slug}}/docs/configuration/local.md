@@ -14,7 +14,7 @@ Then, simply run the analysis pipeline:
 nextflow run nf-core/{{ cookiecutter.pipeline_slug }} -profile docker --reads '<path to your reads>'
 ```
 
-Nextflow will recognise `nf-core/{{ cookiecutter.pipeline_slug }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [nfcore/{{ cookiecutter.pipeline_slug }}](https://hub.docker.com/r/nfcore/{{ cookiecutter.dockerhub_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
+Nextflow will recognise `nf-core/{{ cookiecutter.pipeline_slug }}` and download the pipeline from GitHub. The `-profile docker` configuration lists the [nfcore/{{ cookiecutter.pipeline_slug }}](https://hub.docker.com/r/nfcore/{{ cookiecutter.pipeline_slug }}/) image that we have created and is hosted at dockerhub, and this is downloaded.
 
 For more information about how to work with reference genomes, see [`docs/configuration/reference_genomes.md`](docs/configuration/reference_genomes.md).
 
