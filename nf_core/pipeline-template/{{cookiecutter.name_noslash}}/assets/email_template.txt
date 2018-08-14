@@ -1,13 +1,13 @@
 ========================================
- {{ cookiecutter.pipeline_name }} v${version}
+ {{ cookiecutter.name }} v${version}
 ========================================
 Run Name: $runName
 
 <% if (success){
-    out << "## {{ cookiecutter.pipeline_name }} execution completed successfully! ##"
+    out << "## {{ cookiecutter.name }} execution completed successfully! ##"
 } else {
     out << """####################################################
-## {{ cookiecutter.pipeline_name }} execution completed unsuccessfully! ##
+## {{ cookiecutter.name }} execution completed unsuccessfully! ##
 ####################################################
 The exit status of the task that caused the workflow execution to fail was: $exitStatus.
 The full error message was:
@@ -19,7 +19,7 @@ ${errorReport}
 
 <% if (!success){
     out << """####################################################
-## {{ cookiecutter.pipeline_name }} execution completed unsuccessfully! ##
+## {{ cookiecutter.name }} execution completed unsuccessfully! ##
 ####################################################
 The exit status of the task that caused the workflow execution to fail was: $exitStatus.
 The full error message was:
@@ -27,7 +27,7 @@ The full error message was:
 ${errorReport}
 """
 } else {
-    out << "## {{ cookiecutter.pipeline_name }} execution completed successfully! ##"
+    out << "## {{ cookiecutter.name }} execution completed successfully! ##"
 }
 %>
 
@@ -47,5 +47,5 @@ Pipeline Configuration:
 <% out << summary.collect{ k,v -> " - $k: $v" }.join("\n") %>
 
 --
-{{ cookiecutter.pipeline_name }}
-https://github.com/nf-core/{{ cookiecutter.pipeline_name }}
+{{ cookiecutter.name }}
+https://github.com/{{ cookiecutter.name }}

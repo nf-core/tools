@@ -21,14 +21,18 @@ class PipelineCreate(object):
 
     def __init__(self, name, description, new_version='1.0dev', no_git=False, force=False, outdir=None):
         """ Init the object and define variables """
-        self.name = name
+        self.name = 'nf-core/{}'.format(
+            name.lower().replace(r'/\s+/', '-').replace('nf-core/', '').replace('/', '-')
+        )
+        self.name_noslash = self.name.replace('/', '-')
+        self.name_docker = self.name.replace('nf-core', 'nfcore')
         self.description = description
         self.new_version = new_version
         self.no_git = no_git
         self.force = force
         self.outdir = outdir
         if not self.outdir:
-            self.outdir = os.path.join(os.getcwd(), self.name)
+            self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
     def init_pipeline(self):
         """Function to init a new pipeline. Called by the main cli"""
@@ -61,15 +65,21 @@ class PipelineCreate(object):
         template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
         cookiecutter.main.cookiecutter (
             template,
-            extra_context={'pipeline_name':self.name, 'pipeline_short_description':self.description, 'version':self.new_version},
-            no_input=True,
-            overwrite_if_exists=self.force,
-            output_dir=tmpdir
+            extra_context = {
+                'name':self.name,
+                'description':self.description,
+                'name_noslash':self.name_noslash,
+                'name_docker':self.name_docker,
+                'version':self.new_version
+            },
+            no_input = True,
+            overwrite_if_exists = self.force,
+            output_dir = tmpdir
         )
 
         # Move the template to the output directory
-        for f in os.listdir(os.path.join(tmpdir, self.name)):
-            shutil.move(os.path.join(tmpdir, self.name, f), self.outdir)
+        for f in os.listdir(os.path.join(tmpdir, self.name_noslash)):
+            shutil.move(os.path.join(tmpdir, self.name_noslash, f), self.outdir)
 
         # Delete the temporary directory
         shutil.rmtree(tmpdir)
