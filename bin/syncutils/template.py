@@ -3,7 +3,16 @@ import utils
 import git
 import os
 import shutil
+import sys
 from cookiecutter.main import cookiecutter
+
+# Enable access to the nf_core package
+rootPath = os.path.abspath("../..")
+if rootPath not in sys.path:
+    sys.path.insert(0, rootPath)
+# Import the create script file
+import nf_core.create
+
 
 class NfcoreTemplate:
     """Updates the template content of an nf-core pipeline in
@@ -55,11 +64,12 @@ class NfcoreTemplate:
         """Apply the changes of the cookiecutter template
         to the pipelines template branch.
         """
-        cookiecutter(template_url,
-                     no_input=True,
-                     extra_context=context,
-                     overwrite_if_exists=True,
-                     output_dir=templatedir)
+        nf_core.create.run_cookiecutter(
+            name=context.get('pipeline_name'),
+            description=context.get('pipeline_short_description'),
+            new_version=context.get('version') 
+        )
+
         # Clear the pipeline's template branch content
         for f in os.listdir(self.tmpdir):
             if f == ".git": continue

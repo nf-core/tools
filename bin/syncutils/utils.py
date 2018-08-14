@@ -27,7 +27,7 @@ def create_context(config):
         {
             'pipeline_name': '<parsed_name>'
             'pipeline_short_description': '<parsed_description>'
-            'new_version': '<parsed_version>'
+            'version': '<parsed_version>'
         }
     """
     context = {}
