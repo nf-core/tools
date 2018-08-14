@@ -504,7 +504,7 @@ class PipelineLint(object):
 
         # Check that the environment name matches the pipeline name
         pipeline_version = self.config['manifest.pipelineVersion'].strip(' \'"')
-        expected_env_name = 'nfcore-{}-{}'.format(self.pipeline_name.lower(), pipeline_version)
+        expected_env_name = 'nf-core-{}-{}'.format(self.pipeline_name.lower(), pipeline_version)
         if self.conda_config['name'] != expected_env_name:
             self.failed.append((8, "Conda environment name is incorrect ({}, should be {})".format(self.conda_config['name'], expected_env_name)))
         else:
