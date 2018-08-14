@@ -1,10 +1,23 @@
 # nf-core/tools
 
-## v1.1dev
+## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
+Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.
+
+* The [Cookiecutter template](https://github.com/nf-core/cookiecutter) has been merged into tools
+    * The old repo above has been archived
+    * New pipelines are now created using the command `nf-core create`
+    * The nf-core template and associated linting are now controlled under the same version system
+* Large number of template updates and associated linting changes
+    * New simplified cookicutter variable usage
+    * Refactored documentation - simplified and reduced duplication
+    * Better `manifest` variables instead of `params` for pipeline name and version
+    * New integrated nextflow version checking
+    * Updated travis docker pull command to use tagging to allow release tests to pass
+    * Reverted Docker and Singularity syntax to use `ENV` hack again
 * Improved Python readme parsing for PyPI
-* Update linting and release tools to support new style of Docker & Singularity conda installations
-* Merged the cookiecutter template into this tools package
-* Added new subcommand to initialise a new pipeline with a local git repo and an initial commit
+* Updated Travis tests to check that the correct `dev` branch is being targeted
+* New sync tool to automate pipeline updates
+    * Once initial merges are complete, a nf-core bot account will create PRs for future template updates
 
 ## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - 2018-07-18
 
