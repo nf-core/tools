@@ -68,12 +68,8 @@ To use the singularity image for a single run, use `-profile standard,singularit
 To specify singularity usage in your pipeline config file, add the following:
 
 ```nextflow
-singularity {
-  enabled = true
-}
-process {
-  container = "shub://$wf_container"
-}
+singularity.enabled = true
+process.container = {"shub://${params.container.replace('nfcore', 'nf-core')}"}
 ```
 
 If you intend to run the pipeline offline, nextflow will not be able to automatically download the singularity image for you. Instead, you'll have to do this yourself manually first, transfer the image file and then point to that.
