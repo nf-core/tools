@@ -64,10 +64,13 @@ class NfcoreTemplate:
         """Apply the changes of the cookiecutter template
         to the pipelines template branch.
         """
-        nf_core.create.run_cookiecutter(
+        nf_core.create.PipelineCreate(
             name=context.get('pipeline_name'),
             description=context.get('pipeline_short_description'),
-            new_version=context.get('version') 
+            new_version=context.get('version'),
+            no_git=True,
+            force=True,
+            outdir=templatedir
         )
 
         # Clear the pipeline's template branch content
