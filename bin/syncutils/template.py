@@ -59,15 +59,6 @@ class NfcoreTemplate:
         """Apply the changes of the cookiecutter template
         to the pipelines template branch.
         """
-        nf_core.create.PipelineCreate(
-            name=context.get('pipeline_name'),
-            description=context.get('pipeline_short_description'),
-            new_version=context.get('version'),
-            no_git=True,
-            force=True,
-            outdir=templatedir
-        )
-
         # Clear the pipeline's template branch content
         for f in os.listdir(self.tmpdir):
             if f == ".git": continue
@@ -76,13 +67,15 @@ class NfcoreTemplate:
             except:
                 os.remove(os.path.join(target_dir, f))
 
-        # Move the new template content into the template branch
-        template_path = os.path.join(self.templatedir, self.pipeline)
-        for f in os.listdir(template_path):
-            shutil.move(
-                os.path.join(template_path, f), # src
-                os.path.join(self.tmpdir, f), # dest
-            )
+        # Create the new template structure
+        nf_core.create.PipelineCreate(
+            name=context.get('pipeline_name'),
+            description=context.get('pipeline_short_description'),
+            new_version=context.get('version'),
+            no_git=True,
+            force=True,
+            outdir=templatedir
+        )
 
     def commit_changes(self):
         """Commits the changes of the new template to the current branch.
