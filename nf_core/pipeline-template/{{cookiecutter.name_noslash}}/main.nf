@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-                         {{ cookiecutter.pipeline_name }}
+                         {{ cookiecutter.name }}
 ========================================================================================
- {{ cookiecutter.pipeline_name }} Analysis Pipeline.
+ {{ cookiecutter.name }} Analysis Pipeline.
  #### Homepage / Documentation
- https://github.com/nf-core/{{ cookiecutter.pipeline_name }}
+ https://github.com/{{ cookiecutter.name }}
 ----------------------------------------------------------------------------------------
 */
 
@@ -13,13 +13,13 @@
 def helpMessage() {
     log.info"""
     =========================================
-     {{ cookiecutter.pipeline_name }} v${manifest.pipelineVersion}
+     {{ cookiecutter.name }} v${manifest.pipelineVersion}
     =========================================
     Usage:
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run nf-core/{{ cookiecutter.pipeline_name }} --reads '*_R{1,2}.fastq.gz' -profile docker
+    nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile standard,docker
 
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
@@ -128,10 +128,10 @@ log.info """=======================================================
     | \\| |       \\__, \\__/ |  \\ |___     \\`-._,-`-,
                                           `._,._,\'
 
-{{ cookiecutter.pipeline_name }} v${manifest.pipelineVersion}"
+{{ cookiecutter.name }} v${manifest.pipelineVersion}"
 ======================================================="""
 def summary = [:]
-summary['Pipeline Name']  = '{{ cookiecutter.pipeline_name }}'
+summary['Pipeline Name']  = '{{ cookiecutter.name }}'
 summary['Pipeline Version'] = manifest.pipelineVersion
 summary['Run Name']     = custom_runName ?: workflow.runName
 summary['Reads']        = params.reads
@@ -164,10 +164,10 @@ def create_workflow_summary(summary) {
 
     def yaml_file = workDir.resolve('workflow_summary_mqc.yaml')
     yaml_file.text  = """
-    id: 'nf-core-{{ cookiecutter.pipeline_slug }}-summary'
+    id: '{{ cookiecutter.name_noslash }}-summary'
     description: " - this information is collected when the pipeline is started."
-    section_name: 'nf-core/{{ cookiecutter.pipeline_name }} Workflow Summary'
-    section_href: 'https://github.com/nf-core/{{ cookiecutter.pipeline_slug }}'
+    section_name: '{{ cookiecutter.name }} Workflow Summary'
+    section_href: 'https://github.com/{{ cookiecutter.name }}'
     plot_type: 'html'
     data: |
         <dl class=\"dl-horizontal\">
@@ -274,9 +274,9 @@ process output_documentation {
 workflow.onComplete {
 
     // Set up the e-mail variables
-    def subject = "[{{ cookiecutter.pipeline_name }}] Successful: $workflow.runName"
+    def subject = "[{{ cookiecutter.name }}] Successful: $workflow.runName"
     if(!workflow.success){
-      subject = "[{{ cookiecutter.pipeline_name }}] FAILED: $workflow.runName"
+      subject = "[{{ cookiecutter.name }}] FAILED: $workflow.runName"
     }
     def email_fields = [:]
     email_fields['version'] = manifest.pipelineVersion
@@ -324,11 +324,11 @@ workflow.onComplete {
           if( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
           // Try to send HTML e-mail using sendmail
           [ 'sendmail', '-t' ].execute() << sendmail_html
-          log.info "[{{ cookiecutter.pipeline_name }}] Sent summary e-mail to $params.email (sendmail)"
+          log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $params.email (sendmail)"
         } catch (all) {
           // Catch failures and try with plaintext
           [ 'mail', '-s', subject, params.email ].execute() << email_txt
-          log.info "[{{ cookiecutter.pipeline_name }}] Sent summary e-mail to $params.email (mail)"
+          log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $params.email (mail)"
         }
     }
 
@@ -342,6 +342,6 @@ workflow.onComplete {
     def output_tf = new File( output_d, "pipeline_report.txt" )
     output_tf.withWriter { w -> w << email_txt }
 
-    log.info "[{{ cookiecutter.pipeline_name }}] Pipeline Complete"
+    log.info "[{{ cookiecutter.name }}] Pipeline Complete"
 
 }
