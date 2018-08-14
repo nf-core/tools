@@ -58,18 +58,18 @@ docker {
 }
 ```
 
+A test profile comes with the pipeline and is used by the Travis continuous integration (CI) service to test the pipeline for potential errors. Typically, this downloads a small test dataset from [test data repository](https://github.com/nf-core/test-datasets/) and runs the pipeline automatically using docker using [Travis](https://travis-ci.org/nf-core/{{ cookiecutter.pipeline_name }}/) whenever changes are made to the pipeline. Further information on how to add your own test data for a new pipeline can be found at the link mentioned above. 
 
 ### Singularity image
 Many HPC environments are not able to run Docker due to security issues. [Singularity](http://singularity.lbl.gov/) is a tool designed to run on such HPC systems which is very similar to Docker. Even better, it can use create images directly from dockerhub.
-
 To use the singularity image for a single run, use `-profile standard,singularity`. This will download the singularity container from singularity hub dynamically.
+
 
 To specify singularity usage in your pipeline config file, add the following:
 
 ```nextflow
-singularity {
-  enabled = true
-}
+singularity.enabled = true
+process.container = {"shub://${params.container.replace('nfcore', 'nf-core')}"}
 ```
 
 If you intend to run the pipeline offline, nextflow will not be able to automatically download the singularity image for you. Instead, you'll have to do this yourself manually first, transfer the image file and then point to that.
@@ -99,12 +99,9 @@ bash Miniconda3-latest-Linux-x86_64.sh
 
 #### 2) Add the bioconda conda channel (and others)
 ```bash
-conda config --add channels anaconda
+conda config --add channels default
 conda config --add channels conda-forge
-conda config --add channels defaults
-conda config --add channels r
 conda config --add channels bioconda
-conda config --add channels salilab
 ```
 
 #### 3) Create a conda environment, with all necessary packages:
