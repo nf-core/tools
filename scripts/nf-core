@@ -137,9 +137,15 @@ def release(pipeline_dir, new_version):
     default = False,
     help = "Overwrite output directory if it already exists"
 )
-def create(name, description, new_version, no_git, force):
+@click.option(
+    '-o', '--outdir',
+    type = str,
+    help = "Output directory for new pipeline (default: pipeline name)"
+)
+def create(name, description, new_version, no_git, force, outdir):
     """ Create a new pipeline using the nf-core template """
-    nf_core.create.init_pipeline(name, description, new_version, no_git, force)
+    create_obj = nf_core.create.PipelineCreate(name, description, new_version, no_git, force, outdir)
+    create_obj.init_pipeline()
 
 
 if __name__ == '__main__':
