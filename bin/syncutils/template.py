@@ -6,11 +6,6 @@ import shutil
 import sys
 from cookiecutter.main import cookiecutter
 
-# Enable access to the nf_core package
-rootPath = os.path.abspath("../..")
-if rootPath not in sys.path:
-    sys.path.insert(0, rootPath)
-# Import the create script file
 import nf_core.create
 
 
@@ -33,11 +28,11 @@ class NfcoreTemplate:
         self.repo = git.Repo.clone_from(self.repo_url, self.tmpdir)
         assert self.repo
     
-    def sync(self, template_url):
+    def sync(self):
         """Execute the template update.
         """
         context = self.context_from_nextflow(nf_project_dir=self.tmpdir)
-        self.update_child_template(template_url, self.templatedir, self.tmpdir, context=context)
+        self.update_child_template(self.templatedir, self.tmpdir, context=context)
         self.commit_changes()
         self.push_changes()
 
@@ -60,7 +55,7 @@ class NfcoreTemplate:
         return utils.create_context(config)
     
 
-    def update_child_template(self, template_url, templatedir, target_dir, context=None):
+    def update_child_template(self, templatedir, target_dir, context=None):
         """Apply the changes of the cookiecutter template
         to the pipelines template branch.
         """
@@ -80,6 +75,7 @@ class NfcoreTemplate:
                 shutil.rmtree(os.path.join(target_dir, f))
             except:
                 os.remove(os.path.join(target_dir, f))
+
         # Move the new template content into the template branch
         template_path = os.path.join(self.templatedir, self.pipeline)
         for f in os.listdir(template_path):

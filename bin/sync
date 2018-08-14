@@ -16,11 +16,6 @@ import syncutils.template
 DEF_TEMPLATE_BRANCH = "TEMPLATE"
 # The GitHub base url or the nf-core project
 GH_BASE_URL = "https://{token}@github.com/nf-core/{pipeline}"
-# The current cookiecutter template url for nf-core pipelines
-NF_CORE_TEMPLATE = os.path.join(
-                        os.path.dirname(
-                                os.path.dirname(os.path.realpath(__file__))
-                        ), "nf_core/pipeline-template")
 # The JSON file is updated on every push event on the nf-core GitHub project
 NF_CORE_PIPELINE_INFO = "http://nf-co.re/pipelines.json"
 # The API endpoint for creating pull requests
@@ -70,7 +65,7 @@ def main():
                 pipeline['name'],
                 branch=DEF_TEMPLATE_BRANCH,
                 repo_url=GH_BASE_URL.format(token=os.environ["NF_CORE_BOT"], pipeline=pipeline['name'])
-            ).sync(template_url=NF_CORE_TEMPLATE)
+            ).sync()
         except Exception as e:
             sync_errors.append((pipeline['name'], e))
     
