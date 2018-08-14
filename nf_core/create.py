@@ -10,40 +10,71 @@ import git
 import logging
 import os
 import re
+import shutil
+import sys
+import tempfile
 
 import nf_core
 
-def init_pipeline(name, description, new_version='1.0dev', no_git=False, force=False):
-    """Function to init a new pipeline. Called by the main cli"""
+class PipelineCreate(object):
+    """ Object to create a new pipeline """
 
-    # Make the new pipeline
-    run_cookiecutter(name, description, new_version, force)
+    def __init__(self, name, description, new_version='1.0dev', no_git=False, force=False, outdir=None):
+        """ Init the object and define variables """
+        self.name = name
+        self.description = description
+        self.new_version = new_version
+        self.no_git = no_git
+        self.force = force
+        self.outdir = outdir
+        if not self.outdir:
+            self.outdir = os.path.join(os.getcwd(), self.name)
 
-    # Init the git repository and make the first commit
-    if not no_git:
-        git_init_pipeline(name)
+    def init_pipeline(self):
+        """Function to init a new pipeline. Called by the main cli"""
 
-def run_cookiecutter(name, description, new_version='1.0dev', force=False):
-    """Run cookiecutter to create a new pipeline"""
+        # Make the new pipeline
+        self.run_cookiecutter()
 
-    logging.info("Creating new nf-core pipeline: {}".format(name))
-    template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
-    try:
+        # Init the git repository and make the first commit
+        if not self.no_git:
+            self.git_init_pipeline()
+
+    def run_cookiecutter(self):
+        """Run cookiecutter to create a new pipeline"""
+
+        logging.info("Creating new nf-core pipeline: {}".format(self.name))
+
+        # Check if the output directory exists
+        if os.path.exists(self.outdir):
+            logging.error("Output directory '{}' exists!".format(self.outdir))
+            logging.info("Use -f / --force to overwrite existing files")
+            sys.exit(1)
+
+        # Build the template in a temporary directory
+        tmpdir = tempfile.mkdtemp()
+        template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
         cookiecutter.main.cookiecutter (
             template,
-            extra_context={'pipeline_name':name, 'pipeline_short_description':description, 'version':new_version},
+            extra_context={'pipeline_name':self.name, 'pipeline_short_description':self.description, 'version':self.new_version},
             no_input=True,
-            overwrite_if_exists=force
+            overwrite_if_exists=self.force,
+            output_dir=tmpdir
         )
-    except (cookiecutter.exceptions.OutputDirExistsException) as e:
-        logging.error(e)
-        logging.info("Use -f / --force to overwrite existing files")
 
-def git_init_pipeline(name):
-    """Initialise the new pipeline as a git repo and make first commit"""
-    logging.info("Initialising pipeline git repository")
-    pipeline_dir = os.path.join(os.getcwd(), name)
-    repo = git.Repo.init(pipeline_dir)
-    repo.git.add(A=True)
-    repo.index.commit("initial commit")
-    logging.info("Done. Remember to add a remote and push to GitHub!")
+        # Move the template to the output directory
+        os.makedirs(self.outdir)
+        for f in os.listdir(os.path.join(tmpdir, self.name)):
+            shutil.move(os.path.join(tmpdir, self.name, f), self.outdir)
+
+        # Delete the temporary directory
+        shutil.rmtree(tmpdir)
+
+
+    def git_init_pipeline(self):
+        """Initialise the new pipeline as a git repo and make first commit"""
+        logging.info("Initialising pipeline git repository")
+        repo = git.Repo.init(self.outdir)
+        repo.git.add(A=True)
+        repo.index.commit("initial template build from nf-core/tools, version {}".format(nf_core.__version__))
+        logging.info("Done. Remember to add a remote and push to GitHub:\n  cd {}\n  git remote add origin git@github.com:USERNAME/REPO_NAME.git\n  git push".format(self.outdir))
