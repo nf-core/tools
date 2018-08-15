@@ -396,7 +396,7 @@ class PipelineLint(object):
                         self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
 
                 # Check that we're testing the minimum nextflow version
-                minNextflowVersion_tested = False
+                minNextflowVersion = ""
                 env = ciconf.get('env', [])
                 if type(env) is dict:
                     env = env.get('matrix', [])
@@ -406,12 +406,13 @@ class PipelineLint(object):
                         k,v = s.split('=')
                         if k == 'NXF_VER':
                             ci_ver = v.strip('\'"')
+                            minNextflowVersion = ci_ver if v else minNextflowVersion
                             if ci_ver == self.minNextflowVersion:
-                                minNextflowVersion_tested = True
                                 self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
-                if not minNextflowVersion_tested:
+                if not minNextflowVersion:
                     self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
-
+                elif minNextflowVersion != self.minNextflowVersion:
+                    self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
 
     def check_readme(self):
         """ Check the repository README file for errors

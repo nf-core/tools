@@ -67,7 +67,7 @@ The following variables fail the test if missing:
     * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
 * `manifest.nextflowVersion`
     * The minimum version of Nextflow required to run the pipeline.
-    * Should `>=` a version number, eg. `>=0.31.0`
+    * Should `>=` a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (check the [Nexftlow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest) for more.)
     * This should correspond to the `NXF_VER` version tested by Travis.
 * `manifest.homePage`
     * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
