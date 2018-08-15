@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 60
+MAX_PASS_CHECKS = 61
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -133,7 +133,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.minNextflowVersion = '0.27.0'
         lint_obj.check_ci_config()
-        expectations = {"failed": 0, "warned": 0, "passed": 2}
+        expectations = {"failed": 0, "warned": 0, "passed": 3}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_ci_conf_fail_wrong_nf_version(self):
@@ -141,7 +141,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.minNextflowVersion = '0.28.0'
         lint_obj.check_ci_config()
-        expectations = {"failed": 1, "warned": 0, "passed": 1}
+        expectations = {"failed": 1, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_ci_conf_fail(self):
