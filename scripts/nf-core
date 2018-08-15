@@ -8,7 +8,7 @@ import sys
 import os
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.download, nf_core.release, nf_core.create
+import nf_core.lint, nf_core.list, nf_core.download, nf_core.bump_version, nf_core.create
 
 import logging
 
@@ -84,7 +84,7 @@ def download(pipeline, release, singularity, outdir):
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir)
     dl.download_workflow()
 
-@nf_core_cli.command()
+@nf_core_cli.command('bump-version')
 @click.argument(
     'pipeline_dir',
     type = click.Path(exists=True),
@@ -94,17 +94,26 @@ def download(pipeline, release, singularity, outdir):
 @click.argument(
     'new_version',
     required = True,
-    metavar = "<new version number>"
+    metavar = "<new version>"
 )
-def release(pipeline_dir, new_version):
+@click.option(
+    '-n', '--nextflow',
+    is_flag = True,
+    default = False,
+    help = "Bump required nextflow version instead of pipeline version"
+)
+def bump_version(pipeline_dir, new_version, nextflow):
     """ Update nf-core pipeline version number """
 
     # First, lint the pipeline to check everything is in order
     logging.info("Running nf-core lint tests")
     lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
 
-    # Bump the version number in relevant files
-    nf_core.release.make_release(lint_obj, new_version)
+    # Bump the pipeline version number
+    if not nextflow:
+        nf_core.bump_version.bump_pipeline_version(lint_obj, new_version)
+    else:
+        nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
 @nf_core_cli.command()
 @click.option(

@@ -9,14 +9,17 @@ import logging
 import os
 import re
 
-def make_release(lint_obj, new_version):
-    """ Function to make the release. Called by the main script """
+def bump_pipeline_version(lint_obj, new_version):
+    """ Function to bump a pipeline version number. Called by the main script """
 
     # Collect the old and new version numbers
-    current_version = lint_obj.config['manifest.pipelineVersion'].strip(' \'"')
+    current_version = lint_obj.config.get('manifest.pipelineVersion', '').strip(' \'"')
     if new_version.startswith('v'):
         logging.warn("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
+    if not current_version:
+        logging.error("Could not find config variable manifest.pipelineVersion")
+        sys.exit(1)
     logging.info("Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(current_version, new_version))
 
     # Update nextflow.config
@@ -50,7 +53,29 @@ def make_release(lint_obj, new_version):
         nfconfig_newstr = "name: nf-core-{}-{}".format(lint_obj.pipeline_name.lower(), new_version)
         update_file_version("environment.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-def update_file_version(filename, lint_obj, pattern, newstr):
+def bump_nextflow_version(lint_obj, new_version):
+    """ Function to bump the required nextflow version number."""
+
+    # Collect the old and new version numbers
+    current_version = lint_obj.config.get('manifest.nextflowVersion', '').strip(' \'"')
+    current_version = re.sub(r'[^0-9\.]', '', current_version)
+    new_version = re.sub(r'[^0-9\.]', '', new_version)
+    if not current_version:
+        logging.error("Could not find config variable manifest.nextflowVersion")
+        sys.exit(1)
+    logging.info("Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(current_version, new_version))
+
+    # Update nextflow.config
+    nfconfig_pattern = r"nextflowVersion\s*=\s*[\'\"]?>={}[\'\"]?".format(current_version.replace('.','\.'))
+    nfconfig_newstr = "nextflowVersion = '>={}'".format(new_version)
+    update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
+
+    # Update travis config
+    nfconfig_pattern = r"NXF_VER=[\'\"]?{}[\'\"]?".format(current_version.replace('.','\.'))
+    nfconfig_newstr = "NXF_VER='{}'".format(new_version)
+    update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr, True)
+
+def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=False):
     """ Update manifest.pipelineVersion in the nextflow config file """
 
     # Load the file
@@ -63,7 +88,7 @@ def update_file_version(filename, lint_obj, pattern, newstr):
     matches = re.findall(pattern, content)
     if len(matches) == 0:
         raise SyntaxError ("Could not find version number in {}: '{}'".format(filename, pattern))
-    if len(matches) > 1:
+    if len(matches) > 1 and not allow_multiple:
         raise SyntaxError ("Found more than one version number in {}: '{}'".format(filename, pattern))
 
     # Replace the match

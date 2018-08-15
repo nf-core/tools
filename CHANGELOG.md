@@ -1,4 +1,16 @@
-# nf-core/tools
+# nf-core/tools: Changelog
+
+## v1.2dev
+* Updated the `nf-core release` command
+    * Now called `nf-core bump-versions` instead
+    * New flag `--nextflow` to change the required nextflow version instead
+* Template updates
+    * Simpler installation of the `nf-core` helper tool, now directly from PyPI
+    * Bump minimum nextflow version to `0.31.1` (required for built in `manifest.nextflowVersion` check)
+* New lint tests
+    * `.travis.yml` test for PRs made against the `master` branch
+    * Automatic `--release` option not used if the travis repo is `nf-core/tools`
+* Updated PyPI deployment to  correctly parse the markdown readme (hopefully!)
 
 ## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
 Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.

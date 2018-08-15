@@ -179,17 +179,17 @@ WARNING: Test Warnings:
 ```
 
 
-## Making a pipeline release
+## Bumping a pipeline version number
 
-When releasing a new version of a nf-core pipeline, version numbers have to be updated in several different places. The helper command `nf-core release` automates this for you to avoid manual errors (and frustration!).
+When releasing a new version of a nf-core pipeline, version numbers have to be updated in several different places. The helper command `nf-core bump-version` automates this for you to avoid manual errors (and frustration!).
 
 The command uses results from the linting process, so will only work with workflows that pass these tests.
 
-Usage is `nf-core release <pipeline_dir> <new_version>`, eg:
+Usage is `nf-core bump-version <pipeline_dir> <new_version>`, eg:
 
 ```
 $ cd path/to/my_pipeline
-$ nf-core release . 1.3
+$ nf-core bump-version . 1.3
 
 
                                           ,--./,-.
@@ -227,3 +227,5 @@ INFO: Updating version in environment.yml
  - name: nfcore-methylseq-1.3dev
  + name: nfcore-methylseq-1.3
 ```
+
+To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.

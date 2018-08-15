@@ -279,7 +279,7 @@ class DownloadTest(unittest.TestCase):
         download_obj.validate_md5(tmpfile[1], val_hash)
 
         # Clean up
-        os.remove(tmpfile)
+        os.remove(tmpfile[1])
 
     @pytest.mark.xfail(raises=IOError)
     def test_mismatching_md5sums(self):
