@@ -406,7 +406,7 @@ class PipelineLint(object):
                         k,v = s.split('=')
                         if k == 'NXF_VER':
                             ci_ver = v.strip('\'"')
-                            minNextflowVersion = ci_ver if v
+                            minNextflowVersion = ci_ver if v else minNextflowVersion
                             if ci_ver == self.minNextflowVersion:
                                 self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
                 if not minNextflowVersion:
