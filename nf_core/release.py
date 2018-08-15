@@ -46,8 +46,8 @@ def make_release(lint_obj, new_version):
 
     if 'environment.yml' in lint_obj.files:
         # Update conda environment.yml
-        nfconfig_pattern = r"name: nfcore-{}-{}".format(lint_obj.pipeline_name.lower(), current_version.replace('.','\.'))
-        nfconfig_newstr = "name: nfcore-{}-{}".format(lint_obj.pipeline_name.lower(), new_version)
+        nfconfig_pattern = r"name: nf-core-{}-{}".format(lint_obj.pipeline_name.lower(), current_version.replace('.','\.'))
+        nfconfig_newstr = "name: nf-core-{}-{}".format(lint_obj.pipeline_name.lower(), new_version)
         update_file_version("environment.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
 def update_file_version(filename, lint_obj, pattern, newstr):

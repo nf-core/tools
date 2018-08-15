@@ -2,11 +2,11 @@ From:nfcore/base
 Bootstrap:docker
 
 %labels
-    DESCRIPTION Singularity image containing all requirements for {{ cookiecutter.pipeline_name }} pipeline
+    DESCRIPTION Singularity image containing all requirements for {{ cookiecutter.name }} pipeline
     VERSION {{ cookiecutter.version }}
 
 %environment
-    PATH=/opt/conda/envs/nfcore-{{ cookiecutter.pipeline_slug }}-{{ cookiecutter.version }}/bin:$PATH
+    PATH=/opt/conda/envs/{{ cookiecutter.name_noslash }}-{{ cookiecutter.version }}/bin:$PATH
     export PATH
 
 %files
