@@ -111,6 +111,12 @@ This test fails if the following happens:
     ```
     * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
     * Other variables can be specified on these lines as long as they are space separated.
+* `.travis.yml` checks that pull requests are not opened directly to the `master` branch
+    * The following is expected in the `before_install` section:
+    ```yaml
+    before_install:
+      - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+    ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 The `README.md` files for a project are very important and must meet some requirements:
