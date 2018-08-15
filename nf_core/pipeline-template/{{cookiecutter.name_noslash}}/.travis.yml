@@ -1,10 +1,8 @@
 sudo: required
 language: python
 jdk: openjdk8
-services:
-  - docker
-python:
-  - '3.6'
+services: docker
+python: '3.6'
 cache: pip
 matrix:
   fast_finish: true
@@ -19,19 +17,17 @@ before_install:
 
 install:
   # Install Nextflow
-  - mkdir /tmp/nextflow
-  - cd /tmp/nextflow
+  - mkdir /tmp/nextflow && cd /tmp/nextflow
   - wget -qO- get.nextflow.io | bash
   - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
   # Install nf-core/tools
   - pip install nf-core
   # Reset
-  - mkdir ${TRAVIS_BUILD_DIR}/tests
-  - cd ${TRAVIS_BUILD_DIR}/tests
+  - mkdir ${TRAVIS_BUILD_DIR}/tests && cd ${TRAVIS_BUILD_DIR}/tests
 
 env:
   - NXF_VER='0.31.1' # Specify a minimum NF version that should be tested and work
-  - NXF_VER='' # Plus: get the latest NF version and check, that it works
+  - NXF_VER='' # Plus: get the latest NF version and check that it works
 
 script:
   # Lint the pipeline code
