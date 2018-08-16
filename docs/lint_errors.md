@@ -94,6 +94,13 @@ The following variables throw warnings if missing:
     * Specify to work with single-end sequence data instead of default paired-end
     * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
 
+The following variables are depreciated and fail the test if they are still present:
+
+* `params.version`
+    * The old method for specifying the pieline version. Replaced by `manifest.pipelineVersion`
+* `params.nf_required_version`
+    * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
+
 ## Error #5 - Continuous Integration configuration ## {#5}
 nf-core pipelines must have CI testing with Travis or Circle CI.
 

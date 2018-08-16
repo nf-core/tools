@@ -2,7 +2,7 @@ From:nfcore/base
 Bootstrap:docker
 
 %labels
-    DESCRIPTION Singularity image containing all requirements for {{ cookiecutter.name }} pipeline
+    DESCRIPTION Singularity image containing all requirements for the {{ cookiecutter.name }} pipeline
     VERSION {{ cookiecutter.version }}
 
 %environment
