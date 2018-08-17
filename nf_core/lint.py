@@ -270,7 +270,7 @@ class PipelineLint(object):
         and print all config variables.
         NB: Does NOT parse contents of main.nf / nextflow script
         """
-
+        # Fail tests if these are missing
         config_fail = [
             'manifest.name',
             'manifest.nextflowVersion',
@@ -286,6 +286,7 @@ class PipelineLint(object):
             'process.time',
             'params.outdir'
         ]
+        # Throw a warning if these are missing
         config_warn = [
             'manifest.mainScript',
             'timeline.file',
@@ -296,6 +297,11 @@ class PipelineLint(object):
             'process.container',
             'params.container',
             'params.singleEnd'
+        ]
+        # Old depreciated vars - fail if present
+        config_fail_ifdefined = [
+            'params.version',
+            'params.nf_required_version'
         ]
 
         # Get the nextflow config for this pipeline
@@ -310,6 +316,11 @@ class PipelineLint(object):
                 self.passed.append((4, "Config variable found: {}".format(cf)))
             else:
                 self.warned.append((4, "Config variable not found: {}".format(cf)))
+        for cf in config_fail_ifdefined:
+            if cf not in self.config.keys():
+                self.passed.append((4, "Config variable (correctly) not found: {}".format(cf)))
+            else:
+                self.failed.append((4, "Config variable (incorrectly) found: {}".format(cf)))
 
         # Check and warn if the process configuration is done with deprecated syntax
         process_with_deprecated_syntax = list(set([re.search('^(process\.\$.*?)\.+.*$', ck).group(1) for ck in self.config.keys() if re.match(r'^(process\.\$.*?)\.+.*$', ck)]))
