@@ -21,7 +21,7 @@ def fetch_wf_config(wf_path):
         raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
     else:
         for l in nfconfig_raw.splitlines():
-            ul = l.decode()
+            ul = l.decode('utf-8')
             k, v = ul.split(' = ', 1)
             config[k] = v
     return config
