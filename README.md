@@ -6,6 +6,15 @@
 
 A python package with helper tools for the nf-core community.
 
+## Table of contents
+
+* [Installation](#installation)
+* [Listing pipelines](#listing-pipelines) (`nf-core list`)
+* [Downloading pipelines for offline use](#downloading-pipelines-for-offline-use) (`nf-core download`)
+* [Creating a new workflow](#creating-a-new-workflow) (`nf-core create`)
+* [Linting a workflow](#linting-a-workflow) (`nf-core lint`)
+* [Bumping a pipeline version number](#bumping-a-pipeline-version-number) (`nf-core bump-version`)
+
 ## Installation
 
 You can install `nf-core/tools` from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
@@ -49,15 +58,17 @@ $ nf-core list
                                           `._,._,'
 
 
-Name               Version    Published       Last Pulled    Default local is latest release?
------------------  ---------  --------------  -------------  ----------------------------------
-nf-core/methylseq  1.0        1.0 months ago  just now       Yes
-nf-core/chipseq    dev        -               -              No
-nf-core/EAGER2.0   dev        -               -              No
-nf-core/exoseq     dev        -               -              No
-nf-core/mag        dev        -               -              No
-nf-core/rnaseq     dev        -               -              No
-nf-core/vipr       dev        -               -              No
+Name               Version    Published    Last Pulled    Default local is latest release?
+-----------------  ---------  -----------  -------------  ----------------------------------
+nf-core/hlatyping  1.1.0      5 days ago   9 minutes ago  Yes
+nf-core/methylseq  1.1        1 week ago   2 months ago   No
+nf-core/chipseq    dev        -            -              No
+nf-core/eager      dev        -            -              No
+nf-core/exoseq     dev        -            -              No
+nf-core/mag        dev        -            -              No
+nf-core/rnaseq     dev        -            -              No
+nf-core/smrnaseq   dev        -            -              No
+nf-core/vipr       dev        -            -              No
 ```
 
 ## Downloading pipelines for offline use
@@ -111,9 +122,11 @@ nf-core-methylseq-1.0/
 ```
 
 ## Creating a new workflow
-The `create` subcommand makes a new workflow using the nf-core base template. With a given pipeline name and description, it gives you a starter pipeline which follows nf-core best practices.
+The `create` subcommand makes a new workflow using the nf-core base template.
+With a given pipeline name and description, it gives you a starter pipeline which follows nf-core best practices.
 
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
+See the [nf-core syncing docs](http://nf-co.re/sync) for more information.
 
 ```
 $ nf-core create -n nextbigthing -d "This pipeline analyses data from the next big 'omics technique"
@@ -125,11 +138,14 @@ $ nf-core create -n nextbigthing -d "This pipeline analyses data from the next b
                                           `._,._,'
 
 
-INFO: Creating new nf-core pipeline: nextbigthing
+INFO: Creating new nf-core pipeline: nf-core/nextbigthing
 
 INFO: Initialising pipeline git repository
 
-INFO: Done. Remember to add a remote and push to GitHub!
+INFO: Done. Remember to add a remote and push to GitHub:
+  cd /path/nf-core-nextbigthing
+  git remote add origin git@github.com:USERNAME/REPO_NAME.git
+  git push
 ```
 
 Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet).
@@ -189,8 +205,7 @@ Usage is `nf-core bump-version <pipeline_dir> <new_version>`, eg:
 
 ```
 $ cd path/to/my_pipeline
-$ nf-core bump-version . 1.3
-
+$ nf-core bump-version . 1.0
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -205,27 +220,39 @@ Running pipeline tests  [####################################]  100%  None
 INFO: ===========
  LINTING RESULTS
 =================
-  74 tests passed   0 tests had warnings   0 tests failed
+  96 tests passed   0 tests had warnings   0 tests failed
 
 INFO: Changing version number:
-  Current version number is '1.3dev'
-  New version number will be '1.3'
+  Current version number is '1.0dev'
+  New version number will be '1.0'
 
 INFO: Updating version in nextflow.config
- - version = '1.3dev'
- + version = '1.3'
+ - pipelineVersion = '1.0dev'
+ + pipelineVersion = '1.0'
 
 INFO: Updating version in nextflow.config
- - container = 'nfcore/methylseq:latest'
- + container = 'nfcore/methylseq:1.3'
+ - container = 'nfcore/mypipeline:latest'
+ + container = 'nfcore/mypipeline:1.0'
+
+INFO: Updating version in .travis.yml
+ - docker tag nfcore/mypipeline nfcore/mypipeline:latest
+ + docker tag nfcore/mypipeline nfcore/mypipeline:1.0
 
 INFO: Updating version in Singularity
- - VERSION 1.3dev
- + VERSION 1.3
+ - VERSION 1.0dev
+ + VERSION 1.0
 
 INFO: Updating version in environment.yml
- - name: nfcore-methylseq-1.3dev
- + name: nfcore-methylseq-1.3
+ - name: nf-core-mypipeline-1.0dev
+ + name: nf-core-mypipeline-1.0
+
+INFO: Updating version in Dockerfile
+ - PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
+ + PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
+
+INFO: Updating version in Singularity
+ - PATH=/opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
+ + PATH=/opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
