@@ -58,15 +58,17 @@ $ nf-core list
                                           `._,._,'
 
 
-Name               Version    Published       Last Pulled    Default local is latest release?
------------------  ---------  --------------  -------------  ----------------------------------
-nf-core/methylseq  1.0        1.0 months ago  just now       Yes
-nf-core/chipseq    dev        -               -              No
-nf-core/EAGER2.0   dev        -               -              No
-nf-core/exoseq     dev        -               -              No
-nf-core/mag        dev        -               -              No
-nf-core/rnaseq     dev        -               -              No
-nf-core/vipr       dev        -               -              No
+Name               Version    Published    Last Pulled    Default local is latest release?
+-----------------  ---------  -----------  -------------  ----------------------------------
+nf-core/hlatyping  1.1.0      5 days ago   9 minutes ago  Yes
+nf-core/methylseq  1.1        1 week ago   2 months ago   No
+nf-core/chipseq    dev        -            -              No
+nf-core/eager      dev        -            -              No
+nf-core/exoseq     dev        -            -              No
+nf-core/mag        dev        -            -              No
+nf-core/rnaseq     dev        -            -              No
+nf-core/smrnaseq   dev        -            -              No
+nf-core/vipr       dev        -            -              No
 ```
 
 ## Downloading pipelines for offline use
@@ -120,9 +122,11 @@ nf-core-methylseq-1.0/
 ```
 
 ## Creating a new workflow
-The `create` subcommand makes a new workflow using the nf-core base template. With a given pipeline name and description, it gives you a starter pipeline which follows nf-core best practices.
+The `create` subcommand makes a new workflow using the nf-core base template.
+With a given pipeline name and description, it gives you a starter pipeline which follows nf-core best practices.
 
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
+See the [nf-core syncing docs](http://nf-co.re/sync) for more information.
 
 ```
 $ nf-core create -n nextbigthing -d "This pipeline analyses data from the next big 'omics technique"
