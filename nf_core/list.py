@@ -251,17 +251,17 @@ def pretty_date(time):
     pretty_msg[0] = [(float('inf'), 1, 'from the future')]
     pretty_msg[1] = [
             (10, 1, "just now"),
-            (60, 1, "{sec:.0g} seconds ago"),
+            (60, 1, "{sec:.0f} seconds ago"),
             (120, 1, "a minute ago"),
-            (3600, 60, "{sec:.0g} minutes ago"),
+            (3600, 60, "{sec:.0f} minutes ago"),
             (7200, 1, "an hour ago"),
-            (86400, 3600, "{sec:.0g} hours ago")
+            (86400, 3600, "{sec:.0f} hours ago")
         ]
     pretty_msg[2] = [(float('inf'), 1, 'yesterday')]
-    pretty_msg[7] = [(float('inf'), 1, '{days:.0g} day{day_s} ago')]
-    pretty_msg[31] = [(float('inf'), 7, '{days:.0g} week{day_s} ago')]
-    pretty_msg[365] = [(float('inf'), 30, '{days:.0g} months ago')]
-    pretty_msg[float('inf')] = [(float('inf'), 365, '{days:.0g} year{day_s} ago')]
+    pretty_msg[7] = [(float('inf'), 1, '{days:.0f} day{day_s} ago')]
+    pretty_msg[31] = [(float('inf'), 7, '{days:.0f} week{day_s} ago')]
+    pretty_msg[365] = [(float('inf'), 30, '{days:.0f} months ago')]
+    pretty_msg[float('inf')] = [(float('inf'), 365, '{days:.0f} year{day_s} ago')]
 
     for days, seconds in pretty_msg.items():
         if day_diff < days:
