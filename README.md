@@ -143,7 +143,7 @@ INFO: Creating new nf-core pipeline: nf-core/nextbigthing
 INFO: Initialising pipeline git repository
 
 INFO: Done. Remember to add a remote and push to GitHub:
-  cd /path/nf-core-nextbigthing
+  cd /path/to/nf-core-nextbigthing
   git remote add origin git@github.com:USERNAME/REPO_NAME.git
   git push
 ```
