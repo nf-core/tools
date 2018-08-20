@@ -2,6 +2,7 @@
 """ List available nf-core pipelines and versions """
 
 from __future__ import print_function
+from collections import OrderedDict
 
 import datetime
 import json
@@ -67,7 +68,7 @@ class Workflows(object):
             for gh_repo in gh_repos:
                 if gh_repo['name'] not in self.remote_ignore:
                     self.remote_workflows.append(RemoteWorkflow(gh_repo))
-    
+
     def get_local_nf_workflows(self):
         """ Get local nextflow workflows """
 
@@ -108,7 +109,7 @@ class Workflows(object):
                 if rwf.full_name == lwf.full_name:
                     rwf.local_wf = lwf
                     if rwf.releases:
-                        if rwf.releases[0]['tag_sha'] == lwf.commit_sha:
+                        if rwf.releases[-1]['tag_sha'] == lwf.commit_sha:
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
@@ -124,8 +125,8 @@ class Workflows(object):
         for wf in self.remote_workflows:
             summary.append([
                 wf.full_name,
-                wf.releases[0]['tag_name'] if len(wf.releases) > 0 else 'dev',
-                wf.releases[0]['published_at_pretty'] if len(wf.releases) > 0 else '-',
+                wf.releases[-1]['tag_name'] if len(wf.releases) > 0 else 'dev',
+                wf.releases[-1]['published_at_pretty'] if len(wf.releases) > 0 else '-',
                 wf.local_wf.last_pull_pretty if wf.local_wf is not None else '-',
                 'Yes' if wf.local_is_latest else 'No'
             ])
@@ -246,27 +247,29 @@ def pretty_date(time):
     second_diff = diff.seconds
     day_diff = diff.days
 
-    pretty_msg = {
-        0: [(float('inf'), 1, 'from the future')],
-        1: [
+    pretty_msg = OrderedDict()
+    pretty_msg[0] = [(float('inf'), 1, 'from the future')]
+    pretty_msg[1] = [
             (10, 1, "just now"),
-            (60, 1, "{sec} seconds ago"),
+            (60, 1, "{sec:.0g} seconds ago"),
             (120, 1, "a minute ago"),
-            (3600, 60, "{sec} minutes ago"),
+            (3600, 60, "{sec:.0g} minutes ago"),
             (7200, 1, "an hour ago"),
-            (86400, 3600, "{sec} hours ago")
-        ],
-        2: [(float('inf'), 1, 'yesterday')],
-        7: [(float('inf'), 1, '{days} days ago')],
-        31: [(float('inf'), 7, '{days} weeks ago')],
-        365: [(float('inf'), 30, '{days} months ago')],
-        float('inf'): [(float('inf'), 365, '{days} years ago')]
-    }
+            (86400, 3600, "{sec:.0g} hours ago")
+        ]
+    pretty_msg[2] = [(float('inf'), 1, 'yesterday')]
+    pretty_msg[7] = [(float('inf'), 1, '{days:.0g} day{day_s} ago')]
+    pretty_msg[31] = [(float('inf'), 7, '{days:.0g} week{day_s} ago')]
+    pretty_msg[365] = [(float('inf'), 30, '{days:.0g} months ago')]
+    pretty_msg[float('inf')] = [(float('inf'), 365, '{days:.0g} year{day_s} ago')]
 
     for days, seconds in pretty_msg.items():
         if day_diff < days:
             for sec in seconds:
                 if second_diff < sec[0]:
-                    return sec[2].format(days=round(day_diff/sec[1], 1),
-                        sec=round(second_diff/sec[1], 1))
+                    return sec[2].format(
+                            days = day_diff/sec[1],
+                            sec = second_diff/sec[1],
+                            day_s = 's' if day_diff/sec[1] > 1 else ''
+                        )
     return '... time is relative anyway'
