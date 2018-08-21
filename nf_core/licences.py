@@ -19,6 +19,8 @@ class WorkflowLicences():
     def __init__(self, pipeline, json=False):
         """ Set class variables """
         self.pipeline = pipeline
+        if self.pipeline.startswith('nf-core/'):
+            self.pipeline = self.pipeline[8:]
         self.json = json
         self.conda_package_licences = {}
 
@@ -26,6 +28,12 @@ class WorkflowLicences():
         """ Get the conda licences """
         env_url = 'https://raw.githubusercontent.com/nf-core/{}/master/environment.yml'.format(self.pipeline)
         response = requests.get(env_url)
+
+        # Check that the pipeline exists
+        if response.status_code == 404:
+            logging.error("Couldn't find pipeline nf-core/{}".format(self.pipeline))
+            sys.exit(1)
+
         lint_obj = nf_core.lint.PipelineLint(self.pipeline)
         lint_obj.conda_config = yaml.load(response.text)
         # Check conda dependency list
