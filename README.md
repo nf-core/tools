@@ -11,8 +11,9 @@ A python package with helper tools for the nf-core community.
 * [Installation](#installation)
 * [Listing pipelines](#listing-pipelines) (`nf-core list`)
 * [Downloading pipelines for offline use](#downloading-pipelines-for-offline-use) (`nf-core download`)
+* [Listing software licences](#pipeline-software-licences): List software licences for a given workflow (`nf-core licences`)
 * [Creating a new workflow](#creating-a-new-workflow) (`nf-core create`)
-* [Linting a workflow](#linting-a-workflow) (`nf-core lint`)
+* [Checking a pipeline against nf-core guidelines](#linting-a-workflow) (`nf-core lint`)
 * [Bumping a pipeline version number](#bumping-a-pipeline-version-number) (`nf-core bump-version`)
 
 ## Installation
@@ -121,6 +122,43 @@ nf-core-methylseq-1.0/
 7 directories, 8 files
 ```
 
+## Pipeline software licences
+Sometimes it's useful to see the software licences of the tools used in a pipeline. You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
+
+```
+$ nf-core licences rnaseq
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Warning: This tool only prints licence information for the software tools packaged using conda.
+        The pipeline may use other software and dependencies not described here.
+
+Package Name           Version    Licence
+---------------------  ---------  --------------------
+stringtie              1.3.3      Artistic License 2.0
+preseq                 2.0.3      GPL
+trim-galore            0.4.5      GPL
+bioconductor-edger     3.20.7     GPL >=2
+fastqc                 0.11.7     GPL >=3
+openjdk                8.0.144    GPLv2
+r-gplots               3.0.1      GPLv2
+r-markdown             0.8        GPLv2
+rseqc                  2.6.4      GPLv2
+bioconductor-dupradar  1.8.0      GPLv3
+hisat2                 2.1.0      GPLv3
+multiqc                1.5        GPLv3
+r-data.table           1.10.4     GPLv3
+star                   2.5.4a     GPLv3
+subread                1.6.1      GPLv3
+picard                 2.18.2     MIT
+samtools               1.8        MIT
+```
+
 ## Creating a new workflow
 The `create` subcommand makes a new workflow using the nf-core base template.
 With a given pipeline name and description, it gives you a starter pipeline which follows nf-core best practices.
@@ -166,6 +204,7 @@ Final tasks (needs more documentation):
 * Add a description and keywords to the github repositories
 * Protect the `master` branch on the nf-core repository
 
+
 ## Linting a workflow
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
 This is the same test that is used on the automated continuous integration tests.
@@ -193,6 +232,8 @@ WARNING: Test Warnings:
   http://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
   http://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
 ```
+
+You can find extensive documentation about each of the lint tests in the [lint errors documentation](docs/lint_errors.md).
 
 
 ## Bumping a pipeline version number
