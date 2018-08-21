@@ -281,20 +281,15 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     @mock.patch('requests.get')
+    @pytest.mark.xfail(raises=ValueError)
     def test_conda_env_timeout(self, mock_get):
         """ Tests the conda environment handles API timeouts """
         # Define the behaviour of the request get mock
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.files = ['environment.yml']
-        with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
-            lint_obj.conda_config = yaml.load(fh)
-        lint_obj.pipeline_name = 'tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.4'
-        lint_obj.check_conda_env_yaml()
-        expectations = {"failed": 2, "warned": 5, "passed": 4}
-        self.assess_lint_status(lint_obj, **expectations)
+        lint_obj.conda_config['channels'] = ['bioconda']
+        lint_obj.check_anaconda_package('multiqc=1.6')
 
     def test_conda_env_skip(self):
         """ Tests the conda environment config is skipped when not needed """
