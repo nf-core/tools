@@ -47,15 +47,27 @@ def lint(pipeline_dir, release):
         sys.exit(1)
 
 @nf_core_cli.command()
+@click.argument(
+    'keywords',
+    required = False,
+    nargs = -1,
+    metavar = "<filter keywords>"
+)
+@click.option(
+    '-s', '--sort',
+    type = click.Choice(['release', 'name', 'stars']),
+    default = 'release',
+    help = "How to sort listed pipelines"
+)
 @click.option(
     '--json',
     is_flag = True,
     default = False,
     help = "Print full output as JSON"
 )
-def list(json):
+def list(sort, json, keywords):
     """ List nf-core pipelines with local info """
-    nf_core.list.list_workflows(json)
+    nf_core.list.list_workflows(sort, json, keywords)
 
 @nf_core_cli.command()
 @click.argument(

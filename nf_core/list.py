@@ -28,9 +28,9 @@ requests_cache.install_cache(
     backend='sqlite',
 )
 
-def list_workflows(json=False):
+def list_workflows(sort='release', json=False, keywords=[]):
     """ Main function to list all nf-core workflows """
-    wfs = Workflows()
+    wfs = Workflows(sort, keywords)
     wfs.get_remote_workflows()
     wfs.get_local_nf_workflows()
     wfs.compare_remote_local()
@@ -42,19 +42,13 @@ def list_workflows(json=False):
 class Workflows(object):
     """ Class to hold all workflows """
 
-    def __init__(self):
+    def __init__(self, sort='release', keywords=[]):
         """ Initialise the class with empty placeholder vars """
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
-        self.remote_ignore = [
-            'cookiecutter',
-            'nf-core.github.io',
-            'nf-co.re',
-            'tools',
-            'logos',
-            'test-datasets'
-        ]
+        self.keyword_filters = keywords
+        self.sort_workflows = sort
 
     def get_remote_workflows(self):
         """ Get remote nf-core workflows """
@@ -64,10 +58,9 @@ class Workflows(object):
         nfcore_url = 'http://nf-co.re/pipelines.json'
         response = requests.get(nfcore_url, timeout=10)
         if response.status_code == 200:
-            gh_repos = response.json()['remote_workflows']
-            for gh_repo in gh_repos:
-                if gh_repo['name'] not in self.remote_ignore:
-                    self.remote_workflows.append(RemoteWorkflow(gh_repo))
+            repos = response.json()['remote_workflows']
+            for repo in repos:
+                self.remote_workflows.append(RemoteWorkflow(repo))
 
     def get_local_nf_workflows(self):
         """ Get local nextflow workflows """
@@ -114,26 +107,68 @@ class Workflows(object):
                         else:
                             rwf.local_is_latest = False
 
+    def filtered_workflows(self):
+        """ Filter remote workflows if keywords supplied """
+        # If no keywords, don't filter
+        if not self.keyword_filters:
+            return self.remote_workflows
+
+        filtered_workflows = []
+        for wf in self.remote_workflows:
+            for k in self.keyword_filters:
+                in_name = k in wf.name
+                in_desc = k in wf.description
+                in_topics = any([ k in t for t in wf.topics])
+                if not in_name and not in_desc and not in_topics:
+                    break
+            else:
+                # We didn't hit a break, so all keywords were found
+                filtered_workflows.append(wf)
+        return filtered_workflows
+
     def print_summary(self):
         """ Print summary of all pipelines """
 
         # Sort by released / dev, then alphabetical
-        self.remote_workflows.sort(key=lambda item:(len(item.releases) == 0, item.full_name.lower()))
+        if self.sort_workflows == 'release':
+            self.remote_workflows.sort(
+                key=lambda wf: (
+                    (wf.releases[-1].get('published_at_timestamp', 0) if len(wf.releases) > 0 else 0) * -1,
+                    wf.full_name.lower()
+                )
+            )
+        # Sort by name
+        elif self.sort_workflows == 'name':
+            self.remote_workflows.sort( key=lambda wf: wf.full_name.lower() )
+        # Sort by stars, then name
+        elif self.sort_workflows == 'stars':
+            self.remote_workflows.sort(
+                key=lambda wf: (
+                    wf.stargazers_count * -1,
+                    wf.full_name.lower()
+                )
+            )
 
         # Build summary list to print
         summary = list()
-        for wf in self.remote_workflows:
-            summary.append([
+        for wf in self.filtered_workflows():
+            rowdata = [
                 wf.full_name,
                 wf.releases[-1]['tag_name'] if len(wf.releases) > 0 else 'dev',
                 wf.releases[-1]['published_at_pretty'] if len(wf.releases) > 0 else '-',
                 wf.local_wf.last_pull_pretty if wf.local_wf is not None else '-',
                 'Yes' if wf.local_is_latest else 'No'
-            ])
+            ]
+            if self.sort_workflows == 'stars':
+                rowdata.insert(1, wf.stargazers_count)
+            summary.append(rowdata)
+        t_headers = ['Name', 'Version', 'Published', 'Last Pulled', 'Default local is latest release?']
+        if self.sort_workflows == 'stars':
+            t_headers.insert(1, 'Stargazers')
 
         # Print summary table
         print("", file=sys.stderr)
-        print(tabulate.tabulate(summary, headers=['Name', 'Version', 'Published', 'Last Pulled', 'Default local is latest release?']))
+        print(tabulate.tabulate(summary, headers=t_headers))
         print("", file=sys.stderr)
 
     def print_json(self):
@@ -154,6 +189,7 @@ class RemoteWorkflow(object):
         self.name = data.get('name')
         self.full_name = data.get('full_name')
         self.description = data.get('description')
+        self.topics = data.get('topics', [])
         self.archived = data.get('archived')
         self.stargazers_count = data.get('stargazers_count')
         self.watchers_count = data.get('watchers_count')
@@ -171,6 +207,7 @@ class RemoteWorkflow(object):
             release['published_at_pretty'] = pretty_date(
                 datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ")
             )
+            release['published_at_timestamp'] = int(datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ").strftime("%s"))
 
 
 class LocalWorkflow(object):

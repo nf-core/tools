@@ -72,6 +72,29 @@ nf-core/smrnaseq   dev        -            -              No
 nf-core/vipr       dev        -            -              No
 ```
 
+To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
+
+```
+nf-core list rna rna-seq
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+Name              Version    Published     Last Pulled    Default local is latest release?
+----------------  ---------  ------------  -------------  ----------------------------------
+nf-core/rnaseq    1.0        20 hours ago  -              No
+nf-core/smrnaseq  dev        -             -              No
+```
+
+You can sort the results by latest release (default), name (alphabetical) or number of GitHub stars using the `-s`/`--stars` option.
+
+Finally, to return machine-readable JSON output, use the `--json` flag.
+
+
 ## Downloading pipelines for offline use
 Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection. In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
 
