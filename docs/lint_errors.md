@@ -57,15 +57,18 @@ names. This test fails or throws warnings if required variables are not set.
 
 The following variables fail the test if missing:
 
-* `params.version`
-    * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
-* `params.nf_required_version`
-    * The minimum version of Nextflow required to run the pipeline.
-    * This should correspond to the `NXF_VER` version tested by Travis.
 * `params.outdir`
     * A directory in which all pipeline results should be saved
+* `manifest.name`
+    * The pipeline name. Should begin with `nf-core/`
 * `manifest.description`
     * A description of the pipeline
+* `manifest.pipelineVersion`
+    * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
+* `manifest.nextflowVersion`
+    * The minimum version of Nextflow required to run the pipeline.
+    * Should `>=` a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (check the [Nexftlow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest) for more.)
+    * This should correspond to the `NXF_VER` version tested by Travis.
 * `manifest.homePage`
     * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
       so beginning with `https://github.com/nf-core/`
@@ -91,6 +94,13 @@ The following variables throw warnings if missing:
     * Specify to work with single-end sequence data instead of default paired-end
     * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
 
+The following variables are depreciated and fail the test if they are still present:
+
+* `params.version`
+    * The old method for specifying the pieline version. Replaced by `manifest.pipelineVersion`
+* `params.nf_required_version`
+    * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
+
 ## Error #5 - Continuous Integration configuration ## {#5}
 nf-core pipelines must have CI testing with Travis or Circle CI.
 
@@ -98,16 +108,22 @@ This test fails if the following happens:
 
 * `.travis.yml` does not contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
 * `.travis.yml` does not contain the string `docker pull <container>` under `before_install`
-    * Where `<container>` is fetched from `params.container` in the `nextflow.config` file
-* `.travis.yml` does not test the Nextflow version specified in the pipeline as `nf_required_version`
+    * Where `<container>` is fetched from `params.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
+* `.travis.yml` does not test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
     * This is expected in the `env` section of the config, eg:
     ```yaml
     env:
       - NXF_VER=0.27.0
       - NXF_VER=''
     ```
-    * At least one of these `NXF_VER` variables must match the `params.nf_required_version` version specified in the pipeline config
+    * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
     * Other variables can be specified on these lines as long as they are space separated.
+* `.travis.yml` checks that pull requests are not opened directly to the `master` branch
+    * The following is expected in the `before_install` section:
+    ```yaml
+    before_install:
+      - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+    ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 The `README.md` files for a project are very important and must meet some requirements:
@@ -143,9 +159,9 @@ if they are set.
 > These tests only run when your pipeline has a root file called `environment.yml`
 
 * The environment `name` must match the pipeline name and version
-    * The pipeline name is found from the Nextflow config `manifest.homePage`,
-      which assumes that the URL is in the format `github.com/nf-core/[pipeline-name]`
-    * Example: For `github.com/nf-core/test` version 1.4, the conda environment name should be `nfcore-test-1.4`
+    * The pipeline name is defined in the config variable `manifest.name`
+    * Replace the slash with a hyphen as environment names shouldn't contain that character
+    * Example: For `nf-core/test` version 1.4, the conda environment name should be `nf-core-test-1.4`
 
 Each dependency is checked using the [Anaconda API service](https://api.anaconda.org/docs).
 Dependency sublists are ignored with the exception of `- pip`: these packages are also checked
@@ -174,15 +190,13 @@ LABEL authors="your@email.com" \
       description="Container image containing all requirements for nf-core/EXAMPLE pipeline"
 
 COPY environment.yml /
-RUN conda env create -f /environment.yml && conda clean -a
-ENV PATH /opt/conda/envs/nfcore-EXAMPLE/bin:$PATH
+RUN conda env update -n root -f /environment.yml && conda clean -a
 ```
 
 To enforce this minimal `Dockerfile` and check for common copy+paste errors, we require
 that the above template is used.
-Failures are generated if the `FROM`, `COPY`, `RUN` and `ENV` statements above are not present.
-These lines must be an exact copy of the above example, with the exception that
-the `ENV PATH` must reference the name of your pipeline instead of `nfcore-EXAMPLE`.
+Failures are generated if the `FROM`, `COPY` and `RUN` statements above are not present.
+These lines must be an exact copy of the above example.
 
 Additional lines and different metadata can be added without causing the test to fail.
 
@@ -204,15 +218,11 @@ Bootstrap:docker
     DESCRIPTION Container image containing all requirements for the nf-core/EXAMPLE pipeline
     VERSION [pipeline version]
 
-%environment
-    PATH=/opt/conda/envs/nfcore-EXAMPLE/bin:$PATH
-    export PATH
-
 %files
     environment.yml /
 
 %post
-    /opt/conda/bin/conda env create -f /environment.yml
+    /opt/conda/bin/conda env update -n root -f /environment.yml
     /opt/conda/bin/conda clean -a
 ```
 
@@ -222,10 +232,8 @@ that the above template is used. Specifically, presence of these lines is checke
 * `From:nfcore/base`
 * `Bootstrap:docker`
 * `VERSION [pipeline version]`
-* `PATH=/opt/conda/envs/nfcore-EXAMPLE/bin:$PATH`
-* `export PATH`
 * `environment.yml /`
-* `/opt/conda/bin/conda env create -f /environment.yml`
+* `/opt/conda/bin/conda env update -n root -f /environment.yml`
 * `/opt/conda/bin/conda clean -a`
 
 Additional lines and different metadata can be added without causing the test to fail.
