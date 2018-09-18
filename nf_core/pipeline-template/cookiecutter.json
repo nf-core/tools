@@ -1,0 +1,7 @@
+{
+    "name": "nf-core/example",
+    "description": "This pipeline takes some data and does something with it.",
+    "name_noslash": "{{ cookiecutter.name.replace('/', '-') }}",
+    "name_docker": "{{ cookiecutter.name_docker }}",
+    "version": "1.0dev"
+}

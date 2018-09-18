@@ -7,7 +7,7 @@ Bootstrap:docker
     VERSION 0.4
 
 %environment
-    PATH=/opt/conda/envs/nfcore-tools-0.4/bin:$PATH
+    PATH=/opt/conda/envs/nf-core-tools-0.4/bin:$PATH
     export PATH
 
 %files

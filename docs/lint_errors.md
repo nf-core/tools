@@ -57,15 +57,18 @@ names. This test fails or throws warnings if required variables are not set.
 
 The following variables fail the test if missing:
 
-* `params.version`
-    * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
-* `params.nf_required_version`
-    * The minimum version of Nextflow required to run the pipeline.
-    * This should correspond to the `NXF_VER` version tested by Travis.
 * `params.outdir`
     * A directory in which all pipeline results should be saved
+* `manifest.name`
+    * The pipeline name. Should begin with `nf-core/`
 * `manifest.description`
     * A description of the pipeline
+* `manifest.pipelineVersion`
+    * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
+* `manifest.nextflowVersion`
+    * The minimum version of Nextflow required to run the pipeline.
+    * Should `>=` a version number, eg. `>=0.31.0`
+    * This should correspond to the `NXF_VER` version tested by Travis.
 * `manifest.homePage`
     * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
       so beginning with `https://github.com/nf-core/`
@@ -98,15 +101,15 @@ This test fails if the following happens:
 
 * `.travis.yml` does not contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
 * `.travis.yml` does not contain the string `docker pull <container>` under `before_install`
-    * Where `<container>` is fetched from `params.container` in the `nextflow.config` file
-* `.travis.yml` does not test the Nextflow version specified in the pipeline as `nf_required_version`
+    * Where `<container>` is fetched from `params.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
+* `.travis.yml` does not test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
     * This is expected in the `env` section of the config, eg:
     ```yaml
     env:
       - NXF_VER=0.27.0
       - NXF_VER=''
     ```
-    * At least one of these `NXF_VER` variables must match the `params.nf_required_version` version specified in the pipeline config
+    * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
     * Other variables can be specified on these lines as long as they are space separated.
 
 ## Error #6 - Repository `README.md` tests ## {#6}
@@ -143,9 +146,9 @@ if they are set.
 > These tests only run when your pipeline has a root file called `environment.yml`
 
 * The environment `name` must match the pipeline name and version
-    * The pipeline name is found from the Nextflow config `manifest.homePage`,
-      which assumes that the URL is in the format `github.com/nf-core/[pipeline-name]`
-    * Example: For `github.com/nf-core/test` version 1.4, the conda environment name should be `nfcore-test-1.4`
+    * The pipeline name is defined in the config variable `manifest.name`
+    * Replace the slash with a hyphen as environment names shouldn't contain that character
+    * Example: For `nf-core/test` version 1.4, the conda environment name should be `nf-core-test-1.4`
 
 Each dependency is checked using the [Anaconda API service](https://api.anaconda.org/docs).
 Dependency sublists are ignored with the exception of `- pip`: these packages are also checked
