@@ -6,7 +6,7 @@
     * New flag `--nextflow` to change the required nextflow version instead
 * Template updates
     * Simpler installation of the `nf-core` helper tool, now directly from PyPI
-    * Bump minimum nextflow version to `0.31.1` (required for built in `manifest.nextflowVersion` check)
+    * Bump minimum nextflow version to `0.32.0` - required for built in `manifest.nextflowVersion` check and access to `workflow.manifest` variables from within nextflow scripts
 * New lint tests
     * `.travis.yml` test for PRs made against the `master` branch
     * Automatic `--release` option not used if the travis repo is `nf-core/tools`
