@@ -8,17 +8,18 @@ a nf-core pipeline
 import logging
 import os
 import re
+import sys
 
 def bump_pipeline_version(lint_obj, new_version):
     """ Function to bump a pipeline version number. Called by the main script """
 
     # Collect the old and new version numbers
-    current_version = lint_obj.config.get('manifest.version', '').strip(' \'"')
+    current_version = lint_obj.config.get('workflow.manifest.version', '').strip(' \'"')
     if new_version.startswith('v'):
         logging.warn("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
     if not current_version:
-        logging.error("Could not find config variable manifest.version")
+        logging.error("Could not find config variable workflow.manifest.version")
         sys.exit(1)
     logging.info("Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(current_version, new_version))
 
@@ -86,7 +87,7 @@ def bump_nextflow_version(lint_obj, new_version):
     update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr, True)
 
 def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=False):
-    """ Update manifest.version in the nextflow config file """
+    """ Update workflow.manifest.version in the nextflow config file """
 
     # Load the file
     fn = os.path.join(lint_obj.path, filename)
