@@ -200,7 +200,7 @@ class TestLint(unittest.TestCase):
     def test_version_consistency_pass(self):
         """Tests the workflow version and container version sucessfully"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config["manifest.pipelineVersion"] = "0.4"
+        lint_obj.config["workflow.manifest.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
@@ -212,7 +212,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_TAG"] = "0.5"
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config["manifest.pipelineVersion"] = "0.4"
+        lint_obj.config["workflow.manifest.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
@@ -225,7 +225,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_TAG"] = "0.5dev"
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config["manifest.pipelineVersion"] = "0.4"
+        lint_obj.config["workflow.manifest.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
@@ -237,7 +237,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_TAG"] = "0.4"
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config["manifest.pipelineVersion"] = "0.4"
+        lint_obj.config["workflow.manifest.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
@@ -249,7 +249,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_TAG"] = "0.4"
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.config["manifest.pipelineVersion"] = "0.4"
+        lint_obj.config["workflow.manifest.version"] = "0.4"
         lint_obj.config["params.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
@@ -262,7 +262,7 @@ class TestLint(unittest.TestCase):
         with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
             lint_obj.conda_config = yaml.load(fh)
         lint_obj.pipeline_name = 'tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.4'
+        lint_obj.config['workflow.manifest.version'] = '0.4'
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 6}
         self.assess_lint_status(lint_obj, **expectations)
@@ -275,7 +275,7 @@ class TestLint(unittest.TestCase):
             lint_obj.conda_config = yaml.load(fh)
         lint_obj.conda_config['dependencies'] = ['fastqc', 'multiqc=0.9', 'notapackaage=0.4']
         lint_obj.pipeline_name = 'not_tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.23'
+        lint_obj.config['workflow.manifest.version'] = '0.23'
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 3, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -331,7 +331,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.4'
+        lint_obj.config['workflow.manifest.version'] = '0.4'
         lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 1}
@@ -342,7 +342,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.4'
+        lint_obj.config['workflow.manifest.version'] = '0.4'
         lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.4']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
@@ -358,7 +358,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.4'
+        lint_obj.config['workflow.manifest.version'] = '0.4'
         lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
@@ -374,7 +374,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.4'
+        lint_obj.config['workflow.manifest.version'] = '0.4'
         lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
@@ -385,7 +385,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
-        lint_obj.config['manifest.pipelineVersion'] = '0.4'
+        lint_obj.config['workflow.manifest.version'] = '0.4'
         lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['notpresent=1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 2}
