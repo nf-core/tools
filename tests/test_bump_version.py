@@ -16,7 +16,7 @@ def test_working_bump_pipeline_version(datafiles):
     """ Test that making a release with the working example files works """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj.pipeline_name = 'tools'
-    lint_obj.config['manifest.pipelineVersion'] = '0.4'
+    lint_obj.config['workflow.manifest.version'] = '0.4'
     lint_obj.files = ['nextflow.config', 'Dockerfile', 'environment.yml']
     nf_core.bump_version.bump_pipeline_version(lint_obj, '1.1')
 
@@ -25,7 +25,7 @@ def test_dev_bump_pipeline_version(datafiles):
     """ Test that making a release works with a dev name and a leading v """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj.pipeline_name = 'tools'
-    lint_obj.config['manifest.pipelineVersion'] = '0.4'
+    lint_obj.config['workflow.manifest.version'] = '0.4'
     lint_obj.files = ['nextflow.config', 'Dockerfile', 'environment.yml']
     nf_core.bump_version.bump_pipeline_version(lint_obj, 'v1.2dev')
 
@@ -35,7 +35,7 @@ def test_pattern_not_found(datafiles):
     """ Test that making a release raises and error if a pattern isn't found """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj.pipeline_name = 'tools'
-    lint_obj.config['manifest.pipelineVersion'] = '0.5'
+    lint_obj.config['workflow.manifest.version'] = '0.5'
     lint_obj.files = ['nextflow.config', 'Dockerfile', 'environment.yml']
     nf_core.bump_version.bump_pipeline_version(lint_obj, '1.2dev')
 
@@ -45,8 +45,8 @@ def test_multiple_patterns_found(datafiles):
     """ Test that making a release raises if a version number is found twice """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
     with open(os.path.join(str(datafiles), 'nextflow.config'), "a") as nfcfg:
-        nfcfg.write("manifest.pipelineVersion = '0.4'")
+        nfcfg.write("workflow.manifest.version = '0.4'")
     lint_obj.pipeline_name = 'tools'
-    lint_obj.config['manifest.pipelineVersion'] = '0.4'
+    lint_obj.config['workflow.manifest.version'] = '0.4'
     lint_obj.files = ['nextflow.config', 'Dockerfile', 'environment.yml']
     nf_core.bump_version.bump_pipeline_version(lint_obj, '1.2dev')

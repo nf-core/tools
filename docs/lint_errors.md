@@ -63,7 +63,7 @@ The following variables fail the test if missing:
     * The pipeline name. Should begin with `nf-core/`
 * `manifest.description`
     * A description of the pipeline
-* `manifest.pipelineVersion`
+* `manifest.version`
     * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
 * `manifest.nextflowVersion`
     * The minimum version of Nextflow required to run the pipeline.
@@ -97,7 +97,7 @@ The following variables throw warnings if missing:
 The following variables are depreciated and fail the test if they are still present:
 
 * `params.version`
-    * The old method for specifying the pieline version. Replaced by `manifest.pipelineVersion`
+    * The old method for specifying the pieline version. Replaced by `manifest.version`
 * `params.nf_required_version`
     * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 

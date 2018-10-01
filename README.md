@@ -291,8 +291,8 @@ INFO: Changing version number:
   New version number will be '1.0'
 
 INFO: Updating version in nextflow.config
- - pipelineVersion = '1.0dev'
- + pipelineVersion = '1.0'
+ - version = '1.0dev'
+ + version = '1.0'
 
 INFO: Updating version in nextflow.config
  - container = 'nfcore/mypipeline:latest'

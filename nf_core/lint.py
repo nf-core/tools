@@ -276,7 +276,7 @@ class PipelineLint(object):
             'manifest.name',
             'manifest.nextflowVersion',
             'manifest.description',
-            'manifest.pipelineVersion',
+            'manifest.version',
             'manifest.homePage',
             'timeline.enabled',
             'trace.enabled',
@@ -477,7 +477,7 @@ class PipelineLint(object):
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
-        versions['manifest.pipelineVersion'] = self.config.get('manifest.pipelineVersion', '').strip(' \'"')
+        versions['manifest.version'] = self.config.get('manifest.version', '').strip(' \'"')
 
         # Get version from the docker slug
         if self.config.get('params.container', '') and \
@@ -524,7 +524,7 @@ class PipelineLint(object):
             return
 
         # Check that the environment name matches the pipeline name
-        pipeline_version = self.config.get('manifest.pipelineVersion', '').strip(' \'"')
+        pipeline_version = self.config.get('manifest.version', '').strip(' \'"')
         expected_env_name = 'nf-core-{}-{}'.format(self.pipeline_name.lower(), pipeline_version)
         if self.conda_config['name'] != expected_env_name:
             self.failed.append((8, "Conda environment name is incorrect ({}, should be {})".format(self.conda_config['name'], expected_env_name)))
@@ -657,7 +657,7 @@ class PipelineLint(object):
         expected_strings = [
             'From:nfcore/base',
             'Bootstrap:docker',
-            'VERSION {}'.format(self.config.get('manifest.pipelineVersion', '').strip(' \'"')),
+            'VERSION {}'.format(self.config.get('manifest.version', '').strip(' \'"')),
             'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
             'export PATH',
             'environment.yml /',
