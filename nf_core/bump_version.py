@@ -86,6 +86,11 @@ def bump_nextflow_version(lint_obj, new_version):
     nfconfig_newstr = "NXF_VER='{}'".format(new_version)
     update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr, True)
 
+    # Update README badge
+    nfconfig_pattern = r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace('.','\.'))
+    nfconfig_newstr = "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version)
+    update_file_version("README.md", lint_obj, nfconfig_pattern, nfconfig_newstr, True)
+
 def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=False):
     """ Update workflow.manifest.version in the nextflow config file """
 
