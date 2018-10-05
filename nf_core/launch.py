@@ -1,0 +1,121 @@
+#!/usr/bin/env python
+""" Launch a pipeline, interactively collecting params """
+
+from __future__ import print_function
+
+import click
+import logging
+import os
+import subprocess
+
+import nf_core.utils
+
+def launch_pipeline(workflow):
+    wf = Launch(workflow)
+    wf.collect_defaults()
+    wf.prompt_vars()
+    wf.build_command()
+    wf.launch_workflow()
+
+class Launch(object):
+    """ Class to hold config option to launch a pipeline """
+
+    def __init__(self, workflow):
+        """ Initialise the class with empty placeholder vars """
+
+        # Prepend nf-core/ if it seems sensible
+        if 'nf-core' not in workflow and workflow.count('/') == 0 and not os.path.exists(workflow):
+            workflow = "nf-core/{}".format(workflow)
+            logging.debug("Prepending nf-core/ to workflow")
+        logging.info("Launching {}\n".format(workflow))
+
+        self.workflow = workflow
+        self.nxf_flag_defaults = {
+            '-name': False,
+            '-r': False,
+            '-profile': 'standard',
+            '-w': os.getenv('NXF_WORK') if os.getenv('NXF_WORK') else 'work',
+            '-resume': False
+        }
+        self.nxf_flag_help = {
+            '-name': 'Unique name for this nextflow run',
+            '-r': 'Release / revision to use',
+            '-profile': 'Config profile to use',
+            '-w': 'Work directory for intermediate files',
+            '-resume': 'Resume a previous workflow run'
+        }
+        self.nxf_flags = {}
+        self.param_defaults = {}
+        self.params = {}
+        self.nextflow_cmd = "nextflow run {}".format(self.workflow)
+
+    def collect_defaults(self):
+        """ Collect the default params and values from the workflow """
+        config = nf_core.utils.fetch_wf_config(self.workflow)
+        for key, value in config.items():
+            keys = key.split('.')
+            if keys[0] == 'params' and len(keys) == 2:
+                self.param_defaults[keys[1]] = value
+
+    def prompt_vars(self):
+        """ Ask the user if they want to override any default values """
+        # Main nextflow flags
+        logging.info("Main nextflow options:\n")
+        for flag, f_default in self.nxf_flag_defaults.items():
+            f_user = click.prompt(self.nxf_flag_help[flag], default=f_default)
+            # Only save if we've changed the default
+            if f_user != f_default:
+                # Convert string bools to real bools
+                try:
+                    f_user = f_user.strip('"').strip("'")
+                    if f_user.lower() == 'true': f_user = True
+                    if f_user.lower() == 'false': f_user = False
+                except AttributeError:
+                    pass
+                self.nxf_flags[flag] = f_user
+
+        # Pipeline params
+        logging.info("Pipeline specific parameters:\n")
+        for param, p_default in self.param_defaults.items():
+            if not isinstance(p_default, dict) and not isinstance(p_default, list):
+                p_user = click.prompt("--{}".format(param), default=p_default)
+                # Only save if we've changed the default
+                if p_user != p_default:
+                    # Convert string bools to real bools
+                    try:
+                        p_user = p_user.strip('"').strip("'")
+                        if p_user.lower() == 'true': p_user = True
+                        if p_user.lower() == 'false': p_user = False
+                    except AttributeError:
+                        pass
+                    self.params[param] = p_user
+
+    def build_command(self):
+        """ Build the nextflow run command based on what we know """
+        for flag, val in self.nxf_flags.items():
+            # Boolean flags like -resume
+            if isinstance(val, bool):
+                if val:
+                    self.nextflow_cmd = "{} {}".format(self.nextflow_cmd, flag)
+                else:
+                    logging.warn("TODO: Can't set false boolean flags currently.")
+            # String values
+            else:
+                self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, flag, val.replace('"', '\\"'))
+        for param, val in self.params.items():
+            # Boolean flags like --saveTrimmed
+            if isinstance(val, bool):
+                if val:
+                    self.nextflow_cmd = "{} --{}".format(self.nextflow_cmd, param)
+                else:
+                    logging.warn("TODO: Can't set false boolean flags currently.")
+            # everything else
+            else:
+                self.nextflow_cmd = '{} --{} "{}"'.format(self.nextflow_cmd, param, val.replace('"', '\\"'))
+
+    def launch_workflow(self):
+        """ Launch nextflow if required  """
+        logging.info("Nextflow command:\n  {}\n\n".format(self.nextflow_cmd))
+        if click.confirm('Do you want to run this command now?'):
+            logging.info("Launching!")
+            subprocess.call(self.nextflow_cmd, shell=True)
