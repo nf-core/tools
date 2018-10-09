@@ -2,6 +2,8 @@
 
 ## v1.3dev
 _nothing yet.._
+* Updated channel order for bioconda/conda-forge channels in environment.yaml
+
 
 ## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
 * Updated the `nf-core release` command
