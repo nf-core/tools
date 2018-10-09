@@ -1,7 +1,6 @@
 # nf-core/tools: Changelog
 
 ## v1.3dev
-_nothing yet.._
 * Updated channel order for bioconda/conda-forge channels in environment.yaml
 
 
