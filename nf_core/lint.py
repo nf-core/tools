@@ -591,6 +591,9 @@ class PipelineLint(object):
             except (requests.exceptions.Timeout):
                 self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
                 raise ValueError
+            except (requests.exceptions.ConnectionError):
+                self.warned.append((8, "Could not connect to Anaconda API"))
+                raise ValueError
             else:
                 if response.status_code == 200:
                     dep_json = response.json()
