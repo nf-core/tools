@@ -6,6 +6,7 @@ from __future__ import print_function
 import click
 import sys
 import os
+import re
 
 import nf_core
 import nf_core.lint, nf_core.list, nf_core.download, nf_core.licences, nf_core.bump_version, nf_core.create
@@ -145,11 +146,19 @@ def bump_version(pipeline_dir, new_version, nextflow):
     else:
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
+def normalise_wf_name(ctx, opts, args):
+    """ Force the workflow name to meet the nf-core requirements """
+    norm_name = re.sub(r'[^a-z]', '', args.lower())
+    if norm_name != args:
+        print(' >>> Sanitising name to: {}'.format(norm_name))
+    return norm_name
+
 @nf_core_cli.command()
 @click.option(
     '-n', '--name',
-    prompt = True,
+    prompt = 'Workflow Name (lower case, no punctuation)',
     required = True,
+    callback = normalise_wf_name,
     type = str,
     help = 'The name of your new pipeline'
 )
@@ -191,7 +200,7 @@ def bump_version(pipeline_dir, new_version, nextflow):
     help = "Output directory for new pipeline (default: pipeline name)"
 )
 def create(name, description, author, new_version, no_git, force, outdir):
-    """ Create a new pipeline using the nf-core template """
+    """ Create a new pipeline using the template """
     create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
 
