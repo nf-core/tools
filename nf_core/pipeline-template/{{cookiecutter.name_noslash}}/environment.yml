@@ -4,5 +4,6 @@ channels:
   - conda-forge
   - defaults
 dependencies:
+  # TODO nf-core: Add required software dependencies here
   - fastqc=0.11.7
   - multiqc=1.6
