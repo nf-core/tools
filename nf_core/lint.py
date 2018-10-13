@@ -117,7 +117,8 @@ class PipelineLint(object):
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
-            'check_conda_singularityfile'
+            'check_conda_singularityfile',
+            'check_pipeline_todos'
         ]
         if release:
             self.releaseMode = True
@@ -674,6 +675,29 @@ class PipelineLint(object):
         else:
             for missing in difference:
                 self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
+
+    def check_pipeline_todos(self):
+        """ Go through all template files looking for the string 'TODO nf-core:' """
+        ignore = ['.git']
+        if os.path.isfile(os.path.join(self.path, '.gitignore')):
+            with open(os.path.join(self.path, '.gitignore')) as fh:
+                for l in fh:
+                    ignore.append(os.path.basename(l.strip().rstrip('/')))
+        for root, dirs, files in os.walk(self.path):
+            # Ignore files
+            for i in ignore:
+                if i in dirs:
+                    dirs.remove(i)
+                if i in files:
+                    files.remove(i)
+            for fname in files:
+                with open(os.path.join(self.path, root, fname)) as fh:
+                    for l in fh:
+                        if 'TODO nf-core' in l:
+                            l = l.replace('<!--', '').replace('-->', '').replace('# TODO nf-core: ', '').replace('// TODO nf-core: ', '').replace('TODO nf-core: ', '').strip()
+                            if len(fname) + len(l) > 50:
+                                l = '{}..'.format(l[:50-len(fname)])
+                            self.warned.append((11, "TODO string found in '{}': {}".format(fname,l)))
 
     def print_results(self):
         # Print results
