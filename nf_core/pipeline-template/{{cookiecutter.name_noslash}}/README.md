@@ -23,3 +23,6 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 3. [Running the pipeline](docs/usage.md)
 4. [Output and how to interpret the results](docs/output.md)
 5. [Troubleshooting](docs/troubleshooting.md)
+
+### Credits
+{{ cookiecutter.name }} was originally written by {{ cookiecutter.author }}.
