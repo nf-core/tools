@@ -39,7 +39,7 @@ python -m pytest .
 ```
 
 ### Lint Tests
-The nf-core has a [set of guidelines](http://nf-co.re/developer_docs) which all pipelines must adhere to.
+The nf-core has a [set of guidelines](http://nf-co.re/guidelines) which all pipelines must adhere to.
 To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
 
 The nf-core/tools repo itself contains the master template for creating new nf-core pipelines.

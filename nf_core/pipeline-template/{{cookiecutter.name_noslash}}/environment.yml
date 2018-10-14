@@ -1,9 +1,9 @@
 name: {{ cookiecutter.name_noslash }}-{{ cookiecutter.version }}
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
   - defaults
 dependencies:
   # TODO nf-core: Add required software dependencies here
-  - fastqc=0.11.7
+  - fastqc=0.11.8
   - multiqc=1.6
