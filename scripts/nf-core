@@ -146,19 +146,20 @@ def bump_version(pipeline_dir, new_version, nextflow):
     else:
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
-def normalise_wf_name(ctx, opts, args):
+def validate_wf_name_prompt(ctx, opts, value):
     """ Force the workflow name to meet the nf-core requirements """
-    norm_name = re.sub(r'[^a-z]', '', args.lower())
-    if norm_name != args:
-        print(' >>> Sanitising name to: {}'.format(norm_name))
-    return norm_name
+    if not re.match(r'^[a-z]+$', value):
+        click.echo('Invalid workflow name: must be lowercase without punctuation.')
+        value = click.prompt(opts.prompt)
+        return validate_wf_name_prompt(ctx, opts, value)
+    return value
 
 @nf_core_cli.command()
 @click.option(
     '-n', '--name',
-    prompt = 'Workflow Name (lower case, no punctuation)',
+    prompt = 'Workflow Name',
     required = True,
-    callback = normalise_wf_name,
+    callback = validate_wf_name_prompt,
     type = str,
     help = 'The name of your new pipeline'
 )
