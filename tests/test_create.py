@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Some tests covering the bump_version code.
+"""Some tests covering the pipeline creation sub command.
 """
 import os
 import pytest
