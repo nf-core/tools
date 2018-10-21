@@ -23,7 +23,7 @@ is as follows:
 If you're not used to this workflow with git, you can start with some [basic docs from GitHub](https://help.github.com/articles/fork-a-repo/) or even their [excellent interactive tutorial](https://try.github.io/).
 
 ## Style guide
-Google provides an excellent [style guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#power-features), which
+Google provides an excellent [style guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md), which
 is an best practise extension of [PEP](https://www.python.org/dev/peps/), the Python Enhancement Proposals. Have a look at the 
 [docstring](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) section, which is in particular
 important, as nf-core tool's code documentation is generated out of these automatically.
