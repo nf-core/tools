@@ -2,6 +2,9 @@
 
 ## v1.3dev
 * Updated channel order for bioconda/conda-forge channels in environment.yaml
+* Increased code coverage for sub command `create` and `licenses`
+* Fixed nasty dependency hell issue between `pytest` and `py` package in Python 3.4.x
+* Introduced `.coveragerc` for pytest-cov configuration, which excludes the pipeline template now from being reported
 
 
 ## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
