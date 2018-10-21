@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """ Release code for the nf-core python package.
 
-Bumps the version number in all appropriate files for
-a nf-core pipeline
+Creates a nf-core pipeline matching the current
+organization's specification.
 """
 
 import cookiecutter.main, cookiecutter.exceptions
