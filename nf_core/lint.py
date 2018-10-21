@@ -1,7 +1,7 @@
 #!/usr/bin/env python
-""" Linting code for the nf-core python package.
+"""Linting policy for nf-core pipeline projects.
 
-Tests Nextflow pipelines to check that they adhere to
+Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
@@ -34,15 +34,27 @@ requests_cache.install_cache(
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
-def run_linting(pipeline_dir, release):
-    """ Run all linting tests. Called by main script. """
+def run_linting(pipeline_dir, release_mode=False):
+    """Runs all nf-core linting checks on a given Nextflow pipeline project
+    in either ``release`` mode or ``normal`` mode (default). Returns an object
+    of type :class:`PipelineLint` after finished.
+
+    Args:
+        pipeline_dir (str): The path to the Nextflow pipeline root directory
+
+        release_mode (bool): Set this to ``True``, if the linting should be run in the ``release`` mode.
+                             See :meth:`PipelineLint.lint_pipeline` for more information.
+
+    Returns:
+        An instance of class :class:`PipelineLint`, containing all the linting results.
+    """
 
     # Create the lint object
     lint_obj = PipelineLint(pipeline_dir)
 
     # Run the linting tests
     try:
-        lint_obj.lint_pipeline(release)
+        lint_obj.lint_pipeline(release_mode)
     except AssertionError as e:
         logging.critical("Critical error: {}".format(e))
         logging.info("Stopping tests...")
