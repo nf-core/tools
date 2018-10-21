@@ -19,7 +19,7 @@ install:
   - cd ${TRAVIS_BUILD_DIR}
   - pip install --upgrade pip # Get rid of dependency resolve issues from older pip versions
   - pip install .
-  - pip install codecov pytest-datafiles pytest-cov mock
+  - pip install codecov 'pytest==3.6.4' pytest-datafiles pytest-cov mock
 
 script:
   - python -m pytest --cov=nf_core .
