@@ -10,7 +10,6 @@ import logging
 import os
 import re
 import shlex
-import subprocess
 import tempfile
 
 import click
@@ -33,6 +32,7 @@ requests_cache.install_cache(
 # Don't pick up debug logs from the requests package
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+
 
 def run_linting(pipeline_dir, release_mode=False):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
@@ -68,19 +68,41 @@ def run_linting(pipeline_dir, release_mode=False):
     if len(lint_obj.failed) > 0:
         logging.error(
             "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n"
-            .format("\n       Reminder: Lint tests were run in --release mode." if release else '')
+            .format("\n\tReminder: Lint tests were run in --release mode." if release_mode else '')
         )
 
     return lint_obj
 
 
 class PipelineLint(object):
-    """ Object to hold linting info and results """
+    """Object to hold linting information and results.
+    All objects attributes are set, after the :meth:`PipelineLint.lint_pipeline` function was called.
 
-    def __init__(self, pipeline_dir):
+    Attributes:
+        conda_config (dict): The parsed conda configuration file content (``environment.yml``). The dictionary has
+                             the following structure, with some example values::
+
+                                 {'name': 'nf-core-hlatyping',
+                                  'channels': ['bioconda', 'conda-forge'],
+                                  'dependencies': ['optitype=1.3.2', 'yara=0.9.6']}
+
+        conda_package_info (dict):
+        config (dict):
+        dockerfile (list):
+        failed (list):
+        files (list):
+        minNextflowVersion (str):
+        passed (list):
+        path (str): Path to the pipeline directory
+        pipeline_name (str):
+        release_mode (bool): release mode
+        singularityfile (list):
+        warned (list):
+    """
+    def __init__(self, path):
         """ Initialise linting object """
-        self.releaseMode = False
-        self.path = pipeline_dir
+        self.release_mode = False
+        self.path = path
         self.files = []
         self.config = {}
         self.pipeline_name = None
@@ -93,7 +115,7 @@ class PipelineLint(object):
         self.warned = []
         self.failed = []
 
-    def lint_pipeline(self, release=False):
+    def lint_pipeline(self, release_mode=False):
         """ Main linting function.
 
         Takes the pipeline directory as the primary input and iterates through
@@ -131,16 +153,16 @@ class PipelineLint(object):
             'check_conda_dockerfile',
             'check_conda_singularityfile'
         ]
-        if release:
-            self.releaseMode = True
+        if release_mode:
+            self.release_mode = True
             check_functions.extend([
                 'check_version_consistency'
             ])
-        with click.progressbar(check_functions, label='Running pipeline tests', item_show_func=repr) as fnames:
-            for fname in fnames:
-                getattr(self, fname)()
+        with click.progressbar(check_functions, label='Running pipeline tests', item_show_func=repr) as fun_names:
+            for fun_name in fun_names:
+                getattr(self, fun_name)()
                 if len(self.failed) > 0:
-                    logging.error("Found test failures in '{}', halting lint run.".format(fname))
+                    logging.error("Found test failures in '{}', halting lint run.".format(fun_name))
                     break
 
     def check_files_exist(self):
@@ -202,7 +224,6 @@ class PipelineLint(object):
             with open(os.path.join(self.path, 'environment.yml'), 'r') as fh:
                 self.conda_config = yaml.load(fh)
 
-
     def check_docker(self):
         """ Check that Dockerfile contains the string 'FROM ' """
         fn = os.path.join(self.path, "Dockerfile")
@@ -230,7 +251,6 @@ class PipelineLint(object):
             return
 
         self.failed.append((2, "Singularity file check failed"))
-
 
     def check_licence(self):
         """ Check licence file is MIT
@@ -263,9 +283,7 @@ class PipelineLint(object):
                 # - https://choosealicense.com/licenses/mit/
                 # - https://opensource.org/licenses/MIT
                 # - https://en.wikipedia.org/wiki/MIT_License
-                placeholders = set(['[year]', '[fullname]',
-                                    '<YEAR>', '<COPYRIGHT HOLDER>',
-                                    '<year>', '<copyright holders>'])
+                placeholders = {'[year]', '[fullname]', '<YEAR>', '<COPYRIGHT HOLDER>', '<year>', '<copyright holders>'}
                 if any([ph in content for ph in placeholders]):
                     self.failed.append((3, "Licence file contains placeholders: {}".format(fn)))
                     return
