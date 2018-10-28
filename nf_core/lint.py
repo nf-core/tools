@@ -36,17 +36,16 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 def run_linting(pipeline_dir, release_mode=False):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
-    in either ``release`` mode or ``normal`` mode (default). Returns an object
-    of type :class:`PipelineLint` after finished.
+    in either `release` mode or `normal` mode (default). Returns an object
+    of type #nf_core.lint.PipelineLint after finished.
 
-    Args:
-        pipeline_dir (str): The path to the Nextflow pipeline root directory
+    # Arguments
+    pipeline_dir (str): The path to the Nextflow pipeline root directory
+    release_mode (bool): Set this to `True`, if the linting should be run in the `release` mode.
+                         See #nf_core.lint.PipelineLint for more information.
 
-        release_mode (bool): Set this to ``True``, if the linting should be run in the ``release`` mode.
-                             See :meth:`PipelineLint.lint_pipeline` for more information.
-
-    Returns:
-        An instance of class :class:`PipelineLint`, containing all the linting results.
+    # Returns
+    An instance of class #nf_core.lint.PipelineLint, containing all the linting results.
     """
 
     # Create the lint object
