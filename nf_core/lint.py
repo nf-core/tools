@@ -728,7 +728,7 @@ class PipelineLint(object):
 
     def print_results(self):
         # Print results
-        rl = "\n  Using --release mode linting tests" if self.releaseMode else ''
+        rl = "\n  Using --release mode linting tests" if self.release_mode else ''
         logging.info("===========\n LINTING RESULTS\n=================\n" +
             "{0:>4} tests passed".format(len(self.passed)) +
             "{0:>4} tests had warnings".format(len(self.warned)) +
