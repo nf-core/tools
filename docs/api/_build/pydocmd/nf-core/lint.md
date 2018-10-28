@@ -12,17 +12,17 @@ run_linting(pipeline_dir, release_mode=False)
 ```
 Runs all nf-core linting checks on a given Nextflow pipeline project
 in either `release` mode or `normal` mode (default). Returns an object
-of type `nf_core.lint.PipelineLint` after finished.
+of type `PipelineLint` after finished.
 
 __Arguments__
 
 - __pipeline_dir (str)__: The path to the Nextflow pipeline root directory
 - __release_mode (bool)__: Set this to `True`, if the linting should be run in the `release` mode.
-                     See `nf_core.lint.PipelineLint` for more information.
+                     See `PipelineLint` for more information.
 
 __Returns__
 
-An instance of class `nf_core.lint.PipelineLint`, containing all the linting results.
+`PipelineLint`: Contains all the linting results.
 
 <h2 id="nf_core.lint.PipelineLint">PipelineLint</h2>
 
@@ -30,28 +30,55 @@ An instance of class `nf_core.lint.PipelineLint`, containing all the linting res
 PipelineLint(self, path)
 ```
 Object to hold linting information and results.
-All objects attributes are set, after the :meth:`PipelineLint.lint_pipeline` function was called.
+All objects attributes are set, after the `PipelineLint.lint_pipeline()` function was called.
 
-Attributes:
-    conda_config (dict): The parsed conda configuration file content (``environment.yml``). The dictionary has
-                         the following structure, with some example values::
+__Dictionary specifications:__
 
-                             {'name': 'nf-core-hlatyping',
-                              'channels': ['bioconda', 'conda-forge'],
-                              'dependencies': ['optitype=1.3.2', 'yara=0.9.6']}
+* `conda_config`:
+    ```python
+         {
+            'name': 'nf-core-hlatyping',
+            'channels': ['bioconda', 'conda-forge'],
+            'dependencies': ['optitype=1.3.2', 'yara=0.9.6']
+          }
+     ```
+* `conda_package_info`:
+    See [bioconda-utils](https://api.anaconda.org/package/bioconda/bioconda-utils) as an example.
+    ```python
+       {
+        <package>: <API JSON repsonse object>
+       }
+    ```
+* `config`: Produced by calling Nextflow with `nextflow config -flat <workflow dir>`. Here is an example from
+    the nf-core/hlatyping pipeline:
+    ```python
+        params.container = 'nfcore/hlatyping:1.1.1'
+        params.help = false
+        params.outdir = './results'
+        params.bam = false
+        params.singleEnd = false
+        params.seqtype = 'dna'
+        params.solver = 'glpk'
+        params.igenomes_base = './iGenomes'
+        params.clusterOptions = false
+        ...
+    ```
 
-    conda_package_info (dict):
-    config (dict):
-    dockerfile (list):
-    failed (list):
-    files (list):
-    minNextflowVersion (str):
-    passed (list):
-    path (str): Path to the pipeline directory
-    pipeline_name (str):
-    release_mode (bool): release mode
-    singularityfile (list):
-    warned (list):
+__Attributes__
+
+- `conda_config (dict)`: The parsed conda configuration file content (`environment.yml`).
+- `conda_package_info (dict)`: The conda package(s) information, based on the API requests to Anaconda cloud.
+- `config (dict)`: The Nextflow pipeline configuration file content.
+- `dockerfile (list)`: A list of lines (str) from the parsed Dockerfile.
+- `failed (list)`: A list of tuples of the form: `(<error no>, <reason>)`
+- `files (list)`: A list of files found during the linting process.
+- `minNextflowVersion (str)`: The minimum required Nextflow version to run the pipeline.
+- `passed (list)`: A list of tuples of the form: `(<passed no>, <reason>)`
+- `path (str)`: Path to the pipeline directory.
+- `pipeline_name (str)`: The pipeline name, without the `nf-core` tag, for example `hlatyping`.
+- `release_mode (bool)`: `True`, if you the to linting was run in release mode, `False` else.
+- `singularityfile (list)`: A list of lines (str) parsed from the Singularity file.
+- `warned (list)`: A list of tuples of the form: `(<warned no>, <reason>)`
 
 <h3 id="nf_core.lint.PipelineLint.lint_pipeline">lint_pipeline</h3>
 
