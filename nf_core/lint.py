@@ -576,7 +576,7 @@ class PipelineLint(object):
                             pass
                         else:
                             # Check, if PyPi package version is available at all
-                            if pip_depver not in self.conda_package_info[pip_dep].get('info').get('releases').keys():
+                            if pip_depver not in self.conda_package_info[pip_dep].get('releases').keys():
                                 self.failed.append((8, "PyPi package had an unknown version: {}".format(pip_depver)))
                                 continue  # No need to test latest version, if not available
                             last_ver = self.conda_package_info[pip_dep].get('info').get('version')
