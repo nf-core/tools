@@ -564,7 +564,7 @@ class PipelineLint(object):
                     # Check that each pip dependency has a version number
                     try:
                         assert pip_dep.count('=') == 1
-                    except:
+                    except AssertionError:
                         self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
                     else:
                         self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
@@ -575,6 +575,10 @@ class PipelineLint(object):
                         except ValueError:
                             pass
                         else:
+                            # Check, if PyPi package version is available at all
+                            if pip_depver not in self.conda_package_info[pip_dep].get('info').get('releases').keys():
+                                self.failed.append((8, "PyPi package had an unknown version: {}".format(pip_depver)))
+                                continue  # No need to test latest version, if not available
                             last_ver = self.conda_package_info[pip_dep].get('info').get('version')
                             if last_ver is not None and last_ver != pip_depver:
                                 self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
