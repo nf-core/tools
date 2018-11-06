@@ -534,7 +534,7 @@ class PipelineLint(object):
         # Check conda dependency list
         for dep in self.conda_config.get('dependencies', []):
             if isinstance(dep, str):
-                # Check that each dependency has a verion number
+                # Check that each dependency has a version number
                 try:
                     assert dep.count('=') == 1
                 except:
