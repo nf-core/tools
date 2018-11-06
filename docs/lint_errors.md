@@ -174,6 +174,7 @@ Each dependency can have the following lint failures and warnings:
 
 * (Test failure) Dependency does not have a pinned version number, eg. `toolname=1.6.8`
 * (Test failure) The package cannot be found on any of the listed conda channels (or PyPI if `pip`)
+* (Test failure) The package version cannot be found on anaconda cloud (or on PyPi, for `pip` dependencies)
 * (Test warning) A newer version of the package is available
 
 ## Error #9 - Dockerfile for use with Conda environments ## {#9}
