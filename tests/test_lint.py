@@ -390,3 +390,29 @@ class TestLint(unittest.TestCase):
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_dependency_fails(self):
+        """ Tests that linting fails, if conda dependency
+        package version is not available on Anaconda.
+        """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.config['manifest.version'] = '0.4'
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': ['openjdk=0.0.0']}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pip_dependency_fails(self):
+        """ Tests that linting fails, if conda dependency
+        package version is not available on Anaconda.
+        """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.config['manifest.version'] = '0.4'
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=0.0']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
