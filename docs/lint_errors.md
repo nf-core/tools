@@ -63,11 +63,11 @@ The following variables fail the test if missing:
     * The pipeline name. Should begin with `nf-core/`
 * `manifest.description`
     * A description of the pipeline
-* `manifest.pipelineVersion`
+* `manifest.version`
     * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
 * `manifest.nextflowVersion`
     * The minimum version of Nextflow required to run the pipeline.
-    * Should `>=` a version number, eg. `>=0.31.0`
+    * Should `>=` a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (check the [Nexftlow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest) for more.)
     * This should correspond to the `NXF_VER` version tested by Travis.
 * `manifest.homePage`
     * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
@@ -94,6 +94,13 @@ The following variables throw warnings if missing:
     * Specify to work with single-end sequence data instead of default paired-end
     * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
 
+The following variables are depreciated and fail the test if they are still present:
+
+* `params.version`
+    * The old method for specifying the pieline version. Replaced by `manifest.version`
+* `params.nf_required_version`
+    * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
+
 ## Error #5 - Continuous Integration configuration ## {#5}
 nf-core pipelines must have CI testing with Travis or Circle CI.
 
@@ -111,6 +118,12 @@ This test fails if the following happens:
     ```
     * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
     * Other variables can be specified on these lines as long as they are space separated.
+* `.travis.yml` checks that pull requests are not opened directly to the `master` branch
+    * The following is expected in the `before_install` section:
+    ```yaml
+    before_install:
+      - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+    ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 The `README.md` files for a project are very important and must meet some requirements:

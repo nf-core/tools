@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+import sys
 
-version = '1.1'
+version = '1.2'
 
 with open('README.md') as f:
     readme = f.read()
@@ -31,6 +32,10 @@ setup(
         'requests_cache',
         'tabulate'
     ],
+    setup_requires=[
+        'twine>=1.11.0',
+        'setuptools>=38.6.',
+    ] + ([] if sys.version_info.minor == 4 else ['wheel>=0.31.0']),
     packages = find_packages(exclude=('docs')),
     include_package_data = True,
     zip_safe = False

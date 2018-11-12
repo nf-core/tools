@@ -1,4 +1,24 @@
-# nf-core/tools
+# nf-core/tools: Changelog
+
+## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
+* Updated the `nf-core release` command
+    * Now called `nf-core bump-versions` instead
+    * New flag `--nextflow` to change the required nextflow version instead
+* Template updates
+    * Simpler installation of the `nf-core` helper tool, now directly from PyPI
+    * Bump minimum nextflow version to `0.32.0` - required for built in `manifest.nextflowVersion` check and access to `workflow.manifest` variables from within nextflow scripts
+    * New `withName` syntax for configs
+    * Travis tests fail if PRs come against the `master` branch, slightly refactored
+    * Improved GitHub contributing instructions and pull request / issue templates
+* New lint tests
+    * `.travis.yml` test for PRs made against the `master` branch
+    * Automatic `--release` option not used if the travis repo is `nf-core/tools`
+    * Warnings if depreciated variables `params.version` and `params.nf_required_version` are found
+* New `nf-core licences` subcommand to show licence for each conda package in a workflow
+* `nf-core list` now has options for sorting pipeline nicely
+* Latest version of conda used in nf-core base docker image
+* Updated PyPI deployment to  correctly parse the markdown readme (hopefully!)
+* New GitHub contributing instructions and pull request template
 
 ## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
 Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.

@@ -8,7 +8,7 @@ import sys
 import os
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.download, nf_core.release, nf_core.create
+import nf_core.lint, nf_core.list, nf_core.download, nf_core.licences, nf_core.bump_version, nf_core.create
 
 import logging
 
@@ -35,7 +35,7 @@ def nf_core_cli(verbose):
 @click.option(
     '--release',
     is_flag = True,
-    default = os.environ.get('TRAVIS_BRANCH') == 'master' and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('nf-core/') and not os.environ.get('TRAVIS_REPO_SLUG', 'nf-core/tools'),
+    default = os.environ.get('TRAVIS_BRANCH') == 'master' and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('nf-core/') and not os.environ.get('TRAVIS_REPO_SLUG', '') == 'nf-core/tools',
     help = "Execute additional checks for release-ready workflows."
 )
 def lint(pipeline_dir, release):
@@ -47,15 +47,45 @@ def lint(pipeline_dir, release):
         sys.exit(1)
 
 @nf_core_cli.command()
+@click.argument(
+    'keywords',
+    required = False,
+    nargs = -1,
+    metavar = "<filter keywords>"
+)
+@click.option(
+    '-s', '--sort',
+    type = click.Choice(['release', 'name', 'stars']),
+    default = 'release',
+    help = "How to sort listed pipelines"
+)
 @click.option(
     '--json',
     is_flag = True,
     default = False,
     help = "Print full output as JSON"
 )
-def list(json):
+def list(sort, json, keywords):
     """ List nf-core pipelines with local info """
-    nf_core.list.list_workflows(json)
+    nf_core.list.list_workflows(sort, json, keywords)
+
+@nf_core_cli.command()
+@click.argument(
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+@click.option(
+    '--json',
+    is_flag = True,
+    default = False,
+    help = "Print output as JSON"
+)
+def licences(pipeline, json):
+    """ List software licences for a given workflow """
+    lic = nf_core.licences.WorkflowLicences(pipeline, json)
+    lic.fetch_conda_licences()
+    lic.print_licences()
 
 @nf_core_cli.command()
 @click.argument(
@@ -84,7 +114,7 @@ def download(pipeline, release, singularity, outdir):
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir)
     dl.download_workflow()
 
-@nf_core_cli.command()
+@nf_core_cli.command('bump-version')
 @click.argument(
     'pipeline_dir',
     type = click.Path(exists=True),
@@ -94,17 +124,26 @@ def download(pipeline, release, singularity, outdir):
 @click.argument(
     'new_version',
     required = True,
-    metavar = "<new version number>"
+    metavar = "<new version>"
 )
-def release(pipeline_dir, new_version):
+@click.option(
+    '-n', '--nextflow',
+    is_flag = True,
+    default = False,
+    help = "Bump required nextflow version instead of pipeline version"
+)
+def bump_version(pipeline_dir, new_version, nextflow):
     """ Update nf-core pipeline version number """
 
     # First, lint the pipeline to check everything is in order
     logging.info("Running nf-core lint tests")
     lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
 
-    # Bump the version number in relevant files
-    nf_core.release.make_release(lint_obj, new_version)
+    # Bump the pipeline version number
+    if not nextflow:
+        nf_core.bump_version.bump_pipeline_version(lint_obj, new_version)
+    else:
+        nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
 @nf_core_cli.command()
 @click.option(

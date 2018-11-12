@@ -76,6 +76,7 @@ class PipelineLint(object):
         self.dockerfile = []
         self.singularityfile = []
         self.conda_config = {}
+        self.conda_package_info = {}
         self.passed = []
         self.warned = []
         self.failed = []
@@ -270,12 +271,12 @@ class PipelineLint(object):
         and print all config variables.
         NB: Does NOT parse contents of main.nf / nextflow script
         """
-
+        # Fail tests if these are missing
         config_fail = [
             'manifest.name',
             'manifest.nextflowVersion',
             'manifest.description',
-            'manifest.pipelineVersion',
+            'manifest.version',
             'manifest.homePage',
             'timeline.enabled',
             'trace.enabled',
@@ -286,6 +287,7 @@ class PipelineLint(object):
             'process.time',
             'params.outdir'
         ]
+        # Throw a warning if these are missing
         config_warn = [
             'manifest.mainScript',
             'timeline.file',
@@ -296,6 +298,11 @@ class PipelineLint(object):
             'process.container',
             'params.container',
             'params.singleEnd'
+        ]
+        # Old depreciated vars - fail if present
+        config_fail_ifdefined = [
+            'params.version',
+            'params.nf_required_version'
         ]
 
         # Get the nextflow config for this pipeline
@@ -310,6 +317,11 @@ class PipelineLint(object):
                 self.passed.append((4, "Config variable found: {}".format(cf)))
             else:
                 self.warned.append((4, "Config variable not found: {}".format(cf)))
+        for cf in config_fail_ifdefined:
+            if cf not in self.config.keys():
+                self.passed.append((4, "Config variable (correctly) not found: {}".format(cf)))
+            else:
+                self.failed.append((4, "Config variable (incorrectly) found: {}".format(cf)))
 
         # Check and warn if the process configuration is done with deprecated syntax
         process_with_deprecated_syntax = list(set([re.search('^(process\.\$.*?)\.+.*$', ck).group(1) for ck in self.config.keys() if re.match(r'^(process\.\$.*?)\.+.*$', ck)]))
@@ -368,6 +380,14 @@ class PipelineLint(object):
             if os.path.isfile(fn):
                 with open(fn, 'r') as fh:
                     ciconf = yaml.load(fh)
+                # Check that we have the master branch protection
+                travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+                try:
+                    assert(travisMasterCheck in ciconf.get('before_install', {}))
+                except AssertionError:
+                    self.failed.append((5, "Continuous integration must check for master branch PRs: '{}'".format(fn)))
+                else:
+                    self.passed.append((5, "Continuous integration checks for master branch PRs: '{}'".format(fn)))
                 # Check that the nf-core linting runs
                 try:
                     assert('nf-core lint ${TRAVIS_BUILD_DIR}' in ciconf['script'])
@@ -396,7 +416,7 @@ class PipelineLint(object):
                         self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
 
                 # Check that we're testing the minimum nextflow version
-                minNextflowVersion_tested = False
+                minNextflowVersion = ""
                 env = ciconf.get('env', [])
                 if type(env) is dict:
                     env = env.get('matrix', [])
@@ -406,12 +426,13 @@ class PipelineLint(object):
                         k,v = s.split('=')
                         if k == 'NXF_VER':
                             ci_ver = v.strip('\'"')
+                            minNextflowVersion = ci_ver if v else minNextflowVersion
                             if ci_ver == self.minNextflowVersion:
-                                minNextflowVersion_tested = True
                                 self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
-                if not minNextflowVersion_tested:
+                if not minNextflowVersion:
                     self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
-
+                elif minNextflowVersion != self.minNextflowVersion:
+                    self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
 
     def check_readme(self):
         """ Check the repository README file for errors
@@ -456,7 +477,7 @@ class PipelineLint(object):
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
-        versions['manifest.pipelineVersion'] = self.config.get('manifest.pipelineVersion', '').strip(' \'"')
+        versions['manifest.version'] = self.config.get('manifest.version', '').strip(' \'"')
 
         # Get version from the docker slug
         if self.config.get('params.container', '') and \
@@ -503,7 +524,7 @@ class PipelineLint(object):
             return
 
         # Check that the environment name matches the pipeline name
-        pipeline_version = self.config.get('manifest.pipelineVersion', '').strip(' \'"')
+        pipeline_version = self.config.get('manifest.version', '').strip(' \'"')
         expected_env_name = 'nf-core-{}-{}'.format(self.pipeline_name.lower(), pipeline_version)
         if self.conda_config['name'] != expected_env_name:
             self.failed.append((8, "Conda environment name is incorrect ({}, should be {})".format(self.conda_config['name'], expected_env_name)))
@@ -521,30 +542,19 @@ class PipelineLint(object):
                 else:
                     self.passed.append((8, "Conda dependency had pinned version number: {}".format(dep)))
 
-                    # Check if each dependency is the latest available version
-                    depname, depver = dep.split('=', 1)
-                    dep_channels = self.conda_config.get('channels', [])
-                    if '::' in depname:
-                        dep_channels = [depname.split('::')[0]]
-                        depname = depname.split('::')[1]
-                    for ch in reversed(dep_channels):
-                        anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
-                        try:
-                            response = requests.get(anaconda_api_url, timeout=10)
-                        except (requests.exceptions.Timeout):
-                            self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
-                        else:
-                            if response.status_code == 200:
-                                dep_json = response.json()
-                                last_ver = dep_json.get('latest_version')
-                                if last_ver is not None and last_ver != depver:
-                                    self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
-                                else:
-                                    self.passed.append((8, "Conda package is latest available: {}".format(dep)))
-                                break
+                    try:
+                        depname, depver = dep.split('=', 1)
+                        self.check_anaconda_package(dep)
+                    except ValueError:
+                        pass
                     else:
-                        self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
-            if isinstance(dep, dict):
+                        last_ver = self.conda_package_info[dep].get('latest_version')
+                        if last_ver is not None and last_ver != depver:
+                            self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
+                        else:
+                            self.passed.append((8, "Conda package is latest available: {}".format(dep)))
+
+            elif isinstance(dep, dict):
                 for pip_dep in dep.get('pip', []):
                     # Check that each pip dependency has a verion number
                     try:
@@ -553,25 +563,62 @@ class PipelineLint(object):
                         self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
                     else:
                         self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
-                        pip_depname, pip_depver = pip_dep.split('=', 1)
-                        pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
-                        try:
-                            response = requests.get(pip_api_url, timeout=10)
-                        except (requests.exceptions.Timeout):
-                            self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
-                        except (requests.exceptions.ConnectionError):
-                            self.warned.append((8, "PyPi API Connection error: {}".format(pip_api_url)))
-                        else:
-                            if response.status_code == 200:
-                                pip_dep_json = response.json()
-                                last_ver = pip_dep_json.get('info').get('version')
-                                if last_ver is not None and last_ver != pip_depver:
-                                    self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
-                                else:
-                                    self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
-                            else:
-                                self.failed.append((8, "Could not find pip dependency using the PyPi API: {}".format(dep)))
 
+                        try:
+                            pip_depname, pip_depver = pip_dep.split('=', 1)
+                            self.check_pip_package(pip_dep)
+                        except ValueError:
+                            pass
+                        else:
+                            last_ver = self.conda_package_info[pip_dep].get('info').get('version')
+                            if last_ver is not None and last_ver != pip_depver:
+                                self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
+                            else:
+                                self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
+
+    def check_anaconda_package(self, dep):
+        """ Call the anaconda API to find details about package """
+        # Check if each dependency is the latest available version
+        depname, depver = dep.split('=', 1)
+        dep_channels = self.conda_config.get('channels', [])
+        if '::' in depname:
+            dep_channels = [depname.split('::')[0]]
+            depname = depname.split('::')[1]
+        for ch in reversed(dep_channels):
+            anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
+            try:
+                response = requests.get(anaconda_api_url, timeout=10)
+            except (requests.exceptions.Timeout):
+                self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
+                raise ValueError
+            else:
+                if response.status_code == 200:
+                    dep_json = response.json()
+                    self.conda_package_info[dep] = dep_json
+                    return
+        else:
+            self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
+            raise ValueError
+
+    def check_pip_package(self, dep):
+        """ Call the PyPI API to find details about package """
+        pip_depname, pip_depver = dep.split('=', 1)
+        pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
+        try:
+            response = requests.get(pip_api_url, timeout=10)
+        except (requests.exceptions.Timeout):
+            self.warned.append((8, "PyPi API timed out: {}".format(pip_api_url)))
+            raise ValueError
+        except (requests.exceptions.ConnectionError):
+            self.warned.append((8, "PyPi API Connection error: {}".format(pip_api_url)))
+            raise ValueError
+        else:
+            if response.status_code == 200:
+                pip_dep_json = response.json()
+                self.conda_package_info[dep] = pip_dep_json
+            else:
+                self.failed.append((8, "Could not find pip dependency using the PyPi API: {}".format(dep)))
+                raise ValueError
 
     def check_conda_dockerfile(self):
         """ Check that the Docker build file looks right, if working with conda
@@ -610,7 +657,7 @@ class PipelineLint(object):
         expected_strings = [
             'From:nfcore/base',
             'Bootstrap:docker',
-            'VERSION {}'.format(self.config.get('manifest.pipelineVersion', '').strip(' \'"')),
+            'VERSION {}'.format(self.config.get('manifest.version', '').strip(' \'"')),
             'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
             'export PATH',
             'environment.yml /',

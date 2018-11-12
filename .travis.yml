@@ -7,7 +7,7 @@ python:
   - '3.5'
   - '3.6'
 before_install:
-  # PRs made to 'master' branch should always orginate from another repo or the 'dev' branch
+  # PRs to master are only ok if coming from dev branch
   - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
 install:
   # Install Nextflow
@@ -35,3 +35,6 @@ deploy:
     secure: "nSrZdapawe/sCIQuHeYYsh3oyezEOvIh6ZhHvokQPfLrEd17ERvP/qQbIgA4DSzpMJ4w/B72/ZFuvkn3oBna/niQNoKhrW2969RQzaIBobzEIvq6jX7Q08bTRN+DdKtsTqNOJLvB2Q8PWflvcfYrhVCCivAs9eUV0vUooqpvzH+t6AFRvodTzmXtqFlV/YWOSwogAMeqYFW7Ya7poX5XUkUMNYwH0J84AtlWuxjMrFU1mEqk0WxUkWC56akaltk3DkeS7N4/8yPHQhCYYweGPYA0KQbPWpIQzO/ij5M3qggncaypyEi5fTsC7tyz8K5T033FE6LfkD4wuxXZrWN3BZRvSlCgGHw4lGu1Yqm4kSyCZROcHVE2xgbMwxWrdvwyKophRKqnQukAxNqXPBrfm/id+FI3cEh9611GqxpFXDkWn7E+IcKKwk2n0EbZFQGhTzNP4YoDJRY6q5SjYnxfsgsuyo1CGPpB9RNGDOAznxZmRKRumXyXPPrPEC2M7jfiSCfEwhbDP6rMrcFjPP2rI/no7Y9A5XK8grs750fcUpNoCcInKLXUodK3PtLHuUiFjJTobAqAdORBX8+DE8Ghlf5IhoSBq7yFuNma2CzBs8AVtEYiSDxuDkOGhn+KpYX2pZS2YA9F4PBk1g0mK3Q4rVqkFVTDmORu644D5H7wUDo="
   on:
     tags: true
+    distributions: sdist bdist_wheel
+    repo: nf-core/tools
+    python: '3.6'
