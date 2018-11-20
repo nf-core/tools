@@ -117,7 +117,8 @@ class PipelineLint(object):
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
-            'check_conda_singularityfile'
+            'check_conda_singularityfile',
+            'check_pipeline_todos'
         ]
         if release:
             self.releaseMode = True
@@ -534,10 +535,10 @@ class PipelineLint(object):
         # Check conda dependency list
         for dep in self.conda_config.get('dependencies', []):
             if isinstance(dep, str):
-                # Check that each dependency has a verion number
+                # Check that each dependency has a version number
                 try:
                     assert dep.count('=') == 1
-                except:
+                except AssertionError:
                     self.failed.append((8, "Conda dependency did not have pinned version number: {}".format(dep)))
                 else:
                     self.passed.append((8, "Conda dependency had pinned version number: {}".format(dep)))
@@ -548,6 +549,11 @@ class PipelineLint(object):
                     except ValueError:
                         pass
                     else:
+                        # Check that required version is available at all
+                        if depver not in self.conda_package_info[dep].get('versions'):
+                            self.failed.append((8, "Conda dependency had an unknown version: {}".format(dep)))
+                            continue  # No need to test for latest version, continue linting
+                        # Check version is latest available
                         last_ver = self.conda_package_info[dep].get('latest_version')
                         if last_ver is not None and last_ver != depver:
                             self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
@@ -556,10 +562,10 @@ class PipelineLint(object):
 
             elif isinstance(dep, dict):
                 for pip_dep in dep.get('pip', []):
-                    # Check that each pip dependency has a verion number
+                    # Check that each pip dependency has a version number
                     try:
                         assert pip_dep.count('=') == 1
-                    except:
+                    except AssertionError:
                         self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
                     else:
                         self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
@@ -570,6 +576,10 @@ class PipelineLint(object):
                         except ValueError:
                             pass
                         else:
+                            # Check, if PyPi package version is available at all
+                            if pip_depver not in self.conda_package_info[pip_dep].get('releases').keys():
+                                self.failed.append((8, "PyPi package had an unknown version: {}".format(pip_depver)))
+                                continue  # No need to test latest version, if not available
                             last_ver = self.conda_package_info[pip_dep].get('info').get('version')
                             if last_ver is not None and last_ver != pip_depver:
                                 self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
@@ -590,6 +600,9 @@ class PipelineLint(object):
                 response = requests.get(anaconda_api_url, timeout=10)
             except (requests.exceptions.Timeout):
                 self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
+                raise ValueError
+            except (requests.exceptions.ConnectionError):
+                self.warned.append((8, "Could not connect to Anaconda API"))
                 raise ValueError
             else:
                 if response.status_code == 200:
@@ -671,6 +684,29 @@ class PipelineLint(object):
         else:
             for missing in difference:
                 self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
+
+    def check_pipeline_todos(self):
+        """ Go through all template files looking for the string 'TODO nf-core:' """
+        ignore = ['.git']
+        if os.path.isfile(os.path.join(self.path, '.gitignore')):
+            with open(os.path.join(self.path, '.gitignore')) as fh:
+                for l in fh:
+                    ignore.append(os.path.basename(l.strip().rstrip('/')))
+        for root, dirs, files in os.walk(self.path):
+            # Ignore files
+            for i in ignore:
+                if i in dirs:
+                    dirs.remove(i)
+                if i in files:
+                    files.remove(i)
+            for fname in files:
+                with open(os.path.join(self.path, root, fname)) as fh:
+                    for l in fh:
+                        if 'TODO nf-core' in l:
+                            l = l.replace('<!--', '').replace('-->', '').replace('# TODO nf-core: ', '').replace('// TODO nf-core: ', '').replace('TODO nf-core: ', '').strip()
+                            if len(fname) + len(l) > 50:
+                                l = '{}..'.format(l[:50-len(fname)])
+                            self.warned.append((11, "TODO string found in '{}': {}".format(fname,l)))
 
     def print_results(self):
         # Print results

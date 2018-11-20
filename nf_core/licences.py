@@ -32,7 +32,7 @@ class WorkflowLicences():
         # Check that the pipeline exists
         if response.status_code == 404:
             logging.error("Couldn't find pipeline nf-core/{}".format(self.pipeline))
-            sys.exit(1)
+            raise LookupError("Couldn't find pipeline nf-core/{}".format(self.pipeline))
 
         lint_obj = nf_core.lint.PipelineLint(self.pipeline)
         lint_obj.conda_config = yaml.load(response.text)

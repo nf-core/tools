@@ -50,3 +50,13 @@ def test_multiple_patterns_found(datafiles):
     lint_obj.config['manifest.version'] = '0.4'
     lint_obj.files = ['nextflow.config', 'Dockerfile', 'environment.yml']
     nf_core.bump_version.bump_pipeline_version(lint_obj, '1.2dev')
+
+@pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
+def test_successfull_nextflow_version_bump(datafiles):
+    lint_obj = nf_core.lint.PipelineLint(str(datafiles))
+    lint_obj.pipeline_name = 'tools'
+    lint_obj.config['manifest.nextflowVersion'] = '0.32.0'
+    nf_core.bump_version.bump_nextflow_version(lint_obj, '0.40')
+    lint_obj_new = nf_core.lint.PipelineLint(str(datafiles))
+    lint_obj_new.check_nextflow_config()
+    assert lint_obj_new.config['manifest.nextflowVersion'] == "'>=0.40'"

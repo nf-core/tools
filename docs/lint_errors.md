@@ -174,6 +174,7 @@ Each dependency can have the following lint failures and warnings:
 
 * (Test failure) Dependency does not have a pinned version number, eg. `toolname=1.6.8`
 * (Test failure) The package cannot be found on any of the listed conda channels (or PyPI if `pip`)
+* (Test failure) The package version cannot be found on anaconda cloud (or on PyPi, for `pip` dependencies)
 * (Test warning) A newer version of the package is available
 
 ## Error #9 - Dockerfile for use with Conda environments ## {#9}
@@ -201,7 +202,7 @@ These lines must be an exact copy of the above example.
 Additional lines and different metadata can be added without causing the test to fail.
 
 
-## Error #10 - Singularity for use with Conda environments ## {#9}
+## Error #10 - Singularity for use with Conda environments ## {#10}
 
 > This test only runs if there is both `environment.yml`
 > and `Singularity` file present in the workflow.
@@ -237,3 +238,12 @@ that the above template is used. Specifically, presence of these lines is checke
 * `/opt/conda/bin/conda clean -a`
 
 Additional lines and different metadata can be added without causing the test to fail.
+
+## Error #11 - Template TODO statement found ## {#11}
+
+The nf-core workflow template contains a number of comment lines with the following format:
+```groovy
+// TODO nf-core: Make some kind of change to the workflow here
+```
+
+This lint test runs through all files in the pipeline and searches for these lines.
