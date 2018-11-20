@@ -1,6 +1,9 @@
 # nf-core/tools: Changelog
 
 ## v1.3dev
+* `nf-core create` command line interface updated
+    * Interactive prompts for required arguments if not given
+    * New flag for workflow author
 * Updated channel order for bioconda/conda-forge channels in environment.yaml
 * Increased code coverage for sub command `create` and `licenses`
 * Fixed nasty dependency hell issue between `pytest` and `py` package in Python 3.4.x

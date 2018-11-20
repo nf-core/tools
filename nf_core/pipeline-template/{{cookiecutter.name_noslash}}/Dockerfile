@@ -1,5 +1,6 @@
 FROM nfcore/base
-LABEL description="Docker image containing all requirements for {{ cookiecutter.name }} pipeline"
+LABEL authors="{{ cookiecutter.author }}" \
+      description="Docker image containing all requirements for {{ cookiecutter.name }} pipeline"
 
 COPY environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a

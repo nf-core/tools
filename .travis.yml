@@ -23,7 +23,7 @@ install:
 
 script:
   - python -m pytest --cov=nf_core .
-  - nf-core create -n testpipeline -d "This pipeline is for testing"
+  - nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
   - nf-core lint nf-core-testpipeline
 
 after_success:
