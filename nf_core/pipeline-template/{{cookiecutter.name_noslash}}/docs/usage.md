@@ -11,6 +11,8 @@
         * [`docker`](#docker)
         * [`awsbatch`](#awsbatch)
         * [`standard`](#standard)
+        * [`binac`](#binac)
+        * [`cfc`](#cfc)
         * [`none`](#none)
     * [`--reads`](#--reads)
     * [`--singleEnd`](#--singleend)
@@ -96,6 +98,12 @@ Use this parameter to choose a configuration profile. Profiles can give configur
 * `conda`
     * A generic configuration profile to be used with [conda](https://conda.io/docs/)
     * Pulls most software from [Bioconda](https://bioconda.github.io/)
+* `binac`
+    * A profile for the [BinAC](https://www.bwhpc-c5.de/wiki/index.php/Category:BwForCluster_BinAC) cluster
+    * Pulls images via Singularity from Dockerhub automatically
+* `cfc`
+    * A profile for the Core Facility Cluster at QBiC Tuebingen
+    * Pulls images via Singularity from Dockerhub automatically
 * `awsbatch`
     * A generic configuration profile to be used with AWS Batch.
 * `test`
