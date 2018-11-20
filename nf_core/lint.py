@@ -7,6 +7,7 @@ the nf-core community guidelines.
 
 import datetime
 import logging
+import io
 import os
 import re
 import shlex
@@ -689,7 +690,7 @@ class PipelineLint(object):
         """ Go through all template files looking for the string 'TODO nf-core:' """
         ignore = ['.git']
         if os.path.isfile(os.path.join(self.path, '.gitignore')):
-            with open(os.path.join(self.path, '.gitignore')) as fh:
+            with io.open(os.path.join(self.path, '.gitignore'), 'rt', encoding='latin1') as fh:
                 for l in fh:
                     ignore.append(os.path.basename(l.strip().rstrip('/')))
         for root, dirs, files in os.walk(self.path):
@@ -700,7 +701,7 @@ class PipelineLint(object):
                 if i in files:
                     files.remove(i)
             for fname in files:
-                with open(os.path.join(root, fname)) as fh:
+                with io.open(os.path.join(root, fname), 'rt', encoding='latin1') as fh:
                     for l in fh:
                         if 'TODO nf-core' in l:
                             l = l.replace('<!--', '').replace('-->', '').replace('# TODO nf-core: ', '').replace('// TODO nf-core: ', '').replace('TODO nf-core: ', '').strip()
