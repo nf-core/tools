@@ -700,7 +700,7 @@ class PipelineLint(object):
                 if i in files:
                     files.remove(i)
             for fname in files:
-                with open(os.path.join(self.path, root, fname)) as fh:
+                with open(os.path.join(root, fname)) as fh:
                     for l in fh:
                         if 'TODO nf-core' in l:
                             l = l.replace('<!--', '').replace('-->', '').replace('# TODO nf-core: ', '').replace('// TODO nf-core: ', '').replace('TODO nf-core: ', '').strip()
