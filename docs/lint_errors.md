@@ -202,7 +202,7 @@ These lines must be an exact copy of the above example.
 Additional lines and different metadata can be added without causing the test to fail.
 
 
-## Error #10 - Singularity for use with Conda environments ## {#9}
+## Error #10 - Singularity for use with Conda environments ## {#10}
 
 > This test only runs if there is both `environment.yml`
 > and `Singularity` file present in the workflow.
@@ -238,3 +238,12 @@ that the above template is used. Specifically, presence of these lines is checke
 * `/opt/conda/bin/conda clean -a`
 
 Additional lines and different metadata can be added without causing the test to fail.
+
+## Error #11 - Template TODO statement found ## {#11}
+
+The nf-core workflow template contains a number of comment lines with the following format:
+```groovy
+// TODO nf-core: Make some kind of change to the workflow here
+```
+
+This lint test runs through all files in the pipeline and searches for these lines.
