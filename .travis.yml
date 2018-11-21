@@ -39,3 +39,8 @@ deploy:
     distributions: sdist bdist_wheel
     repo: nf-core/tools
     python: '3.6'
+
+after_deploy:
+  - bash ${TRAVIS_BUILD_DIR}/bin/sync
+  on:
+    tags: true
