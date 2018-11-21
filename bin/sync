@@ -33,7 +33,7 @@ def create_pullrequest(pipeline, origin="dev", template="TEMPLATE", token="", us
     content['body'] = "Some important changes have been made in the nf-core pipelines templates.\n" \
     "Please make sure to merge this in ASAP and make a new minor release of your pipeline.\n\n" \
     "Follow the link [nf-core/tools](https://github.com/nf-core/tools/releases/tag/{})".format(os.environ['TRAVIS_TAG'])
-    content['head'] = "{}".format(template)
+    content['head'] = "nf-core/{}".format(template)
     content['base'] = origin
     return requests.post(url=GITHUB_PR_URL_TEMPL.format(pipeline=pipeline),
                          data=json.dumps(content),
@@ -58,28 +58,25 @@ def main():
     pipelines = [
         {
             "name": "hlatyping"
-        },
-        {
-            "name": "eager"
         }
     ]  # just for testing
-    
+
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
         print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
-        #try:
-        syncutils.template.NfcoreTemplate(
-            pipeline['name'],
-            branch=DEF_TEMPLATE_BRANCH,
-            repo_url=GH_BASE_URL.format(token=os.environ["NF_CORE_BOT"], pipeline=pipeline['name'])
-        ).sync()
-        #except Exception as e:
-         #   sync_errors.append((pipeline['name'], e))
-    
+        try:
+            syncutils.template.NfcoreTemplate(
+                pipeline['name'],
+                branch=DEF_TEMPLATE_BRANCH,
+                repo_url=GH_BASE_URL.format(token=os.environ["NF_CORE_BOT"], pipeline=pipeline['name'])
+            ).sync()
+        except Exception as e:
+            sync_errors.append((pipeline['name'], e))
+
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
         print("Trying to open pull request for pipeline {}...".format(pipeline['name']))
-        response = create_pullrequest(pipeline['name'], os.environ["NF_CORE_BOT"])
+        response = create_pullrequest(pipeline['name'], token=os.environ["NF_CORE_BOT"])
         if response.status_code != 201:
             pr_errors.append((pipeline['name'], response.status_code, response.content))
         else:
