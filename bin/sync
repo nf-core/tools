@@ -67,14 +67,14 @@ def main():
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
         print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
-        try:
-            syncutils.template.NfcoreTemplate(
-                pipeline['name'],
-                branch=DEF_TEMPLATE_BRANCH,
-                repo_url=GH_BASE_URL.format(token=os.environ["NF_CORE_BOT"], pipeline=pipeline['name'])
-            ).sync()
-        except Exception as e:
-            sync_errors.append((pipeline['name'], e))
+        #try:
+        syncutils.template.NfcoreTemplate(
+            pipeline['name'],
+            branch=DEF_TEMPLATE_BRANCH,
+            repo_url=GH_BASE_URL.format(token=os.environ["NF_CORE_BOT"], pipeline=pipeline['name'])
+        ).sync()
+        #except Exception as e:
+         #   sync_errors.append((pipeline['name'], e))
     
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
