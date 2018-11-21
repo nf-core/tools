@@ -11,6 +11,7 @@
 * Fix [189](https://github.com/nf-core/tools/issues/189): Check for given conda and PyPi package dependencies, if their versions exist
 * Added profiles for `cfc` and `binac` that can be synced across pipelines
 * Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
+* Added `vim` and `nano` to base docker image for all containers
 
 ## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
 * Updated the `nf-core release` command
