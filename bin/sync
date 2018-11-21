@@ -33,7 +33,7 @@ def create_pullrequest(pipeline, origin="dev", template="TEMPLATE", token="", us
     content['body'] = "Some important changes have been made in the nf-core pipelines templates.\n" \
     "Please make sure to merge this in ASAP and make a new minor release of your pipeline.\n\n" \
     "Follow the link [nf-core/tools](https://github.com/nf-core/tools/releases/tag/{})".format(os.environ['TRAVIS_TAG'])
-    content['head'] = "nf-core/{}".format(template)
+    content['head'] = "{}".format(template)
     content['base'] = origin
     return requests.post(url=GITHUB_PR_URL_TEMPL.format(pipeline=pipeline),
                          data=json.dumps(content),
