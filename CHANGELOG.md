@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.3dev
+##[v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
 * `nf-core create` command line interface updated
     * Interactive prompts for required arguments if not given
     * New flag for workflow author

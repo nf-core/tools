@@ -184,7 +184,7 @@ samtools               1.8        MIT
 
 ## Creating a new workflow
 The `create` subcommand makes a new workflow using the nf-core base template.
-With a given pipeline name, description and author, it males a starter pipeline which follows nf-core best practices.
+With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
 
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
 See the [nf-core syncing docs](http://nf-co.re/sync) for more information.
