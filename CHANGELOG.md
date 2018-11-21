@@ -9,7 +9,8 @@
 * Fixed nasty dependency hell issue between `pytest` and `py` package in Python 3.4.x
 * Introduced `.coveragerc` for pytest-cov configuration, which excludes the pipeline template now from being reported
 * Fix [189](https://github.com/nf-core/tools/issues/189): Check for given conda and PyPi package dependencies, if their versions exist
-* Added profiles for `cfc` and `binac` that can be synced across pipelines
+* Added profiles for `cfc`,`binac`, `uzh` that can be synced across pipelines
+  * Ordering alphabetically for profiles now
 * Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
 
 ## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
