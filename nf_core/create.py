@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """ Release code for the nf-core python package.
 
-Bumps the version number in all appropriate files for
-a nf-core pipeline
+Creates a nf-core pipeline matching the current
+organization's specification.
 """
 
 import cookiecutter.main, cookiecutter.exceptions
@@ -19,7 +19,7 @@ import nf_core
 class PipelineCreate(object):
     """ Object to create a new pipeline """
 
-    def __init__(self, name, description, new_version='1.0dev', no_git=False, force=False, outdir=None):
+    def __init__(self, name, description, author, new_version='1.0dev', no_git=False, force=False, outdir=None):
         """ Init the object and define variables """
         self.name = 'nf-core/{}'.format(
             name.lower().replace(r'/\s+/', '-').replace('nf-core/', '').replace('/', '-')
@@ -27,6 +27,7 @@ class PipelineCreate(object):
         self.name_noslash = self.name.replace('/', '-')
         self.name_docker = self.name.replace('nf-core', 'nfcore')
         self.description = description
+        self.author = author
         self.new_version = new_version
         self.no_git = no_git
         self.force = force
@@ -68,6 +69,7 @@ class PipelineCreate(object):
             extra_context = {
                 'name':self.name,
                 'description':self.description,
+                'author':self.author,
                 'name_noslash':self.name_noslash,
                 'name_docker':self.name_docker,
                 'version':self.new_version

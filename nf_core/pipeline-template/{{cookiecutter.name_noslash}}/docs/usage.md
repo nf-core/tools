@@ -11,6 +11,8 @@
         * [`docker`](#docker)
         * [`awsbatch`](#awsbatch)
         * [`standard`](#standard)
+        * [`binac`](#binac)
+        * [`cfc`](#cfc)
         * [`none`](#none)
     * [`--reads`](#--reads)
     * [`--singleEnd`](#--singleend)
@@ -96,6 +98,12 @@ Use this parameter to choose a configuration profile. Profiles can give configur
 * `conda`
     * A generic configuration profile to be used with [conda](https://conda.io/docs/)
     * Pulls most software from [Bioconda](https://bioconda.github.io/)
+* `binac`
+    * A profile for the [BinAC](https://www.bwhpc-c5.de/wiki/index.php/Category:BwForCluster_BinAC) cluster
+    * Pulls images via Singularity from Dockerhub automatically
+* `cfc`
+    * A profile for the Core Facility Cluster at QBiC Tuebingen
+    * Pulls images via Singularity from Dockerhub automatically
 * `awsbatch`
     * A generic configuration profile to be used with AWS Batch.
 * `test`
@@ -104,6 +112,7 @@ Use this parameter to choose a configuration profile. Profiles can give configur
 * `none`
     * No configuration at all. Useful if you want to build your own config from scratch and want to avoid loading in the default `base` config profile (not recommended).
 
+<!-- TODO nf-core: Document required command line parameters -->
 ### `--reads`
 Use this to specify the location of your input FastQ files. For example:
 
@@ -153,6 +162,7 @@ Note that you can use the same configuration setup to save sets of reference fil
 
 The syntax for this reference configuration is as follows:
 
+<!-- TODO nf-core: Update reference genome example according to what is needed -->
 ```nextflow
 params {
   genomes {
@@ -164,6 +174,7 @@ params {
 }
 ```
 
+<!-- TODO nf-core: Describe reference path flags -->
 ### `--fasta`
 If you prefer, you can specify the full path to your reference genome when you run the pipeline:
 
@@ -188,6 +199,8 @@ The AWS region to run your job in. Default is set to `eu-west-1` but can be adju
 Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a S3 storage bucket of your choice - you'll get an error message notifying you if you didn't.
 
 ## Other command line parameters
+
+<!-- TODO nf-core: Describe any other command line flags here -->
 
 ### `--outdir`
 The output directory where the results will be saved.
@@ -214,11 +227,7 @@ Specify the path to a specific config file (this is a core NextFlow command).
 
 **NB:** Single hyphen (core Nextflow option)
 
-Note - you can use this to override defaults. For example, you can specify a config file using `-c` that contains the following:
-
-```nextflow
-process.$multiqc.module = []
-```
+Note - you can use this to override pipeline defaults.
 
 ### `--max_memory`
 Use to set a top-limit for the default memory requirement for each process.

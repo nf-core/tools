@@ -17,12 +17,13 @@ install:
   - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
   # Set up nf-core and test/coverage modules
   - cd ${TRAVIS_BUILD_DIR}
+  - pip install --upgrade pip # Get rid of dependency resolve issues from older pip versions
   - pip install .
-  - pip install codecov pytest pytest-datafiles pytest-cov mock
+  - pip install codecov 'pytest==3.6.4' pytest-datafiles pytest-cov mock
 
 script:
   - python -m pytest --cov=nf_core .
-  - nf-core create -n testpipeline -d "This pipeline is for testing"
+  - nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
   - nf-core lint nf-core-testpipeline
 
 after_success:
@@ -38,3 +39,9 @@ deploy:
     distributions: sdist bdist_wheel
     repo: nf-core/tools
     python: '3.6'
+
+# Sync pipelines with possible nf-core template changes
+after_deploy:
+  - bash ${TRAVIS_BUILD_DIR}/bin/sync
+  on:
+    tags: true

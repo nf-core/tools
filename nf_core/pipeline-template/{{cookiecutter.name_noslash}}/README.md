@@ -23,3 +23,8 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 3. [Running the pipeline](docs/usage.md)
 4. [Output and how to interpret the results](docs/output.md)
 5. [Troubleshooting](docs/troubleshooting.md)
+
+<!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
+
+### Credits
+{{ cookiecutter.name }} was originally written by {{ cookiecutter.author }}.
