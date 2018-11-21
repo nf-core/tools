@@ -42,6 +42,4 @@ deploy:
 
 # Sync pipelines with possible nf-core template changes
 after_deploy: 
-  if [ -n "${TRAVIS_TAG}" ]; then
-    bash ${TRAVIS_BUILD_DIR}/bin/syn
-  fi
+  ./${TRAVIS_BUILD_DIR}/bin/sync
