@@ -28,7 +28,7 @@ script:
 
 after_success:
   - codecov
-  - .${TRAVIS_BUILD_DIR}/bin/sync
+  - ./bin/sync
 
 deploy:
   provider: pypi
