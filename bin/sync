@@ -50,7 +50,7 @@ def main():
 
     # Get nf-core pipelines info
     res = requests.get(NF_CORE_PIPELINE_INFO)
-    pipelines = json.loads(res.content).get('remote_workflows')
+    pipelines = res.json().get('remote_workflows')
     if not pipelines:
         print("Pipeline information was empty!")
     
