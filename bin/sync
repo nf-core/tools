@@ -93,7 +93,7 @@ def main():
     for pipeline, return_code, content in pr_errors:
         print("Pull-request for pipeline \'{pipeline}\' failed," 
                 " got return code {return_code}."
-                .format(pipeline=pipeline["name"], return_code=return_code))
+                .format(pipeline=pipeline["name"], return_code=str(return_code)))
         print(content)
     
     if pr_errors or sync_errors: sys.exit(1)
