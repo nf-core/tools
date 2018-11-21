@@ -1,5 +1,5 @@
 import tempfile
-import utils
+import syncutils.utils
 import git
 import os
 import shutil
