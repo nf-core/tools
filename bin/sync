@@ -87,7 +87,7 @@ def main():
                 .format(pipeline=pipeline["name"]))
     
     for pipeline, exception in sync_errors:
-        print("Sync for pipeline {name} failed.".format(pipeline))
+        print("Sync for pipeline {name} failed.".format(name=pipeline))
         print(exception)
 
     for pipeline, return_code, content in pr_errors:
