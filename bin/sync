@@ -55,7 +55,14 @@ def main():
         print("Pipeline information was empty!")
     
     # TODO: Remove this line, once we go for production
-    pipelines = [{"name":"hlatyping"}] # just for testing
+    pipelines = [
+        {
+            "name": "hlatyping"
+        },
+        {
+            "name" "eager"
+        }
+    ]  # just for testing
     
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
