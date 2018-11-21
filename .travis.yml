@@ -28,7 +28,7 @@ script:
 
 after_success:
   - codecov
-  - ./${TRAVIS_BUILD_DIR}/bin/sync
+  - .${TRAVIS_BUILD_DIR}/bin/sync
 
 deploy:
   provider: pypi
@@ -43,4 +43,4 @@ deploy:
 
 # Sync pipelines with possible nf-core template changes
 after_deploy: 
-  ./${TRAVIS_BUILD_DIR}/bin/sync
+  .${TRAVIS_BUILD_DIR}/bin/sync
