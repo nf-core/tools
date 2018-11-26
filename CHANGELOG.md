@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v1.3dev
+* Institutional custom config profiles moved to github `nf-core/configs`
+    * These will now be maintained centrally as opposed to being shipped with the pipelines in `conf/`
+    * Load `base.config` by default for all profiles
+    * Removed profiles named `standard` and `none`
+    * Added parameter `--igenomesIgnore` so `igenomes.config` isnt loaded if parameter clashes are observed
+    * Added parameter `--custom_config_version` for custom config version control. Can use this parameter to provide commit id for reproducibility. Defaults to `master`  
+
 ##[v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
 * `nf-core create` command line interface updated
     * Interactive prompts for required arguments if not given
