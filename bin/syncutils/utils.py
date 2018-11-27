@@ -34,6 +34,7 @@ def create_context(config):
     context["pipeline_name"] = config.get("manifest.name") if config.get("manifest.name") else get_name_from_url(config.get("manifest.homePage"))
     context["pipeline_short_description"] = config.get("manifest.description") 
     context["version"] = config.get("manifest.version") if config.get("manifest.version") else config.get("params.version")
+    context["author"] = config.get("manifest.author") if config.get("manifest.author") else "No author provided"
     return context
 
 def get_name_from_url(url):

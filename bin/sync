@@ -50,7 +50,7 @@ def main():
 
     # Get nf-core pipelines info
     res = requests.get(NF_CORE_PIPELINE_INFO)
-    pipelines = json.loads(res.content).get('remote_workflows')
+    pipelines = res.json().get('remote_workflows')
     if not pipelines:
         print("Pipeline information was empty!")
     
@@ -58,12 +58,9 @@ def main():
     pipelines = [
         {
             "name": "hlatyping"
-        },
-        {
-            "name" "eager"
         }
     ]  # just for testing
-    
+
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
         print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
@@ -75,11 +72,11 @@ def main():
             ).sync()
         except Exception as e:
             sync_errors.append((pipeline['name'], e))
-    
+
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
         print("Trying to open pull request for pipeline {}...".format(pipeline['name']))
-        response = create_pullrequest(pipeline['name'], os.environ["NF_CORE_BOT"])
+        response = create_pullrequest(pipeline['name'], token=os.environ["NF_CORE_BOT"])
         if response.status_code != 201:
             pr_errors.append((pipeline['name'], response.status_code, response.content))
         else:
@@ -87,13 +84,13 @@ def main():
                 .format(pipeline=pipeline["name"]))
     
     for pipeline, exception in sync_errors:
-        print("Sync for pipeline {name} failed.".format(pipeline))
+        print("Sync for pipeline {name} failed.".format(name=pipeline))
         print(exception)
 
     for pipeline, return_code, content in pr_errors:
         print("Pull-request for pipeline \'{pipeline}\' failed," 
                 " got return code {return_code}."
-                .format(pipeline=pipeline["name"], return_code=return_code))
+                .format(pipeline=pipeline, return_code=return_code))
         print(content)
     
     if pr_errors or sync_errors: sys.exit(1)

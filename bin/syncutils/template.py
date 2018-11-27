@@ -1,5 +1,5 @@
 import tempfile
-import utils
+from syncutils import utils
 import git
 import os
 import shutil
@@ -7,6 +7,8 @@ import sys
 from cookiecutter.main import cookiecutter
 
 import nf_core.create
+
+TEMPLATE_BRANCH = "TEMPLATE"
 
 
 class NfcoreTemplate:
@@ -17,7 +19,7 @@ class NfcoreTemplate:
           - branch: The template branch name, default=`TEMPLATE`
           - token: GitHub auth token
     """
-    def __init__(self, pipeline, branch='master', repo_url=""):
+    def __init__(self, pipeline, branch=TEMPLATE_BRANCH, repo_url=""):
         """Basic constructor
         """
         self.pipeline = pipeline
@@ -42,7 +44,7 @@ class NfcoreTemplate:
         Returns: A cookiecutter-readable context (Python dictionary)
         """
         # Check if we are on "master" (main pipeline code)
-        if self.repo.active_branch is not "master":
+        if self.repo.active_branch.name != "master":
             self.repo.git.checkout("origin/master", b="master")
 
         # Fetch the config variables from the Nextflow pipeline
@@ -53,7 +55,6 @@ class NfcoreTemplate:
             b="{branch}".format(branch=self.branch))
 
         return utils.create_context(config)
-    
 
     def update_child_template(self, templatedir, target_dir, context=None):
         """Apply the changes of the cookiecutter template
@@ -61,12 +62,14 @@ class NfcoreTemplate:
         """
         # Clear the pipeline's template branch content
         for f in os.listdir(self.tmpdir):
-            if f == ".git": continue
+            if f == ".git":
+                continue
             try:
                 shutil.rmtree(os.path.join(target_dir, f))
             except:
                 os.remove(os.path.join(target_dir, f))
-
+        print(target_dir)
+        print(context.get('author'))
         # Create the new template structure
         nf_core.create.PipelineCreate(
             name=context.get('pipeline_name'),
@@ -74,8 +77,9 @@ class NfcoreTemplate:
             new_version=context.get('version'),
             no_git=True,
             force=True,
-            outdir=templatedir
-        )
+            outdir=target_dir,
+            author=context.get('author')
+        ).init_pipeline()
 
     def commit_changes(self):
         """Commits the changes of the new template to the current branch.
@@ -85,4 +89,3 @@ class NfcoreTemplate:
 
     def push_changes(self):
         self.repo.git.push()
-        

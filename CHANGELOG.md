@@ -10,6 +10,7 @@
     * Deleted custom configs from template in `conf/` directory i.e. `uzh.config`, `binac.config` and `cfc.config`
 * Added `local.md` to cookiecutter template in `docs/configuration/`. This was referenced in `README.md` but not present.
 
+
 ## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
 * `nf-core create` command line interface updated
     * Interactive prompts for required arguments if not given

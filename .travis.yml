@@ -41,7 +41,5 @@ deploy:
     python: '3.6'
 
 # Sync pipelines with possible nf-core template changes
-after_deploy:
-  - bash ${TRAVIS_BUILD_DIR}/bin/sync
-  on:
-    tags: true
+after_deploy: 
+  - ./bin/sync
