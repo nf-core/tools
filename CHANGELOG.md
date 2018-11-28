@@ -10,7 +10,7 @@
     * Deleted custom configs from template in `conf/` directory i.e. `uzh.config`, `binac.config` and `cfc.config`
 * Added `local.md` to cookiecutter template in `docs/configuration/`. This was referenced in `README.md` but not present.
 * Make Travis CI tests fail on pull requests if the `CHANGELOG.md` file hasn't been updated
-
+* Major overhaul of docs to add/remove parameters, unify linking of files and added description for providing custom contigs where necessary
 
 ## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
 * `nf-core create` command line interface updated
