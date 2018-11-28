@@ -241,7 +241,7 @@ Use to set a top-limit for the default CPU requirement for each process.
 Should be a string in the format integer-unit. eg. `--max_cpus 1`
 
 ### `--plaintext_email`
-Set to receive plain-text e-mails instead of HTML formatted.  
+Set to receive plain-text e-mails instead of HTML formatted.
 
 ### `--multiqc_config`
 Specify a path to a custom MultiQC configuration file.
