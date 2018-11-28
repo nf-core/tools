@@ -12,7 +12,7 @@ To start using the {{ cookiecutter.name }} pipeline, follow the steps below:
     * [Software deps: Bioconda](#32-software-deps-bioconda)
     * [Configuration profiles](#33-configuration-profiles)
 4. [Reference genomes](#4-reference-genomes)
-5. [Appendices](#appendices)
+5. [Appendices](#5-appendices)
     * [Running on UPPMAX](#running-on-uppmax)
 
 ## 1) Install NextFlow
@@ -100,8 +100,15 @@ This is slower and less reproducible than the above, but is still better than ha
 The pipeline ships with a conda environment file and nextflow has built-in support for this.
 To use it first ensure that you have conda installed (we recommend [miniconda](https://conda.io/miniconda.html)), then follow the same pattern as above and use the flag `-profile standard,conda`
 
+#### 3.3) Configuration profiles
 
-## Appendices
+See [`docs/configuration/adding_your_own.md`](configuration/adding_your_own.md)
+
+## 4) Reference genomes
+
+See [`docs/configuration/reference_genomes.md`](configuration/reference_genomes.md)
+
+## 5) Appendices
 
 #### Running on UPPMAX
 To run the pipeline on the [Swedish UPPMAX](https://www.uppmax.uu.se/) clusters (`rackham`, `irma`, `bianca` etc), use the command line flag `-profile uppmax`. This tells Nextflow to submit jobs using the SLURM job executor with Singularity for software dependencies.
