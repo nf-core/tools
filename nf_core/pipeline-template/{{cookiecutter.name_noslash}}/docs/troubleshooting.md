@@ -1,5 +1,7 @@
 # {{ cookiecutter.name }}: Troubleshooting
 
+<!-- TODO nf-core: Change this documentation if these parameters/errors are not relevant for your workflow -->
+
 ## Input files not found
 
 If only no file, only one input file , or only read one and not read two is picked up then something is wrong with your input file declaration
