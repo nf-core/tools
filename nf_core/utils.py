@@ -3,7 +3,6 @@
 Common utility functions for the nf-core python package.
 """
 
-import logging
 import os
 import subprocess
 

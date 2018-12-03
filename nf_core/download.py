@@ -8,7 +8,6 @@ import click
 import logging
 import hashlib
 import os
-import re
 import requests
 import requests_cache
 import subprocess
@@ -77,8 +76,8 @@ class DownloadWorkflow():
                         self.pull_singularity_image(container)
 
     def fetch_workflow_details(self, wfs):
-        """ Fetch details of nf-core workflow to download 
-        
+        """ Fetch details of nf-core workflow to download
+
         params:
         - wfs   A nf_core.list.Workflows object
         """
