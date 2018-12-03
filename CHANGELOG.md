@@ -1,6 +1,8 @@
 # nf-core/tools: Changelog
 
 ## v1.4dev
+
+#### Template pipeline
 * Institutional custom config profiles moved to github `nf-core/configs`
     * These will now be maintained centrally as opposed to being shipped with the pipelines in `conf/`
     * Load `base.config` by default for all profiles
@@ -9,8 +11,11 @@
     * Added parameter `--custom_config_version` for custom config version control. Can use this parameter to provide commit id for reproducibility. Defaults to `master`  
     * Deleted custom configs from template in `conf/` directory i.e. `uzh.config`, `binac.config` and `cfc.config`
 * Added `local.md` to cookiecutter template in `docs/configuration/`. This was referenced in `README.md` but not present.
+* Major overhaul of docs to add/remove parameters, unify linking of files and added description for providing custom configs where necessary
+
+#### Tools helper code
 * Make Travis CI tests fail on pull requests if the `CHANGELOG.md` file hasn't been updated
-* Major overhaul of docs to add/remove parameters, unify linking of files and added description for providing custom contigs where necessary
+* Minor bugfixing in Python code (eg. removing unused import statements)
 
 ## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
 * `nf-core create` command line interface updated
