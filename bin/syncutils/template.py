@@ -3,8 +3,6 @@ from syncutils import utils
 import git
 import os
 import shutil
-import sys
-from cookiecutter.main import cookiecutter
 
 import nf_core.create
 
@@ -29,7 +27,7 @@ class NfcoreTemplate:
         self.templatedir = tempfile.mkdtemp()
         self.repo = git.Repo.clone_from(self.repo_url, self.tmpdir)
         assert self.repo
-    
+
     def sync(self):
         """Execute the template update.
         """
@@ -49,7 +47,7 @@ class NfcoreTemplate:
 
         # Fetch the config variables from the Nextflow pipeline
         config = utils.fetch_wf_config(wf_path=nf_project_dir)
-        
+
         # Checkout again to configured template branch
         self.repo.git.checkout("origin/{branch}".format(branch=self.branch),
             b="{branch}".format(branch=self.branch))
