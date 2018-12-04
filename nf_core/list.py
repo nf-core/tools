@@ -11,22 +11,15 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 
 import git
 import requests
-import requests_cache
 import tabulate
 
+import nf_core.utils
+
 # Set up local caching for requests to speed up remote queries
-cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
-if not os.path.exists(cachedir):
-    os.mkdir(cachedir)
-requests_cache.install_cache(
-    os.path.join(cachedir, 'nfcore_cache'),
-    expire_after=datetime.timedelta(hours=1),
-    backend='sqlite',
-)
+nf_core.utils.setup_requests_cachedir()
 
 def list_workflows(sort='release', json=False, keywords=[]):
     """ Main function to list all nf-core workflows """
