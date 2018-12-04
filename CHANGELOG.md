@@ -16,6 +16,7 @@
 #### Tools helper code
 * Make Travis CI tests fail on pull requests if the `CHANGELOG.md` file hasn't been updated
 * Minor bugfixing in Python code (eg. removing unused import statements)
+* Made the web requests caching work on multi-user installations
 
 ## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
 * `nf-core create` command line interface updated

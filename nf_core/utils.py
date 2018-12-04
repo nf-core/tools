@@ -3,8 +3,10 @@
 Common utility functions for the nf-core python package.
 """
 
+import datetime
 import os
 import subprocess
+import tempfile
 
 def fetch_wf_config(wf_path):
     """
@@ -24,3 +26,24 @@ def fetch_wf_config(wf_path):
             k, v = ul.split(' = ', 1)
             config[k] = v
     return config
+
+
+def setup_requests_cachedir():
+    """
+    Set up local caching for requests to speed up remote queries
+    """
+
+    # Only import it if we need it
+    import requests_cache
+
+    cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
+    if not os.path.exists(cachedir):
+        os.mkdir(cachedir)
+    requests_cache.install_cache(
+        os.path.join(cachedir, 'nfcore_cache'),
+        expire_after=datetime.timedelta(hours=1),
+        backend='sqlite',
+    )
+    # Make world-writeable so that multi-user installations work
+    os.chmod(cachedir, 0o777)
+    os.chmod(os.path.join(cachedir, 'nfcore_cache.sqlite'), 0o777)
