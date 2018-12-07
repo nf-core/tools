@@ -18,6 +18,9 @@ def fetch_wf_config(wf_path):
     try:
         with open(os.devnull, 'w') as devnull:
             nfconfig_raw = subprocess.check_output(['nextflow', 'config', '-flat', wf_path], stderr=devnull)
+    except OSError as e:
+        if e.errno == os.errno.ENOENT:
+            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
     except subprocess.CalledProcessError as e:
         raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
     else:
