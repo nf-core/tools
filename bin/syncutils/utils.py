@@ -10,6 +10,9 @@ def fetch_wf_config(wf_path):
     try:
         with open(os.devnull, 'w') as devnull:
             nfconfig_raw = subprocess.check_output(['nextflow', 'config', '-flat', wf_path], stderr=devnull)
+    except OSError as e:
+        if e.errno == os.errno.ENOENT:
+            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
     except subprocess.CalledProcessError as e:
         raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
     else:
@@ -20,10 +23,10 @@ def fetch_wf_config(wf_path):
     return config
 
 def create_context(config):
-    """Consumes a flat Nextflow config file and will create 
+    """Consumes a flat Nextflow config file and will create
     a context dictionary with information for the nf-core template creation.
 
-    Returns: A dictionary with: 
+    Returns: A dictionary with:
         {
             'pipeline_name': '<parsed_name>'
             'pipeline_short_description': '<parsed_description>'
@@ -32,7 +35,7 @@ def create_context(config):
     """
     context = {}
     context["pipeline_name"] = config.get("manifest.name") if config.get("manifest.name") else get_name_from_url(config.get("manifest.homePage"))
-    context["pipeline_short_description"] = config.get("manifest.description") 
+    context["pipeline_short_description"] = config.get("manifest.description")
     context["version"] = config.get("manifest.version") if config.get("manifest.version") else config.get("params.version")
     context["author"] = config.get("manifest.author") if config.get("manifest.author") else "No author provided"
     return context

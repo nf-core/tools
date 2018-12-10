@@ -74,6 +74,9 @@ class Workflows(object):
             try:
                 with open(os.devnull, 'w') as devnull:
                     nflist_raw = subprocess.check_output(['nextflow', 'list'], stderr=devnull)
+            except OSError as e:
+                if e.errno == os.errno.ENOENT:
+                    raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
             except subprocess.CalledProcessError as e:
                 raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
             else:
@@ -237,6 +240,9 @@ class LocalWorkflow(object):
                 try:
                     with open(os.devnull, 'w') as devnull:
                         nfinfo_raw = subprocess.check_output(['nextflow', 'info', '-d', self.full_name], stderr=devnull)
+                except OSError as e:
+                    if e.errno == os.errno.ENOENT:
+                        raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
                 except subprocess.CalledProcessError as e:
                     raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
                 else:
