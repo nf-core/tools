@@ -11,9 +11,9 @@ before_install:
   # PRs to master are only ok if coming from dev branch
   - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
   # Pull the docker image first so the test doesn't wait for this
-  - docker pull {{ cookiecutter.name_docker }}
+  - docker pull {{ cookiecutter.name_docker }}:dev
   # Fake the tag locally so that the pipeline runs properly
-  - docker tag {{ cookiecutter.name_docker }} {{ cookiecutter.name_docker }}:latest
+  - docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:latest
 
 install:
   # Install Nextflow
@@ -21,7 +21,7 @@ install:
   - wget -qO- get.nextflow.io | bash
   - sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
   # Install nf-core/tools
-  - pip install --upgrade pip 
+  - pip install --upgrade pip
   - pip install nf-core
   # Reset
   - mkdir ${TRAVIS_BUILD_DIR}/tests && cd ${TRAVIS_BUILD_DIR}/tests
