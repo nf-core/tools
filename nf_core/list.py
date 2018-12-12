@@ -11,22 +11,15 @@ import os
 import re
 import subprocess
 import sys
-import tempfile
 
 import git
 import requests
-import requests_cache
 import tabulate
 
+import nf_core.utils
+
 # Set up local caching for requests to speed up remote queries
-cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
-if not os.path.exists(cachedir):
-    os.mkdir(cachedir)
-requests_cache.install_cache(
-    os.path.join(cachedir, 'nfcore_cache'),
-    expire_after=datetime.timedelta(hours=1),
-    backend='sqlite',
-)
+nf_core.utils.setup_requests_cachedir()
 
 def list_workflows(sort='release', json=False, keywords=[]):
     """ Main function to list all nf-core workflows """
@@ -81,6 +74,9 @@ class Workflows(object):
             try:
                 with open(os.devnull, 'w') as devnull:
                     nflist_raw = subprocess.check_output(['nextflow', 'list'], stderr=devnull)
+            except OSError as e:
+                if e.errno == os.errno.ENOENT:
+                    raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
             except subprocess.CalledProcessError as e:
                 raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
             else:
@@ -244,6 +240,9 @@ class LocalWorkflow(object):
                 try:
                     with open(os.devnull, 'w') as devnull:
                         nfinfo_raw = subprocess.check_output(['nextflow', 'info', '-d', self.full_name], stderr=devnull)
+                except OSError as e:
+                    if e.errno == os.errno.ENOENT:
+                        raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
                 except subprocess.CalledProcessError as e:
                     raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
                 else:

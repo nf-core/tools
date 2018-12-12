@@ -9,7 +9,6 @@ import cookiecutter.main, cookiecutter.exceptions
 import git
 import logging
 import os
-import re
 import shutil
 import sys
 import tempfile

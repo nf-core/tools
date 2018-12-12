@@ -3,6 +3,7 @@
 # [nf-core/tools](https://github.com/nf-core/tools)
 [![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
 
 A python package with helper tools for the nf-core community.
 
@@ -298,8 +299,8 @@ INFO: Updating version in nextflow.config
  + container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .travis.yml
- - docker tag nfcore/mypipeline nfcore/mypipeline:latest
- + docker tag nfcore/mypipeline nfcore/mypipeline:1.0
+ - docker tag nfcore/mypipeline:dev nfcore/mypipeline:latest
+ + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in Singularity
  - VERSION 1.0dev

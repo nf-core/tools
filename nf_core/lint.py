@@ -5,31 +5,20 @@ Tests Nextflow pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
-import datetime
 import logging
 import io
 import os
 import re
 import shlex
-import subprocess
-import tempfile
 
 import click
 import requests
-import requests_cache
 import yaml
 
 import nf_core.utils
 
 # Set up local caching for requests to speed up remote queries
-cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
-if not os.path.exists(cachedir):
-    os.mkdir(cachedir)
-requests_cache.install_cache(
-    os.path.join(cachedir, 'nfcore_cache'),
-    expire_after=datetime.timedelta(hours=1),
-    backend='sqlite',
-)
+nf_core.utils.setup_requests_cachedir()
 
 # Don't pick up debug logs from the requests package
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -400,7 +389,7 @@ class PipelineLint(object):
                 # Check that we're pulling the right docker image
                 if self.config.get('params.container', ''):
                     docker_notag = re.sub(r':(?:[\.\d]+|latest)$', '', self.config.get('params.container', '').strip('"\''))
-                    docker_pull_cmd = 'docker pull {}'.format(docker_notag)
+                    docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                     try:
                         assert(docker_pull_cmd in ciconf.get('before_install', []))
                     except AssertionError:
@@ -409,7 +398,7 @@ class PipelineLint(object):
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
                     # Check that we tag the docker image properly
-                    docker_tag_cmd = 'docker tag {} {}'.format(docker_notag, self.config.get('params.container', '').strip('"\''))
+                    docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, self.config.get('params.container', '').strip('"\''))
                     try:
                         assert(docker_tag_cmd in ciconf.get('before_install'))
                     except AssertionError:

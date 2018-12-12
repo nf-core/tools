@@ -27,13 +27,13 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile standard,docker
+    nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile docker
 
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
       --genome                      Name of iGenomes reference
       -profile                      Configuration profile to use. Can use multiple (comma separated)
-                                    Available: standard, conda, docker, singularity, awsbatch, test
+                                    Available: conda, docker, singularity, awsbatch, test and more.
 
     Options:
       --singleEnd                   Specifies that the input is single end reads
@@ -95,8 +95,8 @@ if( workflow.profile == 'awsbatch') {
 }
 
 // Stage config files
-multiqc_config = file(params.multiqc_config)
-output_docs = file("$baseDir/docs/output.md")
+ch_multiqc_config = Channel.fromPath(params.multiqc_config)
+ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
 
 /*
  * Create a channel for input read files
@@ -232,7 +232,7 @@ process multiqc {
     publishDir "${params.outdir}/MultiQC", mode: 'copy'
 
     input:
-    file multiqc_config
+    file multiqc_config from ch_multiqc_config
     // TODO nf-core: Add in log files from your new processes for MultiQC to find!
     file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
     file ('software_versions/*') from software_versions_yaml
@@ -260,7 +260,7 @@ process output_documentation {
     publishDir "${params.outdir}/Documentation", mode: 'copy'
 
     input:
-    file output_docs
+    file output_docs from ch_output_docs
 
     output:
     file "results_description.html"
