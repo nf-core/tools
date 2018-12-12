@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12
+## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
 #### Template pipeline
 * Institutional custom config profiles moved to github `nf-core/configs`
