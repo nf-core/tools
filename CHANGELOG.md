@@ -14,6 +14,7 @@
 * Added `local.md` to cookiecutter template in `docs/configuration/`. This was referenced in `README.md` but not present.
 * Major overhaul of docs to add/remove parameters, unify linking of files and added description for providing custom configs where necessary
 * Travis: Pull the `dev` tagged docker image for testing
+* Removed UPPMAX-specific documentation from the template.
 
 #### Tools helper code
 * Make Travis CI tests fail on pull requests if the `CHANGELOG.md` file hasn't been updated
