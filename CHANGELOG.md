@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.4dev
+## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12
 
 #### Template pipeline
 * Institutional custom config profiles moved to github `nf-core/configs`
@@ -8,7 +8,7 @@
     * Load `base.config` by default for all profiles
     * Removed profiles named `standard` and `none`
     * Added parameter `--igenomesIgnore` so `igenomes.config` is not loaded if parameter clashes are observed
-    * Added parameter `--custom_config_version` for custom config version control. Can use this parameter to provide commit id for reproducibility. Defaults to `master`  
+    * Added parameter `--custom_config_version` for custom config version control. Can use this parameter to provide commit id for reproducibility. Defaults to `master`
     * Deleted custom configs from template in `conf/` directory i.e. `uzh.config`, `binac.config` and `cfc.config`
 * `multiqc_config` and `output_md` are now put into channels instead of using the files directly (see issue [#222](https://github.com/nf-core/tools/issues/222))
 * Added `local.md` to cookiecutter template in `docs/configuration/`. This was referenced in `README.md` but not present.
