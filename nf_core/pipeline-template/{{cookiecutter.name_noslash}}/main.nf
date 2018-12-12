@@ -27,13 +27,13 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile standard,docker
+    nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile docker
 
     Mandatory arguments:
       --reads                       Path to input data (must be surrounded with quotes)
       --genome                      Name of iGenomes reference
       -profile                      Configuration profile to use. Can use multiple (comma separated)
-                                    Available: standard, conda, docker, singularity, awsbatch, test
+                                    Available: conda, docker, singularity, awsbatch, test and more.
 
     Options:
       --singleEnd                   Specifies that the input is single end reads
