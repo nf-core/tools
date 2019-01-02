@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v1.5dev
+
+#### Template pipeline
+_..nothing yet.._
+
+#### Tools helper code
+* `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
+
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
 #### Template pipeline
