@@ -1,5 +1,10 @@
 # nf-core/tools: Changelog
 
+## v1.5dev
+
+### Code coverage
+* Introduced test for filtering remote workflows by keyword
+
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
 #### Template pipeline
