@@ -6,6 +6,7 @@ from __future__ import print_function
 import click
 import sys
 import os
+import re
 
 import nf_core
 import nf_core.lint, nf_core.list, nf_core.download, nf_core.licences, nf_core.bump_version, nf_core.create
@@ -145,18 +146,36 @@ def bump_version(pipeline_dir, new_version, nextflow):
     else:
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
+def validate_wf_name_prompt(ctx, opts, value):
+    """ Force the workflow name to meet the nf-core requirements """
+    if not re.match(r'^[a-z]+$', value):
+        click.echo('Invalid workflow name: must be lowercase without punctuation.')
+        value = click.prompt(opts.prompt)
+        return validate_wf_name_prompt(ctx, opts, value)
+    return value
+
 @nf_core_cli.command()
 @click.option(
     '-n', '--name',
+    prompt = 'Workflow Name',
     required = True,
+    callback = validate_wf_name_prompt,
     type = str,
     help = 'The name of your new pipeline'
 )
 @click.option(
     '-d', '--description',
+    prompt = True,
     required = True,
     type = str,
     help = 'A short description of your pipeline'
+)
+@click.option(
+    '-a', '--author',
+    prompt = True,
+    required = True,
+    type = str,
+    help = 'Name of the main author(s)'
 )
 @click.option(
     '--new-version',
@@ -181,9 +200,9 @@ def bump_version(pipeline_dir, new_version, nextflow):
     type = str,
     help = "Output directory for new pipeline (default: pipeline name)"
 )
-def create(name, description, new_version, no_git, force, outdir):
-    """ Create a new pipeline using the nf-core template """
-    create_obj = nf_core.create.PipelineCreate(name, description, new_version, no_git, force, outdir)
+def create(name, description, author, new_version, no_git, force, outdir):
+    """ Create a new pipeline using the template """
+    create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
 
 

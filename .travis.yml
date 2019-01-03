@@ -9,6 +9,9 @@ python:
 before_install:
   # PRs to master are only ok if coming from dev branch
   - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+  # Check that the changelog has been updated if this is a PR
+  - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch
+  - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $(git diff --name-only HEAD origin/${TRAVIS_BRANCH} | grep CHANGELOG.md | wc -l) -eq 1 ]'
 install:
   # Install Nextflow
   - mkdir /tmp/nextflow
@@ -23,7 +26,7 @@ install:
 
 script:
   - python -m pytest --cov=nf_core .
-  - nf-core create -n testpipeline -d "This pipeline is for testing"
+  - nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
   - nf-core lint nf-core-testpipeline
 
 after_success:
@@ -39,3 +42,7 @@ deploy:
     distributions: sdist bdist_wheel
     repo: nf-core/tools
     python: '3.6'
+
+# Sync pipelines with possible nf-core template changes
+after_deploy:
+  - ./bin/sync

@@ -5,29 +5,20 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
-import datetime
 import logging
+import io
 import os
 import re
 import shlex
-import tempfile
 
 import click
 import requests
-import requests_cache
 import yaml
 
 import nf_core.utils
 
 # Set up local caching for requests to speed up remote queries
-cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
-if not os.path.exists(cachedir):
-    os.mkdir(cachedir)
-requests_cache.install_cache(
-    os.path.join(cachedir, 'nfcore_cache'),
-    expire_after=datetime.timedelta(hours=1),
-    backend='sqlite',
-)
+nf_core.utils.setup_requests_cachedir()
 
 # Don't pick up debug logs from the requests package
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -183,7 +174,8 @@ class PipelineLint(object):
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
-            'check_conda_singularityfile'
+            'check_conda_singularityfile',
+            'check_pipeline_todos'
         ]
         if release_mode:
             self.release_mode = True
@@ -480,7 +472,7 @@ class PipelineLint(object):
                 # Check that we're pulling the right docker image
                 if self.config.get('params.container', ''):
                     docker_notag = re.sub(r':(?:[\.\d]+|latest)$', '', self.config.get('params.container', '').strip('"\''))
-                    docker_pull_cmd = 'docker pull {}'.format(docker_notag)
+                    docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                     try:
                         assert(docker_pull_cmd in ciconf.get('before_install', []))
                     except AssertionError:
@@ -489,7 +481,7 @@ class PipelineLint(object):
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
                     # Check that we tag the docker image properly
-                    docker_tag_cmd = 'docker tag {} {}'.format(docker_notag, self.config.get('params.container', '').strip('"\''))
+                    docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, self.config.get('params.container', '').strip('"\''))
                     try:
                         assert(docker_tag_cmd in ciconf.get('before_install'))
                     except AssertionError:
@@ -660,7 +652,7 @@ class PipelineLint(object):
                             pass
                         else:
                             # Check, if PyPi package version is available at all
-                            if pip_depver not in self.conda_package_info[pip_dep].get('info').get('releases').keys():
+                            if pip_depver not in self.conda_package_info[pip_dep].get('releases').keys():
                                 self.failed.append((8, "PyPi package had an unknown version: {}".format(pip_depver)))
                                 continue  # No need to test latest version, if not available
                             last_ver = self.conda_package_info[pip_dep].get('info').get('version')
@@ -683,6 +675,17 @@ class PipelineLint(object):
         # Check if each dependency is the latest available version
         depname, depver = dep.split('=', 1)
         dep_channels = self.conda_config.get('channels', [])
+        # 'defaults' isn't actually a channel name. See https://docs.anaconda.com/anaconda/user-guide/tasks/using-repositories/
+        if 'defaults' in dep_channels:
+            dep_channels.remove('defaults')
+            dep_channels.extend([
+                'main',
+                'anaconda',
+                'r',
+                'free',
+                'archive',
+                'anaconda-extras'
+            ])
         if '::' in depname:
             dep_channels = [depname.split('::')[0]]
             depname = depname.split('::')[1]
@@ -692,6 +695,9 @@ class PipelineLint(object):
                 response = requests.get(anaconda_api_url, timeout=10)
             except (requests.exceptions.Timeout):
                 self.warned.append((8, "Anaconda API timed out: {}".format(anaconda_api_url)))
+                raise ValueError
+            except (requests.exceptions.ConnectionError):
+                self.warned.append((8, "Could not connect to Anaconda API"))
                 raise ValueError
             else:
                 if response.status_code == 200:
@@ -784,6 +790,29 @@ class PipelineLint(object):
         else:
             for missing in difference:
                 self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
+
+    def check_pipeline_todos(self):
+        """ Go through all template files looking for the string 'TODO nf-core:' """
+        ignore = ['.git']
+        if os.path.isfile(os.path.join(self.path, '.gitignore')):
+            with io.open(os.path.join(self.path, '.gitignore'), 'rt', encoding='latin1') as fh:
+                for l in fh:
+                    ignore.append(os.path.basename(l.strip().rstrip('/')))
+        for root, dirs, files in os.walk(self.path):
+            # Ignore files
+            for i in ignore:
+                if i in dirs:
+                    dirs.remove(i)
+                if i in files:
+                    files.remove(i)
+            for fname in files:
+                with io.open(os.path.join(root, fname), 'rt', encoding='latin1') as fh:
+                    for l in fh:
+                        if 'TODO nf-core' in l:
+                            l = l.replace('<!--', '').replace('-->', '').replace('# TODO nf-core: ', '').replace('// TODO nf-core: ', '').replace('TODO nf-core: ', '').strip()
+                            if len(fname) + len(l) > 50:
+                                l = '{}..'.format(l[:50-len(fname)])
+                            self.warned.append((11, "TODO string found in '{}': {}".format(fname,l)))
 
     def print_results(self):
         # Print results
