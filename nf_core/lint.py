@@ -37,15 +37,15 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 def run_linting(pipeline_dir, release_mode=False):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
-    of type #PipelineLint after finished.
+    of type :class:`PipelineLint` after finished.
 
-    # Arguments
-    pipeline_dir (str): The path to the Nextflow pipeline root directory
-    release_mode (bool): Set this to `True`, if the linting should be run in the `release` mode.
-                         See #PipelineLint for more information.
+    Args:
+        pipeline_dir (str): The path to the Nextflow pipeline root directory
+        release_mode (bool): Set this to `True`, if the linting should be run in the `release` mode.
+                             See :class:`PipelineLint` for more information.
 
-    # Returns
-    PipelineLint: Contains all the linting results.
+    Returns:
+        An object of type :class:`PipelineLint` that contains all the linting results.
     """
 
     # Create the lint object
@@ -75,27 +75,49 @@ def run_linting(pipeline_dir, release_mode=False):
 
 class PipelineLint(object):
     """Object to hold linting information and results.
-    All objects attributes are set, after the #PipelineLint.lint_pipeline() function was called.
+    All objects attributes are set, after the :func:`PipelineLint.lint_pipeline` function was called.
 
-    # Dictionary specifications:
-    * `conda_config`:
-        ```python
-             {
-                'name': 'nf-core-hlatyping',
-                'channels': ['bioconda', 'conda-forge'],
-                'dependencies': ['optitype=1.3.2', 'yara=0.9.6']
-              }
-         ```
-    * `conda_package_info`:
-        See [bioconda-utils](https://api.anaconda.org/package/bioconda/bioconda-utils) as an example.
-        ```python
-           {
+    Args:
+        path (str): The path to the nf-core pipeline directory.
+
+    Attributes:
+        conda_config (dict): The parsed conda configuration file content (`environment.yml`).
+        conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
+        config (dict): The Nextflow pipeline configuration file content.
+        dockerfile (list): A list of lines (str) from the parsed Dockerfile.
+        failed (list): A list of tuples of the form: `(<error no>, <reason>)`
+        files (list): A list of files found during the linting process.
+        minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
+        passed (list): A list of tuples of the form: `(<passed no>, <reason>)`
+        path (str): Path to the pipeline directory.
+        pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
+        release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
+        singularityfile (list): A list of lines (str) parsed from the Singularity file.
+        warned (list): A list of tuples of the form: `(<warned no>, <reason>)`
+
+    **Attribute specifications**
+
+    Some of the more complex attributes of a PipelineLint object.
+
+    * `conda_config`::
+
+        # Example
+         {
+            'name': 'nf-core-hlatyping',
+            'channels': ['bioconda', 'conda-forge'],
+            'dependencies': ['optitype=1.3.2', 'yara=0.9.6']
+         }
+
+    * `conda_package_info`::
+
+        # See https://api.anaconda.org/package/bioconda/bioconda-utils as an example.
+         {
             <package>: <API JSON repsonse object>
-           }
-        ```
-    * `config`: Produced by calling Nextflow with `nextflow config -flat <workflow dir>`. Here is an example from
-        the nf-core/hlatyping pipeline:
-        ```python
+         }
+
+    * `config`: Produced by calling Nextflow with :code:`nextflow config -flat <workflow dir>`. Here is an example from
+        the `nf-core/hlatyping <https://github.com/nf-core/hlatyping>`_ pipeline::
+
             params.container = 'nfcore/hlatyping:1.1.1'
             params.help = false
             params.outdir = './results'
@@ -106,22 +128,6 @@ class PipelineLint(object):
             params.igenomes_base = './iGenomes'
             params.clusterOptions = false
             ...
-        ```
-
-    # Attributes
-    conda_config (dict): The parsed conda configuration file content (`environment.yml`).
-    conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
-    config (dict): The Nextflow pipeline configuration file content.
-    dockerfile (list): A list of lines (str) from the parsed Dockerfile.
-    failed (list): A list of tuples of the form: `(<error no>, <reason>)`
-    files (list): A list of files found during the linting process.
-    minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
-    passed (list): A list of tuples of the form: `(<passed no>, <reason>)`
-    path (str): Path to the pipeline directory.
-    pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
-    release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
-    singularityfile (list): A list of lines (str) parsed from the Singularity file.
-    warned (list): A list of tuples of the form: `(<warned no>, <reason>)`
     """
     def __init__(self, path):
         """ Initialise linting object """
@@ -140,7 +146,7 @@ class PipelineLint(object):
         self.failed = []
 
     def lint_pipeline(self, release_mode=False):
-        """ Main linting function.
+        """Main linting function.
 
         Takes the pipeline directory as the primary input and iterates through
         the different linting checks in order. Collects any warnings or errors
@@ -149,10 +155,12 @@ class PipelineLint(object):
         pipeline script). Results from this function are printed by the main script.
 
         Args:
-            pipeline_dir (str): The path to the pipeline directory
+            release_mode (boolean): Activates the release mode, which checks for
+                consistent version tags of containers. Default is `False`.
 
         Returns:
-            dict: Summary of test result messages structured as follows:
+            dict: Summary of test result messages structured as follows::
+
             {
                 'pass': [
                     ( test-id (int), message (string) ),
@@ -163,7 +171,7 @@ class PipelineLint(object):
             }
 
         Raises:
-            If a critical problem is found, an AssertionError is raised.
+            If a critical problem is found, an ``AssertionError`` is raised.
         """
         check_functions = [
             'check_files_exist',
@@ -190,10 +198,31 @@ class PipelineLint(object):
                     break
 
     def check_files_exist(self):
-        """ Check a given pipeline directory for required files.
+        """Checks a given pipeline directory for required files.
 
-        Throws an AssertionError if neither nextflow.config or main.nf found
-        Gives either test failures or warnings for set of other filenames
+        Iterates through the pipeline's directory content and checkmarks files
+        for presence.
+        Files that **must** be present::
+
+            'nextflow.config',
+            'Dockerfile',
+            'Singularity',
+            ['.travis.yml', '.circle.yml'],
+            ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
+            'README.md',
+            'CHANGELOG.md',
+            'docs/README.md',
+            'docs/output.md',
+            'docs/usage.md'
+
+        Files that *should* be present::
+
+            'main.nf',
+            'environment.yml',
+            'conf/base.config'
+
+        Raises:
+            An AssertionError if neither `nextflow.config` or `main.nf` found.
         """
 
         # NB: Should all be files, not directories
@@ -249,12 +278,12 @@ class PipelineLint(object):
                 self.conda_config = yaml.load(fh)
 
     def check_docker(self):
-        """ Check that Dockerfile contains the string 'FROM ' """
+        """Checks that Dockerfile contains the string ``FROM``."""
         fn = os.path.join(self.path, "Dockerfile")
         content = ""
         with open(fn, 'r') as fh: content = fh.read()
 
-        # Implicitely also checks if empty.
+        # Implicitly also checks if empty.
         if 'FROM ' in content:
             self.passed.append((2, "Dockerfile check passed"))
             self.dockerfile = [line.strip() for line in content.splitlines()]
@@ -263,7 +292,7 @@ class PipelineLint(object):
         self.failed.append((2, "Dockerfile check failed"))
 
     def check_singularity(self):
-        """ Check that Singularity file contains the string 'FROM ' """
+        """Checks that Singularity file contains the string ``FROM``."""
         fn = os.path.join(self.path, "Singularity")
         content = ""
         with open(fn, 'r') as fh: content = fh.read()
@@ -277,11 +306,12 @@ class PipelineLint(object):
         self.failed.append((2, "Singularity file check failed"))
 
     def check_licence(self):
-        """ Check licence file is MIT
+        """Checks licence file is MIT.
 
-        Ensures that Licence file is long enough (4 or more lines)
-        Checks that licence contains the string 'without restriction'
-        Checks that licence doesn't have any placeholder variables
+        Currently the checkpoints are:
+            * licence file must be long enough (4 or more lines)
+            * licence contains the string *without restriction*
+            * licence doesn't have any placeholder variables
         """
         for l in ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md']:
             fn = os.path.join(self.path, l)
@@ -317,11 +347,10 @@ class PipelineLint(object):
 
         self.failed.append((3, "Couldn't find MIT licence file"))
 
-
     def check_nextflow_config(self):
-        """ Check a given pipeline for required config variables.
+        """Checks a given pipeline for required config variables.
 
-        Uses `nextflow config -flat` to parse pipeline nextflow.config
+        Uses ``nextflow config -flat`` to parse pipeline ``nextflow.config``
         and print all config variables.
         NB: Does NOT parse contents of main.nf / nextflow script
         """
@@ -423,12 +452,11 @@ class PipelineLint(object):
                 self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
 
     def check_ci_config(self):
-        """ Check that the Travis or Circle CI YAML config is valid
+        """Checks that the Travis or Circle CI YAML config is valid.
 
-        Makes sure that `nf-core lint` runs in travis tests
-        Checks that tests run with the required nextflow version
+        Makes sure that ``nf-core lint`` runs in travis tests and that
+        tests run with the required nextflow version.
         """
-
         for cf in ['.travis.yml', 'circle.yml']:
             fn = os.path.join(self.path, cf)
             if os.path.isfile(fn):
@@ -489,9 +517,9 @@ class PipelineLint(object):
                     self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
 
     def check_readme(self):
-        """ Check the repository README file for errors
+        """Checks the repository README file for errors.
 
-        Currently just checks the badges at the top of the README
+        Currently just checks the badges at the top of the README.
         """
         with open(os.path.join(self.path, 'README.md'), 'r') as fh:
             content = fh.read()
@@ -521,13 +549,15 @@ class PipelineLint(object):
 
 
     def check_version_consistency(self):
-        """ Check container tags versions
+        """Checks container tags versions.
 
-        Runs on process.container, params.container and $TRAVIS_TAG (each only if set)
-        Check that the container has a tag
-        Check that the version numbers are numeric
-        Check that the version numbers are the same as one-another """
+        Runs on ``process.container``, ``params.container`` and ``$TRAVIS_TAG`` (each only if set).
 
+        Checks that:
+            * the container has a tag
+            * the version numbers are numeric
+            * the version numbers are the same as one-another
+        """
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
@@ -566,14 +596,14 @@ class PipelineLint(object):
 
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
-
     def check_conda_env_yaml(self):
-        """ Check that the conda environment file is valid
+        """Checks that the conda environment file is valid.
 
-        Make sure that a name is given and is consistent with the pipeline name
-        Check that depedency versions are pinned
-        Warn if dependency versions are not the latest available """
-
+        Checks that:
+            * a name is given and is consistent with the pipeline name
+            * check that dependency versions are pinned
+            * dependency versions are the latest available
+        """
         if 'environment.yml' not in self.files:
             return
 
@@ -640,7 +670,16 @@ class PipelineLint(object):
                                 self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
 
     def check_anaconda_package(self, dep):
-        """ Call the anaconda API to find details about package """
+        """Query conda package information.
+
+        Sends a HTTP GET request to the Anaconda remote API.
+
+        Args:
+            dep (str): A conda package name.
+
+        Raises:
+            A ValueError, if the package name can not be resolved.
+        """
         # Check if each dependency is the latest available version
         depname, depver = dep.split('=', 1)
         dep_channels = self.conda_config.get('channels', [])
@@ -664,7 +703,16 @@ class PipelineLint(object):
             raise ValueError
 
     def check_pip_package(self, dep):
-        """ Call the PyPI API to find details about package """
+        """Query PyPi package information.
+
+        Sends a HTTP GET request to the PyPi remote API.
+
+        Args:
+            dep (str): A PyPi package name.
+
+        Raises:
+            A ValueError, if the package name can not be resolved or the connection timed out.
+        """
         pip_depname, pip_depver = dep.split('=', 1)
         pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
         try:
@@ -684,12 +732,13 @@ class PipelineLint(object):
                 raise ValueError
 
     def check_conda_dockerfile(self):
-        """ Check that the Docker build file looks right, if working with conda
+        """Checks the Docker build file.
 
-        Make sure that a name is given and is consistent with the pipeline name
-        Check that depedency versions are pinned
-        Warn if dependency versions are not the latest available """
-
+        Checks that:
+            * a name is given and is consistent with the pipeline name
+            * dependency versions are pinned
+            * dependency versions are the latest available
+        """
         if 'environment.yml' not in self.files or len(self.dockerfile) == 0:
             return
 
@@ -708,12 +757,13 @@ class PipelineLint(object):
                 self.failed.append((10, "Could not find Dockerfile file string: {}".format(missing)))
 
     def check_conda_singularityfile(self):
-        """ Check that the Singularity build file looks right, if working with conda
+        """Checks the Singularity build file.
 
-        Make sure that a name is given and is consistent with the pipeline name
-        Check that depedency versions are pinned
-        Warn if dependency versions are not the latest available """
-
+        Checks that:
+            * a name is given and is consistent with the pipeline name
+            * dependency versions are pinned
+            * dependency versions are the latest available
+        """
         if 'environment.yml' not in self.files or len(self.singularityfile) == 0:
             return
 
