@@ -2,9 +2,16 @@
 
 ## v1.5dev
 
-### Syncing
+#### Syncing
 * Syncing now reads from a `blacklist.json` in order to exclude
 pipelines from being synced if necessary.
+
+#### Template pipeline
+_..nothing yet.._
+
+#### Tools helper code
+* `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
+* `nf-core lint` now properly searches for conda packages in default channels
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 

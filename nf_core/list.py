@@ -148,13 +148,14 @@ class Workflows(object):
         # Build summary list to print
         summary = list()
         for wf in self.filtered_workflows():
-            rowdata = [
-                wf.full_name,
-                wf.releases[-1]['tag_name'] if len(wf.releases) > 0 else 'dev',
-                wf.releases[-1]['published_at_pretty'] if len(wf.releases) > 0 else '-',
-                wf.local_wf.last_pull_pretty if wf.local_wf is not None else '-',
-                'Yes' if wf.local_is_latest else 'No'
-            ]
+            version = wf.releases[-1]['tag_name'] if len(wf.releases) > 0 else 'dev'
+            published = wf.releases[-1]['published_at_pretty'] if len(wf.releases) > 0 else '-'
+            pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else '-'
+            if wf.local_wf is not None:
+                is_latest = 'Yes' if wf.local_is_latest else 'No'
+            else:
+                is_latest = '-'
+            rowdata = [ wf.full_name, version, published, pulled, is_latest ]
             if self.sort_workflows == 'stars':
                 rowdata.insert(1, wf.stargazers_count)
             summary.append(rowdata)
