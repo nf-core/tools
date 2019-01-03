@@ -3,6 +3,7 @@
 # [nf-core/tools](https://github.com/nf-core/tools)
 [![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
+[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
 
 A python package with helper tools for the nf-core community.
 
@@ -184,13 +185,13 @@ samtools               1.8        MIT
 
 ## Creating a new workflow
 The `create` subcommand makes a new workflow using the nf-core base template.
-With a given pipeline name and description, it gives you a starter pipeline which follows nf-core best practices.
+With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
 
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
 See the [nf-core syncing docs](http://nf-co.re/sync) for more information.
 
 ```
-$ nf-core create -n nextbigthing -d "This pipeline analyses data from the next big 'omics technique"
+$ nf-core create
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -198,6 +199,9 @@ $ nf-core create -n nextbigthing -d "This pipeline analyses data from the next b
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+Workflow Name: nextbigthing
+Description: This pipeline analyses data from the next big 'omics technique
+Author: Big Steve
 
 INFO: Creating new nf-core pipeline: nf-core/nextbigthing
 
@@ -218,14 +222,10 @@ git push --set-upstream origin master
 ```
 
 You can then continue to edit, commit and push normally as you build your pipeline.
-When you're ready, create a new repository under the `nf-core` organisation (or ask someone to do this for you on the gitter channel) and make a pull-request.
 
-Final tasks (needs more documentation):
-* Set up travis CI on fork and nf-core repository
-* Create a dockerhub repository
-* Create a singularity hub repository
-* Add a description and keywords to the github repositories
-* Protect the `master` branch on the nf-core repository
+Please see the [nf-core documentation](https://nf-co.re/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
+
+Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
 
 ## Linting a workflow
@@ -256,7 +256,7 @@ WARNING: Test Warnings:
   http://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
 ```
 
-You can find extensive documentation about each of the lint tests in the [lint errors documentation](docs/lint_errors.md).
+You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
 
 
 ## Bumping a pipeline version number
@@ -299,8 +299,8 @@ INFO: Updating version in nextflow.config
  + container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .travis.yml
- - docker tag nfcore/mypipeline nfcore/mypipeline:latest
- + docker tag nfcore/mypipeline nfcore/mypipeline:1.0
+ - docker tag nfcore/mypipeline:dev nfcore/mypipeline:latest
+ + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in Singularity
  - VERSION 1.0dev

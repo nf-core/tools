@@ -1,11 +1,59 @@
 # nf-core/tools: Changelog
 
-## v1.3dev
+## v1.5dev
+
+#### Documentation
+* Added nf-core tools API description to assist developers with the classes and functions available.
+
+#### Code coverage
+* Introduced test for filtering remote workflows by keyword
+
+#### Syncing
+* Syncing now reads from a `blacklist.json` in order to exclude
+pipelines from being synced if necessary.
+
+#### Template pipeline
+_..nothing yet.._
+
+#### Tools helper code
+* `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
+* `nf-core lint` now properly searches for conda packages in default channels
+
+## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
+
+#### Template pipeline
+* Institutional custom config profiles moved to github `nf-core/configs`
+    * These will now be maintained centrally as opposed to being shipped with the pipelines in `conf/`
+    * Load `base.config` by default for all profiles
+    * Removed profiles named `standard` and `none`
+    * Added parameter `--igenomesIgnore` so `igenomes.config` is not loaded if parameter clashes are observed
+    * Added parameter `--custom_config_version` for custom config version control. Can use this parameter to provide commit id for reproducibility. Defaults to `master`
+    * Deleted custom configs from template in `conf/` directory i.e. `uzh.config`, `binac.config` and `cfc.config`
+* `multiqc_config` and `output_md` are now put into channels instead of using the files directly (see issue [#222](https://github.com/nf-core/tools/issues/222))
+* Added `local.md` to cookiecutter template in `docs/configuration/`. This was referenced in `README.md` but not present.
+* Major overhaul of docs to add/remove parameters, unify linking of files and added description for providing custom configs where necessary
+* Travis: Pull the `dev` tagged docker image for testing
+* Removed UPPMAX-specific documentation from the template.
+
+#### Tools helper code
+* Make Travis CI tests fail on pull requests if the `CHANGELOG.md` file hasn't been updated
+* Minor bugfixing in Python code (eg. removing unused import statements)
+* Made the web requests caching work on multi-user installations
+* Handle exception if nextflow isn't installed
+* Linting: Update for Travis: Pull the `dev` tagged docker image for testing
+
+## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
+* `nf-core create` command line interface updated
+    * Interactive prompts for required arguments if not given
+    * New flag for workflow author
 * Updated channel order for bioconda/conda-forge channels in environment.yaml
 * Increased code coverage for sub command `create` and `licenses`
 * Fixed nasty dependency hell issue between `pytest` and `py` package in Python 3.4.x
 * Introduced `.coveragerc` for pytest-cov configuration, which excludes the pipeline template now from being reported
 * Fix [189](https://github.com/nf-core/tools/issues/189): Check for given conda and PyPi package dependencies, if their versions exist
+* Added profiles for `cfc`,`binac`, `uzh` that can be synced across pipelines
+  * Ordering alphabetically for profiles now
+* Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
 
 ## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
 * Updated the `nf-core release` command

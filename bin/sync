@@ -1,16 +1,12 @@
 #!/usr/bin/env python
 
-from cookiecutter.main import cookiecutter
-import git
 import json
 import os
 import requests
 from requests.auth import HTTPBasicAuth
-import shutil
 import sys
-import subprocess
-import tempfile
 import syncutils.template
+import syncutils.utils
 
 # Set the default nf-core pipeline template branch
 DEF_TEMPLATE_BRANCH = "TEMPLATE"
@@ -20,6 +16,9 @@ GH_BASE_URL = "https://{token}@github.com/nf-core/{pipeline}"
 NF_CORE_PIPELINE_INFO = "http://nf-co.re/pipelines.json"
 # The API endpoint for creating pull requests
 GITHUB_PR_URL_TEMPL = "https://api.github.com/repos/nf-core/{pipeline}/pulls"
+# Current script dir
+PATH_PARENT_DIR = os.path.dirname(os.path.realpath(__file__))
+
 
 
 def create_pullrequest(pipeline, origin="dev", template="TEMPLATE", token="", user="nf-core"):
@@ -39,6 +38,7 @@ def create_pullrequest(pipeline, origin="dev", template="TEMPLATE", token="", us
                          data=json.dumps(content),
                          auth=HTTPBasicAuth(user, token))
 
+
 def main():
     # Check that the commit event is a GitHub tag event
     assert os.environ['TRAVIS_TAG']
@@ -48,15 +48,22 @@ def main():
     sync_errors = []
     pr_errors = []
 
+    # Get blacklisted pipelines, that should be excluded from sync
+    with open(PATH_PARENT_DIR + "/blacklist.json") as fh:
+        blacklist = json.load(fh)
+
     # Get nf-core pipelines info
     res = requests.get(NF_CORE_PIPELINE_INFO)
-    pipelines = json.loads(res.content).get('remote_workflows')
+    pipelines = res.json().get('remote_workflows')
     if not pipelines:
         print("Pipeline information was empty!")
-    
-    # TODO: Remove this line, once we go for production
-    pipelines = [{"name":"hlatyping"}] # just for testing
-    
+
+    pipelines_without_template = syncutils.utils.repos_without_template_branch(
+        pipeline["name"] for pipeline in pipelines)
+
+    # Exclude blacklisted pipelines
+    pipelines = [pipeline for pipeline in pipelines if pipeline['name'] not in blacklist['pipelines']]
+
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
         print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
@@ -68,31 +75,31 @@ def main():
             ).sync()
         except Exception as e:
             sync_errors.append((pipeline['name'], e))
-    
+
     # Create a pull request from each template branch to the origin branch
     for pipeline in pipelines:
         print("Trying to open pull request for pipeline {}...".format(pipeline['name']))
-        response = create_pullrequest(pipeline['name'], os.environ["NF_CORE_BOT"])
+        response = create_pullrequest(pipeline['name'], token=os.environ["NF_CORE_BOT"])
         if response.status_code != 201:
             pr_errors.append((pipeline['name'], response.status_code, response.content))
         else:
             print("Created pull-request for pipeline \'{pipeline}\' successfully."
                 .format(pipeline=pipeline["name"]))
-    
+
     for pipeline, exception in sync_errors:
-        print("Sync for pipeline {name} failed.".format(pipeline))
+        print("Sync for pipeline {name} failed.".format(name=pipeline))
         print(exception)
 
     for pipeline, return_code, content in pr_errors:
-        print("Pull-request for pipeline \'{pipeline}\' failed," 
+        print("Pull-request for pipeline \'{pipeline}\' failed,"
                 " got return code {return_code}."
-                .format(pipeline=pipeline["name"], return_code=return_code))
+                .format(pipeline=pipeline, return_code=return_code))
         print(content)
-    
+
     if pr_errors or sync_errors: sys.exit(1)
-    
+
     sys.exit(0)
-            
+
+
 if __name__ == "__main__":
     main()
-
