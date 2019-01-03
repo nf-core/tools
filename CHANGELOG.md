@@ -2,6 +2,9 @@
 
 ## v1.5dev
 
+#### Code coverage
+* Introduced test for filtering remote workflows by keyword
+
 #### Template pipeline
 _..nothing yet.._
 
