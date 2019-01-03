@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## v1.5dev
+
+### Syncing
+* Syncing now reads from a `blacklist.json` in order to exclude
+pipelines from being synced if necessary.
+
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
 #### Template pipeline
