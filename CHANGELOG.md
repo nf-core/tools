@@ -5,6 +5,10 @@
 #### Code coverage
 * Introduced test for filtering remote workflows by keyword
 
+#### Syncing
+* Syncing now reads from a `blacklist.json` in order to exclude
+pipelines from being synced if necessary.
+
 #### Template pipeline
 _..nothing yet.._
 

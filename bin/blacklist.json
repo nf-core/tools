@@ -1,0 +1,14 @@
+{
+  "pipelines": [
+    "atacseq",
+    "bcellmagic",
+    "chipseq",
+    "epitopeprediction",
+    "exoseq",
+    "nascent",
+    "neutronstar", 
+    "rnaseq",
+    "smrnaseq",
+    "vipr"
+  ]
+}
