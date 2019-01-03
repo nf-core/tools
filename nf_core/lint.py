@@ -581,6 +581,17 @@ class PipelineLint(object):
         # Check if each dependency is the latest available version
         depname, depver = dep.split('=', 1)
         dep_channels = self.conda_config.get('channels', [])
+        # 'defaults' isn't actually a channel name. See https://docs.anaconda.com/anaconda/user-guide/tasks/using-repositories/
+        if 'defaults' in dep_channels:
+            dep_channels.remove('defaults')
+            dep_channels.extend([
+                'main',
+                'anaconda',
+                'r',
+                'free',
+                'archive',
+                'anaconda-extras'
+            ])
         if '::' in depname:
             dep_channels = [depname.split('::')[0]]
             depname = depname.split('::')[1]
