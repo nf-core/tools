@@ -32,6 +32,7 @@ script:
 
 after_success:
   - codecov
+  - ./bin/push.sh  #Create API docs and push to Github
 
 deploy:
   provider: pypi
