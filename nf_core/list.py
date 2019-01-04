@@ -60,8 +60,10 @@ class Workflows(object):
         self.sort_workflows_by = sort_by
 
     def get_remote_workflows(self):
-        """ Get remote nf-core workflows """
+        """Retrieves remote workflows from `nf-co.re <http://nf-co.re>`_.
 
+        Remote workflows are stored in :attr:`self.remote_workflows` list.
+        """
         # List all repositories at nf-core
         logging.debug("Fetching list of nf-core workflows")
         nfcore_url = 'http://nf-co.re/pipelines.json'
@@ -72,8 +74,10 @@ class Workflows(object):
                 self.remote_workflows.append(RemoteWorkflow(repo))
 
     def get_local_nf_workflows(self):
-        """ Get local nextflow workflows """
+        """Retrieves local Nextflow workflows.
 
+        Local workflows are stored in :attr:`self.local_workflows` list.
+        """
         # Try to guess the local cache directory (much faster than calling nextflow)
         if os.environ.get('NXF_ASSETS'):
             nf_wfdir = os.path.join(os.environ.get('NXF_ASSETS'), 'nf-core')
@@ -108,7 +112,14 @@ class Workflows(object):
             wf.get_local_nf_workflow_details()
 
     def compare_remote_local(self):
-        """ Match local to remote workflows. """
+        """Matches local to remote workflows.
+
+        If a matching remote workflow is found, the local workflow's Git commit hash is compared
+        with the latest one from remote.
+
+        A boolean flag in :attr:`RemoteWorkflow.local_is_latest` is set to True, if the local workflow
+        is the latest.
+        """
         for rwf in self.remote_workflows:
             for lwf in self.local_workflows:
                 if rwf.full_name == lwf.full_name:
@@ -120,7 +131,11 @@ class Workflows(object):
                             rwf.local_is_latest = False
 
     def filtered_workflows(self):
-        """ Filter remote workflows if keywords supplied """
+        """Filters remote workflows for keywords.
+
+        Returns:
+            list: Filtered remote workflows.
+        """
         # If no keywords, don't filter
         if not self.keyword_filters:
             return self.remote_workflows
@@ -139,7 +154,7 @@ class Workflows(object):
         return filtered_workflows
 
     def print_summary(self):
-        """ Print summary of all pipelines """
+        """Prints a summary of all pipelines."""
 
         # Sort by released / dev, then alphabetical
         if self.sort_workflows_by == 'release':
@@ -193,11 +208,14 @@ class Workflows(object):
 
 
 class RemoteWorkflow(object):
-    """ Class to hold a single workflow """
+    """A information container for a remote workflow.
+
+    Args:
+        data (dict): workflow information as they are retrieved from the Github repository REST API request
+            (https://developer.github.com/v3/repos/#get).
+    """
 
     def __init__(self, data):
-        """ Initialise a workflow object from the GitHub API object """
-
         # Vars from the initial data payload
         self.name = data.get('name')
         self.full_name = data.get('full_name')
@@ -282,9 +300,9 @@ class LocalWorkflow(object):
             self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
             self.last_pull_pretty = pretty_date(self.last_pull)
 
+
 def pretty_date(time):
-    """
-    Get a datetime object or a int() Epoch timestamp and return a
+    """Transforms a datetime object or a int() Epoch timestamp into a
     pretty string like 'an hour ago', 'Yesterday', '3 months ago',
     'just now', etc
 
