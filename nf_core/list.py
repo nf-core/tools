@@ -22,16 +22,16 @@ import nf_core.utils
 nf_core.utils.setup_requests_cachedir()
 
 
-def list_workflows(sort_by='release', as_json=False, *args):
+def list_workflows(filter_by=None, sort_by='release', as_json=False):
     """Prints out a list of all nf-core workflows.
 
     Args:
+        filter_by (list): A list of strings that can be used for filtering.
         sort_by (str): workflows can be sorted by keywords. Keyword must be one of
             `release` (default), `name`, `stars`.
         as_json (boolean): Set to true, if the lists should be printed in JSON.
-        *args: A variable number of strings that can be used for filtering.
     """
-    wfs = Workflows(sort_by, *args)
+    wfs = Workflows(filter_by, sort_by)
     wfs.get_remote_workflows()
     wfs.get_local_nf_workflows()
     wfs.compare_remote_local()
@@ -48,15 +48,15 @@ class Workflows(object):
     can be sorted, filtered and compared.
 
     Args:
+        filter_by (list): A list of strings that can be used for filtering.
         sort_by (str): workflows can be sorted by keywords. Keyword must be one of
             `release` (default), `name`, `stars`.
-        *args: A variable length string argument list that can be used for filtering.
     """
-    def __init__(self, sort_by='release', *args):
+    def __init__(self, filter_by=None, sort_by='release'):
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
-        self.keyword_filters = list(*args)
+        self.keyword_filters = filter_by if filter_by is not None else []
         self.sort_workflows_by = sort_by
 
     def get_remote_workflows(self):
