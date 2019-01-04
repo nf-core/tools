@@ -10,9 +10,10 @@ Welcome to nf-core's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   download
+   licences
    lint
    list
-   licences
 
 
 
