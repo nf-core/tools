@@ -16,7 +16,7 @@ Welcome to nf-core's documentation!
    licences
    lint
    list
-
+   utils
 
 
 Indices and tables
