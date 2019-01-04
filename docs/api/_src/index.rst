@@ -10,7 +10,8 @@ Welcome to nf-core's documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   nf_core
+   lint
+   list
 
 
 
