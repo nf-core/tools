@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" List available nf-core pipelines and versions """
+"""Lists available nf-core pipelines and versions."""
 
 from __future__ import print_function
 from collections import OrderedDict
@@ -21,27 +21,43 @@ import nf_core.utils
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
 
-def list_workflows(sort='release', json=False, keywords=[]):
-    """ Main function to list all nf-core workflows """
-    wfs = Workflows(sort, keywords)
+
+def list_workflows(sort_by='release', as_json=False, *args):
+    """Prints out a list of all nf-core workflows.
+
+    Args:
+        sort_by (str): workflows can be sorted by keywords. Keyword must be one of
+            `release` (default), `name`, `stars`.
+        as_json (boolean): Set to true, if the lists should be printed in JSON.
+        *args: A variable number of strings that can be used for filtering.
+    """
+    wfs = Workflows(sort_by, *args)
     wfs.get_remote_workflows()
     wfs.get_local_nf_workflows()
     wfs.compare_remote_local()
-    if json:
+    if as_json:
         wfs.print_json()
     else:
         wfs.print_summary()
 
-class Workflows(object):
-    """ Class to hold all workflows """
 
-    def __init__(self, sort='release', keywords=[]):
-        """ Initialise the class with empty placeholder vars """
+class Workflows(object):
+    """Workflow container class.
+
+    Is used to collect local and remote nf-core pipelines. Pipelines
+    can be sorted, filtered and compared.
+
+    Args:
+        sort_by (str): workflows can be sorted by keywords. Keyword must be one of
+            `release` (default), `name`, `stars`.
+        *args: A variable length string argument list that can be used for filtering.
+    """
+    def __init__(self, sort_by='release', *args):
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
-        self.keyword_filters = keywords
-        self.sort_workflows = sort
+        self.keyword_filters = list(*args)
+        self.sort_workflows_by = sort_by
 
     def get_remote_workflows(self):
         """ Get remote nf-core workflows """
@@ -126,7 +142,7 @@ class Workflows(object):
         """ Print summary of all pipelines """
 
         # Sort by released / dev, then alphabetical
-        if self.sort_workflows == 'release':
+        if self.sort_workflows_by == 'release':
             self.remote_workflows.sort(
                 key=lambda wf: (
                     (wf.releases[-1].get('published_at_timestamp', 0) if len(wf.releases) > 0 else 0) * -1,
@@ -134,10 +150,10 @@ class Workflows(object):
                 )
             )
         # Sort by name
-        elif self.sort_workflows == 'name':
+        elif self.sort_workflows_by == 'name':
             self.remote_workflows.sort( key=lambda wf: wf.full_name.lower() )
         # Sort by stars, then name
-        elif self.sort_workflows == 'stars':
+        elif self.sort_workflows_by == 'stars':
             self.remote_workflows.sort(
                 key=lambda wf: (
                     wf.stargazers_count * -1,
@@ -156,11 +172,11 @@ class Workflows(object):
             else:
                 is_latest = '-'
             rowdata = [ wf.full_name, version, published, pulled, is_latest ]
-            if self.sort_workflows == 'stars':
+            if self.sort_workflows_by == 'stars':
                 rowdata.insert(1, wf.stargazers_count)
             summary.append(rowdata)
         t_headers = ['Name', 'Version', 'Published', 'Last Pulled', 'Default local is latest release?']
-        if self.sort_workflows == 'stars':
+        if self.sort_workflows_by == 'stars':
             t_headers.insert(1, 'Stargazers')
 
         # Print summary table
