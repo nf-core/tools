@@ -29,7 +29,7 @@ class TestLint(unittest.TestCase):
     @mock.patch('nf_core.list.LocalWorkflow')
     def test_working_listcall_json(self, mock_loc_wf, mock_subprocess, mock_json):
         """ Test that listing pipelines with JSON works """
-        nf_core.list.list_workflows(True)
+        nf_core.list.list_workflows([], as_json=True)
 
     def test_pretty_datetime(self):
         """ Test that the pretty datetime function works """
@@ -124,7 +124,7 @@ class TestLint(unittest.TestCase):
     
 
     def test_worflow_filter(self):
-        workflows_obj = nf_core.list.Workflows(keywords=["rna"])
+        workflows_obj = nf_core.list.Workflows(["rna", "myWF"])
 
         remote = {
             'name': 'myWF',
