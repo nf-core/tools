@@ -10,6 +10,7 @@ Welcome to nf-core's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   bump_version
    create
    download
    licences

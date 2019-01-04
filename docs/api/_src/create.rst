@@ -1,4 +1,4 @@
-nf-core.create
+nf_core.create
 ==============
 
 .. automodule:: nf_core.create
