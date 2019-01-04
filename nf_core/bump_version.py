@@ -1,8 +1,6 @@
 #!/usr/bin/env python
-""" Release code for the nf-core python package.
-
-Bumps the version number in all appropriate files for
-a nf-core pipeline
+"""Bumps the version number in all appropriate files for
+a nf-core pipeline.
 """
 
 import logging
@@ -10,9 +8,15 @@ import os
 import re
 import sys
 
-def bump_pipeline_version(lint_obj, new_version):
-    """ Function to bump a pipeline version number. Called by the main script """
 
+def bump_pipeline_version(lint_obj, new_version):
+    """Bumps a pipeline version number.
+
+    Args:
+        lint_obj (nf_core.lint.PipelineLint): A `PipelineLint` object that holds information
+            about the pipeline contents and build files.
+        new_version (str): The new version tag for the pipeline. Semantic versioning only.
+    """
     # Collect the old and new version numbers
     current_version = lint_obj.config.get('manifest.version', '').strip(' \'"')
     if new_version.startswith('v'):
@@ -64,9 +68,15 @@ def bump_pipeline_version(lint_obj, new_version):
         nfconfig_newstr = "PATH=/opt/conda/envs/nf-core-{}-{}/bin:$PATH".format(lint_obj.pipeline_name.lower(), new_version)
         update_file_version("Singularity", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-def bump_nextflow_version(lint_obj, new_version):
-    """ Function to bump the required nextflow version number."""
 
+def bump_nextflow_version(lint_obj, new_version):
+    """Bumps the required Nextflow version number of a pipeline.
+
+    Args:
+        lint_obj (nf_core.lint.PipelineLint): A `PipelineLint` object that holds information
+            about the pipeline contents and build files.
+        new_version (str): The new version tag for the required Nextflow version.
+    """
     # Collect the old and new version numbers
     current_version = lint_obj.config.get('manifest.nextflowVersion', '').strip(' \'"')
     current_version = re.sub(r'[^0-9\.]', '', current_version)
@@ -91,9 +101,21 @@ def bump_nextflow_version(lint_obj, new_version):
     nfconfig_newstr = "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version)
     update_file_version("README.md", lint_obj, nfconfig_pattern, nfconfig_newstr, True)
 
-def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=False):
-    """ Update version number in the requested file """
 
+def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=False):
+    """Updates the version number in a requested file.
+
+    Args:
+        filename (str): File to scan.
+        lint_obj (nf_core.lint.PipelineLint): A PipelineLint object that holds information
+            about the pipeline contents and build files.
+        pattern (str): Regex pattern to apply.
+        newstr (str): The replaced string.
+        allow_multiple (bool): Replace all pattern hits, not only the first. Defaults to False.
+
+    Raises:
+        SyntaxError, if the version number cannot be found.
+    """
     # Load the file
     fn = os.path.join(lint_obj.path, filename)
     content = ''
@@ -103,9 +125,9 @@ def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=Fals
     # Check that we have exactly one match
     matches = re.findall(pattern, content)
     if len(matches) == 0:
-        raise SyntaxError ("Could not find version number in {}: '{}'".format(filename, pattern))
+        raise SyntaxError("Could not find version number in {}: '{}'".format(filename, pattern))
     if len(matches) > 1 and not allow_multiple:
-        raise SyntaxError ("Found more than one version number in {}: '{}'".format(filename, pattern))
+        raise SyntaxError("Found more than one version number in {}: '{}'".format(filename, pattern))
 
     # Replace the match
     logging.info("Updating version in {}\n - {}\n + {}".format(filename, matches[0], newstr))

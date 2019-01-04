@@ -14,7 +14,7 @@ import nf_core
 
 
 class PipelineCreate(object):
-    """Creates a nf-core pipeline à la carte from the nf-core best-practise template.
+    """Creates a nf-core pipeline a la carte from the nf-core best-practise template.
 
     Args:
         name (str): Name for the pipeline.
