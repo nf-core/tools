@@ -26,7 +26,7 @@ class DownloadWorkflow(object):
     Args:
         pipeline (str): A nf-core pipeline name.
         release (str): The workflow release version to download, like `1.0`. Defaults to None.
-        singularity (boolean): Flag, if the Singularity container should be downloaded as well. Defaults to False.
+        singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
     """
     def __init__(self, pipeline, release=None, singularity=False, outdir=None):
