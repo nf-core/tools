@@ -1,5 +1,5 @@
-nf-core.lint reference
-=====================
+nf-core.lint
+============
 
 .. automodule:: nf_core.list
     :members:

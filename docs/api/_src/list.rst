@@ -1,5 +1,5 @@
-nf-core.list reference
-=====================
+nf-core.list
+============
 
 .. automodule:: nf_core.list
     :members:

@@ -12,6 +12,7 @@ Welcome to nf-core's documentation!
 
    lint
    list
+   licences
 
 
 
