@@ -1,9 +1,5 @@
 #!/bin/sh
 
-setup_git() {
-  git config --global user.name "nf-core bot"
-}
-
 create_api_doc() {
     make --directory ./docs/api html
 }
@@ -21,10 +17,9 @@ commit_website_files() {
 }
 
 upload_files() {
-  git remote add nf-core https://$NF_CORE_BOT@github.com/nf-core/tools.git > /dev/null 2>&1
+  git remote add nf-core "https://$NF_CORE_BOT@github.com/nf-core/tools.git" > /dev/null 2>&1
   git push --quiet --set-upstream nf-core api-doc
 }
 
-setup_git
 commit_website_files
 upload_files
