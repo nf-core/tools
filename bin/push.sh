@@ -9,7 +9,7 @@ create_api_doc() {
 }
 
 remove_source_files() {
-    ls | grep -v docs | xargs rm -rf
+    git rm -r --cache .
 }
 
 commit_website_files() {
