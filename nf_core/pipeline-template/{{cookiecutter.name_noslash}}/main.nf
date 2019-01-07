@@ -134,36 +134,38 @@ log.info """=======================================================
 {{ cookiecutter.name }} v${workflow.manifest.version}"
 ======================================================="""
 def summary = [:]
-summary['Pipeline Name']  = '{{ cookiecutter.name }}'
+summary['Pipeline Name']    = '{{ cookiecutter.name }}'
 summary['Pipeline Version'] = workflow.manifest.version
-summary['Run Name']     = custom_runName ?: workflow.runName
+summary['Run Name']         = custom_runName ?: workflow.runName
 // TODO nf-core: Report custom parameters here
-summary['Reads']        = params.reads
-summary['Fasta Ref']    = params.fasta
-summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
-summary['Max Memory']   = params.max_memory
-summary['Max CPUs']     = params.max_cpus
-summary['Max Time']     = params.max_time
-summary['Output dir']   = params.outdir
-summary['Working dir']  = workflow.workDir
+summary['Reads']            = params.reads
+summary['Fasta Ref']        = params.fasta
+summary['Data Type']        = params.singleEnd ? 'Single-End' : 'Paired-End'
+summary['Max Memory']       = params.max_memory
+summary['Max CPUs']         = params.max_cpus
+summary['Max Time']         = params.max_time
+summary['Output dir']       = params.outdir
+summary['Working dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
 if(workflow.containerEngine) summary['Container'] = workflow.container
-summary['Current home']   = "$HOME"
-summary['Current user']   = "$USER"
-summary['Current path']   = "$PWD"
-summary['Working dir']    = workflow.workDir
-summary['Output dir']     = params.outdir
-summary['Script dir']     = workflow.projectDir
-summary['Config Profile'] = workflow.profile
-params.config_profile_description ? summary['Config Profile Description'] = params.config_profile_description
-params.config_profile_contact ? summary['Config Profile Contact'] = params.config_profile_contact
-params.config_profile_url ? summary['Config Profile URL'] = params.config_profile_url
+summary['Current home']     = "$HOME"
+summary['Current user']     = "$USER"
+summary['Current path']     = "$PWD"
+summary['Working dir']      = workflow.workDir
+summary['Output dir']       = params.outdir
+summary['Script dir']       = workflow.projectDir
+summary['Config Profile']   = workflow.profile
+if(params.config_profile_description){
+  summary['Config Profile Description'] = params.config_profile_description
+  summary['Config Profile Contact']     = params.config_profile_contact
+  summary['Config Profile URL']         = params.config_profile_url
+}
 if(workflow.profile == 'awsbatch'){
    summary['AWS Region'] = params.awsregion
-   summary['AWS Queue'] = params.awsqueue
+   summary['AWS Queue']  = params.awsqueue
 }
 if(params.email) summary['E-mail Address'] = params.email
-log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
+log.info summary.collect { k,v -> "${k.padRight(26)}: $v" }.join("\n")
 log.info "========================================="
 
 
