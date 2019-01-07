@@ -2,6 +2,9 @@
 
 ## v1.5dev
 
+#### CI
+* Build API docs
+
 #### Documentation
 * Added nf-core tools API description to assist developers with the classes and functions available.
 
