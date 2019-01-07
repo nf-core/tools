@@ -32,7 +32,7 @@ script:
 
 after_success:
   - codecov
-  - 'if [ "$TRAVIS_PULL_REQUEST" = "false" && "TRAVIS_PYTHON_VERSION" = "3.6" && ( "$TRAVIS_BRANCH" = "master" || "$TRAVIS_BRANCH" = "dev" ) ]; then bash ./bin/push.sh; fi'
+  - 'if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_PYTHON_VERSION" == "3.6" && "$TRAVIS_BRANCH" == "master" || "$TRAVIS_BRANCH" == "dev" ]]; then bash ./bin/push.sh; fi'
 
 deploy:
   provider: pypi
