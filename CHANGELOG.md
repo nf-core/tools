@@ -13,7 +13,7 @@
 pipelines from being synced if necessary.
 
 #### Template pipeline
-_..nothing yet.._
+* Template logs cluster profiles of nf-core/configs in the nextflow logfile
 
 #### Tools helper code
 * `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
