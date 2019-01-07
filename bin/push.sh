@@ -18,7 +18,7 @@ commit_website_files() {
 
 upload_files() {
   git remote add nf-core "https://$NF_CORE_BOT@github.com/nf-core/tools.git" > /dev/null 2>&1
-  git push --quiet --set-upstream nf-core api-doc
+  git push --force --quiet --set-upstream nf-core api-doc
 }
 
 commit_website_files
