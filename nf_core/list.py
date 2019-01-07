@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" List available nf-core pipelines and versions """
+"""Lists available nf-core pipelines and versions."""
 
 from __future__ import print_function
 from collections import OrderedDict
@@ -21,31 +21,49 @@ import nf_core.utils
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
 
-def list_workflows(sort='release', json=False, keywords=[]):
-    """ Main function to list all nf-core workflows """
-    wfs = Workflows(sort, keywords)
+
+def list_workflows(filter_by=None, sort_by='release', as_json=False):
+    """Prints out a list of all nf-core workflows.
+
+    Args:
+        filter_by (list): A list of strings that can be used for filtering.
+        sort_by (str): workflows can be sorted by keywords. Keyword must be one of
+            `release` (default), `name`, `stars`.
+        as_json (boolean): Set to true, if the lists should be printed in JSON.
+    """
+    wfs = Workflows(filter_by, sort_by)
     wfs.get_remote_workflows()
     wfs.get_local_nf_workflows()
     wfs.compare_remote_local()
-    if json:
+    if as_json:
         wfs.print_json()
     else:
         wfs.print_summary()
 
-class Workflows(object):
-    """ Class to hold all workflows """
 
-    def __init__(self, sort='release', keywords=[]):
-        """ Initialise the class with empty placeholder vars """
+class Workflows(object):
+    """Workflow container class.
+
+    Is used to collect local and remote nf-core pipelines. Pipelines
+    can be sorted, filtered and compared.
+
+    Args:
+        filter_by (list): A list of strings that can be used for filtering.
+        sort_by (str): workflows can be sorted by keywords. Keyword must be one of
+            `release` (default), `name`, `stars`.
+    """
+    def __init__(self, filter_by=None, sort_by='release'):
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
-        self.keyword_filters = keywords
-        self.sort_workflows = sort
+        self.keyword_filters = filter_by if filter_by is not None else []
+        self.sort_workflows_by = sort_by
 
     def get_remote_workflows(self):
-        """ Get remote nf-core workflows """
+        """Retrieves remote workflows from `nf-co.re <http://nf-co.re>`_.
 
+        Remote workflows are stored in :attr:`self.remote_workflows` list.
+        """
         # List all repositories at nf-core
         logging.debug("Fetching list of nf-core workflows")
         nfcore_url = 'http://nf-co.re/pipelines.json'
@@ -56,8 +74,10 @@ class Workflows(object):
                 self.remote_workflows.append(RemoteWorkflow(repo))
 
     def get_local_nf_workflows(self):
-        """ Get local nextflow workflows """
+        """Retrieves local Nextflow workflows.
 
+        Local workflows are stored in :attr:`self.local_workflows` list.
+        """
         # Try to guess the local cache directory (much faster than calling nextflow)
         if os.environ.get('NXF_ASSETS'):
             nf_wfdir = os.path.join(os.environ.get('NXF_ASSETS'), 'nf-core')
@@ -92,7 +112,14 @@ class Workflows(object):
             wf.get_local_nf_workflow_details()
 
     def compare_remote_local(self):
-        """ Match local to remote workflows. """
+        """Matches local to remote workflows.
+
+        If a matching remote workflow is found, the local workflow's Git commit hash is compared
+        with the latest one from remote.
+
+        A boolean flag in :attr:`RemoteWorkflow.local_is_latest` is set to True, if the local workflow
+        is the latest.
+        """
         for rwf in self.remote_workflows:
             for lwf in self.local_workflows:
                 if rwf.full_name == lwf.full_name:
@@ -104,7 +131,11 @@ class Workflows(object):
                             rwf.local_is_latest = False
 
     def filtered_workflows(self):
-        """ Filter remote workflows if keywords supplied """
+        """Filters remote workflows for keywords.
+
+        Returns:
+            list: Filtered remote workflows.
+        """
         # If no keywords, don't filter
         if not self.keyword_filters:
             return self.remote_workflows
@@ -123,10 +154,10 @@ class Workflows(object):
         return filtered_workflows
 
     def print_summary(self):
-        """ Print summary of all pipelines """
+        """Prints a summary of all pipelines."""
 
         # Sort by released / dev, then alphabetical
-        if self.sort_workflows == 'release':
+        if self.sort_workflows_by == 'release':
             self.remote_workflows.sort(
                 key=lambda wf: (
                     (wf.releases[-1].get('published_at_timestamp', 0) if len(wf.releases) > 0 else 0) * -1,
@@ -134,10 +165,10 @@ class Workflows(object):
                 )
             )
         # Sort by name
-        elif self.sort_workflows == 'name':
+        elif self.sort_workflows_by == 'name':
             self.remote_workflows.sort( key=lambda wf: wf.full_name.lower() )
         # Sort by stars, then name
-        elif self.sort_workflows == 'stars':
+        elif self.sort_workflows_by == 'stars':
             self.remote_workflows.sort(
                 key=lambda wf: (
                     wf.stargazers_count * -1,
@@ -156,11 +187,11 @@ class Workflows(object):
             else:
                 is_latest = '-'
             rowdata = [ wf.full_name, version, published, pulled, is_latest ]
-            if self.sort_workflows == 'stars':
+            if self.sort_workflows_by == 'stars':
                 rowdata.insert(1, wf.stargazers_count)
             summary.append(rowdata)
         t_headers = ['Name', 'Version', 'Published', 'Last Pulled', 'Default local is latest release?']
-        if self.sort_workflows == 'stars':
+        if self.sort_workflows_by == 'stars':
             t_headers.insert(1, 'Stargazers')
 
         # Print summary table
@@ -177,11 +208,14 @@ class Workflows(object):
 
 
 class RemoteWorkflow(object):
-    """ Class to hold a single workflow """
+    """A information container for a remote workflow.
+
+    Args:
+        data (dict): workflow information as they are retrieved from the Github repository REST API request
+            (https://developer.github.com/v3/repos/#get).
+    """
 
     def __init__(self, data):
-        """ Initialise a workflow object from the GitHub API object """
-
         # Vars from the initial data payload
         self.name = data.get('name')
         self.full_name = data.get('full_name')
@@ -266,9 +300,9 @@ class LocalWorkflow(object):
             self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
             self.last_pull_pretty = pretty_date(self.last_pull)
 
+
 def pretty_date(time):
-    """
-    Get a datetime object or a int() Epoch timestamp and return a
+    """Transforms a datetime object or a int() Epoch timestamp into a
     pretty string like 'an hour ago', 'Yesterday', '3 months ago',
     'just now', etc
 

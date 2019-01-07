@@ -2,6 +2,9 @@
 
 ## v1.5dev
 
+#### Documentation
+* Added nf-core tools API description to assist developers with the classes and functions available.
+
 #### Code coverage
 * Introduced test for filtering remote workflows by keyword
 

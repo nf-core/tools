@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" Download a nf-core pipeline """
+"""Downloads a nf-core pipeline to the local file system."""
 
 from __future__ import print_function
 
@@ -14,14 +14,22 @@ import subprocess
 import sys
 from zipfile import ZipFile
 
+import nf_core.list
+import nf_core.utils
 
-import nf_core.list, nf_core.utils
 
-class DownloadWorkflow():
+class DownloadWorkflow(object):
+    """Downloads a nf-core workflow from Github to the local file system.
 
+    Can also download its Singularity container image if required.
+
+    Args:
+        pipeline (str): A nf-core pipeline name.
+        release (str): The workflow release version to download, like `1.0`. Defaults to None.
+        singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
+        outdir (str): Path to the local download directory. Defaults to None.
+    """
     def __init__(self, pipeline, release=None, singularity=False, outdir=None):
-        """ Set class variables """
-
         self.pipeline = pipeline
         self.release = release
         self.singularity = singularity
@@ -34,8 +42,7 @@ class DownloadWorkflow():
         self.containers = list()
 
     def download_workflow(self):
-        """ Main function to download a nf-core workflow """
-
+        """Starts a nf-core workflow download."""
         # Get workflow details
         try:
             self.fetch_workflow_details(nf_core.list.Workflows())
@@ -76,10 +83,13 @@ class DownloadWorkflow():
                         self.pull_singularity_image(container)
 
     def fetch_workflow_details(self, wfs):
-        """ Fetch details of nf-core workflow to download
+        """Fetches details of a nf-core workflow to download.
 
-        params:
-        - wfs   A nf_core.list.Workflows object
+        Args:
+            wfs (nf_core.list.Workflows): A nf_core.list.Workflows object
+
+        Raises:
+            LockupError, if the pipeline can not be found.
         """
         wfs.get_remote_workflows()
 
@@ -144,7 +154,8 @@ class DownloadWorkflow():
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
-        """ Download workflow files from GitHub - save in outdir """
+        """Downloads workflow files from Github to the :attr:`self.outdir`.
+        """
         logging.debug("Downloading {}".format(self.wf_download_url))
 
         # Download GitHub zip file into memory and extract
@@ -157,8 +168,10 @@ class DownloadWorkflow():
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, 'workflow'))
 
     def find_singularity_images(self):
-        """ Find singularity image names for workflow """
+        """Finds Singularity image names for a given workflow.
 
+        Search hits are stored in :attr:`self.containers`.
+        """
         # Use linting code to parse the pipeline nextflow config
         self.config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, 'workflow'))
 
@@ -168,8 +181,15 @@ class DownloadWorkflow():
                 self.containers.append(v.strip('"').strip("'"))
 
     def download_shub_image(self, container):
-        """ Download singularity images from singularity-hub """
+        """Downloads singularity images from Singularity Hub.
 
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to `nfcore/name:latest`.
+
+        Raises:
+            RuntimeWarning, if the API call to Singularity Hub fails.
+        """
         out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
         out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         shub_api_url = 'https://www.singularity-hub.org/api/container/{}'.format(container.replace('nfcore', 'nf-core').replace('docker://', ''))
@@ -214,7 +234,15 @@ class DownloadWorkflow():
             raise ImportError("Error with singularity hub API call: {}".format(response.status_code))
 
     def pull_singularity_image(self, container):
-        """ Use a local installation of singularity to pull an image from docker hub """
+        """Uses a local installation of singularity to pull an image from Docker Hub.
+
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to `nfcore/name:latest`.
+
+        Raises:
+            Various exceptions possible from `subprocess` execution of Singularity.
+        """
         out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
         out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         address = 'docker://{}'.format(container.replace('docker://', ''))
@@ -234,7 +262,15 @@ class DownloadWorkflow():
                 raise e
 
     def validate_md5(self, fname, expected):
-        """ Calculate the md5sum for a file on the disk and validate with expected """
+        """Calculates the md5sum for a file on the disk and validate with expected.
+
+        Args:
+            fname (str): Path to a local file.
+            expected (str): The expected md5sum.
+
+        Raises:
+            IOError, if the md5sum does not match the remote sum.
+        """
         logging.debug("Validating image hash: {}".format(fname))
 
         # Calculate the md5 for the file on disk

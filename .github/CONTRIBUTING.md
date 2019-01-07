@@ -22,6 +22,21 @@ is as follows:
 
 If you're not used to this workflow with git, you can start with some [basic docs from GitHub](https://help.github.com/articles/fork-a-repo/) or even their [excellent interactive tutorial](https://try.github.io/).
 
+## Style guide
+Google provides an excellent [style guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md), which
+is an best practise extension of [PEP](https://www.python.org/dev/peps/), the Python Enhancement Proposals. Have a look at the 
+[docstring](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) section, which is in particular
+important, as nf-core tool's code documentation is generated out of these automatically.
+
+In order to test the documentation, you have to install Sphinx on the machine, where the documentation should be generated.
+
+Please follow Sphinx's [installation instruction](http://www.sphinx-doc.org/en/master/usage/installation.html).
+
+Once done, you can run `make clean` and then `make html` in the root directory of `nf-core tools`, where the `Makefile` is located.
+
+The HTML will then be generated in `docs/api/_build/html`.
+
+
 ## Tests
 When you create a pull request with changes, [Travis CI](https://travis-ci.org/) will run automatic tests.
 Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
