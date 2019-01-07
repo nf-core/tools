@@ -144,28 +144,26 @@ summary['Data Type']        = params.singleEnd ? 'Single-End' : 'Paired-End'
 summary['Max Memory']       = params.max_memory
 summary['Max CPUs']         = params.max_cpus
 summary['Max Time']         = params.max_time
-summary['Output dir']       = params.outdir
-summary['Working dir']      = workflow.workDir
+summary['Output Dir']       = params.outdir
+summary['Working Dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
 if(workflow.containerEngine) summary['Container'] = workflow.container
-summary['Current home']     = "$HOME"
-summary['Current user']     = "$USER"
-summary['Current path']     = "$PWD"
-summary['Working dir']      = workflow.workDir
-summary['Output dir']       = params.outdir
-summary['Script dir']       = workflow.projectDir
-summary['Config Profile']   = workflow.profile
-if(params.config_profile_description){
-  summary['Config Profile Description'] = params.config_profile_description
-  summary['Config Profile Contact']     = params.config_profile_contact
-  summary['Config Profile URL']         = params.config_profile_url
-}
+summary['Current Home']     = "$HOME"
+summary['Current User']     = "$USER"
+summary['Current Path']     = "$PWD"
+summary['Working Dir']      = workflow.workDir
+summary['Output Dir']       = params.outdir
+summary['Script Dir']       = workflow.projectDir
+summary['Config']   = workflow.profile
+if(params.config_profile_description) summary['Config Description'] = params.config_profile_description
+if(params.config_profile_contact)     summary['Config Contact']     = params.config_profile_contact
+if(params.config_profile_url)         summary['Config URL']         = params.config_profile_url
 if(workflow.profile == 'awsbatch'){
    summary['AWS Region'] = params.awsregion
    summary['AWS Queue']  = params.awsqueue
 }
 if(params.email) summary['E-mail Address'] = params.email
-log.info summary.collect { k,v -> "${k.padRight(26)}: $v" }.join("\n")
+log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
 log.info "========================================="
 
 
