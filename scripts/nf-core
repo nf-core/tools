@@ -9,7 +9,7 @@ import os
 import re
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.download, nf_core.licences, nf_core.bump_version, nf_core.create
+import nf_core.bump_version, nf_core.create, nf_core.download, nf_core.launch, nf_core.licences, nf_core.lint, nf_core.list
 
 import logging
 
@@ -114,6 +114,16 @@ def download(pipeline, release, singularity, outdir):
     """ Download a pipeline and singularity container """
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir)
     dl.download_workflow()
+
+@nf_core_cli.command()
+@click.argument(
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+def launch(pipeline):
+    """ Interactively build a nextflow command and launch a pipeline """
+    nf_core.launch.launch_pipeline(pipeline)
 
 @nf_core_cli.command('bump-version')
 @click.argument(
