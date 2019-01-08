@@ -35,7 +35,7 @@ setup(
     setup_requires=[
         'twine>=1.11.0',
         'setuptools>=38.6.'
-    ] + ([] if sys.version_info.minor == 4 else ['wheel>=0.31.0']),
+    ],
     packages = find_packages(exclude=('docs')),
     include_package_data = True,
     zip_safe = False
