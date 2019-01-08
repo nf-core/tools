@@ -2,6 +2,9 @@
 
 ## v1.5dev
 
+#### Launch command
+* Launch nf-core pipelines from command-line
+
 #### Documentation
 * Added nf-core tools API description to assist developers with the classes and functions available.
 
