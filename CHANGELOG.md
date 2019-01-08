@@ -2,6 +2,9 @@
 
 ## v1.5dev
 
+#### General
+* Drop Python 3.4 support
+
 #### CI
 * Build API docs
 * Use Travis job for api doc generation and publish
