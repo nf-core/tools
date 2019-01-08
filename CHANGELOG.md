@@ -4,6 +4,7 @@
 
 #### CI
 * Build API docs
+* Use Travis job for api doc generation and publish
 
 #### Documentation
 * Added nf-core tools API description to assist developers with the classes and functions available.
