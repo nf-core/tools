@@ -20,11 +20,16 @@
 pipelines from being synced if necessary.
 
 #### Template pipeline
-_..nothing yet.._
+* Summary now logs details of the cluster profile used if from [nf-core/configs](https://github.com/nf-core/configs)
 
 #### Tools helper code
 * `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
 * `nf-core lint` now properly searches for conda packages in default channels
+* Linting correctly validates version pinning for packages from PyPI
+* Syncing now reads from a `blacklist.json` in order to exclude pipelines from being synced if necessary.
+* Added nf-core tools API description to assist developers with the classes and functions available.
+  * Docs are automatically built by Travis CI and updated on the nf-co.re website.
+* Introduced test for filtering remote workflows by keyword
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
