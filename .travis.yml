@@ -3,7 +3,6 @@ language: python
 jdk: openjdk8
 python:
   - '2.7'
-  - '3.4'
   - '3.5'
   - '3.6'
 before_install:
@@ -32,7 +31,12 @@ script:
 
 after_success:
   - codecov
-  - ./bin/push.sh  #Create API docs and push to Github
+
+jobs:
+  include:
+    - stage: docs generation
+      if: (branch = "master" OR branch = "dev") AND type = push
+      script: bash ./bin/push.sh
 
 deploy:
   provider: pypi
