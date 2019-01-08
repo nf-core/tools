@@ -32,7 +32,12 @@ script:
 
 after_success:
   - codecov
-  - 'if [[ "$TRAVIS_PULL_REQUEST" == "false" && "$TRAVIS_PYTHON_VERSION" == "3.6" && ("$TRAVIS_BRANCH" == "master" || "$TRAVIS_BRANCH" == "dev") ]]; then bash ./bin/push.sh; fi'
+
+jobs:
+  include:
+    - stage: docs generation
+      if: (branch = "master" OR branch = "dev") AND type = push
+      script: bash ./bin/push.sh
 
 deploy:
   provider: pypi
