@@ -639,14 +639,14 @@ class PipelineLint(object):
                 for pip_dep in dep.get('pip', []):
                     # Check that each pip dependency has a version number
                     try:
-                        assert pip_dep.count('=') == 1
+                        assert pip_dep.count('=') == 2
                     except AssertionError:
                         self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
                     else:
                         self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
 
                         try:
-                            pip_depname, pip_depver = pip_dep.split('=', 1)
+                            pip_depname, pip_depver = pip_dep.split('==', 1)
                             self.check_pip_package(pip_dep)
                         except ValueError:
                             pass

@@ -177,6 +177,8 @@ Each dependency can have the following lint failures and warnings:
 * (Test failure) The package version cannot be found on anaconda cloud (or on PyPi, for `pip` dependencies)
 * (Test warning) A newer version of the package is available
 
+> NB: Conda package versions should be pinned with one equals sign (`toolname=1.1`), pip with two (`toolname==1.2`)
+
 ## Error #9 - Dockerfile for use with Conda environments ## {#9}
 
 > This test only runs if there is both `environment.yml`
