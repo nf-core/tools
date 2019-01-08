@@ -155,6 +155,9 @@ summary['Working dir']    = workflow.workDir
 summary['Output dir']     = params.outdir
 summary['Script dir']     = workflow.projectDir
 summary['Config Profile'] = workflow.profile
+params.config_profile_description ? summary['Config Profile Description'] = params.config_profile_description
+params.config_profile_contact ? summary['Config Profile Contact'] = params.config_profile_contact
+params.config_profile_url ? summary['Config Profile URL'] = params.config_profile_url
 if(workflow.profile == 'awsbatch'){
    summary['AWS Region'] = params.awsregion
    summary['AWS Queue'] = params.awsqueue

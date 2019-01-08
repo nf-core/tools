@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 """Some tests covering the pipeline creation sub command.
 """
-import os
 import pytest
 import nf_core.lint, nf_core.licences
-import tempfile
 import unittest
 
 
 PL_WITH_LICENSES = 'nf-core/hlatyping'
+
 
 class WorkflowLicensesTest(unittest.TestCase):
     """ A class that performs tests on the workflow license
@@ -16,8 +15,7 @@ class WorkflowLicensesTest(unittest.TestCase):
 
     def setUp(self):
         self.license_obj = nf_core.licences.WorkflowLicences(
-            pipeline=PL_WITH_LICENSES,
-            json=False
+            pipeline=PL_WITH_LICENSES
         )
 
     def test_fetch_licenses_successful(self):

@@ -80,13 +80,13 @@ def list(sort, json, keywords):
     '--json',
     is_flag = True,
     default = False,
-    help = "Print output as JSON"
+    help = "Print output in JSON"
 )
 def licences(pipeline, json):
     """ List software licences for a given workflow """
-    lic = nf_core.licences.WorkflowLicences(pipeline, json)
+    lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.fetch_conda_licences()
-    lic.print_licences()
+    lic.print_licences(as_json=json)
 
 @nf_core_cli.command()
 @click.argument(

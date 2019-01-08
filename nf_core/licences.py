@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-""" List software licences for a given workflow """
+"""Lists software licences for a given workflow."""
 
 from __future__ import print_function
 
@@ -13,19 +13,28 @@ import yaml
 
 import nf_core.lint
 
-class WorkflowLicences():
-    """ Class to hold all licence info """
 
-    def __init__(self, pipeline, json=False):
-        """ Set class variables """
+class WorkflowLicences(object):
+    """A nf-core workflow licenses collection.
+
+    Tries to retrieve the license information from all dependencies
+    of a given nf-core pipeline.
+
+    A condensed overview with license per dependency can be printed out.
+
+    Args:
+        pipeline (str): An existing nf-core pipeline name, like `nf-core/hlatyping`
+            or short `hlatyping`.
+    """
+    def __init__(self, pipeline):
         self.pipeline = pipeline
         if self.pipeline.startswith('nf-core/'):
             self.pipeline = self.pipeline[8:]
-        self.json = json
         self.conda_package_licences = {}
 
     def fetch_conda_licences(self):
-        """ Get the conda licences """
+        """Fetch package licences from Anaconda and PyPi.
+        """
         env_url = 'https://raw.githubusercontent.com/nf-core/{}/master/environment.yml'.format(self.pipeline)
         response = requests.get(env_url)
 
@@ -65,7 +74,15 @@ class WorkflowLicences():
                 pass
 
     def clean_licence_names(self, licences):
-        """ Normalise varying licence names """
+        """Normalises varying licence names.
+
+        Args:
+            licences (list): A list of licences which are basically raw string objects from
+                the licence content information.
+
+        Returns:
+            list: Cleaned licences.
+        """
         clean_licences = []
         for l in licences:
             l = re.sub(r'GNU General Public License v\d \(([^\)]+)\)', r'\1', l)
@@ -78,15 +95,17 @@ class WorkflowLicences():
             clean_licences.append(l)
         return clean_licences
 
-    def print_licences(self):
-        """ Print the fetched information """
+    def print_licences(self, as_json=False):
+        """Prints the fetched license information.
 
+        Args:
+            as_json (boolean): Prints the information in JSON. Defaults to False.
+        """
         logging.info("""Warning: This tool only prints licence information for the software tools packaged using conda.
         The pipeline may use other software and dependencies not described here. """)
 
-        if self.json:
+        if as_json:
             print(json.dumps(self.conda_package_licences, indent=4))
-
         else:
             licence_list = []
             for dep, licences in self.conda_package_licences.items():

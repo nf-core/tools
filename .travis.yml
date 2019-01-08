@@ -23,6 +23,7 @@ install:
   - pip install --upgrade pip # Get rid of dependency resolve issues from older pip versions
   - pip install .
   - pip install codecov 'pytest==3.6.4' pytest-datafiles pytest-cov mock
+  - pip install Sphinx sphinxcontrib-napoleon  # For autodoc generation
 
 script:
   - python -m pytest --cov=nf_core .
@@ -31,6 +32,7 @@ script:
 
 after_success:
   - codecov
+  - ./bin/push.sh  #Create API docs and push to Github
 
 deploy:
   provider: pypi

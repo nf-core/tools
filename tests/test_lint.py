@@ -72,7 +72,7 @@ class TestLint(unittest.TestCase):
     def test_call_lint_pipeline_release(self):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.lint_pipeline(release=True)
+        lint_obj.lint_pipeline(release_mode=True)
         expectations = {"failed": 0, "warned": 3, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
 

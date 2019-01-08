@@ -256,7 +256,7 @@ WARNING: Test Warnings:
   http://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
 ```
 
-You can find extensive documentation about each of the lint tests in the [lint errors documentation](docs/lint_errors.md).
+You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
 
 
 ## Bumping a pipeline version number

@@ -1,5 +1,7 @@
 import os
+import requests
 import subprocess
+
 
 def fetch_wf_config(wf_path):
     """
@@ -22,6 +24,7 @@ def fetch_wf_config(wf_path):
             config[k] = v.replace("\'", "").replace("\"", "")
     return config
 
+
 def create_context(config):
     """Consumes a flat Nextflow config file and will create
     a context dictionary with information for the nf-core template creation.
@@ -40,5 +43,22 @@ def create_context(config):
     context["author"] = config.get("manifest.author") if config.get("manifest.author") else "No author provided"
     return context
 
+
 def get_name_from_url(url):
     return url.split("/")[-1] if url else ""
+
+
+def repos_without_template_branch(pipeline_names):
+    pipelines_without_template = []
+    for pipeline in pipeline_names:
+        api_call = "https://api.github.com/repos/nf-core/{}/branches".format(pipeline)
+        print("Fetching branch information for nf-core/{}...".format(pipeline))
+        res = requests.get(api_call)
+        branch_list = res.json()
+        branch_names = [branch["name"] for branch in branch_list]
+        if "TEMPLATE" not in branch_names:
+            pipelines_without_template.append(pipeline)
+            print("WARNING: nf-core/{} had no TEMPLATE branch!".format(pipeline))
+
+    return pipelines_without_template
+
