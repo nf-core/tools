@@ -82,7 +82,7 @@ class PipelineLint(object):
         passed (list): A list of tuples of the form: `(<passed no>, <reason>)`
         path (str): Path to the pipeline directory.
         pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
-        release_mode (bool): `True`, if you the linting was run in release mode, `False` else.
+        release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
         singularityfile (list): A list of lines (str) parsed from the Singularity file.
         warned (list): A list of tuples of the form: `(<warned no>, <reason>)`
 
