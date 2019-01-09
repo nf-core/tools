@@ -33,12 +33,12 @@ def bump_pipeline_version(lint_obj, new_version):
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
     # Update container tag
-    docker_tag = 'latest'
+    docker_tag = 'dev'
     if new_version.replace('.', '').isdigit():
         docker_tag = new_version
     else:
-        logging.info("New version contains letters. Setting docker tag to 'latest'")
-    nfconfig_pattern = r"container\s*=\s*[\'\"]nfcore/{}:(?:{}|latest)[\'\"]".format(lint_obj.pipeline_name.lower(), current_version.replace('.',r'\.'))
+        logging.info("New version contains letters. Setting docker tag to 'dev'")
+    nfconfig_pattern = r"container\s*=\s*[\'\"]nfcore/{}:(?:{}|dev)[\'\"]".format(lint_obj.pipeline_name.lower(), current_version.replace('.',r'\.'))
     nfconfig_newstr = "container = 'nfcore/{}:{}'".format(lint_obj.pipeline_name.lower(), docker_tag)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
