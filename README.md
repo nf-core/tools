@@ -298,10 +298,6 @@ INFO: Updating version in nextflow.config
  - container = 'nfcore/mypipeline:dev'
  + container = 'nfcore/mypipeline:1.0'
 
-INFO: Updating version in .travis.yml
- - docker tag nfcore/mypipeline:dev nfcore/mypipeline:latest
- + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
-
 INFO: Updating version in Singularity
  - VERSION 1.0dev
  + VERSION 1.0

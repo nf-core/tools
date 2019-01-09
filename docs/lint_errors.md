@@ -108,7 +108,7 @@ This test fails if the following happens:
 
 * `.travis.yml` does not contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
 * `.travis.yml` does not contain the string `docker pull <container>:dev` under `before_install`
-    * Where `<container>` is fetched from `params.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
+    * Where `<container>` is fetched from `params.container` in the `nextflow.config` file
 * `.travis.yml` does not test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
     * This is expected in the `env` section of the config, eg:
     ```yaml
