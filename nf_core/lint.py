@@ -471,7 +471,7 @@ class PipelineLint(object):
                     self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
                 # Check that we're pulling the right docker image
                 if self.config.get('params.container', ''):
-                    docker_notag = re.sub(r':(?:[\.\d]+|latest)$', '', self.config.get('params.container', '').strip('"\''))
+                    docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('params.container', '').strip('"\''))
                     docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                     try:
                         assert(docker_pull_cmd in ciconf.get('before_install', []))
