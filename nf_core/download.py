@@ -187,7 +187,7 @@ class DownloadWorkflow(object):
 
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
-                to `nfcore/name:latest`.
+                to `nfcore/name:dev`.
 
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
