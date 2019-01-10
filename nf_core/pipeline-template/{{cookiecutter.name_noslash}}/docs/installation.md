@@ -83,7 +83,7 @@ The process is very similar: running the pipeline with the option `-profile sing
 If running offline with Singularity, you'll need to download and transfer the Singularity image first:
 
 ```bash
-singularity pull --name {{ cookiecutter.name_noslash }}.simg shub://{{ cookiecutter.name }}
+singularity pull --name {{ cookiecutter.name_noslash }}.simg {{ cookiecutter.name }}
 ```
 
 Once transferred, use `-with-singularity` and specify the path to the image file:
