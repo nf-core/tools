@@ -68,7 +68,7 @@ class DownloadWorkflow(object):
         # Download the singularity images
         if self.singularity:
             logging.debug("Fetching container names for workflow")
-            self.find_singularity_images()
+            self.find_container_images()
             if len(self.containers) == 0:
                 logging.info("No container names found in workflow")
             else:
