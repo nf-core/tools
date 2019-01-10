@@ -114,10 +114,10 @@ class DownloadTest(unittest.TestCase):
         download_obj.download_wf_files()
 
     #
-    # Tests for 'find_singularity_images'
+    # Tests for 'find_container_images'
     #
     @mock.patch('nf_core.utils.fetch_wf_config')
-    def test_find_singularity_images(self, mock_fetch_wf_config):
+    def test_find_container_images(self, mock_fetch_wf_config):
         download_obj = DownloadWorkflow(
             pipeline = "dummy",
             outdir = tempfile.mkdtemp())
@@ -125,7 +125,7 @@ class DownloadTest(unittest.TestCase):
             'process.mapping.container': 'cutting-edge-container',
             'process.nocontainer': 'not-so-cutting-edge'
         }
-        download_obj.find_singularity_images()
+        download_obj.find_container_images()
         assert len(download_obj.containers) == 1
         assert download_obj.containers[0] == 'cutting-edge-container'
 

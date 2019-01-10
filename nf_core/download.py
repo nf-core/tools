@@ -170,7 +170,18 @@ class DownloadWorkflow(object):
         gh_name = '{}-{}'.format(self.wf_name, self.wf_sha).split('/')[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, 'workflow'))
 
-    
+    def find_container_images(self):
+        """ Find container image names for workflow """
+
+        # Use linting code to parse the pipeline nextflow config
+        self.config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, 'workflow'))
+
+        # Find any config variables that look like a container
+        for k,v in self.config.items():
+            if k.startswith('process.') and k.endswith('.container'):
+                self.containers.append(v.strip('"').strip("'"))
+
+
     def pull_singularity_image(self, container):
         """Uses a local installation of singularity to pull an image from Docker Hub.
 
