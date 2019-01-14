@@ -98,9 +98,6 @@ class Parameter(object):
     def as_dict(self):
         """Describes its attibutes in a dictionary.
 
-        Args:
-            indent (integer): String output indentation. Defaults to 0.
-        
         Returns:
             dict: Parameter object as key value pairs.
         """
