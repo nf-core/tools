@@ -2,14 +2,24 @@
 """Some tests covering the parameters code.
 """
 import json
+import jsonschema
+from jsonschema import ValidationError
 import os
 import pytest
+import requests
 import shutil
 import unittest
 import nf_core.workflow.parameters as pms
 
 WD = os.path.dirname(__file__)
 PATH_WORKING_EXAMPLE = os.path.join(WD, 'example.json')
+SCHEMA_URI = "https://nf-co.re/parameters.schema.json"
+
+@pytest.fixture(scope="class")
+def schema():
+    res = requests.get(SCHEMA_URI)
+    assert res.status_code == 200
+    return res.text
 
 @pytest.fixture(scope="class")
 def example_json():
@@ -42,3 +52,17 @@ def test_parameter_builder():
     parameter = pms.Parameter.builder().name("width").default(2).build()
     assert parameter.name == "width"
     assert parameter.default_value == 2
+
+@pytest.mark.xfail(raises=ValidationError)
+def test_validation(schema):
+    """Tests the parameter objects against the JSON schema."""
+    parameter = pms.Parameter.builder().name("width").param_type("unknown").default(2).build()
+    params_in_json = pms.Parameters.in_full_json([parameter])
+    jsonschema.validate(json.loads(pms.Parameters.in_full_json([parameter])), json.loads(schema))
+
+def test_validation_with_success(schema):
+    """Tests the parameter objects against the JSON schema."""
+    parameter = pms.Parameter.builder().name("width").param_type("integer") \
+            .default(2).label("The width of a table.").render("textfield").required(False).build()
+    params_in_json = pms.Parameters.in_full_json([parameter])
+    jsonschema.validate(json.loads(pms.Parameters.in_full_json([parameter])), json.loads(schema))
