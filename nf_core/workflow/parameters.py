@@ -96,13 +96,13 @@ class Parameter(object):
         return ParameterBuilder()
 
     def as_dict(self):
-        """Describes its attibutes in JSON.
+        """Describes its attibutes in a dictionary.
 
         Args:
             indent (integer): String output indentation. Defaults to 0.
         
         Returns:
-            str: Parameter object in JSON.
+            dict: Parameter object as key value pairs.
         """
         params_dict = {}
         for attribute in ['name', 'label', 'usage', 'required', 
