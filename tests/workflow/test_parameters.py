@@ -36,3 +36,9 @@ def test_params_as_json_dump(example_json):
     assert len(parsed_output.keys()) == 1
     assert parameter.name in parsed_output.keys()
     assert parameter.default_value == parsed_output[parameter.name]
+
+def test_parameter_builder():
+    """Tests the parameter builder."""
+    parameter = pms.Parameter.builder().name("width").default(2).build()
+    assert parameter.name == "width"
+    assert parameter.default_value == 2
