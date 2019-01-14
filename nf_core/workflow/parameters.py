@@ -31,6 +31,7 @@ class Parameters:
                     .choices(param.get("choices")) \
                     .default(param.get("default_value")) \
                     .pattern(param.get("pattern")) \
+                    .render(param.get("render")) \
                     .arity(param.get("arity")) \
                     .build()
                 parameters.append(parameter)
@@ -39,8 +40,12 @@ class Parameters:
         return parameters
 
     @staticmethod
-    def as_json(parameters, indent=0):
-        """Converts a list of Parameter objects into JSON.
+    def in_nextflow_json(parameters, indent=0):
+        """Converts a list of Parameter objects into JSON, readable by Nextflow.
+
+        Args:
+            parameters (list): List of :class:`Parameter` objects.
+            indent (integer): String output indentation. Defaults to 0.
 
         Returns:
             list: JSON formatted parameters.
@@ -49,7 +54,22 @@ class Parameters:
         for p in parameters:
             params[p.name] = str(p.value) if p.value else p.default_value
         return json.dumps(params, indent=indent)
+    
+    @staticmethod
+    def in_full_json(parameters, indent=0):
+        """Converts a list of Parameter objects into JSON. All attributes 
+         are written.
 
+        Args:
+            parameters (list): List of :class:`Parameter` objects.
+            indent (integer): String output indentation. Defaults to 0.
+
+        Returns:
+            list: JSON formatted parameters.
+        """
+        params_dict = {}
+        params_dict["parameters"] = [p.as_dict() for p in parameters]
+        return json.dumps(params_dict, indent=indent)
 
 
 class Parameter(object):
@@ -68,10 +88,29 @@ class Parameter(object):
         self.default_value = param_builder.p_default_value
         self.pattern = param_builder.p_pattern
         self.arity = param_builder.p_arity
+        self.required = param_builder.p_required
+        self.render = param_builder.p_render
     
     @staticmethod
     def builder():
         return ParameterBuilder()
+
+    def as_dict(self):
+        """Describes its attibutes in JSON.
+
+        Args:
+            indent (integer): String output indentation. Defaults to 0.
+        
+        Returns:
+            str: Parameter object in JSON.
+        """
+        params_dict = {}
+        for attribute in ['name', 'label', 'usage', 'required', 
+            'type', 'value', 'choices', 'default_value', 'pattern', 'arity', 'render']:
+            if getattr(self, attribute):
+                params_dict[attribute] = getattr(self, attribute)
+            params_dict['required'] = getattr(self, 'required')
+        return params_dict
 
 class ParameterBuilder:
     """Parameter builder.
@@ -85,7 +124,9 @@ class ParameterBuilder:
         self.p_choices = []
         self.p_default_value = ""
         self.p_pattern = ""
-        self.p_arity = ""
+        self.p_arity = 0
+        self.p_render = ""
+        self.p_required = False
     
     def name(self, name):
         """Sets the parameter name.
@@ -166,6 +207,20 @@ class ParameterBuilder:
             pattern (str): Parameter regex pattern.
         """
         self.p_arity = arity
+        return self
+
+    def render(self, render):
+        """Sets the parameter render type.
+
+        Args:
+            render (str): UI render type.
+        """
+        self.p_render = render
+        return self
+    
+    def required(self, required):
+        """Sets the required parameter flag."""
+        self.p_required = required
         return self
     
     def build(self):
