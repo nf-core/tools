@@ -8,6 +8,7 @@
 #### CI
 * Build API docs
 * Use Travis job for api doc generation and publish
+* Bump `conda` to 4.5.12 in Dockerfile
 
 #### Documentation
 * Added nf-core tools API description to assist developers with the classes and functions available.
