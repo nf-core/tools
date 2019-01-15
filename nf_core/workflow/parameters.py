@@ -108,6 +108,10 @@ class Parameter(object):
                 params_dict[attribute] = getattr(self, attribute)
             params_dict['required'] = getattr(self, 'required')
         return params_dict
+    
+    def validate(self):
+        Validator.check(self)
+
 
 class ParameterBuilder:
     """Parameter builder.
