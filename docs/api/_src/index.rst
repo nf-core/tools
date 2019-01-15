@@ -17,6 +17,7 @@ Welcome to nf-core tools API documentation!
    lint
    list
    utils
+   workflow
 
 
 Indices and tables
