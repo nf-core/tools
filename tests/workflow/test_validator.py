@@ -41,15 +41,29 @@ def param_with_unknown_type():
 @pytest.fixture(scope="class")
 def string_param_not_matching_pattern():
     param = pms.Parameter.builder().name("Fake String Param") \
-        .default("Not empty!").value("id.123A").choices(["0", "10"])\
+        .default("Not empty!").value("id.123A") \
         .param_type("string").pattern(r"^id\.[0-9]*$").build()
     return param
 
 @pytest.fixture(scope="class")
 def string_param_matching_pattern():
     param = pms.Parameter.builder().name("Fake String Param") \
-        .default("Not empty!").value("id.123").choices(["0", "10"])\
+        .default("Not empty!").value("id.123") \
         .param_type("string").pattern(r"^id\.[0-9]*$").build()
+    return param
+
+@pytest.fixture(scope="class")
+def string_param_not_matching_choices():
+    param = pms.Parameter.builder().name("Fake String Param") \
+        .default("Not empty!").value("snail").choices(["horse", "pig"])\
+        .param_type("string").build()
+    return param
+
+@pytest.fixture(scope="class")
+def string_param_matching_choices():
+    param = pms.Parameter.builder().name("Fake String Param") \
+        .default("Not empty!").value("horse").choices(["horse", "pig"])\
+        .param_type("string").build()
     return param
 
 def test_simple_integer_validation(valid_integer_param):
@@ -78,4 +92,13 @@ def test_string_param_not_matching_pattern(string_param_not_matching_pattern):
 
 def test_string_param_matching_pattern(string_param_matching_pattern):
     validator = valid.Validators.get_validator_for_param(string_param_matching_pattern)
+    validator.validate()
+
+@pytest.mark.xfail(raises=AttributeError)
+def test_string_param_not_matching_choices(string_param_not_matching_choices):
+    validator = valid.Validators.get_validator_for_param(string_param_not_matching_choices)
+    validator.validate()
+
+def test_string_param_matching_choices(string_param_matching_choices):
+    validator = valid.Validators.get_validator_for_param(string_param_matching_choices)
     validator.validate()
