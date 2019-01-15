@@ -38,6 +38,20 @@ def param_with_unknown_type():
         .default("Not empty!").value("Whatever").choices(["0", "10"]).param_type("unknown").build()
     return param
 
+@pytest.fixture(scope="class")
+def string_param_not_matching_pattern():
+    param = pms.Parameter.builder().name("Fake String Param") \
+        .default("Not empty!").value("id.123A").choices(["0", "10"])\
+        .param_type("string").pattern(r"^id\.[0-9]*$").build()
+    return param
+
+@pytest.fixture(scope="class")
+def string_param_matching_pattern():
+    param = pms.Parameter.builder().name("Fake String Param") \
+        .default("Not empty!").value("id.123").choices(["0", "10"])\
+        .param_type("string").pattern(r"^id\.[0-9]*$").build()
+    return param
+
 def test_simple_integer_validation(valid_integer_param):
     validator = valid.Validators.get_validator_for_param(valid_integer_param)
     validator.validate()
@@ -55,4 +69,13 @@ def test_string_with_empty_pattern_and_choices(invalid_string_param_without_patt
 @pytest.mark.xfail(raises=LookupError)
 def test_param_with_empty_type(param_with_unknown_type):
     validator = valid.Validators.get_validator_for_param(param_with_unknown_type)
+    validator.validate()
+
+@pytest.mark.xfail(raises=AttributeError)
+def test_string_param_not_matching_pattern(string_param_not_matching_pattern):
+    validator = valid.Validators.get_validator_for_param(string_param_not_matching_pattern)
+    validator.validate()
+
+def test_string_param_matching_pattern(string_param_matching_pattern):
+    validator = valid.Validators.get_validator_for_param(string_param_matching_pattern)
     validator.validate()
