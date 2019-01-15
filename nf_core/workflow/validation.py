@@ -1,5 +1,11 @@
 import abc
+import sys
 from nf_core.workflow.parameters import Parameter
+
+if sys.version_info >= (3, 4):
+    ABC = abc.ABC
+else:
+    ABC = abc.ABCMeta('ABC', (), {})
 
 class Validators(object):
     """Gives access to a factory method for objects of instance 
@@ -26,7 +32,7 @@ class Validators(object):
             .format(parameter.type))
 
     
-class Validator(abc.ABC):
+class Validator(ABC):
     """Abstract base class for different parameter validators.
     """
     __metaclass__ = abc.ABCMeta
