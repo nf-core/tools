@@ -28,6 +28,8 @@ class Validators(object):
         """
         if parameter.type == "integer":
             return IntegerValidator(parameter)
+        if parameter.type == "string":
+            return StringValidator(parameter)
         raise LookupError("Cannot find a matching validator for type '{}'."
             .format(parameter.type))
 
@@ -57,7 +59,6 @@ class IntegerValidator(Validator):
     
     Raises:
         AttributeError: In case the argument is not of instance :class:`Parameter`.
-
     """
 
     def __init__(self, parameter):
@@ -79,6 +80,35 @@ class IntegerValidator(Validator):
         if not value >= choices[0] and value <= choices[-1]:
             raise AttributeError("The value for parameter '{}' must be within range of [{},{}]"
                 .format(self._param.name, choices[0], choices[-1]))
+
+
+class StringValidator(Validator):
+    """Implementation for parameters of type string.
+    
+    Args:
+        parameter (:class:`Parameter`): A Parameter object.
+    
+    Raises:
+        AttributeError: In case the argument is not of instance :class:`Parameter`.
+    """
+
+    def __init__(self, parameter):
+        super(StringValidator, self).__init__(parameter)
+
+    def validate(self):
+        """Validates an parameter integer value against a given range (choices).
+        If the value is valid, no error is risen.
+
+        Raises:
+            AtrributeError: Description of the value error.
+        """
+        value = str(self._param.value)
+        choices = sorted([str(x) for x in self._param.choices])
+        if not choices:
+            if not self._param.pattern:
+                raise AttributeError("Can't validate value for parameter {}," \
+                    "because the value for 'choices' and 'pattern' were empty.".format(self._param.value))
+        
 
 
 
