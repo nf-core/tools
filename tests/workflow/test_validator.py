@@ -26,6 +26,18 @@ def invalid_integer_param():
         .default("0").value("20").choices(["0", "10"]).param_type("integer").build()
     return param
 
+@pytest.fixture(scope="class")
+def invalid_string_param_without_pattern_and_choices():
+    param = pms.Parameter.builder().name("Fake String Param") \
+        .default("Not empty!").value("Whatever").choices(["0", "10"]).param_type("integer").build()
+    return param
+
+@pytest.fixture(scope="class")
+def param_with_unknown_type():
+    param = pms.Parameter.builder().name("Fake String Param") \
+        .default("Not empty!").value("Whatever").choices(["0", "10"]).param_type("unknown").build()
+    return param
+
 def test_simple_integer_validation(valid_integer_param):
     validator = valid.Validators.get_validator_for_param(valid_integer_param)
     validator.validate()
@@ -33,4 +45,14 @@ def test_simple_integer_validation(valid_integer_param):
 @pytest.mark.xfail(raises=AttributeError)
 def test_simple_integer_out_of_range(invalid_integer_param):
     validator = valid.Validators.get_validator_for_param(invalid_integer_param)
+    validator.validate()
+
+@pytest.mark.xfail(raises=AttributeError)
+def test_string_with_empty_pattern_and_choices(invalid_string_param_without_pattern_and_choices):
+    validator = valid.Validators.get_validator_for_param(invalid_integer_param)
+    validator.validate()
+
+@pytest.mark.xfail(raises=LookupError)
+def test_param_with_empty_type(param_with_unknown_type):
+    validator = valid.Validators.get_validator_for_param(param_with_unknown_type)
     validator.validate()
