@@ -35,7 +35,7 @@ class Validator(abc.ABC):
     def __init__(self, parameter):
         if not isinstance(parameter, Parameter):
             raise (AttributeError("Argument must be of class {}"
-                .format(parameters.Parameter.__class__.__module__)))
+                .format(Parameter.__class__)))
         self._param = parameter
 
     @abc.abstractmethod
