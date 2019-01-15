@@ -1,4 +1,5 @@
 import abc
+import re
 import sys
 from nf_core.workflow.parameters import Parameter
 
@@ -108,6 +109,12 @@ class StringValidator(Validator):
             if not self._param.pattern:
                 raise AttributeError("Can't validate value for parameter {}," \
                     "because the value for 'choices' and 'pattern' were empty.".format(self._param.value))
+            result = re.match(self._param.pattern, self._param.value)
+            if not result:
+                raise AttributeError("The value '{}' for parameter {}" \
+                    " did not match the regex pattern '{}' .".format(
+                        self._param.value, self._param.name, self._param.pattern
+                    ))
         
 
 
