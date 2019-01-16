@@ -1,5 +1,6 @@
 import copy
 import json
+import nf_core.workflow.validation as vld
 
 
 class Parameters:
@@ -110,7 +111,16 @@ class Parameter(object):
         return params_dict
     
     def validate(self):
-        Validator.check(self)
+        """Validates the parameter's value. If the value is within
+        the parameter requirements, no exception is thrown.
+
+        Raises:
+            LookupError: Raised when no matching validator can be determined.
+            AttributeError: Raised with description, if a parameter value violates
+                the parameter constrains. 
+        """
+        validator = vld.Validators.get_validator_for_param(self)
+        validator.validate()
 
 
 class ParameterBuilder:
