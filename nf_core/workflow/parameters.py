@@ -60,7 +60,7 @@ class Parameters:
         """
         params = {}
         for p in parameters:
-            params[p.name] = str(p.value) if p.value else p.default_value
+            params[p.name] = p.value if p.value else p.default_value
         return json.dumps(params, indent=indent)
     
     @staticmethod

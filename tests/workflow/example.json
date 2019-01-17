@@ -15,8 +15,8 @@
             "usage": "Integer value that will be applied against input reads.",
             "type": "integer",
             "render": "range",
-            "choices": ["1", "150"],
-            "default_value": "1"
+            "choices": [1, 150],
+            "default_value": 1
         }
     ]
 }
