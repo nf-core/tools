@@ -17,13 +17,13 @@ SCHEMA_URI = "https://nf-co.re/parameters.schema.json"
 @pytest.fixture(scope="class")
 def valid_integer_param():
     param = pms.Parameter.builder().name("Fake Integer Param") \
-        .default("0").value("10").choices(["0", "10"]).param_type("integer").build()
+        .default(0).value(10).choices([0, 10]).param_type("integer").build()
     return param
 
 @pytest.fixture(scope="class")
 def invalid_integer_param():
     param = pms.Parameter.builder().name("Fake Integer Param") \
-        .default("0").value("20").choices(["0", "10"]).param_type("integer").build()
+        .default(0).value(20).choices([0, 10]).param_type("integer").build()
     return param
 
 @pytest.fixture(scope="class")
