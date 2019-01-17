@@ -9,7 +9,7 @@ import os
 import subprocess
 
 import nf_core.utils
-import nf_core.workflow.parameters as pms
+from nf_core.workflow import parameters as pms
 
 def launch_pipeline(workflow, params_json, direct):
     launcher = Launch(workflow)
@@ -126,7 +126,7 @@ class Launch(object):
                 else:
                     value_is_valid = True          
 
-    def build_command(self):
+    def build_command(self, params = None):
         """ Build the nextflow run command based on what we know """
         for flag, val in self.nxf_flags.items():
             # Boolean flags like -resume
@@ -138,6 +138,13 @@ class Launch(object):
             # String values
             else:
                 self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, flag, val.replace('"', '\\"'))
+        
+        if params:  # When a parameter specification file was used, we can run Nextflow with it
+            path = Launch.__create_nfx_params_file(params)
+            self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, "--params-file", path)
+            Launch.__write_params_as_full_json(params)
+            return
+        
         for param, val in self.params.items():
             # Boolean flags like --saveTrimmed
             if isinstance(val, bool):
@@ -148,6 +155,23 @@ class Launch(object):
             # everything else
             else:
                 self.nextflow_cmd = '{} --{} "{}"'.format(self.nextflow_cmd, param, val.replace('"', '\\"'))
+
+    @classmethod
+    def __create_nfx_params_file(cls, params):
+        working_dir = os.getcwd()
+        output_file = os.path.join(working_dir, "nfx-params.json")
+        json_string = pms.Parameters.in_nextflow_json(params, indent=4)
+        with open(output_file, "w") as fp:
+            fp.write(json_string)
+        return output_file
+    
+    @classmethod
+    def __write_params_as_full_json(cls, params, outdir = os.getcwd()):
+        output_file = os.path.join(outdir, "full-params.json")
+        json_string = pms.Parameters.in_full_json(params, indent=4)
+        with open(output_file, "w") as fp:
+            fp.write(json_string)
+        return output_file
 
     def launch_workflow(self):
         """ Launch nextflow if required  """

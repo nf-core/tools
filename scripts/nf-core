@@ -133,7 +133,7 @@ def download(pipeline, release, singularity, outdir):
     '--direct',
     is_flag = True,
     default = False, 
-    help = "Uses the values from the parameter file directly."
+    help = "Uses given values from the parameter file directly."
 )
 def launch(pipeline, params, direct):
     """ Interactively build a nextflow command and launch a pipeline """
