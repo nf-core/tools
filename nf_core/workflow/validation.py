@@ -1,7 +1,7 @@
 import abc
 import re
 import sys
-from nf_core.workflow.parameters import Parameter
+import nf_core.workflow.parameters as pms
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -42,9 +42,9 @@ class Validator(ABC):
 
     @abc.abstractmethod
     def __init__(self, parameter):
-        if not isinstance(parameter, Parameter):
+        if not isinstance(parameter, pms.Parameter):
             raise (AttributeError("Argument must be of class {}"
-                .format(Parameter.__class__)))
+                .format(pms.Parameter.__class__)))
         self._param = parameter
 
     @abc.abstractmethod
@@ -104,7 +104,7 @@ class StringValidator(Validator):
             AtrributeError: Description of the value error.
         """
         value = str(self._param.value)
-        choices = sorted([str(x) for x in self._param.choices])
+        choices = sorted([str(x) for x in self._param.choices]) if self._param.choices else []
         if not choices:
             if not self._param.pattern:
                 raise AttributeError("Can't validate value for parameter '{}'," \

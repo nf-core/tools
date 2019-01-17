@@ -1,43 +1,50 @@
 import copy
 import json
+import requests
+import requests_cache
+from jsonschema import validate
+from jsonschema.exceptions import ValidationError
 import nf_core.workflow.validation as vld
 
+NFCORE_PARAMS_SCHEMA_URI = "https://nf-co.re/parameters.schema.json"
 
 class Parameters:
     """Contains a static factory method
     for :class:`Parameter` object creation.
     """
     @staticmethod
-    def create_from_json(parameters_json):
+    def create_from_json(parameters_json, schema = ""):
         """Creates a list of Parameter objects from
         a description in JSON.
 
         Args:
             parameters_json (str): Parameter(s) description in JSON.
+            schema (str): Parameter schema in JSON.
 
         Returns:
             list: Parameter objects.
 
         Raises:
-            IOError, if the JSON is of unknown schema to this parser.
+            ValidationError: When the parameter JSON violates the schema.
+            LookupError: When the schema cannot be downloaded.
         """
+        if not schema:
+            schema = Parameters.__download_schema_from_nf_core(NFCORE_PARAMS_SCHEMA_URI)
+        validate(json.loads(parameters_json), json.loads(schema))  # Throws a ValidationError when schema is violated
         properties = json.loads(parameters_json)
         parameters = []
-        try:
-            for param in properties.get("parameters"):
-                parameter = Parameter.builder().name(param.get("name")) \
-                    .label(param.get("label")) \
-                    .usage(param.get("usage")) \
-                    .param_type(param.get("type")) \
-                    .choices(param.get("choices")) \
-                    .default(param.get("default_value")) \
-                    .pattern(param.get("pattern")) \
-                    .render(param.get("render")) \
-                    .arity(param.get("arity")) \
-                    .build()
-                parameters.append(parameter)
-        except Exception as e: 
-            raise IOError(e)
+        for param in properties.get("parameters"):
+            parameter = Parameter.builder().name(param.get("name")) \
+                .label(param.get("label")) \
+                .usage(param.get("usage")) \
+                .param_type(param.get("type")) \
+                .choices(param.get("choices")) \
+                .default(param.get("default_value")) \
+                .pattern(param.get("pattern")) \
+                .render(param.get("render")) \
+                .arity(param.get("arity")) \
+                .build()
+            parameters.append(parameter)
         return parameters
 
     @staticmethod
@@ -71,6 +78,15 @@ class Parameters:
         params_dict = {}
         params_dict["parameters"] = [p.as_dict() for p in parameters]
         return json.dumps(params_dict, indent=indent)
+    
+    @classmethod
+    def __download_schema_from_nf_core(cls, url):
+        with requests_cache.disabled():
+            result = requests.get(url, headers={'Cache-Control': 'no-cache'})
+        if not result.status_code == 200:
+            raise LookupError("Could not fetch schema from {url}.\n{e}".format(
+                url, result.text))
+        return result.text
 
 
 class Parameter(object):

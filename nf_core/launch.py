@@ -9,13 +9,20 @@ import os
 import subprocess
 
 import nf_core.utils
+import nf_core.workflow.parameters as pms
 
-def launch_pipeline(workflow):
-    wf = Launch(workflow)
-    wf.collect_defaults()
-    wf.prompt_vars()
-    wf.build_command()
-    wf.launch_workflow()
+def launch_pipeline(workflow, params_json):
+    launcher = Launch(workflow)
+    params_list = []
+    if params_json: 
+        with open(params_json, "r") as fp:
+            params_json_str=fp.read()
+        params_list = pms.Parameters.create_from_json(params_json_str)
+    if not params_json:
+        launcher.collect_defaults()  # Fallback, calls Nextflow's config command
+    launcher.prompt_vars(params_list)
+    launcher.build_command(params_list)
+    launcher.launch_workflow()
 
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
@@ -57,7 +64,7 @@ class Launch(object):
             if keys[0] == 'params' and len(keys) == 2:
                 self.param_defaults[keys[1]] = value
 
-    def prompt_vars(self):
+    def prompt_vars(self, params = None):
         """ Ask the user if they want to override any default values """
         # Main nextflow flags
         logging.info("Main nextflow options:\n")
@@ -76,6 +83,9 @@ class Launch(object):
 
         # Pipeline params
         logging.info("Pipeline specific parameters:\n")
+        if params:
+            Launch.__prompt_defaults_from_param_objects(params)
+            return
         for param, p_default in self.param_defaults.items():
             if not isinstance(p_default, dict) and not isinstance(p_default, list):
                 p_user = click.prompt("--{}".format(param), default=p_default)
@@ -89,6 +99,27 @@ class Launch(object):
                     except AttributeError:
                         pass
                     self.params[param] = p_user
+    
+    @classmethod
+    def __prompt_defaults_from_param_objects(cls, params):
+        for parameter in params:
+            value_is_valid = False
+            while(not value_is_valid):
+                desired_param_value = click.prompt("'--{name}'\n"
+                        "\tUsage: {usage}\n"
+                        "\tRange/Choices: {choices}.\n"
+                        .format(name=parameter.name,
+                                usage=parameter.usage,
+                                choices=parameter.choices),
+                    default=parameter.default_value)
+                parameter.value = desired_param_value
+                try:
+                    parameter.validate()
+                except Exception as e:
+                    print(e)
+                    continue
+                else:
+                    value_is_valid = True          
 
     def build_command(self):
         """ Build the nextflow run command based on what we know """
