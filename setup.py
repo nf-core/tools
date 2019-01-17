@@ -27,6 +27,7 @@ setup(
         'cookiecutter',
         'click',
         'GitPython',
+        'jsonschema',
         'pyyaml',
         'requests',
         'requests_cache',
