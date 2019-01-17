@@ -9,7 +9,7 @@ import pytest
 import requests
 import shutil
 import unittest
-import nf_core.workflow.parameters as pms
+from nf_core.workflow import parameters as pms
 
 WD = os.path.dirname(__file__)
 PATH_WORKING_EXAMPLE = os.path.join(WD, 'example.json')

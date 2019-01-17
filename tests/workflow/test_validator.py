@@ -6,8 +6,8 @@ import pytest
 import requests
 import shutil
 import unittest
-import nf_core.workflow.parameters as pms
-import nf_core.workflow.validation as valid
+from nf_core.workflow import parameters as pms
+from nf_core.workflow import validation as valid
 
 
 WD = os.path.dirname(__file__)
