@@ -77,11 +77,12 @@ class IntegerValidator(Validator):
             raise AttributeError("The value {} for parameter {} needs to be of type Integer, but was {}"
                 .format(value, self._param.name, type(value)))
         choices = sorted([x for x in self._param.choices])
+        print(choices)
         if not choices:
             return
         if len(choices) < 2:
             raise AttributeError("The property 'choices' must have at least two entries.")
-        if not value >= choices[0] and value <= choices[-1]:
+        if not (value >= choices[0] and value <= choices[-1]):
             raise AttributeError("The value for parameter '{}' must be within range of [{},{}]"
                 .format(self._param.name, choices[0], choices[-1]))
 
