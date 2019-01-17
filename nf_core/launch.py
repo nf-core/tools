@@ -11,7 +11,7 @@ import subprocess
 import nf_core.utils
 import nf_core.workflow.parameters as pms
 
-def launch_pipeline(workflow, params_json):
+def launch_pipeline(workflow, params_json, direct):
     launcher = Launch(workflow)
     params_list = []
     if params_json: 
@@ -20,7 +20,7 @@ def launch_pipeline(workflow, params_json):
         params_list = pms.Parameters.create_from_json(params_json_str)
     if not params_json:
         launcher.collect_defaults()  # Fallback, calls Nextflow's config command
-    launcher.prompt_vars(params_list)
+    launcher.prompt_vars(params_list, direct)
     launcher.build_command(params_list)
     launcher.launch_workflow()
 
@@ -64,7 +64,7 @@ class Launch(object):
             if keys[0] == 'params' and len(keys) == 2:
                 self.param_defaults[keys[1]] = value
 
-    def prompt_vars(self, params = None):
+    def prompt_vars(self, params = None, direct = False):
         """ Ask the user if they want to override any default values """
         # Main nextflow flags
         logging.info("Main nextflow options:\n")
@@ -80,6 +80,11 @@ class Launch(object):
                 except AttributeError:
                     pass
                 self.nxf_flags[flag] = f_user
+        
+        # Uses the parameter values from the JSON file
+        # and does not ask the user to set them explicitly
+        if direct:
+            return
 
         # Pipeline params
         logging.info("Pipeline specific parameters:\n")

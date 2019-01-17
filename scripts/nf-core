@@ -129,9 +129,15 @@ def download(pipeline, release, singularity, outdir):
     type = str,
     help = "Parameter file in JSON."
 )
-def launch(pipeline, params):
+@click.option(
+    '--direct',
+    is_flag = True,
+    default = False, 
+    help = "Uses the values from the parameter file directly."
+)
+def launch(pipeline, params, direct):
     """ Interactively build a nextflow command and launch a pipeline """
-    nf_core.launch.launch_pipeline(pipeline, params)
+    nf_core.launch.launch_pipeline(pipeline, params, direct)
 
 @nf_core_cli.command('bump-version')
 @click.argument(
