@@ -72,7 +72,10 @@ class IntegerValidator(Validator):
         Raises:
             AtrributeError: Description of the value error.
         """
-        value = int(self._param.value)
+        value = self._param.value
+        if not isinstance(value, int):
+            raise AttributeError("The value {} for parameter {} needs to be of type Integer, but was {}"
+                .format(value, self._param.name, type(value)))
         choices = sorted([x for x in self._param.choices])
         if not choices:
             return
@@ -103,7 +106,10 @@ class StringValidator(Validator):
         Raises:
             AtrributeError: Description of the value error.
         """
-        value = str(self._param.value)
+        value = self._param.value
+        if not isinstance(value, str):
+            raise AttributeError("The value {} for parameter {} needs to be of type Integer, but was {}"
+                .format(value, self._param.name, type(value)))
         choices = sorted([x for x in self._param.choices]) if self._param.choices else []
         if not choices:
             if not self._param.pattern:
@@ -121,11 +127,3 @@ class StringValidator(Validator):
                     " was not part of choices '{}'.".format(
                         value, self._param.name, choices
                     ))
-        
-
-
-
-
-
-
-
