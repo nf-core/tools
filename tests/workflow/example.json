@@ -7,8 +7,7 @@
             "type": "string",
             "render": "file",
             "default_value": "path/to/reads.fastq.gz",
-            "pattern": ".*(\\.fastq$|\\.fastq\\.gz$)",
-            "required": "True"
+            "pattern": ".*(\\.fastq$|\\.fastq\\.gz$)"
         },
         {
             "name": "norm_factor",
@@ -17,8 +16,7 @@
             "type": "integer",
             "render": "range",
             "choices": ["1", "150"],
-            "default_value": "1",
-            "required:": "False"
+            "default_value": "1"
         }
     ]
 }
