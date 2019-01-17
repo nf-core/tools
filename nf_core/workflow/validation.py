@@ -73,7 +73,7 @@ class IntegerValidator(Validator):
             AtrributeError: Description of the value error.
         """
         value = int(self._param.value)
-        choices = sorted([int(x) for x in self._param.choices])
+        choices = sorted([x for x in self._param.choices])
         if not choices:
             return
         if len(choices) < 2:
@@ -104,7 +104,7 @@ class StringValidator(Validator):
             AtrributeError: Description of the value error.
         """
         value = str(self._param.value)
-        choices = sorted([str(x) for x in self._param.choices]) if self._param.choices else []
+        choices = sorted([x for x in self._param.choices]) if self._param.choices else []
         if not choices:
             if not self._param.pattern:
                 raise AttributeError("Can't validate value for parameter '{}'," \
