@@ -18,6 +18,7 @@ import logging
 @click.option(
     '-v', '--verbose',
     is_flag = True,
+    default = False,
     help = "Verbose output (print debug statements)"
 )
 def nf_core_cli(verbose):
@@ -121,9 +122,16 @@ def download(pipeline, release, singularity, outdir):
     required = True,
     metavar = "<pipeline name>"
 )
-def launch(pipeline):
+@click.option(
+    '-p', '--params',
+    is_flag = False,
+    default = "",
+    type = str,
+    help = "Parameter file in JSON."
+)
+def launch(pipeline, params):
     """ Interactively build a nextflow command and launch a pipeline """
-    nf_core.launch.launch_pipeline(pipeline)
+    nf_core.launch.launch_pipeline(pipeline, params)
 
 @nf_core_cli.command('bump-version')
 @click.argument(
