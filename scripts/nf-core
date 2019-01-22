@@ -127,7 +127,7 @@ def download(pipeline, release, singularity, outdir):
     is_flag = False,
     default = "",
     type = str,
-    help = "Parameter file in JSON."
+    help = "Local parameter settings file in JSON."
 )
 @click.option(
     '--direct',

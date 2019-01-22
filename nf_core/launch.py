@@ -11,14 +11,19 @@ import subprocess
 import nf_core.utils
 from nf_core.workflow import parameters as pms
 
-def launch_pipeline(workflow, params_json, direct):
+def launch_pipeline(workflow, params_local_uri, direct):
     launcher = Launch(workflow)
     params_list = []
-    if params_json: 
-        with open(params_json, "r") as fp:
-            params_json_str=fp.read()
+    try:
+        if params_local_uri:
+            with open(params_local_uri, 'r') as fp: params_json_str = fp.read() 
+        else:
+            params_json_str = nf_core.utils.fetch_parameter_settings_from_github(workflow)
         params_list = pms.Parameters.create_from_json(params_json_str)
-    if not params_json:
+    except LookupError as e:
+        print("WARNING: No parameter settings file found for `{pipeline}`.\n{exception}".format(
+            pipeline=workflow, exception=e))
+    if not params_list:
         launcher.collect_defaults()  # Fallback, calls Nextflow's config command
     launcher.prompt_vars(params_list, direct)
     launcher.build_command(params_list)

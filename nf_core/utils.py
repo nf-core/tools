@@ -5,8 +5,33 @@ Common utility functions for the nf-core python package.
 
 import datetime
 import os
+import requests
+import requests_cache     
 import subprocess
 import tempfile
+
+PARAMETERS_URI_TEMPL = "https://raw.githubusercontent.com/nf-core/{pipeline}/master/parameters.settings.json"
+
+
+def fetch_parameter_settings_from_github(pipeline):
+    """Requests the pipeline parameter settings from Github.
+
+    Args:
+        pipeline (str): The nf-core pipeline name.
+    
+    Returns:
+        str: The raw JSON string of the file with the parameter settings.
+
+    Raises:
+        LookupError: If for some reason the URI cannot be accessed.
+    """
+    target_uri = PARAMETERS_URI_TEMPL.format(pipeline=pipeline)
+    try:
+        with requests_cache.disabled():
+            result = requests.get(target_uri, headers={'Cache-Control': 'no-cache'})
+    except (ConnectionError, TimeoutError) as e:
+        raise LookupError(e)
+    return result.text
 
 
 def fetch_wf_config(wf_path):

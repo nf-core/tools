@@ -29,8 +29,10 @@ class Validators(object):
         """
         if parameter.type == "integer":
             return IntegerValidator(parameter)
-        if parameter.type == "string":
+        elif parameter.type == "string":
             return StringValidator(parameter)
+        elif parameter.type == "boolean":
+            return BooleanValidator(parameter) 
         raise LookupError("Cannot find a matching validator for type '{}'."
             .format(parameter.type))
 
@@ -59,7 +61,7 @@ class IntegerValidator(Validator):
         parameter (:class:`Parameter`): A Parameter object.
     
     Raises:
-        AttributeError: In case the argument is not of instance :class:`Parameter`.
+        AttributeError: In case the argument is not of instance integer.
     """
 
     def __init__(self, parameter):
@@ -94,7 +96,7 @@ class StringValidator(Validator):
         parameter (:class:`Parameter`): A Parameter object.
     
     Raises:
-        AttributeError: In case the argument is not of instance :class:`Parameter`.
+        AttributeError: In case the argument is not of instance string.
     """
 
     def __init__(self, parameter):
@@ -128,3 +130,30 @@ class StringValidator(Validator):
                     " was not part of choices '{}'.".format(
                         value, self._param.name, choices
                     ))
+
+
+class BooleanValidator(Validator):
+    """Implementation for parameters of type boolean.
+    
+    Args:
+        parameter (:class:`Parameter`): A Parameter object.
+    
+    Raises:
+        AttributeError: In case the argument is not of instance boolean.
+    """
+
+    def __init__(self, parameter):
+        super(BooleanValidator, self).__init__(parameter)
+
+    def validate(self):
+        """Validates an parameter boolean value.
+        If the value is valid, no error is risen.
+
+        Raises:
+            AtrributeError: Description of the value error.
+        """
+        value = self._param.value
+        if not isinstance(self._param.value, bool):
+            raise AttributeError("The value {} for parameter {} needs to be of type Boolean, but was {}"
+                .format(value, self._param.name, type(value)))
+
