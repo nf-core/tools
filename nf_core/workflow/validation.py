@@ -32,7 +32,9 @@ class Validators(object):
         elif parameter.type == "string":
             return StringValidator(parameter)
         elif parameter.type == "boolean":
-            return BooleanValidator(parameter) 
+            return BooleanValidator(parameter)
+        elif parameter.type == "decimal":
+            return DecimalValidator(parameter) 
         raise LookupError("Cannot find a matching validator for type '{}'."
             .format(parameter.type))
 
@@ -157,3 +159,28 @@ class BooleanValidator(Validator):
             raise AttributeError("The value {} for parameter {} needs to be of type Boolean, but was {}"
                 .format(value, self._param.name, type(value)))
 
+
+class DecimalValidator(Validator):
+    """Implementation for parameters of type boolean.
+    
+    Args:
+        parameter (:class:`Parameter`): A Parameter object.
+    
+    Raises:
+        AttributeError: In case the argument is not of instance decimal.
+    """
+
+    def __init__(self, parameter):
+        super(DecimalValidator, self).__init__(parameter)
+
+    def validate(self):
+        """Validates an parameter boolean value.
+        If the value is valid, no error is risen.
+
+        Raises:
+            AtrributeError: Description of the value error.
+        """
+        value = self._param.value
+        if not isinstance(self._param.value, float):
+            raise AttributeError("The value {} for parameter {} needs to be of type Boolean, but was {}"
+                .format(value, self._param.name, type(value)))
