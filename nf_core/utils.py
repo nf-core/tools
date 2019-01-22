@@ -5,8 +5,7 @@ Common utility functions for the nf-core python package.
 
 import datetime
 import os
-import requests
-import requests_cache     
+import requests     
 import subprocess
 import tempfile
 
@@ -25,6 +24,8 @@ def fetch_parameter_settings_from_github(pipeline):
     Raises:
         LookupError: If for some reason the URI cannot be accessed.
     """
+    import requests_cache
+    
     target_uri = PARAMETERS_URI_TEMPL.format(pipeline=pipeline)
     try:
         with requests_cache.disabled():
