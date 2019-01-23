@@ -107,6 +107,7 @@ class Parameter(object):
         self.arity = param_builder.p_arity
         self.required = param_builder.p_required
         self.render = param_builder.p_render
+        self.group = param_builder.p_group
     
     @staticmethod
     def builder():
@@ -120,7 +121,7 @@ class Parameter(object):
         """
         params_dict = {}
         for attribute in ['name', 'label', 'usage', 'required', 
-            'type', 'value', 'choices', 'default_value', 'pattern', 'arity', 'render']:
+            'type', 'value', 'choices', 'default_value', 'pattern', 'arity', 'render', 'group']:
             if getattr(self, attribute):
                 params_dict[attribute] = getattr(self, attribute)
             params_dict['required'] = getattr(self, 'required')
@@ -154,6 +155,16 @@ class ParameterBuilder:
         self.p_arity = 0
         self.p_render = ""
         self.p_required = False
+        self.p_group = ""
+
+    def group(self, group):
+        """Sets the parameter group tag
+
+        Args:
+            group (str): Parameter group tag.
+        """
+        self.p_group = group
+        return self
     
     def name(self, name):
         """Sets the parameter name.
