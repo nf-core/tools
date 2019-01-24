@@ -125,7 +125,7 @@ class Launch(object):
                 if parameter.type == "integer":
                     desired_param_value = int(desired_param_value)
                 elif parameter.type == "boolean":
-                    desired_param_value = bool(desired_param_value)
+                    desired_param_value = (str(desired_param_value).lower() in ['yes', 'y', 'true', 't', '1'])
                 elif parameter.type == "decimal":
                     desired_param_value = float(desired_param_value)
                 parameter.value = desired_param_value
