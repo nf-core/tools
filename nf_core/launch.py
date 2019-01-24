@@ -94,7 +94,9 @@ class Launch(object):
         # Pipeline params
         logging.info("Pipeline specific parameters:\n")
         if params:
-            Launch.__prompt_defaults_from_param_objects(params)
+            Launch.__prompt_defaults_from_param_objects(
+                Launch.__group_parameters(params)
+                )
             return
         for param, p_default in self.param_defaults.items():
             if not isinstance(p_default, dict) and not isinstance(p_default, list):
@@ -109,33 +111,71 @@ class Launch(object):
                     except AttributeError:
                         pass
                     self.params[param] = p_user
-    
+
     @classmethod
-    def __prompt_defaults_from_param_objects(cls, params):
-        for parameter in params:
-            value_is_valid = False
-            while(not value_is_valid):
-                desired_param_value = click.prompt("'--{name}'\n"
-                        "\tUsage: {usage}\n"
-                        "\tRange/Choices: {choices}.\n"
-                        .format(name=parameter.name,
-                                usage=parameter.usage,
-                                choices=parameter.choices),
-                    default=parameter.default_value)
-                if parameter.type == "integer":
-                    desired_param_value = int(desired_param_value)
-                elif parameter.type == "boolean":
-                    desired_param_value = (str(desired_param_value).lower() in ['yes', 'y', 'true', 't', '1'])
-                elif parameter.type == "decimal":
-                    desired_param_value = float(desired_param_value)
-                parameter.value = desired_param_value
-                try:
-                    parameter.validate()
-                except Exception as e:
-                    print(e)
-                    continue
-                else:
-                    value_is_valid = True          
+    def __group_parameters(cls, parameters):
+        """Groups parameters by their 'group' property.
+
+        Args:
+            parameters (list): Collection of parameter objects.
+
+        Returns:
+            dict: Parameter objects grouped by the `group` property.
+        """
+        grouped_parameters = {}
+        for param in parameters:
+            if not grouped_parameters.get(param.group):
+                grouped_parameters[param.group] = []
+            grouped_parameters[param.group].append(param)
+        return grouped_parameters
+
+    @classmethod
+    def __prompt_defaults_from_param_objects(cls, params_grouped):
+        """Prompts the user for parameter input values and validates them.
+
+        Args:
+            params_grouped (dict): A dictionary with parameter group labels
+                as keys and list of parameters as values. ::
+
+                {
+                    "group1": [param1, param2],
+                    ...
+                }
+        """
+        for group_label, params in params_grouped.items():
+            print("{prespace}Parameter group: \'{label}\'{postspace}".format(
+                prespace='-'*5,
+                label=group_label,
+                postspace='-'*10)
+                )
+            use_defaults = click.confirm("Do you want to use the groups defaults?",
+                    default=True)
+            if use_defaults:
+                continue
+            for parameter in params:
+                value_is_valid = False
+                while(not value_is_valid):
+                    desired_param_value = click.prompt("'--{name}'\n"
+                            "\tUsage: {usage}\n"
+                            "\tRange/Choices: {choices}.\n"
+                            .format(name=parameter.name,
+                                    usage=parameter.usage,
+                                    choices=parameter.choices),
+                        default=parameter.default_value)
+                    if parameter.type == "integer":
+                        desired_param_value = int(desired_param_value)
+                    elif parameter.type == "boolean":
+                        desired_param_value = (str(desired_param_value).lower() in ['yes', 'y', 'true', 't', '1'])
+                    elif parameter.type == "decimal":
+                        desired_param_value = float(desired_param_value)
+                    parameter.value = desired_param_value
+                    try:
+                        parameter.validate()
+                    except Exception as e:
+                        print(e)
+                        continue
+                    else:
+                        value_is_valid = True          
 
     def build_command(self, params = None):
         """ Build the nextflow run command based on what we know """
