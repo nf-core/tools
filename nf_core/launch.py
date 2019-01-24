@@ -16,7 +16,7 @@ def launch_pipeline(workflow, params_local_uri, direct):
     params_list = []
     try:
         if params_local_uri:
-            with open(params_local_uri, 'r') as fp: params_json_str = fp.read() 
+            with open(params_local_uri, 'r') as fp: params_json_str = fp.read()
         else:
             params_json_str = nf_core.utils.fetch_parameter_settings_from_github(workflow)
         params_list = pms.Parameters.create_from_json(params_json_str)
@@ -43,10 +43,10 @@ class Launch(object):
 
         self.workflow = workflow
         self.nxf_flag_defaults = {
-            '-name': False,
-            '-r': False,
+            '-name': None,
+            '-r': None,
             '-profile': 'standard',
-            '-w': os.getenv('NXF_WORK') if os.getenv('NXF_WORK') else 'work',
+            '-w': os.getenv('NXF_WORK') if os.getenv('NXF_WORK') else './work',
             '-resume': False
         }
         self.nxf_flag_help = {
@@ -72,9 +72,29 @@ class Launch(object):
     def prompt_vars(self, params = None, direct = False):
         """ Ask the user if they want to override any default values """
         # Main nextflow flags
-        logging.info("Main nextflow options:\n")
+        click.secho("Main nextflow options", bold=True, underline=True)
         for flag, f_default in self.nxf_flag_defaults.items():
-            f_user = click.prompt(self.nxf_flag_help[flag], default=f_default)
+
+            # Click prompts don't like None, so we have to use an empty string instead
+            f_default_print = f_default
+            if f_default is None:
+                f_default = ''
+                f_default_print = 'None'
+
+            # Overwrite the default prompt for boolean
+            if isinstance(f_default, bool):
+                f_default_print = 'Y/n' if f_default else 'y/N'
+
+            # Prompt for a response
+            f_user = click.prompt(
+                "\n{}\n {} {}".format(
+                    self.nxf_flag_help[flag],
+                    click.style(flag, fg='blue'),
+                    click.style('[{}]'.format(str(f_default_print)), fg='green')
+                ),
+                default = f_default,
+                show_default = False
+            )
             # Only save if we've changed the default
             if f_user != f_default:
                 # Convert string bools to real bools
@@ -85,14 +105,13 @@ class Launch(object):
                 except AttributeError:
                     pass
                 self.nxf_flags[flag] = f_user
-        
+
         # Uses the parameter values from the JSON file
         # and does not ask the user to set them explicitly
         if direct:
             return
 
         # Pipeline params
-        logging.info("Pipeline specific parameters:\n")
         if params:
             Launch.__prompt_defaults_from_param_objects(
                 Launch.__group_parameters(params)
@@ -143,39 +162,69 @@ class Launch(object):
                 }
         """
         for group_label, params in params_grouped.items():
-            print("{prespace}Parameter group: \'{label}\'{postspace}".format(
-                prespace='-'*5,
-                label=group_label,
-                postspace='-'*10)
-                )
-            use_defaults = click.confirm("Do you want to use the group's defaults?",
-                    default=True)
-            if use_defaults:
+            click.echo("\n\n{}{}".format(
+                click.style('Parameter group: ', bold=True, underline=True),
+                click.style(group_label, bold=True, underline=True, fg='red'),
+            ))
+            use_defaults = click.confirm(
+                "Do you want to change the group's defaults? "+click.style('[y/N]', fg='green'),
+                    default=False, show_default=False)
+            if not use_defaults:
                 continue
             for parameter in params:
                 value_is_valid = False
-                while(not value_is_valid):
-                    desired_param_value = click.prompt("'--{name}'\n"
-                            "\tUsage: {usage}\n"
-                            "\tRange/Choices: {choices}.\n"
-                            .format(name=parameter.name,
-                                    usage=parameter.usage,
-                                    choices=parameter.choices),
-                        default=parameter.default_value)
+                first_attempt = True
+                while not value_is_valid:
+                    # Start building the string to show to the user - label and usage
+                    plines = ['',
+                        click.style(parameter.label, bold=True),
+                        click.style(parameter.usage, dim=True)
+                    ]
+                    # Add the choices / range if applicable
+                    if parameter.choices:
+                        rc = 'Choices' if parameter.type == 'string' else 'Range'
+                        plines.append('{}: {}'.format(rc, str(parameter.choices)))
+
+                    # Reset the choice display if boolean
+                    if parameter.type == "boolean":
+                        pdef_val = 'Y/n' if parameter.default_value else 'y/N'
+                    else:
+                        pdef_val = parameter.default_value
+
+                    # Final line to print - command and default
+                    flag_prompt = click.style(' --{} '.format(parameter.name), fg='blue') + \
+                        click.style('[{}]'.format(pdef_val), fg='green')
+                    # Only show this final prompt if we're trying again
+                    if first_attempt:
+                        plines.append(flag_prompt)
+                    else:
+                        plines = [flag_prompt]
+                    first_attempt = False
+
+                    # Use click.confirm if a boolean for default input handling
+                    if parameter.type == "boolean":
+                        parameter.value = click.confirm("\n".join(plines),
+                            default=parameter.default_value, show_default=False)
+                    # Use click.prompt if anything else
+                    else:
+                        parameter.value = click.prompt("\n".join(plines),
+                            default=parameter.default_value, show_default=False)
+
+                    # Set input parameter types
                     if parameter.type == "integer":
-                        desired_param_value = int(desired_param_value)
-                    elif parameter.type == "boolean":
-                        desired_param_value = (str(desired_param_value).lower() in ['yes', 'y', 'true', 't', '1'])
+                        parameter.value = int(parameter.value)
                     elif parameter.type == "decimal":
-                        desired_param_value = float(desired_param_value)
-                    parameter.value = desired_param_value
+                        parameter.value = float(parameter.value)
+
+                    # Validate the input
                     try:
                         parameter.validate()
                     except Exception as e:
-                        print(e)
+                        click.secho("\nERROR: {}".format(e), fg='red')
+                        click.secho("Please try again:")
                         continue
                     else:
-                        value_is_valid = True          
+                        value_is_valid = True
 
     def build_command(self, params = None):
         """ Build the nextflow run command based on what we know """
@@ -189,13 +238,13 @@ class Launch(object):
             # String values
             else:
                 self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, flag, val.replace('"', '\\"'))
-        
+
         if params:  # When a parameter specification file was used, we can run Nextflow with it
             path = Launch.__create_nfx_params_file(params)
             self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, "--params-file", path)
             Launch.__write_params_as_full_json(params)
             return
-        
+
         for param, val in self.params.items():
             # Boolean flags like --saveTrimmed
             if isinstance(val, bool):
@@ -215,7 +264,7 @@ class Launch(object):
         with open(output_file, "w") as fp:
             fp.write(json_string)
         return output_file
-    
+
     @classmethod
     def __write_params_as_full_json(cls, params, outdir = os.getcwd()):
         output_file = os.path.join(outdir, "full-params.json")
@@ -226,7 +275,13 @@ class Launch(object):
 
     def launch_workflow(self):
         """ Launch nextflow if required  """
-        logging.info("Nextflow command:\n  {}\n\n".format(self.nextflow_cmd))
-        if click.confirm('Do you want to run this command now?'):
-            logging.info("Launching!")
+        click.secho("\n\nNextflow command:", bold=True, underline=True)
+        click.secho("  {}\n\n".format(self.nextflow_cmd), fg='magenta')
+
+        if click.confirm(
+            'Do you want to run this command now? '+click.style('[y/N]', fg='green'),
+            default=False,
+            show_default=False
+            ):
+            logging.info("Launching workflow!")
             subprocess.call(self.nextflow_cmd, shell=True)

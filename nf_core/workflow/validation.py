@@ -9,20 +9,20 @@ else:
     ABC = abc.ABCMeta('ABC', (), {})
 
 class Validators(object):
-    """Gives access to a factory method for objects of instance 
-    :class:`Validator` which returns the correct Validator for a 
+    """Gives access to a factory method for objects of instance
+    :class:`Validator` which returns the correct Validator for a
     given parameter type.
     """
     def __init__(self):
         pass
-    
+
     @staticmethod
     def get_validator_for_param(parameter):
         """Determines matching :class:`Validator` instance for a given parameter.
 
         Returns:
             Validator: Matching validator for a given :class:`Parameter`.
-        
+
         Raises:
             LookupError: In case no matching validator for a given parameter type
                 can be determined.
@@ -34,11 +34,11 @@ class Validators(object):
         elif parameter.type == "boolean":
             return BooleanValidator(parameter)
         elif parameter.type == "decimal":
-            return DecimalValidator(parameter) 
+            return DecimalValidator(parameter)
         raise LookupError("Cannot find a matching validator for type '{}'."
             .format(parameter.type))
 
-    
+
 class Validator(ABC):
     """Abstract base class for different parameter validators.
     """
@@ -58,10 +58,10 @@ class Validator(ABC):
 
 class IntegerValidator(Validator):
     """Implementation for parameters of type integer.
-    
+
     Args:
         parameter (:class:`Parameter`): A Parameter object.
-    
+
     Raises:
         AttributeError: In case the argument is not of instance integer.
     """
@@ -78,7 +78,7 @@ class IntegerValidator(Validator):
         """
         value = self._param.value
         if not isinstance(value, int):
-            raise AttributeError("The value {} for parameter {} needs to be of type Integer, but was {}"
+            raise AttributeError("The value {} for parameter {} needs to be an Integer, but was a {}"
                 .format(value, self._param.name, type(value)))
         choices = sorted([x for x in self._param.choices])
         print(choices)
@@ -87,16 +87,16 @@ class IntegerValidator(Validator):
         if len(choices) < 2:
             raise AttributeError("The property 'choices' must have at least two entries.")
         if not (value >= choices[0] and value <= choices[-1]):
-            raise AttributeError("The value for parameter '{}' must be within range of [{},{}]"
+            raise AttributeError("'{}' must be within the range [{},{}]"
                 .format(self._param.name, choices[0], choices[-1]))
 
 
 class StringValidator(Validator):
     """Implementation for parameters of type string.
-    
+
     Args:
         parameter (:class:`Parameter`): A Parameter object.
-    
+
     Raises:
         AttributeError: In case the argument is not of instance string.
     """
@@ -122,24 +122,24 @@ class StringValidator(Validator):
                     "because the value for 'choices' and 'pattern' were empty.".format(self._param.value))
             result = re.match(self._param.pattern, self._param.value)
             if not result:
-                raise AttributeError("The value '{}' for parameter '{}'" \
-                    " did not match the regex pattern '{}' .".format(
-                        self._param.value, self._param.name, self._param.pattern
+                raise AttributeError("'{}' doesn't match the regex pattern '{}'".format(
+                        self._param.value, self._param.pattern
                     ))
         else:
             if value not in choices:
-                raise AttributeError("The value '{}' for parameter '{}'" \
-                    " was not part of choices '{}'.".format(
-                        value, self._param.name, choices
-                    ))
+                raise AttributeError(
+                    "'{}' is not not one of the choices {}".format(
+                        value, str(choices)
+                    )
+                )
 
 
 class BooleanValidator(Validator):
     """Implementation for parameters of type boolean.
-    
+
     Args:
         parameter (:class:`Parameter`): A Parameter object.
-    
+
     Raises:
         AttributeError: In case the argument is not of instance boolean.
     """
@@ -162,10 +162,10 @@ class BooleanValidator(Validator):
 
 class DecimalValidator(Validator):
     """Implementation for parameters of type boolean.
-    
+
     Args:
         parameter (:class:`Parameter`): A Parameter object.
-    
+
     Raises:
         AttributeError: In case the argument is not of instance decimal.
     """
