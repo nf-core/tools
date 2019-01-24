@@ -295,7 +295,7 @@ INFO: Updating version in nextflow.config
  + version = '1.0'
 
 INFO: Updating version in nextflow.config
- - container = 'nfcore/mypipeline:latest'
+ - container = 'nfcore/mypipeline:dev'
  + container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .travis.yml

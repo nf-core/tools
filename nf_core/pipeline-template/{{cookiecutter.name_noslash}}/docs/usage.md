@@ -98,7 +98,7 @@ If `-profile` is not specified at all the pipeline will be run locally and expec
     * Pulls software from dockerhub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `singularity`
     * A generic configuration profile to be used with [Singularity](http://singularity.lbl.gov/)
-    * Pulls software from singularity-hub
+    * Pulls software from DockerHub
 * `test`
     * A profile with a complete configuration for automated testing
     * Includes links to test data so needs no other parameters

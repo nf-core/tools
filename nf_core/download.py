@@ -68,7 +68,7 @@ class DownloadWorkflow(object):
         # Download the singularity images
         if self.singularity:
             logging.debug("Fetching container names for workflow")
-            self.find_singularity_images()
+            self.find_container_images()
             if len(self.containers) == 0:
                 logging.info("No container names found in workflow")
             else:
@@ -76,11 +76,14 @@ class DownloadWorkflow(object):
                 logging.info("Downloading {} singularity container{}".format(len(self.containers), 's' if len(self.containers) > 1 else ''))
                 for container in self.containers:
                     try:
-                        # Download from singularity hub if we can
-                        self.download_shub_image(container)
-                    except RuntimeWarning:
-                        # Try to build from dockerhub
+                        # Download from Dockerhub in all cases
                         self.pull_singularity_image(container)
+                    except RuntimeWarning as r:
+                        # Raise exception if this is not possible
+                        logging.error("Not able to pull image. Service might be down or internet connection is dead.")
+                        raise r
+
+                        
 
     def fetch_workflow_details(self, wfs):
         """Fetches details of a nf-core workflow to download.
@@ -167,11 +170,9 @@ class DownloadWorkflow(object):
         gh_name = '{}-{}'.format(self.wf_name, self.wf_sha).split('/')[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, 'workflow'))
 
-    def find_singularity_images(self):
-        """Finds Singularity image names for a given workflow.
+    def find_container_images(self):
+        """ Find container image names for workflow """
 
-        Search hits are stored in :attr:`self.containers`.
-        """
         # Use linting code to parse the pipeline nextflow config
         self.config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, 'workflow'))
 
@@ -180,65 +181,13 @@ class DownloadWorkflow(object):
             if k.startswith('process.') and k.endswith('.container'):
                 self.containers.append(v.strip('"').strip("'"))
 
-    def download_shub_image(self, container):
-        """Downloads singularity images from Singularity Hub.
-
-        Args:
-            container (str): A pipeline's container name. Usually it is of similar format
-                to `nfcore/name:latest`.
-
-        Raises:
-            RuntimeWarning, if the API call to Singularity Hub fails.
-        """
-        out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
-        out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
-        shub_api_url = 'https://www.singularity-hub.org/api/container/{}'.format(container.replace('nfcore', 'nf-core').replace('docker://', ''))
-
-        logging.debug("Checking shub API: {}".format(shub_api_url))
-        response = requests.get(shub_api_url, timeout=10)
-        if response.status_code == 200:
-            shub_response = response.json()
-            # Stream the download as it's going to be large
-            logging.debug("Starting download: {}".format(shub_response['image']))
-
-            # Don't use the requests cache for the download
-            with requests_cache.disabled():
-                dl_request = requests.get(shub_response['image'], stream=True)
-
-                # Check that we got a good response code
-                if dl_request.status_code == 200:
-                    total_size = int(dl_request.headers.get('content-length'))
-                    logging.debug("Total image file size: {} bytes".format(total_size))
-                    dl_label = "{} [{:.2f}MB]".format(out_name, total_size/1024.0/1024)
-                    # Open file in bytes mode
-                    with open(out_path, 'wb') as f:
-                        dl_iter = dl_request.iter_content(1024)
-                        # Use a click progress bar whilst we stream the download
-                        with click.progressbar(dl_iter, length=total_size/1024, label=dl_label, show_pos=True) as pbar:
-                            for chunk in pbar:
-                                if chunk:
-                                    f.write(chunk)
-                                    f.flush()
-
-                    # Check that the downloaded image has the right md5sum hash
-                    self.validate_md5(out_path, shub_response['version'])
-                else:
-                    logging.error("Error with singularity hub API call: {}".format(response.status_code))
-                    raise RuntimeWarning("Error with singularity hub API call: {}".format(response.status_code))
-
-        elif response.status_code == 404:
-            logging.debug("Singularity image not found on singularity-hub")
-            raise RuntimeWarning("Singularity image not found on singularity-hub")
-        else:
-            logging.error("Error with singularity hub API call: {}".format(response.status_code))
-            raise ImportError("Error with singularity hub API call: {}".format(response.status_code))
 
     def pull_singularity_image(self, container):
         """Uses a local installation of singularity to pull an image from Docker Hub.
 
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
-                to `nfcore/name:latest`.
+                to `nfcore/name:dev`.
 
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.

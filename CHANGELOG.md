@@ -11,6 +11,7 @@
 #### CI
 * Build API docs
 * Use Travis job for api doc generation and publish
+* Bump `conda` to 4.5.12 in Dockerfile
 
 #### Documentation
 * Added nf-core tools API description to assist developers with the classes and functions available.
@@ -24,6 +25,8 @@ pipelines from being synced if necessary.
 
 #### Template pipeline
 * Summary now logs details of the cluster profile used if from [nf-core/configs](https://github.com/nf-core/configs)
+* Dockerhub is used in favor of Singularity Hub for pulling when using the Singularity profile
+* Changed default container tag from latest to dev
 
 #### Tools helper code
 * `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
