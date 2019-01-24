@@ -34,17 +34,17 @@ class Parameters:
         properties = json.loads(parameters_json)
         parameters = []
         for param in properties.get("parameters"):
-            parameter = Parameter.builder().name(param.get("name")) \
-                .label(param.get("label")) \
-                .usage(param.get("usage")) \
-                .param_type(param.get("type")) \
-                .choices(param.get("choices")) \
-                .default(param.get("default_value")) \
-                .pattern(param.get("pattern")) \
-                .render(param.get("render")) \
-                .arity(param.get("arity")) \
-                .group(param.get("group")) \
-                .build()
+            parameter = (Parameter.builder().name(param.get("name"))
+                .label(param.get("label"))
+                .usage(param.get("usage"))
+                .param_type(param.get("type"))
+                .choices(param.get("choices"))
+                .default(param.get("default_value"))
+                .pattern(param.get("pattern"))
+                .render(param.get("render"))
+                .arity(param.get("arity"))
+                .group(param.get("group"))
+                .build())
             parameters.append(parameter)
         return parameters
 
@@ -63,10 +63,10 @@ class Parameters:
         for p in parameters:
             params[p.name] = p.value if p.value else p.default_value
         return json.dumps(params, indent=indent)
-    
+
     @staticmethod
     def in_full_json(parameters, indent=0):
-        """Converts a list of Parameter objects into JSON. All attributes 
+        """Converts a list of Parameter objects into JSON. All attributes
          are written.
 
         Args:
@@ -79,7 +79,7 @@ class Parameters:
         params_dict = {}
         params_dict["parameters"] = [p.as_dict() for p in parameters]
         return json.dumps(params_dict, indent=indent)
-    
+
     @classmethod
     def __download_schema_from_nf_core(cls, url):
         with requests_cache.disabled():
@@ -95,7 +95,7 @@ class Parameter(object):
     """
     def __init__(self, param_builder):
         # Make some checks
-        
+
         # Put content
         self.name = param_builder.p_name
         self.label = param_builder.p_label
@@ -109,7 +109,7 @@ class Parameter(object):
         self.required = param_builder.p_required
         self.render = param_builder.p_render
         self.group = param_builder.p_group
-    
+
     @staticmethod
     def builder():
         return ParameterBuilder()
@@ -121,13 +121,13 @@ class Parameter(object):
             dict: Parameter object as key value pairs.
         """
         params_dict = {}
-        for attribute in ['name', 'label', 'usage', 'required', 
+        for attribute in ['name', 'label', 'usage', 'required',
             'type', 'value', 'choices', 'default_value', 'pattern', 'arity', 'render', 'group']:
             if getattr(self, attribute):
                 params_dict[attribute] = getattr(self, attribute)
             params_dict['required'] = getattr(self, 'required')
         return params_dict
-    
+
     def validate(self):
         """Validates the parameter's value. If the value is within
         the parameter requirements, no exception is thrown.
@@ -135,7 +135,7 @@ class Parameter(object):
         Raises:
             LookupError: Raised when no matching validator can be determined.
             AttributeError: Raised with description, if a parameter value violates
-                the parameter constrains. 
+                the parameter constrains.
         """
         validator = vld.Validators.get_validator_for_param(self)
         validator.validate()
@@ -166,7 +166,7 @@ class ParameterBuilder:
         """
         self.p_group = group
         return self
-    
+
     def name(self, name):
         """Sets the parameter name.
 
@@ -175,7 +175,7 @@ class ParameterBuilder:
         """
         self.p_name = name
         return self
-    
+
     def label(self, label):
         """Sets the parameter label.
 
@@ -184,7 +184,7 @@ class ParameterBuilder:
         """
         self.p_label = label
         return self
-    
+
     def usage(self, usage):
         """Sets the parameter usage.
 
@@ -193,7 +193,7 @@ class ParameterBuilder:
         """
         self.p_usage = usage
         return self
-    
+
     def value(self, value):
         """Sets the parameter value.
 
@@ -202,7 +202,7 @@ class ParameterBuilder:
         """
         self.p_value = value
         return self
-    
+
     def choices(self, choices):
         """Sets the parameter value choices.
 
@@ -211,7 +211,7 @@ class ParameterBuilder:
         """
         self.p_choices = choices
         return self
-    
+
     def param_type(self, param_type):
         """Sets the parameter type.
 
@@ -220,7 +220,7 @@ class ParameterBuilder:
         """
         self.p_type = param_type
         return self
-    
+
     def default(self, default):
         """Sets the parameter default value.
 
@@ -229,7 +229,7 @@ class ParameterBuilder:
         """
         self.p_default_value = default
         return self
-    
+
     def pattern(self, pattern):
         """Sets the parameter regex pattern.
 
@@ -238,7 +238,7 @@ class ParameterBuilder:
         """
         self.p_pattern = pattern
         return self
-    
+
     def arity(self, arity):
         """Sets the parameter regex pattern.
 
@@ -256,12 +256,12 @@ class ParameterBuilder:
         """
         self.p_render = render
         return self
-    
+
     def required(self, required):
         """Sets the required parameter flag."""
         self.p_required = required
         return self
-    
+
     def build(self):
         """Builds parameter object.
 
@@ -269,4 +269,3 @@ class ParameterBuilder:
             Parameter: Fresh from the factory.
         """
         return Parameter(self)
-
