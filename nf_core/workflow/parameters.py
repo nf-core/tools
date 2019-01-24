@@ -43,6 +43,7 @@ class Parameters:
                 .pattern(param.get("pattern")) \
                 .render(param.get("render")) \
                 .arity(param.get("arity")) \
+                .group(param.get("group")) \
                 .build()
             parameters.append(parameter)
         return parameters

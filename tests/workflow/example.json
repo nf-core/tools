@@ -7,7 +7,18 @@
             "type": "string",
             "render": "file",
             "default_value": "path/to/reads.fastq.gz",
-            "pattern": ".*(\\.fastq$|\\.fastq\\.gz$)"
+            "pattern": ".*(\\.fastq$|\\.fastq\\.gz$)",
+            "group": "inputdata"
+        },
+        {
+            "name": "index",
+            "label": "Mapper index",
+            "usage": "Needs to be provided for the mapping.",
+            "type": "string",
+            "render": "file",
+            "default_value": "path/to/index",
+            "pattern": ".*",
+            "group": "inputdata"
         },
         {
             "name": "norm_factor",
@@ -16,7 +27,8 @@
             "type": "integer",
             "render": "range",
             "choices": [1, 150],
-            "default_value": 1
+            "default_value": 1,
+            "group": "normalization"
         }
     ]
 }

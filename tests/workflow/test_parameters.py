@@ -31,7 +31,13 @@ def example_json():
 def test_creating_params_from_json(example_json):
     """Tests parsing of a parameter json."""
     result = pms.Parameters.create_from_json(example_json)
-    assert len(result) == 2
+    assert len(result) == 3
+
+def test_groups_from_json(example_json):
+    """Tests group property of a parameter json."""
+    result = pms.Parameters.create_from_json(example_json)
+    group_labels = set([ param.group for param in result ])
+    assert len(group_labels) == 2
 
 def test_params_as_json_dump(example_json):
     """Tests the JSON dump that can be consumed by Nextflow."""
