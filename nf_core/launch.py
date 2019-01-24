@@ -148,7 +148,7 @@ class Launch(object):
                 label=group_label,
                 postspace='-'*10)
                 )
-            use_defaults = click.confirm("Do you want to use the groups defaults?",
+            use_defaults = click.confirm("Do you want to use the group's defaults?",
                     default=True)
             if use_defaults:
                 continue
