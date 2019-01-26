@@ -23,11 +23,13 @@ install:
   - pip install .
   - pip install codecov 'pytest==3.6.4' pytest-datafiles pytest-cov mock
   - pip install Sphinx sphinxcontrib-napoleon  # For autodoc generation
+  - sudo apt-get install npm && npm install -g markdownlint-cli # For documentation linting
 
 script:
   - python -m pytest --cov=nf_core .
   - nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
   - nf-core lint nf-core-testpipeline
+  - markdownlint . -c .markdownlint.yml
 
 after_success:
   - codecov

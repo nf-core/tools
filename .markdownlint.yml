@@ -1,0 +1,4 @@
+# Markdownlint configuration file
+default: true,
+line-length: false
+no-multiple-blanks: 0
