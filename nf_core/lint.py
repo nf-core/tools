@@ -818,13 +818,13 @@ class PipelineLint(object):
         # Print results
         rl = "\n  Using --release mode linting tests" if self.release_mode else ''
         logging.info("===========\n LINTING RESULTS\n=================\n" +
-            "{0:>4} tests passed".format(len(self.passed)) +
-            "{0:>4} tests had warnings".format(len(self.warned)) +
-            "{0:>4} tests failed".format(len(self.failed)) + rl
+            click.style("{0:>4} tests passed".format(len(self.passed)), fg='green') +
+            click.style("{0:>4} tests had warnings".format(len(self.warned)), fg='yellow') +
+            click.style("{0:>4} tests failed".format(len(self.failed)), fg='red') + rl
         )
         if len(self.passed) > 0:
-            logging.debug("Test Passed:\n  {}".format("\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
+            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
         if len(self.warned) > 0:
-            logging.warn("Test Warnings:\n  {}".format("\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
+            logging.warn("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
         if len(self.failed) > 0:
-            logging.error("Test Failures:\n  {}".format("\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))
+            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))

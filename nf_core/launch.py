@@ -164,7 +164,7 @@ class Launch(object):
         for group_label, params in params_grouped.items():
             click.echo("\n\n{}{}".format(
                 click.style('Parameter group: ', bold=True, underline=True),
-                click.style(group_label, bold=True, underline=True, fg='red'),
+                click.style(group_label, bold=True, underline=True, fg='red')
             ))
             use_defaults = click.confirm(
                 "Do you want to change the group's defaults? "+click.style('[y/N]', fg='green'),
