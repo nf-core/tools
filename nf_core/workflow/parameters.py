@@ -2,18 +2,21 @@ import copy
 import json
 import requests
 import requests_cache
+
 from jsonschema import validate
-from jsonschema.exceptions import ValidationError
+
 import nf_core.workflow.validation as vld
 
 NFCORE_PARAMS_SCHEMA_URI = "https://nf-co.re/parameters.schema.json"
+
 
 class Parameters:
     """Contains a static factory method
     for :class:`Parameter` object creation.
     """
+
     @staticmethod
-    def create_from_json(parameters_json, schema = ""):
+    def create_from_json(parameters_json, schema=""):
         """Creates a list of Parameter objects from
         a description in JSON.
 
@@ -35,16 +38,16 @@ class Parameters:
         parameters = []
         for param in properties.get("parameters"):
             parameter = (Parameter.builder().name(param.get("name"))
-                .label(param.get("label"))
-                .usage(param.get("usage"))
-                .param_type(param.get("type"))
-                .choices(param.get("choices"))
-                .default(param.get("default_value"))
-                .pattern(param.get("pattern"))
-                .render(param.get("render"))
-                .arity(param.get("arity"))
-                .group(param.get("group"))
-                .build())
+                         .label(param.get("label"))
+                         .usage(param.get("usage"))
+                         .param_type(param.get("type"))
+                         .choices(param.get("choices"))
+                         .default(param.get("default_value"))
+                         .pattern(param.get("pattern"))
+                         .render(param.get("render"))
+                         .arity(param.get("arity"))
+                         .group(param.get("group"))
+                         .build())
             parameters.append(parameter)
         return parameters
 
@@ -93,6 +96,7 @@ class Parameters:
 class Parameter(object):
     """Holds information about a workflow parameter.
     """
+
     def __init__(self, param_builder):
         # Make some checks
 
@@ -122,7 +126,7 @@ class Parameter(object):
         """
         params_dict = {}
         for attribute in ['name', 'label', 'usage', 'required',
-            'type', 'value', 'choices', 'default_value', 'pattern', 'arity', 'render', 'group']:
+                          'type', 'value', 'choices', 'default_value', 'pattern', 'arity', 'render', 'group']:
             if getattr(self, attribute):
                 params_dict[attribute] = getattr(self, attribute)
             params_dict['required'] = getattr(self, 'required')
@@ -144,6 +148,7 @@ class Parameter(object):
 class ParameterBuilder:
     """Parameter builder.
     """
+
     def __init__(self):
         self.p_name = ""
         self.p_label = ""
