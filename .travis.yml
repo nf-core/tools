@@ -25,7 +25,7 @@ install:
   - pip install Sphinx sphinxcontrib-napoleon # For autodoc generation
 
 script:
-  - pytest --cov=nf_core .
+  - pytest . --cov
   - nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
   - nf-core lint nf-core-testpipeline
 
