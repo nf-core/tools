@@ -132,7 +132,7 @@ def download(pipeline, release, singularity, outdir):
 @click.option(
     '--direct',
     is_flag = True,
-    default = False, 
+    default = False,
     help = "Uses given values from the parameter file directly."
 )
 def launch(pipeline, params, direct):
@@ -231,11 +231,9 @@ def create(name, description, author, new_version, no_git, force, outdir):
 
 
 if __name__ == '__main__':
-    print("""
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-    """, file=sys.stderr)
+    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'))
+    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'))
+    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'))
+    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'))
+    click.secho("                                          `._,._,'\n", fg='green')
     nf_core_cli()
