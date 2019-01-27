@@ -1,5 +1,5 @@
 from nf_core.workflow.parameters import Parameters
-from nf_core.workflow.parameters import Parameter
+
 
 class Workflow(object):
     """nf-core workflow object that holds run parameter information.

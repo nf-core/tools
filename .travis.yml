@@ -21,7 +21,7 @@ install:
   - cd ${TRAVIS_BUILD_DIR}
   - pip install --upgrade pip # Get rid of dependency resolve issues from older pip versions
   - pip install .
-  - pip install codecov 'pytest==3.6.4' pytest-datafiles pytest-cov mock jsonschema
+  - pip install codecov pytest-datafiles pytest-cov mock jsonschema
   - pip install Sphinx sphinxcontrib-napoleon # For autodoc generation
 
 script:
