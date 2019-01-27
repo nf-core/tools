@@ -4,7 +4,7 @@ import requests
 import requests_cache
 from jsonschema import validate
 from jsonschema.exceptions import ValidationError
-from nf_core.workflow import validation as vld
+import nf_core.workflow.validation as vld
 
 NFCORE_PARAMS_SCHEMA_URI = "https://nf-co.re/parameters.schema.json"
 

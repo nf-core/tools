@@ -1,7 +1,7 @@
 import abc
 import re
 import sys
-from nf_core.workflow import parameters as pms
+import nf_core.workflow.parameters as pms
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
