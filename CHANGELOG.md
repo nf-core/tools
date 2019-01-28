@@ -3,6 +3,7 @@
 ## v1.5dev
 
 #### General
+* Added `markdownlint-cli` for checking Markdown syntax
 * Drop Python 3.4 support
 
 #### CI

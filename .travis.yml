@@ -32,7 +32,7 @@ script:
   - markdownlint . -c .markdownlint.yml
 
 after_success:
-  - codecov
+  - codecov --rcfile=${TRAVIS_BUILD_DIR}/.github/coveragerc
 
 jobs:
   include:
