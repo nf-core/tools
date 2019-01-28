@@ -29,7 +29,7 @@ script:
   - python -m pytest --cov=nf_core .
   - nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
   - nf-core lint nf-core-testpipeline
-  - markdownlint . -c .markdownlint.yml
+  - markdownlint . -c ${TRAVIS_BUILD_DIR}/.github/markdownlint.yml
 
 after_success:
   - codecov --rcfile=${TRAVIS_BUILD_DIR}/.github/coveragerc

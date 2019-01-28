@@ -2,3 +2,5 @@
 default: true,
 line-length: false
 no-multiple-blanks: 0
+blanks-around-headers: false
+blanks-around-lists: false 
