@@ -83,7 +83,6 @@ class PipelineLint(object):
         path (str): Path to the pipeline directory.
         pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
         release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
-        singularityfile (list): A list of lines (str) parsed from the Singularity file.
         warned (list): A list of tuples of the form: `(<warned no>, <reason>)`
 
     **Attribute specifications**
@@ -129,7 +128,6 @@ class PipelineLint(object):
         self.pipeline_name = None
         self.minNextflowVersion = None
         self.dockerfile = []
-        self.singularityfile = []
         self.conda_config = {}
         self.conda_package_info = {}
         self.passed = []
@@ -168,13 +166,11 @@ class PipelineLint(object):
             'check_files_exist',
             'check_licence',
             'check_docker',
-            'check_singularity',
             'check_nextflow_config',
             'check_ci_config',
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
-            'check_conda_singularityfile',
             'check_pipeline_todos'
         ]
         if release_mode:
@@ -198,7 +194,6 @@ class PipelineLint(object):
 
             'nextflow.config',
             'Dockerfile',
-            'Singularity',
             ['.travis.yml', '.circle.yml'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
@@ -222,7 +217,6 @@ class PipelineLint(object):
         files_fail = [
             'nextflow.config',
             'Dockerfile',
-            'Singularity',
             ['.travis.yml', '.circle.yml'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
@@ -282,20 +276,6 @@ class PipelineLint(object):
             return
 
         self.failed.append((2, "Dockerfile check failed"))
-
-    def check_singularity(self):
-        """Checks that Singularity file contains the string ``FROM``."""
-        fn = os.path.join(self.path, "Singularity")
-        content = ""
-        with open(fn, 'r') as fh: content = fh.read()
-
-        # Implicitely also checks if empty.
-        if 'From:' in content:
-            self.passed.append((2, "Singularity file check passed"))
-            self.singularityfile = [line.strip() for line in content.splitlines()]
-            return
-
-        self.failed.append((2, "Singularity file check failed"))
 
     def check_licence(self):
         """Checks licence file is MIT.
@@ -761,35 +741,6 @@ class PipelineLint(object):
         else:
             for missing in difference:
                 self.failed.append((10, "Could not find Dockerfile file string: {}".format(missing)))
-
-    def check_conda_singularityfile(self):
-        """Checks the Singularity build file.
-
-        Checks that:
-            * a name is given and is consistent with the pipeline name
-            * dependency versions are pinned
-            * dependency versions are the latest available
-        """
-        if 'environment.yml' not in self.files or len(self.singularityfile) == 0:
-            return
-
-        expected_strings = [
-            'From:nfcore/base',
-            'Bootstrap:docker',
-            'VERSION {}'.format(self.config.get('manifest.version', '').strip(' \'"')),
-            'PATH=/opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name']),
-            'export PATH',
-            'environment.yml /',
-            '/opt/conda/bin/conda env create -f /environment.yml',
-            '/opt/conda/bin/conda clean -a',
-        ]
-
-        difference = set(expected_strings) - set(self.singularityfile)
-        if not difference:
-            self.passed.append((10, "Found all expected strings in Singularity file"))
-        else:
-            for missing in difference:
-                self.failed.append((10, "Could not find Singularity file string: {}".format(missing)))
 
     def check_pipeline_todos(self):
         """ Go through all template files looking for the string 'TODO nf-core:' """

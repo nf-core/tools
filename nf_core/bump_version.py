@@ -47,11 +47,6 @@ def bump_pipeline_version(lint_obj, new_version):
     nfconfig_newstr = "docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(name=lint_obj.pipeline_name.lower(), tag=docker_tag)
     update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-    # Update Singularity version name
-    nfconfig_pattern = r"VERSION {}".format(current_version.replace('.',r'\.'))
-    nfconfig_newstr = "VERSION {}".format(new_version)
-    update_file_version("Singularity", lint_obj, nfconfig_pattern, nfconfig_newstr)
-
     if 'environment.yml' in lint_obj.files:
         # Update conda environment.yml
         nfconfig_pattern = r"name: nf-core-{}-{}".format(lint_obj.pipeline_name.lower(), current_version.replace('.',r'\.'))

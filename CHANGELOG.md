@@ -3,6 +3,7 @@
 ## v1.5dev
 
 #### General
+* Removed Singularity file and related linting
 * Added `markdownlint-cli` for checking Markdown syntax
 * Drop Python 3.4 support
 
