@@ -2,39 +2,27 @@
 
 ## v1.5dev
 
-#### General
-* Added `markdownlint-cli` for checking Markdown syntax
-* Drop Python 3.4 support
-
-#### CI
-* Build API docs
-* Use Travis job for api doc generation and publish
-* Bump `conda` to 4.5.12 in Dockerfile
-* Lint markdown formatting in automated tests
-
-#### Documentation
-* Added nf-core tools API description to assist developers with the classes and functions available.
-
-#### Code coverage
-* Introduced test for filtering remote workflows by keyword
-
-#### Syncing
-* Syncing now reads from a `blacklist.json` in order to exclude
-pipelines from being synced if necessary.
-
 #### Template pipeline
 * Summary now logs details of the cluster profile used if from [nf-core/configs](https://github.com/nf-core/configs)
 * Dockerhub is used in favor of Singularity Hub for pulling when using the Singularity profile
 * Changed default container tag from latest to dev
 
 #### Tools helper code
+* Drop Python 3.4 support
 * `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
 * `nf-core lint` now properly searches for conda packages in default channels
 * Linting correctly validates version pinning for packages from PyPI
+* Lint markdown formatting in automated tests
+  * Added `markdownlint-cli` for checking Markdown syntax
 * Syncing now reads from a `blacklist.json` in order to exclude pipelines from being synced if necessary.
 * Added nf-core tools API description to assist developers with the classes and functions available.
   * Docs are automatically built by Travis CI and updated on the nf-co.re website.
 * Introduced test for filtering remote workflows by keyword
+* Build tools python API docs
+  * Use Travis job for api doc generation and publish
+* Bump `conda` to 4.5.12 in base nf-core Dockerfile
+* `nf-core bump-version` now stops before making changes if the linting fails
+
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
