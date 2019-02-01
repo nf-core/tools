@@ -10,6 +10,7 @@ Nextflow has [excellent integration](https://www.nextflow.io/docs/latest/docker.
 First, install docker on your system: [Docker Installation Instructions](https://docs.docker.com/engine/installation/)
 
 Then, simply run the analysis pipeline:
+
 ```bash
 nextflow run {{ cookiecutter.name }} -profile docker --genome '<genome ID>' --design '<path to your design file>'
 ```
