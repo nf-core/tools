@@ -58,10 +58,6 @@ def bump_pipeline_version(lint_obj, new_version):
         nfconfig_newstr = "PATH /opt/conda/envs/nf-core-{}-{}/bin:$PATH".format(lint_obj.pipeline_name.lower(), new_version)
         update_file_version("Dockerfile", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-        # Update Singularity PATH
-        nfconfig_pattern = r"PATH=/opt/conda/envs/nf-core-{}-{}/bin:\$PATH".format(lint_obj.pipeline_name.lower(), current_version.replace('.',r'\.'))
-        nfconfig_newstr = "PATH=/opt/conda/envs/nf-core-{}-{}/bin:$PATH".format(lint_obj.pipeline_name.lower(), new_version)
-
 
 def bump_nextflow_version(lint_obj, new_version):
     """Bumps the required Nextflow version number of a pipeline.
