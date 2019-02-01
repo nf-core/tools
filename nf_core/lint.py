@@ -737,10 +737,10 @@ class PipelineLint(object):
 
         difference = set(expected_strings) - set(self.dockerfile)
         if not difference:
-            self.passed.append((10, "Found all expected strings in Dockerfile file"))
+            self.passed.append((9, "Found all expected strings in Dockerfile file"))
         else:
             for missing in difference:
-                self.failed.append((10, "Could not find Dockerfile file string: {}".format(missing)))
+                self.failed.append((9, "Could not find Dockerfile file string: {}".format(missing)))
 
     def check_pipeline_todos(self):
         """ Go through all template files looking for the string 'TODO nf-core:' """
@@ -763,7 +763,7 @@ class PipelineLint(object):
                             l = l.replace('<!--', '').replace('-->', '').replace('# TODO nf-core: ', '').replace('// TODO nf-core: ', '').replace('TODO nf-core: ', '').strip()
                             if len(fname) + len(l) > 50:
                                 l = '{}..'.format(l[:50-len(fname)])
-                            self.warned.append((11, "TODO string found in '{}': {}".format(fname,l)))
+                            self.warned.append((10, "TODO string found in '{}': {}".format(fname,l)))
 
     def print_results(self):
         # Print results
