@@ -35,7 +35,7 @@ pipelines from being synced if necessary.
 * Syncing now reads from a `blacklist.json` in order to exclude pipelines from being synced if necessary.
 * Added nf-core tools API description to assist developers with the classes and functions available.
   * Docs are automatically built by Travis CI and updated on the nf-co.re website.
-* Introduced test for filtering remote workflows by keyword
+* Introduced test for filtering remote workflows by keyword.
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
