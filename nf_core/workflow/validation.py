@@ -1,7 +1,8 @@
+#!/usr/bin/env python
+
 import abc
 import re
 import sys
-import nf_core.workflow.parameters as pms
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -46,9 +47,6 @@ class Validator(ABC):
 
     @abc.abstractmethod
     def __init__(self, parameter):
-        if not isinstance(parameter, pms.Parameter):
-            raise (AttributeError("Argument must be of class {}"
-                .format(pms.Parameter.__class__)))
         self._param = parameter
 
     @abc.abstractmethod
