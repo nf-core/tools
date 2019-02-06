@@ -49,7 +49,7 @@ class Launch(object):
         if 'nf-core' not in workflow and workflow.count('/') == 0 and not os.path.exists(workflow):
             workflow = "nf-core/{}".format(workflow)
             logging.debug("Prepending nf-core/ to workflow")
-        logging.info("Launching {}\n".format(workflow))
+        logging.info("Launching {}".format(workflow))
 
         # Get local workflows to see if we have a cached version
         self.local_wf = None
@@ -97,6 +97,7 @@ class Launch(object):
                 raise AssertionError("`nextflow pull` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
             else:
                 self.local_wf = nf_core.list.LocalWorkflow(self.workflow)
+                self.local_wf.get_local_nf_workflow_details()
 
     def parse_parameter_settings(self, params_local_uri = None):
         """
@@ -112,7 +113,7 @@ class Launch(object):
             else:
                 local_params_path = os.path.join(self.local_wf.local_path, 'parameters.settings.json')
                 if os.path.exists(local_params_path):
-                    with open(params_local_uri, 'r') as fp:
+                    with open(local_params_path, 'r') as fp:
                         params_json_str = fp.read()
             if not params_json_str:
                 raise LookupError('parameters.settings.json file not found')
@@ -128,15 +129,36 @@ class Launch(object):
         for key, value in config.items():
             keys = key.split('.')
             if keys[0] == 'params' and len(keys) == 2:
+
+                # Try to guess the variable type from the default value
+                p_type = 'string'
+                p_default = str(value)
+                # All digits - int
+                if value.isdigit():
+                    p_type = 'integer'
+                    p_default = int(value)
+                else:
+                    # Not just digis - try converting to a float
+                    try:
+                        p_default = float(value)
+                        p_type = 'decimal'
+                    except ValueError:
+                        pass
+                # Strings 'true' and 'false' - booleans
+                if value == 'true' or value == 'false':
+                    p_type = 'boolean'
+                    p_default = True if value == 'true' else False
+
+                # Build the Parameter object
                 parameter = (nf_core.workflow.parameters.Parameter.builder()
                              .name(keys[1])
                              .label(None)
                              .usage(None)
-                             .param_type("string")
+                             .param_type(p_type)
                              .choices(None)
-                             .default(str(value))
+                             .default(p_default)
                              .pattern(".*")
-                             .render(None)
+                             .render("textfield")
                              .arity(None)
                              .group("Pipeline parameters")
                              .build())
