@@ -11,7 +11,6 @@ import nf_core.workflow.validation as vld
 
 NFCORE_PARAMS_SCHEMA_URI = "https://nf-co.re/parameters.schema.json"
 
-
 class Parameters:
     """Contains a static factory method
     for :class:`Parameter` object creation.
@@ -39,7 +38,8 @@ class Parameters:
         properties = json.loads(parameters_json)
         parameters = []
         for param in properties.get("parameters"):
-            parameter = (Parameter.builder().name(param.get("name"))
+            parameter = (Parameter.builder()
+                         .name(param.get("name"))
                          .label(param.get("label"))
                          .usage(param.get("usage"))
                          .param_type(param.get("type"))
@@ -66,7 +66,8 @@ class Parameters:
         """
         params = {}
         for p in parameters:
-            params[p.name] = p.value if p.value else p.default_value
+            if p.value and p.value != p.default_value:
+                params[p.name] = p.value
         return json.dumps(params, indent=indent)
 
     @staticmethod

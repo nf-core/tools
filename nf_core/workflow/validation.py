@@ -111,12 +111,12 @@ class StringValidator(Validator):
         """
         value = self._param.value
         if not isinstance(value, str):
-            raise AttributeError("The value {} for parameter {} needs to be of type Integer, but was {}"
+            raise AttributeError("The value {} for parameter {} needs to be of type String, but was {}"
                 .format(value, self._param.name, type(value)))
         choices = sorted([x for x in self._param.choices]) if self._param.choices else []
         if not choices:
             if not self._param.pattern:
-                raise AttributeError("Can't validate value for parameter '{}'," \
+                raise AttributeError("Can't validate value for parameter '{}', " \
                     "because the value for 'choices' and 'pattern' were empty.".format(self._param.value))
             result = re.match(self._param.pattern, self._param.value)
             if not result:
@@ -180,5 +180,5 @@ class DecimalValidator(Validator):
         """
         value = self._param.value
         if not isinstance(self._param.value, float):
-            raise AttributeError("The value {} for parameter {} needs to be of type Boolean, but was {}"
+            raise AttributeError("The value {} for parameter {} needs to be of type Decimal, but was {}"
                 .format(value, self._param.name, type(value)))
