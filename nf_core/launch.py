@@ -8,24 +8,55 @@ import logging
 import os
 import subprocess
 
-import nf_core.utils
-from nf_core.workflow import parameters as pms
+import nf_core.utils, nf_core.list
+import nf_core.workflow.parameters, nf_core.workflow.validation, nf_core.workflow.workflow
 
 def launch_pipeline(workflow, params_local_uri, direct):
     launcher = Launch(workflow)
     params_list = []
-    try:
-        if params_local_uri:
-            with open(params_local_uri, 'r') as fp: params_json_str = fp.read()
+
+    # Get nextflow to fetch the workflow if we don't already have it
+    if not launcher.local_wf:
+        logging.info("Downloading workflow: {}".format(launcher.workflow))
+        try:
+            with open(os.devnull, 'w') as devnull:
+                nfconfig_raw = subprocess.check_output(['nextflow', 'pull', launcher.workflow], stderr=devnull)
+        except OSError as e:
+            if e.errno == os.errno.ENOENT:
+                raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+        except subprocess.CalledProcessError as e:
+            raise AssertionError("`nextflow pull` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
         else:
-            params_json_str = nf_core.utils.fetch_parameter_settings_from_github(workflow)
-        params_list = pms.Parameters.create_from_json(params_json_str)
+            launcher.local_wf = nf_core.list.LocalWorkflow(launcher.workflow)
+
+    # Get the pipeline default parameters
+    try:
+        params_json_str = None
+        # Params file supplied to launch command
+        if params_local_uri:
+            with open(params_local_uri, 'r') as fp:
+                params_json_str = fp.read()
+        # Get workflow file from local cached copy
+        else:
+            local_params_path = os.path.join(launcher.local_wf.local_path, 'parameters.settings.json')
+            if os.path.exists(local_params_path):
+                with open(params_local_uri, 'r') as fp:
+                    params_json_str = fp.read()
+        if not params_json_str:
+            raise LookupError
+        params_list = nf_core.workflow.parameters.Parameters.create_from_json(params_json_str)
     except LookupError as e:
         print("WARNING: No parameter settings file found for `{pipeline}`.\n{exception}".format(
-            pipeline=workflow, exception=e))
+            pipeline=launcher.workflow, exception=e))
+
+    # Fallback if parameters.settings.json not found, calls Nextflow's config command
     if not params_list:
-        launcher.collect_defaults()  # Fallback, calls Nextflow's config command
+        launcher.collect_defaults()
+
+    # Kick off the interactive wizard to collect user inputs
     launcher.prompt_vars(params_list, direct)
+
+    # Build and launch the `nextflow run` command
     launcher.build_command(params_list)
     launcher.launch_workflow()
 
@@ -40,6 +71,14 @@ class Launch(object):
             workflow = "nf-core/{}".format(workflow)
             logging.debug("Prepending nf-core/ to workflow")
         logging.info("Launching {}\n".format(workflow))
+
+        # Get local workflows to see if we have a cached version
+        self.local_wf = None
+        wfs = nf_core.list.Workflows()
+        wfs.get_local_nf_workflows()
+        for wf in wfs.local_workflows:
+            if workflow == wf.full_name:
+                self.local_wf = wf
 
         self.workflow = workflow
         self.nxf_flag_defaults = {
@@ -95,6 +134,7 @@ class Launch(object):
                 default = f_default,
                 show_default = False
             )
+
             # Only save if we've changed the default
             if f_user != f_default:
                 # Convert string bools to real bools
@@ -119,7 +159,17 @@ class Launch(object):
             return
         for param, p_default in self.param_defaults.items():
             if not isinstance(p_default, dict) and not isinstance(p_default, list):
-                p_user = click.prompt("--{}".format(param), default=p_default)
+
+                # Prompt for a response
+                p_user = click.prompt(
+                    "\n --{} {}".format(
+                        click.style(param, fg='blue'),
+                        click.style('[{}]'.format(str(p_default)), fg='green')
+                    ),
+                    default = p_default,
+                    show_default = False
+                )
+
                 # Only save if we've changed the default
                 if p_user != p_default:
                     # Convert string bools to real bools
@@ -260,7 +310,7 @@ class Launch(object):
     def __create_nfx_params_file(cls, params):
         working_dir = os.getcwd()
         output_file = os.path.join(working_dir, "nfx-params.json")
-        json_string = pms.Parameters.in_nextflow_json(params, indent=4)
+        json_string = nf_core.workflow.parameters.Parameters.in_nextflow_json(params, indent=4)
         with open(output_file, "w") as fp:
             fp.write(json_string)
         return output_file
@@ -268,7 +318,7 @@ class Launch(object):
     @classmethod
     def __write_params_as_full_json(cls, params, outdir = os.getcwd()):
         output_file = os.path.join(outdir, "full-params.json")
-        json_string = pms.Parameters.in_full_json(params, indent=4)
+        json_string = nf_core.workflow.parameters.Parameters.in_full_json(params, indent=4)
         with open(output_file, "w") as fp:
             fp.write(json_string)
         return output_file
