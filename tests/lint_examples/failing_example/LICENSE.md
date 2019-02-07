@@ -1,1 +1,1 @@
-This is a bad licence file.
+# This is a bad licence file

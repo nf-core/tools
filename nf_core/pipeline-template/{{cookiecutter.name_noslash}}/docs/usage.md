@@ -7,37 +7,37 @@
 * [Updating the pipeline](#updating-the-pipeline)
 * [Reproducibility](#reproducibility)
 * [Main arguments](#main-arguments)
-    * [`-profile`](#-profile-single-dash)
-        * [`awsbatch`](#awsbatch)
-        * [`conda`](#conda)
-        * [`docker`](#docker)
-        * [`singularity`](#singularity)
-        * [`test`](#test)
-    * [`--reads`](#--reads)
-    * [`--singleEnd`](#--singleend)
+  * [`-profile`](#-profile-single-dash)
+    * [`awsbatch`](#awsbatch)
+    * [`conda`](#conda)
+    * [`docker`](#docker)
+    * [`singularity`](#singularity)
+    * [`test`](#test)
+  * [`--reads`](#--reads)
+  * [`--singleEnd`](#--singleend)
 * [Reference genomes](#reference-genomes)
-    * [`--genome`](#--genome)
-    * [`--fasta`](#--fasta)
-    * [`--igenomesIgnore`](#--igenomesignore)
+  * [`--genome`](#--genome)
+  * [`--fasta`](#--fasta)
+  * [`--igenomesIgnore`](#--igenomesignore)
 * [Job resources](#job-resources)
 * [Automatic resubmission](#automatic-resubmission)
 * [Custom resource requests](#custom-resource-requests)
 * [AWS batch specific parameters](#aws-batch-specific-parameters)
-    * [`-awsbatch`](#-awsbatch)
-    * [`--awsqueue`](#--awsqueue)
-    * [`--awsregion`](#--awsregion)
+  * [`-awsbatch`](#-awsbatch)
+  * [`--awsqueue`](#--awsqueue)
+  * [`--awsregion`](#--awsregion)
 * [Other command line parameters](#other-command-line-parameters)
-    * [`--outdir`](#--outdir)
-    * [`--email`](#--email)
-    * [`-name`](#-name-single-dash)
-    * [`-resume`](#-resume-single-dash)
-    * [`-c`](#-c-single-dash)
-    * [`--custom_config_version`](#--custom_config_version)
-    * [`--max_memory`](#--max_memory)
-    * [`--max_time`](#--max_time)
-    * [`--max_cpus`](#--max_cpus)
-    * [`--plaintext_email`](#--plaintext_email)
-    * [`--multiqc_config`](#--multiqc_config)
+  * [`--outdir`](#--outdir)
+  * [`--email`](#--email)
+  * [`-name`](#-name-single-dash)
+  * [`-resume`](#-resume-single-dash)
+  * [`-c`](#-c-single-dash)
+  * [`--custom_config_version`](#--custom_config_version)
+  * [`--max_memory`](#--max_memory)
+  * [`--max_time`](#--max_time)
+  * [`--max_cpus`](#--max_cpus)
+  * [`--plaintext_email`](#--plaintext_email)
+  * [`--multiqc_config`](#--multiqc_config)
 
 
 ## General Nextflow info
@@ -48,9 +48,12 @@ It is recommended to limit the Nextflow Java virtual machines memory. We recomme
 ```bash
 NXF_OPTS='-Xms1g -Xmx4g'
 ```
+
 <!-- TODO nf-core: Document required command line parameters to run the pipeline-->
+
 ## Running the pipeline
 The typical command for running the pipeline is as follows:
+
 ```bash
 nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile docker
 ```
@@ -89,21 +92,22 @@ Use this parameter to choose a configuration profile. Profiles can give configur
 If `-profile` is not specified at all the pipeline will be run locally and expects all software to be installed and available on the `PATH`.
 
 * `awsbatch`
-    * A generic configuration profile to be used with AWS Batch.
+  * A generic configuration profile to be used with AWS Batch.
 * `conda`
-    * A generic configuration profile to be used with [conda](https://conda.io/docs/)
-    * Pulls most software from [Bioconda](https://bioconda.github.io/)
+  * A generic configuration profile to be used with [conda](https://conda.io/docs/)
+  * Pulls most software from [Bioconda](https://bioconda.github.io/)
 * `docker`
-    * A generic configuration profile to be used with [Docker](http://docker.com/)
-    * Pulls software from dockerhub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * A generic configuration profile to be used with [Docker](http://docker.com/)
+  * Pulls software from dockerhub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `singularity`
-    * A generic configuration profile to be used with [Singularity](http://singularity.lbl.gov/)
-    * Pulls software from DockerHub
+  * A generic configuration profile to be used with [Singularity](http://singularity.lbl.gov/)
+  * Pulls software from DockerHub
 * `test`
-    * A profile with a complete configuration for automated testing
-    * Includes links to test data so needs no other parameters
+  * A profile with a complete configuration for automated testing
+  * Includes links to test data so needs no other parameters
 
 <!-- TODO nf-core: Document required command line parameters -->
+
 ### `--reads`
 Use this to specify the location of your input FastQ files. For example:
 
@@ -154,6 +158,7 @@ Note that you can use the same configuration setup to save sets of reference fil
 The syntax for this reference configuration is as follows:
 
 <!-- TODO nf-core: Update reference genome example according to what is needed -->
+
 ```nextflow
 params {
   genomes {

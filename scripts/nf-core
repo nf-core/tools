@@ -163,6 +163,9 @@ def bump_version(pipeline_dir, new_version, nextflow):
     # First, lint the pipeline to check everything is in order
     logging.info("Running nf-core lint tests")
     lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
+    if len(lint_obj.failed) > 0:
+        logging.error("Please fix lint errors before bumping versions")
+        return
 
     # Bump the pipeline version number
     if not nextflow:
