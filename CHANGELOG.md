@@ -18,7 +18,7 @@
 * Syncing now reads from a `blacklist.json` in order to exclude pipelines from being synced if necessary.
 * Added nf-core tools API description to assist developers with the classes and functions available.
   * Docs are automatically built by Travis CI and updated on the nf-co.re website.
-* Introduced test for filtering remote workflows by keyword
+* Introduced test for filtering remote workflows by keyword.
 * Build tools python API docs
   * Use Travis job for api doc generation and publish
 * Bump `conda` to 4.5.12 in base nf-core Dockerfile
