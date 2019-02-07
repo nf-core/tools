@@ -124,15 +124,12 @@ def download(pipeline, release, singularity, outdir):
 )
 @click.option(
     '-p', '--params',
-    is_flag = False,
-    default = "",
     type = str,
     help = "Local parameter settings file in JSON."
 )
 @click.option(
-    '--direct',
+    '-d', '--direct',
     is_flag = True,
-    default = False,
     help = "Uses given values from the parameter file directly."
 )
 def launch(pipeline, params, direct):

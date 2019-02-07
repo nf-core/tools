@@ -1,7 +1,8 @@
+#!/usr/bin/env python
+
 import abc
 import re
 import sys
-import nf_core.workflow.parameters as pms
 
 if sys.version_info >= (3, 4):
     ABC = abc.ABC
@@ -46,9 +47,6 @@ class Validator(ABC):
 
     @abc.abstractmethod
     def __init__(self, parameter):
-        if not isinstance(parameter, pms.Parameter):
-            raise (AttributeError("Argument must be of class {}"
-                .format(pms.Parameter.__class__)))
         self._param = parameter
 
     @abc.abstractmethod
@@ -80,15 +78,13 @@ class IntegerValidator(Validator):
         if not isinstance(value, int):
             raise AttributeError("The value {} for parameter {} needs to be an Integer, but was a {}"
                 .format(value, self._param.name, type(value)))
-        choices = sorted([x for x in self._param.choices])
-        print(choices)
-        if not choices:
-            return
-        if len(choices) < 2:
-            raise AttributeError("The property 'choices' must have at least two entries.")
-        if not (value >= choices[0] and value <= choices[-1]):
-            raise AttributeError("'{}' must be within the range [{},{}]"
-                .format(self._param.name, choices[0], choices[-1]))
+        if self._param.choices:
+            choices = sorted([x for x in self._param.choices])
+            if len(choices) < 2:
+                raise AttributeError("The property 'choices' must have at least two entries.")
+            if not (value >= choices[0] and value <= choices[-1]):
+                raise AttributeError("'{}' must be within the range [{},{}]"
+                    .format(self._param.name, choices[0], choices[-1]))
 
 
 class StringValidator(Validator):
@@ -113,12 +109,12 @@ class StringValidator(Validator):
         """
         value = self._param.value
         if not isinstance(value, str):
-            raise AttributeError("The value {} for parameter {} needs to be of type Integer, but was {}"
+            raise AttributeError("The value {} for parameter {} needs to be of type String, but was {}"
                 .format(value, self._param.name, type(value)))
         choices = sorted([x for x in self._param.choices]) if self._param.choices else []
         if not choices:
             if not self._param.pattern:
-                raise AttributeError("Can't validate value for parameter '{}'," \
+                raise AttributeError("Can't validate value for parameter '{}', " \
                     "because the value for 'choices' and 'pattern' were empty.".format(self._param.value))
             result = re.match(self._param.pattern, self._param.value)
             if not result:
@@ -182,5 +178,5 @@ class DecimalValidator(Validator):
         """
         value = self._param.value
         if not isinstance(self._param.value, float):
-            raise AttributeError("The value {} for parameter {} needs to be of type Boolean, but was {}"
+            raise AttributeError("The value {} for parameter {} needs to be of type Decimal, but was {}"
                 .format(value, self._param.name, type(value)))
