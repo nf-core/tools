@@ -123,8 +123,8 @@ class Launch(object):
 
     def collect_pipeline_param_defaults(self):
         """ Collect the default params and values from the workflow """
-        logging.info("Collecting pipeline parameter defaults\n")
-        config = nf_core.utils.fetch_wf_config(self.workflow)
+        logging.debug("Collecting pipeline parameter defaults\n")
+        config = nf_core.utils.fetch_wf_config(self.workflow, self.local_wf)
         for key, value in config.items():
             keys = key.split('.')
             if keys[0] == 'params' and len(keys) == 2:

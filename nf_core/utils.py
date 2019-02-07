@@ -4,11 +4,13 @@ Common utility functions for the nf-core python package.
 """
 
 import datetime
+import json
+import logging
 import os
 import subprocess
 import tempfile
 
-def fetch_wf_config(wf_path):
+def fetch_wf_config(wf_path, wf=None):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -20,6 +22,27 @@ def fetch_wf_config(wf_path):
     """
 
     config = dict()
+    cache_fn = None
+    cache_basedir = None
+    cache_path = None
+
+    # Build a cache directory if we can
+    if os.path.isdir(os.path.join(os.getenv("HOME"), '.nextflow')):
+        cache_basedir = os.path.join(os.getenv("HOME"), '.nextflow', 'nf-core')
+        if not os.path.isdir(cache_basedir):
+            os.mkdir(cache_basedir)
+
+    # If we're given a workflow object with a commit, see if we have a cached copy
+    if cache_basedir and wf and wf.full_name and wf.commit_sha:
+        cache_fn = '{}-{}.json'.format(wf.full_name.replace(os.path.sep, '-'), wf.commit_sha)
+        cache_path = os.path.join(cache_basedir, cache_fn)
+        if os.path.isfile(cache_path):
+            logging.debug("Found a config cache, loading: {}".format(cache_path))
+            with open(cache_path, 'r') as fh:
+                config = json.load(fh)
+            return config
+
+
     # Call `nextflow config` and pipe stderr to /dev/null
     try:
         with open(os.devnull, 'w') as devnull:
@@ -34,6 +57,13 @@ def fetch_wf_config(wf_path):
             ul = l.decode('utf-8')
             k, v = ul.split(' = ', 1)
             config[k] = v
+
+    # If we can, save a cached copy
+    if cache_path:
+        logging.debug("Saving config cache: {}".format(cache_path))
+        with open(cache_path, 'w') as fh:
+            json.dump(config, fh, indent=4)
+
     return config
 
 
