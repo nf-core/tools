@@ -274,7 +274,7 @@ class Launch(object):
                         parameter.value = int(parameter.value)
                     elif parameter.type == "decimal":
                         parameter.value = float(parameter.value)
-                    else:
+                    elif parameter.type == "string":
                         parameter.value = str(parameter.value)
 
                     # Validate the input

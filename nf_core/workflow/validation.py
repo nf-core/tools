@@ -78,15 +78,13 @@ class IntegerValidator(Validator):
         if not isinstance(value, int):
             raise AttributeError("The value {} for parameter {} needs to be an Integer, but was a {}"
                 .format(value, self._param.name, type(value)))
-        choices = sorted([x for x in self._param.choices])
-        print(choices)
-        if not choices:
-            return
-        if len(choices) < 2:
-            raise AttributeError("The property 'choices' must have at least two entries.")
-        if not (value >= choices[0] and value <= choices[-1]):
-            raise AttributeError("'{}' must be within the range [{},{}]"
-                .format(self._param.name, choices[0], choices[-1]))
+        if self._param.choices:
+            choices = sorted([x for x in self._param.choices])
+            if len(choices) < 2:
+                raise AttributeError("The property 'choices' must have at least two entries.")
+            if not (value >= choices[0] and value <= choices[-1]):
+                raise AttributeError("'{}' must be within the range [{},{}]"
+                    .format(self._param.name, choices[0], choices[-1]))
 
 
 class StringValidator(Validator):
