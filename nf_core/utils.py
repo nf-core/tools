@@ -5,7 +5,6 @@ Common utility functions for the nf-core python package.
 
 import datetime
 import os
-import requests
 import subprocess
 import tempfile
 

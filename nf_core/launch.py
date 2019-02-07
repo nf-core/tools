@@ -6,7 +6,6 @@ from __future__ import print_function
 import click
 import logging
 import os
-import re
 import subprocess
 
 import nf_core.utils, nf_core.list
@@ -89,7 +88,7 @@ class Launch(object):
             logging.info("Downloading workflow: {}".format(self.workflow))
             try:
                 with open(os.devnull, 'w') as devnull:
-                    nfconfig_raw = subprocess.check_output(['nextflow', 'pull', self.workflow], stderr=devnull)
+                    subprocess.check_output(['nextflow', 'pull', self.workflow], stderr=devnull)
             except OSError as e:
                 if e.errno == os.errno.ENOENT:
                     raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
