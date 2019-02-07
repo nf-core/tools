@@ -1,6 +1,6 @@
-<img src="docs/images/nf-core-logo.png" width="400">
+# ![nf-core/tools](docs/images/nf-core-logo.png)
 
-# [nf-core/tools](https://github.com/nf-core/tools)
+## [nf-core/tools](https://github.com/nf-core/tools)
 [![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
@@ -21,13 +21,13 @@ A python package with helper tools for the nf-core community.
 
 You can install `nf-core/tools` from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
-```
+```bash
 pip install nf-core
 ```
 
 If you would like the development version instead, the command is:
 
-```
+```bash
 pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
 ```
 
@@ -50,7 +50,7 @@ The command `nf-core list` shows all available nf-core pipelines along with thei
 
 An example of the output from the command is as follows:
 
-```
+```bash
 $ nf-core list
 
                                           ,--./,-.
@@ -75,7 +75,7 @@ nf-core/vipr       dev        -            -              No
 
 To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
 
-```
+```bash
 nf-core list rna rna-seq
 
                                           ,--./,-.
@@ -103,7 +103,7 @@ To make this process easier and ensure accurate retrieval of correctly versioned
 
 By default, the pipeline will just download the pipeline code. If you specify the flag `--singularity`, it will also download any singularity image files that are required.
 
-```
+```bash
 $ nf-core download methylseq --singularity
 
                                           ,--./,-.
@@ -123,7 +123,8 @@ INFO: Downloading workflow files from GitHub
 INFO: Downloading 1 singularity container
 nf-core-methylseq-1.0.simg [762.28MB]  [####################################]  780573/780572
 ```
-```
+
+```bash
 $ tree -L 2 nf-core-methylseq-1.0/
 
 nf-core-methylseq-1.0/
@@ -149,7 +150,7 @@ nf-core-methylseq-1.0/
 ## Pipeline software licences
 Sometimes it's useful to see the software licences of the tools used in a pipeline. You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-```
+```bash
 $ nf-core licences rnaseq
 
                                           ,--./,-.
@@ -190,7 +191,7 @@ With a given pipeline name, description and author, it makes a starter pipeline 
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
 See the [nf-core syncing docs](http://nf-co.re/sync) for more information.
 
-```
+```bash
 $ nf-core create
 
                                           ,--./,-.
@@ -234,7 +235,7 @@ This is the same test that is used on the automated continuous integration tests
 
 For example, the current version looks something like this:
 
-```
+```bash
 $ cd path/to/my_pipeline
 $ nf-core lint .
 
@@ -267,7 +268,7 @@ The command uses results from the linting process, so will only work with workfl
 
 Usage is `nf-core bump-version <pipeline_dir> <new_version>`, eg:
 
-```
+```bash
 $ cd path/to/my_pipeline
 $ nf-core bump-version . 1.0
 
