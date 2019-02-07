@@ -17,7 +17,8 @@ def launch_pipeline(workflow, params_local_uri, direct):
     launcher = Launch(workflow)
 
     # Get nextflow to fetch the workflow if we don't already have it
-    launcher.get_local_wf()
+    if not launcher.wf_ispath:
+        launcher.get_local_wf()
 
     # Get the pipeline default parameters
     launcher.parse_parameter_settings(params_local_uri)
@@ -44,19 +45,23 @@ class Launch(object):
     def __init__(self, workflow):
         """ Initialise the class with empty placeholder vars """
 
+        # Check if the workflow name is actually a path
+        self.wf_ispath = os.path.exists(workflow)
+
         # Prepend nf-core/ if it seems sensible
-        if 'nf-core' not in workflow and workflow.count('/') == 0 and not os.path.exists(workflow):
+        if 'nf-core' not in workflow and workflow.count('/') == 0 and not self.wf_ispath:
             workflow = "nf-core/{}".format(workflow)
             logging.debug("Prepending nf-core/ to workflow")
         logging.info("Launching {}".format(workflow))
 
-        # Get local workflows to see if we have a cached version
+        # Get list of local workflows to see if we have a cached version
         self.local_wf = None
-        wfs = nf_core.list.Workflows()
-        wfs.get_local_nf_workflows()
-        for wf in wfs.local_workflows:
-            if workflow == wf.full_name:
-                self.local_wf = wf
+        if not self.wf_ispath:
+            wfs = nf_core.list.Workflows()
+            wfs.get_local_nf_workflows()
+            for wf in wfs.local_workflows:
+                if workflow == wf.full_name:
+                    self.local_wf = wf
 
         self.workflow = workflow
         self.nxf_flag_defaults = {
@@ -110,7 +115,10 @@ class Launch(object):
                     params_json_str = fp.read()
             # Get workflow file from local cached copy
             else:
-                local_params_path = os.path.join(self.local_wf.local_path, 'parameters.settings.json')
+                if self.wf_ispath:
+                    local_params_path = os.path.join(self.workflow, 'parameters.settings.json')
+                else:
+                    local_params_path = os.path.join(self.local_wf.local_path, 'parameters.settings.json')
                 if os.path.exists(local_params_path):
                     with open(local_params_path, 'r') as fp:
                         params_json_str = fp.read()
@@ -303,7 +311,8 @@ class Launch(object):
         # Write the user selection to a file and run nextflow with that
         if self.use_params_file:
             path = self.create_nfx_params_file()
-            self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, "--params-file", path)
+            if path is not None:
+                self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, "--params-file", path)
             self.write_params_as_full_json()
 
         # Call nextflow with a list of command line flags
@@ -323,6 +332,8 @@ class Launch(object):
         working_dir = os.getcwd()
         output_file = os.path.join(working_dir, "nfx-params.json")
         json_string = nf_core.workflow.parameters.Parameters.in_nextflow_json(self.parameters, indent=4)
+        if json_string == '{}':
+            return None
         with open(output_file, "w") as fp:
             fp.write(json_string)
         return output_file
