@@ -65,11 +65,11 @@ The following variables fail the test if missing:
   * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
 * `manifest.nextflowVersion`
   * The minimum version of Nextflow required to run the pipeline.
-    * Should `>=` a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (check the [Nexftlow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest) for more.)
-    * This should correspond to the `NXF_VER` version tested by Travis.
+  * Should `>=` a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (check the [Nexftlow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest) for more.)
+  * This should correspond to the `NXF_VER` version tested by Travis.
 * `manifest.homePage`
   * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
-      so beginning with `https://github.com/nf-core/`
+    so beginning with `https://github.com/nf-core/`
 * `timeline.enabled`, `trace.enabled`, `report.enabled`, `dag.enabled`
   * The nextflow timeline, trace, report and DAG should be enabled by default
 * `process.cpus`, `process.memory`, `process.time`
@@ -90,7 +90,7 @@ The following variables throw warnings if missing:
   * Input parameter to specify input data (typically FastQ files / pairs)
 * `params.singleEnd`
   * Specify to work with single-end sequence data instead of default paired-end
-    * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
+  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -135,10 +135,10 @@ The `README.md` files for a project are very important and must meet some requir
     ```
 * Bioconda badge
   * If your pipeline contains a file called `environment.yml`, a bioconda badge is required
-    * Required badge code:
-    ```markdown
-    [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
-    ```
+  * Required badge code:
+  ```markdown
+  [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
+  ```
 
 ## Error #7 - Pipeline and container version numbers ## {#7}
 
