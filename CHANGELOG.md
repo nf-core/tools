@@ -6,6 +6,8 @@
 * Summary now logs details of the cluster profile used if from [nf-core/configs](https://github.com/nf-core/configs)
 * Dockerhub is used in favor of Singularity Hub for pulling when using the Singularity profile
 * Changed default container tag from latest to dev
+* Brought the logo to life
+* Change the default filenames for the pipeline trace files
 
 #### Tools helper code
 * Drop Python 3.4 support
