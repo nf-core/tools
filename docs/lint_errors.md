@@ -136,9 +136,9 @@ The `README.md` files for a project are very important and must meet some requir
 * Bioconda badge
   * If your pipeline contains a file called `environment.yml`, a bioconda badge is required
   * Required badge code:
-  ```markdown
-  [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
-  ```
+    ```markdown
+    [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
+    ```
 
 ## Error #7 - Pipeline and container version numbers ## {#7}
 
