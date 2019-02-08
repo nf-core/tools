@@ -10,6 +10,7 @@
 * Change the default filenames for the pipeline trace files
 
 #### Tools helper code
+* New `nf-core launch` command to interactively launch nf-core pipelines from command-line
 * Drop Python 3.4 support
 * `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
 * `nf-core lint` now properly searches for conda packages in default channels
@@ -19,11 +20,13 @@
 * Syncing now reads from a `blacklist.json` in order to exclude pipelines from being synced if necessary.
 * Added nf-core tools API description to assist developers with the classes and functions available.
   * Docs are automatically built by Travis CI and updated on the nf-co.re website.
-* Introduced test for filtering remote workflows by keyword
+* Introduced test for filtering remote workflows by keyword.
 * Build tools python API docs
   * Use Travis job for api doc generation and publish
 * Bump `conda` to 4.5.12 in base nf-core Dockerfile
 * `nf-core bump-version` now stops before making changes if the linting fails
+* Code test coverage
+  * Introduced test for filtering remote workflows by keyword
 
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly

@@ -9,7 +9,7 @@ import os
 import re
 
 import nf_core
-import nf_core.lint, nf_core.list, nf_core.download, nf_core.licences, nf_core.bump_version, nf_core.create
+import nf_core.bump_version, nf_core.create, nf_core.download, nf_core.launch, nf_core.licences, nf_core.lint, nf_core.list
 
 import logging
 
@@ -18,6 +18,7 @@ import logging
 @click.option(
     '-v', '--verbose',
     is_flag = True,
+    default = False,
     help = "Verbose output (print debug statements)"
 )
 def nf_core_cli(verbose):
@@ -115,6 +116,26 @@ def download(pipeline, release, singularity, outdir):
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir)
     dl.download_workflow()
 
+@nf_core_cli.command()
+@click.argument(
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+@click.option(
+    '-p', '--params',
+    type = str,
+    help = "Local parameter settings file in JSON."
+)
+@click.option(
+    '-d', '--direct',
+    is_flag = True,
+    help = "Uses given values from the parameter file directly."
+)
+def launch(pipeline, params, direct):
+    """ Interactively build a nextflow command and launch a pipeline """
+    nf_core.launch.launch_pipeline(pipeline, params, direct)
+
 @nf_core_cli.command('bump-version')
 @click.argument(
     'pipeline_dir',
@@ -210,11 +231,9 @@ def create(name, description, author, new_version, no_git, force, outdir):
 
 
 if __name__ == '__main__':
-    print("""
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-    """, file=sys.stderr)
+    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'))
+    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'))
+    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'))
+    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'))
+    click.secho("                                          `._,._,'\n", fg='green')
     nf_core_cli()
