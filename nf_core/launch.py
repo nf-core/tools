@@ -8,6 +8,7 @@ import click
 import jsonschema
 import logging
 import os
+import re
 import subprocess
 
 import nf_core.utils, nf_core.list
@@ -25,9 +26,8 @@ def launch_pipeline(workflow, params_local_uri, direct):
     # Get the pipeline default parameters
     launcher.parse_parameter_settings(params_local_uri)
 
-    # Fallback if parameters.settings.json not found, calls Nextflow's config command
-    if len(launcher.parameters) == 0:
-        launcher.collect_pipeline_param_defaults()
+    # Find extra params from `nextflow config` command and main.nf
+    launcher.collect_pipeline_param_defaults()
 
     # Group the parameters
     launcher.group_parameters()
@@ -82,6 +82,7 @@ class Launch(object):
         }
         self.nxf_flags = {}
         self.parameters = []
+        self.parameter_keys = []
         self.grouped_parameters = OrderedDict()
         self.params_user = {}
         self.nextflow_cmd = "nextflow run {}".format(self.workflow)
@@ -128,6 +129,9 @@ class Launch(object):
                 raise LookupError('parameters.settings.json file not found')
             try:
                 self.parameters = nf_core.workflow.parameters.Parameters.create_from_json(params_json_str)
+                for p in self.parameters:
+                    self.parameter_keys.append(p.name)
+                    logging.debug("Found param from parameters.settings.json: param.{}".format(p.name))
             except ValueError as e:
                 logging.error("Could not parse pipeline parameters.settings.json JSON:\n  {}\n".format(e))
             except jsonschema.exceptions.ValidationError as e:
@@ -142,7 +146,7 @@ class Launch(object):
         config = nf_core.utils.fetch_wf_config(self.workflow, self.local_wf)
         for key, value in config.items():
             keys = key.split('.')
-            if keys[0] == 'params' and len(keys) == 2:
+            if keys[0] == 'params' and len(keys) == 2 and keys[1] not in self.parameter_keys:
 
                 # Try to guess the variable type from the default value
                 p_type = 'string'
@@ -166,7 +170,7 @@ class Launch(object):
                 # Build the Parameter object
                 parameter = (nf_core.workflow.parameters.Parameter.builder()
                              .name(keys[1])
-                             .label(None)
+                             .label(keys[1])
                              .usage(None)
                              .param_type(p_type)
                              .choices(None)
@@ -174,9 +178,46 @@ class Launch(object):
                              .pattern(".*")
                              .render("textfield")
                              .arity(None)
-                             .group("Pipeline parameters")
+                             .group("Other pipeline parameters")
                              .build())
                 self.parameters.append(parameter)
+                self.parameter_keys.append(keys[1])
+                logging.debug("Discovered param from `nextflow config`: param.{}".format(keys[1]))
+
+        # Not all parameters can be found with `nextflow config` - try searching main.nf and config files
+        searchfiles = []
+        pattern = re.compile(r'params\.([\w\d]+)')
+        wf_base = self.workflow if self.wf_ispath else self.local_wf.local_path
+        if os.path.exists(os.path.join(wf_base, 'main.nf')):
+            searchfiles.append(os.path.join(wf_base, 'main.nf'))
+        if os.path.exists(os.path.join(wf_base, 'nextflow.config')):
+            searchfiles.append(os.path.join(wf_base, 'nextflow.config'))
+        if os.path.isdir(os.path.join(wf_base, 'conf')):
+            for fn in os.listdir(os.path.join(wf_base, 'conf')):
+                searchfiles.append(os.path.join(wf_base, 'conf', fn))
+        for sf in searchfiles:
+            with open(sf, 'r') as fh:
+                for l in fh:
+                    match = re.search(pattern, l)
+                    if match:
+                        param = match.group(1)
+                        if param not in self.parameter_keys:
+                            # Build the Parameter object
+                            parameter = (nf_core.workflow.parameters.Parameter.builder()
+                                         .name(param)
+                                         .label(param)
+                                         .usage(None)
+                                         .param_type("string")
+                                         .choices(None)
+                                         .default("")
+                                         .pattern(".*")
+                                         .render("textfield")
+                                         .arity(None)
+                                         .group("Other pipeline parameters")
+                                         .build())
+                            self.parameters.append(parameter)
+                            self.parameter_keys.append(param)
+                            logging.debug("Discovered param from {}: param.{}".format(os.path.relpath(sf, wf_base), param))
 
     def prompt_core_nxf_flags(self):
         """ Ask the user if they want to override any default values """
