@@ -2,8 +2,10 @@
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
+from collections import OrderedDict
 
 import click
+import jsonschema
 import logging
 import os
 import subprocess
@@ -80,7 +82,7 @@ class Launch(object):
         }
         self.nxf_flags = {}
         self.parameters = []
-        self.grouped_parameters = {}
+        self.grouped_parameters = OrderedDict()
         self.params_user = {}
         self.nextflow_cmd = "nextflow run {}".format(self.workflow)
         self.use_params_file = True
@@ -124,7 +126,12 @@ class Launch(object):
                         params_json_str = fp.read()
             if not params_json_str:
                 raise LookupError('parameters.settings.json file not found')
-            self.parameters = nf_core.workflow.parameters.Parameters.create_from_json(params_json_str)
+            try:
+                self.parameters = nf_core.workflow.parameters.Parameters.create_from_json(params_json_str)
+            except ValueError as e:
+                logging.error("Could not parse pipeline parameters.settings.json JSON:\n  {}\n".format(e))
+            except jsonschema.exceptions.ValidationError as e:
+                logging.error("Validation error with pipeline parameters.settings.json:\n  Message: {}\n  Instance: {}\n".format(e.message, e.instance))
         except LookupError as e:
             print("WARNING: Could not parse parameter settings file for `{pipeline}`:\n  {exception}".format(
                 pipeline=self.workflow, exception=e))
@@ -236,7 +243,8 @@ class Launch(object):
             if not use_defaults:
                 continue
             for parameter in params:
-                value_is_valid = False
+                # Skip this option if the render mode is none
+                value_is_valid = parameter.render == 'none'
                 first_attempt = True
                 while not value_is_valid:
                     # Start building the string to show to the user - label and usage
@@ -244,12 +252,13 @@ class Launch(object):
                     if parameter.label:
                         plines.append(click.style(parameter.label, bold=True))
                     if parameter.usage:
-                        plines.append(click.style(parameter.usage, dim=True))
+                        plines.append(click.style(parameter.usage))
 
                     # Add the choices / range if applicable
                     if parameter.choices:
                         rc = 'Choices' if parameter.type == 'string' else 'Range'
-                        plines.append('{}: {}'.format(rc, str(parameter.choices)))
+                        choices_string = ", ".join([click.style(x, fg='yellow') for x in parameter.choices if x != ''])
+                        plines.append('{}: {}'.format(rc, choices_string))
 
                     # Reset the choice display if boolean
                     if parameter.type == "boolean":
@@ -258,8 +267,12 @@ class Launch(object):
                         pdef_val = parameter.default_value
 
                     # Final line to print - command and default
-                    flag_prompt = click.style(' --{} '.format(parameter.name), fg='blue') + \
-                        click.style('[{}]'.format(pdef_val), fg='green')
+                    if pdef_val == '':
+                        flag_default = ''
+                    else:
+                        flag_default = click.style(' [{}]'.format(pdef_val), fg='green')
+                    flag_prompt = click.style(' --{}'.format(parameter.name), fg='blue') + flag_default
+
 
                     # Only show this final prompt if we're trying again
                     if first_attempt:
@@ -278,12 +291,15 @@ class Launch(object):
                             default=parameter.default_value, show_default=False)
 
                     # Set input parameter types
-                    if parameter.type == "integer":
-                        parameter.value = int(parameter.value)
-                    elif parameter.type == "decimal":
-                        parameter.value = float(parameter.value)
-                    elif parameter.type == "string":
-                        parameter.value = str(parameter.value)
+                    try:
+                        if parameter.type == "integer":
+                            parameter.value = int(parameter.value)
+                        elif parameter.type == "decimal":
+                            parameter.value = float(parameter.value)
+                        elif parameter.type == "string":
+                            parameter.value = str(parameter.value)
+                    except ValueError as e:
+                        logging.error("Could not set variable type: {}".format(e))
 
                     # Validate the input
                     try:

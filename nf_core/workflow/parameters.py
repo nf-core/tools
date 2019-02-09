@@ -5,6 +5,7 @@ import json
 import requests
 import requests_cache
 
+from collections import OrderedDict
 from jsonschema import validate
 
 import nf_core.workflow.validation as vld
@@ -17,7 +18,7 @@ class Parameters:
     """
 
     @staticmethod
-    def create_from_json(parameters_json, schema=""):
+    def create_from_json(parameters_json, schema_json=""):
         """Creates a list of Parameter objects from
         a description in JSON.
 
@@ -32,10 +33,16 @@ class Parameters:
             ValidationError: When the parameter JSON violates the schema.
             LookupError: When the schema cannot be downloaded.
         """
-        if not schema:
-            schema = Parameters.__download_schema_from_nf_core(NFCORE_PARAMS_SCHEMA_URI)
-        validate(json.loads(parameters_json), json.loads(schema))  # Throws a ValidationError when schema is violated
-        properties = json.loads(parameters_json)
+        # Load the schema and pipeline parameters
+        if not schema_json:
+            schema_json = Parameters.__download_schema_from_nf_core(NFCORE_PARAMS_SCHEMA_URI)
+        schema = json.loads(schema_json, object_pairs_hook=OrderedDict)
+        properties = json.loads(parameters_json, object_pairs_hook=OrderedDict)
+
+        # Validate the parameters JSON. Throws a ValidationError when schema is violated
+        validate(properties, schema)
+
+        # Build the parameters object
         parameters = []
         for param in properties.get("parameters"):
             parameter = (Parameter.builder()
