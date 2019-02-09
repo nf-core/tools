@@ -12,6 +12,7 @@
 #### Tools helper code
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
   * Works with a `parameters.settings.json` file shipped with each pipeline
+  * Discovers additional `params` from the pipeline dynamically
 * Drop Python 3.4 support
 * `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
 * `nf-core lint` now properly searches for conda packages in default channels
