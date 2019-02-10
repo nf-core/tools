@@ -81,9 +81,9 @@ The following variables throw warnings if missing:
   * The filename of the main pipeline script (recommended to be `main.nf`)
 * `timeline.file`, `trace.file`, `report.file`, `dag.file`
   * Default filenames for the timeline, trace and report
-    * Should be set to a results folder, eg: `${params.outdir}/pipeline_info/trace.[workflowname].txt"``
-    * The DAG file path should end with `.svg`
-      * If Graphviz is not installed, Nextflow will generate a `.dot` file instead
+  * Should be set to a results folder, eg: `${params.outdir}/pipeline_info/trace.[workflowname].txt"`
+  * The DAG file path should end with `.svg`
+    * If Graphviz is not installed, Nextflow will generate a `.dot` file instead
 * `process.container`
   * A single default container for use by all processes
 * `params.reads`
@@ -114,8 +114,8 @@ This test fails if the following happens:
       - NXF_VER=0.27.0
       - NXF_VER=''
     ```
-    * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
-    * Other variables can be specified on these lines as long as they are space separated.
+  * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
+  * Other variables can be specified on these lines as long as they are space separated.
 * `.travis.yml` checks that pull requests are not opened directly to the `master` branch
   * The following is expected in the `before_install` section:
     ```yaml
@@ -128,8 +128,8 @@ The `README.md` files for a project are very important and must meet some requir
 
 * Nextflow badge
   * If no Nextflow badge is found, a warning is given
-    * If a badge is found but the version doesn't match the minimum version in the config file, the test fails
-    * Example badge code:
+  * If a badge is found but the version doesn't match the minimum version in the config file, the test fails
+  * Example badge code:
     ```markdown
     [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.27.6-brightgreen.svg)](https://www.nextflow.io/)
     ```
@@ -157,8 +157,8 @@ if they are set.
 
 * The environment `name` must match the pipeline name and version
   * The pipeline name is defined in the config variable `manifest.name`
-    * Replace the slash with a hyphen as environment names shouldn't contain that character
-    * Example: For `nf-core/test` version 1.4, the conda environment name should be `nf-core-test-1.4`
+  * Replace the slash with a hyphen as environment names shouldn't contain that character
+  * Example: For `nf-core/test` version 1.4, the conda environment name should be `nf-core-test-1.4`
 
 Each dependency is checked using the [Anaconda API service](https://api.anaconda.org/docs).
 Dependency sublists are ignored with the exception of `- pip`: these packages are also checked
