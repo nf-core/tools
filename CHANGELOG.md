@@ -31,7 +31,7 @@
   * Introduced test for filtering remote workflows by keyword
 
 #### Other
-* Updated Conda Version on base container to 4.6.7 
+* Updated Conda Version on base container to 4.6.7
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
