@@ -8,6 +8,7 @@
 * Changed default container tag from latest to dev
 * Brought the logo to life
 * Change the default filenames for the pipeline trace files
+* Remote fetch of nf-core/configs profiles fails gracefully if offline
 
 #### Tools helper code
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
