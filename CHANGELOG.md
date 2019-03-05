@@ -3,6 +3,7 @@
 ## v1.5dev
 
 #### Template pipeline
+* Dropped Singularity file
 * Summary now logs details of the cluster profile used if from [nf-core/configs](https://github.com/nf-core/configs)
 * Dockerhub is used in favor of Singularity Hub for pulling when using the Singularity profile
 * Changed default container tag from latest to dev

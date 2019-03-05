@@ -9,8 +9,6 @@ nf-core pipelines should adhere to a common file structure for consistency. The 
   * The main nextflow config file
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
-* `Singularity`
-  * A singularity build script to generate a singularity image with the required software
 * `.travis.yml` or `circle.yml`
   * A config file for automated continuous testing with either [Travis CI](https://travis-ci.org/) or [Circle CI](https://circleci.com/)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
@@ -30,10 +28,10 @@ The following files are suggested but not a hard requirement. If they are missin
   * A `conf` directory with at least one config called `base.config`
 
 
-## Error #2 - Docker / Singularity file check failed ## {#2}
-Pipelines should have a files called `Dockerfile` and `Singularity` in their root directory.
-These are used for automated docker and singularity image builds. This test checks that the files
-exist and contain at least the string `FROM` (`Dockerfile`) / `From:` (`Singularity`).
+## Error #2 - Docker file check failed ## {#2}
+Pipelines should have a files called `Dockerfile` in their root directory.
+The file is used for automated docker image builds. This test checks that the file
+exists and contains at least the string `FROM` (`Dockerfile`).
 
 ## Error #3 - Licence check failed ## {#3}
 nf-core pipelines must ship with an open source [MIT licence](https://choosealicense.com/licenses/mit/).
@@ -83,7 +81,7 @@ The following variables throw warnings if missing:
   * The filename of the main pipeline script (recommended to be `main.nf`)
 * `timeline.file`, `trace.file`, `report.file`, `dag.file`
   * Default filenames for the timeline, trace and report
-  * Should be set to a results folder, eg: `${params.outdir}/pipeline_info/trace.[workflowname].txt"``
+  * Should be set to a results folder, eg: `${params.outdir}/pipeline_info/trace.[workflowname].txt"`
   * The DAG file path should end with `.svg`
     * If Graphviz is not installed, Nextflow will generate a `.dot` file instead
 * `process.container`
@@ -111,18 +109,15 @@ This test fails if the following happens:
   * Where `<container>` is fetched from `params.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
 * `.travis.yml` does not test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
   * This is expected in the `env` section of the config, eg:
-
     ```yaml
     env:
       - NXF_VER=0.27.0
       - NXF_VER=''
     ```
-
   * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
   * Other variables can be specified on these lines as long as they are space separated.
 * `.travis.yml` checks that pull requests are not opened directly to the `master` branch
   * The following is expected in the `before_install` section:
-
     ```yaml
     before_install:
       - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
@@ -135,15 +130,12 @@ The `README.md` files for a project are very important and must meet some requir
   * If no Nextflow badge is found, a warning is given
   * If a badge is found but the version doesn't match the minimum version in the config file, the test fails
   * Example badge code:
-
     ```markdown
     [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.27.6-brightgreen.svg)](https://www.nextflow.io/)
     ```
-
 * Bioconda badge
   * If your pipeline contains a file called `environment.yml`, a bioconda badge is required
   * Required badge code:
-
     ```markdown
     [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
     ```
@@ -158,7 +150,6 @@ if they are set.
 * Container name must have a tag specified (eg. `nfcore/pipeline:version`)
 * Container tag / `$TRAVIS_TAG` must contain only numbers and dots
 * Tags and `$TRAVIS_TAG` must all match one another
-
 
 ## Error #8 - Conda environment tests ## {#8}
 
@@ -209,45 +200,7 @@ These lines must be an exact copy of the above example.
 
 Additional lines and different metadata can be added without causing the test to fail.
 
-
-## Error #10 - Singularity for use with Conda environments ## {#10}
-
-> This test only runs if there is both `environment.yml`
-> and `Singularity` file present in the workflow.
-
-If a workflow has a conda `environment.yml` file (see above), the `Singularity` build script
-should use this to create the container. Such `Singularity` files can usually be very short, eg:
-
-```singularity
-From:nfcore/base
-Bootstrap:docker
-
-%labels
-    MAINTAINER Your Name <your@email.com>
-    DESCRIPTION Container image containing all requirements for the nf-core/EXAMPLE pipeline
-    VERSION [pipeline version]
-
-%files
-    environment.yml /
-
-%post
-    /opt/conda/bin/conda env update -n root -f /environment.yml
-    /opt/conda/bin/conda clean -a
-```
-
-To enforce this minimal `Singularity` and check for common copy+paste errors, we require
-that the above template is used. Specifically, presence of these lines is checked for:
-
-* `From:nfcore/base`
-* `Bootstrap:docker`
-* `VERSION [pipeline version]`
-* `environment.yml /`
-* `/opt/conda/bin/conda env update -n root -f /environment.yml`
-* `/opt/conda/bin/conda clean -a`
-
-Additional lines and different metadata can be added without causing the test to fail.
-
-## Error #11 - Template TODO statement found ## {#11}
+## Error #10 - Template TODO statement found ## {#10}
 
 The nf-core workflow template contains a number of comment lines with the following format:
 
