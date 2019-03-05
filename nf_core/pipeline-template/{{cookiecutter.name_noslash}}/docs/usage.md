@@ -248,7 +248,7 @@ you should download the files from the repo and tell nextflow where to find them
 `custom_config_base` option. For example:
 
 ```bash
-## Download and unizp the config files
+## Download and unzip the config files
 cd /path/to/my/configs
 wget https://github.com/nf-core/configs/archive/master.zip
 unzip master.zip
@@ -257,6 +257,9 @@ unzip master.zip
 cd /path/to/my/data
 nextflow run /path/to/pipeline/ --custom_config_base /path/to/my/configs/configs-master/
 ```
+
+> Note that the nf-core/tools helper package has a `download` command to download all required pipeline
+> files + singularity containers + institutional configs in one go for you, to make this process easier.
 
 ### `--max_memory`
 Use to set a top-limit for the default memory requirement for each process.
