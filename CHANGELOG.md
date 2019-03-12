@@ -20,7 +20,7 @@
 * `nf-core lint` now properly searches for conda packages in default channels
 * Linting correctly validates version pinning for packages from PyPI
 * Lint markdown formatting in automated tests
-  * Added `markdownlint-cli` for checking Markdown syntax
+  * Added `markdownlint-cli` for checking Markdown syntax in pipelines and tools repo
 * Syncing now reads from a `blacklist.json` in order to exclude pipelines from being synced if necessary.
 * Added nf-core tools API description to assist developers with the classes and functions available.
   * Docs are automatically built by Travis CI and updated on the nf-co.re website.
