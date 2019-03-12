@@ -10,6 +10,7 @@
 * Brought the logo to life
 * Change the default filenames for the pipeline trace files
 * Remote fetch of nf-core/configs profiles fails gracefully if offline
+* Remove `process.container` and just directly define `process.container` now.
 
 #### Tools helper code
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
@@ -17,8 +18,6 @@
   * Discovers additional `params` from the pipeline dynamically
 * Drop Python 3.4 support
 * `nf-core list` now only shows a value for _"is local latest version"_ column if there is a local copy.
-* `nf-core lint` now properly searches for conda packages in default channels
-* Linting correctly validates version pinning for packages from PyPI
 * Lint markdown formatting in automated tests
   * Added `markdownlint-cli` for checking Markdown syntax in pipelines and tools repo
 * Syncing now reads from a `blacklist.json` in order to exclude pipelines from being synced if necessary.
@@ -31,6 +30,10 @@
 * `nf-core bump-version` now stops before making changes if the linting fails
 * Code test coverage
   * Introduced test for filtering remote workflows by keyword
+* Linting updates
+  * Now properly searches for conda packages in default channels
+  * Now correctly validates version pinning for packages from PyPI
+  * Updates for changes to `process.container` definition
 
 #### Other
 * Updated Conda Version on base container to 4.6.7

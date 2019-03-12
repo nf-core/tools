@@ -85,7 +85,9 @@ The following variables throw warnings if missing:
   * The DAG file path should end with `.svg`
     * If Graphviz is not installed, Nextflow will generate a `.dot` file instead
 * `process.container`
-  * A single default container for use by all processes
+  * Dockerhub handle for a single default container for use by all processes.
+  * Must specify a tag that matches the pipeline version number if set.
+  * If the pipeline version number contains the string `dev`, the dockerhub tag must be `:dev`
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
 * `params.singleEnd`
@@ -95,9 +97,11 @@ The following variables throw warnings if missing:
 The following variables are depreciated and fail the test if they are still present:
 
 * `params.version`
-  * The old method for specifying the pieline version. Replaced by `manifest.version`
+  * The old method for specifying the pipeline version. Replaced by `manifest.version`
 * `params.nf_required_version`
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
+* `process.container`
+  * The old method for specifying the dockerhub container address. Replaced by `process.container`
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 nf-core pipelines must have CI testing with Travis or Circle CI.

@@ -351,13 +351,13 @@ class PipelineLint(object):
             'dag.file',
             'params.reads',
             'process.container',
-            'params.container',
             'params.singleEnd'
         ]
         # Old depreciated vars - fail if present
         config_fail_ifdefined = [
             'params.version',
-            'params.nf_required_version'
+            'params.nf_required_version',
+            'params.container'
         ]
 
         # Get the nextflow config for this pipeline
@@ -423,6 +423,19 @@ class PipelineLint(object):
             else:
                 self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
 
+        # Check that the params.container name is pulling the version tag or :dev
+        if self.config.get('process.container'):
+            container_name = '{}:{}'.format(self.config.get('manifest.name').replace('nf-core','nfcore').strip("'"), self.config.get('manifest.version', '').strip("'"))
+            if 'dev' in self.config.get('manifest.version', '') or not self.config.get('manifest.version'):
+                container_name = '{}:dev'.format(self.config.get('manifest.name').replace('nf-core','nfcore').strip("'"))
+            try:
+                assert self.config.get('process.container', '').strip("'") == container_name
+            except AssertionError:
+                self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+            else:
+                self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
+
+
     def check_ci_config(self):
         """Checks that the Travis or Circle CI YAML config is valid.
 
@@ -459,15 +472,6 @@ class PipelineLint(object):
                         self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                     else:
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
-
-                    # Check that we tag the docker image properly
-                    docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, self.config.get('params.container', '').strip('"\''))
-                    try:
-                        assert(docker_tag_cmd in ciconf.get('before_install'))
-                    except AssertionError:
-                        self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
-                    else:
-                        self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
 
                 # Check that we're testing the minimum nextflow version
                 minNextflowVersion = ""

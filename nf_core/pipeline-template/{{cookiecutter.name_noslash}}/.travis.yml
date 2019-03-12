@@ -13,6 +13,7 @@ before_install:
   # Pull the docker image first so the test doesn't wait for this
   - docker pull {{ cookiecutter.name_docker }}:dev
   # Fake the tag locally so that the pipeline runs properly
+  # Looks weird when this is :dev to :dev, but makes sense when testing code for a release (:dev to :1.0.1)
   - docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
 
 install:
