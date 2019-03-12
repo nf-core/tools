@@ -109,15 +109,18 @@ This test fails if the following happens:
   * Where `<container>` is fetched from `params.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
 * `.travis.yml` does not test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
   * This is expected in the `env` section of the config, eg:
+
     ```yaml
     env:
       - NXF_VER=0.27.0
       - NXF_VER=''
     ```
+
   * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
   * Other variables can be specified on these lines as long as they are space separated.
 * `.travis.yml` checks that pull requests are not opened directly to the `master` branch
   * The following is expected in the `before_install` section:
+
     ```yaml
     before_install:
       - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
@@ -130,12 +133,15 @@ The `README.md` files for a project are very important and must meet some requir
   * If no Nextflow badge is found, a warning is given
   * If a badge is found but the version doesn't match the minimum version in the config file, the test fails
   * Example badge code:
+
     ```markdown
     [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.27.6-brightgreen.svg)](https://www.nextflow.io/)
     ```
+
 * Bioconda badge
   * If your pipeline contains a file called `environment.yml`, a bioconda badge is required
   * Required badge code:
+
     ```markdown
     [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
     ```
