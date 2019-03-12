@@ -100,7 +100,7 @@ The following variables are depreciated and fail the test if they are still pres
   * The old method for specifying the pipeline version. Replaced by `manifest.version`
 * `params.nf_required_version`
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
-* `process.container`
+* `params.container`
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
 
 ## Error #5 - Continuous Integration configuration ## {#5}
@@ -110,7 +110,7 @@ This test fails if the following happens:
 
 * `.travis.yml` does not contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
 * `.travis.yml` does not contain the string `docker pull <container>:dev` under `before_install`
-  * Where `<container>` is fetched from `params.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
+  * Where `<container>` is fetched from `process.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
 * `.travis.yml` does not test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
   * This is expected in the `env` section of the config, eg:
 
@@ -154,7 +154,7 @@ The `README.md` files for a project are very important and must meet some requir
 
 > This test only runs when `--release` is set or `$TRAVIS_BRANCH` is equal to `master`
 
-These tests look at `params.container`, `process.container` and `$TRAVIS_TAG`, only
+These tests look at `process.container` and `$TRAVIS_TAG`, only
 if they are set.
 
 * Container name must have a tag specified (eg. `nfcore/pipeline:version`)
