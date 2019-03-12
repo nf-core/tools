@@ -108,7 +108,7 @@ class PipelineLint(object):
     * `config`: Produced by calling Nextflow with :code:`nextflow config -flat <workflow dir>`. Here is an example from
         the `nf-core/hlatyping <https://github.com/nf-core/hlatyping>`_ pipeline::
 
-            params.container = 'nfcore/hlatyping:1.1.1'
+            process.container = 'nfcore/hlatyping:1.1.1'
             params.help = false
             params.outdir = './results'
             params.bam = false
@@ -351,13 +351,13 @@ class PipelineLint(object):
             'dag.file',
             'params.reads',
             'process.container',
-            'params.container',
             'params.singleEnd'
         ]
         # Old depreciated vars - fail if present
         config_fail_ifdefined = [
             'params.version',
-            'params.nf_required_version'
+            'params.nf_required_version',
+            'params.container'
         ]
 
         # Get the nextflow config for this pipeline
@@ -423,6 +423,19 @@ class PipelineLint(object):
             else:
                 self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
 
+        # Check that the process.container name is pulling the version tag or :dev
+        if self.config.get('process.container'):
+            container_name = '{}:{}'.format(self.config.get('manifest.name').replace('nf-core','nfcore').strip("'"), self.config.get('manifest.version', '').strip("'"))
+            if 'dev' in self.config.get('manifest.version', '') or not self.config.get('manifest.version'):
+                container_name = '{}:dev'.format(self.config.get('manifest.name').replace('nf-core','nfcore').strip("'"))
+            try:
+                assert self.config.get('process.container', '').strip("'") == container_name
+            except AssertionError:
+                self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+            else:
+                self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
+
+
     def check_ci_config(self):
         """Checks that the Travis or Circle CI YAML config is valid.
 
@@ -449,9 +462,10 @@ class PipelineLint(object):
                     self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
                 else:
                     self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
+
                 # Check that we're pulling the right docker image
-                if self.config.get('params.container', ''):
-                    docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('params.container', '').strip('"\''))
+                if self.config.get('process.container', ''):
+                    docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
                     docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                     try:
                         assert(docker_pull_cmd in ciconf.get('before_install', []))
@@ -461,7 +475,7 @@ class PipelineLint(object):
                         self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
                     # Check that we tag the docker image properly
-                    docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, self.config.get('params.container', '').strip('"\''))
+                    docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, self.config.get('process.container', '').strip('"\''))
                     try:
                         assert(docker_tag_cmd in ciconf.get('before_install'))
                     except AssertionError:
@@ -523,7 +537,7 @@ class PipelineLint(object):
     def check_version_consistency(self):
         """Checks container tags versions.
 
-        Runs on ``process.container``, ``params.container`` and ``$TRAVIS_TAG`` (each only if set).
+        Runs on ``process.container``, ``process.container`` and ``$TRAVIS_TAG`` (each only if set).
 
         Checks that:
             * the container has a tag
@@ -536,15 +550,15 @@ class PipelineLint(object):
         versions['manifest.version'] = self.config.get('manifest.version', '').strip(' \'"')
 
         # Get version from the docker slug
-        if self.config.get('params.container', '') and \
-                not ':' in self.config.get('params.container', ''):
+        if self.config.get('process.container', '') and \
+                not ':' in self.config.get('process.container', ''):
             self.failed.append((7, "Docker slug seems not to have "
-                "a version tag: {}".format(self.config.get('params.container', ''))))
+                "a version tag: {}".format(self.config.get('process.container', ''))))
             return
 
         # Get config container slugs, (if set; one container per workflow)
-        if self.config.get('params.container', ''):
-            versions['params.container'] = self.config.get('params.container', '').strip(' \'"').split(':')[-1]
+        if self.config.get('process.container', ''):
+            versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
         if self.config.get('process.container', ''):
             versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
 

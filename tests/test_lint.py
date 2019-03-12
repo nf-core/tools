@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 58
+MAX_PASS_CHECKS = 59
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -112,14 +112,14 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test works with good pipeline example"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         good_lint_obj.check_nextflow_config()
-        expectations = {"failed": 0, "warned": 0, "passed": 32}
+        expectations = {"failed": 0, "warned": 0, "passed": 33}
         self.assess_lint_status(good_lint_obj, **expectations)
 
     def test_config_variable_example_with_failed(self):
         """Tests that config variable existence test fails with bad pipeline example"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_nextflow_config()
-        expectations = {"failed": 18, "warned": 9, "passed": 6}
+        expectations = {"failed": 19, "warned": 8, "passed": 6}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -201,7 +201,7 @@ class TestLint(unittest.TestCase):
         """Tests the workflow version and container version sucessfully"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -213,7 +213,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
@@ -226,7 +226,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
@@ -238,7 +238,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools"
+        lint_obj.config["process.container"] = "nfcore/tools"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
@@ -250,7 +250,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)

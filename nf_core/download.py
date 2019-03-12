@@ -4,12 +4,10 @@
 from __future__ import print_function
 
 from io import BytesIO
-import click
 import logging
 import hashlib
 import os
 import requests
-import requests_cache
 import subprocess
 import sys
 from zipfile import ZipFile
@@ -83,7 +81,7 @@ class DownloadWorkflow(object):
                         logging.error("Not able to pull image. Service might be down or internet connection is dead.")
                         raise r
 
-                        
+
 
     def fetch_workflow_details(self, wfs):
         """Fetches details of a nf-core workflow to download.
