@@ -10,7 +10,7 @@
 * Brought the logo to life
 * Change the default filenames for the pipeline trace files
 * Remote fetch of nf-core/configs profiles fails gracefully if offline
-* Remove `process.container` and just directly define `process.container` now
+* Remove `params.container` and just directly define `process.container` now
 * Completion email now includes MultiQC report if not too big
 * `params.genome` is now checked if set, to ensure that it's a valid iGenomes key
 * Together with nf-core/configs, helper function now checks hostname and suggests a valid config profile
