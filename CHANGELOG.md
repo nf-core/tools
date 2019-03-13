@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.5dev
+## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
 #### Template pipeline
 * Dropped Singularity file
