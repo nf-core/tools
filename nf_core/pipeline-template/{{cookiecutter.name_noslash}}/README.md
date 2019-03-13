@@ -7,8 +7,6 @@
 
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
 [![Docker](https://img.shields.io/docker/automated/{{ cookiecutter.name_docker }}.svg)](https://hub.docker.com/r/{{ cookiecutter.name_docker }})
-![Singularity Container available](
-https://img.shields.io/badge/singularity-available-7E4C74.svg)
 
 ## Introduction
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker / singularity containers making installation trivial and results highly reproducible.
