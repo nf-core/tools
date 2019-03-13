@@ -1,0 +1,34 @@
+{
+    "parameters": [
+        {
+            "name": "reads",
+            "label": "WGS single-end fastq file.",
+            "usage": "Needs to be provided as workflow input data.",
+            "type": "string",
+            "render": "file",
+            "default_value": "path/to/reads.fastq.gz",
+            "pattern": ".*(\\.fastq$|\\.fastq\\.gz$)",
+            "group": "inputdata"
+        },
+        {
+            "name": "index",
+            "label": "Mapper index",
+            "usage": "Needs to be provided for the mapping.",
+            "type": "string",
+            "render": "file",
+            "default_value": "path/to/index",
+            "pattern": ".*",
+            "group": "inputdata"
+        },
+        {
+            "name": "norm_factor",
+            "label": "Normalization factor ",
+            "usage": "Integer value that will be applied against input reads.",
+            "type": "integer",
+            "render": "range",
+            "choices": [1, 150],
+            "default_value": 1,
+            "group": "normalization"
+        }
+    ]
+}

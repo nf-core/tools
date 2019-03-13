@@ -4,4 +4,4 @@ LABEL authors="phil.ewels@scilifelab.se,alexander.peltzer@qbic.uni-tuebingen.de"
 
 # Install procps so that Nextflow can poll CPU usage
 RUN apt-get update && apt-get install -y procps && apt-get clean -y 
-RUN conda install conda=4.5.11
+RUN conda install conda=4.6.7

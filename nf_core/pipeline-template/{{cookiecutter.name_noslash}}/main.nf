@@ -12,16 +12,8 @@
 
 def helpMessage() {
     // TODO nf-core: Add to this help message with new command line parameters
+    log.info nfcoreHeader()
     log.info"""
-    =======================================================
-                                              ,--./,-.
-              ___     __   __   __   ___     /,-._.--~\'
-        |\\ | |__  __ /  ` /  \\ |__) |__         }  {
-        | \\| |       \\__, \\__/ |  \\ |___     \\`-._,-`-,
-                                              `._,._,\'
-
-     {{ cookiecutter.name }} v${workflow.manifest.version}
-    =======================================================
 
     Usage:
 
@@ -124,44 +116,39 @@ ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
 
 
 // Header log info
-log.info """=======================================================
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\'
-    |\\ | |__  __ /  ` /  \\ |__) |__         }  {
-    | \\| |       \\__, \\__/ |  \\ |___     \\`-._,-`-,
-                                          `._,._,\'
-
-{{ cookiecutter.name }} v${workflow.manifest.version}"
-======================================================="""
+log.info nfcoreHeader()
 def summary = [:]
-summary['Pipeline Name']  = '{{ cookiecutter.name }}'
+summary['Pipeline Name']    = '{{ cookiecutter.name }}'
 summary['Pipeline Version'] = workflow.manifest.version
-summary['Run Name']     = custom_runName ?: workflow.runName
+summary['Run Name']         = custom_runName ?: workflow.runName
 // TODO nf-core: Report custom parameters here
-summary['Reads']        = params.reads
-summary['Fasta Ref']    = params.fasta
-summary['Data Type']    = params.singleEnd ? 'Single-End' : 'Paired-End'
-summary['Max Memory']   = params.max_memory
-summary['Max CPUs']     = params.max_cpus
-summary['Max Time']     = params.max_time
-summary['Output dir']   = params.outdir
-summary['Working dir']  = workflow.workDir
+summary['Reads']            = params.reads
+summary['Fasta Ref']        = params.fasta
+summary['Data Type']        = params.singleEnd ? 'Single-End' : 'Paired-End'
+summary['Max Memory']       = params.max_memory
+summary['Max CPUs']         = params.max_cpus
+summary['Max Time']         = params.max_time
+summary['Output Dir']       = params.outdir
+summary['Working Dir']      = workflow.workDir
 summary['Container Engine'] = workflow.containerEngine
 if(workflow.containerEngine) summary['Container'] = workflow.container
-summary['Current home']   = "$HOME"
-summary['Current user']   = "$USER"
-summary['Current path']   = "$PWD"
-summary['Working dir']    = workflow.workDir
-summary['Output dir']     = params.outdir
-summary['Script dir']     = workflow.projectDir
-summary['Config Profile'] = workflow.profile
+summary['Current Home']     = "$HOME"
+summary['Current User']     = "$USER"
+summary['Current Path']     = "$PWD"
+summary['Working Dir']      = workflow.workDir
+summary['Output Dir']       = params.outdir
+summary['Script Dir']       = workflow.projectDir
+summary['Config']   = workflow.profile
+if(params.config_profile_description) summary['Config Description'] = params.config_profile_description
+if(params.config_profile_contact)     summary['Config Contact']     = params.config_profile_contact
+if(params.config_profile_url)         summary['Config URL']         = params.config_profile_url
 if(workflow.profile == 'awsbatch'){
    summary['AWS Region'] = params.awsregion
-   summary['AWS Queue'] = params.awsqueue
+   summary['AWS Queue']  = params.awsqueue
 }
 if(params.email) summary['E-mail Address'] = params.email
-log.info summary.collect { k,v -> "${k.padRight(15)}: $v" }.join("\n")
-log.info "========================================="
+log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
+log.info "\033[2m----------------------------------------------------\033[0m"
 
 
 def create_workflow_summary(summary) {
@@ -349,4 +336,28 @@ workflow.onComplete {
 
     log.info "[{{ cookiecutter.name }}] Pipeline Complete"
 
+}
+
+
+def nfcoreHeader(){
+    // Log colors ANSI codes
+    c_reset = params.monochrome_logs ? '' : "\033[0m";
+    c_dim = params.monochrome_logs ? '' : "\033[2m";
+    c_black = params.monochrome_logs ? '' : "\033[0;30m";
+    c_green = params.monochrome_logs ? '' : "\033[0;32m";
+    c_yellow = params.monochrome_logs ? '' : "\033[0;33m";
+    c_blue = params.monochrome_logs ? '' : "\033[0;34m";
+    c_purple = params.monochrome_logs ? '' : "\033[0;35m";
+    c_cyan = params.monochrome_logs ? '' : "\033[0;36m";
+    c_white = params.monochrome_logs ? '' : "\033[0;37m";
+
+    return """    ${c_dim}----------------------------------------------------${c_reset}
+                                            ${c_green},--.${c_black}/${c_green},-.${c_reset}
+    ${c_blue}        ___     __   __   __   ___     ${c_green}/,-._.--~\'${c_reset}
+    ${c_blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${c_yellow}}  {${c_reset}
+    ${c_blue}  | \\| |       \\__, \\__/ |  \\ |___     ${c_green}\\`-._,-`-,${c_reset}
+                                            ${c_green}`._,._,\'${c_reset}
+    ${c_purple}  {{ cookiecutter.name }} v${workflow.manifest.version}${c_reset}
+    ${c_dim}----------------------------------------------------${c_reset}
+    """.stripIndent()
 }

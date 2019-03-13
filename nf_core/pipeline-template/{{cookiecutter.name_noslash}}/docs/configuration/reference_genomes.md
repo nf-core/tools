@@ -44,6 +44,7 @@ For more information about the AWS iGenomes, see https://ewels.github.io/AWS-iGe
 Downloading the files takes time and bandwidth, so we recommend making a local copy of the iGenomes resource.
 Once downloaded, you can customise the variable `params.igenomes_base` in your custom configuration file to point to the reference location.
 For example:
+
 ```nextflow
 params.igenomes_base = '/path/to/data/igenomes/'
 ```

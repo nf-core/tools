@@ -13,7 +13,8 @@ before_install:
   # Pull the docker image first so the test doesn't wait for this
   - docker pull {{ cookiecutter.name_docker }}:dev
   # Fake the tag locally so that the pipeline runs properly
-  - docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:latest
+  # Looks weird when this is :dev to :dev, but makes sense when testing code for a release (:dev to :1.0.1)
+  - docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
 
 install:
   # Install Nextflow
@@ -25,6 +26,8 @@ install:
   - pip install nf-core
   # Reset
   - mkdir ${TRAVIS_BUILD_DIR}/tests && cd ${TRAVIS_BUILD_DIR}/tests
+  # Install markdownlint-cli
+  - sudo apt-get install npm && npm install -g markdownlint-cli
 
 env:
   - NXF_VER='0.32.0' # Specify a minimum NF version that should be tested and work
@@ -33,5 +36,7 @@ env:
 script:
   # Lint the pipeline code
   - nf-core lint ${TRAVIS_BUILD_DIR}
+  # Lint the documentation
+  - markdownlint ${TRAVIS_BUILD_DIR} -c ${TRAVIS_BUILD_DIR}/.github/markdownlint.yml
   # Run the pipeline with the test profile
   - nextflow run ${TRAVIS_BUILD_DIR} -profile test,docker

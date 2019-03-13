@@ -1,27 +1,33 @@
 #!/usr/bin/env python
-""" Download a nf-core pipeline """
+"""Downloads a nf-core pipeline to the local file system."""
 
 from __future__ import print_function
 
 from io import BytesIO
-import click
 import logging
 import hashlib
 import os
 import requests
-import requests_cache
 import subprocess
 import sys
 from zipfile import ZipFile
 
+import nf_core.list
+import nf_core.utils
 
-import nf_core.list, nf_core.utils
 
-class DownloadWorkflow():
+class DownloadWorkflow(object):
+    """Downloads a nf-core workflow from Github to the local file system.
 
+    Can also download its Singularity container image if required.
+
+    Args:
+        pipeline (str): A nf-core pipeline name.
+        release (str): The workflow release version to download, like `1.0`. Defaults to None.
+        singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
+        outdir (str): Path to the local download directory. Defaults to None.
+    """
     def __init__(self, pipeline, release=None, singularity=False, outdir=None):
-        """ Set class variables """
-
         self.pipeline = pipeline
         self.release = release
         self.singularity = singularity
@@ -34,8 +40,7 @@ class DownloadWorkflow():
         self.containers = list()
 
     def download_workflow(self):
-        """ Main function to download a nf-core workflow """
-
+        """Starts a nf-core workflow download."""
         # Get workflow details
         try:
             self.fetch_workflow_details(nf_core.list.Workflows())
@@ -61,7 +66,7 @@ class DownloadWorkflow():
         # Download the singularity images
         if self.singularity:
             logging.debug("Fetching container names for workflow")
-            self.find_singularity_images()
+            self.find_container_images()
             if len(self.containers) == 0:
                 logging.info("No container names found in workflow")
             else:
@@ -69,17 +74,23 @@ class DownloadWorkflow():
                 logging.info("Downloading {} singularity container{}".format(len(self.containers), 's' if len(self.containers) > 1 else ''))
                 for container in self.containers:
                     try:
-                        # Download from singularity hub if we can
-                        self.download_shub_image(container)
-                    except RuntimeWarning:
-                        # Try to build from dockerhub
+                        # Download from Dockerhub in all cases
                         self.pull_singularity_image(container)
+                    except RuntimeWarning as r:
+                        # Raise exception if this is not possible
+                        logging.error("Not able to pull image. Service might be down or internet connection is dead.")
+                        raise r
+
+
 
     def fetch_workflow_details(self, wfs):
-        """ Fetch details of nf-core workflow to download
+        """Fetches details of a nf-core workflow to download.
 
-        params:
-        - wfs   A nf_core.list.Workflows object
+        Args:
+            wfs (nf_core.list.Workflows): A nf_core.list.Workflows object
+
+        Raises:
+            LockupError, if the pipeline can not be found.
         """
         wfs.get_remote_workflows()
 
@@ -144,7 +155,8 @@ class DownloadWorkflow():
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
-        """ Download workflow files from GitHub - save in outdir """
+        """Downloads workflow files from Github to the :attr:`self.outdir`.
+        """
         logging.debug("Downloading {}".format(self.wf_download_url))
 
         # Download GitHub zip file into memory and extract
@@ -156,8 +168,8 @@ class DownloadWorkflow():
         gh_name = '{}-{}'.format(self.wf_name, self.wf_sha).split('/')[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, 'workflow'))
 
-    def find_singularity_images(self):
-        """ Find singularity image names for workflow """
+    def find_container_images(self):
+        """ Find container image names for workflow """
 
         # Use linting code to parse the pipeline nextflow config
         self.config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, 'workflow'))
@@ -167,54 +179,17 @@ class DownloadWorkflow():
             if k.startswith('process.') and k.endswith('.container'):
                 self.containers.append(v.strip('"').strip("'"))
 
-    def download_shub_image(self, container):
-        """ Download singularity images from singularity-hub """
-
-        out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
-        out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
-        shub_api_url = 'https://www.singularity-hub.org/api/container/{}'.format(container.replace('nfcore', 'nf-core').replace('docker://', ''))
-
-        logging.debug("Checking shub API: {}".format(shub_api_url))
-        response = requests.get(shub_api_url, timeout=10)
-        if response.status_code == 200:
-            shub_response = response.json()
-            # Stream the download as it's going to be large
-            logging.debug("Starting download: {}".format(shub_response['image']))
-
-            # Don't use the requests cache for the download
-            with requests_cache.disabled():
-                dl_request = requests.get(shub_response['image'], stream=True)
-
-                # Check that we got a good response code
-                if dl_request.status_code == 200:
-                    total_size = int(dl_request.headers.get('content-length'))
-                    logging.debug("Total image file size: {} bytes".format(total_size))
-                    dl_label = "{} [{:.2f}MB]".format(out_name, total_size/1024.0/1024)
-                    # Open file in bytes mode
-                    with open(out_path, 'wb') as f:
-                        dl_iter = dl_request.iter_content(1024)
-                        # Use a click progress bar whilst we stream the download
-                        with click.progressbar(dl_iter, length=total_size/1024, label=dl_label, show_pos=True) as pbar:
-                            for chunk in pbar:
-                                if chunk:
-                                    f.write(chunk)
-                                    f.flush()
-
-                    # Check that the downloaded image has the right md5sum hash
-                    self.validate_md5(out_path, shub_response['version'])
-                else:
-                    logging.error("Error with singularity hub API call: {}".format(response.status_code))
-                    raise RuntimeWarning("Error with singularity hub API call: {}".format(response.status_code))
-
-        elif response.status_code == 404:
-            logging.debug("Singularity image not found on singularity-hub")
-            raise RuntimeWarning("Singularity image not found on singularity-hub")
-        else:
-            logging.error("Error with singularity hub API call: {}".format(response.status_code))
-            raise ImportError("Error with singularity hub API call: {}".format(response.status_code))
 
     def pull_singularity_image(self, container):
-        """ Use a local installation of singularity to pull an image from docker hub """
+        """Uses a local installation of singularity to pull an image from Docker Hub.
+
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to `nfcore/name:dev`.
+
+        Raises:
+            Various exceptions possible from `subprocess` execution of Singularity.
+        """
         out_name = '{}.simg'.format(container.replace('nfcore', 'nf-core').replace('/','-').replace(':', '-'))
         out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         address = 'docker://{}'.format(container.replace('docker://', ''))
@@ -234,7 +209,15 @@ class DownloadWorkflow():
                 raise e
 
     def validate_md5(self, fname, expected):
-        """ Calculate the md5sum for a file on the disk and validate with expected """
+        """Calculates the md5sum for a file on the disk and validate with expected.
+
+        Args:
+            fname (str): Path to a local file.
+            expected (str): The expected md5sum.
+
+        Raises:
+            IOError, if the md5sum does not match the remote sum.
+        """
         logging.debug("Validating image hash: {}".format(fname))
 
         # Calculate the md5 for the file on disk
