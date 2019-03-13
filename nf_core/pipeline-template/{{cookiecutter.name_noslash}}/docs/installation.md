@@ -2,18 +2,22 @@
 
 To start using the {{ cookiecutter.name }} pipeline, follow the steps below:
 
-1. [Install Nextflow](#1-install-nextflow)
-2. [Install the pipeline](#2-install-the-pipeline)
-    * [Automatic](#21-automatic)
-    * [Offline](#22-offline)
-    * [Development](#23-development)
-3. [Pipeline configuration](#3-pipeline-configuration)
-    * [Software deps: Docker and Singularity](#31-software-deps-docker-and-singularity)
-    * [Software deps: Bioconda](#32-software-deps-bioconda)
-    * [Configuration profiles](#33-configuration-profiles)
-4. [Reference genomes](#4-reference-genomes)
+<!-- Install Atom plugin markdown-toc-auto for this ToC to auto-update on save -->
+<!-- TOC START min:2 max:3 link:true asterisk:true update:true -->
+* [Install NextFlow](#install-nextflow)
+* [Install the pipeline](#install-the-pipeline)
+    * [Automatic](#automatic)
+    * [Offline](#offline)
+    * [Development](#development)
+* [Pipeline configuration](#pipeline-configuration)
+    * [Docker](#docker)
+    * [Singularity](#singularity)
+    * [Conda](#conda)
+    * [Configuration profiles](#configuration-profiles)
+* [Reference genomes](#reference-genomes)
+<!-- TOC END -->
 
-## 1) Install NextFlow
+## Install NextFlow
 Nextflow runs on most POSIX systems (Linux, Mac OSX etc). It can be installed by running the following commands:
 
 ```bash
@@ -31,12 +35,12 @@ mv nextflow ~/bin/
 
 See [nextflow.io](https://www.nextflow.io/) for further instructions on how to install and configure Nextflow.
 
-## 2) Install the pipeline
+## Install the pipeline
 
-#### 2.1) Automatic
+### Automatic
 This pipeline itself needs no installation - NextFlow will automatically fetch it from GitHub if `{{ cookiecutter.name }}` is specified as the pipeline name.
 
-#### 2.2) Offline
+### Offline
 The above method requires an internet connection so that Nextflow can download the pipeline files. If you're running on a system that has no internet connection, you'll need to download and transfer the pipeline files manually:
 
 ```bash
@@ -53,12 +57,12 @@ To stop nextflow from looking for updates online, you can tell it to run in offl
 export NXF_OFFLINE='TRUE'
 ```
 
-#### 2.3) Development
+### Development
 
 If you would like to make changes to the pipeline, it's best to make a fork on GitHub and then clone the files. Once cloned you can run the pipeline directly as above.
 
 
-## 3) Pipeline configuration
+## Pipeline configuration
 By default, the pipeline loads a basic server configuration [`conf/base.config`](../conf/base.config)
 This uses a number of sensible defaults for process requirements and is suitable for running
 on a simple (if powerful!) local server.
@@ -71,12 +75,12 @@ Be warned of two important points about this default configuration:
 2. Nextflow will expect all software to be installed and available on the `PATH`
     * It's expected to use an additional config profile for docker, singularity or conda support. See below.
 
-#### 3.1) Software deps: Docker
+### Docker
 First, install docker on your system: [Docker Installation Instructions](https://docs.docker.com/engine/installation/)
 
 Then, running the pipeline with the option `-profile docker` tells Nextflow to enable Docker for this run. An image containing all of the software requirements will be automatically fetched and used from dockerhub (https://hub.docker.com/r/{{ cookiecutter.name_docker }}).
 
-#### 3.1) Software deps: Singularity
+### Singularity
 If you're not able to use Docker then [Singularity](http://singularity.lbl.gov/) is a great alternative.
 The process is very similar: running the pipeline with the option `-profile singularity` tells Nextflow to enable singularity for this run. An image containing all of the software requirements will be automatically fetched and used from singularity hub.
 
@@ -94,17 +98,16 @@ nextflow run /path/to/{{ cookiecutter.name_noslash }} -with-singularity {{ cooki
 
 Remember to pull updated versions of the singularity image if you update the pipeline.
 
-
-#### 3.2) Software deps: conda
+### Conda
 If you're not able to use Docker _or_ Singularity, you can instead use conda to manage the software requirements.
 This is slower and less reproducible than the above, but is still better than having to install all requirements yourself!
 The pipeline ships with a conda environment file and nextflow has built-in support for this.
 To use it first ensure that you have conda installed (we recommend [miniconda](https://conda.io/miniconda.html)), then follow the same pattern as above and use the flag `-profile conda`
 
-#### 3.3) Configuration profiles
+### Configuration profiles
 
 See [`docs/configuration/adding_your_own.md`](configuration/adding_your_own.md)
 
-## 4) Reference genomes
+## Reference genomes
 
 See [`docs/configuration/reference_genomes.md`](configuration/reference_genomes.md)
