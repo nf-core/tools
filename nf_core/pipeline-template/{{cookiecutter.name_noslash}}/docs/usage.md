@@ -2,46 +2,45 @@
 
 ## Table of contents
 
-* [Introduction](#general-nextflow-info)
+<!-- Install Atom plugin markdown-toc-auto for this ToC to auto-update on save -->
+<!-- TOC START min:2 max:3 link:true asterisk:true update:true -->
+* [Table of contents](#table-of-contents)
+* [Introduction](#introduction)
 * [Running the pipeline](#running-the-pipeline)
-* [Updating the pipeline](#updating-the-pipeline)
-* [Reproducibility](#reproducibility)
+  * [Updating the pipeline](#updating-the-pipeline)
+  * [Reproducibility](#reproducibility)
 * [Main arguments](#main-arguments)
-  * [`-profile`](#-profile-single-dash)
-    * [`awsbatch`](#awsbatch)
-    * [`conda`](#conda)
-    * [`docker`](#docker)
-    * [`singularity`](#singularity)
-    * [`test`](#test)
+  * [`-profile`](#-profile)
   * [`--reads`](#--reads)
   * [`--singleEnd`](#--singleend)
 * [Reference genomes](#reference-genomes)
-  * [`--genome`](#--genome)
+  * [`--genome` (using iGenomes)](#--genome-using-igenomes)
   * [`--fasta`](#--fasta)
   * [`--igenomesIgnore`](#--igenomesignore)
 * [Job resources](#job-resources)
-* [Automatic resubmission](#automatic-resubmission)
-* [Custom resource requests](#custom-resource-requests)
-* [AWS batch specific parameters](#aws-batch-specific-parameters)
-  * [`-awsbatch`](#-awsbatch)
+  * [Automatic resubmission](#automatic-resubmission)
+  * [Custom resource requests](#custom-resource-requests)
+* [AWS Batch specific parameters](#aws-batch-specific-parameters)
   * [`--awsqueue`](#--awsqueue)
   * [`--awsregion`](#--awsregion)
 * [Other command line parameters](#other-command-line-parameters)
   * [`--outdir`](#--outdir)
   * [`--email`](#--email)
-  * [`-name`](#-name-single-dash)
-  * [`-resume`](#-resume-single-dash)
-  * [`-c`](#-c-single-dash)
+  * [`-name`](#-name)
+  * [`-resume`](#-resume)
+  * [`-c`](#-c)
   * [`--custom_config_version`](#--custom_config_version)
+  * [`--custom_config_base`](#--custom_config_base)
   * [`--max_memory`](#--max_memory)
   * [`--max_time`](#--max_time)
   * [`--max_cpus`](#--max_cpus)
   * [`--plaintext_email`](#--plaintext_email)
   * [`--monochrome_logs`](#--monochrome_logs)
   * [`--multiqc_config`](#--multiqc_config)
+<!-- TOC END -->
 
 
-## General Nextflow info
+## Introduction
 Nextflow handles job submissions on SLURM or other environments, and supervises running the jobs. Thus the Nextflow process must run until the pipeline is finished. We recommend that you put the process running in the background through `screen` / `tmux` or similar tool. Alternatively you can run nextflow within a cluster job submitted your job scheduler.
 
 It is recommended to limit the Nextflow Java virtual machines memory. We recommend adding the following line to your environment (typically in `~/.bashrc` or `~./bash_profile`):
@@ -210,7 +209,7 @@ Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a 
 The output directory where the results will be saved.
 
 ### `--email`
-Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to speicfy this on the command line for every run.
+Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.
 
 ### `-name`
 Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.
