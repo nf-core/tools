@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.5dev
+## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
 #### Template pipeline
 * Dropped Singularity file
@@ -10,7 +10,10 @@
 * Brought the logo to life
 * Change the default filenames for the pipeline trace files
 * Remote fetch of nf-core/configs profiles fails gracefully if offline
-* Remove `process.container` and just directly define `process.container` now.
+* Remove `params.container` and just directly define `process.container` now
+* Completion email now includes MultiQC report if not too big
+* `params.genome` is now checked if set, to ensure that it's a valid iGenomes key
+* Together with nf-core/configs, helper function now checks hostname and suggests a valid config profile
 
 #### Tools helper code
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
