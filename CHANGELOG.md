@@ -26,7 +26,7 @@
 * Introduced test for filtering remote workflows by keyword.
 * Build tools python API docs
   * Use Travis job for api doc generation and publish
-* Bump `conda` to 4.5.12 in base nf-core Dockerfile
+
 * `nf-core bump-version` now stops before making changes if the linting fails
 * Code test coverage
   * Introduced test for filtering remote workflows by keyword
@@ -36,7 +36,7 @@
   * Updates for changes to `process.container` definition
 
 #### Other
-* Updated Conda Version on base container to 4.6.7
+* Bump `conda` to 4.6.7 in base nf-core Dockerfile
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
