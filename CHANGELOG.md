@@ -18,6 +18,7 @@ _..nothing yet.._
 * Completion email now includes MultiQC report if not too big
 * `params.genome` is now checked if set, to ensure that it's a valid iGenomes key
 * Together with nf-core/configs, helper function now checks hostname and suggests a valid config profile
+* `awsbatch` executor requires the `tracedir` not to be set to an `s3` bucket.
 
 #### Tools helper code
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
