@@ -2,7 +2,9 @@
 
 ## v1.6dev
 
-_..nothing yet.._
+#### Template pipeline
+* Fixed markdown linting
+* Tools CI testing now runs markdown lint on compiled template pipeline
 
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
