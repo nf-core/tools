@@ -124,6 +124,7 @@ if(params.readPaths){
 // Header log info
 log.info nfcoreHeader()
 def summary = [:]
+if(workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
 // TODO nf-core: Report custom parameters here
 summary['Reads']            = params.reads
@@ -358,7 +359,7 @@ workflow.onComplete {
     c_green = params.monochrome_logs ? '' : "\033[0;32m";
     c_red = params.monochrome_logs ? '' : "\033[0;31m";
     if(workflow.success){
-        log.info "${c_purple}[{{ cookiecutter.name }}]${c_green} Pipeline complete${c_reset}"
+        log.info "${c_purple}[{{ cookiecutter.name }}]${c_green} Pipeline completed successfully${c_reset}"
     } else {
         checkHostname()
         log.info "${c_purple}[{{ cookiecutter.name }}]${c_red} Pipeline completed with errors${c_reset}"
