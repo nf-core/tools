@@ -50,7 +50,7 @@ The command `nf-core list` shows all available nf-core pipelines along with thei
 
 An example of the output from the command is as follows:
 
-```bash
+```txt
 $ nf-core list
 
                                           ,--./,-.
@@ -75,7 +75,7 @@ nf-core/vipr       dev        -            -              No
 
 To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
 
-```bash
+```txt
 nf-core list rna rna-seq
 
                                           ,--./,-.
@@ -103,7 +103,7 @@ To make this process easier and ensure accurate retrieval of correctly versioned
 
 By default, the pipeline will just download the pipeline code. If you specify the flag `--singularity`, it will also download any singularity image files that are required.
 
-```bash
+```txt
 $ nf-core download methylseq --singularity
 
                                           ,--./,-.
@@ -124,7 +124,7 @@ INFO: Downloading 1 singularity container
 nf-core-methylseq-1.0.simg [762.28MB]  [####################################]  780573/780572
 ```
 
-```bash
+```txt
 $ tree -L 2 nf-core-methylseq-1.0/
 
 nf-core-methylseq-1.0/
@@ -150,7 +150,7 @@ nf-core-methylseq-1.0/
 ## Pipeline software licences
 Sometimes it's useful to see the software licences of the tools used in a pipeline. You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-```bash
+```txt
 $ nf-core licences rnaseq
 
                                           ,--./,-.
@@ -191,7 +191,7 @@ With a given pipeline name, description and author, it makes a starter pipeline 
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
 See the [nf-core syncing docs](http://nf-co.re/sync) for more information.
 
-```bash
+```txt
 $ nf-core create
 
                                           ,--./,-.
@@ -217,7 +217,7 @@ INFO: Done. Remember to add a remote and push to GitHub:
 Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet).
 On your computer, add this repository as a git remote and push to it:
 
-```bash
+```txt
 git remote add origin https://github.com/ewels/nf-core-nextbigthing.git
 git push --set-upstream origin master
 ```
@@ -235,7 +235,7 @@ This is the same test that is used on the automated continuous integration tests
 
 For example, the current version looks something like this:
 
-```bash
+```txt
 $ cd path/to/my_pipeline
 $ nf-core lint .
 
@@ -268,7 +268,7 @@ The command uses results from the linting process, so will only work with workfl
 
 Usage is `nf-core bump-version <pipeline_dir> <new_version>`, eg:
 
-```bash
+```txt
 $ cd path/to/my_pipeline
 $ nf-core bump-version . 1.0
 

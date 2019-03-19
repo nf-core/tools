@@ -6,6 +6,9 @@
 * Fixed markdown linting
 * Tools CI testing now runs markdown lint on compiled template pipeline
 
+#### Tools helper code
+* Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
+
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
 #### Template pipeline
@@ -20,6 +23,7 @@
 * Completion email now includes MultiQC report if not too big
 * `params.genome` is now checked if set, to ensure that it's a valid iGenomes key
 * Together with nf-core/configs, helper function now checks hostname and suggests a valid config profile
+* `awsbatch` executor requires the `tracedir` not to be set to an `s3` bucket.
 
 #### Tools helper code
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
