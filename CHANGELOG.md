@@ -2,8 +2,11 @@
 
 ## v1.6dev
 
-_..nothing yet.._
-#### Syncing Functionality
+#### Template pipeline
+* Fixed markdown linting
+* Tools CI testing now runs markdown lint on compiled template pipeline
+
+#### Tools helper code
 * Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
 
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
