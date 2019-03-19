@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.png') }}">
+
+  <title>{% block page_title %}nf-core monitor{% endblock %}</title>
+  <meta name="description" content="{% block meta_description %}{% endblock %}">
+  <meta name="author" content="Phil Ewels">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/static/css/libs/bootstrap.min.css">
+  <link rel="stylesheet" href="/static/css/libs/fontawesome.all.min.css">
+  <link rel="stylesheet" href="/static/css/nf-core.css">
+  {% block css %}{% endblock %}
+
+</head>
+
+<body>
+<div class="page-content">
+{% block body %}
+
+  {% include "nav-top.html" %}
+
+  <div class="{% block content_class %}container-fluid{% endblock content_class %}">
+    <div class="row">
+      {% include "nav-side.html" %}
+
+      <main role="main" class="col-md-9 ml-sm-auto col-lg-10 px-4">
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+
+  </div>
+
+{% endblock %}
+</div><!-- /.page-content -->
+
+<!-- JavaScript -->
+<script type="text/javascript" src="/static/js/libs/jquery-3.3.1.min.js"></script>
+<script type="text/javascript" src="/static/js/libs/popper.min.js"></script>
+<script type="text/javascript" src="/static/js/libs/bootstrap.min.js"></script>
+
+</body>
+</html>

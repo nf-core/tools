@@ -1,0 +1,32 @@
+<nav class="col-md-2 d-none d-md-block bg-light sidebar">
+  <div class="sidebar-sticky">
+
+    <h6 class="sidebar-heading px-3 mt-2 mb-1 text-muted">
+      <span>Workflow Monitoring</span>
+    </h6>
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link active" href="#">
+          <i class="fas fa-home fa-lg fa-fw"></i>
+          Dashboard <span class="sr-only">(current)</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#">
+          <i class="far fa-chart-bar fa-lg fa-fw"></i>
+          Statistics
+        </a>
+      </li>
+    </ul>
+
+    {% block sidebar_footer %}
+    <div class="sidebar-footer pt-4 mt-4 mb-1 text-center text-muted small">
+      <a href="https://nf-co.re" target="_blank">
+        <img src="/static/img/nf-core-logo.svg" class="px-1">
+      </a>
+      <a href="https://nf-co.re" target="_blank" class="text-muted">https://nf-co.re</a>
+    </div>
+    {% endblock %}
+
+  </div>
+</nav>

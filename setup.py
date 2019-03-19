@@ -26,6 +26,7 @@ setup(
     install_requires = [
         'cookiecutter',
         'click',
+        'flask',
         'GitPython',
         'jsonschema',
         'pyyaml',

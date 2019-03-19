@@ -9,7 +9,7 @@ import os
 import re
 
 import nf_core
-import nf_core.bump_version, nf_core.create, nf_core.download, nf_core.launch, nf_core.licences, nf_core.lint, nf_core.list
+import nf_core.bump_version, nf_core.create, nf_core.download, nf_core.launch, nf_core.licences, nf_core.lint, nf_core.list, nf_core.monitor
 
 import logging
 
@@ -229,6 +229,9 @@ def create(name, description, author, new_version, no_git, force, outdir):
     create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
 
+
+# Import the flask commands under the nf-core monitor cli group
+nf_core_cli.add_command(nf_core.monitor.app.monitor)
 
 if __name__ == '__main__':
     click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'))
