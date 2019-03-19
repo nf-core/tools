@@ -23,6 +23,11 @@ setup(
     url = 'https://github.com/nf-core/tools',
     license = license,
     scripts = ['scripts/nf-core'],
+    entry_points = {
+        'console_scripts': [
+            'nf_core_monitor=nf_core.monitor.app:monitor'
+        ],
+    },
     install_requires = [
         'cookiecutter',
         'click',
