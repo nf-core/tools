@@ -103,6 +103,8 @@ class DownloadWorkflow(object):
 
                 # Find latest release hash
                 if self.release is None and len(wf.releases) > 0:
+                    # Sort list of releases so that most recent is first
+                    wf.releases = sorted(wf.releases, key=lambda k: k['published_at_timestamp'], reverse=True)
                     self.release = wf.releases[0]['tag_name']
                     self.wf_sha = wf.releases[0]['tag_sha']
                     logging.debug("No release specified. Using latest release: {}".format(self.release))
