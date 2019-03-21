@@ -13,6 +13,11 @@ import nf_core.bump_version, nf_core.create, nf_core.download, nf_core.launch, n
 
 import logging
 
+# Set FLASK_APP so that flask knows where to find the subcommand flask server
+flaskenv_app_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'nf_core', 'monitor', 'app.py')
+flaskenv_app_func = '{}:create_nf_core_app'.format(flaskenv_app_path)
+os.environ['FLASK_APP'] = flaskenv_app_func
+
 @click.group()
 @click.version_option(nf_core.__version__)
 @click.option(
