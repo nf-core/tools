@@ -170,6 +170,11 @@ class DownloadWorkflow(object):
         gh_name = '{}-{}'.format(self.wf_name, self.wf_sha).split('/')[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, 'workflow'))
 
+        # Make downloaded files executable
+        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, 'workflow')):
+            for fname in filelist:
+                os.chmod(os.path.join(dirpath, fname), 0o775)
+
     def find_container_images(self):
         """ Find container image names for workflow """
 
