@@ -11,11 +11,12 @@ A python package with helper tools for the nf-core community.
 
 * [`nf-core` tools installation](#installation)
 * [`nf-core list` - List available pipelines](#listing-pipelines)
+* [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
 * [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
 * [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
 * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
-* [`nf-core bump-version` - Change a pipeline version number](#bumping-a-pipeline-version-number)
+* [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -70,23 +71,27 @@ $ nf-core list
                                           `._,._,'
 
 
-Name               Version    Published    Last Pulled    Default local is latest release?
------------------  ---------  -----------  -------------  ----------------------------------
-nf-core/hlatyping  1.1.0      5 days ago   9 minutes ago  Yes
-nf-core/methylseq  1.1        1 week ago   2 months ago   No
-nf-core/chipseq    dev        -            -              No
-nf-core/eager      dev        -            -              No
-nf-core/exoseq     dev        -            -              No
-nf-core/mag        dev        -            -              No
-nf-core/rnaseq     dev        -            -              No
-nf-core/smrnaseq   dev        -            -              No
-nf-core/vipr       dev        -            -              No
+Name                       Version    Released      Last Pulled     Have latest release?
+-------------------------  ---------  ------------  --------------  ----------------------
+nf-core/rnaseq             1.3        4 days ago    27 minutes ago  Yes
+nf-core/hlatyping          1.1.4      3 weeks ago   1 months ago    No
+nf-core/eager              2.0.6      3 weeks ago   -               -
+nf-core/mhcquant           1.2.6      3 weeks ago   -               -
+nf-core/rnafusion          1.0        1 months ago  -               -
+nf-core/methylseq          1.3        1 months ago  3 months ago    No
+nf-core/ampliseq           1.0.0      3 months ago  -               -
+nf-core/deepvariant        1.0        4 months ago  -               -
+nf-core/atacseq            dev        -             1 months ago    No
+nf-core/bacass             dev        -             -               -
+nf-core/bcellmagic         dev        -             -               -
+nf-core/chipseq            dev        -             1 months ago    No
+nf-core/clinvap            dev        -             -               -
 ```
 
 To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
 
 ```txt
-nf-core list rna rna-seq
+$ nf-core list rna rna-seq
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -95,15 +100,108 @@ nf-core list rna rna-seq
                                           `._,._,'
 
 
-Name              Version    Published     Last Pulled    Default local is latest release?
-----------------  ---------  ------------  -------------  ----------------------------------
-nf-core/rnaseq    1.0        20 hours ago  -              No
-nf-core/smrnaseq  dev        -             -              No
+Name               Version    Released      Last Pulled     Have latest release?
+-----------------  ---------  ------------  --------------  ----------------------
+nf-core/rnaseq     1.3        4 days ago    28 minutes ago  Yes
+nf-core/rnafusion  1.0        1 months ago  -               -
+nf-core/lncpipe    dev        -             -               -
+nf-core/smrnaseq   dev        -             -               -
 ```
 
-You can sort the results by latest release (default), name (alphabetical) or number of GitHub stars using the `-s`/`--stars` option.
+You can sort the results by latest release (`-s release`, default),
+when you last pulled a local copy (`-s pulled`),
+alphabetically (`-s name`),
+or number of GitHub stars (`-s stars`).
+
+```txt
+$ nf-core list -s stars
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+Name                         Stargazers  Version    Released      Last Pulled     Have latest release?
+-------------------------  ------------  ---------  ------------  --------------  ----------------------
+nf-core/rnaseq                       81  1.3        4 days ago    30 minutes ago  Yes
+nf-core/methylseq                    22  1.3        1 months ago  3 months ago    No
+nf-core/ampliseq                     21  1.0.0      3 months ago  -               -
+nf-core/chipseq                      20  dev        -             1 months ago    No
+nf-core/deepvariant                  15  1.0        4 months ago  -               -
+nf-core/eager                        14  2.0.6      3 weeks ago   -               -
+nf-core/rnafusion                    14  1.0        1 months ago  -               -
+nf-core/lncpipe                       9  dev        -             -               -
+nf-core/exoseq                        8  dev        -             -               -
+nf-core/mag                           8  dev        -             -               -
+```
 
 Finally, to return machine-readable JSON output, use the `--json` flag.
+
+## Launch a pipeline
+Some nextflow pipelines have a considerable number of command line flags that can be used.
+To help with this, the `nf-core launch` command uses an interactive command-line wizard tool to prompt you for
+values for running nextflow and the pipeline parameters.
+
+If the pipeline in question has a `parameters.settings.json` schema, parameters will be grouped and have associated description text and variable typing.
+
+Nextflow `params` variables are saved in to a JSON file called `nfx-params.json` and used by nextflow with the `-params-file` flag.
+This makes it easier to reuse these in the future.
+
+It is not essential to run the pipeline - the wizard will ask you if you want to launch the command at the end.
+If not, you finish with the `params` JSON file and a nextflow command that you can copy and paste.
+
+```
+$ nf-core launch rnaseq
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Launching nf-core/rnaseq
+Main nextflow options
+
+Config profile to use
+ -profile [standard]: docker
+
+Unique name for this nextflow run
+ -name [None]: test_run
+
+Work directory for intermediate files
+ -w [./work]:
+
+Resume a previous workflow run
+ -resume [y/N]:
+
+Release / revision to use
+ -r [None]: 1.3
+
+
+Parameter group: Main options
+Do you want to change the group's defaults? [y/N]: y
+
+Input files
+Specify the location of your input FastQ files.
+ --reads ['data/*{1,2}.fastq.gz']: '/path/to/reads_*{R1,R2}.fq.gz'
+
+[..truncated..]
+
+Nextflow command:
+  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" --params-file "/Users/ewels/testing/nfx-params.json"
+
+
+Do you want to run this command now? [y/N]: y
+
+INFO: Launching workflow!
+N E X T F L O W  ~  version 19.01.0
+Launching `nf-core/rnaseq` [evil_engelbart] - revision: 37f260d360 [master]
+
+[..truncated..]
+```
 
 
 ## Downloading pipelines for offline use
