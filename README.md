@@ -152,7 +152,7 @@ This makes it easier to reuse these in the future.
 It is not essential to run the pipeline - the wizard will ask you if you want to launch the command at the end.
 If not, you finish with the `params` JSON file and a nextflow command that you can copy and paste.
 
-```
+```txt
 $ nf-core launch rnaseq
 
                                           ,--./,-.
