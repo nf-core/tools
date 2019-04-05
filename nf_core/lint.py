@@ -698,7 +698,7 @@ class PipelineLint(object):
                     dep_json = response.json()
                     self.conda_package_info[dep] = dep_json
                     return
-                else if response.status_code != 404:
+                elif response.status_code != 404:
                     self.warned.append((8, "Anaconda API returned unexpected response code '{}' for: {}\n{}".format(response.status_code, anaconda_api_url, response)))
                     raise ValueError
         else:
