@@ -698,7 +698,11 @@ class PipelineLint(object):
                     dep_json = response.json()
                     self.conda_package_info[dep] = dep_json
                     return
+                elif response.status_code != 404:
+                    self.warned.append((8, "Anaconda API returned unexpected response code '{}' for: {}\n{}".format(response.status_code, anaconda_api_url, response)))
+                    raise ValueError
         else:
+            # We have looped through each channel and had a 404 response code on everything
             self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
             raise ValueError
 

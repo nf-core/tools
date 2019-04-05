@@ -8,9 +8,15 @@
 
 #### Tools helper code
 * Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
+* Updated main help command to sort the subcommands in a more logical order
+* Updated readme to describe the new `nf-core launch` command
 * Fix bugs in `nf-core download`
   * The _latest_ release is now fetched by default if not specified
   * Downloaded pipeline files are now properly executable.
+* Fixed bugs in `nf-core list`
+  * Sorting now works again
+  * Output is partially coloured (better highlighting out of date pipelines)
+  * Improved documentation
 
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
