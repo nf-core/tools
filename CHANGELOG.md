@@ -17,6 +17,8 @@
   * Sorting now works again
   * Output is partially coloured (better highlighting out of date pipelines)
   * Improved documentation
+* Fixed bugs in `nf-core lint`
+  * The order of conda channels is now correct, avoiding occasional erroneous errors that packages weren't found ([#207](https://github.com/nf-core/tools/issues/207))
 
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 

@@ -683,7 +683,7 @@ class PipelineLint(object):
         if '::' in depname:
             dep_channels = [depname.split('::')[0]]
             depname = depname.split('::')[1]
-        for ch in reversed(dep_channels):
+        for ch in dep_channels:
             anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
             try:
                 response = requests.get(anaconda_api_url, timeout=10)
@@ -701,6 +701,8 @@ class PipelineLint(object):
                 elif response.status_code != 404:
                     self.warned.append((8, "Anaconda API returned unexpected response code '{}' for: {}\n{}".format(response.status_code, anaconda_api_url, response)))
                     raise ValueError
+                elif response.status_code == 404:
+                    logging.debug("Could not find {} in conda channel {}".format(dep, ch))
         else:
             # We have looped through each channel and had a 404 response code on everything
             self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
