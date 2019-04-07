@@ -3,6 +3,7 @@
 ## v1.6dev
 
 #### Template pipeline
+* awsbatch `work-dir` checking moved to nextflow itself. Removed unsatisfiable check in main.nf template.
 * Fixed markdown linting
 * Tools CI testing now runs markdown lint on compiled template pipeline
 
