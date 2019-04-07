@@ -6,6 +6,8 @@
 * awsbatch `work-dir` checking moved to nextflow itself. Removed unsatisfiable check in main.nf template.
 * Fixed markdown linting
 * Tools CI testing now runs markdown lint on compiled template pipeline
+* Migrated large portions of documentation to the [nf-core website](https://github.com/nf-core/nf-co.re/pull/93)
+
 
 #### Tools helper code
 * Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
