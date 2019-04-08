@@ -7,7 +7,9 @@
 * Fixed markdown linting
 * Tools CI testing now runs markdown lint on compiled template pipeline
 * Migrated large portions of documentation to the [nf-core website](https://github.com/nf-core/nf-co.re/pull/93)
-
+* Removed Gitter references in `.github/` directories for `tools/` and pipeline template.
+* Changed `scrape_software_versions.py` to output `.csv` file
+* Added `export_plots` parameter to multiqc config
 
 #### Tools helper code
 * Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
