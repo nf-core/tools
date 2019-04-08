@@ -178,9 +178,15 @@ ${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style
  * Parse software version numbers
  */
 process get_software_versions {
+    publishDir "${params.outdir}/pipeline_info", mode: 'copy',
+    saveAs: {filename ->
+        if (filename.indexOf(".csv") > 0) filename
+        else null
+    }
 
     output:
     file 'software_versions_mqc.yaml' into software_versions_yaml
+    file "software_versions.csv"
 
     script:
     // TODO nf-core: Get all tools to print their version number here
@@ -189,7 +195,7 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     fastqc --version > v_fastqc.txt
     multiqc --version > v_multiqc.txt
-    scrape_software_versions.py > software_versions_mqc.yaml
+    scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
 
@@ -227,12 +233,13 @@ process multiqc {
     file multiqc_config from ch_multiqc_config
     // TODO nf-core: Add in log files from your new processes for MultiQC to find!
     file ('fastqc/*') from fastqc_results.collect().ifEmpty([])
-    file ('software_versions/*') from software_versions_yaml
+    file ('software_versions/*') from software_versions_yaml.collect()
     file workflow_summary from create_workflow_summary(summary)
 
     output:
     file "*multiqc_report.html" into multiqc_report
     file "*_data"
+    file "multiqc_plots"
 
     script:
     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''

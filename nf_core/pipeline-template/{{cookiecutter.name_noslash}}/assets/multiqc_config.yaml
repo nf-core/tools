@@ -5,3 +5,5 @@ report_comment: >
 report_section_order:
     {{ cookiecutter.name.lower().replace(' ', '-') }}-software-versions:
         order: -1000
+
+export_plots: true
