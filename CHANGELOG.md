@@ -1,5 +1,37 @@
 # nf-core/tools: Changelog
 
+## v1.6
+
+#### Syncing
+* Code refactoring to make the script more readable
+* No travis build failure anymore on sync errors
+* More verbose logging
+
+#### Template pipeline
+* awsbatch `work-dir` checking moved to nextflow itself. Removed unsatisfiable check in main.nf template.
+* Fixed markdown linting
+* Tools CI testing now runs markdown lint on compiled template pipeline
+* Migrated large portions of documentation to the [nf-core website](https://github.com/nf-core/nf-co.re/pull/93)
+* Removed Gitter references in `.github/` directories for `tools/` and pipeline template.
+* Changed `scrape_software_versions.py` to output `.csv` file
+* Added `export_plots` parameter to multiqc config
+
+#### Tools helper code
+* Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
+* Updated main help command to sort the subcommands in a more logical order
+* Updated readme to describe the new `nf-core launch` command
+* Fix bugs in `nf-core download`
+  * The _latest_ release is now fetched by default if not specified
+  * Downloaded pipeline files are now properly executable.
+* Fixed bugs in `nf-core list`
+  * Sorting now works again
+  * Output is partially coloured (better highlighting out of date pipelines)
+  * Improved documentation
+* Fixed bugs in `nf-core lint`
+  * The order of conda channels is now correct, avoiding occasional erroneous errors that packages weren't found ([#207](https://github.com/nf-core/tools/issues/207))
+* Add reporting of ignored errored process
+  * As a solution for [#103](https://github.com/nf-core/tools/issues/103))
+
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
 #### Template pipeline
@@ -14,6 +46,7 @@
 * Completion email now includes MultiQC report if not too big
 * `params.genome` is now checked if set, to ensure that it's a valid iGenomes key
 * Together with nf-core/configs, helper function now checks hostname and suggests a valid config profile
+* `awsbatch` executor requires the `tracedir` not to be set to an `s3` bucket.
 
 #### Tools helper code
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line

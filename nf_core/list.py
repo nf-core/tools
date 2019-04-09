@@ -4,6 +4,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 
+import click
 import datetime
 import json
 import logging
@@ -156,20 +157,30 @@ class Workflows(object):
     def print_summary(self):
         """Prints a summary of all pipelines."""
 
+        filtered_workflows = self.filtered_workflows()
+
         # Sort by released / dev, then alphabetical
-        if self.sort_workflows_by == 'release':
-            self.remote_workflows.sort(
+        if not self.sort_workflows_by or self.sort_workflows_by == 'release':
+            filtered_workflows.sort(
                 key=lambda wf: (
                     (wf.releases[-1].get('published_at_timestamp', 0) if len(wf.releases) > 0 else 0) * -1,
                     wf.full_name.lower()
                 )
             )
+        # Sort by date pulled
+        elif self.sort_workflows_by == 'pulled':
+            def sort_pulled_date(wf):
+                try:
+                    return wf.local_wf.last_pull * -1
+                except:
+                    return 0
+            filtered_workflows.sort(key=sort_pulled_date)
         # Sort by name
         elif self.sort_workflows_by == 'name':
-            self.remote_workflows.sort( key=lambda wf: wf.full_name.lower() )
+            filtered_workflows.sort( key=lambda wf: wf.full_name.lower() )
         # Sort by stars, then name
         elif self.sort_workflows_by == 'stars':
-            self.remote_workflows.sort(
+            filtered_workflows.sort(
                 key=lambda wf: (
                     wf.stargazers_count * -1,
                     wf.full_name.lower()
@@ -178,19 +189,19 @@ class Workflows(object):
 
         # Build summary list to print
         summary = list()
-        for wf in self.filtered_workflows():
-            version = wf.releases[-1]['tag_name'] if len(wf.releases) > 0 else 'dev'
+        for wf in filtered_workflows:
+            version = click.style(wf.releases[-1]['tag_name'], fg='blue') if len(wf.releases) > 0 else click.style('dev', fg='yellow')
             published = wf.releases[-1]['published_at_pretty'] if len(wf.releases) > 0 else '-'
             pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else '-'
             if wf.local_wf is not None:
-                is_latest = 'Yes' if wf.local_is_latest else 'No'
+                is_latest = click.style('Yes', fg='green') if wf.local_is_latest else click.style('No', fg='red')
             else:
                 is_latest = '-'
             rowdata = [ wf.full_name, version, published, pulled, is_latest ]
             if self.sort_workflows_by == 'stars':
                 rowdata.insert(1, wf.stargazers_count)
             summary.append(rowdata)
-        t_headers = ['Name', 'Version', 'Published', 'Last Pulled', 'Default local is latest release?']
+        t_headers = ['Name', 'Version', 'Released', 'Last Pulled', 'Have latest release?']
         if self.sort_workflows_by == 'stars':
             t_headers.insert(1, 'Stargazers')
 

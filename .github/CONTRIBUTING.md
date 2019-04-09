@@ -6,7 +6,7 @@ We try to manage the required tasks for nf-core/tools using GitHub issues, you p
 
 However, don't be put off by this template - other more general issues and suggestions are welcome! Contributions to the code are even more welcome ;)
 
-> If you need help using or developing nf-core/tools then the best place to go is the Gitter chatroom where you can ask us questions directly: https://gitter.im/nf-core/Lobby
+> If you need help using or developing nf-core/tools then the best place to ask is the nf-core `tools` channel on [Slack](https://nf-core-invite.herokuapp.com/).
 
 ## Contribution workflow
 If you'd like to write some code for nf-core/tools, the standard workflow
@@ -24,7 +24,7 @@ If you're not used to this workflow with git, you can start with some [basic doc
 
 ## Style guide
 Google provides an excellent [style guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md), which
-is an best practise extension of [PEP](https://www.python.org/dev/peps/), the Python Enhancement Proposals. Have a look at the 
+is a best practise extension of [PEP](https://www.python.org/dev/peps/), the Python Enhancement Proposals. Have a look at the
 [docstring](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) section, which is in particular
 important, as nf-core tool's code documentation is generated out of these automatically.
 
@@ -68,4 +68,4 @@ nf-core lint nf-core-testpipeline
 ```
 
 ## Getting help
-For further information/help, please consult the [nf-core/tools documentation](https://github.com/nf-core/tools#documentation) and don't hesitate to get in touch on [Gitter](https://gitter.im/nf-core/Lobby)
+For further information/help, please consult the [nf-core/tools documentation](https://github.com/nf-core/tools#documentation) and don't hesitate to get in touch on the nf-core `tools` channel on [Slack](https://nf-core-invite.herokuapp.com/).

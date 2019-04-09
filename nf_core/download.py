@@ -103,6 +103,8 @@ class DownloadWorkflow(object):
 
                 # Find latest release hash
                 if self.release is None and len(wf.releases) > 0:
+                    # Sort list of releases so that most recent is first
+                    wf.releases = sorted(wf.releases, key=lambda k: k.get('published_at_timestamp', 0), reverse=True)
                     self.release = wf.releases[0]['tag_name']
                     self.wf_sha = wf.releases[0]['tag_sha']
                     logging.debug("No release specified. Using latest release: {}".format(self.release))
@@ -167,6 +169,11 @@ class DownloadWorkflow(object):
         # Rename the internal directory name to be more friendly
         gh_name = '{}-{}'.format(self.wf_name, self.wf_sha).split('/')[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, 'workflow'))
+
+        # Make downloaded files executable
+        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, 'workflow')):
+            for fname in filelist:
+                os.chmod(os.path.join(dirpath, fname), 0o775)
 
     def find_container_images(self):
         """ Find container image names for workflow """

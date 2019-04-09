@@ -26,10 +26,13 @@ install:
   - sudo apt-get install npm && npm install -g markdownlint-cli # For documentation linting
 
 script:
+  # Test the main code in this repo
   - pytest --cov=nf_core .
+  - markdownlint . -c ${TRAVIS_BUILD_DIR}/.github/markdownlint.yml
+  # Test the pipeline template code
   - nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
   - nf-core lint nf-core-testpipeline
-  - markdownlint . -c ${TRAVIS_BUILD_DIR}/.github/markdownlint.yml
+  - markdownlint nf-core-testpipeline -c nf-core-testpipeline/.github/markdownlint.yml
 
 after_success:
   - codecov --rcfile=${TRAVIS_BUILD_DIR}/.github/coveragerc
