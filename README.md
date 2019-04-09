@@ -144,7 +144,7 @@ Some nextflow pipelines have a considerable number of command line flags that ca
 To help with this, the `nf-core launch` command uses an interactive command-line wizard tool to prompt you for
 values for running nextflow and the pipeline parameters.
 
-If the pipeline in question has a `parameters.settings.json` schema, parameters will be grouped and have associated description text and variable typing.
+If the pipeline in question has a `parameters.settings.json` file following the [nf-core parameter JSON schema](https://nf-co.re/parameters.schema.json), parameters will be grouped and have associated description text and variable typing.
 
 Nextflow `params` variables are saved in to a JSON file called `nfx-params.json` and used by nextflow with the `-params-file` flag.
 This makes it easier to reuse these in the future.
