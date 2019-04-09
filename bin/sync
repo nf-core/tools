@@ -39,6 +39,17 @@ def create_pullrequest(pipeline, origin="dev", template="TEMPLATE", token="", us
                          auth=HTTPBasicAuth(user, token))
 
 
+def filter_blacklisted_pipelines_from_list(pipelines, blacklisted_pipelines):
+    filtered_pipelines = []
+    for pipeline in pipelines:
+        if not pipeline.get('name'):
+            print("No attribute \'name\' for pipeline found: {}".format(pipeline))
+        else:
+            filtered_pipelines.append(pipeline) if pipeline.get('name') not in blacklisted_pipelines \
+                else filtered_pipelines
+    return filtered_pipelines
+
+
 def main():
     # Check that the commit event is a GitHub tag event
     assert os.environ['TRAVIS_TAG']
@@ -62,7 +73,7 @@ def main():
         pipeline["name"] for pipeline in pipelines)
 
     # Exclude blacklisted pipelines
-    pipelines = [pipeline for pipeline in pipelines if pipeline['name'] not in blacklist['pipelines']]
+    pipelines = filter_blacklisted_pipelines_from_list(pipelines, blacklist)
 
     # Update the template branch of each pipeline repo
     for pipeline in pipelines:
