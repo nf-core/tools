@@ -97,12 +97,14 @@ def main():
     assert os.environ['NF_CORE_BOT']
 
     blacklisted_pipeline_names = fetch_black_listed_pipelines_from_file(PATH_PARENT_DIR + "/blacklist.json")
-    print(blacklisted_pipeline_names)
 
     pipelines = fetch_nfcore_workflows_from_website(NF_CORE_PIPELINE_INFO)
 
-    filtered_pipelines = filter_blacklisted_pipelines_from_list(pipelines, blacklisted_pipeline_names)
-    print(filtered_pipelines)
+    if len(sys.argv) > 1:
+        pipeline_to_sync = sys.argv[1] 
+        filtered_pipelines = [pipeline for pipeline in pipelines if pipeline_to_sync in pipeline.get('name')]
+    else:
+        filtered_pipelines = filter_blacklisted_pipelines_from_list(pipelines, blacklisted_pipeline_names)
 
     for pipeline in filtered_pipelines:
         print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
