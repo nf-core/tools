@@ -1,6 +1,11 @@
 # nf-core/tools: Changelog
 
-## v1.6dev
+## v1.6
+
+#### Syncing
+* Code refactoring to make the script more readable
+* No travis build failure anymore on sync errors
+* More verbose logging
 
 #### Template pipeline
 * awsbatch `work-dir` checking moved to nextflow itself. Removed unsatisfiable check in main.nf template.
