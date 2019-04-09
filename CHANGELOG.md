@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.6dev
+## v1.6
 
 #### Syncing
 * Code refactoring to make the script more readable
