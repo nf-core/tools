@@ -1,5 +1,10 @@
 # nf-core/tools: Changelog
 
+## v1.7dev
+
+#### Syncing
+* Can now sync a targeted pipeline via command-line
+
 ## v1.6
 
 #### Syncing

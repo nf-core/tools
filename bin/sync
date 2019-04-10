@@ -55,7 +55,7 @@ def filter_blacklisted_pipelines_from_list(pipelines, blacklisted_pipelines):
 def fetch_black_listed_pipelines_from_file(file_path):
     with open(file_path) as fh:
         blacklist = json.load(fh)
-    return blacklist
+    return blacklist.get('pipelines')
 
 
 def fetch_nfcore_workflows_from_website(url):
@@ -100,7 +100,11 @@ def main():
 
     pipelines = fetch_nfcore_workflows_from_website(NF_CORE_PIPELINE_INFO)
 
-    filtered_pipelines = filter_blacklisted_pipelines_from_list(pipelines, blacklisted_pipeline_names)
+    if len(sys.argv) > 1:
+        pipeline_to_sync = sys.argv[1] 
+        filtered_pipelines = [pipeline for pipeline in pipelines if pipeline_to_sync in pipeline.get('name')]
+    else:
+        filtered_pipelines = filter_blacklisted_pipelines_from_list(pipelines, blacklisted_pipeline_names)
 
     for pipeline in filtered_pipelines:
         print("Update template branch for pipeline '{pipeline}'... ".format(pipeline=pipeline['name']))
