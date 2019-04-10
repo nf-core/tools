@@ -4,7 +4,7 @@
 Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
-
+import json
 import logging
 import io
 import os
@@ -171,7 +171,8 @@ class PipelineLint(object):
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
-            'check_pipeline_todos'
+            'check_pipeline_todos',
+            'check_params_json'
         ]
         if release_mode:
             self.release_mode = True
@@ -221,6 +222,7 @@ class PipelineLint(object):
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
+            'parameters.settings.json',
             'docs/README.md',
             'docs/output.md',
             'docs/usage.md',
@@ -262,6 +264,7 @@ class PipelineLint(object):
         if 'environment.yml' in self.files:
             with open(os.path.join(self.path, 'environment.yml'), 'r') as fh:
                 self.conda_config = yaml.load(fh)
+
 
     def check_docker(self):
         """Checks that Dockerfile contains the string ``FROM``."""
@@ -501,6 +504,7 @@ class PipelineLint(object):
                     self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
                 elif minNextflowVersion != self.minNextflowVersion:
                     self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
+
 
     def check_readme(self):
         """Checks the repository README file for errors.
@@ -784,6 +788,18 @@ class PipelineLint(object):
                             if len(fname) + len(l) > 50:
                                 l = '{}..'.format(l[:50-len(fname)])
                             self.warned.append((10, "TODO string found in '{}': {}".format(fname,l)))
+
+
+    def check_params_json(self):
+        fn = os.path.join(self.path, 'parameters.settings.json')
+        with open(fn, 'r') as paramsfile:
+            try:
+                json_content = json.loads(paramsfile.read())
+            except(ValueError):
+                self.failed.append((11, "{} file not a valid JSON file.".format(fn)))
+
+
+        return
 
     def print_results(self):
         # Print results
