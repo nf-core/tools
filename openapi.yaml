@@ -1,0 +1,107 @@
+openapi: "3.0.0"
+externalDocs:
+  url: "https://nf-co.re/"
+info:
+  version: 1.0.0
+  description: A DSL for data-driven computational pipelines
+  title: nextflow monitor
+  license:
+    name: MIT
+tags: 
+  - name: weblog
+    description: Status updates as produced by nextflow 
+  - name: runs
+    description: Query or update metadata about jobs
+paths:
+  /event:
+    post:
+      summary: Receives events from nextflows weblog
+      operationId: submitEvent
+      tags: 
+        - weblog
+      responses:
+        '200':
+          description: Submission of the event successfull
+        '400':
+          description: The submitted event was invalid
+  "/events/{runId}":
+    get:
+      summary: Lists received events for a run
+      operationId: listEvents
+      parameters: 
+        - name: runId
+          in: path
+          required: true
+          schema:
+            $ref: '#/components/schemas/runId'
+      tags:
+        - runs
+      responses:
+        '200':
+          description: A list of events for the runID
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  required:
+                    - event
+                    - utcTime
+                  properties:
+                    event: 
+                      type: string
+                    utcTime:
+                      type: string
+                      format: date-time
+        '404':
+          description: Invalid runId
+  "/run/{runId}/{event}":
+    get:
+      summary: Returns the trace of the specified event
+      operationId: getEvent
+      tags:
+        - runs
+      parameters: 
+        - name: runId
+          in: path
+          required: true
+          schema:
+            $ref: "#/components/schemas/runId"
+        - name: event
+          in: path
+          required: true
+          description: The event to return for the run, e.g 'started'
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A trace of the event as submitted by nextflow
+          content:
+            application/json:
+              schema:
+                type: object
+        '404':
+          description: Invalid runId
+  /runs:
+    get:
+      summary: Lists available run names
+      operationId: listRuns
+      tags:
+        - runs
+      responses:
+        '200':
+          description: A list of all available runs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+components:
+  schemas:
+    runId:
+      description: The run id to look for
+      type: string
+      format: uuid
+
