@@ -1,8 +1,9 @@
 import connexion
 import six
 
-from nf_core.openapi_server import util
+from flask import request
 
+from nf_core.openapi_server import util, db
 
 def submit_event(body=None):  # noqa: E501
     """Receives events from nextflows weblog
@@ -14,4 +15,11 @@ def submit_event(body=None):  # noqa: E501
 
     :rtype: None
     """
-    return 'do some magic!'
+
+    event = request.get_json()
+    database = db.get_db()
+    if event['runId'] not in database['runs']:
+         database['runs'].append(event['runId'])
+     
+    database['events'] = event
+    return "Added event successfully."
