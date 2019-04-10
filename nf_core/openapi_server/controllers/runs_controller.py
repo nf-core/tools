@@ -1,8 +1,9 @@
 import connexion
 import six
+from werkzeug.wrappers import BaseResponse as Response
 
 from nf_core.openapi_server.models.inline_response200 import InlineResponse200  # noqa: E501
-from nf_core.openapi_server import util
+from nf_core.openapi_server import util, db
 
 
 def get_event(run_id, event):  # noqa: E501
@@ -17,7 +18,10 @@ def get_event(run_id, event):  # noqa: E501
 
     :rtype: object
     """
-    return 'do some magic!'
+    database = db.get_db()
+    if run_id not in database['runs']:
+         return Response('Run with run id {} not found'.format(run_id))
+    return [ev for ev in database if ev['runId'] == run_id and ev['event'] == event]
 
 
 def list_events(run_id):  # noqa: E501
@@ -30,8 +34,10 @@ def list_events(run_id):  # noqa: E501
 
     :rtype: List[InlineResponse200]
     """
-    return 'do some magic!'
-
+    database = db.get_db()
+    if run_id not in database['runs']:
+        return Response('Run with run id {} not found'.format(run_id))
+    return [{'event': event['event'], 'utcTime': event['utcTime']} for event in database['events'] if event['runId'] == run_id]
 
 def list_runs():  # noqa: E501
     """Lists available run names
@@ -41,4 +47,6 @@ def list_runs():  # noqa: E501
 
     :rtype: List[str]
     """
-    return 'do some magic!'
+
+    database = db.get_db()
+    return database['runs']
