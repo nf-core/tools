@@ -1,0 +1,122 @@
+openapi: 3.0.0
+info:
+  description: A DSL for data-driven computational pipelines
+  license:
+    name: MIT
+  title: nextflow monitor
+  version: 1.0.0
+externalDocs:
+  url: https://nf-co.re/
+servers:
+- url: /
+tags:
+- description: Status updates as produced by nextflow
+  name: weblog
+- description: Query or update metadata about jobs
+  name: runs
+paths:
+  /event:
+    post:
+      operationId: submit_event
+      responses:
+        200:
+          description: Submission of the event successfull
+        400:
+          description: The submitted event was invalid
+      summary: Receives events from nextflows weblog
+      tags:
+      - weblog
+      x-openapi-router-controller: openapi_server.controllers.weblog_controller
+  /events/{runId}:
+    get:
+      operationId: list_events
+      parameters:
+      - explode: false
+        in: path
+        name: runId
+        required: true
+        schema:
+          $ref: '#/components/schemas/runId'
+        style: simple
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items:
+                  $ref: '#/components/schemas/inline_response_200'
+                type: array
+          description: A list of events for the runID
+        404:
+          description: Invalid runId
+      summary: Lists received events for a run
+      tags:
+      - runs
+      x-openapi-router-controller: openapi_server.controllers.runs_controller
+  /run/{runId}/{event}:
+    get:
+      operationId: get_event
+      parameters:
+      - explode: false
+        in: path
+        name: runId
+        required: true
+        schema:
+          $ref: '#/components/schemas/runId'
+        style: simple
+      - description: The event to return for the run, e.g 'started'
+        explode: false
+        in: path
+        name: event
+        required: true
+        schema:
+          type: string
+        style: simple
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+          description: A trace of the event as submitted by nextflow
+        404:
+          description: Invalid runId
+      summary: Returns the trace of the specified event
+      tags:
+      - runs
+      x-openapi-router-controller: openapi_server.controllers.runs_controller
+  /runs:
+    get:
+      operationId: list_runs
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items:
+                  type: string
+                type: array
+          description: A list of all available runs
+      summary: Lists available run names
+      tags:
+      - runs
+      x-openapi-router-controller: openapi_server.controllers.runs_controller
+components:
+  schemas:
+    runId:
+      description: The run id to look for
+      format: uuid
+      type: string
+    inline_response_200:
+      example:
+        utcTime: 2000-01-23T04:56:07.000+00:00
+        event: event
+      properties:
+        event:
+          type: string
+        utcTime:
+          format: date-time
+          type: string
+      required:
+      - event
+      - utcTime
