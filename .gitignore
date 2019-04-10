@@ -105,5 +105,8 @@ ENV/
 # mypy
 .mypy_cache/
 
+# OpenAPI stuff
+.openapi-generator/
+
 # backup files
 *~

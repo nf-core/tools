@@ -31,7 +31,11 @@ setup(
         'pyyaml',
         'requests',
         'requests_cache',
-        'tabulate'
+        'tabulate',
+        'connexion==2.0.0',
+        'swagger-ui-bundle==0.0.2',
+        'python_dateutil==2.6.0',
+        'jsonschema<3.0'
     ],
     setup_requires=[
         'twine>=1.11.0',
