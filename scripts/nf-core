@@ -7,9 +7,11 @@ import click
 import sys
 import os
 import re
+import connexion
 
 import nf_core
 import nf_core.bump_version, nf_core.create, nf_core.download, nf_core.launch, nf_core.licences, nf_core.lint, nf_core.list
+from nf_core.openapi_server import encoder
 
 import logging
 
@@ -262,7 +264,27 @@ def bump_version(pipeline_dir, new_version, nextflow):
     else:
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
+@nf_core_cli.command('monitor', help_priority=8)
+@click.argument(
+    'port',
+    type = click.INT,
+    required = False,
+    default = 8080,
+    envvar='PORT'
+)
+def start_monitor(port):
+    """ Starts the server under nf_core.openapi_server """
 
+    # Informing the user that we are going to start the server
+    logging.info("Starting monitor on port {}".format(port))
+    specification_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), '..', '..', 'nf_core', 'openapi_server')
+    logging.debug("Specification directory is at {}".format(specification_dir))
+    app = connexion.App(__name__, specification_dir=os.path.join(specification_dir, './openapi/'))
+    app.app.json_encoder = encoder.JSONEncoder
+    app.add_api('openapi.yaml',
+                arguments={'title': 'nextflow monitor'},
+                pythonic_params=True)
+    app.run(port=port)
 
 if __name__ == '__main__':
     click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'))
