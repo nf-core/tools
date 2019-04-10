@@ -794,7 +794,7 @@ class PipelineLint(object):
         fn = os.path.join(self.path, 'parameters.settings.json')
         with open(fn, 'r') as paramsfile:
             try:
-                json_content = json.loads(paramsfile.read())
+                json.loads(paramsfile.read())
             except(ValueError):
                 self.failed.append((11, "{} file not a valid JSON file.".format(fn)))
 
