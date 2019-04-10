@@ -1,6 +1,11 @@
 # nf-core/tools: Changelog
 
-## v1.6dev
+## v1.6
+
+#### Syncing
+* Code refactoring to make the script more readable
+* No travis build failure anymore on sync errors
+* More verbose logging
 
 #### Template pipeline
 * awsbatch `work-dir` checking moved to nextflow itself. Removed unsatisfiable check in main.nf template.
@@ -24,6 +29,8 @@
   * Improved documentation
 * Fixed bugs in `nf-core lint`
   * The order of conda channels is now correct, avoiding occasional erroneous errors that packages weren't found ([#207](https://github.com/nf-core/tools/issues/207))
+* Add reporting of ignored errored process
+  * As a solution for [#103](https://github.com/nf-core/tools/issues/103))
 
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
