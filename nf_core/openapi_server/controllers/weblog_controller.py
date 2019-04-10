@@ -4,11 +4,13 @@ import six
 from nf_core.openapi_server import util
 
 
-def submit_event():  # noqa: E501
+def submit_event(body=None):  # noqa: E501
     """Receives events from nextflows weblog
 
      # noqa: E501
 
+    :param body: An event json object
+    :type body: 
 
     :rtype: None
     """

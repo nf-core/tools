@@ -18,6 +18,13 @@ paths:
   /event:
     post:
       operationId: submit_event
+      requestBody:
+        content:
+          application/json:
+            schema:
+              description: See https://github.com/nextflow-io/nextflow/blob/master/docs/tracing.rst#id11
+              type: object
+        description: An event json object
       responses:
         200:
           description: Submission of the event successfull

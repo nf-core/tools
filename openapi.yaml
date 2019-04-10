@@ -17,6 +17,13 @@ paths:
     post:
       summary: Receives events from nextflows weblog
       operationId: submitEvent
+      requestBody:
+        description: An event json object
+        content:
+          application/json:
+            schema:
+              description: See https://github.com/nextflow-io/nextflow/blob/master/docs/tracing.rst#id11
+              type: object
       tags: 
         - weblog
       responses:

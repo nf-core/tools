@@ -31,4 +31,5 @@ git_push.sh
 README.md
 .travis.yml
 Dockerfile
+setup.py
 
