@@ -367,6 +367,38 @@ WARNING: Test Warnings:
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
 
+## Starting a monitor
+
+The `monitor` subcommand starts a monitor that can receive [weblog events](https://www.nextflow.io/docs/latest/tracing.html#weblog-via-http) via a [RESTful](https://en.wikipedia.org/wiki/Representational_state_transfer) interface.
+
+Usage is `nf-core monitor <port>`
+
+Once started you should see the web server listening on port `8080` (by default):
+
+```console
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Starting monitor on port 8080
+ * Serving Flask app "nf_core.monitor" (lazy loading)
+ * Environment: production
+   WARNING: Do not use the development server in a production environment.
+   Use a production WSGI server instead.
+ * Debug mode: off
+```
+
+You can start submitting events to the monitor with the `-with-weblog` parameter like this:
+
+```console
+nextflow run <pipeline name> -with-weblog http://localhost:8080/weblog
+```
+
+You can then see the submitted events and query individual runs on the web interface at `http://localhost:8080/ui`
 
 ## Bumping a pipeline version number
 
