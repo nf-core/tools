@@ -16,6 +16,7 @@ Welcome to nf-core tools API documentation!
    licences
    lint
    list
+   monitor
    utils
    workflow
 
