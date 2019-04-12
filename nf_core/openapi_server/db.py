@@ -13,8 +13,6 @@ def get_db():
         if os.path.isfile(temporaryDatabase):
             g.db = pickle.load(open(temporaryDatabase, 'rb'))
         else:
-            g.db = {}
-            g.db['events'] = []
-            g.db['runs'] = []
+            g.db = []
 
     return g.db

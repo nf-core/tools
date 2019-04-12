@@ -15,8 +15,5 @@ def submit_event(body=None):  # noqa: E501
 
     event = request.get_json()
     database = db.get_db()
-    if event['runId'] not in database['runs']:
-         database['runs'].append(event['runId'])
-     
-    database['events'] = event
+    database.append(event)
     return "Added event successfully."
