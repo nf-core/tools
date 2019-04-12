@@ -1,9 +1,6 @@
-import connexion
-import six
-
 from flask import request
 
-from nf_core.openapi_server import util, db
+from nf_core.openapi_server import db
 
 def submit_event(body=None):  # noqa: E501
     """Receives events from nextflows weblog

@@ -1,4 +1,4 @@
-from flask import current_app, g
+from flask import g
 
 def get_db():
     """ Returns a database for the current session """
