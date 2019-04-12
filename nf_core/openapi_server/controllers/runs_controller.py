@@ -1,7 +1,7 @@
 from flask import abort
 
 from nf_core.openapi_server.models.inline_response200 import InlineResponse200  # noqa: E501
-from nf_core.openapi_server import util, db
+from nf_core.openapi_server import db
 
 def get_event(run_id, event):  # noqa: E501
     """Returns the trace of the specified event
