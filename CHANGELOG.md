@@ -5,6 +5,9 @@
 #### Syncing
 * Can now sync a targeted pipeline via command-line
 
+#### Other
+* Fix small typo in central readme of tools for future releases
+
 ## v1.6
 
 #### Syncing
