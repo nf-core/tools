@@ -6,7 +6,7 @@
 * Can now sync a targeted pipeline via command-line
 
 #### Singularity with Python Multiprocessing
-* Add a singularity option in `nextflow.config` to add support for python multiprocessing when using nf-core pipelines with singularity. 
+* Add a singularity option in `nextflow.config` to add support for python multiprocessing when using nf-core pipelines with singularity
 
 ## v1.6
 
