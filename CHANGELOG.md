@@ -5,8 +5,8 @@
 #### Syncing
 * Can now sync a targeted pipeline via command-line
 
-#### Singularity with Python Multiprocessing
-* Add a singularity option in `nextflow.config` to add support for python multiprocessing when using nf-core pipelines with singularity
+#### Add exception handling (skipping) for mutiline parameters
+In `utils.py` when encountering parameters spanning accross mutliple lines.
 
 ## v1.6
 
