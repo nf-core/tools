@@ -55,9 +55,12 @@ def fetch_wf_config(wf_path, wf=None):
     else:
         for l in nfconfig_raw.splitlines():
             ul = l.decode('utf-8')
-            k, v = ul.split(' = ', 1)
-            config[k] = v
-
+            try:
+                k, v = ul.split(' = ', 1)
+                config[k] = v
+            except ValueError:
+                print('Encountered multiline config parameter')
+                continue
     # If we can, save a cached copy
     if cache_path:
         logging.debug("Saving config cache: {}".format(cache_path))
