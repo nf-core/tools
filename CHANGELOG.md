@@ -7,6 +7,7 @@
 
 #### Other
 * Fix small typo in central readme of tools for future releases
+* Added yaml `Loader=` parameter to fix PyYAML warning that was thrown because of a possible [exploit](https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation)
 
 ## v1.6
 
