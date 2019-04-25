@@ -332,7 +332,7 @@ git push --set-upstream origin master
 
 You can then continue to edit, commit and push normally as you build your pipeline.
 
-Please see the [nf-core documentation](https://nf-co.re/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
+Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
