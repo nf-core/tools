@@ -261,7 +261,7 @@ class PipelineLint(object):
         # Load and parse files for later
         if 'environment.yml' in self.files:
             with open(os.path.join(self.path, 'environment.yml'), 'r') as fh:
-                self.conda_config = yaml.load(fh)
+                self.conda_config = yaml.safe_load(fh)
 
     def check_docker(self):
         """Checks that Dockerfile contains the string ``FROM``."""
@@ -446,7 +446,7 @@ class PipelineLint(object):
             fn = os.path.join(self.path, cf)
             if os.path.isfile(fn):
                 with open(fn, 'r') as fh:
-                    ciconf = yaml.load(fh)
+                    ciconf = yaml.safe_load(fh)
                 # Check that we have the master branch protection
                 travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
                 try:

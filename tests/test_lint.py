@@ -260,7 +260,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
-            lint_obj.conda_config = yaml.load(fh)
+            lint_obj.conda_config = yaml.safe_load(fh)
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.version'] = '0.4'
         lint_obj.check_conda_env_yaml()
@@ -272,7 +272,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         with open(os.path.join(PATH_WORKING_EXAMPLE, 'environment.yml'), 'r') as fh:
-            lint_obj.conda_config = yaml.load(fh)
+            lint_obj.conda_config = yaml.safe_load(fh)
         lint_obj.conda_config['dependencies'] = ['fastqc', 'multiqc=0.9', 'notapackaage=0.4']
         lint_obj.pipeline_name = 'not_tools'
         lint_obj.config['manifest.version'] = '0.23'

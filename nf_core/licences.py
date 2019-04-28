@@ -44,7 +44,7 @@ class WorkflowLicences(object):
             raise LookupError("Couldn't find pipeline nf-core/{}".format(self.pipeline))
 
         lint_obj = nf_core.lint.PipelineLint(self.pipeline)
-        lint_obj.conda_config = yaml.load(response.text)
+        lint_obj.conda_config = yaml.safe_load(response.text)
         # Check conda dependency list
         for dep in lint_obj.conda_config.get('dependencies', []):
             try:
