@@ -63,3 +63,6 @@ apt-get install -y nodejs
 npm install -g markdownlint-cli
 
 # TODO: firewall setup ??
+
+# Cron job for cleaning up docker images
+crontab -l | { cat; echo '0 0 * * * docker images -f "dangling=true" -q'; } | crontab -
