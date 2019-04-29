@@ -1,5 +1,8 @@
 # Node installation
 
+echo 'Type root password:'
+su
+
 # Update and Upgrade
 echo 'Updating and upgrading the system'
 apt-get update && apt-get upgrade
@@ -25,19 +28,21 @@ usermod -aG docker jenkins
 # TODO: use sed here 
 mkdir /share/docker-data
 nano /lib/systemd/system/docker.service
-# ExecStart=/usr/bin/dockerd -g /share/docker-data -H fd://
+# ExecStart=/usr/bin/dockerd -g /share/docker-data -H fd:// --containerd=/run/containerd/containerd.sock
 systemctl stop docker
 systemctl daemon-reload
 rsync -aqxP /var/lib/docker/ /share/docker-data
-systemclt restart docker
+systemctl restart docker
 # Verify change
 ps aux | grep -i docker | grep -v grep
 
 # Install Java
 echo 'Install Java'
-apt-get install default-jdk
+apt-get install -y default-jdk
 
 # Install conda
+echo 'Password for user jenkins:'
+su jenkins
 echo 'Install Conda'
 wget https://repo.anaconda.com/archive/Anaconda3-2018.12-Linux-x86_64.sh
 sh Anaconda3-2018.12-Linux-x86_64.sh
@@ -48,11 +53,13 @@ sh Anaconda3-2018.12-Linux-x86_64.sh
 echo 'Install Nextflow'
 curl -s https://get.nextflow.io | bash
 mv nextflow /usr/local/bin/
+echo 'Password for user root:'
+su && chown -R jenkins:jenkins /usr/local/bin
 
 # Install linting
 echo 'Install markdownlint-cli'
-curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
-apt-get install nodejs
+curl -sL https://deb.nodesource.com/setup_10.x | bash -
+apt-get install -y nodejs
 npm install -g markdownlint-cli
 
 # TODO: firewall setup ??
