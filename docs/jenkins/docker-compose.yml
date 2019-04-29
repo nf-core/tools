@@ -1,0 +1,46 @@
+version: '3.6'
+
+volumes:
+  jenkins-data:
+  jenkins-log:
+networks:
+  master-stack-net:
+
+services:
+  reverse-proxy:
+    container_name: traefik
+    image: traefik:alpine
+    ports:
+      - 80:80
+      - 8080:8080
+    volumes:
+      - ./reverse-proxy/traefik.toml:/etc/traefik/traefik.toml
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: always
+    networks:
+      - master-stack-net
+
+  jenkins:
+    container_name: jenkins-master
+    image: jenkins-master:1.0
+    build: 
+      context: ./jenkins-master
+      dockerfile: Dockerfile
+    volumes:
+      - jenkins-log:/var/log/jenkins
+      - jenkins-data:/var/jenkins_home
+    command: --prefix=/jenkins
+    ports:
+      - 8081:8080
+      - 50000:50000
+    labels:
+      - traefik.port=8080
+      - traefik.enable=true
+      - traefik.backend=jenkins
+      - traefik.frontend.rule=Host:${HOST};PathPrefix:/jenkins
+      - traefik.frontend.passHostHeader=true
+    restart: always
+    networks:
+      - master-stack-net
+
+    

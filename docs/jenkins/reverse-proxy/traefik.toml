@@ -1,0 +1,18 @@
+################################################################
+# Global configuration
+################################################################
+
+defaultEntryPoints = ["http"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+
+[docker]
+endpoint = "unix:///var/run/docker.sock"
+domain = "kraken.dyn.scilifelab.se"
+watch = true
+
+[api]
+dashboard = true
+debug = true
