@@ -429,3 +429,8 @@ INFO: Updating version in Singularity
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
+
+## Citation
+
+If you use `nf-core tools` in your work, please cite it as follows:  
+Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tomasso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
