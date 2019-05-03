@@ -28,3 +28,12 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 
 ## Credits
 {{ cookiecutter.name }} was originally written by {{ cookiecutter.author }}.
+
+
+## Citation
+
+<!-- TODO nf-core: Add citation for pipeline after release. Uncomment lines below and add citation. -->
+<!-- If you use {{ cookiecutter.name }} for your analysis, please cite it as follows: -->
+
+You can cite the `nf-core` pre-print as follows:  
+Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
