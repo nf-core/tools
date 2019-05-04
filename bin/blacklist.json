@@ -1,7 +1,5 @@
 {
   "pipelines": [
-    "atacseq",
-    "bcellmagic",
     "chipseq",
     "epitopeprediction",
     "exoseq",
