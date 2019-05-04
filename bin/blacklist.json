@@ -6,6 +6,13 @@
     "neutronstar", 
     "smrnaseq",
     "vipr",
-    "sarek"
+    "sarek",
+    "neutronstar",
+    "proteomicslfq",
+    "clinvap",
+    "lncpipe",
+    "ddamsproteomics",
+    "scrnaseq",
+    "guideseq"
   ]
 }
