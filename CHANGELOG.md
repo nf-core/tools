@@ -4,6 +4,7 @@
 
 #### Syncing
 * Can now sync a targeted pipeline via command-line
+* Updated Blacklist of synced pipelines 
 
 #### Other
 * Fix small typo in central readme of tools for future releases
