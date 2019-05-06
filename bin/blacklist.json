@@ -1,13 +1,18 @@
 {
   "pipelines": [
-    "atacseq",
-    "bcellmagic",
     "chipseq",
     "epitopeprediction",
     "exoseq",
-    "nascent",
     "neutronstar", 
     "smrnaseq",
-    "vipr"
+    "vipr",
+    "sarek",
+    "neutronstar",
+    "proteomicslfq",
+    "clinvap",
+    "lncpipe",
+    "ddamsproteomics",
+    "scrnaseq",
+    "guideseq"
   ]
 }
