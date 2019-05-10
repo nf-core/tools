@@ -1,9 +1,8 @@
 {
   "pipelines": [
-    "chipseq",
     "epitopeprediction",
     "exoseq",
-    "neutronstar", 
+    "neutronstar",
     "smrnaseq",
     "vipr",
     "sarek",
