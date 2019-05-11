@@ -1,32 +1,39 @@
 #!/usr/bin/env python
-""" Release code for the nf-core python package.
-
-Bumps the version number in all appropriate files for
-a nf-core pipeline
+"""Creates a nf-core pipeline matching the current
+organization's specification based on a template.
 """
-
 import cookiecutter.main, cookiecutter.exceptions
 import git
 import logging
 import os
-import re
 import shutil
 import sys
 import tempfile
 
 import nf_core
 
-class PipelineCreate(object):
-    """ Object to create a new pipeline """
 
-    def __init__(self, name, description, new_version='1.0dev', no_git=False, force=False, outdir=None):
-        """ Init the object and define variables """
+class PipelineCreate(object):
+    """Creates a nf-core pipeline a la carte from the nf-core best-practise template.
+
+    Args:
+        name (str): Name for the pipeline.
+        description (str): Description for the pipeline.
+        author (str): Authors name of the pipeline.
+        new_version (str): Version flag. Semantic versioning only. Defaults to `1.0dev`.
+        no_git (bool): Prevents the creation of a local Git repository for the pipeline. Defaults to False.
+        force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
+            May the force be with you.
+        outdir (str): Path to the local output directory.
+    """
+    def __init__(self, name, description, author, new_version='1.0dev', no_git=False, force=False, outdir=None):
         self.name = 'nf-core/{}'.format(
             name.lower().replace(r'/\s+/', '-').replace('nf-core/', '').replace('/', '-')
         )
         self.name_noslash = self.name.replace('/', '-')
         self.name_docker = self.name.replace('nf-core', 'nfcore')
         self.description = description
+        self.author = author
         self.new_version = new_version
         self.no_git = no_git
         self.force = force
@@ -35,7 +42,10 @@ class PipelineCreate(object):
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
     def init_pipeline(self):
-        """Function to init a new pipeline. Called by the main cli"""
+        """Creates the nf-core pipeline.
+
+        Launches cookiecutter, that will ask for required pipeline information.
+        """
 
         # Make the new pipeline
         self.run_cookiecutter()
@@ -45,8 +55,8 @@ class PipelineCreate(object):
             self.git_init_pipeline()
 
     def run_cookiecutter(self):
-        """Run cookiecutter to create a new pipeline"""
-
+        """Runs cookiecutter to create a new nf-core pipeline.
+        """
         logging.info("Creating new nf-core pipeline: {}".format(self.name))
 
         # Check if the output directory exists
@@ -63,18 +73,19 @@ class PipelineCreate(object):
         # Build the template in a temporary directory
         tmpdir = tempfile.mkdtemp()
         template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
-        cookiecutter.main.cookiecutter (
+        cookiecutter.main.cookiecutter(
             template,
             extra_context = {
-                'name':self.name,
-                'description':self.description,
-                'name_noslash':self.name_noslash,
-                'name_docker':self.name_docker,
-                'version':self.new_version
+                'name': self.name,
+                'description': self.description,
+                'author': self.author,
+                'name_noslash': self.name_noslash,
+                'name_docker': self.name_docker,
+                'version': self.new_version
             },
-            no_input = True,
-            overwrite_if_exists = self.force,
-            output_dir = tmpdir
+            no_input=True,
+            overwrite_if_exists=self.force,
+            output_dir=tmpdir
         )
 
         # Move the template to the output directory
@@ -84,9 +95,9 @@ class PipelineCreate(object):
         # Delete the temporary directory
         shutil.rmtree(tmpdir)
 
-
     def git_init_pipeline(self):
-        """Initialise the new pipeline as a git repo and make first commit"""
+        """Initialises the new pipeline as a Git repository and submits first commit.
+        """
         logging.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)

@@ -29,7 +29,7 @@ class TestLint(unittest.TestCase):
     @mock.patch('nf_core.list.LocalWorkflow')
     def test_working_listcall_json(self, mock_loc_wf, mock_subprocess, mock_json):
         """ Test that listing pipelines with JSON works """
-        nf_core.list.list_workflows(True)
+        nf_core.list.list_workflows([], as_json=True)
 
     def test_pretty_datetime(self):
         """ Test that the pretty datetime function works """
@@ -123,3 +123,40 @@ class TestLint(unittest.TestCase):
         local_wf.get_local_nf_workflow_details()
     
 
+    def test_worflow_filter(self):
+        workflows_obj = nf_core.list.Workflows(["rna", "myWF"])
+
+        remote = {
+            'name': 'myWF',
+            'full_name': 'my Workflow',
+            'description': 'rna',
+            'archived': [],
+            'stargazers_count': 42,
+            'watchers_count': 6,
+            'forks_count': 7,
+            'releases': []
+        }
+
+        rwf_ex = nf_core.list.RemoteWorkflow(remote)
+        rwf_ex.commit_sha = "aw3s0meh1sh"
+        rwf_ex.releases = [{'tag_sha': "aw3s0meh1sh"}]
+
+        remote2 = {
+            'name': 'myWF',
+            'full_name': 'my Workflow',
+            'description': 'dna',
+            'archived': [],
+            'stargazers_count': 42,
+            'watchers_count': 6,
+            'forks_count': 7,
+            'releases': []
+        }
+
+        rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
+        rwf_ex2.commit_sha = "aw3s0meh1sh"
+        rwf_ex2.releases = [{'tag_sha': "aw3s0meh1sh"}]
+
+        workflows_obj.remote_workflows.append(rwf_ex)
+        workflows_obj.remote_workflows.append(rwf_ex2)
+
+        assert len(workflows_obj.filtered_workflows()) == 1
