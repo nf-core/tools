@@ -8,8 +8,6 @@
 #### Other
 * Fix small typo in central readme of tools for future releases
 
-####
-
 * Fix ignored failed jobs odd reporting behavior in `main.nf` template [#338](https://github.com/nf-core/tools/pull/338)
 
 ## v1.6
