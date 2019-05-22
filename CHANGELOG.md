@@ -6,6 +6,7 @@
 * Can now sync a targeted pipeline via command-line
 * Updated Blacklist of synced pipelines
 * Removed `chipseq` from Blacklist of synced pipelines
+* Fixed issue ([#314](https://github.com/nf-core/tools/issues/314))
 
 #### Other
 * Fix small typo in central readme of tools for future releases
