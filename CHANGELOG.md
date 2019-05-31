@@ -8,6 +8,9 @@
 * Removed `chipseq` from Blacklist of synced pipelines
 * Fixed issue [#314](https://github.com/nf-core/tools/issues/314)
 
+#### Linting
+* If the container slug does not contain the nf-core organisation (for example during development on a fork), linting will raise a warning, and an error with release mode on
+
 #### Other
 * Fix small typo in central readme of tools for future releases
 * Switched to yaml.safe_load() to fix PyYAML warning that was thrown because of a possible [exploit](https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation)
