@@ -431,7 +431,10 @@ class PipelineLint(object):
             try:
                 assert self.config.get('process.container', '').strip("'") == container_name
             except AssertionError:
-                self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+                if self.release_mode:
+                    self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+                else:
+                    self.warned.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
             else:
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
