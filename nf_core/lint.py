@@ -434,7 +434,7 @@ class PipelineLint(object):
                 if self.release_mode:
                     self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
                 else:
-                    self.warned.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+                    self.warned.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'. Fix this before you make a release of your pipeline!".format(container_name, self.config.get('process.container', '').strip("'"))))
             else:
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
