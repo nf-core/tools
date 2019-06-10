@@ -9,30 +9,32 @@
 [![Docker](https://img.shields.io/docker/automated/{{ cookiecutter.name_docker }}.svg)](https://hub.docker.com/r/{{ cookiecutter.name_docker }})
 
 ## Introduction
+
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
 ## Quick Start
 
-1. Install [`nextflow`](https://nf-co.re/usage/installation)
+1 Install [`nextflow`](https://nf-co.re/usage/installation)
 
-2. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
+2 Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
 
-3. Download the pipeline and test it on a minimal dataset with a single command
+3 Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
 nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda>
 ```
 
-4. Start running your own analysis!
+4 Start running your own analysis!
 
+<!-- TODO nf-core: Update the default command above used to run the pipeline -->
 ```bash
 nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 ```
 
-<!-- TODO nf-core: Update the default command above used to run the pipeline -->
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Documentation
+
 The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline, found in the `docs/` directory:
 
 1. [Installation](https://nf-co.re/usage/installation)
@@ -47,8 +49,8 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 <!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
 
 ## Credits
-{{ cookiecutter.name }} was originally written by {{ cookiecutter.author }}.
 
+{{ cookiecutter.name }} was originally written by {{ cookiecutter.author }}.
 
 ## Citation
 
