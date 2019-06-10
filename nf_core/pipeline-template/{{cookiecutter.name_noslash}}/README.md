@@ -14,17 +14,17 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 ## Quick Start
 
-1 Install [`nextflow`](https://nf-co.re/usage/installation)
+i. Install [`nextflow`](https://nf-co.re/usage/installation)
 
-2 Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
+ii. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
 
-3 Download the pipeline and test it on a minimal dataset with a single command
+iii. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
 nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda>
 ```
 
-4 Start running your own analysis!
+iv. Start running your own analysis!
 
 <!-- TODO nf-core: Update the default command above used to run the pipeline -->
 ```bash
