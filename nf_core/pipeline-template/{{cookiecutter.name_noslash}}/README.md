@@ -13,11 +13,11 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 ## Quick Start
 
-1. Install [`nextflow`](docs/installation.md)
+1. Install [`nextflow`](https://nf-co.re/usage/installation)
 
 2. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
 
-3. Download and test the pipeline using the provided test data
+3. Download the pipeline and test it with a minimal dataset
 
 ```bash
 nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda>
