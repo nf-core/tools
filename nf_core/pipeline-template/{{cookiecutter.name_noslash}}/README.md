@@ -17,7 +17,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 
 2. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
 
-3. Download the pipeline and test it with a minimal dataset
+3. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
 nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda>
