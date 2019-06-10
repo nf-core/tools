@@ -25,11 +25,11 @@ nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda>
 
 4. Start running your own analysis!
 
-<!-- TODO nf-core: Update the default command used to run the pipeline -->
 ```bash
 nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 ```
 
+<!-- TODO nf-core: Update the default command above used to run the pipeline -->
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Documentation
