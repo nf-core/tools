@@ -16,7 +16,8 @@
 * Switched to yaml.safe_load() to fix PyYAML warning that was thrown because of a possible [exploit](https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation)
 * Add `nf-core` citation
 * Add proper `nf-core` logo for tools
-`
+* Add `Quick Start` section to main README of template
+
 ## v1.6
 
 #### Syncing

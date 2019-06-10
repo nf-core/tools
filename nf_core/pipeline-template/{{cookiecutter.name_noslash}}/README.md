@@ -11,6 +11,26 @@
 ## Introduction
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
+## Quick Start
+
+1. Install [`nextflow`](docs/installation.md)
+
+2. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) or [`conda`](https://conda.io/miniconda.html)
+
+3. Download and test the pipeline using the provided test data
+
+```bash
+nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda>
+```
+
+4. Start running your own analysis!
+
+<!-- TODO nf-core: Update the default command used to run the pipeline -->
+```bash
+nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+```
+
+See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Documentation
 The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline, found in the `docs/` directory:
@@ -32,8 +52,8 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 
 ## Citation
 
-<!-- TODO nf-core: Add citation for pipeline after release. Uncomment lines below and add citation. -->
-<!-- If you use {{ cookiecutter.name }} for your analysis, please cite it as follows: -->
+<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
+<!-- If you use  {{ cookiecutter.name }} for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 You can cite the `nf-core` pre-print as follows:  
 Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
