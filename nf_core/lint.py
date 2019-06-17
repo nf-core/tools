@@ -419,7 +419,11 @@ class PipelineLint(object):
             if self.config.get('manifest.nextflowVersion', '').strip('"\'').startswith('>='):
                 self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >="))
                 # Save self.minNextflowVersion for convenience
-                self.minNextflowVersion = re.sub(r'[^0-9\.]', '', self.config.get('manifest.nextflowVersion', ''))
+                nextflowVersionMatch = re.search(r'[0-9\.]+(-edge)?', self.config.get('manifest.nextflowVersion', ''))
+                if nextflowVersionMatch:
+                    self.minNextflowVersion = nextflowVersionMatch.group(0)
+                else:
+                    self.minNextflowVersion = None
             else:
                 self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
 
