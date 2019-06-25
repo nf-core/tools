@@ -49,7 +49,7 @@ def helpMessage() {
  * SET UP CONFIGURATION VARIABLES
  */
 
-// Show help emssage
+// Show help message
 if (params.help){
     helpMessage()
     exit 0
@@ -65,7 +65,7 @@ if (params.genomes && params.genome && !params.genomes.containsKey(params.genome
 fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
 if ( params.fasta ){
     fasta = file(params.fasta)
-    if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
+    if ( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
 }
 //
 // NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
@@ -78,12 +78,12 @@ if ( params.fasta ){
 // Has the run name been specified by the user?
 //  this has the bonus effect of catching both -name and --name
 custom_runName = params.name
-if( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
+if ( !(workflow.runName ==~ /[a-z]+_[a-z]+/) ){
   custom_runName = workflow.runName
 }
 
 
-if( workflow.profile == 'awsbatch') {
+if ( workflow.profile == 'awsbatch') {
   // AWSBatch sanity checking
   if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
   // Check outdir paths to be S3 buckets if running on AWSBatch
@@ -100,8 +100,8 @@ ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
 /*
  * Create a channel for input read files
  */
-if(params.readPaths){
-    if(params.singleEnd){
+if (params.readPaths){
+    if (params.singleEnd){
         Channel
             .from(params.readPaths)
             .map { row -> [ row[0], [file(row[1][0])]] }
@@ -125,28 +125,28 @@ if(params.readPaths){
 // Header log info
 log.info nfcoreHeader()
 def summary = [:]
-if(workflow.revision) summary['Pipeline Release'] = workflow.revision
+if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
 // TODO nf-core: Report custom parameters here
 summary['Reads']            = params.reads
 summary['Fasta Ref']        = params.fasta
 summary['Data Type']        = params.singleEnd ? 'Single-End' : 'Paired-End'
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
-if(workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
+if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
 summary['Output dir']       = params.outdir
 summary['Launch dir']       = workflow.launchDir
 summary['Working dir']      = workflow.workDir
 summary['Script dir']       = workflow.projectDir
 summary['User']             = workflow.userName
-if(workflow.profile == 'awsbatch'){
+if (workflow.profile == 'awsbatch'){
    summary['AWS Region']    = params.awsregion
    summary['AWS Queue']     = params.awsqueue
 }
 summary['Config Profile'] = workflow.profile
-if(params.config_profile_description) summary['Config Description'] = params.config_profile_description
-if(params.config_profile_contact)     summary['Config Contact']     = params.config_profile_contact
-if(params.config_profile_url)         summary['Config URL']         = params.config_profile_url
-if(params.email) {
+if (params.config_profile_description) summary['Config Description'] = params.config_profile_description
+if (params.config_profile_contact)     summary['Config Contact']     = params.config_profile_contact
+if (params.config_profile_url)         summary['Config URL']         = params.config_profile_url
+if (params.email) {
   summary['E-mail Address']  = params.email
   summary['MultiQC maxsize'] = params.maxMultiqcEmailFileSize
 }
@@ -279,7 +279,7 @@ workflow.onComplete {
 
     // Set up the e-mail variables
     def subject = "[{{ cookiecutter.name }}] Successful: $workflow.runName"
-    if(!workflow.success){
+    if (!workflow.success){
       subject = "[{{ cookiecutter.name }}] FAILED: $workflow.runName"
     }
     def email_fields = [:]
@@ -298,10 +298,10 @@ workflow.onComplete {
     email_fields['summary']['Date Completed'] = workflow.complete
     email_fields['summary']['Pipeline script file path'] = workflow.scriptFile
     email_fields['summary']['Pipeline script hash ID'] = workflow.scriptId
-    if(workflow.repository) email_fields['summary']['Pipeline repository Git URL'] = workflow.repository
-    if(workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
-    if(workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
-    if(workflow.container) email_fields['summary']['Docker image'] = workflow.container
+    if (workflow.repository) email_fields['summary']['Pipeline repository Git URL'] = workflow.repository
+    if (workflow.commitId) email_fields['summary']['Pipeline repository Git Commit'] = workflow.commitId
+    if (workflow.revision) email_fields['summary']['Pipeline Git branch/tag'] = workflow.revision
+    if (workflow.container) email_fields['summary']['Docker image'] = workflow.container
     email_fields['summary']['Nextflow Version'] = workflow.nextflow.version
     email_fields['summary']['Nextflow Build'] = workflow.nextflow.build
     email_fields['summary']['Nextflow Compile Timestamp'] = workflow.nextflow.timestamp
@@ -341,7 +341,7 @@ workflow.onComplete {
     // Send the HTML e-mail
     if (params.email) {
         try {
-          if( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
+          if ( params.plaintext_email ){ throw GroovyException('Send plaintext e-mail, not HTML') }
           // Try to send HTML e-mail using sendmail
           [ 'sendmail', '-t' ].execute() << sendmail_html
           log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $params.email (sendmail)"
@@ -354,7 +354,7 @@ workflow.onComplete {
 
     // Write summary e-mail HTML to a file
     def output_d = new File( "${params.outdir}/pipeline_info/" )
-    if( !output_d.exists() ) {
+    if ( !output_d.exists() ) {
       output_d.mkdirs()
     }
     def output_hf = new File( output_d, "pipeline_report.html" )
@@ -373,7 +373,7 @@ workflow.onComplete {
       log.info "${c_green}Number of successfully ran process(es) : ${workflow.stats.succeedCountFmt} ${c_reset}"
     }
 
-    if(workflow.success){
+    if (workflow.success){
         log.info "${c_purple}[{{ cookiecutter.name }}]${c_green} Pipeline completed successfully${c_reset}"
     } else {
         checkHostname()
@@ -411,11 +411,11 @@ def checkHostname(){
     def c_white = params.monochrome_logs ? '' : "\033[0;37m"
     def c_red = params.monochrome_logs ? '' : "\033[1;91m"
     def c_yellow_bold = params.monochrome_logs ? '' : "\033[1;93m"
-    if(params.hostnames){
+    if (params.hostnames){
         def hostname = "hostname".execute().text.trim()
         params.hostnames.each { prof, hnames ->
             hnames.each { hname ->
-                if(hostname.contains(hname) && !workflow.profile.contains(prof)){
+                if (hostname.contains(hname) && !workflow.profile.contains(prof)){
                     log.error "====================================================\n" +
                             "  ${c_red}WARNING!${c_reset} You are running with `-profile $workflow.profile`\n" +
                             "  but your machine hostname is ${c_white}'$hostname'${c_reset}\n" +
