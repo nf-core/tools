@@ -29,6 +29,7 @@
   * Improved documentation
 * Fixed bugs in `nf-core lint`
   * The order of conda channels is now correct, avoiding occasional erroneous errors that packages weren't found ([#207](https://github.com/nf-core/tools/issues/207))
+  * Allow edge versions in nf-core pipelines
 * Add reporting of ignored errored process
   * As a solution for [#103](https://github.com/nf-core/tools/issues/103))
 
