@@ -2,6 +2,9 @@
 
 ## v1.7dev
 
+#### Tools helper code
+* The tools `create` command now sets up a TEMPLATE branch for syncing
+
 #### Syncing
 * Can now sync a targeted pipeline via command-line
 * Updated Blacklist of synced pipelines
