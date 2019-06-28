@@ -3,24 +3,29 @@
 ## v1.7dev
 
 #### Tools helper code
+
 * The tools `create` command now sets up a TEMPLATE branch for syncing
 
 #### Syncing
+
 * Can now sync a targeted pipeline via command-line
 * Updated Blacklist of synced pipelines
 * Removed `chipseq` from Blacklist of synced pipelines
 * Fixed issue [#314](https://github.com/nf-core/tools/issues/314)
 
 #### Linting
+
 * If the container slug does not contain the nf-core organisation (for example during development on a fork), linting will raise a warning, and an error with release mode on
 
-#### Other
+#### Template
+
 * Fix small typo in central readme of tools for future releases
 * Small code polishing + typo fix in the template main.nf file
 * Switched to yaml.safe_load() to fix PyYAML warning that was thrown because of a possible [exploit](https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation)
 * Add `nf-core` citation
 * Add proper `nf-core` logo for tools
 * Add `Quick Start` section to main README of template
+* Fix [Docker RunOptions](https://github.com/nf-core/tools/pull/351) to get UID and GID set in the template
 
 ## v1.6
 
