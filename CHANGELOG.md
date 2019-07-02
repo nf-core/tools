@@ -27,6 +27,10 @@
 * Add `Quick Start` section to main README of template
 * Fix [Docker RunOptions](https://github.com/nf-core/tools/pull/351) to get UID and GID set in the template
 
+#### Other
+
+* Bump `conda` to 4.6.14 in base nf-core Dockerfile
+
 ## v1.6
 
 #### Syncing
