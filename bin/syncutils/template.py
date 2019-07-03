@@ -42,8 +42,8 @@ class NfcoreTemplate:
         Returns: A cookiecutter-readable context (Python dictionary)
         """
         # Check if we are on "master" (main pipeline code)
-        if self.repo.active_branch.name != "master":
-            self.repo.git.checkout("origin/master", b="master")
+        if self.repo.active_branch.name != "dev":
+            self.repo.git.checkout("origin/dev", b="dev")
 
         # Fetch the config variables from the Nextflow pipeline
         config = utils.fetch_wf_config(wf_path=nf_project_dir)
@@ -66,8 +66,6 @@ class NfcoreTemplate:
                 shutil.rmtree(os.path.join(target_dir, f))
             except:
                 os.remove(os.path.join(target_dir, f))
-        print(target_dir)
-        print(context.get('author'))
         # Create the new template structure
         nf_core.create.PipelineCreate(
             name=context.get('pipeline_name'),

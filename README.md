@@ -1,6 +1,5 @@
-# ![nf-core/tools](docs/images/nf-core-logo.png)
+# ![nf-core/tools](docs/images/nfcore-tools_logo.png)
 
-## [nf-core/tools](https://github.com/nf-core/tools)
 [![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
@@ -297,7 +296,7 @@ The `create` subcommand makes a new workflow using the nf-core base template.
 With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
 
 After creating the files, the command initialises the folder as a git repository and makes an initial commit. This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
-See the [nf-core syncing docs](http://nf-co.re/sync) for more information.
+See the [nf-core syncing docs](https://nf-co.re/developers/sync) for more information.
 
 ```console
 $ nf-core create
@@ -332,7 +331,7 @@ git push --set-upstream origin master
 
 You can then continue to edit, commit and push normally as you build your pipeline.
 
-Please see the [nf-core documentation](https://nf-co.re/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
+Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
@@ -429,3 +428,8 @@ INFO: Updating version in Singularity
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
+
+## Citation
+
+If you use `nf-core tools` in your work, please cite the `nf-core` preprint as follows:  
+Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
