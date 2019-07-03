@@ -26,6 +26,9 @@
 * Add proper `nf-core` logo for tools
 * Add `Quick Start` section to main README of template
 * Fix [Docker RunOptions](https://github.com/nf-core/tools/pull/351) to get UID and GID set in the template
+* Use [`file`](https://github.com/nf-core/tools/pull/354) instead of `new File`
+  to avoid weird behavior such as making an `s3:/` directory locally when using
+  an AWS S3 bucket as the `--outdir`.
 
 #### Other
 
