@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 63
+MAX_PASS_CHECKS = 59
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -58,7 +58,7 @@ class TestLint(unittest.TestCase):
         This should not result in any exception for the minimal
         working example"""
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
-        expectations = {"failed": 0, "warned": 1, "passed": MAX_PASS_CHECKS}
+        expectations = {"failed": 0, "warned": 3, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -72,8 +72,8 @@ class TestLint(unittest.TestCase):
     def test_call_lint_pipeline_release(self):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.lint_pipeline(release=True)
-        expectations = {"failed": 0, "warned": 1, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
+        lint_obj.lint_pipeline(release_mode=True)
+        expectations = {"failed": 0, "warned": 3, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
@@ -91,7 +91,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 5, "warned": 1, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 5 - 2}
+        expectations = {"failed": 4, "warned": 1, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 5 - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -112,14 +112,14 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test works with good pipeline example"""
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         good_lint_obj.check_nextflow_config()
-        expectations = {"failed": 0, "warned": 0, "passed": 32}
+        expectations = {"failed": 0, "warned": 0, "passed": 33}
         self.assess_lint_status(good_lint_obj, **expectations)
 
     def test_config_variable_example_with_failed(self):
         """Tests that config variable existence test fails with bad pipeline example"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_nextflow_config()
-        expectations = {"failed": 18, "warned": 9, "passed": 6}
+        expectations = {"failed": 19, "warned": 8, "passed": 6}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -201,7 +201,7 @@ class TestLint(unittest.TestCase):
         """Tests the workflow version and container version sucessfully"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -213,7 +213,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
@@ -226,7 +226,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
@@ -238,7 +238,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools"
+        lint_obj.config["process.container"] = "nfcore/tools"
         lint_obj.check_version_consistency()
         expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
@@ -250,7 +250,7 @@ class TestLint(unittest.TestCase):
         os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
-        lint_obj.config["params.container"] = "nfcore/tools:0.4"
+        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -264,7 +264,7 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.version'] = '0.4'
         lint_obj.check_conda_env_yaml()
-        expectations = {"failed": 0, "warned": 1, "passed": 6}
+        expectations = {"failed": 0, "warned": 3, "passed": 4}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_env_fail(self):
@@ -343,7 +343,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.version'] = '0.4'
-        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.4']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc==1.4']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -359,7 +359,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.version'] = '0.4'
-        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc==1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -375,7 +375,7 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.version'] = '0.4'
-        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc=1.5']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc==1.5']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 0, "warned": 1, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -386,7 +386,33 @@ class TestLint(unittest.TestCase):
         lint_obj.files = ['environment.yml']
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.version'] = '0.4'
-        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['notpresent=1.5']}]}
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['notpresent==1.5']}]}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_conda_dependency_fails(self):
+        """ Tests that linting fails, if conda dependency
+        package version is not available on Anaconda.
+        """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.config['manifest.version'] = '0.4'
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': ['openjdk=0.0.0']}
+        lint_obj.check_conda_env_yaml()
+        expectations = {"failed": 1, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pip_dependency_fails(self):
+        """ Tests that linting fails, if conda dependency
+        package version is not available on Anaconda.
+        """
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ['environment.yml']
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.config['manifest.version'] = '0.4'
+        lint_obj.conda_config = {'name': 'nf-core-tools-0.4', 'dependencies': [{'pip': ['multiqc==0.0']}]}
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)

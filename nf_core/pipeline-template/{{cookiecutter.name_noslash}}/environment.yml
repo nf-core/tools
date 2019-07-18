@@ -1,8 +1,11 @@
+# You can use this file to create a conda environment for this pipeline:
+#   conda env create -f environment.yml
 name: {{ cookiecutter.name_noslash }}-{{ cookiecutter.version }}
 channels:
-  - bioconda
   - conda-forge
+  - bioconda
   - defaults
 dependencies:
-  - fastqc=0.11.7
-  - multiqc=1.6
+  # TODO nf-core: Add required software dependencies here
+  - fastqc=0.11.8
+  - multiqc=1.7

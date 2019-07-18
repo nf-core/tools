@@ -6,7 +6,7 @@ We try to manage the required tasks for nf-core/tools using GitHub issues, you p
 
 However, don't be put off by this template - other more general issues and suggestions are welcome! Contributions to the code are even more welcome ;)
 
-> If you need help using or developing nf-core/tools then the best place to go is the Gitter chatroom where you can ask us questions directly: https://gitter.im/nf-core/Lobby
+> If you need help using or developing nf-core/tools then the best place to ask is the nf-core `tools` channel on [Slack](https://nf-core-invite.herokuapp.com/).
 
 ## Contribution workflow
 If you'd like to write some code for nf-core/tools, the standard workflow
@@ -21,6 +21,21 @@ is as follows:
 4. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged.
 
 If you're not used to this workflow with git, you can start with some [basic docs from GitHub](https://help.github.com/articles/fork-a-repo/) or even their [excellent interactive tutorial](https://try.github.io/).
+
+## Style guide
+Google provides an excellent [style guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md), which
+is a best practise extension of [PEP](https://www.python.org/dev/peps/), the Python Enhancement Proposals. Have a look at the
+[docstring](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) section, which is in particular
+important, as nf-core tool's code documentation is generated out of these automatically.
+
+In order to test the documentation, you have to install Sphinx on the machine, where the documentation should be generated.
+
+Please follow Sphinx's [installation instruction](http://www.sphinx-doc.org/en/master/usage/installation.html).
+
+Once done, you can run `make clean` and then `make html` in the root directory of `nf-core tools`, where the `Makefile` is located.
+
+The HTML will then be generated in `docs/api/_build/html`.
+
 
 ## Tests
 When you create a pull request with changes, [Travis CI](https://travis-ci.org/) will run automatic tests.
@@ -39,7 +54,7 @@ python -m pytest .
 ```
 
 ### Lint Tests
-The nf-core has a [set of guidelines](http://nf-co.re/developer_docs) which all pipelines must adhere to.
+The nf-core has a [set of guidelines](http://nf-co.re/guidelines) which all pipelines must adhere to.
 To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
 
 The nf-core/tools repo itself contains the master template for creating new nf-core pipelines.
@@ -53,4 +68,4 @@ nf-core lint nf-core-testpipeline
 ```
 
 ## Getting help
-For further information/help, please consult the [nf-core/tools documentation](https://github.com/nf-core/tools#documentation) and don't hesitate to get in touch on [Gitter](https://gitter.im/nf-core/Lobby)
+For further information/help, please consult the [nf-core/tools documentation](https://github.com/nf-core/tools#documentation) and don't hesitate to get in touch on the nf-core `tools` channel on [Slack](https://nf-core-invite.herokuapp.com/).
