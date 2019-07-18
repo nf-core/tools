@@ -2,22 +2,22 @@
 
 ## v1.7dev
 
-#### Tools helper code
+### Tools helper code
 
 * The tools `create` command now sets up a TEMPLATE branch for syncing
 
-#### Syncing
+### Syncing
 
 * Can now sync a targeted pipeline via command-line
 * Updated Blacklist of synced pipelines
 * Removed `chipseq` from Blacklist of synced pipelines
 * Fixed issue [#314](https://github.com/nf-core/tools/issues/314)
 
-#### Linting
+### Linting
 
 * If the container slug does not contain the nf-core organisation (for example during development on a fork), linting will raise a warning, and an error with release mode on
 
-#### Template
+### Template
 
 * Fix small typo in central readme of tools for future releases
 * Small code polishing + typo fix in the template main.nf file
@@ -29,8 +29,9 @@
 * Use [`file`](https://github.com/nf-core/tools/pull/354) instead of `new File`
   to avoid weird behavior such as making an `s3:/` directory locally when using
   an AWS S3 bucket as the `--outdir`.
+* Fix workflow.onComplete() message when finishing pipeline
 
-#### Other
+### Other
 
 * Bump `conda` to 4.6.14 in base nf-core Dockerfile
 
