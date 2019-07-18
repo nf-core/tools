@@ -52,6 +52,7 @@
 * Removed Gitter references in `.github/` directories for `tools/` and pipeline template.
 * Changed `scrape_software_versions.py` to output `.csv` file
 * Added `export_plots` parameter to multiqc config
+* Corrected some typos as listed [here](https://github.com/nf-core/tools/issues/348) to Guidelines
 
 ### Tools helper code
 
