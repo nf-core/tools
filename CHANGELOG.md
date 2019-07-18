@@ -36,12 +36,14 @@
 
 ## v1.6
 
-#### Syncing
+### Syncing
+
 * Code refactoring to make the script more readable
 * No travis build failure anymore on sync errors
 * More verbose logging
 
-#### Template pipeline
+### Template pipeline
+
 * awsbatch `work-dir` checking moved to nextflow itself. Removed unsatisfiable check in main.nf template.
 * Fixed markdown linting
 * Tools CI testing now runs markdown lint on compiled template pipeline
@@ -49,8 +51,10 @@
 * Removed Gitter references in `.github/` directories for `tools/` and pipeline template.
 * Changed `scrape_software_versions.py` to output `.csv` file
 * Added `export_plots` parameter to multiqc config
+* Corrected some typos as listed [here](https://github.com/nf-core/tools/issues/348) to Guidelines
 
-#### Tools helper code
+### Tools helper code
+
 * Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
 * Updated main help command to sort the subcommands in a more logical order
 * Updated readme to describe the new `nf-core launch` command
@@ -70,7 +74,8 @@
 
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
-#### Template pipeline
+### Template pipeline
+
 * Dropped Singularity file
 * Summary now logs details of the cluster profile used if from [nf-core/configs](https://github.com/nf-core/configs)
 * Dockerhub is used in favor of Singularity Hub for pulling when using the Singularity profile
@@ -84,7 +89,8 @@
 * Together with nf-core/configs, helper function now checks hostname and suggests a valid config profile
 * `awsbatch` executor requires the `tracedir` not to be set to an `s3` bucket.
 
-#### Tools helper code
+### Tools helper code
+
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
   * Works with a `parameters.settings.json` file shipped with each pipeline
   * Discovers additional `params` from the pipeline dynamically
@@ -107,12 +113,14 @@
   * Now correctly validates version pinning for packages from PyPI
   * Updates for changes to `process.container` definition
 
-#### Other
+### Other
+
 * Bump `conda` to 4.6.7 in base nf-core Dockerfile
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
-#### Template pipeline
+### Template pipeline
+
 * Institutional custom config profiles moved to github `nf-core/configs`
   * These will now be maintained centrally as opposed to being shipped with the pipelines in `conf/`
   * Load `base.config` by default for all profiles
@@ -126,7 +134,8 @@
 * Travis: Pull the `dev` tagged docker image for testing
 * Removed UPPMAX-specific documentation from the template.
 
-#### Tools helper code
+### Tools helper code
+
 * Make Travis CI tests fail on pull requests if the `CHANGELOG.md` file hasn't been updated
 * Minor bugfixing in Python code (eg. removing unused import statements)
 * Made the web requests caching work on multi-user installations
@@ -134,6 +143,7 @@
 * Linting: Update for Travis: Pull the `dev` tagged docker image for testing
 
 ## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
+
 * `nf-core create` command line interface updated
   * Interactive prompts for required arguments if not given
   * New flag for workflow author
@@ -147,6 +157,7 @@
 * Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
 
 ## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
+
 * Updated the `nf-core release` command
   * Now called `nf-core bump-versions` instead
   * New flag `--nextflow` to change the required nextflow version instead
@@ -167,6 +178,7 @@
 * New GitHub contributing instructions and pull request template
 
 ## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
+
 Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.
 
 * The [Cookiecutter template](https://github.com/nf-core/cookiecutter) has been merged into tools
