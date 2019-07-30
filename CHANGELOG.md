@@ -30,6 +30,7 @@
   to avoid weird behavior such as making an `s3:/` directory locally when using
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
+* Update URL for joining the nf-core slack to https://nf-co.re/join/slack
 
 ### Other
 
