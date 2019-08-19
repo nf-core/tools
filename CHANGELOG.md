@@ -2,6 +2,10 @@
 
 ## v1.7dev
 
+### Pypi package description
+
+* The readme should now be rendered properly on Pypi.
+
 ### Tools helper code
 
 * The tools `create` command now sets up a TEMPLATE branch for syncing
