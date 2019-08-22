@@ -9,3 +9,4 @@ dependencies:
   # TODO nf-core: Add required software dependencies here
   - bioconda::fastqc=0.11.8
   - bioconda::multiqc=1.7
+  - conda-forge::r-markdown=0.9
