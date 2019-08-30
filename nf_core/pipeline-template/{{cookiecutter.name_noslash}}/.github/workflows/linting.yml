@@ -1,4 +1,4 @@
-name:  {{ cookiecutter.name }} lint
+name: nf-core linting
 # This workflow is triggered on pushes and PRs to the repository.
 on: [push, pull_request]  
 
@@ -22,7 +22,6 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install Nextflow
         run: |
-          export NXF_VER=${{ matrix.nxf_ver }}
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
       - uses: actions/setup-python@v1
