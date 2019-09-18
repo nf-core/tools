@@ -8,7 +8,7 @@
 
 ### Tools helper code
 
-* The tools `create` command now sets up a TEMPLATE branch for syncing
+* The tools `create` command now sets up `TEMPLATE` and `dev` branches
 
 ### Syncing
 
