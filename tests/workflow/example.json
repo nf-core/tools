@@ -29,7 +29,7 @@
             "type": "integer",
             "render": "range",
             "choices": [1, 150],
-            "default_value": 1,
+            "default_value": "1",
             "group": "normalization",
             "required": false
         }
