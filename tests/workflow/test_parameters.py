@@ -13,7 +13,7 @@ from nf_core.workflow import parameters as pms
 
 WD = os.path.dirname(__file__)
 PATH_WORKING_EXAMPLE = os.path.join(WD, 'example.json')
-SCHEMA_URI = "https://nf-co.re/parameters.schema.json"
+SCHEMA_URI = "https://nf-co.re/params/0.2.0dev/parameters.schema.json"
 
 @pytest.fixture(scope="class")
 def schema():
