@@ -104,5 +104,6 @@ class PipelineCreate(object):
         repo.index.commit("initial template build from nf-core/tools, version {}".format(nf_core.__version__))
         #Add TEMPLATE branch to git repository
         repo.git.branch('TEMPLATE')
+        repo.git.branch('dev')
         logging.info("Done. Remember to add a remote and push to GitHub:\n  cd {}\n  git remote add origin git@github.com:USERNAME/REPO_NAME.git\n  git push --all origin".format(self.outdir))
-        logging.info("This will also push your newly created TEMPLATE branch for syncing.")
+        logging.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")
