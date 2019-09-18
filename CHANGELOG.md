@@ -35,6 +35,7 @@
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
 * Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
 
 ### Other
 
