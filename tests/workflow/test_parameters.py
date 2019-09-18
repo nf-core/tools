@@ -69,6 +69,6 @@ def test_validation(schema):
 def test_validation_with_success(schema):
     """Tests the parameter objects against the JSON schema."""
     parameter = pms.Parameter.builder().name("width").param_type("integer") \
-            .default("2").label("The width of a table.").render("textfield").required(False).build()
+            .default("2").label("The width of a table.").render("range").required(False).build()
     params_in_json = pms.Parameters.in_full_json([parameter])
     jsonschema.validate(json.loads(pms.Parameters.in_full_json([parameter])), json.loads(schema))
