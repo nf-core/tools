@@ -54,6 +54,12 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 
 {{ cookiecutter.name }} was originally written by {{ cookiecutter.author }}.
 
+## Contributions and Support
+
+If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
+
+For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/{{ cookiecutter.name }}) (you can join with [this invite](https://nf-co.re/join/slack)).
+
 ## Citation
 
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
