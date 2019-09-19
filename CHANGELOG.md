@@ -2,6 +2,10 @@
 
 ## v1.7dev
 
+### Pypi package description
+
+* The readme should now be rendered properly on Pypi.
+
 ### Tools helper code
 
 * The tools `create` command now sets up a TEMPLATE branch for syncing
@@ -33,6 +37,8 @@
 * Update URL for joining the nf-core slack to https://nf-co.re/join/slack
 * Add direct link to the pipeline slack channel in the contribution guidelines
 * Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
+* Fix Parameters JSON due to new versionized structure
+* Added conda-forge::r-markdown=1.1 and conda-forge::r-base=3.6.1 to environment
 
 ### Other
 
