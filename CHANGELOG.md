@@ -36,6 +36,8 @@
 * Fix workflow.onComplete() message when finishing pipeline
 * Update URL for joining the nf-core slack to https://nf-co.re/join/slack
 * Add GitHub Action for CI and Linting
+* Fix Parameters JSON due to new versionized structure
+* Added conda-forge::r-markdown=1.1 and conda-forge::r-base=3.6.1 to environment
 
 ### Other
 
