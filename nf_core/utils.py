@@ -75,8 +75,9 @@ def setup_requests_cachedir():
     """
     # Only import it if we need it
     import requests_cache
+    
 
-    cachedir = os.path.join(tempfile.gettempdir(), 'nfcore_cache')
+    cachedir = os.path.join(os.getenv("HOME"), '.nfcore_cache')
     if not os.path.exists(cachedir):
         os.mkdir(cachedir)
     requests_cache.install_cache(
@@ -84,6 +85,3 @@ def setup_requests_cachedir():
         expire_after=datetime.timedelta(hours=1),
         backend='sqlite',
     )
-    # Make world-writeable so that multi-user installations work
-    os.chmod(cachedir, 0o777)
-    os.chmod(os.path.join(cachedir, 'nfcore_cache.sqlite'), 0o777)
