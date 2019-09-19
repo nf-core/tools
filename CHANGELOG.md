@@ -8,7 +8,7 @@
 
 ### Tools helper code
 
-* The tools `create` command now sets up a TEMPLATE branch for syncing
+* The tools `create` command now sets up a `TEMPLATE` and a `dev` branch for syncing
 
 ### Syncing
 
@@ -36,6 +36,7 @@
 * Fix workflow.onComplete() message when finishing pipeline
 * Update URL for joining the nf-core slack to https://nf-co.re/join/slack
 * Add GitHub Action for CI and Linting
+* [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
 * Add direct link to the pipeline slack channel in the contribution guidelines
 * Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
 * Fix Parameters JSON due to new versionized structure
