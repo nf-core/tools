@@ -44,6 +44,7 @@
 ### Other
 
 * Bump `conda` to 4.6.14 in base nf-core Dockerfile
+* Added a Code of Conduct to nf-core/tools
 
 ## v1.6
 
