@@ -78,7 +78,7 @@ def setup_requests_cachedir():
 
     cachedir = os.path.join(os.getenv("HOME"), os.path.join('.nfcore', 'cache'))
     if not os.path.exists(cachedir):
-        os.mkdirs(cachedir)
+        os.makedirs(cachedir)
     requests_cache.install_cache(
         os.path.join(cachedir, 'github_info'),
         expire_after=datetime.timedelta(hours=1),
