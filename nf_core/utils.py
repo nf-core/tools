@@ -8,7 +8,6 @@ import json
 import logging
 import os
 import subprocess
-import tempfile
 
 def fetch_wf_config(wf_path, wf=None):
     """Uses Nextflow to retrieve the the configuration variables
