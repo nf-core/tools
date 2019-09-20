@@ -2,9 +2,13 @@
 
 ## v1.7dev
 
+### Pypi package description
+
+* The readme should now be rendered properly on Pypi.
+
 ### Tools helper code
 
-* The tools `create` command now sets up a TEMPLATE branch for syncing
+* The tools `create` command now sets up a `TEMPLATE` and a `dev` branch for syncing
 * Fixed issue [379](https://github.com/nf-core/tools/issues/379)
 
 ### Syncing
@@ -32,6 +36,11 @@
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
 * Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
+* Add direct link to the pipeline slack channel in the contribution guidelines
+* Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
+* Fix Parameters JSON due to new versionized structure
+* Added conda-forge::r-markdown=1.1 and conda-forge::r-base=3.6.1 to environment
 
 ### Other
 
