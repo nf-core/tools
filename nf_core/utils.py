@@ -76,11 +76,11 @@ def setup_requests_cachedir():
     import requests_cache
     
 
-    cachedir = os.path.join(os.getenv("HOME"), '.nfcore_cache')
+    cachedir = os.path.join(os.getenv("HOME"), os.path.join('.nfcore', 'cache'))
     if not os.path.exists(cachedir):
-        os.mkdir(cachedir)
+        os.mkdirs(cachedir)
     requests_cache.install_cache(
-        os.path.join(cachedir, 'nfcore_cache'),
+        os.path.join(cachedir, 'github_info'),
         expire_after=datetime.timedelta(hours=1),
         backend='sqlite',
     )
