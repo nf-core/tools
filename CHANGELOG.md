@@ -10,7 +10,7 @@
 
 * The tools `create` command now sets up a `TEMPLATE` and a `dev` branch for syncing
 * Fixed issue [379](https://github.com/nf-core/tools/issues/379)
-* nf-core launch now uses stable parameter schema version 0.1.0 
+* nf-core launch now uses stable parameter schema version 0.1.0
 
 ### Syncing
 
