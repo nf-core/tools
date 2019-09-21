@@ -12,7 +12,7 @@ from nf_core.workflow import validation as valid
 
 WD = os.path.dirname(__file__)
 PATH_WORKING_EXAMPLE = os.path.join(WD, 'example.json')
-SCHEMA_URI = "https://nf-co.re/params/0.1.0/parameters.schema.json"
+SCHEMA_URI = "https://nf-co.re/parameter-schema/0.1.0/parameters.schema.json"
 
 @pytest.fixture(scope="class")
 def valid_integer_param():
