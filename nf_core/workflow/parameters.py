@@ -10,7 +10,7 @@ from jsonschema import validate
 
 import nf_core.workflow.validation as vld
 
-NFCORE_PARAMS_SCHEMA_URI = "https://nf-co.re/params/0.1.0dev/parameters.schema.json"
+NFCORE_PARAMS_SCHEMA_URI = "https://nf-co.re/parameter-schema/0.1.0/parameters.schema.json"
 
 class Parameters:
     """Contains a static factory method
