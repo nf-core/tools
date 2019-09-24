@@ -454,14 +454,14 @@ class PipelineLint(object):
             if os.path.isfile(fn):
                 with open(fn, 'r') as fh:
                     ciconf = yaml.safe_load(fh)
-                # Check that we have the master branch protection
-                travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+                # Check that we have the master branch protection, but allow patch as well
+                travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && ([ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ] || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]))'
                 try:
                     assert(travisMasterCheck in ciconf.get('before_install', {}))
                 except AssertionError:
-                    self.failed.append((5, "Continuous integration must check for master branch PRs: '{}'".format(fn)))
+                    self.failed.append((5, "Continuous integration must check for master/patch branch PRs: '{}'".format(fn)))
                 else:
-                    self.passed.append((5, "Continuous integration checks for master branch PRs: '{}'".format(fn)))
+                    self.passed.append((5, "Continuous integration checks for master/patch branch PRs: '{}'".format(fn)))
                 # Check that the nf-core linting runs
                 try:
                     assert('nf-core lint ${TRAVIS_BUILD_DIR}' in ciconf['script'])
