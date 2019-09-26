@@ -3,6 +3,7 @@
 
 from __future__ import print_function
 
+import errno
 from io import BytesIO
 import logging
 import hashlib
@@ -208,7 +209,7 @@ class DownloadWorkflow(object):
         try:
             subprocess.call(singularity_command)
         except OSError as e:
-            if e.errno == os.errno.ENOENT:
+            if e.errno == errno.ENOENT:
                 # Singularity is not installed
                 logging.error('Singularity is not installed!')
             else:

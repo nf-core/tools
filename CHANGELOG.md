@@ -2,9 +2,9 @@
 
 ## v1.7dev
 
-### Pypi package description
+### PyPI package description
 
-* The readme should now be rendered properly on Pypi.
+* The readme should now be rendered properly on PyPI.
 
 ### Tools helper code
 
@@ -12,6 +12,7 @@
 * Fixed issue [379](https://github.com/nf-core/tools/issues/379)
 * nf-core launch now uses stable parameter schema version 0.1.0
 * Check that PR from patch or dev branch is acceptable by linting
+* Made code compatible with Python 3.7
 
 ### Syncing
 

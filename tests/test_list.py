@@ -11,7 +11,6 @@ import pytest
 import time
 import unittest
 
-from nose.tools import raises
 from datetime import datetime
 
 class TestLint(unittest.TestCase):
@@ -38,7 +37,7 @@ class TestLint(unittest.TestCase):
         now_ts = time.mktime(now.timetuple())
         nf_core.list.pretty_date(now_ts)
 
-    @raises(AssertionError)
+    @pytest.mark.xfail(raises=AssertionError)
     def test_local_workflows_and_fail(self):
         """ Test the local workflow class and try to get local
         Nextflow workflow information """
@@ -67,7 +66,7 @@ class TestLint(unittest.TestCase):
         rwf_ex = nf_core.list.RemoteWorkflow(remote)
         rwf_ex.commit_sha = "aw3s0meh1sh"
         rwf_ex.releases = [{'tag_sha': "aw3s0meh1sh"}]
-    
+
 
         wfs.local_workflows.append(lwf_ex)
         wfs.remote_workflows.append(rwf_ex)
@@ -83,7 +82,7 @@ class TestLint(unittest.TestCase):
         wfs.compare_remote_local()
 
         rwf_ex.releases = None
-    
+
     @mock.patch('nf_core.list.LocalWorkflow')
     def test_parse_local_workflow_and_succeed(self, mock_local_wf):
         test_path = '/tmp/nxf/nf-core'
@@ -92,7 +91,7 @@ class TestLint(unittest.TestCase):
         if not os.environ.get('NXF_ASSETS'):
             os.environ['NXF_ASSETS'] = '/tmp/nxf'
         assert os.environ['NXF_ASSETS'] == '/tmp/nxf'
-        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f: 
+        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f:
             f.write('dummy')
         workflows_obj = nf_core.list.Workflows()
         workflows_obj.get_local_nf_workflows()
@@ -108,11 +107,11 @@ class TestLint(unittest.TestCase):
         mock_env.side_effect = '/tmp/nxf'
 
         assert os.environ['NXF_ASSETS'] == '/tmp/nxf'
-        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f: 
+        with open('/tmp/nxf/nf-core/dummy-wf', 'w') as f:
             f.write('dummy')
         workflows_obj = nf_core.list.Workflows()
         workflows_obj.get_local_nf_workflows()
-    
+
     @mock.patch('os.stat')
     @mock.patch('git.Repo')
     def test_local_workflow_investigation(self, mock_repo, mock_stat):
@@ -121,7 +120,7 @@ class TestLint(unittest.TestCase):
         mock_repo.head.commit.hexsha = 'h00r4y'
         mock_stat.st_mode = 1
         local_wf.get_local_nf_workflow_details()
-    
+
 
     def test_worflow_filter(self):
         workflows_obj = nf_core.list.Workflows(["rna", "myWF"])

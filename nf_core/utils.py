@@ -4,10 +4,12 @@ Common utility functions for the nf-core python package.
 """
 
 import datetime
+import errno
 import json
 import logging
 import os
 import subprocess
+import sys
 
 def fetch_wf_config(wf_path, wf=None):
     """Uses Nextflow to retrieve the the configuration variables
@@ -47,7 +49,7 @@ def fetch_wf_config(wf_path, wf=None):
         with open(os.devnull, 'w') as devnull:
             nfconfig_raw = subprocess.check_output(['nextflow', 'config', '-flat', wf_path], stderr=devnull)
     except OSError as e:
-        if e.errno == os.errno.ENOENT:
+        if e.errno == errno.ENOENT:
             raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
     except subprocess.CalledProcessError as e:
         raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
@@ -74,9 +76,9 @@ def setup_requests_cachedir():
     """
     # Only import it if we need it
     import requests_cache
-    
 
-    cachedir = os.path.join(os.getenv("HOME"), os.path.join('.nfcore', 'cache'))
+    pyversion = '.'.join(str(v) for v in sys.version_info[0:3])
+    cachedir = os.path.join(os.getenv("HOME"), os.path.join('.nfcore', 'cache_'+pyversion))
     if not os.path.exists(cachedir):
         os.makedirs(cachedir)
     requests_cache.install_cache(
