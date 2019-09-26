@@ -41,7 +41,7 @@ after_success:
 jobs:
   include:
     - stage: docs generation
-      if: (branch = "master" OR branch = "dev") AND type = push
+      if: (branch = "master" OR branch = "dev") AND type = push AND repo = nf-core/tools
       script: bash ./bin/push.sh
 
 deploy:
