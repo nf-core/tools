@@ -9,8 +9,10 @@ import logging
 import hashlib
 import os
 import requests
+import shutil
 import subprocess
 import sys
+import tarfile
 from zipfile import ZipFile
 
 import nf_core.list
@@ -28,11 +30,15 @@ class DownloadWorkflow(object):
         singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
     """
-    def __init__(self, pipeline, release=None, singularity=False, outdir=None):
+    def __init__(self, pipeline, release=None, singularity=False, outdir=None, compress_type='tar.gz'):
         self.pipeline = pipeline
         self.release = release
         self.singularity = singularity
         self.outdir = outdir
+        self.output_filename = None
+        self.compress_type = compress_type
+        if self.compress_type == 'none':
+            self.compress_type = None
 
         self.wf_name = None
         self.wf_sha = None
@@ -48,16 +54,28 @@ class DownloadWorkflow(object):
         except LookupError:
             sys.exit(1)
 
+        output_logmsg = "Output directory: {}".format(self.outdir)
+
+        # Set an output filename now that we have the outdir
+        if self.compress_type is not None:
+            self.output_filename = '{}.{}'.format(self.outdir, self.compress_type)
+            output_logmsg = "Output file: {}".format(self.output_filename)
+
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
             logging.error("Output directory '{}' already exists".format(self.outdir))
+            sys.exit(1)
+
+        # Check that compressed output file doesn't already exist
+        if self.output_filename and os.path.exists(self.output_filename):
+            logging.error("Output file '{}' already exists".format(self.output_filename))
             sys.exit(1)
 
         logging.info(
             "Saving {}".format(self.pipeline) +
             "\n Pipeline release: {}".format(self.release) +
             "\n Pull singularity containers: {}".format('Yes' if self.singularity else 'No') +
-            "\n Output directory: {}".format(self.outdir)
+            "\n {}".format(output_logmsg)
         )
 
         # Download the pipeline files
@@ -87,6 +105,10 @@ class DownloadWorkflow(object):
                         logging.error("Not able to pull image. Service might be down or internet connection is dead.")
                         raise r
 
+        # Compress into an archive
+        if self.compress_type is not None:
+            logging.info("Compressing download..")
+            self.compress_download()
 
 
     def fetch_workflow_details(self, wfs):
@@ -261,7 +283,40 @@ class DownloadWorkflow(object):
                 # Something else went wrong with singularity command
                 raise e
 
-    def validate_md5(self, fname, expected):
+    def compress_download(self):
+        """Take the downloaded files and make a compressed .tar.gz archive.
+        """
+        logging.debug('Creating archive: {}'.format(self.output_filename))
+
+        # .tar.gz and .tar.bz2 files
+        if self.compress_type == 'tar.gz' or self.compress_type == 'tar.bz2':
+            ctype = self.compress_type.split('.')[1]
+            with tarfile.open(self.output_filename, "w:{}".format(ctype)) as tar:
+                tar.add(self.outdir, arcname=os.path.basename(self.outdir))
+            tar_flags = 'xzf' if ctype == 'gz' else 'xjf'
+            logging.info('Command to extract files: tar -{} {}'.format(tar_flags, self.output_filename))
+
+        # .zip files
+        if self.compress_type == 'zip':
+            with ZipFile(self.output_filename, 'w') as zipObj:
+               # Iterate over all the files in directory
+               for folderName, subfolders, filenames in os.walk(self.outdir):
+                   for filename in filenames:
+                       #create complete filepath of file in directory
+                       filePath = os.path.join(folderName, filename)
+                       # Add file to zip
+                       zipObj.write(filePath)
+            logging.info('Command to extract files: unzip {}'.format(self.output_filename))
+
+        # Delete original files
+        logging.debug('Deleting uncompressed files: {}'.format(self.outdir))
+        shutil.rmtree(self.outdir)
+
+        # Caclualte md5sum for output file
+        self.validate_md5(self.output_filename)
+
+
+    def validate_md5(self, fname, expected=None):
         """Calculates the md5sum for a file on the disk and validate with expected.
 
         Args:
@@ -280,7 +335,10 @@ class DownloadWorkflow(object):
                 hash_md5.update(chunk)
         file_hash = hash_md5.hexdigest()
 
-        if file_hash == expected:
-            logging.debug('md5 sum of image matches expected: {}'.format(expected))
+        if expected is None:
+            logging.info("MD5 checksum for {}: {}".format(fname, file_hash))
         else:
-            raise IOError ("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))
+            if file_hash == expected:
+                logging.debug('md5 sum of image matches expected: {}'.format(expected))
+            else:
+                raise IOError ("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))
