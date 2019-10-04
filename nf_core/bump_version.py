@@ -20,7 +20,7 @@ def bump_pipeline_version(lint_obj, new_version):
     # Collect the old and new version numbers
     current_version = lint_obj.config.get('manifest.version', '').strip(' \'"')
     if new_version.startswith('v'):
-        logging.warn("Stripping leading 'v' from new version number")
+        logging.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
     if not current_version:
         logging.error("Could not find config variable manifest.version")

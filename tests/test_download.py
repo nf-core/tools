@@ -215,11 +215,11 @@ class DownloadTest(unittest.TestCase):
     def test_download_workflow_with_success(self,
         mock_download_image):
 
-        tmp_dir = os.path.join(tempfile.mkdtemp(), 'new')
+        tmp_dir = tempfile.mkdtemp()
 
         download_obj = DownloadWorkflow(
             pipeline = "nf-core/methylseq",
-            outdir = tmp_dir,
+            outdir = os.path.join(tmp_dir, 'new'),
             singularity = True)
 
         download_obj.download_workflow()

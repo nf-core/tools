@@ -151,7 +151,7 @@ class DownloadWorkflow(object):
                 elif not self.release:
                     self.release = 'dev'
                     self.wf_sha = 'master' # Cheating a little, but GitHub download link works
-                    logging.warn("Pipeline is in development - downloading current code on master branch.\n" +
+                    logging.warning("Pipeline is in development - downloading current code on master branch.\n" +
                         "This is likely to change soon should not be considered fully reproducible.")
 
                 # Set outdir name if not defined
@@ -167,7 +167,7 @@ class DownloadWorkflow(object):
         # If we got this far, must not be a nf-core pipeline
         if self.pipeline.count('/') == 1:
             # Looks like a GitHub address - try working with this repo
-            logging.warn("Pipeline name doesn't match any nf-core workflows")
+            logging.warning("Pipeline name doesn't match any nf-core workflows")
             logging.info("Pipeline name looks like a GitHub address - attempting to download anyway")
             self.wf_name = self.pipeline
             if not self.release:

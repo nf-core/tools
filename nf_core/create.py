@@ -62,7 +62,7 @@ class PipelineCreate(object):
         # Check if the output directory exists
         if os.path.exists(self.outdir):
             if self.force:
-                logging.warn("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
+                logging.warning("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
             else:
                 logging.error("Output directory '{}' exists!".format(self.outdir))
                 logging.info("Use -f / --force to overwrite existing files")
