@@ -64,6 +64,11 @@ class DownloadWorkflow(object):
         logging.info("Downloading workflow files from GitHub")
         self.download_wf_files()
 
+        # Download the centralised configs
+        logging.info("Downloading centralised configs from GitHub")
+        self.download_configs()
+        self.wf_use_local_configs()
+
         # Download the singularity images
         if self.singularity:
             logging.debug("Fetching container names for workflow")
@@ -175,6 +180,46 @@ class DownloadWorkflow(object):
         for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, 'workflow')):
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
+
+    def download_configs(self):
+        """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`.
+        """
+        configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
+        configs_local_dir = "configs-master"
+        logging.debug("Downloading {}".format(configs_zip_url))
+
+        # Download GitHub zip file into memory and extract
+        url = requests.get(configs_zip_url)
+        zipfile = ZipFile(BytesIO(url.content))
+        zipfile.extractall(self.outdir)
+
+        # Rename the internal directory name to be more friendly
+        os.rename(os.path.join(self.outdir, configs_local_dir), os.path.join(self.outdir, 'configs'))
+
+        # Make downloaded files executable
+        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, 'configs')):
+            for fname in filelist:
+                os.chmod(os.path.join(dirpath, fname), 0o775)
+
+    def wf_use_local_configs(self):
+        """Edit the downloaded nextflow.config file to use the local config files
+        """
+        nfconfig_fn = os.path.join(self.outdir, 'workflow', 'nextflow.config')
+        find_str = 'https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}'
+        repl_str = '../configs/'
+        logging.debug("Editing params.custom_config_base in {}".format(nfconfig_fn))
+
+        # Load the nextflow.config file into memory
+        with open(nfconfig_fn, 'r') as nfconfig_fh:
+          nfconfig = nfconfig_fh.read()
+
+        # Replace the target string
+        nfconfig = nfconfig.replace(find_str, repl_str)
+
+        # Write the file out again
+        with open(nfconfig_fn, 'w') as nfconfig_fh:
+          nfconfig_fh.write(nfconfig)
+
 
     def find_container_images(self):
         """ Find container image names for workflow """
