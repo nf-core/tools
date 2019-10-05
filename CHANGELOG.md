@@ -14,7 +14,7 @@
 * Check that PR from patch or dev branch is acceptable by linting
 * Made code compatible with Python 3.7
 * The `download` command now also fetches institutional configs from nf-core/configs
-* The `download` command can now compress files into a single archive
+* The `download` command can now compress files into a single archive.
 
 ### Syncing
 
