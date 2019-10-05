@@ -26,6 +26,7 @@
 * [Other command line parameters](#other-command-line-parameters)
   * [`--outdir`](#--outdir)
   * [`--email`](#--email)
+  * [`--email_on_fail`](#--email_on_fail)
   * [`-name`](#-name)
   * [`-resume`](#-resume)
   * [`-c`](#-c)
@@ -210,6 +211,9 @@ The output directory where the results will be saved.
 
 ### `--email`
 Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.
+
+### `--email_on_fail`
+This works exactly as with `--email`, except emails are only sent if the workflow is not successful.
 
 ### `-name`
 Name for the pipeline run. If not specified, Nextflow will automatically generate a random mnemonic.

@@ -1,4 +1,4 @@
-# {{ cookiecutter.name }}
+# ![{{ cookiecutter.name }}](docs/images/{{ cookiecutter.name_noslash }}_logo.png)
 
 **{{ cookiecutter.description }}**.
 
