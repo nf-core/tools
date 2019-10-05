@@ -261,7 +261,7 @@ class PipelineLint(object):
         # Load and parse files for later
         if 'environment.yml' in self.files:
             with open(os.path.join(self.path, 'environment.yml'), 'r') as fh:
-                self.conda_config = yaml.load(fh)
+                self.conda_config = yaml.safe_load(fh)
 
     def check_docker(self):
         """Checks that Dockerfile contains the string ``FROM``."""
@@ -419,7 +419,11 @@ class PipelineLint(object):
             if self.config.get('manifest.nextflowVersion', '').strip('"\'').startswith('>='):
                 self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >="))
                 # Save self.minNextflowVersion for convenience
-                self.minNextflowVersion = re.sub(r'[^0-9\.]', '', self.config.get('manifest.nextflowVersion', ''))
+                nextflowVersionMatch = re.search(r'[0-9\.]+(-edge)?', self.config.get('manifest.nextflowVersion', ''))
+                if nextflowVersionMatch:
+                    self.minNextflowVersion = nextflowVersionMatch.group(0)
+                else:
+                    self.minNextflowVersion = None
             else:
                 self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
 
@@ -431,7 +435,10 @@ class PipelineLint(object):
             try:
                 assert self.config.get('process.container', '').strip("'") == container_name
             except AssertionError:
-                self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+                if self.release_mode:
+                    self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+                else:
+                    self.warned.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'. Fix this before you make a release of your pipeline!".format(container_name, self.config.get('process.container', '').strip("'"))))
             else:
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
@@ -446,15 +453,15 @@ class PipelineLint(object):
             fn = os.path.join(self.path, cf)
             if os.path.isfile(fn):
                 with open(fn, 'r') as fh:
-                    ciconf = yaml.load(fh)
-                # Check that we have the master branch protection
-                travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+                    ciconf = yaml.safe_load(fh)
+                # Check that we have the master branch protection, but allow patch as well
+                travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && ([ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ] || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]))'
                 try:
                     assert(travisMasterCheck in ciconf.get('before_install', {}))
                 except AssertionError:
-                    self.failed.append((5, "Continuous integration must check for master branch PRs: '{}'".format(fn)))
+                    self.failed.append((5, "Continuous integration must check for master/patch branch PRs: '{}'".format(fn)))
                 else:
-                    self.passed.append((5, "Continuous integration checks for master branch PRs: '{}'".format(fn)))
+                    self.passed.append((5, "Continuous integration checks for master/patch branch PRs: '{}'".format(fn)))
                 # Check that the nf-core linting runs
                 try:
                     assert('nf-core lint ${TRAVIS_BUILD_DIR}' in ciconf['script'])
@@ -796,6 +803,6 @@ class PipelineLint(object):
         if len(self.passed) > 0:
             logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
         if len(self.warned) > 0:
-            logging.warn("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
+            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
         if len(self.failed) > 0:
             logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))

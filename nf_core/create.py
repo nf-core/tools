@@ -6,6 +6,7 @@ import cookiecutter.main, cookiecutter.exceptions
 import git
 import logging
 import os
+import requests
 import shutil
 import sys
 import tempfile
@@ -27,9 +28,8 @@ class PipelineCreate(object):
         outdir (str): Path to the local output directory.
     """
     def __init__(self, name, description, author, new_version='1.0dev', no_git=False, force=False, outdir=None):
-        self.name = 'nf-core/{}'.format(
-            name.lower().replace(r'/\s+/', '-').replace('nf-core/', '').replace('/', '-')
-        )
+        self.short_name = name.lower().replace(r'/\s+/', '-').replace('nf-core/', '').replace('/', '-')
+        self.name = 'nf-core/{}'.format(self.short_name)
         self.name_noslash = self.name.replace('/', '-')
         self.name_docker = self.name.replace('nf-core', 'nfcore')
         self.description = description
@@ -62,7 +62,7 @@ class PipelineCreate(object):
         # Check if the output directory exists
         if os.path.exists(self.outdir):
             if self.force:
-                logging.warn("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
+                logging.warning("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
             else:
                 logging.error("Output directory '{}' exists!".format(self.outdir))
                 logging.info("Use -f / --force to overwrite existing files")
@@ -71,7 +71,7 @@ class PipelineCreate(object):
             os.makedirs(self.outdir)
 
         # Build the template in a temporary directory
-        tmpdir = tempfile.mkdtemp()
+        self.tmpdir = tempfile.mkdtemp()
         template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), 'pipeline-template/')
         cookiecutter.main.cookiecutter(
             template,
@@ -83,17 +83,42 @@ class PipelineCreate(object):
                 'name_docker': self.name_docker,
                 'version': self.new_version
             },
-            no_input=True,
-            overwrite_if_exists=self.force,
-            output_dir=tmpdir
+            no_input = True,
+            overwrite_if_exists = self.force,
+            output_dir = self.tmpdir
         )
 
+        # Make a logo and save it
+        self.make_pipeline_logo()
+
         # Move the template to the output directory
-        for f in os.listdir(os.path.join(tmpdir, self.name_noslash)):
-            shutil.move(os.path.join(tmpdir, self.name_noslash, f), self.outdir)
+        for f in os.listdir(os.path.join(self.tmpdir, self.name_noslash)):
+            shutil.move(os.path.join(self.tmpdir, self.name_noslash, f), self.outdir)
 
         # Delete the temporary directory
-        shutil.rmtree(tmpdir)
+        shutil.rmtree(self.tmpdir)
+
+    def make_pipeline_logo(self):
+        """Fetch a logo for the new pipeline from the nf-core website
+        """
+
+        logo_url = "https://nf-co.re/logo/{}".format(self.short_name)
+        logging.debug("Fetching logo from {}".format(logo_url))
+
+        email_logo_path = "{}/{}/assets/{}_logo.png".format(self.tmpdir, self.name_noslash, self.name_noslash)
+        logging.debug("Writing logo to {}".format(email_logo_path))
+        r = requests.get("{}?w=400".format(logo_url))
+        with open(email_logo_path, 'wb') as fh:
+            fh.write(r.content)
+
+        readme_logo_path = "{}/{}/docs/images/{}_logo.png".format(self.tmpdir, self.name_noslash, self.name_noslash)
+
+        logging.debug("Writing logo to {}".format(readme_logo_path))
+        if not os.path.exists(os.path.dirname(readme_logo_path)):
+            os.makedirs(os.path.dirname(readme_logo_path))
+        r = requests.get("{}?w=600".format(logo_url))
+        with open(readme_logo_path, 'wb') as fh:
+            fh.write(r.content)
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.
@@ -102,4 +127,8 @@ class PipelineCreate(object):
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
         repo.index.commit("initial template build from nf-core/tools, version {}".format(nf_core.__version__))
-        logging.info("Done. Remember to add a remote and push to GitHub:\n  cd {}\n  git remote add origin git@github.com:USERNAME/REPO_NAME.git\n  git push".format(self.outdir))
+        #Add TEMPLATE branch to git repository
+        repo.git.branch('TEMPLATE')
+        repo.git.branch('dev')
+        logging.info("Done. Remember to add a remote and push to GitHub:\n  cd {}\n  git remote add origin git@github.com:USERNAME/REPO_NAME.git\n  git push --all origin".format(self.outdir))
+        logging.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")

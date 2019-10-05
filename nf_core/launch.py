@@ -5,6 +5,7 @@ from __future__ import print_function
 from collections import OrderedDict
 
 import click
+import errno
 import jsonschema
 import logging
 import os
@@ -98,7 +99,7 @@ class Launch(object):
                 with open(os.devnull, 'w') as devnull:
                     subprocess.check_output(['nextflow', 'pull', self.workflow], stderr=devnull)
             except OSError as e:
-                if e.errno == os.errno.ENOENT:
+                if e.errno == errno.ENOENT:
                     raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
             except subprocess.CalledProcessError as e:
                 raise AssertionError("`nextflow pull` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
@@ -360,7 +361,7 @@ class Launch(object):
                 if val:
                     self.nextflow_cmd = "{} {}".format(self.nextflow_cmd, flag)
                 else:
-                    logging.warn("TODO: Can't set false boolean flags currently.")
+                    logging.warning("TODO: Can't set false boolean flags currently.")
             # String values
             else:
                 self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, flag, val.replace('"', '\\"'))
