@@ -361,7 +361,7 @@ class Launch(object):
                 if val:
                     self.nextflow_cmd = "{} {}".format(self.nextflow_cmd, flag)
                 else:
-                    logging.warn("TODO: Can't set false boolean flags currently.")
+                    logging.warning("TODO: Can't set false boolean flags currently.")
             # String values
             else:
                 self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, flag, val.replace('"', '\\"'))
