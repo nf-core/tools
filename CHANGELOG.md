@@ -14,6 +14,7 @@
 * Check that PR from patch or dev branch is acceptable by linting
 * Made code compatible with Python 3.7
 * The `download` command now also fetches institutional configs from nf-core/configs
+* When listing pipelines, a nicer message is given for the rare case of a detached `HEAD` ref in a locally pulled pipeline. [#297](https://github.com/nf-core/tools/issues/297)
 * The `download` command can now compress files into a single archive.
 * `nf-core create` now fetches a logo for the pipeline from the nf-core website
 
