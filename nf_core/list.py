@@ -304,13 +304,22 @@ class LocalWorkflow(object):
 
         # Pull information from the local git repository
         if self.local_path is not None:
-            repo = git.Repo(self.local_path)
-            self.commit_sha = str(repo.head.commit.hexsha)
-            self.remote_url = str(repo.remotes.origin.url)
-            self.branch = str(repo.active_branch)
-            self.last_pull = os.stat(os.path.join(self.local_path, '.git', 'FETCH_HEAD')).st_mtime
-            self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
-            self.last_pull_pretty = pretty_date(self.last_pull)
+            try:
+                repo = git.Repo(self.local_path)
+                self.commit_sha = str(repo.head.commit.hexsha)
+                self.remote_url = str(repo.remotes.origin.url)
+                self.branch = str(repo.active_branch)
+                self.last_pull = os.stat(os.path.join(self.local_path, '.git', 'FETCH_HEAD')).st_mtime
+                self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
+                self.last_pull_pretty = pretty_date(self.last_pull)
+            except TypeError as e:
+                logging.error(
+                    "Could not fetch status of local Nextflow copy of {}:".format(self.full_name) +
+                    "\n   {}".format(str(e)) +
+                    "\n\nIt's probably a good idea to delete this local copy and pull again:".format(self.local_path) +
+                    "\n   rm -rf {}".format(self.local_path) +
+                    "\n   nextflow pull {}".format(self.full_name)
+                )
 
 
 def pretty_date(time):
