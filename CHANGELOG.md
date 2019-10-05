@@ -15,6 +15,7 @@
 * Made code compatible with Python 3.7
 * The `download` command now also fetches institutional configs from nf-core/configs
 * The `download` command can now compress files into a single archive
+* `nf-core create` now fetches a logo for the pipeline from the nf-core website
 
 ### Syncing
 
@@ -48,6 +49,7 @@
 * Fix Parameters JSON due to new versionized structure
 * Added conda-forge::r-markdown=1.1 and conda-forge::r-base=3.6.1 to environment
 * Plain-text email template now has nf-core ASCII artwork
+* Template configured to use logo fetched from website
 
 ### Other
 
