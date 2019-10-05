@@ -50,6 +50,7 @@
 * Added conda-forge::r-markdown=1.1 and conda-forge::r-base=3.6.1 to environment
 * Plain-text email template now has nf-core ASCII artwork
 * Template configured to use logo fetched from website
+* New option `--email_on_fail` which only sends emails if the workflow is not successful
 
 ### Other
 
