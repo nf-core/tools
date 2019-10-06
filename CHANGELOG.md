@@ -52,6 +52,9 @@
 * Plain-text email template now has nf-core ASCII artwork
 * Template configured to use logo fetched from website
 * New option `--email_on_fail` which only sends emails if the workflow is not successful
+* Add file existence check when checking software versions
+* Use `checkIfExists` when initialising `file` objects
+* Consistent spacing for `if` statements
 
 ### Other
 
