@@ -63,17 +63,14 @@ if (params.genomes && params.genome && !params.genomes.containsKey(params.genome
 
 // TODO nf-core: Add any reference files that are needed
 // Configurable reference genomes
-fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
-if ( params.fasta ){
-    fasta = file(params.fasta)
-    if( !fasta.exists() ) exit 1, "Fasta file not found: ${params.fasta}"
-}
 //
 // NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
-// If you want to use the above in a process, define the following:
+// If you want to use the channel below in a process, define the following:
 //   input:
-//   file fasta from fasta
+//   file fasta from ch_fasta
 //
+params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
+if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
 
 // Has the run name been specified by the user?
