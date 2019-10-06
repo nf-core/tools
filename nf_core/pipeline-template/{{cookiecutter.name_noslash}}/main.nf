@@ -92,8 +92,8 @@ if( workflow.profile == 'awsbatch') {
 }
 
 // Stage config files
-ch_multiqc_config = Channel.fromPath(params.multiqc_config)
-ch_output_docs = Channel.fromPath("$baseDir/docs/output.md")
+ch_multiqc_config = file(params.multiqc_config, checkIfExists: true)
+ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 
 /*
  * Create a channel for input read files
