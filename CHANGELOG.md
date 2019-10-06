@@ -57,6 +57,7 @@
 
 * Bump `conda` to 4.6.14 in base nf-core Dockerfile
 * Added a Code of Conduct to nf-core/tools, as only the template had this before
+* TravisCI tests will now also start for PRs from `patch` branches, [to allow fixing critical issues](https://github.com/nf-core/tools/pull/392) without making a new major release
 
 ## v1.6
 
