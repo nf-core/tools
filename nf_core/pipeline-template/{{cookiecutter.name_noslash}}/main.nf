@@ -198,6 +198,7 @@ process get_software_versions {
  */
 process fastqc {
     tag "$name"
+    label 'process_medium'
     publishDir "${params.outdir}/fastqc", mode: 'copy',
         saveAs: { filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename" }
 
@@ -209,7 +210,7 @@ process fastqc {
 
     script:
     """
-    fastqc -q $reads
+    fastqc --quiet --threads $task.cpus $reads 
     """
 }
 
