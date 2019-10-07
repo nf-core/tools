@@ -2,7 +2,13 @@
 
 ## v1.8dev
 
-..nothing yet..
+### Syncing
+
+* Updated Blacklist of synced pipelines
+
+### Other
+
+* Updated Base Dockerfile to Conda 4.7.10
 
 ## v1.7
 

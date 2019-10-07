@@ -12,6 +12,11 @@
     "lncpipe",
     "ddamsproteomics",
     "scrnaseq",
-    "guideseq"
+    "guideseq",
+    "nanodemux",
+    "mnaseseq",
+    "bactmap",
+    "kmermaid",
+    "crisprvar"
   ]
 }
