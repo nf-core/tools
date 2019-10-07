@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 from __future__ import print_function
 from collections import OrderedDict
-import os
 import re
 
 # TODO nf-core: Add additional regexes for new tools in process get_software_versions
@@ -19,13 +18,13 @@ results['MultiQC'] = '<span style="color:#999999;\">N/A</span>'
 
 # Search each file using its regex
 for k, v in regexes.items():
-    if os.path.exists(v[0]):
+    try:
         with open(v[0]) as x:
             versions = x.read()
             match = re.search(v[1], versions)
             if match:
                 results[k] = "v{}".format(match.group(1))
-    else:
+    except IOError:
         results[k] = False
 
 # Remove software set to false in results
