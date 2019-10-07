@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.7dev
+## v1.7
 
 ### PyPI package description
 
