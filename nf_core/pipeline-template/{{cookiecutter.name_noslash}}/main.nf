@@ -210,7 +210,7 @@ process fastqc {
 
     script:
     """
-    fastqc --quiet --threads $task.cpus $reads 
+    fastqc --quiet --threads $task.cpus $reads
     """
 }
 
