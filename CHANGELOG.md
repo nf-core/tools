@@ -54,6 +54,7 @@
 * Plain-text email template now has nf-core ASCII artwork
 * Template configured to use logo fetched from website
 * New option `--email_on_fail` which only sends emails if the workflow is not successful
+* Update `check_max()` with an improved `check_resource()`, which is already used in nf-core/sarek
 
 ### Other
 
