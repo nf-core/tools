@@ -54,6 +54,10 @@
 * Plain-text email template now has nf-core ASCII artwork
 * Template configured to use logo fetched from website
 * New option `--email_on_fail` which only sends emails if the workflow is not successful
+* Add file existence check when checking software versions
+* Fixed issue [https://github.com/nf-core/tools/issues/165] - Use `checkIfExists`
+* Consistent spacing for `if` statements
+* Add sensible resource labels to `base.config`
 
 ### Other
 
