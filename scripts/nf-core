@@ -123,9 +123,15 @@ def launch(pipeline, params, direct):
     type = str,
     help = "Output directory"
 )
-def download(pipeline, release, singularity, outdir):
+@click.option(
+    '-c', '--compress',
+    type = click.Choice(['tar.gz', 'tar.bz2', 'zip', 'none']),
+    default = 'tar.gz',
+    help = "Compression type"
+)
+def download(pipeline, release, singularity, outdir, compress):
     """ Download a pipeline and singularity container """
-    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir)
+    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress)
     dl.download_workflow()
 
 # nf-core licences

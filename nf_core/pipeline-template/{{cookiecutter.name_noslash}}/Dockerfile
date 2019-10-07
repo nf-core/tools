@@ -1,4 +1,4 @@
-FROM nfcore/base
+FROM nfcore/base:{{ 'dev' if 'dev' in cookiecutter.nf_core_version else cookiecutter.nf_core_version }}
 LABEL authors="{{ cookiecutter.author }}" \
       description="Docker image containing all requirements for {{ cookiecutter.name }} pipeline"
 

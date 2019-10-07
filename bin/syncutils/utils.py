@@ -1,3 +1,4 @@
+import erro
 import os
 import requests
 import subprocess
@@ -13,7 +14,7 @@ def fetch_wf_config(wf_path):
         with open(os.devnull, 'w') as devnull:
             nfconfig_raw = subprocess.check_output(['nextflow', 'config', '-flat', wf_path], stderr=devnull)
     except OSError as e:
-        if e.errno == os.errno.ENOENT:
+        if e.errno == errno.ENOENT:
             raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
     except subprocess.CalledProcessError as e:
         raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
@@ -61,4 +62,3 @@ def repos_without_template_branch(pipeline_names):
             print("WARNING: nf-core/{} had no TEMPLATE branch!".format(pipeline))
 
     return pipelines_without_template
-

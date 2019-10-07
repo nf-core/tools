@@ -3,13 +3,10 @@
 from setuptools import setup, find_packages
 import sys
 
-version = '1.6'
+version = '1.7'
 
 with open('README.md') as f:
     readme = f.read()
-
-with open('LICENSE') as f:
-    license = f.read()
 
 setup(
     name = 'nf-core',
@@ -21,7 +18,7 @@ setup(
     author = 'Phil Ewels',
     author_email = 'phil.ewels@scilifelab.se',
     url = 'https://github.com/nf-core/tools',
-    license = license,
+    license = 'MIT',
     scripts = ['scripts/nf-core'],
     install_requires = [
         'cookiecutter',

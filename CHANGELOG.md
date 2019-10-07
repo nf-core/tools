@@ -1,13 +1,80 @@
 # nf-core/tools: Changelog
 
+## v1.7
+
+### PyPI package description
+
+* The readme should now be rendered properly on PyPI.
+
+### Tools helper code
+
+* The tools `create` command now sets up a `TEMPLATE` and a `dev` branch for syncing
+* Fixed issue [379](https://github.com/nf-core/tools/issues/379)
+* nf-core launch now uses stable parameter schema version 0.1.0
+* Check that PR from patch or dev branch is acceptable by linting
+* Made code compatible with Python 3.7
+* The `download` command now also fetches institutional configs from nf-core/configs
+* When listing pipelines, a nicer message is given for the rare case of a detached `HEAD` ref in a locally pulled pipeline. [#297](https://github.com/nf-core/tools/issues/297)
+* The `download` command can now compress files into a single archive.
+* `nf-core create` now fetches a logo for the pipeline from the nf-core website
+
+### Syncing
+
+* Can now sync a targeted pipeline via command-line
+* Updated Blacklist of synced pipelines
+* Removed `chipseq` from Blacklist of synced pipelines
+* Fixed issue [#314](https://github.com/nf-core/tools/issues/314)
+
+### Linting
+
+* If the container slug does not contain the nf-core organisation (for example during development on a fork), linting will raise a warning, and an error with release mode on
+
+### Template
+
+* Add new code for Travis CI to allow PRs from patch branches too
+* Fix small typo in central readme of tools for future releases
+* Small code polishing + typo fix in the template main.nf file
+* Header ANSI codes no longer print `[2m` to console when using `-with-ansi`
+* Switched to yaml.safe_load() to fix PyYAML warning that was thrown because of a possible [exploit](https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation)
+* Add `nf-core` citation
+* Add proper `nf-core` logo for tools
+* Add `Quick Start` section to main README of template
+* Fix [Docker RunOptions](https://github.com/nf-core/tools/pull/351) to get UID and GID set in the template
+* `Dockerfile` now specifically uses the proper release tag of the nfcore/base image
+* Use [`file`](https://github.com/nf-core/tools/pull/354) instead of `new File`
+  to avoid weird behavior such as making an `s3:/` directory locally when using
+  an AWS S3 bucket as the `--outdir`.
+* Fix workflow.onComplete() message when finishing pipeline
+* Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
+* Add direct link to the pipeline slack channel in the contribution guidelines
+* Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
+* Fix Parameters JSON due to new versionized structure
+* Added conda-forge::r-markdown=1.1 and conda-forge::r-base=3.6.1 to environment
+* Plain-text email template now has nf-core ASCII artwork
+* Template configured to use logo fetched from website
+* New option `--email_on_fail` which only sends emails if the workflow is not successful
+* Add file existence check when checking software versions
+* Fixed issue [https://github.com/nf-core/tools/issues/165] - Use `checkIfExists`
+* Consistent spacing for `if` statements
+* Add sensible resource labels to `base.config`
+
+### Other
+
+* Bump `conda` to 4.6.14 in base nf-core Dockerfile
+* Added a Code of Conduct to nf-core/tools, as only the template had this before
+* TravisCI tests will now also start for PRs from `patch` branches, [to allow fixing critical issues](https://github.com/nf-core/tools/pull/392) without making a new major release
+
 ## v1.6
 
-#### Syncing
+### Syncing
+
 * Code refactoring to make the script more readable
 * No travis build failure anymore on sync errors
 * More verbose logging
 
-#### Template pipeline
+### Template pipeline
+
 * awsbatch `work-dir` checking moved to nextflow itself. Removed unsatisfiable check in main.nf template.
 * Fixed markdown linting
 * Tools CI testing now runs markdown lint on compiled template pipeline
@@ -15,8 +82,10 @@
 * Removed Gitter references in `.github/` directories for `tools/` and pipeline template.
 * Changed `scrape_software_versions.py` to output `.csv` file
 * Added `export_plots` parameter to multiqc config
+* Corrected some typos as listed [here](https://github.com/nf-core/tools/issues/348) to Guidelines
 
-#### Tools helper code
+### Tools helper code
+
 * Drop [nf-core/rnaseq](https://github.com/nf-core/rnaseq]) from `blacklist.json` to make template sync available
 * Updated main help command to sort the subcommands in a more logical order
 * Updated readme to describe the new `nf-core launch` command
@@ -29,12 +98,15 @@
   * Improved documentation
 * Fixed bugs in `nf-core lint`
   * The order of conda channels is now correct, avoiding occasional erroneous errors that packages weren't found ([#207](https://github.com/nf-core/tools/issues/207))
+  * Allow edge versions in nf-core pipelines
 * Add reporting of ignored errored process
   * As a solution for [#103](https://github.com/nf-core/tools/issues/103))
+* Add Bowtie2 and BWA in iGenome config file template
 
 ## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
 
-#### Template pipeline
+### Template pipeline
+
 * Dropped Singularity file
 * Summary now logs details of the cluster profile used if from [nf-core/configs](https://github.com/nf-core/configs)
 * Dockerhub is used in favor of Singularity Hub for pulling when using the Singularity profile
@@ -48,7 +120,8 @@
 * Together with nf-core/configs, helper function now checks hostname and suggests a valid config profile
 * `awsbatch` executor requires the `tracedir` not to be set to an `s3` bucket.
 
-#### Tools helper code
+### Tools helper code
+
 * New `nf-core launch` command to interactively launch nf-core pipelines from command-line
   * Works with a `parameters.settings.json` file shipped with each pipeline
   * Discovers additional `params` from the pipeline dynamically
@@ -71,12 +144,14 @@
   * Now correctly validates version pinning for packages from PyPI
   * Updates for changes to `process.container` definition
 
-#### Other
+### Other
+
 * Bump `conda` to 4.6.7 in base nf-core Dockerfile
 
 ## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
 
-#### Template pipeline
+### Template pipeline
+
 * Institutional custom config profiles moved to github `nf-core/configs`
   * These will now be maintained centrally as opposed to being shipped with the pipelines in `conf/`
   * Load `base.config` by default for all profiles
@@ -90,7 +165,8 @@
 * Travis: Pull the `dev` tagged docker image for testing
 * Removed UPPMAX-specific documentation from the template.
 
-#### Tools helper code
+### Tools helper code
+
 * Make Travis CI tests fail on pull requests if the `CHANGELOG.md` file hasn't been updated
 * Minor bugfixing in Python code (eg. removing unused import statements)
 * Made the web requests caching work on multi-user installations
@@ -98,6 +174,7 @@
 * Linting: Update for Travis: Pull the `dev` tagged docker image for testing
 
 ## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
+
 * `nf-core create` command line interface updated
   * Interactive prompts for required arguments if not given
   * New flag for workflow author
@@ -111,6 +188,7 @@
 * Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
 
 ## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
+
 * Updated the `nf-core release` command
   * Now called `nf-core bump-versions` instead
   * New flag `--nextflow` to change the required nextflow version instead
@@ -131,6 +209,7 @@
 * New GitHub contributing instructions and pull request template
 
 ## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
+
 Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.
 
 * The [Cookiecutter template](https://github.com/nf-core/cookiecutter) has been merged into tools

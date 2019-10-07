@@ -3,13 +3,16 @@
 
 from __future__ import print_function
 
+import errno
 from io import BytesIO
 import logging
 import hashlib
 import os
 import requests
+import shutil
 import subprocess
 import sys
+import tarfile
 from zipfile import ZipFile
 
 import nf_core.list
@@ -27,11 +30,15 @@ class DownloadWorkflow(object):
         singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
     """
-    def __init__(self, pipeline, release=None, singularity=False, outdir=None):
+    def __init__(self, pipeline, release=None, singularity=False, outdir=None, compress_type='tar.gz'):
         self.pipeline = pipeline
         self.release = release
         self.singularity = singularity
         self.outdir = outdir
+        self.output_filename = None
+        self.compress_type = compress_type
+        if self.compress_type == 'none':
+            self.compress_type = None
 
         self.wf_name = None
         self.wf_sha = None
@@ -47,21 +54,38 @@ class DownloadWorkflow(object):
         except LookupError:
             sys.exit(1)
 
+        output_logmsg = "Output directory: {}".format(self.outdir)
+
+        # Set an output filename now that we have the outdir
+        if self.compress_type is not None:
+            self.output_filename = '{}.{}'.format(self.outdir, self.compress_type)
+            output_logmsg = "Output file: {}".format(self.output_filename)
+
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
             logging.error("Output directory '{}' already exists".format(self.outdir))
+            sys.exit(1)
+
+        # Check that compressed output file doesn't already exist
+        if self.output_filename and os.path.exists(self.output_filename):
+            logging.error("Output file '{}' already exists".format(self.output_filename))
             sys.exit(1)
 
         logging.info(
             "Saving {}".format(self.pipeline) +
             "\n Pipeline release: {}".format(self.release) +
             "\n Pull singularity containers: {}".format('Yes' if self.singularity else 'No') +
-            "\n Output directory: {}".format(self.outdir)
+            "\n {}".format(output_logmsg)
         )
 
         # Download the pipeline files
         logging.info("Downloading workflow files from GitHub")
         self.download_wf_files()
+
+        # Download the centralised configs
+        logging.info("Downloading centralised configs from GitHub")
+        self.download_configs()
+        self.wf_use_local_configs()
 
         # Download the singularity images
         if self.singularity:
@@ -81,6 +105,10 @@ class DownloadWorkflow(object):
                         logging.error("Not able to pull image. Service might be down or internet connection is dead.")
                         raise r
 
+        # Compress into an archive
+        if self.compress_type is not None:
+            logging.info("Compressing download..")
+            self.compress_download()
 
 
     def fetch_workflow_details(self, wfs):
@@ -123,7 +151,7 @@ class DownloadWorkflow(object):
                 elif not self.release:
                     self.release = 'dev'
                     self.wf_sha = 'master' # Cheating a little, but GitHub download link works
-                    logging.warn("Pipeline is in development - downloading current code on master branch.\n" +
+                    logging.warning("Pipeline is in development - downloading current code on master branch.\n" +
                         "This is likely to change soon should not be considered fully reproducible.")
 
                 # Set outdir name if not defined
@@ -139,7 +167,7 @@ class DownloadWorkflow(object):
         # If we got this far, must not be a nf-core pipeline
         if self.pipeline.count('/') == 1:
             # Looks like a GitHub address - try working with this repo
-            logging.warn("Pipeline name doesn't match any nf-core workflows")
+            logging.warning("Pipeline name doesn't match any nf-core workflows")
             logging.info("Pipeline name looks like a GitHub address - attempting to download anyway")
             self.wf_name = self.pipeline
             if not self.release:
@@ -175,6 +203,46 @@ class DownloadWorkflow(object):
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
+    def download_configs(self):
+        """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`.
+        """
+        configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
+        configs_local_dir = "configs-master"
+        logging.debug("Downloading {}".format(configs_zip_url))
+
+        # Download GitHub zip file into memory and extract
+        url = requests.get(configs_zip_url)
+        zipfile = ZipFile(BytesIO(url.content))
+        zipfile.extractall(self.outdir)
+
+        # Rename the internal directory name to be more friendly
+        os.rename(os.path.join(self.outdir, configs_local_dir), os.path.join(self.outdir, 'configs'))
+
+        # Make downloaded files executable
+        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, 'configs')):
+            for fname in filelist:
+                os.chmod(os.path.join(dirpath, fname), 0o775)
+
+    def wf_use_local_configs(self):
+        """Edit the downloaded nextflow.config file to use the local config files
+        """
+        nfconfig_fn = os.path.join(self.outdir, 'workflow', 'nextflow.config')
+        find_str = 'https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}'
+        repl_str = '../configs/'
+        logging.debug("Editing params.custom_config_base in {}".format(nfconfig_fn))
+
+        # Load the nextflow.config file into memory
+        with open(nfconfig_fn, 'r') as nfconfig_fh:
+          nfconfig = nfconfig_fh.read()
+
+        # Replace the target string
+        nfconfig = nfconfig.replace(find_str, repl_str)
+
+        # Write the file out again
+        with open(nfconfig_fn, 'w') as nfconfig_fh:
+          nfconfig_fh.write(nfconfig)
+
+
     def find_container_images(self):
         """ Find container image names for workflow """
 
@@ -208,14 +276,47 @@ class DownloadWorkflow(object):
         try:
             subprocess.call(singularity_command)
         except OSError as e:
-            if e.errno == os.errno.ENOENT:
+            if e.errno == errno.ENOENT:
                 # Singularity is not installed
                 logging.error('Singularity is not installed!')
             else:
                 # Something else went wrong with singularity command
                 raise e
 
-    def validate_md5(self, fname, expected):
+    def compress_download(self):
+        """Take the downloaded files and make a compressed .tar.gz archive.
+        """
+        logging.debug('Creating archive: {}'.format(self.output_filename))
+
+        # .tar.gz and .tar.bz2 files
+        if self.compress_type == 'tar.gz' or self.compress_type == 'tar.bz2':
+            ctype = self.compress_type.split('.')[1]
+            with tarfile.open(self.output_filename, "w:{}".format(ctype)) as tar:
+                tar.add(self.outdir, arcname=os.path.basename(self.outdir))
+            tar_flags = 'xzf' if ctype == 'gz' else 'xjf'
+            logging.info('Command to extract files: tar -{} {}'.format(tar_flags, self.output_filename))
+
+        # .zip files
+        if self.compress_type == 'zip':
+            with ZipFile(self.output_filename, 'w') as zipObj:
+               # Iterate over all the files in directory
+               for folderName, subfolders, filenames in os.walk(self.outdir):
+                   for filename in filenames:
+                       #create complete filepath of file in directory
+                       filePath = os.path.join(folderName, filename)
+                       # Add file to zip
+                       zipObj.write(filePath)
+            logging.info('Command to extract files: unzip {}'.format(self.output_filename))
+
+        # Delete original files
+        logging.debug('Deleting uncompressed files: {}'.format(self.outdir))
+        shutil.rmtree(self.outdir)
+
+        # Caclualte md5sum for output file
+        self.validate_md5(self.output_filename)
+
+
+    def validate_md5(self, fname, expected=None):
         """Calculates the md5sum for a file on the disk and validate with expected.
 
         Args:
@@ -234,7 +335,10 @@ class DownloadWorkflow(object):
                 hash_md5.update(chunk)
         file_hash = hash_md5.hexdigest()
 
-        if file_hash == expected:
-            logging.debug('md5 sum of image matches expected: {}'.format(expected))
+        if expected is None:
+            logging.info("MD5 checksum for {}: {}".format(fname, file_hash))
         else:
-            raise IOError ("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))
+            if file_hash == expected:
+                logging.debug('md5 sum of image matches expected: {}'.format(expected))
+            else:
+                raise IOError ("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))

@@ -127,7 +127,7 @@ This test fails if the following happens:
 
     ```yaml
     before_install:
-      - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+      - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && ([ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ] || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]))'
     ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
@@ -195,7 +195,7 @@ If a workflow has a conda `environment.yml` file (see above), the `Dockerfile` s
 to create the container. Such `Dockerfile`s can usually be very short, eg:
 
 ```Dockerfile
-FROM nfcore/base
+FROM nfcore/base:1.7
 LABEL authors="your@email.com" \
       description="Container image containing all requirements for nf-core/EXAMPLE pipeline"
 
@@ -207,6 +207,9 @@ To enforce this minimal `Dockerfile` and check for common copy+paste errors, we 
 that the above template is used.
 Failures are generated if the `FROM`, `COPY` and `RUN` statements above are not present.
 These lines must be an exact copy of the above example.
+
+Note that the base `nfcore/base` image should be tagged to the most recent release.
+The linting tool compares the tag against the currently installed version.
 
 Additional lines and different metadata can be added without causing the test to fail.
 

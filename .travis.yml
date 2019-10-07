@@ -5,9 +5,10 @@ python:
   - '2.7'
   - '3.5'
   - '3.6'
+  - '3.7'
 before_install:
   # PRs to master are only ok if coming from dev branch
-  - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ])'
+  - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && ([ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ] || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]))'
   # Check that the changelog has been updated if this is a PR
   - git config remote.origin.fetch "+refs/heads/*:refs/remotes/origin/*" && git fetch
   - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $(git diff --name-only HEAD origin/${TRAVIS_BRANCH} | grep CHANGELOG.md | wc -l) -ge 1 ]'
@@ -40,7 +41,7 @@ after_success:
 jobs:
   include:
     - stage: docs generation
-      if: (branch = "master" OR branch = "dev") AND type = push
+      if: (branch = "master" OR branch = "dev") AND type = push AND repo = nf-core/tools
       script: bash ./bin/push.sh
 
 deploy:

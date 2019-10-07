@@ -6,7 +6,7 @@ We try to manage the required tasks for nf-core/tools using GitHub issues, you p
 
 However, don't be put off by this template - other more general issues and suggestions are welcome! Contributions to the code are even more welcome ;)
 
-> If you need help using or developing nf-core/tools then the best place to ask is the nf-core `tools` channel on [Slack](https://nf-core-invite.herokuapp.com/).
+> If you need help using or developing nf-core/tools then the best place to ask is the nf-core `tools` channel on [Slack](https://nf-co.re/join/slack/).
 
 ## Contribution workflow
 If you'd like to write some code for nf-core/tools, the standard workflow
@@ -68,4 +68,4 @@ nf-core lint nf-core-testpipeline
 ```
 
 ## Getting help
-For further information/help, please consult the [nf-core/tools documentation](https://github.com/nf-core/tools#documentation) and don't hesitate to get in touch on the nf-core `tools` channel on [Slack](https://nf-core-invite.herokuapp.com/).
+For further information/help, please consult the [nf-core/tools documentation](https://github.com/nf-core/tools#documentation) and don't hesitate to get in touch on the nf-core `tools` channel on [Slack](https://nf-co.re/join/slack/).

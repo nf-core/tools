@@ -1,4 +1,4 @@
-FROM nfcore/base
+FROM nfcore/base:1.7
 MAINTAINER Phil Ewels <phil.ewels@scilifelab.se>
 LABEL authors="phil.ewels@scilifelab.se" \
     description="Docker image containing all requirements for the nf-core tools pipeline"

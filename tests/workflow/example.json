@@ -8,7 +8,8 @@
             "render": "file",
             "default_value": "path/to/reads.fastq.gz",
             "pattern": ".*(\\.fastq$|\\.fastq\\.gz$)",
-            "group": "inputdata"
+            "group": "inputdata",
+            "required": false
         },
         {
             "name": "index",
@@ -18,7 +19,8 @@
             "render": "file",
             "default_value": "path/to/index",
             "pattern": ".*",
-            "group": "inputdata"
+            "group": "inputdata",
+            "required": false
         },
         {
             "name": "norm_factor",
@@ -26,9 +28,10 @@
             "usage": "Integer value that will be applied against input reads.",
             "type": "integer",
             "render": "range",
-            "choices": [1, 150],
-            "default_value": 1,
-            "group": "normalization"
+            "choices": ["1", "150"],
+            "default_value": "1",
+            "group": "normalization",
+            "required": false
         }
     ]
 }
