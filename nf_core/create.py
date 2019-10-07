@@ -81,7 +81,8 @@ class PipelineCreate(object):
                 'author': self.author,
                 'name_noslash': self.name_noslash,
                 'name_docker': self.name_docker,
-                'version': self.new_version
+                'version': self.new_version,
+                'nf_core_version': nf_core.__version__
             },
             no_input = True,
             overwrite_if_exists = self.force,

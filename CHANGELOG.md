@@ -34,11 +34,13 @@
 * Add new code for Travis CI to allow PRs from patch branches too
 * Fix small typo in central readme of tools for future releases
 * Small code polishing + typo fix in the template main.nf file
+* Header ANSI codes no longer print `[2m` to console when using `-with-ansi`
 * Switched to yaml.safe_load() to fix PyYAML warning that was thrown because of a possible [exploit](https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation)
 * Add `nf-core` citation
 * Add proper `nf-core` logo for tools
 * Add `Quick Start` section to main README of template
 * Fix [Docker RunOptions](https://github.com/nf-core/tools/pull/351) to get UID and GID set in the template
+* `Dockerfile` now specifically uses the proper release tag of the nfcore/base image
 * Use [`file`](https://github.com/nf-core/tools/pull/354) instead of `new File`
   to avoid weird behavior such as making an `s3:/` directory locally when using
   an AWS S3 bucket as the `--outdir`.
