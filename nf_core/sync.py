@@ -80,6 +80,14 @@ class PipelineSync(object):
         logging.info("Fetching workflow config variables")
         self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
 
+        # Check that we have the required variables
+        for rvar in ['manifest.name','manifest.description','manifest.version','manifest.author']:
+            if rvar not in self.wf_config:
+                self.sync_error = True
+                logging.error("Workflow config variable `{}` not found!".format(rvar))
+                return False
+
+
         # Try to check out the `TEMPLATE` branch
         try:
             self.repo.git.checkout("origin/TEMPLATE", b="TEMPLATE")
@@ -125,6 +133,16 @@ class PipelineSync(object):
                 return False
 
         # Make a new pipeline using nf_core.create
+        logging.info("Making a new template pipeline using pipeline variables")
+        nf_core.create.PipelineCreate(
+            name = self.wf_config['manifest.name'],
+            description = self.wf_config['manifest.description'],
+            new_version = self.wf_config['manifest.version'],
+            no_git = True,
+            force = True,
+            outdir = self.pipeline_dir,
+            author = self.wf_config['manifest.author'],
+        ).init_pipeline()
 
         # Make a pull request if we've been asked to
 
