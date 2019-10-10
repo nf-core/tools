@@ -231,7 +231,7 @@ Very large release containing lots of work from the first nf-core hackathon, hel
   * New pipelines are now created using the command `nf-core create`
   * The nf-core template and associated linting are now controlled under the same version system
 * Large number of template updates and associated linting changes
-  * New simplified cookicutter variable usage
+  * New simplified cookiecutter variable usage
   * Refactored documentation - simplified and reduced duplication
   * Better `manifest` variables instead of `params` for pipeline name and version
   * New integrated nextflow version checking

@@ -56,7 +56,7 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
-For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/{{ cookiecutter.name }}) (you can join with [this invite](https://nf-co.re/join/slack)).
+For further information or help, don't hesitate to get in touch on [Slack](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) (you can join with [this invite](https://nf-co.re/join/slack)).
 
 ## Citation
 
