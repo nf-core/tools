@@ -10,6 +10,10 @@
 
 * Updated Base Dockerfile to Conda 4.7.10
 
+### Template
+
+* Fixed incorrect paths in iGenomes config as described in issue [418](https://github.com/nf-core/tools/issues/418)
+
 ## v1.7
 
 ### PyPI package description
