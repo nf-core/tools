@@ -45,4 +45,3 @@ These tests are run both with the latest available version of Nextflow and also 
 
 ## Getting help
 For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://github.com/{{ cookiecutter.name }}#documentation) and don't hesitate to get in touch on the [{{ cookiecutter.short_name }} pipeline channel](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) on [Slack](https://nf-co.re/join/slack/).
-
