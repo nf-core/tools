@@ -19,6 +19,7 @@ class PipelineSync(object):
     Args:
         pipeline_dir (str): The path to the Nextflow pipeline root directory
         make_template_branch (bool): Set this to `True` to create a `TEMPLATE` branch if it is not found
+        from_branch (str): The branch to use to fetch config vars. If not set, will use current active branch
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
 
     Attributes:
@@ -35,6 +36,7 @@ class PipelineSync(object):
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.make_template_branch = make_template_branch
         self.from_branch = from_branch
+        self.orphan_branch = False
         self.make_pr = make_pr
 
         self.gh_base_url = "https://{token}@github.com/nf-core/{pipeline}"
@@ -46,7 +48,9 @@ class PipelineSync(object):
     def sync(self):
         """ Find workflow attributes, create a new template pipeline on TEMPLATE
         """
+
         logging.info("Pipeline directory: {}".format(self.pipeline_dir))
+
         # Check that the pipeline_dir is a git repo
         try:
             self.repo = git.Repo(self.pipeline_dir)
@@ -54,6 +58,15 @@ class PipelineSync(object):
             self.sync_error = True
             logging.error("'{}' does not appear to be a git repository".format(self.pipeline_dir))
             return False
+
+        # If we've been asked to make a PR, check that we have the credentials
+        if self.make_pr:
+            try:
+                assert length(str(os.environ['NF_CORE_BOT'])) > 5
+            except (IndexError, AssertionError) as e:
+                self.sync_error = True
+                logging.error("Environment variable `$NF_CORE_BOT` is not set - cannot make PR")
+                return False
 
 
         # get current branch so we can switch back later
@@ -110,6 +123,7 @@ class PipelineSync(object):
                     logging.info("Creating orphan TEMPLATE branch")
                     try:
                         self.repo.git.checkout('--orphan', 'TEMPLATE')
+                        self.orphan_branch = True
                     except git.exc.GitCommandError as e:
                         self.sync_error = True
                         logging.error("Could not create 'TEMPLATE' branch:\n{}".format(e))
@@ -144,9 +158,43 @@ class PipelineSync(object):
             author = self.wf_config['manifest.author'],
         ).init_pipeline()
 
-        # Make a pull request if we've been asked to
+        # Commit changes if we have any
+        if not self.repo.is_dirty(untracked_files=True):
+            logging.info("Template contains no changes - no new commit created")
+        else:
+            try:
+                self.repo.git.add(A=True)
+                self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
+            except Exception as e:
+                self.sync_error = True
+                logging.error("Could not commit changes to TEMPLATE:\n{}".format(e))
+                return False
+
+        # Push and make a pull request if we've been asked to
+        if self.make_pr:
+            self.repo.git.push()
+            #
+            # TODO - MAKE PR
+            #
+            #
+            #
+            #
 
         # Reset: Check out original branch again
+        logging.debug("Checking out original branch: '{}'".format(self.original_branch))
+        try:
+            self.repo.git.checkout(self.original_branch)
+        except git.exc.GitCommandError as e:
+            self.sync_error = True
+            logging.error("Could not reset to original branch `{}`:\n{}".format(self.from_branch, e))
+            return False
+
+        # Finish up
+        if not self.make_pr:
+            git_merge_cmd = 'git merge TEMPLATE'
+            if self.orphan_branch:
+                git_merge_cmd += ' --allow-unrelated-histories'
+            logging.info("Now try to merge the updates in to your pipeline:\n  {}".format(git_merge_cmd))
 
 
 
