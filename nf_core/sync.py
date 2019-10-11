@@ -8,6 +8,7 @@ import json
 import logging
 import nf_core
 import os
+import re
 import requests
 import shutil
 import sys
@@ -37,10 +38,13 @@ class PipelineSync(object):
         self.make_template_branch = make_template_branch
         self.from_branch = from_branch
         self.orphan_branch = False
+        self.made_changes = False
         self.make_pr = make_pr
 
-        self.gh_base_url = "https://{token}@github.com/nf-core/{pipeline}"
-        self.github_pr_url_templ = "https://api.github.com/repos/nf-core/{pipeline}/pulls"
+        self.gh_username = None
+        self.gh_repo = None
+        self.gh_base_url = "https://{token}@github.com/{username}/{pipeline}"
+        self.github_pr_url_templ = "https://api.github.com/repos/{username}/{pipeline}/pulls"
 
         self.sync_error = False
         self.pr_error = False
@@ -58,16 +62,6 @@ class PipelineSync(object):
             self.sync_error = True
             logging.error("'{}' does not appear to be a git repository".format(self.pipeline_dir))
             return False
-
-        # If we've been asked to make a PR, check that we have the credentials
-        if self.make_pr:
-            try:
-                assert length(str(os.environ['NF_CORE_BOT'])) > 5
-            except (IndexError, AssertionError) as e:
-                self.sync_error = True
-                logging.error("Environment variable `$NF_CORE_BOT` is not set - cannot make PR")
-                return False
-
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
@@ -115,6 +109,7 @@ class PipelineSync(object):
                 if not self.make_template_branch:
                     self.sync_error = True
                     logging.error("Could not check out branch 'origin/TEMPLATE'")
+                    logging.info("Use flag --make-template-branch to attempt to create this branch")
                     return False
 
                 # Branch and force is set, fire function to create `TEMPLATE` branch
@@ -124,6 +119,9 @@ class PipelineSync(object):
                     try:
                         self.repo.git.checkout('--orphan', 'TEMPLATE')
                         self.orphan_branch = True
+                        if self.make_pr:
+                            self.make_pr = False
+                            logging.info("Will not attempt to make a PR - orphan branch must be merged manually first")
                     except git.exc.GitCommandError as e:
                         self.sync_error = True
                         logging.error("Could not create 'TEMPLATE' branch:\n{}".format(e))
@@ -149,13 +147,13 @@ class PipelineSync(object):
         # Make a new pipeline using nf_core.create
         logging.info("Making a new template pipeline using pipeline variables")
         nf_core.create.PipelineCreate(
-            name = self.wf_config['manifest.name'],
-            description = self.wf_config['manifest.description'],
-            new_version = self.wf_config['manifest.version'],
+            name = self.wf_config['manifest.name'].strip('\"').strip("\'"),
+            description = self.wf_config['manifest.description'].strip('\"').strip("\'"),
+            new_version = self.wf_config['manifest.version'].strip('\"').strip("\'"),
             no_git = True,
             force = True,
             outdir = self.pipeline_dir,
-            author = self.wf_config['manifest.author'],
+            author = self.wf_config['manifest.author'].strip('\"').strip("\'"),
         ).init_pipeline()
 
         # Commit changes if we have any
@@ -165,20 +163,48 @@ class PipelineSync(object):
             try:
                 self.repo.git.add(A=True)
                 self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
+                self.made_changes = True
+                logging.info("Committed changes to TEMPLATE branch")
             except Exception as e:
                 self.sync_error = True
                 logging.error("Could not commit changes to TEMPLATE:\n{}".format(e))
                 return False
 
         # Push and make a pull request if we've been asked to
-        if self.make_pr:
-            self.repo.git.push()
-            #
-            # TODO - MAKE PR
-            #
-            #
-            #
-            #
+        if self.make_pr and self.made_changes:
+            logging.info("Pushing TEMPLATE branch to remote")
+            try:
+                self.repo.git.push()
+            except git.exc.GitCommandError as e:
+                if self.make_template_branch:
+                    try:
+                        self.repo.git.push('--set-upstream', 'origin', 'TEMPLATE')
+                    except git.exc.GitCommandError as e:
+                        logging.error("Could not push TEMPLATE branch:\n  {}".format(e))
+                        self.pr_error = True
+                else:
+                    logging.error("Could not push TEMPLATE branch:\n  {}".format(e))
+                    self.pr_error = True
+
+            # Figure out the GitHub username to make a PR if we can
+            gh_ssh_username_match = re.search(r'git@github\.com:([^\/]+)/([^\/]+)\.git$', self.repo.remotes.origin.url)
+            if gh_ssh_username_match:
+                self.gh_username = gh_ssh_username_match.group(1)
+                self.gh_repo = gh_ssh_username_match.group(2)
+            gh_url_username_match = re.search(r'https://github\.com/([^\/]+)/([^\/]+)\.git$', self.repo.remotes.origin.url)
+            if gh_url_username_match:
+                self.gh_username = gh_url_username_match.group(1)
+                self.gh_repo = gh_url_username_match.group(2)
+
+            # If we've been asked to make a PR, check that we have the credentials
+            try:
+                assert len(str(os.environ['NF_CORE_BOT'])) > 5
+                ### TODO - MAKE THE PR ###
+            except (KeyError, AssertionError) as e:
+                self.pr_error = True
+                logging.error("Environment variable `$NF_CORE_BOT` is not set - cannot make PR")
+                if self.gh_username and self.gh_repo:
+                    logging.info("Make a PR at the following URL:\n  https://github.com/{}/{}/compare/{}...TEMPLATE".format(self.gh_username, self.gh_repo, self.original_branch))
 
         # Reset: Check out original branch again
         logging.debug("Checking out original branch: '{}'".format(self.original_branch))
@@ -190,11 +216,11 @@ class PipelineSync(object):
             return False
 
         # Finish up
-        if not self.make_pr:
+        if not self.make_pr and self.made_changes:
             git_merge_cmd = 'git merge TEMPLATE'
             if self.orphan_branch:
                 git_merge_cmd += ' --allow-unrelated-histories'
-            logging.info("Now try to merge the updates in to your pipeline:\n  {}".format(git_merge_cmd))
+            logging.info("Now try to merge the updates in to your pipeline:\n  cd {}\n  {}".format(self.pipeline_dir, git_merge_cmd))
 
 
 
