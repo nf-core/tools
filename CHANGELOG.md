@@ -2,23 +2,19 @@
 
 ## v1.8dev
 
-### Syncing
+### Tools helper code
 
 * Updated Blacklist of synced pipelines
-
-### Other
-
-* Updated Base Dockerfile to Conda 4.7.10
 
 ### Template
 
 * Fixed incorrect paths in iGenomes config as described in issue [418](https://github.com/nf-core/tools/issues/418)
 
+### Other
+
+* Updated Base Dockerfile to Conda 4.7.10
+
 ## v1.7
-
-### PyPI package description
-
-* The readme should now be rendered properly on PyPI.
 
 ### Tools helper code
 
@@ -31,6 +27,7 @@
 * When listing pipelines, a nicer message is given for the rare case of a detached `HEAD` ref in a locally pulled pipeline. [#297](https://github.com/nf-core/tools/issues/297)
 * The `download` command can now compress files into a single archive.
 * `nf-core create` now fetches a logo for the pipeline from the nf-core website
+* The readme should now be rendered properly on PyPI.
 
 ### Syncing
 
