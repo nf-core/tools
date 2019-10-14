@@ -488,14 +488,13 @@ These can be created at [https://github.com/settings/tokens](https://github.com/
 Supply this using the `--auth-token` flag, or setting it as the environment variable `NF_CORE_BOT`:
 `export NF_CORE_BOT=my_auth_token`.
 
-## Sync all nf-core pipelines
-
-This command is used by the nf-core/tools release automation to synchronise all nf-core pipelines
+Finally, if `--all` is supplied, then the command attempts to pull and synchronise all nf-core workflows.
+This is used by the nf-core/tools release automation to synchronise all nf-core pipelines
 with the newest version of the template. It requires authentication as either the nf-core-bot account
 or as an nf-core administrator.
 
 ```console
-$ nf-core sync-all
+$ nf-core sync --all
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
