@@ -324,6 +324,22 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
         logging.error(e)
         sys.exit(1)
 
+@nf_core_cli.command('sync-all', help_priority=9)
+@click.option(
+    '-u', '--username',
+    type = str,
+    default = 'nf-core-bot',
+    help = 'GitHub username for the PRs.'
+)
+@click.option(
+    '-a', '--auth-token',
+    type = str,
+    help = 'GitHub API personal access token.'
+)
+def sync(username, auth_token):
+    """ Sync template for all nf-core pipelines. nf-core admins only."""
+    nf_core.sync.sync_all_pipelines()
+
 
 
 if __name__ == '__main__':

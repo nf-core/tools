@@ -1,6 +1,5 @@
 #!/usr/bin/env python
-"""Bumps the version number in all appropriate files for
-a nf-core pipeline.
+"""Synchronise a pipeline TEMPLATE branch with the template.
 """
 
 import git
@@ -350,3 +349,70 @@ class PipelineSync(object):
                     manual_sync_link
                 )
             )
+
+
+
+
+def sync_all_pipelines(gh_username='nf-core-bot', gh_auth_token=None):
+    """Sync all nf-core pipelines
+    """
+
+    # Get remote workflows
+    wfs = nf_core.list.Workflows()
+    wfs.get_remote_workflows()
+
+    successful_syncs = []
+    failed_syncs = []
+
+    # Set up a working directory
+    tmpdir = tempfile.mkdtemp()
+
+    # Let's do some updating!
+    for wf in wfs.remote_workflows:
+
+        logging.info("Syncing {}".format(wf.full_name))
+
+        # Make a local working directory
+        wf_local_path = os.path.join(tmpdir, wf.name)
+        os.mkdir(wf_local_path)
+        logging.debug("Sync working directory: {}".format(wf_local_path))
+
+        # Clone the repo
+        wf_remote_url = "https://{}@github.com/nf-core/{}".format(gh_auth_token, wf.name)
+        repo = git.Repo.clone_from(wf_remote_url, wf_local_path)
+        assert repo
+
+        # Suppress log messages from the pipeline creation method
+        orig_loglevel = logging.getLogger().getEffectiveLevel()
+        if orig_loglevel == getattr(logging, 'INFO'):
+            logging.getLogger().setLevel(logging.ERROR)
+
+        # Sync the repo
+        logging.debug("Running template sync")
+        sync_obj = nf_core.sync.PipelineSync(
+            pipeline_dir=wf_local_path,
+            from_branch='dev',
+            make_pr=True,
+            gh_username=gh_username
+        )
+        try:
+            sync_obj.sync()
+        except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
+            logging.error("Sync failed for {}:\n{}".format(wf.full_name, e))
+            failed_syncs.append(wf.name)
+        else:
+            logging.debug("Sync successful for {}".format(wf.full_name))
+            successful_syncs.append(wf.name)
+
+        # Reset logging
+        logging.getLogger().setLevel(orig_loglevel)
+
+        # Clean up
+        logging.debug("Removing work directory: {}".format(wf_local_path))
+        shutil.rmtree(wf_local_path)
+
+    logging.info("Successfully synchronised {} pipelines".format(len(successful_syncs)))
+
+    if len(failed_syncs) > 0:
+        failed_list = '\n - '.join(failed_syncs)
+        logging.error("Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list))
