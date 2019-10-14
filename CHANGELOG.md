@@ -4,7 +4,7 @@
 
 ### Tools helper code
 
-* Updated Blacklist of synced pipelines
+* Refactored the template synchronisation code to be part of the main nf-core tool
 
 ### Template
 
