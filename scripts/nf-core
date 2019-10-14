@@ -292,15 +292,30 @@ def bump_version(pipeline_dir, new_version, nextflow):
 @click.option(
     '-b', '--from-branch',
     type = str,
-    help = 'The pipeline git branch to use to get workflow vars'
+    help = 'The git branch to use to fetch workflow vars.'
 )
 @click.option(
     '-p', '--pull-request',
     is_flag = True,
     default = False,
-    help = "Make a GitHub pull-request with the changes"
+    help = "Make a GitHub pull-request with the changes."
 )
-def sync(pipeline_dir, make_template_branch, from_branch, pull_request):
+@click.option(
+    '-u', '--username',
+    type = str,
+    help = 'GitHub username for the PR.'
+)
+@click.option(
+    '-r', '--repository',
+    type = str,
+    help = 'GitHub repository name for the PR.'
+)
+@click.option(
+    '-a', '--auth-token',
+    type = str,
+    help = 'GitHub API personal access token.'
+)
+def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username, repository, auth_token):
     """ Sync a pipeline TEMPLATE branch with the nf-core template"""
     sync_obj = nf_core.sync.PipelineSync(pipeline_dir, make_template_branch, from_branch, pull_request)
     try:

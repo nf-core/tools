@@ -32,6 +32,9 @@ class PipelineSync(object):
         make_template_branch (bool): Set this to `True` to create a `TEMPLATE` branch if it is not found
         from_branch (str): The branch to use to fetch config vars. If not set, will use current active branch
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
+        gh_username (str): GitHub username
+        gh_repo (str): GitHub repository name
+        gh_auth_token (str): Authorisation token used to make PR with GitHub API
 
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
@@ -41,12 +44,13 @@ class PipelineSync(object):
         made_changes (bool): Whether making the new template pipeline introduced any changes
         make_pr (bool): Whether to try to automatically make a PR on GitHub.com
         required_config_vars (list): List of nextflow variables required to make template pipeline
-        gh_auth_token (str): Authorisation token used to make PR with GitHub API
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
+        gh_auth_token (str): Authorisation token used to make PR with GitHub API
     """
 
-    def __init__(self, pipeline_dir, make_template_branch=False, from_branch=None, make_pr=False):
+    def __init__(self, pipeline_dir, make_template_branch=False, from_branch=None, make_pr=False,
+        gh_username=None, gh_repo=None, gh_auth_token=None):
         """ Initialise syncing object """
 
         self.pipeline_dir = os.path.abspath(pipeline_dir)
@@ -62,11 +66,9 @@ class PipelineSync(object):
             'manifest.author'
         ]
 
-        self.gh_auth_token = None
-        self.gh_username = None
-        self.gh_repo = None
-
-        # Currently no other way to set this token except $NF_CORE_BOT
+        self.gh_username = gh_username
+        self.gh_repo = gh_repo
+        self.gh_auth_token = gh_auth_token
         if self.gh_auth_token is None:
             try:
                 self.gh_auth_token = os.environ['NF_CORE_BOT']
