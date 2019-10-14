@@ -303,8 +303,10 @@ def bump_version(pipeline_dir, new_version, nextflow):
 def sync(pipeline_dir, make_template_branch, from_branch, pull_request):
     """ Sync a pipeline TEMPLATE branch with the nf-core template"""
     sync_obj = nf_core.sync.PipelineSync(pipeline_dir, make_template_branch, from_branch, pull_request)
-    sync_obj.sync()
-    if sync_obj.sync_error or sync_obj.pr_error:
+    try:
+        sync_obj.sync()
+    except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
+        logging.error(e)
         sys.exit(1)
 
 
