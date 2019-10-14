@@ -141,6 +141,13 @@ class PipelineSync(object):
         except git.exc.GitCommandError:
             raise SyncException("Branch `{}` not found!".format(self.from_branch))
 
+        # If not specified, get the name of the active branch
+        if not self.from_branch:
+            try:
+                self.from_branch = self.repo.active_branch.name
+            except git.exc.GitCommandError as e:
+                logging.error("Could not find active repo branch: ".format(e))
+
         # Figure out the GitHub username and repo name from the 'origin' remote if we can
         try:
             gh_ssh_username_match = re.search(r'git@github\.com:([^\/]+)/([^\/]+)\.git$', self.repo.remotes.origin.url)
@@ -295,20 +302,24 @@ class PipelineSync(object):
             logging.info("Make a PR at the following URL:\n  https://github.com/{}/{}/compare/{}...TEMPLATE".format(self.gh_username, self.gh_repo, self.original_branch))
             raise PullRequestException("No GitHub authentication token set - cannot make PR")
 
+        logging.info("Submitting a pull request via the GitHub API")
         pr_content = {
-            'title': "Important! Template update for nf-core/tools template, version {}".format(nf_core.__version__),
-            'body': "Some important changes have been made in the nf-core/tools pipeline template.\n" \
-                    "Please make sure to merge this pull-request as soon as possible.\n" \
+            'title': "Important! Template update for nf-core/tools v{}".format(nf_core.__version__),
+            'body': "Some important changes have been made in the nf-core/tools pipeline template. " \
+                    "Please make sure to merge this pull-request as soon as possible. " \
                     "Once complete, make a new minor release of your pipeline.\n\n" \
                     "For more information, please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).".format(tag=nf_core.__version__),
             'head': "TEMPLATE",
             'base': self.from_branch
         }
-        return requests.post(
+        r = requests.post(
             url = "https://api.github.com/repos/{}/{}/pulls".format(self.gh_username, self.gh_repo),
             data = json.dumps(pr_content),
-            auth = HTTPBasicAuth(self.gh_username, self.gh_auth_token)
+            auth = requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token)
         )
+        if r.status_code != 200:
+            raise PullRequestException("GitHub API returned code {}: {}".format(r.status_code, r.text))
+        logging.debug(r.json)
 
     def reset_target_dir(self):
         """Reset the target pipeline directory. Check out the original branch.
