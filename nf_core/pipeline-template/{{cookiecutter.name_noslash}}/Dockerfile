@@ -4,5 +4,5 @@ LABEL authors="{{ cookiecutter.author }}" \
 
 COPY environment.yml /
 RUN conda env create -f /environment.yml && conda clean -a
-ENV PATH /opt/conda/envs/{{ cookiecutter.name_noslash }}-{{ cookiecutter.version }}/bin:$PATH
 RUN conda env export --name {{ cookiecutter.name_noslash }}-{{ cookiecutter.version }} > {{ cookiecutter.name_noslash }}-{{ cookiecutter.version }}.yml
+ENV PATH /opt/conda/envs/{{ cookiecutter.name_noslash }}-{{ cookiecutter.version }}/bin:$PATH
