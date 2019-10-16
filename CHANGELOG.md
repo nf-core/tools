@@ -12,6 +12,10 @@
 * Add UCSC genomes to `igenomes.config` and add paths to all genome indices
 * Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
 * Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
+* Change remaining parameters from `camelCase` to `snakeCase` [#39](https://github.com/nf-core/hic/issues/39)
+  * `--singleEnd` to `--single_end`
+  * `--igenomesIgnore` to `--igenomes_ignore`
+* Add `autoMounts=true` to default singularity profile
 
 ### Other
 
