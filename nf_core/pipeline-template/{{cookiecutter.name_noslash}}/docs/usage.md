@@ -12,11 +12,11 @@
 * [Main arguments](#main-arguments)
   * [`-profile`](#-profile)
   * [`--reads`](#--reads)
-  * [`--singleEnd`](#--singleend)
+  * [`--single_end`](#--single_end)
 * [Reference genomes](#reference-genomes)
   * [`--genome` (using iGenomes)](#--genome-using-igenomes)
   * [`--fasta`](#--fasta)
-  * [`--igenomesIgnore`](#--igenomesignore)
+  * [`--igenomes_ignore`](#--igenomes_ignore)
 * [Job resources](#job-resources)
   * [Automatic resubmission](#automatic-resubmission)
   * [Custom resource requests](#custom-resource-requests)
@@ -125,11 +125,11 @@ Please note the following requirements:
 
 If left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`
 
-### `--singleEnd`
-By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--singleEnd` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--reads`. For example:
+### `--single_end`
+By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--single_end` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--reads`. For example:
 
 ```bash
---singleEnd --reads '*.fastq'
+--single_end --reads '*.fastq'
 ```
 
 It is not possible to run a mixture of single-end and paired-end files in one run.
@@ -180,7 +180,7 @@ If you prefer, you can specify the full path to your reference genome when you r
 --fasta '[path to Fasta reference]'
 ```
 
-### `--igenomesIgnore`
+### `--igenomes_ignore`
 Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`.
 
 ## Job resources
