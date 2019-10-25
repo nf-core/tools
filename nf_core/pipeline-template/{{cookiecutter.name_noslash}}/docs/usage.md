@@ -207,9 +207,13 @@ If you have any questions or issues please send us a message on [Slack](https://
 ## AWS Batch specific parameters
 
 Running the pipeline on AWS Batch requires a couple of specific parameters to be set according to your AWS Batch configuration. Please use the `-awsbatch` profile and then specify all of the following parameters.
+
 ### `--awsqueue`
+
 The JobQueue that you intend to use on AWS Batch.
+
 ### `--awsregion`
+
 The AWS region to run your job in. Default is set to `eu-west-1` but can be adjusted to your needs.
 
 Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a S3 storage bucket of your choice - you'll get an error message notifying you if you didn't.
