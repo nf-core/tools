@@ -21,14 +21,16 @@ ii. Install one of [`docker`](https://docs.docker.com/engine/installation/), [`s
 iii. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
-nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda>
+nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda/institute>
 ```
+
+> Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile institute` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
 
 iv. Start running your own analysis!
 
 <!-- TODO nf-core: Update the default command above used to run the pipeline -->
 ```bash
-nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
+nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda/institute> --reads '*_R{1,2}.fastq.gz' --genome GRCh37
 ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.

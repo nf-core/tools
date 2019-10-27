@@ -16,6 +16,7 @@
   * `--singleEnd` to `--single_end`
   * `--igenomesIgnore` to `--igenomes_ignore`
 * Add `autoMounts=true` to default singularity profile
+* Add in `markdownlint` checks that were being ignored by default
 
 ### Other
 

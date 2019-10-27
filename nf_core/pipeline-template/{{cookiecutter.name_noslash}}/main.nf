@@ -174,9 +174,9 @@ ${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style
 process get_software_versions {
     publishDir "${params.outdir}/pipeline_info", mode: 'copy',
         saveAs: { filename ->
-            if (filename.indexOf(".csv") > 0) filename
-            else null
-        }
+                      if (filename.indexOf(".csv") > 0) filename
+                      else null
+                }
 
     output:
     file 'software_versions_mqc.yaml' into ch_software_versions_yaml
@@ -200,7 +200,9 @@ process fastqc {
     tag "$name"
     label 'process_medium'
     publishDir "${params.outdir}/fastqc", mode: 'copy',
-        saveAs: { filename -> filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename" }
+        saveAs: { filename ->
+                      filename.indexOf(".zip") > 0 ? "zips/$filename" : "$filename"
+                }
 
     input:
     set val(name), file(reads) from ch_read_files_fastqc

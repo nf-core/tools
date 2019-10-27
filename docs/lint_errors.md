@@ -3,6 +3,7 @@
 This page contains detailed descriptions of the tests done by the [nf-core/tools](https://github.com/nf-core/tools) package. Linting errors should show URLs next to any failures that link to the relevant heading below.
 
 ## Error #1 - File not found ## {#1}
+
 nf-core pipelines should adhere to a common file structure for consistency. The lint test looks for the following required files:
 
 * `nextflow.config`
@@ -27,13 +28,14 @@ The following files are suggested but not a hard requirement. If they are missin
 * `conf/base.config`
   * A `conf` directory with at least one config called `base.config`
 
-
 ## Error #2 - Docker file check failed ## {#2}
+
 Pipelines should have a files called `Dockerfile` in their root directory.
 The file is used for automated docker image builds. This test checks that the file
 exists and contains at least the string `FROM` (`Dockerfile`).
 
 ## Error #3 - Licence check failed ## {#3}
+
 nf-core pipelines must ship with an open source [MIT licence](https://choosealicense.com/licenses/mit/).
 
 This test fails if the following conditions are not met:
@@ -46,6 +48,7 @@ This test fails if the following conditions are not met:
   * `[year]`, `[fullname]`, `<YEAR>`, `<COPYRIGHT HOLDER>`, `<year>` or `<copyright holders>`
 
 ## Error #4 - Nextflow config check failed ## {#4}
+
 nf-core pipelines are required to be configured with a minimal set of variable
 names. This test fails or throws warnings if required variables are not set.
 
@@ -104,6 +107,7 @@ The following variables are depreciated and fail the test if they are still pres
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
 
 ## Error #5 - Continuous Integration configuration ## {#5}
+
 nf-core pipelines must have CI testing with Travis or Circle CI.
 
 This test fails if the following happens:
@@ -131,6 +135,7 @@ This test fails if the following happens:
     ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
+
 The `README.md` files for a project are very important and must meet some requirements:
 
 * Nextflow badge
