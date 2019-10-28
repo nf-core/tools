@@ -16,8 +16,7 @@ A python package with helper tools for the nf-core community.
 * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
 * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
-* [`nf-core sync` - Synchronise a pipeline TEMPLATE branch](#sync-a-pipeline-with-the-template)
-* [`nf-core sync-all` - Sync all nf-core pipelines and trigger PRs](#sync-all-nf-core-pipelines)
+* [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).

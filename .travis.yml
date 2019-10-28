@@ -57,4 +57,4 @@ deploy:
 
 # Sync pipelines with possible nf-core template changes
 after_deploy:
-  - nf-core sync-all
+  - nf-core sync --all
