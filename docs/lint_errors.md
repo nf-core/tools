@@ -93,9 +93,9 @@ The following variables throw warnings if missing:
   * If the pipeline version number contains the string `dev`, the dockerhub tag must be `:dev`
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
-* `params.singleEnd`
+* `params.single_end`
   * Specify to work with single-end sequence data instead of default paired-end
-  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
+  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -105,6 +105,8 @@ The following variables are depreciated and fail the test if they are still pres
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
+* `singleEnd` and `igenomesIgnore`
+  * Now using `snake_case` for all command line options
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
