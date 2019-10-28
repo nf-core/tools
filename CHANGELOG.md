@@ -17,6 +17,7 @@
   * `--igenomesIgnore` to `--igenomes_ignore`
 * Add `autoMounts=true` to default singularity profile
 * Add in `markdownlint` checks that were being ignored by default
+* Disable ansi logging in the travis CI tests.
 
 ### Other
 
