@@ -116,7 +116,7 @@ class PipelineLint(object):
             params.seqtype = 'dna'
             params.solver = 'glpk'
             params.igenomes_base = './iGenomes'
-            params.cluster_options = false
+            params.clusterOptions = false
             ...
     """
     def __init__(self, path):
