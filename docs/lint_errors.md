@@ -11,7 +11,7 @@ nf-core pipelines should adhere to a common file structure for consistency. The 
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
 * `.travis.yml` or `circle.yml`
-  * A config file for automated continuous testing with either [Travis CI](https://travis-ci.org/) or [Circle CI](https://circleci.com/)
+  * A config file for automated continuous testing with either [Travis CI](https://travis-ci.com/) or [Circle CI](https://circleci.com/)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
 * `README.md`
