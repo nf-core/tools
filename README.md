@@ -1,6 +1,6 @@
 # ![nf-core/tools](docs/images/nfcore-tools_logo.png)
 
-[![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
+[![Build Status](https://travis-ci.com/nf-core/tools.svg?branch=master)](https://travis-ci.com/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
 
