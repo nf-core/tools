@@ -22,6 +22,7 @@
 ### Other
 
 * Updated Base Dockerfile to Conda 4.7.10
+* Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
 
 ## v1.7
 
