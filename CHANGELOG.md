@@ -19,6 +19,7 @@
 * Add in `markdownlint` checks that were being ignored by default
 * Disable ansi logging in the travis CI tests.
 * Move `params`section from `base.config` to `nextflow.config`
+* Added environment variable `PYTHONNOUSERSITE` to template Dockerfile to try to prevent conflicts with host python environment.
 
 ### Other
 
