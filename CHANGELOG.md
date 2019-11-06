@@ -9,6 +9,7 @@
 ### Template
 
 * Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
+* Fixed [incorrect usage of non-existant parameter](https://github.com/nf-core/tools/issues/446) in the template
 * Add UCSC genomes to `igenomes.config` and add paths to all genome indices
 * Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
 * Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
