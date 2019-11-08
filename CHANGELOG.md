@@ -22,8 +22,8 @@
 * Move `params`section from `base.config` to `nextflow.config`
 * Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment.
 * Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
-* Add link to [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
- 
+* Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
+
 ### Other
 
 * Updated Base Dockerfile to Conda 4.7.10
