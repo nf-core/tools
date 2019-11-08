@@ -131,7 +131,7 @@ class TestLint(unittest.TestCase):
     def test_ci_conf_pass(self):
         """Tests that the continous integration config checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = '0.32.0'
+        lint_obj.minNextflowVersion = '19.10.0'
         lint_obj.check_ci_config()
         expectations = {"failed": 0, "warned": 0, "passed": 3}
         self.assess_lint_status(lint_obj, **expectations)
@@ -168,7 +168,7 @@ class TestLint(unittest.TestCase):
     def test_readme_pass(self):
         """Tests that the pipeline README file checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = '0.32.0'
+        lint_obj.minNextflowVersion = '19.10.0'
         lint_obj.files = ['environment.yml']
         lint_obj.check_readme()
         expectations = {"failed": 0, "warned": 0, "passed": 2}

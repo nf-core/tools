@@ -9,6 +9,7 @@
 ### Template
 
 * Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
+* Fixed [incorrect usage of non-existant parameter](https://github.com/nf-core/tools/issues/446) in the template
 * Add UCSC genomes to `igenomes.config` and add paths to all genome indices
 * Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
 * Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
@@ -17,10 +18,15 @@
   * `--igenomesIgnore` to `--igenomes_ignore`
 * Add `autoMounts=true` to default singularity profile
 * Add in `markdownlint` checks that were being ignored by default
+* Disable ansi logging in the travis CI tests.
+* Move `params`section from `base.config` to `nextflow.config`
+* Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment.
+* Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
 
 ### Other
 
 * Updated Base Dockerfile to Conda 4.7.10
+* Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
 
 ## v1.7
 
