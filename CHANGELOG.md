@@ -22,6 +22,7 @@
 * Move `params`section from `base.config` to `nextflow.config`
 * Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment.
 * Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
+* Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 
 ### Other
 
