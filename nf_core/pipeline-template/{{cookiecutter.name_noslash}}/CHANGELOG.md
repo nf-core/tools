@@ -14,4 +14,3 @@ Initial release of {{ cookiecutter.name }}, created with the [nf-core](http://nf
 ### `Dependencies`
 
 ### `Deprecated`
-
