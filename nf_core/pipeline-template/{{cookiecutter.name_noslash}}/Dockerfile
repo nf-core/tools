@@ -1,6 +1,6 @@
 FROM nfcore/base:{{ 'dev' if 'dev' in cookiecutter.nf_core_version else cookiecutter.nf_core_version }}
 LABEL authors="{{ cookiecutter.author }}" \
-      description="Docker image containing all requirements for {{ cookiecutter.name }} pipeline"
+      description="Docker image containing all software requirements for the {{ cookiecutter.name }} pipeline"
 
 # Install the conda environment
 COPY environment.yml /
