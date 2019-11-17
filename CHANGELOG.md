@@ -6,6 +6,10 @@
 
 * Updated Blacklist of synced pipelines
 
+### Linting
+
+* Adjusted linting to enable `patch` branches from being tested
+
 ### Template
 
 * Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
@@ -24,6 +28,7 @@
 * Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
 * Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
+* Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 
 ### Other
 
