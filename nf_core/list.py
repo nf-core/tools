@@ -254,7 +254,7 @@ class RemoteWorkflow(object):
                 release['published_at_timestamp'] = int(datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ").strftime("%s"))
             else:
                 release['published_at_pretty'] = str('unreleased')
-                release['published_at_timestamp'] = str('unreleased')
+                release['published_at_timestamp'] = int(0)
 
 
 class LocalWorkflow(object):
