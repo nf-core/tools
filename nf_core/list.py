@@ -247,10 +247,14 @@ class RemoteWorkflow(object):
 
         # Beautify date
         for release in self.releases:
-            release['published_at_pretty'] = pretty_date(
-                datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ")
-            )
-            release['published_at_timestamp'] = int(datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ").strftime("%s"))
+            if release.get('published_at') is not None:
+                release['published_at_pretty'] = pretty_date(
+                    datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ")
+                )
+                release['published_at_timestamp'] = int(datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ").strftime("%s"))
+            else:
+                release['published_at_pretty'] = str('unreleased')
+                release['published_at_timestamp'] = str('unreleased')
 
 
 class LocalWorkflow(object):
