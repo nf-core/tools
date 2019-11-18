@@ -4,6 +4,7 @@
 
 ### Tools helper code
 
+* Fixed a bug that caused `nf-core list` to fail if there were unreleased tags in `pipelines.json`
 * Updated Blacklist of synced pipelines
 
 ### Template
