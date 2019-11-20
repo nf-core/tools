@@ -5,6 +5,7 @@
 ### Tools helper code
 
 * Updated Blacklist of synced pipelines
+* Ignore pre-releases in `nf-core list`
 
 ### Template
 
