@@ -112,7 +112,7 @@ class TestLint(unittest.TestCase):
         """Tests that Singularity file doesn't exist"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_singularity()
-        expectations = {"failed": 1, "warned": 0, "passed": 33}
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
     def test_config_variable_example_pass(self):
