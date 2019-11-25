@@ -281,7 +281,7 @@ class PipelineLint(object):
     def check_singularity(self):
         """Checks whether a Singularity file exists and warns to remove that file then."""
         fn = os.path.join(self.path, "Singularity")
-        if(path.exists(fn)):
+        if(os.path.exists(fn)):
             self.failed.append((11, "Singularity file exists"))
 
     def check_licence(self):
