@@ -166,6 +166,7 @@ class PipelineLint(object):
             'check_files_exist',
             'check_licence',
             'check_docker',
+            'check_singularity',
             'check_nextflow_config',
             'check_ci_config',
             'check_readme',
@@ -276,6 +277,12 @@ class PipelineLint(object):
             return
 
         self.failed.append((2, "Dockerfile check failed"))
+
+    def check_singularity(self):
+        """Checks whether a Singularity file exists and warns to remove that file then."""
+        fn = os.path.join(self.path, "Singularity")
+        content = ""
+        self.failed.append((2, "Singularity file exists"))
 
     def check_licence(self):
         """Checks licence file is MIT.
