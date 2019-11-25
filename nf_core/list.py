@@ -238,8 +238,8 @@ class RemoteWorkflow(object):
         self.watchers_count = data.get('watchers_count')
         self.forks_count = data.get('forks_count')
 
-        # Placeholder vars for releases info
-        self.releases = data.get('releases')
+        # Placeholder vars for releases info (ignore pre-releases)
+        self.releases = [ r for r in data.get('releases', []) if r.get('published_at') is not None ]
 
         # Placeholder vars for local comparison
         self.local_wf = None
