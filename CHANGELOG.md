@@ -7,6 +7,7 @@
 * Updated Blacklist of synced pipelines
 * Ignore pre-releases in `nf-core list`
 * Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
+* Updated documentation for `nf-core download`
 
 ### Linting
 
