@@ -6,6 +6,11 @@
 
 * Updated Blacklist of synced pipelines
 * Ignore pre-releases in `nf-core list`
+* Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
+
+### Linting
+
+* Adjusted linting to enable `patch` branches from being tested
 
 ### Template
 
@@ -25,6 +30,7 @@
 * Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
 * Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
+* Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 * Add Python 3.7 dependency to the `environment.yml` file
 
 ### Base Docker image
