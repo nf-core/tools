@@ -31,6 +31,7 @@
 * Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
 * Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
+* Remove awsbatch profile cf [#71 @ nf-core/configs](https://github.com/nf-core/configs/pull/71)
 
 ### Other
 
