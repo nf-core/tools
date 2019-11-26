@@ -25,6 +25,12 @@
 * Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
 * Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
+* Add Python 3.7 dependency to the `environment.yml` file
+
+### Base Docker image
+
+* Use miniconda3 instead of miniconda for a Python 3k base environment
+* Update conda version to 4.7.12
 
 ### Other
 
