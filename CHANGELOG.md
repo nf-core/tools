@@ -22,6 +22,7 @@
 * Change remaining parameters from `camelCase` to `snakeCase` [#39](https://github.com/nf-core/hic/issues/39)
   * `--singleEnd` to `--single_end`
   * `--igenomesIgnore` to `--igenomes_ignore`
+  * Having the old camelCase versions of these will now throw an error
 * Add `autoMounts=true` to default singularity profile
 * Add in `markdownlint` checks that were being ignored by default
 * Disable ansi logging in the travis CI tests.

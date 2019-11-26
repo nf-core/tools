@@ -112,7 +112,7 @@ class PipelineLint(object):
             params.help = false
             params.outdir = './results'
             params.bam = false
-            params.singleEnd = false
+            params.single_end = false
             params.seqtype = 'dna'
             params.solver = 'glpk'
             params.igenomes_base = './iGenomes'
@@ -358,13 +358,15 @@ class PipelineLint(object):
             'dag.file',
             'params.reads',
             'process.container',
-            'params.singleEnd'
+            'params.single_end'
         ]
         # Old depreciated vars - fail if present
         config_fail_ifdefined = [
             'params.version',
             'params.nf_required_version',
-            'params.container'
+            'params.container',
+            'params.singleEnd',
+            'params.igenomesIgnore'
         ]
 
         # Get the nextflow config for this pipeline
