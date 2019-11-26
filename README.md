@@ -209,7 +209,8 @@ Sometimes you may need to run an nf-core pipeline on a server or HPC system that
 
 To make this process easier and ensure accurate retrieval of correctly versioned code and software containers, we have written a download helper tool. Simply specify the name of the nf-core pipeline and it will be downloaded to your current working directory.
 
-By default, the pipeline will just download the pipeline code. If you specify the flag `--singularity`, it will also download any singularity image files that are required.
+By default, the pipeline will download the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files.
+If you specify the flag `--singularity`, it will also download any singularity image files that are required.
 
 ```console
 $ nf-core download methylseq --singularity
@@ -222,37 +223,83 @@ $ nf-core download methylseq --singularity
 
 
 INFO: Saving methylseq
- Pipeline release: 1.0
+ Pipeline release: 1.4
  Pull singularity containers: Yes
- Output directory: nf-core-methylseq-1.0
+ Output file: nf-core-methylseq-1.4.tar.gz
 
 INFO: Downloading workflow files from GitHub
 
+INFO: Downloading centralised configs from GitHub
+
 INFO: Downloading 1 singularity container
-nf-core-methylseq-1.0.simg [762.28MB]  [####################################]  780573/780572
+
+INFO: Building singularity image from dockerhub: docker://nfcore/methylseq:1.4
+INFO:    Converting OCI blobs to SIF format
+INFO:    Starting build...
+Getting image source signatures
+....
+INFO:    Creating SIF file...
+INFO:    Build complete: /domus/h1/phil/GitHub/nf-core/tools/testing/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg
+
+INFO: Compressing download..
+
+INFO: Command to extract files: tar -xzf nf-core-methylseq-1.4.tar.gz
+
+INFO: MD5 checksum for nf-core-methylseq-1.4.tar.gz: f5c2b035619967bb227230bc3ec986c5
 ```
 
-```console
-$ tree -L 2 nf-core-methylseq-1.0/
+The tool automatically compresses all of the resulting file in to a `.tar.gz` archive.
+You can choose other formats (`.tar.bz2`, `zip`) or to not compress (`none`) with the `-c`/`--compress` flag.
+The console output provides the command you need to extract the files.
 
-nf-core-methylseq-1.0/
+Once uncompressed, you will see the following file structure for the downloaded pipeline:
+
+```console
+$ tree -L 2 nf-core-methylseq-1.4/
+
+nf-core-methylseq-1.4
+├── configs
+│   ├── bin
+│   ├── conf
+│   ├── configtest.nf
+│   ├── docs
+│   ├── LICENSE
+│   ├── nextflow.config
+│   ├── nfcore_custom.config
+│   └── README.md
 ├── singularity-images
-│   └── nf-core-methylseq-1.0.simg
+│   └── nf-core-methylseq-1.4.simg
 └── workflow
-    ├── CHANGELOG.md
-    ├── Dockerfile
-    ├── LICENCE.md
-    ├── README.md
     ├── assets
     ├── bin
+    ├── CHANGELOG.md
+    ├── CODE_OF_CONDUCT.md
     ├── conf
+    ├── Dockerfile
     ├── docs
     ├── environment.yml
+    ├── LICENSE
     ├── main.nf
     ├── nextflow.config
-    └── tests
+    ├── parameters.settings.json
+    └── README.md
 
-7 directories, 8 files
+10 directories, 15 files
+```
+
+The pipeline files are automatically updated so that the local copy of institutional configs are available when running the pipeline.
+So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
+
+You can run the pipeline by simply providing the directory path for the `workflow` folder.
+Note that if using Singularity, you will also need to provide the path to the Singularity image.
+For example:
+
+```bash
+nextflow run /path/to/nf-core-methylseq-1.4/workflow/ \
+     -profile singularity \
+     -with-singularity /path/to/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg \
+     # .. other normal pipeline parameters from here on..
+     --reads '*_R{1,2}.fastq.gz' --genome GRCh38
 ```
 
 ## Pipeline software licences
