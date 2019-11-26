@@ -212,8 +212,10 @@ To make this process easier and ensure accurate retrieval of correctly versioned
 By default, the pipeline will download the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files.
 If you specify the flag `--singularity`, it will also download any singularity image files that are required.
 
+Use `-r`/`--release` to download a specific release of the pipeline. If not specified, the tool will automatically fetch the latest release.
+
 ```console
-$ nf-core download methylseq --singularity
+$ nf-core download methylseq -r 1.4 --singularity
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
