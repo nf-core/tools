@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v1
       - name: Install Nextflow
         run: |
-          export NXF_VER=${{ matrix.nxf_ver }}
+          {% raw %}export NXF_VER=${{ matrix.nxf_ver }}{% endraw %}
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
       - name: Run test
