@@ -12,4 +12,4 @@ jobs:
       # PRs are only ok if coming from an nf-core dev branch
       - name: Check PRs
         run: |
-          { [[ $(git remote get-url origin) == *nf-core/sarek ]] && [[ ${GITHUB_BASE_REF} = "master" ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == patch ]]
+          { [[ $(git remote get-url origin) == *{{cookiecutter.name_noslash}} ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
