@@ -3,6 +3,7 @@
 """
 
 import nf_core.list
+import nf_core.utils
 from nf_core.download import DownloadWorkflow
 
 import hashlib
@@ -14,6 +15,8 @@ import requests
 import shutil
 import tempfile
 import unittest
+
+PATH_WORKING_EXAMPLE = os.path.join(os.path.dirname(__file__), 'lint_examples/minimal_working_example')
 
 class DownloadTest(unittest.TestCase):
 
@@ -114,6 +117,36 @@ class DownloadTest(unittest.TestCase):
         download_obj.download_wf_files()
 
     #
+    # Tests for 'download_configs'
+    #
+    def test_download_configs(self):
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            release = "1.2.0",
+            outdir = tempfile.mkdtemp()
+            )
+        download_obj.download_configs()
+
+    #
+    # Tests for 'wf_use_local_configs'
+    #
+    def test_wf_use_local_configs(self):
+        # Get a workflow and configs
+        test_outdir = tempfile.mkdtemp()
+        download_obj = DownloadWorkflow(
+            pipeline = "dummy",
+            release = "1.2.0",
+            outdir = test_outdir
+            )
+        shutil.copytree(PATH_WORKING_EXAMPLE, os.path.join(test_outdir, 'workflow'))
+        download_obj.download_configs()
+
+        # Test the function
+        download_obj.wf_use_local_configs()
+        wf_config = nf_core.utils.fetch_wf_config(os.path.join(test_outdir, 'workflow'))
+        assert wf_config['params.custom_config_base'] == "'../configs/'"
+
+    #
     # Tests for 'find_container_images'
     #
     @mock.patch('nf_core.utils.fetch_wf_config')
@@ -182,11 +215,11 @@ class DownloadTest(unittest.TestCase):
     def test_download_workflow_with_success(self,
         mock_download_image):
 
-        tmp_dir = os.path.join(tempfile.mkdtemp(), 'new')
+        tmp_dir = tempfile.mkdtemp()
 
         download_obj = DownloadWorkflow(
             pipeline = "nf-core/methylseq",
-            outdir = tmp_dir,
+            outdir = os.path.join(tmp_dir, 'new'),
             singularity = True)
 
         download_obj.download_workflow()

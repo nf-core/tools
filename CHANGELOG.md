@@ -1,14 +1,58 @@
 # nf-core/tools: Changelog
 
-## v1.7dev
+## v1.8dev
 
-### Pypi package description
+### Tools helper code
 
-* The readme should now be rendered properly on Pypi.
+* Updated Blacklist of synced pipelines
+* Ignore pre-releases in `nf-core list`
+* Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
+
+### Linting
+
+* Adjusted linting to enable `patch` branches from being tested
+
+### Template
+
+* Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
+* Fixed [incorrect usage of non-existant parameter](https://github.com/nf-core/tools/issues/446) in the template
+* Add UCSC genomes to `igenomes.config` and add paths to all genome indices
+* Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
+* Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
+* Change remaining parameters from `camelCase` to `snakeCase` [#39](https://github.com/nf-core/hic/issues/39)
+  * `--singleEnd` to `--single_end`
+  * `--igenomesIgnore` to `--igenomes_ignore`
+  * Having the old camelCase versions of these will now throw an error
+* Add `autoMounts=true` to default singularity profile
+* Add in `markdownlint` checks that were being ignored by default
+* Disable ansi logging in the travis CI tests.
+* Move `params`section from `base.config` to `nextflow.config`
+* Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment.
+* Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
+* Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
+* Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
+* Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
+* Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
+
+### Other
+
+* Updated Base Dockerfile to Conda 4.7.10
+* Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
+
+## v1.7
 
 ### Tools helper code
 
 * The tools `create` command now sets up a `TEMPLATE` and a `dev` branch for syncing
+* Fixed issue [379](https://github.com/nf-core/tools/issues/379)
+* nf-core launch now uses stable parameter schema version 0.1.0
+* Check that PR from patch or dev branch is acceptable by linting
+* Made code compatible with Python 3.7
+* The `download` command now also fetches institutional configs from nf-core/configs
+* When listing pipelines, a nicer message is given for the rare case of a detached `HEAD` ref in a locally pulled pipeline. [#297](https://github.com/nf-core/tools/issues/297)
+* The `download` command can now compress files into a single archive.
+* `nf-core create` now fetches a logo for the pipeline from the nf-core website
+* The readme should now be rendered properly on PyPI.
 
 ### Syncing
 
@@ -23,13 +67,16 @@
 
 ### Template
 
+* Add new code for Travis CI to allow PRs from patch branches too
 * Fix small typo in central readme of tools for future releases
 * Small code polishing + typo fix in the template main.nf file
+* Header ANSI codes no longer print `[2m` to console when using `-with-ansi`
 * Switched to yaml.safe_load() to fix PyYAML warning that was thrown because of a possible [exploit](https://github.com/yaml/pyyaml/wiki/PyYAML-yaml.load(input)-Deprecation)
 * Add `nf-core` citation
 * Add proper `nf-core` logo for tools
 * Add `Quick Start` section to main README of template
 * Fix [Docker RunOptions](https://github.com/nf-core/tools/pull/351) to get UID and GID set in the template
+* `Dockerfile` now specifically uses the proper release tag of the nfcore/base image
 * Use [`file`](https://github.com/nf-core/tools/pull/354) instead of `new File`
   to avoid weird behavior such as making an `s3:/` directory locally when using
   an AWS S3 bucket as the `--outdir`.
@@ -41,10 +88,19 @@
 * Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
 * Fix Parameters JSON due to new versionized structure
 * Added conda-forge::r-markdown=1.1 and conda-forge::r-base=3.6.1 to environment
+* Plain-text email template now has nf-core ASCII artwork
+* Template configured to use logo fetched from website
+* New option `--email_on_fail` which only sends emails if the workflow is not successful
+* Add file existence check when checking software versions
+* Fixed issue [https://github.com/nf-core/tools/issues/165] - Use `checkIfExists`
+* Consistent spacing for `if` statements
+* Add sensible resource labels to `base.config`
 
 ### Other
 
 * Bump `conda` to 4.6.14 in base nf-core Dockerfile
+* Added a Code of Conduct to nf-core/tools, as only the template had this before
+* TravisCI tests will now also start for PRs from `patch` branches, [to allow fixing critical issues](https://github.com/nf-core/tools/pull/392) without making a new major release
 
 ## v1.6
 
@@ -198,7 +254,7 @@ Very large release containing lots of work from the first nf-core hackathon, hel
   * New pipelines are now created using the command `nf-core create`
   * The nf-core template and associated linting are now controlled under the same version system
 * Large number of template updates and associated linting changes
-  * New simplified cookicutter variable usage
+  * New simplified cookiecutter variable usage
   * Refactored documentation - simplified and reduced duplication
   * Better `manifest` variables instead of `params` for pipeline name and version
   * New integrated nextflow version checking

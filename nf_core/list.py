@@ -6,6 +6,7 @@ from collections import OrderedDict
 
 import click
 import datetime
+import errno
 import json
 import logging
 import os
@@ -96,7 +97,7 @@ class Workflows(object):
                 with open(os.devnull, 'w') as devnull:
                     nflist_raw = subprocess.check_output(['nextflow', 'list'], stderr=devnull)
             except OSError as e:
-                if e.errno == os.errno.ENOENT:
+                if e.errno == errno.ENOENT:
                     raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
             except subprocess.CalledProcessError as e:
                 raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
@@ -237,8 +238,8 @@ class RemoteWorkflow(object):
         self.watchers_count = data.get('watchers_count')
         self.forks_count = data.get('forks_count')
 
-        # Placeholder vars for releases info
-        self.releases = data.get('releases')
+        # Placeholder vars for releases info (ignore pre-releases)
+        self.releases = [ r for r in data.get('releases', []) if r.get('published_at') is not None ]
 
         # Placeholder vars for local comparison
         self.local_wf = None
@@ -287,7 +288,7 @@ class LocalWorkflow(object):
                     with open(os.devnull, 'w') as devnull:
                         nfinfo_raw = subprocess.check_output(['nextflow', 'info', '-d', self.full_name], stderr=devnull)
                 except OSError as e:
-                    if e.errno == os.errno.ENOENT:
+                    if e.errno == errno.ENOENT:
                         raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
                 except subprocess.CalledProcessError as e:
                     raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
@@ -303,13 +304,22 @@ class LocalWorkflow(object):
 
         # Pull information from the local git repository
         if self.local_path is not None:
-            repo = git.Repo(self.local_path)
-            self.commit_sha = str(repo.head.commit.hexsha)
-            self.remote_url = str(repo.remotes.origin.url)
-            self.branch = str(repo.active_branch)
-            self.last_pull = os.stat(os.path.join(self.local_path, '.git', 'FETCH_HEAD')).st_mtime
-            self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
-            self.last_pull_pretty = pretty_date(self.last_pull)
+            try:
+                repo = git.Repo(self.local_path)
+                self.commit_sha = str(repo.head.commit.hexsha)
+                self.remote_url = str(repo.remotes.origin.url)
+                self.branch = str(repo.active_branch)
+                self.last_pull = os.stat(os.path.join(self.local_path, '.git', 'FETCH_HEAD')).st_mtime
+                self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
+                self.last_pull_pretty = pretty_date(self.last_pull)
+            except TypeError as e:
+                logging.error(
+                    "Could not fetch status of local Nextflow copy of {}:".format(self.full_name) +
+                    "\n   {}".format(str(e)) +
+                    "\n\nIt's probably a good idea to delete this local copy and pull again:".format(self.local_path) +
+                    "\n   rm -rf {}".format(self.local_path) +
+                    "\n   nextflow pull {}".format(self.full_name)
+                )
 
 
 def pretty_date(time):

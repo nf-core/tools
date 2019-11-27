@@ -6,7 +6,7 @@ We try to manage the required tasks for {{ cookiecutter.name }} using GitHub iss
 
 However, don't be put off by this template - other more general issues and suggestions are welcome! Contributions to the code are even more welcome ;)
 
-> If you need help using or modifying {{ cookiecutter.name }} then the best place to ask is on the pipeline channel on [Slack](https://nf-co.re/join/slack/).
+> If you need help using or modifying {{ cookiecutter.name }} then the best place to ask is on the pipeline channel on [Slack](https://nf-co.re/join/slack).
 
 
 
@@ -26,7 +26,7 @@ If you're not used to this workflow with git, you can start with some [basic doc
 
 
 ## Tests
-When you create a pull request with changes, [Travis CI](https://travis-ci.org/) will run automatic tests.
+When you create a pull request with changes, [Travis CI](https://travis-ci.com/) will run automatic tests.
 Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
 
 There are typically two types of tests that run:
@@ -44,4 +44,4 @@ If there are any failures then the automated tests fail.
 These tests are run both with the latest available version of Nextflow and also the minimum required version that is stated in the pipeline code.
 
 ## Getting help
-For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://github.com/{{ cookiecutter.name }}#documentation) and don't hesitate to get in touch on the [{{ cookiecutter.name }} pipeline channel](https://nfcore.slack.com/channels/{{ cookiecutter.name }}) on [Slack](https://nf-co.re/join/slack/).
+For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://github.com/{{ cookiecutter.name }}#documentation) and don't hesitate to get in touch on the [{{ cookiecutter.name }} pipeline channel](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) on [Slack](https://nf-co.re/join/slack).
