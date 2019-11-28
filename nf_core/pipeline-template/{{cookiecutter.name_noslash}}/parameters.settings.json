@@ -1,0 +1,143 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/{{ cookiecutter.name }}/master/parameters.schema.json",
+    "title": "{{ cookiecutter.name }} pipeline parameters",
+    "description": "{{ cookiecutter.description }}",
+    "type": "object",
+    "properties": {
+        "input": {
+            "title": "Pipeline Input",
+            "type": "object",
+            "properties": {
+                "genome": {
+                    "type": "string",
+                    "description": "genome",
+                },
+                "reads": {
+                    "type": "string",
+                    "description": "reads",
+                    "default": "data/*{1,2}.fastq.gz",
+                },
+                "single_end": {
+                    "type": "boolean",
+                    "description": "single_end",
+                },
+                "outdir": {
+                    "type": "string",
+                    "description": "outdir",
+                    "default": "./results",
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Workflow name",
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "description": "multiqc_config",
+                    "default": "$baseDir/assets/multiqc_config.yaml",
+                },
+                "email": {
+                    "type": "string",
+                    "description": "email",
+                },
+                "email_on_fail": {
+                    "type": "string",
+                    "description": "email_on_fail",
+                },
+                "max_multiqc_email_size": {
+                    "type": "string",
+                    "description": "max_multiqc_email_size",
+                    "default": "25 MB",
+                },
+                "plaintext_email": {
+                    "type": "boolean",
+                    "description": "plaintext_email",
+                },
+                "monochrome_logs": {
+                    "type": "boolean",
+                    "description": "monochrome_logs",
+                },
+                "help": {
+                    "type": "boolean",
+                    "description": "help",
+                },
+                "igenomes_base": {
+                    "type": "string",
+                    "description": "igenomes_base",
+                    "default": "s3://ngi-igenomes/igenomes/",
+                },
+                "tracedir": {
+                    "type": "string",
+                    "description": "tracedir",
+                    "default": "./results/pipeline_info",
+                },
+                "igenomes_ignore": {
+                    "type": "boolean",
+                    "description": "igenomes_ignore",
+                },
+                "custom_config_version": {
+                    "type": "string",
+                    "description": "custom_config_version",
+                    "default": "master",
+                },
+                "custom_config_base": {
+                    "type": "string",
+                    "description": "custom_config_base",
+                    "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                },
+                "hostnames": {
+                    "type": "string",
+                    "description": "hostnames",
+                    "default": "[crick:['.thecrick.org'], genotoul:['.genologin1.toulouse.inra.fr', '.genologin2.toulouse.inra.fr'], genouest:['.genouest.org'], uppmax:['.uppmax.uu.se']]",
+                },
+                "config_profile_description": {
+                    "type": "string",
+                    "description": "config_profile_description",
+                },
+                "config_profile_contact": {
+                    "type": "string",
+                    "description": "config_profile_contact",
+                },
+                "config_profile_url": {
+                    "type": "string",
+                    "description": "config_profile_url",
+                },
+                "max_memory": {
+                    "type": "string",
+                    "description": "max_memory",
+                    "default": "128 GB",
+                },
+                "max_cpus": {
+                    "type": "integer",
+                    "description": "max_cpus",
+                    "default": 16,
+                },
+                "max_time": {
+                    "type": "string",
+                    "description": "max_time",
+                    "default": "10d",
+                },
+                "genomes": {
+                    "type": "string",
+                    "description": "genomes",
+                },
+                "fasta": {
+                    "type": "string",
+                    "description": "fasta",
+                },
+                "awsqueue": {
+                    "type": "string",
+                    "description": "awsqueue",
+                },
+                "readPaths": {
+                    "type": "string",
+                    "description": "readPaths",
+                },
+                "awsregion": {
+                    "type": "string",
+                    "description": "awsregion",
+                }
+            }
+        }
+    ]
+}
