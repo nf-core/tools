@@ -405,11 +405,11 @@ INFO: Updating version in nextflow.config
  + version = '1.0'
 
 INFO: Updating version in nextflow.config
- - process.container = 'nfcore/mypipeline:1.0dev'
+ - process.container = 'nfcore/mypipeline:dev'
  + process.container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .travis.yml
- - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0dev
+ - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
  + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
