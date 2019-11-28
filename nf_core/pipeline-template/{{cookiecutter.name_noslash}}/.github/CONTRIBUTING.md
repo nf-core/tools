@@ -9,7 +9,7 @@ Please use the pre-filled template to save time.
 However, don't be put off by this template - other more general issues and suggestions are welcome!
 Contributions to the code are even more welcome ;)
 
-> If you need help using or modifying {{ cookiecutter.name }} then the best place to ask is on the nf-core Slack [#{{ cookiecutter.cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+> If you need help using or modifying {{ cookiecutter.name }} then the best place to ask is on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Contribution workflow
 
@@ -50,4 +50,4 @@ When patching a release, please work on your fork on a new branch named `patch`
 
 ## Getting help
 
-For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://github.com/{{ cookiecutter.name }}#documentation) and don't hesitate to get in touch on the nf-core Slack [#{{ cookiecutter.cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://github.com/{{ cookiecutter.name }}#documentation) and don't hesitate to get in touch on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
