@@ -405,28 +405,22 @@ INFO: Updating version in nextflow.config
  + version = '1.0'
 
 INFO: Updating version in nextflow.config
- - container = 'nfcore/mypipeline:dev'
- + container = 'nfcore/mypipeline:1.0'
+ - process.container = 'nfcore/mypipeline:dev'
+ + process.container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .travis.yml
- - docker tag nfcore/mypipeline:dev nfcore/mypipeline:latest
- + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
-
-INFO: Updating version in Singularity
- - VERSION 1.0dev
- + VERSION 1.0
+ - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
+ + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
  + name: nf-core-mypipeline-1.0
 
 INFO: Updating version in Dockerfile
- - PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
-
-INFO: Updating version in Singularity
- - PATH=/opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + PATH=/opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
+ - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
+ - ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
+ + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ + ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.

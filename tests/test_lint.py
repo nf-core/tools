@@ -323,7 +323,7 @@ class TestLint(unittest.TestCase):
         lint_obj.conda_config['name'] = 'nf-core-tools-0.4'
         lint_obj.dockerfile = ['fubar']
         lint_obj.check_conda_dockerfile()
-        expectations = {"failed": 4, "warned": 0, "passed": 0}
+        expectations = {"failed": 5, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_dockerfile_skip(self):
