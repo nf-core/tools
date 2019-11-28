@@ -400,26 +400,21 @@ INFO: Changing version number:
   Current version number is '1.0dev'
   New version number will be '1.0'
 
-
 INFO: Updating version in nextflow.config
  - version = '1.0dev'
  + version = '1.0'
-
 
 INFO: Updating version in nextflow.config
  - process.container = 'nfcore/mypipeline:1.0dev'
  + process.container = 'nfcore/mypipeline:1.0'
 
-
 INFO: Updating version in .travis.yml
  - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0dev
  + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
-
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
  + name: nf-core-mypipeline-1.0
-
 
 INFO: Updating version in Dockerfile
  - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
