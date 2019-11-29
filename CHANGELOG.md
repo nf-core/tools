@@ -4,6 +4,7 @@
 
 ### Tools helper code
 
+* `nf-core bump-version` now also bumps the version string of the exported conda environment in the Dockerfile
 * Updated Blacklist of synced pipelines
 * Ignore pre-releases in `nf-core list`
 * Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
@@ -38,6 +39,7 @@
 
 * Updated Base Dockerfile to Conda 4.7.10
 * Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
+* Improved core documentation (`-profile`)
 
 ## v1.7
 

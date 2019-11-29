@@ -203,11 +203,14 @@ to create the container. Such `Dockerfile`s can usually be very short, eg:
 
 ```Dockerfile
 FROM nfcore/base:1.7
+MAINTAINER Rocky Balboa <your@email.com>
 LABEL authors="your@email.com" \
-      description="Container image containing all requirements for nf-core/EXAMPLE pipeline"
+    description="Docker image containing all requirements for the nf-core mypipeline pipeline"
 
 COPY environment.yml /
-RUN conda env update -n root -f /environment.yml && conda clean -a
+RUN conda env create -f /environment.yml && conda clean -a
+RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```
 
 To enforce this minimal `Dockerfile` and check for common copy+paste errors, we require
