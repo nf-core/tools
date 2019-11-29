@@ -1,0 +1,22 @@
+name: nf-core CI
+# This workflow is triggered on pushes and PRs to the repository.
+# It runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
+on: [push, pull_request]  
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and current latest
+        nxf_ver: ['19.10.0', '']
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Nextflow
+        run: |
+          {% raw %}export NXF_VER=${{ matrix.nxf_ver }}{% endraw %}
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+      - name: Run test
+        run: |
+          nextflow run ${GITHUB_WORKSPACE} -profile test,docker

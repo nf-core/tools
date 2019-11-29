@@ -3,6 +3,7 @@
 This page contains detailed descriptions of the tests done by the [nf-core/tools](https://github.com/nf-core/tools) package. Linting errors should show URLs next to any failures that link to the relevant heading below.
 
 ## Error #1 - File not found ## {#1}
+
 nf-core pipelines should adhere to a common file structure for consistency. The lint test looks for the following required files:
 
 * `nextflow.config`
@@ -10,7 +11,7 @@ nf-core pipelines should adhere to a common file structure for consistency. The 
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
 * `.travis.yml` or `circle.yml`
-  * A config file for automated continuous testing with either [Travis CI](https://travis-ci.org/) or [Circle CI](https://circleci.com/)
+  * A config file for automated continuous testing with either [Travis CI](https://travis-ci.com/) or [Circle CI](https://circleci.com/)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
 * `README.md`
@@ -27,13 +28,14 @@ The following files are suggested but not a hard requirement. If they are missin
 * `conf/base.config`
   * A `conf` directory with at least one config called `base.config`
 
-
 ## Error #2 - Docker file check failed ## {#2}
+
 Pipelines should have a files called `Dockerfile` in their root directory.
 The file is used for automated docker image builds. This test checks that the file
 exists and contains at least the string `FROM` (`Dockerfile`).
 
 ## Error #3 - Licence check failed ## {#3}
+
 nf-core pipelines must ship with an open source [MIT licence](https://choosealicense.com/licenses/mit/).
 
 This test fails if the following conditions are not met:
@@ -46,6 +48,7 @@ This test fails if the following conditions are not met:
   * `[year]`, `[fullname]`, `<YEAR>`, `<COPYRIGHT HOLDER>`, `<year>` or `<copyright holders>`
 
 ## Error #4 - Nextflow config check failed ## {#4}
+
 nf-core pipelines are required to be configured with a minimal set of variable
 names. This test fails or throws warnings if required variables are not set.
 
@@ -90,9 +93,9 @@ The following variables throw warnings if missing:
   * If the pipeline version number contains the string `dev`, the dockerhub tag must be `:dev`
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
-* `params.singleEnd`
+* `params.single_end`
   * Specify to work with single-end sequence data instead of default paired-end
-  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
+  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -102,8 +105,11 @@ The following variables are depreciated and fail the test if they are still pres
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
+* `singleEnd` and `igenomesIgnore`
+  * Now using `snake_case` for all command line options
 
 ## Error #5 - Continuous Integration configuration ## {#5}
+
 nf-core pipelines must have CI testing with Travis or Circle CI.
 
 This test fails if the following happens:
@@ -131,6 +137,7 @@ This test fails if the following happens:
     ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
+
 The `README.md` files for a project are very important and must meet some requirements:
 
 * Nextflow badge
@@ -196,11 +203,14 @@ to create the container. Such `Dockerfile`s can usually be very short, eg:
 
 ```Dockerfile
 FROM nfcore/base:1.7
+MAINTAINER Rocky Balboa <your@email.com>
 LABEL authors="your@email.com" \
-      description="Container image containing all requirements for nf-core/EXAMPLE pipeline"
+    description="Docker image containing all requirements for the nf-core mypipeline pipeline"
 
 COPY environment.yml /
-RUN conda env update -n root -f /environment.yml && conda clean -a
+RUN conda env create -f /environment.yml && conda clean -a
+RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```
 
 To enforce this minimal `Dockerfile` and check for common copy+paste errors, we require
@@ -222,3 +232,7 @@ The nf-core workflow template contains a number of comment lines with the follow
 ```
 
 This lint test runs through all files in the pipeline and searches for these lines.
+
+## Error #11 - Singularity file found ##{#11}
+
+As we are relying on [Docker Hub](https://https://hub.docker.com/) instead of Singularity and all containers are automatically pulled from there, repositories should not have a `Singularity` file present.

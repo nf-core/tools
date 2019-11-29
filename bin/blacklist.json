@@ -1,17 +1,13 @@
 {
   "pipelines": [
-    "epitopeprediction",
     "exoseq",
     "neutronstar",
-    "smrnaseq",
     "vipr",
-    "sarek",
     "neutronstar",
     "proteomicslfq",
     "clinvap",
-    "lncpipe",
-    "ddamsproteomics",
-    "scrnaseq",
-    "guideseq"
+    "bactmap",
+    "kmermaid",
+    "crisprvar"
   ]
 }

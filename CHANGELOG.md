@@ -1,10 +1,49 @@
 # nf-core/tools: Changelog
 
-## v1.7dev
+## v1.8dev
 
-### PyPI package description
+### Tools helper code
 
-* The readme should now be rendered properly on PyPI.
+* `nf-core bump-version` now also bumps the version string of the exported conda environment in the Dockerfile
+* Updated Blacklist of synced pipelines
+* Ignore pre-releases in `nf-core list`
+* Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
+* Fixed typo in `nf-core launch` final command
+
+### Linting
+
+* Adjusted linting to enable `patch` branches from being tested
+
+### Template
+
+* Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
+* Fixed [incorrect usage of non-existant parameter](https://github.com/nf-core/tools/issues/446) in the template
+* Add UCSC genomes to `igenomes.config` and add paths to all genome indices
+* Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
+* Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
+* Change remaining parameters from `camelCase` to `snakeCase` [#39](https://github.com/nf-core/hic/issues/39)
+  * `--singleEnd` to `--single_end`
+  * `--igenomesIgnore` to `--igenomes_ignore`
+  * Having the old camelCase versions of these will now throw an error
+* Add `autoMounts=true` to default singularity profile
+* Add in `markdownlint` checks that were being ignored by default
+* Disable ansi logging in the travis CI tests.
+* Move `params`section from `base.config` to `nextflow.config`
+* Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment.
+* Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
+* Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
+* Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
+* Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
+* Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
+* Update `check_max()` with an improved `check_resource()`, which is already used in `nf-core/sarek`
+
+### Other
+
+* Updated Base Dockerfile to Conda 4.7.10
+* Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
+* Improved core documentation (`-profile`)
+
+## v1.7
 
 ### Tools helper code
 
@@ -17,6 +56,7 @@
 * When listing pipelines, a nicer message is given for the rare case of a detached `HEAD` ref in a locally pulled pipeline. [#297](https://github.com/nf-core/tools/issues/297)
 * The `download` command can now compress files into a single archive.
 * `nf-core create` now fetches a logo for the pipeline from the nf-core website
+* The readme should now be rendered properly on PyPI.
 
 ### Syncing
 
@@ -46,6 +86,7 @@
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
 * Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* Add GitHub Action for CI and Linting
 * [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
 * Add direct link to the pipeline slack channel in the contribution guidelines
 * Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
@@ -54,7 +95,10 @@
 * Plain-text email template now has nf-core ASCII artwork
 * Template configured to use logo fetched from website
 * New option `--email_on_fail` which only sends emails if the workflow is not successful
-* Update `check_max()` with an improved `check_resource()`, which is already used in nf-core/sarek
+* Add file existence check when checking software versions
+* Fixed issue [https://github.com/nf-core/tools/issues/165] - Use `checkIfExists`
+* Consistent spacing for `if` statements
+* Add sensible resource labels to `base.config`
 
 ### Other
 
@@ -214,7 +258,7 @@ Very large release containing lots of work from the first nf-core hackathon, hel
   * New pipelines are now created using the command `nf-core create`
   * The nf-core template and associated linting are now controlled under the same version system
 * Large number of template updates and associated linting changes
-  * New simplified cookicutter variable usage
+  * New simplified cookiecutter variable usage
   * Refactored documentation - simplified and reduced duplication
   * Better `manifest` variables instead of `params` for pipeline name and version
   * New integrated nextflow version checking

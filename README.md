@@ -1,6 +1,6 @@
 # ![nf-core/tools](docs/images/nfcore-tools_logo.png)
 
-[![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
+[![Build Status](https://travis-ci.com/nf-core/tools.svg?branch=master)](https://travis-ci.com/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
 
@@ -16,7 +16,6 @@ A python package with helper tools for the nf-core community.
 * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
 * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
-
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
@@ -56,6 +55,7 @@ pip install -e .
 ```
 
 ## Listing pipelines
+
 The command `nf-core list` shows all available nf-core pipelines along with their latest version,  when that was published and how recently the pipeline code was pulled to your local system (if at all).
 
 An example of the output from the command is as follows:
@@ -139,6 +139,7 @@ nf-core/mag                           8  dev        -             -             
 Finally, to return machine-readable JSON output, use the `--json` flag.
 
 ## Launch a pipeline
+
 Some nextflow pipelines have a considerable number of command line flags that can be used.
 To help with this, the `nf-core launch` command uses an interactive command-line wizard tool to prompt you for
 values for running nextflow and the pipeline parameters.
@@ -190,7 +191,7 @@ Specify the location of your input FastQ files.
 [..truncated..]
 
 Nextflow command:
-  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" --params-file "/Users/ewels/testing/nfx-params.json"
+  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" -params-file "/Users/ewels/testing/nfx-params.json"
 
 
 Do you want to run this command now? [y/N]: y
@@ -202,8 +203,8 @@ Launching `nf-core/rnaseq` [evil_engelbart] - revision: 37f260d360 [master]
 [..truncated..]
 ```
 
-
 ## Downloading pipelines for offline use
+
 Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection. In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
 
 To make this process easier and ensure accurate retrieval of correctly versioned code and software containers, we have written a download helper tool. Simply specify the name of the nf-core pipeline and it will be downloaded to your current working directory.
@@ -255,6 +256,7 @@ nf-core-methylseq-1.0/
 ```
 
 ## Pipeline software licences
+
 Sometimes it's useful to see the software licences of the tools used in a pipeline. You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
 ```console
@@ -292,6 +294,7 @@ samtools               1.8        MIT
 ```
 
 ## Creating a new workflow
+
 The `create` subcommand makes a new workflow using the nf-core base template.
 With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
 
@@ -335,8 +338,8 @@ Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipeli
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
-
 ## Linting a workflow
+
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
 This is the same test that is used on the automated continuous integration tests.
 
@@ -365,7 +368,6 @@ WARNING: Test Warnings:
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
-
 
 ## Bumping a pipeline version number
 
@@ -403,28 +405,22 @@ INFO: Updating version in nextflow.config
  + version = '1.0'
 
 INFO: Updating version in nextflow.config
- - container = 'nfcore/mypipeline:dev'
- + container = 'nfcore/mypipeline:1.0'
+ - process.container = 'nfcore/mypipeline:dev'
+ + process.container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .travis.yml
- - docker tag nfcore/mypipeline:dev nfcore/mypipeline:latest
- + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
-
-INFO: Updating version in Singularity
- - VERSION 1.0dev
- + VERSION 1.0
+ - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
+ + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
  + name: nf-core-mypipeline-1.0
 
 INFO: Updating version in Dockerfile
- - PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
-
-INFO: Updating version in Singularity
- - PATH=/opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + PATH=/opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
+ - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
+ - ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
+ + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ + ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
