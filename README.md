@@ -191,7 +191,7 @@ Specify the location of your input FastQ files.
 [..truncated..]
 
 Nextflow command:
-  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" --params-file "/Users/ewels/testing/nfx-params.json"
+  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" -params-file "/Users/ewels/testing/nfx-params.json"
 
 
 Do you want to run this command now? [y/N]: y
