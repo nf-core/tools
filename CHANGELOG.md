@@ -4,10 +4,12 @@
 
 ### Tools helper code
 
+* `nf-core bump-version` now also bumps the version string of the exported conda environment in the Dockerfile
 * Updated Blacklist of synced pipelines
 * Ignore pre-releases in `nf-core list`
 * Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
 * Updated documentation for `nf-core download`
+* Fixed typo in `nf-core launch` final command
 
 ### Linting
 
@@ -23,6 +25,7 @@
 * Change remaining parameters from `camelCase` to `snakeCase` [#39](https://github.com/nf-core/hic/issues/39)
   * `--singleEnd` to `--single_end`
   * `--igenomesIgnore` to `--igenomes_ignore`
+  * Having the old camelCase versions of these will now throw an error
 * Add `autoMounts=true` to default singularity profile
 * Add in `markdownlint` checks that were being ignored by default
 * Disable ansi logging in the travis CI tests.
@@ -38,6 +41,7 @@
 
 * Updated Base Dockerfile to Conda 4.7.10
 * Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
+* Improved core documentation (`-profile`)
 
 ## v1.7
 
@@ -82,6 +86,7 @@
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
 * Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* Add GitHub Action for CI and Linting
 * [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
 * Add direct link to the pipeline slack channel in the contribution guidelines
 * Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
