@@ -10,6 +10,7 @@
 * Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
 * Updated documentation for `nf-core download`
 * Fixed typo in `nf-core launch` final command
+* Handle missing pipeline descriptions in `nf-core list`
 
 ### Linting
 
