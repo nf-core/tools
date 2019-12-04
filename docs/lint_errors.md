@@ -11,7 +11,7 @@ nf-core pipelines should adhere to a common file structure for consistency. The 
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
 * `.travis.yml` or `circle.yml`
-  * A config file for automated continuous testing with either [Travis CI](https://travis-ci.org/) or [Circle CI](https://circleci.com/)
+  * A config file for automated continuous testing with either [Travis CI](https://travis-ci.com/) or [Circle CI](https://circleci.com/)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
 * `README.md`
@@ -93,9 +93,9 @@ The following variables throw warnings if missing:
   * If the pipeline version number contains the string `dev`, the dockerhub tag must be `:dev`
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
-* `params.singleEnd`
+* `params.single_end`
   * Specify to work with single-end sequence data instead of default paired-end
-  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.singleEnd ? 1 : 2 )`
+  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -105,6 +105,8 @@ The following variables are depreciated and fail the test if they are still pres
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
+* `singleEnd` and `igenomesIgnore`
+  * Now using `snake_case` for all command line options
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
@@ -201,11 +203,14 @@ to create the container. Such `Dockerfile`s can usually be very short, eg:
 
 ```Dockerfile
 FROM nfcore/base:1.7
+MAINTAINER Rocky Balboa <your@email.com>
 LABEL authors="your@email.com" \
-      description="Container image containing all requirements for nf-core/EXAMPLE pipeline"
+    description="Docker image containing all requirements for the nf-core mypipeline pipeline"
 
 COPY environment.yml /
-RUN conda env update -n root -f /environment.yml && conda clean -a
+RUN conda env create -f /environment.yml && conda clean -a
+RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```
 
 To enforce this minimal `Dockerfile` and check for common copy+paste errors, we require
@@ -227,3 +232,7 @@ The nf-core workflow template contains a number of comment lines with the follow
 ```
 
 This lint test runs through all files in the pipeline and searches for these lines.
+
+## Error #11 - Singularity file found ##{#11}
+
+As we are relying on [Docker Hub](https://https://hub.docker.com/) instead of Singularity and all containers are automatically pulled from there, repositories should not have a `Singularity` file present.
