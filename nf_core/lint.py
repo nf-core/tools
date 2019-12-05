@@ -235,6 +235,10 @@ class PipelineLint(object):
             'docs/README.md',
             'docs/output.md',
             'docs/usage.md',
+            ['.travis.yml', '.github/workflows/branch.yml'],
+            ['.travis.yml', '.github/workflows/ci.yml'],
+            ['.travis.yml', '.github/workflows/linting.yml']
+
         ]
         files_warn = [
             'main.nf',
@@ -483,6 +487,25 @@ class PipelineLint(object):
             else:
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
+    def check_actions_branch_protection(self):
+        """Checks that the github actions workflows are valid.
+
+        Makes sure that ``nf-core lint``runs in github actions workflows and that 
+        tests run with the required nextflow version.
+        """
+        for wf in ['.github/workflows/branch.yml']:
+            fn = os.path.join(self.path, wf)
+            if os.path.isfile(fn):
+                with open(fn, 'r') as fh:
+                    branchwf = yaml.safe_load(fh)
+                # Check that we have the master branch protection, but allow patch as well
+                branchMasterCheck = 'master'
+                try:
+                    assert(branchMasterCheck in branchwf.get('on', {'pull_request', {'branches', {}}}))
+                except AssertionError:
+                    self.failed.append((5, "Github actions branch workflow must check for master branch PRs: '{}'".format(fn)))
+                else:
+                    self.passed.append((5, "Github actions branch workflow checks for master branch PRs: '{}'".format(fn)))
 
     def check_ci_config(self):
         """Checks that the Travis or Circle CI YAML config is valid.
