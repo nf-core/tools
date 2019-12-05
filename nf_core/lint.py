@@ -195,7 +195,6 @@ class PipelineLint(object):
 
             'nextflow.config',
             'Dockerfile',
-            ['.travis.yml', '.circle.yml'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
@@ -207,7 +206,19 @@ class PipelineLint(object):
 
             'main.nf',
             'environment.yml',
-            'conf/base.config'
+            'conf/base.config',
+            '.github/workflows/branch.yml',
+            '.github/workflows/ci.yml',
+            '.github/workfows/linting.yml'
+
+        Files that *must not* be present::
+
+            '.circle.yml',
+            'Singularity'
+
+        Files that *should not* be present::
+
+            '.travis.yml'
 
         Raises:
             An AssertionError if neither `nextflow.config` or `main.nf` found.
@@ -218,7 +229,6 @@ class PipelineLint(object):
         files_fail = [
             'nextflow.config',
             'Dockerfile',
-            ['.travis.yml', '.circle.yml'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
@@ -229,7 +239,17 @@ class PipelineLint(object):
         files_warn = [
             'main.nf',
             'environment.yml',
-            'conf/base.config'
+            'conf/base.config',
+            '.github/workflows/branch.yml',
+            '.github/workflows/ci.yml',
+            '.github/workflows/linting.yml'
+        ]
+        files_fail_ifexists = [
+            'Singularity',
+            '.circle.yml'
+        ]
+        files_warn_ifexists = [
+            '.travis.yml'
         ]
 
         def pf(file_path):
@@ -239,7 +259,7 @@ class PipelineLint(object):
         if not os.path.isfile(pf('nextflow.config')) and not os.path.isfile(pf('main.nf')):
             raise AssertionError('Neither nextflow.config or main.nf found! Is this a Nextflow pipeline?')
 
-        # Files that cause an error
+        # Files that cause an error if they don't exist
         for files in files_fail:
             if not isinstance(files, list):
                 files = [files]
@@ -249,7 +269,7 @@ class PipelineLint(object):
             else:
                 self.failed.append((1, "File not found: {}".format(files)))
 
-        # Files that cause a warning
+        # Files that cause a warning if they don't exist
         for files in files_warn:
             if not isinstance(files, list):
                 files = [files]
@@ -258,6 +278,24 @@ class PipelineLint(object):
                 self.files.extend(files)
             else:
                 self.warned.append((1, "File not found: {}".format(files)))
+
+        # Files that cause an error if they exist
+        for files in files_fail_ifexists:
+            if not isinstance(files, list):
+                files = [files]
+            if any([os.path.isfile(pf(f)) for f in files]):
+                self.failed.append((1, "File must be removed: {}".format(files)))
+            else:
+                self.passed.append((1, "File not found check: {}".format(files)))
+        
+        # Files that cause a warning if they exist
+        for files in files_warn_ifexists:
+            if not isinstance(files, list):
+                files = [files]
+            if any ([os.path.isfile(pf(f)) for f in files]):
+                self.warned.append((1, "File should be removed: {}".format(files)))
+            else:
+                self.passed.append((1, "File not found check: {}".format(files)))
 
         # Load and parse files for later
         if 'environment.yml' in self.files:
@@ -277,12 +315,6 @@ class PipelineLint(object):
             return
 
         self.failed.append((2, "Dockerfile check failed"))
-
-    def check_singularity(self):
-        """Checks whether a Singularity file exists and warns to remove that file then."""
-        fn = os.path.join(self.path, "Singularity")
-        if(os.path.exists(fn)):
-            self.failed.append((11, "Singularity file exists"))
 
     def check_licence(self):
         """Checks licence file is MIT.
