@@ -280,6 +280,7 @@ def bump_version(pipeline_dir, new_version, nextflow):
 @click.argument(
     'pipeline_dir',
     type = click.Path(exists=True),
+    nargs = -1,
     metavar = "<pipeline directory>"
 )
 @click.option(
@@ -328,9 +329,11 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
         nf_core.sync.sync_all_pipelines()
     else:
         # Manually check for the required parameter
-        if not pipeline_dir:
-            logging.error("<pipeline directory> is required")
+        if not pipeline_dir or len(pipeline_dir) != 1:
+            logging.error("Either use --all or specify one <pipeline directory>")
             sys.exit(1)
+        else:
+            pipeline_dir = pipeline_dir[0]
 
         # Sync the given pipeline dir
         sync_obj = nf_core.sync.PipelineSync(pipeline_dir, make_template_branch, from_branch, pull_request)
