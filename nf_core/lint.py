@@ -519,6 +519,7 @@ class PipelineLint(object):
                     ciconf = yaml.safe_load(fh)
                 # Check that we have the master branch protection, but allow patch as well
                 travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ]) || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]'
+
                 try:
                     assert(travisMasterCheck in ciconf.get('before_install', {}))
                 except AssertionError:

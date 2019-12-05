@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 61
+MAX_PASS_CHECKS = 68
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -58,7 +58,7 @@ class TestLint(unittest.TestCase):
         This should not result in any exception for the minimal
         working example"""
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
-        expectations = {"failed": 0, "warned": 3, "passed": MAX_PASS_CHECKS}
+        expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -73,7 +73,7 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline(release_mode=True)
-        expectations = {"failed": 0, "warned": 3, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
+        expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
