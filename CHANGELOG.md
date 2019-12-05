@@ -16,7 +16,7 @@
 
 * Adjusted linting to enable `patch` branches from being tested
 * `.travis.yml` now optional, `.circle.yml` and `Singularity` must not be present
-* warn if github actions workfkows do not exist
+* Warn if GitHub actions workflows do not exist
 
 ### Template
 
