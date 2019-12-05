@@ -42,7 +42,7 @@ jobs:
   include:
     - stage: docs generation
       if: (branch = "master" OR branch = "dev") AND type = push AND repo = nf-core/tools
-      script: bash ./bin/push.sh
+      script: bash ./bin/build_api_docs.sh
 
 deploy:
   provider: pypi
@@ -57,4 +57,4 @@ deploy:
 
 # Sync pipelines with possible nf-core template changes
 after_deploy:
-  - ./bin/sync
+  - nf-core sync --all
