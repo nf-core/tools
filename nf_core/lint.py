@@ -166,7 +166,6 @@ class PipelineLint(object):
             'check_files_exist',
             'check_licence',
             'check_docker',
-            'check_singularity',
             'check_nextflow_config',
             'check_ci_config',
             'check_readme',
