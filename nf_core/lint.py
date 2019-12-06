@@ -502,15 +502,10 @@ class PipelineLint(object):
 
             try:
                 branchwf[True]['pull_request']['branches']
-            except KeyError:
-                self.failed.append((5, "Github actions branch workflow must check for master branch PRs (KeyError): '{}'".format(fn)))
+            except (AssertionError, KeyError):
+                self.failed.append((5, "Github actions branch workflow must check for master branch PRs: '{}'".format(fn)))
             else:
-                try:
-                    assert(branchMasterCheck in branchwf[True]['pull_request']['branches'])
-                except AssertionError:
-                        self.failed.append((5, "Github actions branch workflow must check for master branch PRs: '{}'".format(fn)))
-                else:
-                    self.passed.append((5, "Github actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.passed.append((5, "Github actions branch workflow checks for master branch PRs: '{}'".format(fn)))
 
     def check_ci_config(self):
         """Checks that the Travis or Circle CI YAML config is valid.
