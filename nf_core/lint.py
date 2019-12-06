@@ -173,7 +173,7 @@ class PipelineLint(object):
             'check_conda_env_yaml',
             'check_conda_dockerfile',
             'check_pipeline_todos',
-            'check_pipeline_naming'
+            'check_pipeline_name'
         ]
         if release_mode:
             self.release_mode = True
@@ -803,7 +803,7 @@ class PipelineLint(object):
                                 l = '{}..'.format(l[:50-len(fname)])
                             self.warned.append((10, "TODO string found in '{}': {}".format(fname,l)))
 
-    def check_pipeline_naming(self):
+    def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
         
         #Extract last part of given path, a.k.a. the workflow name

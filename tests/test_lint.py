@@ -423,3 +423,18 @@ class TestLint(unittest.TestCase):
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pipeline_name_pass(self):
+        """Tests pipeline name good pipeline example: lower case, no punctuation"""
+        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        good_lint_obj.check_pipeline_name()
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(good_lint_obj, **expectations)
+        print("something happened")
+
+    def test_pipeline_name_critical(self):
+        """Tests that warning is returned for pipeline not adhering to naming convention"""
+        good_lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
+        good_lint_obj.check_pipeline_name()
+        expectations = {"failed": 0, "warned": 1, "passed": 0}
+        self.assess_lint_status(good_lint_obj, **expectations)
