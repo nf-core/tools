@@ -8,7 +8,7 @@ import unittest
 import nf_core.lint, nf_core.bump_version
 
 WD = os.path.dirname(__file__)
-PATH_WORKING_EXAMPLE = os.path.join(WD, 'lint_examples/minimal_working_example')
+PATH_WORKING_EXAMPLE = os.path.join(WD, 'lint_examples/minimalworkingexample')
 
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
