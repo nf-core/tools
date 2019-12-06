@@ -32,13 +32,13 @@ def pf(wd, path):
 WD = os.path.dirname(__file__)
 PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
-PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
+PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimalworkingexample')
 PATH_MISSING_LICENSE_EXAMPLE = pf(WD, 'lint_examples/missing_license_example')
 PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 61
+MAX_PASS_CHECKS = 62
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -430,7 +430,6 @@ class TestLint(unittest.TestCase):
         good_lint_obj.check_pipeline_name()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(good_lint_obj, **expectations)
-        print("something happened")
 
     def test_pipeline_name_critical(self):
         """Tests that warning is returned for pipeline not adhering to naming convention"""
