@@ -38,6 +38,7 @@
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
 * Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 * Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
+* Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
 
 ### Other
 
