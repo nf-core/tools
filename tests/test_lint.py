@@ -36,6 +36,7 @@ PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
 PATH_MISSING_LICENSE_EXAMPLE = pf(WD, 'lint_examples/missing_license_example')
 PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
+PATH_ACTIONS_FAILING_EXAMPLE = pf(WD, 'lint_examples/actions_failing_example')
 
 # The maximum sum of passed tests currently possible
 MAX_PASS_CHECKS = 68
@@ -127,6 +128,22 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test falls over nicely with nextflow can't run"""
         bad_lint_obj = nf_core.lint.PipelineLint('/non/existant/path')
         bad_lint_obj.check_nextflow_config()
+    
+    def test_actions_wf_branch_pass(self):
+        """Tests that linting for GitHub actions workflow for branch protection works for a good example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.minNextflowVersion = '19.10.0'
+        lint_obj.check_actions_branch_protection()
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(lint_obj, **expectations)
+    
+    def test_actions_wf_branch_fail(self):
+        """Tests that linting for Github actions workflow for branch protection fails for a bad example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_ACTIONS_FAILING_EXAMPLE)
+        lint_obj.minNextflowVersion = '19.10.0'
+        lint_obj.check_actions_branch_protection()
+        expectations = {"failed": 1, "warned":0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
 
     def test_ci_conf_pass(self):
         """Tests that the continous integration config checks work with a good example"""

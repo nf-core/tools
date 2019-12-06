@@ -489,20 +489,26 @@ class PipelineLint(object):
     def check_actions_branch_protection(self):
         """Checks that the github actions workflows are valid.
 
-        Makes sure that ``nf-core lint``runs in github actions workflows and that 
+        Makes sure that ``nf-core lint`` runs in github actions workflows and that 
         tests run with the required nextflow version.
         """
-        for wf in ['.github/workflows/branch.yml']:
-            fn = os.path.join(self.path, wf)
-            if os.path.isfile(fn):
-                with open(fn, 'r') as fh:
-                    branchwf = yaml.safe_load(fh)
-                # Check that we have the master branch protection, but allow patch as well
-                branchMasterCheck = 'master'
+        wf = '.github/workflows/branch.yml'
+        fn = os.path.join(self.path, wf)
+        if os.path.isfile(fn):
+            with open(fn, 'r') as fh:
+                branchwf = yaml.safe_load(fh)
+            # Check that we have the master branch protection, but allow patch as well
+            branchMasterCheck = 'master'
+
+            try:
+                branchwf[True]['pull_request']['branches']
+            except KeyError:
+                self.failed.append((5, "Github actions branch workflow must check for master branch PRs (KeyError): '{}'".format(fn)))
+            else:
                 try:
-                    assert(branchMasterCheck in branchwf.get('on', {'pull_request', {'branches', {}}}))
+                    assert(branchMasterCheck in branchwf[True]['pull_request']['branches'])
                 except AssertionError:
-                    self.failed.append((5, "Github actions branch workflow must check for master branch PRs: '{}'".format(fn)))
+                        self.failed.append((5, "Github actions branch workflow must check for master branch PRs: '{}'".format(fn)))
                 else:
                     self.passed.append((5, "Github actions branch workflow checks for master branch PRs: '{}'".format(fn)))
 
