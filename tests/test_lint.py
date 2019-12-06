@@ -134,7 +134,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.minNextflowVersion = '19.10.0'
         lint_obj.check_actions_branch_protection()
-        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        expectations = {"failed": 0, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
     
     def test_actions_wf_branch_fail(self):
@@ -142,7 +142,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_ACTIONS_FAILING_EXAMPLE)
         lint_obj.minNextflowVersion = '19.10.0'
         lint_obj.check_actions_branch_protection()
-        expectations = {"failed": 1, "warned":0, "passed": 0}
+        expectations = {"failed": 2, "warned":0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_ci_conf_pass(self):

@@ -487,25 +487,47 @@ class PipelineLint(object):
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
     def check_actions_branch_protection(self):
-        """Checks that the github actions workflows are valid.
+        """Checks that the GitHub actions branch protection workflow is valid.
 
-        Makes sure that ``nf-core lint`` runs in github actions workflows and that 
+        Makes sure that ``nf-core lint`` runs in GitHub actions workflows and that 
         tests run with the required nextflow version.
         """
-        wf = '.github/workflows/branch.yml'
-        fn = os.path.join(self.path, wf)
+        fn = os.path.join(self.path, '.github', 'workflows', 'branch.yml')
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 branchwf = yaml.safe_load(fh)
-            # Check that we have the master branch protection, but allow patch as well
-            branchMasterCheck = 'master'
-
+            
+            # Check that the action is turned on for PRs to master
             try:
-                branchwf[True]['pull_request']['branches']
+                assert('master' in branchwf[True]['pull_request']['branches'])
             except (AssertionError, KeyError):
-                self.failed.append((5, "Github actions branch workflow must check for master branch PRs: '{}'".format(fn)))
+                self.failed.append((5, "GitHub actions branch workflow must check for master branch PRs: '{}'".format(fn)))
             else:
-                self.passed.append((5, "Github actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.passed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+
+            # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
+            PRMasterCheck = '{ [[ $(git remote get-url origin) == *{{cookiecutter.name_noslash}} ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]'
+            print(branchwf)
+            try:
+                steps = branchwf['jobs']['test']['steps']
+                assert(any([PRMasterCheck in step['run'] for step in steps]))
+            except (AssertionError, KeyError):
+                self.failed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+
+    def check_actions_ci(self):
+        """Checks that the GitHub actions ci workflow is valid
+
+        Makes sure that ``nf-core lint``runs in GitHub actions workflows and that
+        tests run with the required nextflow version.
+        """
+        wf = '.github/workflows/ci.yml'
+        fn = os.path.join(self.path, wf)
+        if os.path.isfile(fn):
+            with open(fn, 'r') as fh:
+                ciwf = yaml.safe_load(fh)
+            
 
     def check_ci_config(self):
         """Checks that the Travis or Circle CI YAML config is valid.
