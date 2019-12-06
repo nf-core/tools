@@ -805,15 +805,12 @@ class PipelineLint(object):
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
-        
-        #Extract last part of given path, a.k.a. the workflow name
-        workflow_name = os.path.basename(os.path.normpath(self.path))
-
-        if workflow_name.islower() and workflow_name.isalpha():
+    
+        if self.pipeline_name.islower() and self.pipeline_name.isalpha():
             self.passed.append((12, "Name adheres to nf-core convention"))
-        if not workflow_name.islower():
+        if not self.pipeline_name.islower():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains uppercase letters"))
-        if not workflow_name.isalpha():
+        if not self.pipeline_name.isalpha():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphabetical characters"))
 
             
