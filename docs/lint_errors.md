@@ -236,3 +236,7 @@ This lint test runs through all files in the pipeline and searches for these lin
 ## Error #11 - Singularity file found ##{#11}
 
 As we are relying on [Docker Hub](https://https://hub.docker.com/) instead of Singularity and all containers are automatically pulled from there, repositories should not have a `Singularity` file present.
+
+## Error #12 - Pipeline name ## {#12}
+
+In order to ensure consistent naming, pipeline names should contain only lower case, alphabetical characters. Otherwise a warning is displayed.

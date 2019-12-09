@@ -16,7 +16,7 @@ import shutil
 import tempfile
 import unittest
 
-PATH_WORKING_EXAMPLE = os.path.join(os.path.dirname(__file__), 'lint_examples/minimal_working_example')
+PATH_WORKING_EXAMPLE = os.path.join(os.path.dirname(__file__), 'lint_examples/minimalworkingexample')
 
 class DownloadTest(unittest.TestCase):
 

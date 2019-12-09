@@ -16,6 +16,7 @@
 ### Linting
 
 * Adjusted linting to enable `patch` branches from being tested
+* Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
 
 ### Template
 
