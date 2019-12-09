@@ -239,5 +239,4 @@ As we are relying on [Docker Hub](https://https://hub.docker.com/) instead of Si
 
 ## Error #12 - Pipeline name ## {#12}
 
- In order to ensure consistent naming, pipeline names should contain only lower case, alphabetical characters. Otherwise a warning is displayed. 
- 
+In order to ensure consistent naming, pipeline names should contain only lower case, alphabetical characters. Otherwise a warning is displayed.
