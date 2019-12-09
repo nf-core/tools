@@ -426,14 +426,17 @@ class TestLint(unittest.TestCase):
 
     def test_pipeline_name_pass(self):
         """Tests pipeline name good pipeline example: lower case, no punctuation"""
+        #good_lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE)
         good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        good_lint_obj.pipeline_name = 'tools'
         good_lint_obj.check_pipeline_name()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(good_lint_obj, **expectations)
 
     def test_pipeline_name_critical(self):
         """Tests that warning is returned for pipeline not adhering to naming convention"""
-        good_lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
-        good_lint_obj.check_pipeline_name()
+        critical_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        critical_lint_obj.pipeline_name = 'Tools123'
+        critical_lint_obj.check_pipeline_name()
         expectations = {"failed": 0, "warned": 1, "passed": 0}
-        self.assess_lint_status(good_lint_obj, **expectations)
+        self.assess_lint_status(critical_lint_obj, **expectations)

@@ -334,6 +334,7 @@ class PipelineLint(object):
         and print all config variables.
         NB: Does NOT parse contents of main.nf / nextflow script
         """
+
         # Fail tests if these are missing
         config_fail = [
             'manifest.name',
@@ -805,7 +806,7 @@ class PipelineLint(object):
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
-    
+       
         if self.pipeline_name.islower() and self.pipeline_name.isalpha():
             self.passed.append((12, "Name adheres to nf-core convention"))
         if not self.pipeline_name.islower():
