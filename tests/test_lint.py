@@ -438,5 +438,5 @@ class TestLint(unittest.TestCase):
         critical_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         critical_lint_obj.pipeline_name = 'Tools123'
         critical_lint_obj.check_pipeline_name()
-        expectations = {"failed": 0, "warned": 1, "passed": 0}
+        expectations = {"failed": 0, "warned": 2, "passed": 0}
         self.assess_lint_status(critical_lint_obj, **expectations)
