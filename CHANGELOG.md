@@ -38,8 +38,15 @@
 * Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
 * Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
+* Add Python 3.7 dependency to the `environment.yml` file
 * Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
 * Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
+
+### Base Docker image
+
+* Use miniconda3 instead of miniconda for a Python 3k base environment
+  * If you still need Python 2 for your pipeline, add `conda-forge::python=2.7.4` to the dependencies in your `environment.yml`
+* Update conda version to 4.7.12
 
 ### Other
 
