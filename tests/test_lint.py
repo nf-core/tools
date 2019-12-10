@@ -133,6 +133,8 @@ class TestLint(unittest.TestCase):
         """Tests that linting for GitHub actions workflow for branch protection works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.minNextflowVersion = '19.10.0'
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.config['manifest.version'] = '0.4'
         lint_obj.check_actions_branch_protection()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
@@ -141,6 +143,8 @@ class TestLint(unittest.TestCase):
         """Tests that linting for Github actions workflow for branch protection fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_ACTIONS_FAILING_EXAMPLE)
         lint_obj.minNextflowVersion = '19.10.0'
+        lint_obj.pipeline_name = 'tools'
+        lint_obj.config['manifest.version'] = '0.4'
         lint_obj.check_actions_branch_protection()
         expectations = {"failed": 2, "warned":0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)

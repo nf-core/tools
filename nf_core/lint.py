@@ -489,8 +489,7 @@ class PipelineLint(object):
     def check_actions_branch_protection(self):
         """Checks that the GitHub actions branch protection workflow is valid.
 
-        Makes sure that ``nf-core lint`` runs in GitHub actions workflows and that 
-        tests run with the required nextflow version.
+        Makes sure PRs can only come from nf-core dev or 'patch' of a fork.
         """
         fn = os.path.join(self.path, '.github', 'workflows', 'branch.yml')
         if os.path.isfile(fn):
@@ -506,8 +505,9 @@ class PipelineLint(object):
                 self.passed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
 
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-            PRMasterCheck = '{ [[ $(git remote get-url origin) == *{{cookiecutter.name_noslash}} ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]'
-            print(branchwf)
+            pipeline_version = self.config.get('manifest.version', '').strip(' \'"')
+            PRMasterCheck = "{{ [[ $(git remote get-url origin) == *nf-core/{} ]] && [[ ${{GITHUB_HEAD_REF}} = \"dev\" ]]; }} || [[ ${{GITHUB_HEAD_REF}} == \"patch\" ]]".format(self.pipeline_name.lower())
+            steps = branchwf['jobs']['test']['steps']
             try:
                 steps = branchwf['jobs']['test']['steps']
                 assert(any([PRMasterCheck in step['run'] for step in steps]))
@@ -522,11 +522,13 @@ class PipelineLint(object):
         Makes sure that ``nf-core lint``runs in GitHub actions workflows and that
         tests run with the required nextflow version.
         """
-        wf = '.github/workflows/ci.yml'
-        fn = os.path.join(self.path, wf)
+        fn = os.path.join(self.path, '.github', 'workflows', 'ci.yml')
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 ciwf = yaml.safe_load(fh)
+
+
+            
             
 
     def check_ci_config(self):
