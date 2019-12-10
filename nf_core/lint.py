@@ -167,6 +167,8 @@ class PipelineLint(object):
             'check_licence',
             'check_docker',
             'check_nextflow_config',
+            'check_actions_branch_protection',
+            'check_actions_ci',
             'check_ci_config',
             'check_readme',
             'check_conda_env_yaml',
@@ -519,13 +521,35 @@ class PipelineLint(object):
     def check_actions_ci(self):
         """Checks that the GitHub actions ci workflow is valid
 
-        Makes sure that ``nf-core lint``runs in GitHub actions workflows and that
-        tests run with the required nextflow version.
+        Makes sure tests run with the required nextflow version.
         """
         fn = os.path.join(self.path, '.github', 'workflows', 'ci.yml')
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 ciwf = yaml.safe_load(fh)
+
+            # Check that the action is turned on for push and pull requests
+            try:
+                assert('push' in ciwf[True])
+                assert('pull_request' in ciwf[True])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub actions ci workflow must be triggered on PR and push: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub actions ci workflow is triggered on PR and push: '{}'".format(fn)))
+
+            # Check that we're pulling the right docker image and tagging it properly
+            print(self.config)
+            if self.config.get('process.container', ''):
+                    docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
+                    docker_withtag = self.config.get('process.container', '').strip('"\'')
+                    docker_pull_cmd = 'docker pull {}:dev && docker tag {}:dev {}\n'.format(docker_notag, docker_notag, docker_withtag)
+                    try:
+                        steps = ciwf['jobs']['test']['steps']
+                        assert(any([docker_pull_cmd in step['run'] for step in steps[1:]]))
+                    except AssertionError:
+                        self.failed.append((5, "CI is not pulling and tagging the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
+                    else:
+                        self.passed.append((5, "CI is pulling and tagging the correct docker image: {}".format(docker_pull_cmd)))
 
 
             
@@ -560,6 +584,7 @@ class PipelineLint(object):
                     self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
 
                 # Check that we're pulling the right docker image
+                print(self.config)
                 if self.config.get('process.container', ''):
                     docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
                     docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
