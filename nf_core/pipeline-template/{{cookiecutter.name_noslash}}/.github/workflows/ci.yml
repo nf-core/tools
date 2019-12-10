@@ -17,6 +17,9 @@ jobs:
           {% raw %}export NXF_VER=${{ matrix.nxf_ver }}{% endraw %}
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
+      - name: Pull image
+        run: |
+          docker pull {{ cookiecutter.name_docker }}:dev && docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
       - name: Run test
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker
