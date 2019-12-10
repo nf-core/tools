@@ -43,7 +43,7 @@
 ### Base Docker image
 
 * Use miniconda3 instead of miniconda for a Python 3k base environment
-    * If you still need Python 2 for your pipeline, add `conda-forge:python=2.7.4` to the dependencies in your `environment.yml`
+    * If you still need Python 2 for your pipeline, add `conda-forge::python=2.7.4` to the dependencies in your `environment.yml`
 * Update conda version to 4.7.12
 
 
