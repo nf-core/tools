@@ -44,6 +44,7 @@
 * Add Python 3.7 dependency to the `environment.yml` file
 * Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
 * Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
+* Add `docker pull` command to GitHub actions CI workflow
 
 ### Base Docker image
 
