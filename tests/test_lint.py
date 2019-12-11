@@ -36,7 +36,6 @@ PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimalworkingexample')
 PATH_MISSING_LICENSE_EXAMPLE = pf(WD, 'lint_examples/missing_license_example')
 PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
-PATH_ACTIONS_FAILING_EXAMPLE = pf(WD, 'lint_examples/actions_failing_example')
 
 # The maximum sum of passed tests currently possible
 MAX_PASS_CHECKS = 76
