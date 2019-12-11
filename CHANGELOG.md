@@ -16,7 +16,7 @@
 ### Linting
 
 * Adjusted linting to enable `patch` branches from being tested
-* `.travis.yml` now optional, `.circle.yml` and `Singularity` must not be present
+* `.travis.yml` and circleCI now optional, `Singularity` must not be present
 * Warn if GitHub actions workflows do not exist
 * Added linting of GitHub actions workflows `linting.yml`, `ci.yml` and `branch.yml`
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
