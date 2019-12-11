@@ -548,7 +548,7 @@ class PipelineLint(object):
                 try:
                     steps = ciwf['jobs']['test']['steps']
                     assert(any([docker_pull_cmd in step['run'] for step in steps if 'run' in step.keys()]))
-                except AssertionError:
+                except (AssertionError, KeyError, TypeError):
                     self.failed.append((5, "CI is not pulling and tagging the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                 else:
                     self.passed.append((5, "CI is pulling and tagging the correct docker image: {}".format(docker_pull_cmd)))
