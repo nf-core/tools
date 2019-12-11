@@ -32,7 +32,7 @@ def pf(wd, path):
 WD = os.path.dirname(__file__)
 PATH_CRITICAL_EXAMPLE =  pf(WD, 'lint_examples/critical_example')
 PATH_FAILING_EXAMPLE = pf(WD, 'lint_examples/failing_example')
-PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimal_working_example')
+PATH_WORKING_EXAMPLE = pf(WD, 'lint_examples/minimalworkingexample')
 PATH_MISSING_LICENSE_EXAMPLE = pf(WD, 'lint_examples/missing_license_example')
 PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
@@ -477,3 +477,20 @@ class TestLint(unittest.TestCase):
         lint_obj.check_conda_env_yaml()
         expectations = {"failed": 1, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
+
+    def test_pipeline_name_pass(self):
+        """Tests pipeline name good pipeline example: lower case, no punctuation"""
+        #good_lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE)
+        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        good_lint_obj.pipeline_name = 'tools'
+        good_lint_obj.check_pipeline_name()
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        self.assess_lint_status(good_lint_obj, **expectations)
+
+    def test_pipeline_name_critical(self):
+        """Tests that warning is returned for pipeline not adhering to naming convention"""
+        critical_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        critical_lint_obj.pipeline_name = 'Tools123'
+        critical_lint_obj.check_pipeline_name()
+        expectations = {"failed": 0, "warned": 2, "passed": 0}
+        self.assess_lint_status(critical_lint_obj, **expectations)

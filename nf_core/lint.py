@@ -174,7 +174,8 @@ class PipelineLint(object):
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
-            'check_pipeline_todos'
+            'check_pipeline_todos',
+            'check_pipeline_name'
         ]
         if release_mode:
             self.release_mode = True
@@ -371,6 +372,7 @@ class PipelineLint(object):
         and print all config variables.
         NB: Does NOT parse contents of main.nf / nextflow script
         """
+
         # Fail tests if these are missing
         config_fail = [
             'manifest.name',
@@ -953,6 +955,18 @@ class PipelineLint(object):
                                 l = '{}..'.format(l[:50-len(fname)])
                             self.warned.append((10, "TODO string found in '{}': {}".format(fname,l)))
 
+    def check_pipeline_name(self):
+        """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
+       
+        if self.pipeline_name.islower() and self.pipeline_name.isalpha():
+            self.passed.append((12, "Name adheres to nf-core convention"))
+        if not self.pipeline_name.islower():
+            self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains uppercase letters"))
+        if not self.pipeline_name.isalpha():
+            self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphabetical characters"))
+
+            
+        
     def print_results(self):
         # Print results
         rl = "\n  Using --release mode linting tests" if self.release_mode else ''

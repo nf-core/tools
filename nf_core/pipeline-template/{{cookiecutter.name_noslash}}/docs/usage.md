@@ -2,8 +2,6 @@
 
 ## Table of contents
 
-<!-- Install Atom plugin markdown-toc-auto for this ToC to auto-update on save -->
-<!-- TOC START min:2 max:3 link:true asterisk:true update:true -->
 * [Table of contents](#table-of-contents)
 * [Introduction](#introduction)
 * [Running the pipeline](#running-the-pipeline)
@@ -39,7 +37,6 @@
   * [`--plaintext_email`](#--plaintext_email)
   * [`--monochrome_logs`](#--monochrome_logs)
   * [`--multiqc_config`](#--multiqc_config)
-<!-- TOC END -->
 
 ## Introduction
 
@@ -185,6 +182,7 @@ params {
 ```
 
 <!-- TODO nf-core: Describe reference path flags -->
+
 ### `--fasta`
 
 If you prefer, you can specify the full path to your reference genome when you run the pipeline:
