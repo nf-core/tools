@@ -216,7 +216,6 @@ class PipelineLint(object):
 
         Files that *must not* be present::
 
-            '.circle.yml',
             'Singularity'
 
         Files that *should not* be present::
@@ -253,7 +252,6 @@ class PipelineLint(object):
         ]
         files_fail_ifexists = [
             'Singularity',
-            '.circle.yml'
         ]
         files_warn_ifexists = [
             '.travis.yml'
@@ -610,7 +608,7 @@ class PipelineLint(object):
         Makes sure that ``nf-core lint`` runs in travis tests and that
         tests run with the required nextflow version.
         """
-        for cf in ['.travis.yml', 'circle.yml']:
+        for cf in ['.travis.yml', os.path.join('.circleci','config.yml')]:
             fn = os.path.join(self.path, cf)
             if os.path.isfile(fn):
                 with open(fn, 'r') as fh:
