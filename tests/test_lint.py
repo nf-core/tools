@@ -39,7 +39,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
 PATH_ACTIONS_FAILING_EXAMPLE = pf(WD, 'lint_examples/actions_failing_example')
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 72
+MAX_PASS_CHECKS = 76
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -92,7 +92,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 5, "warned": 3, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 3 - 1}
+        expectations = {"failed": 5, "warned": 2, "passed": len(listfiles(PATH_WORKING_EXAMPLE)) - 2 - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -173,6 +173,20 @@ class TestLint(unittest.TestCase):
         lint_obj.config['process.container'] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
         expectations = {"failed": 1, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_actions_wf_lint_pass(self):
+        """Tests that linting for GitHub actions linting wf works for a good example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.check_actions_lint()
+        expectations = {"failed": 0, "warned": 0, "passed": 3}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_actions_wf_lint_fail(self):
+        """Tests that linting for GitHub actions linting wf fails for a bad example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.check_actions_lint()
+        expectations = {"failed": 3, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_ci_conf_pass(self):

@@ -169,6 +169,7 @@ class PipelineLint(object):
             'check_nextflow_config',
             'check_actions_branch_protection',
             'check_actions_ci',
+            'check_actions_lint',
             'check_ci_config',
             'check_readme',
             'check_conda_env_yaml',
@@ -527,7 +528,7 @@ class PipelineLint(object):
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 ciwf = yaml.safe_load(fh)
-            
+
             # Check that the action is turned on for push and pull requests
             try:
                 assert('push' in ciwf[True])
@@ -544,7 +545,7 @@ class PipelineLint(object):
                 docker_pull_cmd = 'docker pull {}:dev && docker tag {}:dev {}\n'.format(docker_notag, docker_notag, docker_withtag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
-                    assert(any([docker_pull_cmd in step['run'] for step in steps[1:]]))
+                    assert(any([docker_pull_cmd in step['run'] for step in steps if 'run' in step.keys()]))
                 except AssertionError:
                     self.failed.append((5, "CI is not pulling and tagging the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                 else:
@@ -559,8 +560,48 @@ class PipelineLint(object):
             except AssertionError:
                 self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
             else:
-                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
+                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn))) 
     
+    def check_actions_lint(self):
+        """Checks that the GitHub actions lint workflow is valid
+
+        Makes sure ``nf-core lint`` and ``markdownlint`` runs.
+        """
+        fn = os.path.join(self.path, '.github', 'workflows', 'linting.yml')
+        if os.path.isfile(fn):
+            with open(fn, 'r') as fh:
+                lintwf = yaml.safe_load(fh)
+
+            # Check that the action is turned on for push and pull requests
+            try:
+                assert('push' in lintwf[True])
+                assert('pull_request' in lintwf[True])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub actions linting workflow must be triggered on PR and push: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub actions linting workflow is triggered on PR and push: '{}'".format(fn)))
+
+            # Check that the Markdown linting runs
+            Markdownlint_cmd = 'markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml'
+            try:
+                steps = lintwf['jobs']['Markdown']['steps']
+                assert(any([Markdownlint_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "Continuous integration must run Markdown lint Tests: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "Continuous integration runs Markdown lint Tests: '{}'".format(fn)))
+
+
+            # Check that the nf-core linting runs
+            nfcore_lint_cmd = 'nf-core lint ${GITHUB_WORKSPACE}'
+            try:
+                steps = lintwf['jobs']['nf-core']['steps']
+                assert(any([ nfcore_lint_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
+
     def check_ci_config(self):
         """Checks that the Travis or Circle CI YAML config is valid.
 
