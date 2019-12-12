@@ -18,7 +18,7 @@
 * Adjusted linting to enable `patch` branches from being tested
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
 
-### Template
+### Template pipeline
 
 * Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
 * Fixed [incorrect usage of non-existant parameter](https://github.com/nf-core/tools/issues/446) in the template
@@ -40,7 +40,8 @@
 * Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 * Add Python 3.7 dependency to the `environment.yml` file
 * Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
-* Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
+* Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in [base image PR](https://github.com/nf-core/tools/pull/462)
+* Add `--awscli` parameter
 
 ### Base Docker image
 
@@ -80,7 +81,7 @@
 
 * If the container slug does not contain the nf-core organisation (for example during development on a fork), linting will raise a warning, and an error with release mode on
 
-### Template
+### Template pipeline
 
 * Add new code for Travis CI to allow PRs from patch branches too
 * Fix small typo in central readme of tools for future releases
