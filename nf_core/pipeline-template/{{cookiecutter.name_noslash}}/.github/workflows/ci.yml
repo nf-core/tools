@@ -22,4 +22,4 @@ jobs:
           docker pull {{ cookiecutter.name_docker }}:dev && docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
       - name: Run test
         run: |
-          nextflow run ${GITHUB_WORKSPACE} -profile test,docker
+          nextflow run ${GITHUB_WORKSPACE} -ansi-log false -profile test,docker
