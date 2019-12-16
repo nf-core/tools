@@ -234,27 +234,28 @@ class PipelineLint(object):
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
-            'docs/README.md',
-            'docs/output.md',
-            'docs/usage.md',
-            ['.travis.yml', '.github/workflows/branch.yml'],
-            ['.travis.yml', '.github/workflows/ci.yml'],
-            ['.travis.yml', '.github/workflows/linting.yml']
+            os.path.join('docs','README.md'),
+            os.path.join('docs','output.md'),
+            os.path.join('docs','usage.md'),
+            ['.travis.yml', os.path.join('.github', 'workflows', 'branch.yml'), os.path.join('.circleci','config.yml')],
+            ['.travis.yml', os.path.join('.github', 'workflows','ci.yml'), os.path.join('.circleci','config.yml')],
+            ['.travis.yml', os.path.join('.github', 'workflows', 'linting.yml'), os.path.join('.circleci','config.yml')]
 
         ]
         files_warn = [
             'main.nf',
             'environment.yml',
-            'conf/base.config',
-            '.github/workflows/branch.yml',
-            '.github/workflows/ci.yml',
-            '.github/workflows/linting.yml'
+            os.path.join('conf','base.config'),
+            os.path.join('.github', 'workflows', 'branch.yml'),
+            os.path.join('.github', 'workflows','ci.yml'),
+            os.path.join('.github', 'workflows', 'linting.yml')
         ]
         files_fail_ifexists = [
             'Singularity',
         ]
         files_warn_ifexists = [
-            '.travis.yml'
+            '.travis.yml',
+            os.path.join('.circleci','config.yml')
         ]
 
         def pf(file_path):
