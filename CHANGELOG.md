@@ -8,7 +8,6 @@
 * `nf-core bump-version` now also bumps the version string of the exported conda environment in the Dockerfile
 * Updated Blacklist of synced pipelines
 * Ignore pre-releases in `nf-core list`
-* Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
 * Updated documentation for `nf-core download`
 * Fixed typo in `nf-core launch` final command
 * Handle missing pipeline descriptions in `nf-core list`
@@ -16,6 +15,9 @@
 ### Linting
 
 * Adjusted linting to enable `patch` branches from being tested
+* Warn if GitHub actions workflows do not exist, warn if `.travis.yml` and circleCI are there
+* Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
+* Added linting of GitHub actions workflows `linting.yml`, `ci.yml` and `branch.yml`
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
 
 ### Template pipeline
@@ -31,16 +33,17 @@
   * Having the old camelCase versions of these will now throw an error
 * Add `autoMounts=true` to default singularity profile
 * Add in `markdownlint` checks that were being ignored by default
-* Disable ansi logging in the travis CI tests.
+* Disable ansi logging in the travis CI tests
 * Move `params`section from `base.config` to `nextflow.config`
-* Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment.
+* Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment
 * Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
 * Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
 * Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 * Add Python 3.7 dependency to the `environment.yml` file
 * Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
-* Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in [base image PR](https://github.com/nf-core/tools/pull/462)
+* Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
+* Added GitHub actions workflows and respective linting
 * Add `--awscli` parameter
 
 ### Base Docker image

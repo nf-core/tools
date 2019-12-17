@@ -1,0 +1,16 @@
+name: nf-core CI
+# This workflow is triggered on pushes and PRs to the repository.
+# It runs the pipeline with the minimal test dataset to check that it completes without any syntax errors
+on:   
+
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - uses: actions/checkout@v1
+      - name: Install Nextflow
+        run: |
+      - name: Pull container
+        run: |
+      - name: Run test
+        run: |
