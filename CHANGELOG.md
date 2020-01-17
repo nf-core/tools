@@ -45,6 +45,7 @@
 * Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
 * Add GitHub actions workflows and respective linting
 * Add NXF_ANSI_LOG as global environment variable to template GitHub actions CI workflow
+* Fixed global environment variable in GitHub actions CI workflow
 * Add `--awscli` parameter
 
 ### Base Docker image
