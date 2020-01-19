@@ -6,7 +6,7 @@ on: [push, pull_request]
 jobs:
   test:
     env: 
-      NXF_VER: ${{ matrix.nxf_ver }}
+      NXF_VER: {% raw %}${{ matrix.nxf_ver }}{% endraw %}
       NXF_ANSI_LOG: false
     runs-on: ubuntu-18.04
     strategy:
