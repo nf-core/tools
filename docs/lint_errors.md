@@ -118,7 +118,7 @@ The following variables are depreciated and fail the test if they are still pres
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
-nf-core pipelines must have CI testing with GitHub actions, Travis or Circle CI.
+nf-core pipelines must have CI testing with GitHub actions or Travis.
 
 This test fails if the following requirements are not met:
 
