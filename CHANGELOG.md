@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.8dev
+## v1.8
 
 ### Tools helper code
 
@@ -16,18 +16,18 @@
 
 * Adjusted linting to enable `patch` branches from being tested
 * Warn if GitHub actions workflows do not exist, warn if `.travis.yml` and circleCI are there
-* Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
+* Lint for `Singularity` file and raise error if found [#458](https://github.com/nf-core/tools/issues/458)
 * Added linting of GitHub actions workflows `linting.yml`, `ci.yml` and `branch.yml`
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
 
 ### Template pipeline
 
 * Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
-* Fixed [incorrect usage of non-existant parameter](https://github.com/nf-core/tools/issues/446) in the template
+* Fixed incorrect usage of non-existent parameter in the template [#446](https://github.com/nf-core/tools/issues/446)
 * Add UCSC genomes to `igenomes.config` and add paths to all genome indices
 * Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
 * Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
-* Change remaining parameters from `camelCase` to `snakeCase` [#39](https://github.com/nf-core/hic/issues/39)
+* Change remaining parameters from `camelCase` to `snake_case` [#39](https://github.com/nf-core/hic/issues/39)
   * `--singleEnd` to `--single_end`
   * `--igenomesIgnore` to `--igenomes_ignore`
   * Having the old camelCase versions of these will now throw an error
@@ -41,10 +41,10 @@
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
 * Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 * Add Python 3.7 dependency to the `environment.yml` file
-* Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
+* Remove `awsbatch` profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
 * Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
 * Add GitHub actions workflows and respective linting
-* Add NXF_ANSI_LOG as global environment variable to template GitHub actions CI workflow
+* Add `NXF_ANSI_LOG` as global environment variable to template GitHub actions CI workflow
 * Fixed global environment variable in GitHub actions CI workflow
 * Add `--awscli` parameter
 
