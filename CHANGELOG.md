@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.8dev
+## v1.8
 
 ### Tools helper code
 
