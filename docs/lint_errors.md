@@ -113,7 +113,8 @@ The following variables are depreciated and fail the test if they are still pres
 * `params.container`
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
 * `singleEnd` and `igenomesIgnore`
-  * Now using `snake_case` for all command line options
+  * Changed to `single_end` and `igenomes_ignore`
+  * The `snake_case` convention should now be used when defining pipeline parameters
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
