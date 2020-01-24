@@ -101,8 +101,8 @@ The following variables throw warnings if missing:
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
 * `params.single_end`
-  * Specify to work with single-end sequence data instead of default paired-end
-  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
+  * Specify to work with single-end sequence data instead of paired-end by default
+  * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
 
 The following variables are depreciated and fail the test if they are still present:
 
