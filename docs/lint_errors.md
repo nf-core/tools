@@ -137,7 +137,7 @@ For GitHub actions CI workflow:
                 nxf_ver: ['19.10.0', '']
     ```
 
-* `.github/workflows/ci.yml` must pull the container with the command `docker pull <container>:dev && docker tag <container>:dev <container>:tag` under `jobs`,`test`,`steps`. E.g. for nfcore/tools container:
+* `.github/workflows/ci.yml` must pull the container with the command `docker pull <container>:dev && docker tag <container>:dev <container>:<tag>` under `jobs`,`test`,`steps`. E.g. for nfcore/tools container:
 
     ```yaml
     jobs:
