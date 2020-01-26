@@ -2,6 +2,12 @@
 
 ## v1.8
 
+### Continuous integration
+
+* GitHub Actions CI workflows are now included in the template pipeline
+* Travis CI tests will most likely be deprecated from the next `tools` release
+* Linting will generate a warning if GitHub Actions workflows do not exist and if applicable to remove Travis CI workflow file i.e. `.travis.yml`.
+
 ### Tools helper code
 
 * Refactored the template synchronisation code to be part of the main nf-core tool
@@ -15,9 +21,9 @@
 ### Linting
 
 * Adjusted linting to enable `patch` branches from being tested
-* Warn if GitHub actions workflows do not exist, warn if `.travis.yml` and circleCI are there
+* Warn if GitHub Actions workflows do not exist, warn if `.travis.yml` and circleCI are there
 * Lint for `Singularity` file and raise error if found [#458](https://github.com/nf-core/tools/issues/458)
-* Added linting of GitHub actions workflows `linting.yml`, `ci.yml` and `branch.yml`
+* Added linting of GitHub Actions workflows `linting.yml`, `ci.yml` and `branch.yml`
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
 
 ### Template pipeline
@@ -43,10 +49,11 @@
 * Add Python 3.7 dependency to the `environment.yml` file
 * Remove `awsbatch` profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
 * Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
-* Add GitHub actions workflows and respective linting
-* Add `NXF_ANSI_LOG` as global environment variable to template GitHub actions CI workflow
-* Fixed global environment variable in GitHub actions CI workflow
+* Add GitHub Actions workflows and respective linting
+* Add `NXF_ANSI_LOG` as global environment variable to template GitHub Actions CI workflow
+* Fixed global environment variable in GitHub Actions CI workflow
 * Add `--awscli` parameter
+* Add `README.txt` path for genomes in `igenomes.config` [#461](https://github.com/nf-core/tools/issues/461)
 
 ### Base Docker image
 
