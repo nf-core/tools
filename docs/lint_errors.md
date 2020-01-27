@@ -14,7 +14,7 @@ The lint test looks for the following required files:
   * A docker build script to generate a docker image with the required software
 * Continuous integration tests with either [GitHub actions](https://github.com/features/actions) or [Travis CI](https://travis-ci.com/)
   * GitHub actions workflows for CI (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and linting (`.github/workflows/linting.yml`)
-  * Alternatively, `.travis.yml` continuous testing is still allowed but may be deprecated in the near future
+  * Alternatively, `.travis.yml` continuous integration testing is still allowed but will be deprecated in the near future
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
 * `README.md`
