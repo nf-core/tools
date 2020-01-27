@@ -54,7 +54,7 @@
 * Add `NXF_ANSI_LOG` as global environment variable to template GitHub Actions CI workflow
 * Fixed global environment variable in GitHub Actions CI workflow
 * Add `--awscli` parameter
-* Add `README.txt` path for genomes in `igenomes.config` [#461](https://github.com/nf-core/tools/issues/461)
+* Add `README.txt` path for genomes in `igenomes.config` [nf-core/atacseq#75](https://github.com/nf-core/atacseq/issues/75)
 * Fix buggy ANSI codes in pipeline summary log messages
 
 ### Base Docker image
