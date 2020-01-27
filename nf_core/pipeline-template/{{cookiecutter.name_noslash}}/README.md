@@ -26,7 +26,7 @@ iii. Download the pipeline and test it on a minimal dataset with a single comman
 nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda/institute>
 ```
 
-> Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile institute` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
+> Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
 
 iv. Start running your own analysis!
 
