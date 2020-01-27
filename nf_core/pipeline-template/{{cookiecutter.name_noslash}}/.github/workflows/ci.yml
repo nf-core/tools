@@ -14,12 +14,17 @@ jobs:
         # Nextflow versions: check pipeline minimum and current latest
         nxf_ver: ['19.10.0', '']
     steps:
-      - uses: actions/checkout@v1
+      - uses: actions/checkout@v2
       - name: Install Nextflow
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-      - name: Pull image
-        run: docker pull {{ cookiecutter.name_docker }}:dev && docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
-      - name: Run test
-        run: nextflow run ${GITHUB_WORKSPACE} -profile test,docker
+      - name: Pull docker image
+        run: |
+          docker pull {{ cookiecutter.name_docker }}:dev
+          docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
+      - name: Run pipeline with test data
+        run: |
+          # TODO nf-core: You can customise CI pipeline run tests as required
+          # (eg. adding multiple test runs with different parameters)
+          nextflow run ${GITHUB_WORKSPACE} -profile test,docker

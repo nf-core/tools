@@ -12,9 +12,9 @@ The lint test looks for the following required files:
   * The main nextflow config file
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
-* Continuous integration tests with either [GitHub actions](https://github.com/features/actions), [Travis CI](https://travis-ci.com/) or [Circle CI](https://circleci.com/)
+* Continuous integration tests with either [GitHub actions](https://github.com/features/actions) or [Travis CI](https://travis-ci.com/)
   * GitHub actions workflows for CI (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and linting (`.github/workflows/linting.yml`)
-  * Alternatively, `.travis.yml` or `.circleci/config.yml` continuous testing are still allowed but might be deprecated
+  * Alternatively, `.travis.yml` continuous integration testing is still allowed but will be deprecated in the near future
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
 * `README.md`
@@ -101,8 +101,8 @@ The following variables throw warnings if missing:
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
 * `params.single_end`
-  * Specify to work with single-end sequence data instead of default paired-end
-  * Used with Nextflow: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
+  * Specify to work with single-end sequence data instead of paired-end by default
+  * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -113,11 +113,12 @@ The following variables are depreciated and fail the test if they are still pres
 * `params.container`
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
 * `singleEnd` and `igenomesIgnore`
-  * Now using `snake_case` for all command line options
+  * Changed to `single_end` and `igenomes_ignore`
+  * The `snake_case` convention should now be used when defining pipeline parameters
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
-nf-core pipelines must have CI testing with GitHub actions, Travis or Circle CI.
+nf-core pipelines must have CI testing with GitHub actions or Travis.
 
 This test fails if the following requirements are not met:
 
@@ -136,7 +137,7 @@ For GitHub actions CI workflow:
                 nxf_ver: ['19.10.0', '']
     ```
 
-* `.github/workflows/ci.yml` must pull the container with the command `docker pull <container>:dev && docker tag <container>:dev <container>:tag` under `jobs`,`test`,`steps`. E.g. for nfcore/tools container:
+* `.github/workflows/ci.yml` must pull the container with the command `docker pull <container>:dev && docker tag <container>:dev <container>:<tag>` under `jobs`,`test`,`steps`. E.g. for nfcore/tools container:
 
     ```yaml
     jobs:
