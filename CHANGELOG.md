@@ -56,6 +56,7 @@
 * Add `--awscli` parameter
 * Add `README.txt` path for genomes in `igenomes.config` [nf-core/atacseq#75](https://github.com/nf-core/atacseq/issues/75)
 * Fix buggy ANSI codes in pipeline summary log messages
+* Add a `TODO` line in the new GitHub Actions CI test files
 
 ### Base Docker image
 
