@@ -1,4 +1,4 @@
-name: Python code tests
+name: CI tests
 # This workflow is triggered on pushes and PRs to the repository.
 on: [push, pull_request]
 
