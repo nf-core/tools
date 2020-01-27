@@ -23,7 +23,7 @@ def helpMessage() {
     Mandatory arguments:
       --reads [file]                Path to input data (must be surrounded with quotes)
       -profile [str]                Configuration profile to use. Can use multiple (comma separated)
-                                    Available: conda, docker, singularity, test, awsbatch and more
+                                    Available: conda, docker, singularity, test, awsbatch, <institute> and more
 
     Options:
       --genome [str]                  Name of iGenomes reference
