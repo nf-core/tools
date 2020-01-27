@@ -49,6 +49,7 @@
 * Fixed global environment variable in GitHub actions CI workflow
 * Add `--awscli` parameter
 * Fix buggy ANSI codes in pipeline summary log messages
+* Add a `TODO` line in the new GitHub Actions CI test files
 
 ### Base Docker image
 
