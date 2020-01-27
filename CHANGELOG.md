@@ -5,7 +5,7 @@
 ### Continuous integration
 
 * GitHub Actions CI workflows are now included in the template pipeline
-* Travis CI tests will most likely be deprecated from the next `tools` release
+* Travis CI tests will be deprecated from the next `tools` release
 * Linting will generate a warning if GitHub Actions workflows do not exist and if applicable to remove Travis CI workflow file i.e. `.travis.yml`.
 
 ### Tools helper code
