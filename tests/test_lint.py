@@ -42,6 +42,10 @@ MAX_PASS_CHECKS = 77
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
+# The minimal working example expects a development release version
+if 'dev' not in nf_core.__version__:
+    nf_core.__version__ = '{}dev'.format(nf_core.__version__)
+
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
 
@@ -127,7 +131,7 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test falls over nicely with nextflow can't run"""
         bad_lint_obj = nf_core.lint.PipelineLint('/non/existant/path')
         bad_lint_obj.check_nextflow_config()
-    
+
     def test_actions_wf_branch_pass(self):
         """Tests that linting for GitHub actions workflow for branch protection works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -135,7 +139,7 @@ class TestLint(unittest.TestCase):
         lint_obj.check_actions_branch_protection()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
         self.assess_lint_status(lint_obj, **expectations)
-    
+
     def test_actions_wf_branch_fail(self):
         """Tests that linting for Github actions workflow for branch protection fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)

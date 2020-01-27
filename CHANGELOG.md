@@ -25,6 +25,7 @@
 * Lint for `Singularity` file and raise error if found [#458](https://github.com/nf-core/tools/issues/458)
 * Added linting of GitHub Actions workflows `linting.yml`, `ci.yml` and `branch.yml`
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
+* Make CI tests of lint code pass for releases
 
 ### Template pipeline
 
@@ -54,6 +55,7 @@
 * Fixed global environment variable in GitHub Actions CI workflow
 * Add `--awscli` parameter
 * Add `README.txt` path for genomes in `igenomes.config` [#461](https://github.com/nf-core/tools/issues/461)
+* Fix buggy ANSI codes in pipeline summary log messages
 
 ### Base Docker image
 
