@@ -2,7 +2,7 @@
 
 ## v1.9dev
 
-..nothing yet..
+* Stage the workflow summary YAML file within MultiQC work directory
 
 ## v1.8
 
