@@ -19,6 +19,7 @@
 * Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
 * Added linting of GitHub actions workflows `linting.yml`, `ci.yml` and `branch.yml`
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
+* Make CI tests of lint code pass for releases
 
 ### Template pipeline
 
