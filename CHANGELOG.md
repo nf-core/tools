@@ -2,6 +2,13 @@
 
 ## v1.8
 
+### Continuous integration
+
+* GitHub Actions CI workflows are now included in the template pipeline
+  * Please update these files to match the existing tests that you have in `.travis.yml`
+* Travis CI tests will be deprecated from the next `tools` release
+* Linting will generate a warning if GitHub Actions workflows do not exist and if applicable to remove Travis CI workflow file i.e. `.travis.yml`.
+
 ### Tools helper code
 
 * Refactored the template synchronisation code to be part of the main nf-core tool
@@ -15,20 +22,20 @@
 ### Linting
 
 * Adjusted linting to enable `patch` branches from being tested
-* Warn if GitHub actions workflows do not exist, warn if `.travis.yml` and circleCI are there
-* Lint for `Singularity` file [and remove it](https://github.com/nf-core/tools/issues/458)
-* Added linting of GitHub actions workflows `linting.yml`, `ci.yml` and `branch.yml`
+* Warn if GitHub Actions workflows do not exist, warn if `.travis.yml` and circleCI are there
+* Lint for `Singularity` file and raise error if found [#458](https://github.com/nf-core/tools/issues/458)
+* Added linting of GitHub Actions workflows `linting.yml`, `ci.yml` and `branch.yml`
 * Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
 * Make CI tests of lint code pass for releases
 
 ### Template pipeline
 
 * Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
-* Fixed [incorrect usage of non-existant parameter](https://github.com/nf-core/tools/issues/446) in the template
+* Fixed incorrect usage of non-existent parameter in the template [#446](https://github.com/nf-core/tools/issues/446)
 * Add UCSC genomes to `igenomes.config` and add paths to all genome indices
 * Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
 * Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
-* Change remaining parameters from `camelCase` to `snakeCase` [#39](https://github.com/nf-core/hic/issues/39)
+* Change remaining parameters from `camelCase` to `snake_case` [#39](https://github.com/nf-core/hic/issues/39)
   * `--singleEnd` to `--single_end`
   * `--igenomesIgnore` to `--igenomes_ignore`
   * Having the old camelCase versions of these will now throw an error
@@ -42,12 +49,13 @@
 * Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
 * Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
 * Add Python 3.7 dependency to the `environment.yml` file
-* Remove awsbatch profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
+* Remove `awsbatch` profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
 * Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
-* Add GitHub actions workflows and respective linting
-* Add NXF_ANSI_LOG as global environment variable to template GitHub actions CI workflow
-* Fixed global environment variable in GitHub actions CI workflow
+* Add GitHub Actions workflows and respective linting
+* Add `NXF_ANSI_LOG` as global environment variable to template GitHub Actions CI workflow
+* Fixed global environment variable in GitHub Actions CI workflow
 * Add `--awscli` parameter
+* Add `README.txt` path for genomes in `igenomes.config` [nf-core/atacseq#75](https://github.com/nf-core/atacseq/issues/75)
 * Fix buggy ANSI codes in pipeline summary log messages
 * Add a `TODO` line in the new GitHub Actions CI test files
 
