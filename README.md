@@ -1,6 +1,6 @@
 # ![nf-core/tools](docs/images/nfcore-tools_logo.png)
 
-[![Build Status](https://travis-ci.org/nf-core/tools.svg?branch=master)](https://travis-ci.org/nf-core/tools)
+[![Build Status](https://travis-ci.com/nf-core/tools.svg?branch=master)](https://travis-ci.com/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
 
@@ -16,7 +16,7 @@ A python package with helper tools for the nf-core community.
 * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
 * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
-
+* [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
@@ -56,6 +56,7 @@ pip install -e .
 ```
 
 ## Listing pipelines
+
 The command `nf-core list` shows all available nf-core pipelines along with their latest version,  when that was published and how recently the pipeline code was pulled to your local system (if at all).
 
 An example of the output from the command is as follows:
@@ -139,6 +140,7 @@ nf-core/mag                           8  dev        -             -             
 Finally, to return machine-readable JSON output, use the `--json` flag.
 
 ## Launch a pipeline
+
 Some nextflow pipelines have a considerable number of command line flags that can be used.
 To help with this, the `nf-core launch` command uses an interactive command-line wizard tool to prompt you for
 values for running nextflow and the pipeline parameters.
@@ -190,7 +192,7 @@ Specify the location of your input FastQ files.
 [..truncated..]
 
 Nextflow command:
-  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" --params-file "/Users/ewels/testing/nfx-params.json"
+  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" -params-file "/Users/ewels/testing/nfx-params.json"
 
 
 Do you want to run this command now? [y/N]: y
@@ -202,16 +204,19 @@ Launching `nf-core/rnaseq` [evil_engelbart] - revision: 37f260d360 [master]
 [..truncated..]
 ```
 
-
 ## Downloading pipelines for offline use
+
 Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection. In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
 
 To make this process easier and ensure accurate retrieval of correctly versioned code and software containers, we have written a download helper tool. Simply specify the name of the nf-core pipeline and it will be downloaded to your current working directory.
 
-By default, the pipeline will just download the pipeline code. If you specify the flag `--singularity`, it will also download any singularity image files that are required.
+By default, the pipeline will download the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files.
+If you specify the flag `--singularity`, it will also download any singularity image files that are required.
+
+Use `-r`/`--release` to download a specific release of the pipeline. If not specified, the tool will automatically fetch the latest release.
 
 ```console
-$ nf-core download methylseq --singularity
+$ nf-core download methylseq -r 1.4 --singularity
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -221,40 +226,87 @@ $ nf-core download methylseq --singularity
 
 
 INFO: Saving methylseq
- Pipeline release: 1.0
+ Pipeline release: 1.4
  Pull singularity containers: Yes
- Output directory: nf-core-methylseq-1.0
+ Output file: nf-core-methylseq-1.4.tar.gz
 
 INFO: Downloading workflow files from GitHub
 
+INFO: Downloading centralised configs from GitHub
+
 INFO: Downloading 1 singularity container
-nf-core-methylseq-1.0.simg [762.28MB]  [####################################]  780573/780572
+
+INFO: Building singularity image from dockerhub: docker://nfcore/methylseq:1.4
+INFO:    Converting OCI blobs to SIF format
+INFO:    Starting build...
+Getting image source signatures
+....
+INFO:    Creating SIF file...
+INFO:    Build complete: /my-pipelines/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg
+
+INFO: Compressing download..
+
+INFO: Command to extract files: tar -xzf nf-core-methylseq-1.4.tar.gz
+
+INFO: MD5 checksum for nf-core-methylseq-1.4.tar.gz: f5c2b035619967bb227230bc3ec986c5
 ```
 
-```console
-$ tree -L 2 nf-core-methylseq-1.0/
+The tool automatically compresses all of the resulting file in to a `.tar.gz` archive.
+You can choose other formats (`.tar.bz2`, `zip`) or to not compress (`none`) with the `-c`/`--compress` flag.
+The console output provides the command you need to extract the files.
 
-nf-core-methylseq-1.0/
+Once uncompressed, you will see the following file structure for the downloaded pipeline:
+
+```console
+$ tree -L 2 nf-core-methylseq-1.4/
+
+nf-core-methylseq-1.4
+├── configs
+│   ├── bin
+│   ├── conf
+│   ├── configtest.nf
+│   ├── docs
+│   ├── LICENSE
+│   ├── nextflow.config
+│   ├── nfcore_custom.config
+│   └── README.md
 ├── singularity-images
-│   └── nf-core-methylseq-1.0.simg
+│   └── nf-core-methylseq-1.4.simg
 └── workflow
-    ├── CHANGELOG.md
-    ├── Dockerfile
-    ├── LICENCE.md
-    ├── README.md
     ├── assets
     ├── bin
+    ├── CHANGELOG.md
+    ├── CODE_OF_CONDUCT.md
     ├── conf
+    ├── Dockerfile
     ├── docs
     ├── environment.yml
+    ├── LICENSE
     ├── main.nf
     ├── nextflow.config
-    └── tests
+    ├── parameters.settings.json
+    └── README.md
 
-7 directories, 8 files
+10 directories, 15 files
+```
+
+The pipeline files are automatically updated so that the local copy of institutional configs are available when running the pipeline.
+So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
+
+You can run the pipeline by simply providing the directory path for the `workflow` folder.
+Note that if using Singularity, you will also need to provide the path to the Singularity image.
+For example:
+
+```bash
+nextflow run /path/to/nf-core-methylseq-1.4/workflow/ \
+     -profile singularity \
+     -with-singularity /path/to/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg \
+     # .. other normal pipeline parameters from here on..
+     --reads '*_R{1,2}.fastq.gz' --genome GRCh38
 ```
 
 ## Pipeline software licences
+
 Sometimes it's useful to see the software licences of the tools used in a pipeline. You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
 ```console
@@ -292,6 +344,7 @@ samtools               1.8        MIT
 ```
 
 ## Creating a new workflow
+
 The `create` subcommand makes a new workflow using the nf-core base template.
 With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
 
@@ -335,8 +388,8 @@ Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipeli
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
-
 ## Linting a workflow
+
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
 This is the same test that is used on the automated continuous integration tests.
 
@@ -365,7 +418,6 @@ WARNING: Test Warnings:
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
-
 
 ## Bumping a pipeline version number
 
@@ -403,31 +455,102 @@ INFO: Updating version in nextflow.config
  + version = '1.0'
 
 INFO: Updating version in nextflow.config
- - container = 'nfcore/mypipeline:dev'
- + container = 'nfcore/mypipeline:1.0'
+ - process.container = 'nfcore/mypipeline:dev'
+ + process.container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .travis.yml
- - docker tag nfcore/mypipeline:dev nfcore/mypipeline:latest
- + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
-
-INFO: Updating version in Singularity
- - VERSION 1.0dev
- + VERSION 1.0
+ - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
+ + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
  + name: nf-core-mypipeline-1.0
 
 INFO: Updating version in Dockerfile
- - PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
-
-INFO: Updating version in Singularity
- - PATH=/opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + PATH=/opt/conda/envs/nf-core-mypipeline-1.0/bin:\$PATH
+ - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
+ - ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
+ + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ + ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
+
+## Sync a pipeline with the template
+
+Over time, the main nf-core pipeline template is updated. To keep all nf-core pipelines up to date,
+we synchronise these updates automatically when new versions of nf-core/tools are released.
+This is done by maintaining a special `TEMPLATE` branch, containing a vanilla copy of the nf-core template
+with only the variables used when it first ran (name, description etc.). This branch is updated and a
+pull-request can be made with just the updates from the main template code.
+
+This command takes a pipeline directory and attempts to run this synchronisation.
+Usage is `nf-core sync <pipeline_dir>`, eg:
+
+```console
+$ nf-core sync my_pipeline/
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Pipeline directory: /path/to/my_pipeline
+
+INFO: Fetching workflow config variables
+
+INFO: Deleting all files in TEMPLATE branch
+
+INFO: Making a new template pipeline using pipeline variables
+
+INFO: Committed changes to TEMPLATE branch
+
+INFO: Now try to merge the updates in to your pipeline:
+  cd /path/to/my_pipeline
+  git merge TEMPLATE
+```
+
+If your pipeline repository does not already have a `TEMPLATE` branch, you can instruct
+the command to try to create one by giving the `--make-template-branch` flag.
+If it has to, the sync tool will then create an orphan branch - see the
+[nf-core website sync documentation](https://nf-co.re/developers/sync) for details on
+how to handle this.
+
+By default, the tool will collect workflow variables from the current branch in your
+pipeline directory. You can supply the `--from-branch` flag to specific a different branch.
+
+Finally, if you give the `--pull-request` flag, the command will push any changes to the remote
+and attempt to create a pull request using the GitHub API. The GitHub username and repository
+name will be fetched from the remote url (see `git remote -v | grep origin`), or can be supplied
+with `--username` and `--repository`.
+
+To create the pull request, a personal access token is required for API authentication.
+These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
+Supply this using the `--auth-token` flag, or setting it as the environment variable `NF_CORE_BOT`:
+`export NF_CORE_BOT=my_auth_token`.
+
+Finally, if `--all` is supplied, then the command attempts to pull and synchronise all nf-core workflows.
+This is used by the nf-core/tools release automation to synchronise all nf-core pipelines
+with the newest version of the template. It requires authentication as either the nf-core-bot account
+or as an nf-core administrator.
+
+```console
+$ nf-core sync --all
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Syncing nf-core/ampliseq
+
+[...]
+
+INFO: Successfully synchronised [n] pipelines
+```
 
 ## Citation
 

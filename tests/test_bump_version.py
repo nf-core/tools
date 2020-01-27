@@ -8,7 +8,7 @@ import unittest
 import nf_core.lint, nf_core.bump_version
 
 WD = os.path.dirname(__file__)
-PATH_WORKING_EXAMPLE = os.path.join(WD, 'lint_examples/minimal_working_example')
+PATH_WORKING_EXAMPLE = os.path.join(WD, 'lint_examples/minimalworkingexample')
 
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
@@ -55,7 +55,7 @@ def test_multiple_patterns_found(datafiles):
 def test_successfull_nextflow_version_bump(datafiles):
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj.pipeline_name = 'tools'
-    lint_obj.config['manifest.nextflowVersion'] = '0.32.0'
+    lint_obj.config['manifest.nextflowVersion'] = '19.10.0'
     nf_core.bump_version.bump_nextflow_version(lint_obj, '0.40')
     lint_obj_new = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj_new.check_nextflow_config()

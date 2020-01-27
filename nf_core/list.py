@@ -145,8 +145,8 @@ class Workflows(object):
         filtered_workflows = []
         for wf in self.remote_workflows:
             for k in self.keyword_filters:
-                in_name = k in wf.name
-                in_desc = k in wf.description
+                in_name = k in wf.name if wf.name else False
+                in_desc = k in wf.description if wf.description else False
                 in_topics = any([ k in t for t in wf.topics])
                 if not in_name and not in_desc and not in_topics:
                     break
@@ -238,8 +238,8 @@ class RemoteWorkflow(object):
         self.watchers_count = data.get('watchers_count')
         self.forks_count = data.get('forks_count')
 
-        # Placeholder vars for releases info
-        self.releases = data.get('releases')
+        # Placeholder vars for releases info (ignore pre-releases)
+        self.releases = [ r for r in data.get('releases', []) if r.get('published_at') is not None ]
 
         # Placeholder vars for local comparison
         self.local_wf = None

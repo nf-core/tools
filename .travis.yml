@@ -2,7 +2,6 @@ sudo: required
 language: python
 jdk: openjdk8
 python:
-  - '2.7'
   - '3.5'
   - '3.6'
   - '3.7'
@@ -42,7 +41,7 @@ jobs:
   include:
     - stage: docs generation
       if: (branch = "master" OR branch = "dev") AND type = push AND repo = nf-core/tools
-      script: bash ./bin/push.sh
+      script: bash ./bin/build_api_docs.sh
 
 deploy:
   provider: pypi
@@ -57,4 +56,4 @@ deploy:
 
 # Sync pipelines with possible nf-core template changes
 after_deploy:
-  - ./bin/sync
+  - nf-core sync --all

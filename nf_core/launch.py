@@ -370,7 +370,7 @@ class Launch(object):
         if self.use_params_file:
             path = self.create_nfx_params_file()
             if path is not None:
-                self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, "--params-file", path)
+                self.nextflow_cmd = '{} {} "{}"'.format(self.nextflow_cmd, "-params-file", path)
             self.write_params_as_full_json()
 
         # Call nextflow with a list of command line flags
