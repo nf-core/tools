@@ -30,7 +30,7 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        pip install codecov 'pytest==3.6.4' pytest-datafiles pytest-cov mock jsonschema
+        pip install codecov pytest pytest-datafiles pytest-cov mock jsonschema
         pytest --cov=nf_core .
     - name: Upload code coverage report
       if: success()
