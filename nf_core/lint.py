@@ -609,7 +609,7 @@ class PipelineLint(object):
         Makes sure that ``nf-core lint`` runs in travis tests and that
         tests run with the required nextflow version.
         """
-        for cf in ['.travis.yml', os.path.join('.circleci','config.yml')]:
+        for cf in ['.travis.yml']:
             fn = os.path.join(self.path, cf)
             if os.path.isfile(fn):
                 with open(fn, 'r') as fh:
