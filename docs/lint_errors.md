@@ -13,7 +13,7 @@ The lint test looks for the following required files:
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
 * Continuous integration tests with either [GitHub actions](https://github.com/features/actions) or [Travis CI](https://travis-ci.com/)
-  * GitHub actions workflows for CI (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and linting (`.github/workflows/linting.yml`)
+  * GitHub actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practise linting (`.github/workflows/linting.yml`)
   * Alternatively, `.travis.yml` continuous integration testing is still allowed but will be deprecated in the near future
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
@@ -119,6 +119,12 @@ The following variables are depreciated and fail the test if they are still pres
 ## Error #5 - Continuous Integration configuration ## {#5}
 
 nf-core pipelines must have CI testing with GitHub actions or Travis.
+
+There are three main CI test files
+
+  * `ci.yml` - this contains all test commands for your pipeline itself
+  * `branch.yml` - this checks that major branches are protected from un-approved changes
+  * `linting.yml` - this makes sure the nf-core linting scripts are run against your pipeline
 
 This test fails if the following requirements are not met:
 
