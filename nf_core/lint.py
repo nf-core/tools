@@ -975,8 +975,8 @@ class PipelineLint(object):
             click.style("{0:>4} tests failed".format(len(self.failed)), fg='red') + rl
         )
         if len(self.passed) > 0:
-            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
+            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.passed])))
         if len(self.warned) > 0:
-            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
+            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.warned])))
         if len(self.failed) > 0:
-            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))
+            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.failed])))
