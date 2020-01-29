@@ -2,6 +2,12 @@
 
 ## v1.9dev
 
+### Linting
+
+* Removed linting for circleci
+
+### Template pipeline
+
 * Stage the workflow summary YAML file within MultiQC work directory
 
 ## v1.8
