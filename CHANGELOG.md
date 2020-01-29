@@ -4,7 +4,7 @@
 
 ### Linting
 
-* Removed linting for circleci
+* Removed linting for CircleCI
 
 ## v1.8
 
