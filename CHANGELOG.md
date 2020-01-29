@@ -2,7 +2,9 @@
 
 ## v1.9dev
 
-..nothing yet..
+### Linting
+
+* Removed linting for circleci
 
 ## v1.8
 
