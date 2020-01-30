@@ -12,8 +12,8 @@ The lint test looks for the following required files:
   * The main nextflow config file
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
-* Continuous integration tests with either [GitHub actions](https://github.com/features/actions) or [Travis CI](https://travis-ci.com/)
-  * GitHub actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practice linting (`.github/workflows/linting.yml`)
+* Continuous integration tests with either [GitHub Actions](https://github.com/features/actions) or [Travis CI](https://travis-ci.com/)
+  * GitHub Actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practice linting (`.github/workflows/linting.yml`)
   * Alternatively, `.travis.yml` continuous integration testing is still allowed but will be deprecated in the near future
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
