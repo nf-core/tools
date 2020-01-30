@@ -6,6 +6,10 @@
 
 * Removed linting for CircleCI
 
+### Other
+
+* Improve documentation for installing `nf-core/tools`
+
 ## v1.8
 
 ### Continuous integration
