@@ -1,4 +1,4 @@
-# ![nf-core/tools](docs/images/nfcore-tools_logo.png)
+# ![nf-core/tools](docs/images/nfcore-tools_logo.png) <!-- omit in toc -->
 
 [![Build Status](https://travis-ci.com/nf-core/tools.svg?branch=master)](https://travis-ci.com/nf-core/tools)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
@@ -6,20 +6,18 @@
 
 A python package with helper tools for the nf-core community.
 
-## Table of contents
+## Table of contents <!-- omit in toc -->
 
-- [!nf-core/tools](#nf-coretools)
-  - [Table of contents](#table-of-contents)
-  - [Installation](#installation)
-  - [Listing pipelines](#listing-pipelines)
-  - [Launch a pipeline](#launch-a-pipeline)
-  - [Downloading pipelines for offline use](#downloading-pipelines-for-offline-use)
-  - [Pipeline software licences](#pipeline-software-licences)
-  - [Creating a new workflow](#creating-a-new-workflow)
-  - [Linting a workflow](#linting-a-workflow)
-  - [Bumping a pipeline version number](#bumping-a-pipeline-version-number)
-  - [Sync a pipeline with the template](#sync-a-pipeline-with-the-template)
-  - [Citation](#citation)
+- [Installation](#installation)
+- [Listing pipelines](#listing-pipelines)
+- [Launch a pipeline](#launch-a-pipeline)
+- [Downloading pipelines for offline use](#downloading-pipelines-for-offline-use)
+- [Pipeline software licences](#pipeline-software-licences)
+- [Creating a new workflow](#creating-a-new-workflow)
+- [Linting a workflow](#linting-a-workflow)
+- [Bumping a pipeline version number](#bumping-a-pipeline-version-number)
+- [Sync a pipeline with the template](#sync-a-pipeline-with-the-template)
+- [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
