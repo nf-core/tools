@@ -130,38 +130,38 @@ This test will fail if the following requirements are not met in these files:
     * Must be turned on for `push` and `pull_request`.  
     * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:  
 
-    ```yaml
-    jobs:
-    test:
-        runs-on: ubuntu-18.04
-        strategy:
-            matrix:
-                # Nextflow versions: check pipeline minimum and current latest
-                nxf_ver: ['19.10.0', '']
-    ```
+      ```yaml
+      jobs:
+      test:
+          runs-on: ubuntu-18.04
+          strategy:
+              matrix:
+                  # Nextflow versions: check pipeline minimum and current latest
+                  nxf_ver: ['19.10.0', '']
+      ```
 
-  * The `Docker` container for the pipeline must be tagged appropriately for:  
-    * Development pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
-    * Released pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
+    * The `Docker` container for the pipeline must be tagged appropriately for:  
+        * Development pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
+        * Released pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
 
-    ```yaml
-    jobs:
-    test:
-        runs-on: ubuntu-18.04
-        steps:
-        - name: Pull image
-            run: |
-            docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
-    ```
+      ```yaml
+      jobs:
+      test:
+          runs-on: ubuntu-18.04
+          steps:
+          - name: Pull image
+              run: |
+              docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
+      ```
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`  
-  * Must be turned on for `push` and `pull_request`.  
-  * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.  
-  * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.  
+    * Must be turned on for `push` and `pull_request`.  
+    * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.  
+    * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.  
 
 3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch  
-  * Must be turned on for `pull_request` to `master`.  
-  * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:  
+    * Must be turned on for `pull_request` to `master`.  
+    * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:  
 
     ```yaml
     jobs:
