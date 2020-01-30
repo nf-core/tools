@@ -237,9 +237,9 @@ class PipelineLint(object):
             os.path.join('docs','README.md'),
             os.path.join('docs','output.md'),
             os.path.join('docs','usage.md'),
-            ['.travis.yml', os.path.join('.github', 'workflows', 'branch.yml'), os.path.join('.circleci','config.yml')],
-            ['.travis.yml', os.path.join('.github', 'workflows','ci.yml'), os.path.join('.circleci','config.yml')],
-            ['.travis.yml', os.path.join('.github', 'workflows', 'linting.yml'), os.path.join('.circleci','config.yml')]
+            ['.travis.yml', os.path.join('.github', 'workflows', 'branch.yml')],
+            ['.travis.yml', os.path.join('.github', 'workflows','ci.yml')],
+            ['.travis.yml', os.path.join('.github', 'workflows', 'linting.yml')]
 
         ]
         files_warn = [
@@ -251,11 +251,10 @@ class PipelineLint(object):
             os.path.join('.github', 'workflows', 'linting.yml')
         ]
         files_fail_ifexists = [
-            'Singularity',
+            'Singularity'
         ]
         files_warn_ifexists = [
-            '.travis.yml',
-            os.path.join('.circleci','config.yml')
+            '.travis.yml'
         ]
 
         def pf(file_path):
@@ -293,7 +292,7 @@ class PipelineLint(object):
                 self.failed.append((1, "File must be removed: {}".format(files)))
             else:
                 self.passed.append((1, "File not found check: {}".format(files)))
-        
+
         # Files that cause a warning if they exist
         for files in files_warn_ifexists:
             if not isinstance(files, list):
@@ -499,7 +498,7 @@ class PipelineLint(object):
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 branchwf = yaml.safe_load(fh)
-            
+
             # Check that the action is turned on for PRs to master
             try:
                 assert('master' in branchwf[True]['pull_request']['branches'])
@@ -551,9 +550,9 @@ class PipelineLint(object):
                     self.failed.append((5, "CI is not pulling and tagging the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                 else:
                     self.passed.append((5, "CI is pulling and tagging the correct docker image: {}".format(docker_pull_cmd)))
-            
+
             # Check that we are testing the minimum nextflow version
-            try: 
+            try:
                 matrix = ciwf['jobs']['test']['strategy']['matrix']['nxf_ver']
                 assert(any([self.minNextflowVersion in matrix]))
             except (KeyError, TypeError):
@@ -561,8 +560,8 @@ class PipelineLint(object):
             except AssertionError:
                 self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
             else:
-                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn))) 
-    
+                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
+
     def check_actions_lint(self):
         """Checks that the GitHub actions lint workflow is valid
 
@@ -604,7 +603,7 @@ class PipelineLint(object):
                 self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
 
     def check_ci_config(self):
-        """Checks that the Travis or Circle CI YAML config is valid.
+        """Checks that the Travis CI YAML config is valid.
 
         Makes sure that ``nf-core lint`` runs in travis tests and that
         tests run with the required nextflow version.
@@ -956,7 +955,7 @@ class PipelineLint(object):
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
-       
+
         if self.pipeline_name.islower() and self.pipeline_name.isalpha():
             self.passed.append((12, "Name adheres to nf-core convention"))
         if not self.pipeline_name.islower():
@@ -964,8 +963,8 @@ class PipelineLint(object):
         if not self.pipeline_name.isalpha():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphabetical characters"))
 
-            
-        
+
+
     def print_results(self):
         # Print results
         rl = "\n  Using --release mode linting tests" if self.release_mode else ''
