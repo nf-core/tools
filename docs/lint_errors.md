@@ -118,22 +118,17 @@ The following variables are depreciated and fail the test if they are still pres
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
-nf-core pipelines must have CI testing with GitHub actions or Travis.
+nf-core pipelines must have CI testing with GitHub Actions or Travis.
 
 ### Github Actions
 
-There are three main CI test files:
+There are three main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in in the `.github/workflows/` directory.  
 
-  * `ci.yml` - this contains all test commands for your pipeline itself
-  * `branch.yml` - this checks that major branches are protected from un-approved changes
-  * `linting.yml` - this makes sure the nf-core linting scripts are run against your pipeline
+This test will fail if the following requirements are not met in these files:  
 
-This test fails if the following requirements are not met:
-
-For GitHub actions CI workflow:
-
-* `.github/workflows/ci.yml` must be turned on for `push` and `pull_request``
-* `.github/workflows/ci.yml` must test with the minimum Nextflow version specified in the pipline as `manifest.nextflowVersion` under `jobs`, `test`, `strategy`, `matrix`, `nxf_ver`. E.g.:
+1. `ci.yml` contains all the commands required to test the pipeline  
+    *. Must be turned on for `push` and `pull_request`.  
+    *. The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:  
 
     ```yaml
     jobs:
@@ -145,7 +140,7 @@ For GitHub actions CI workflow:
                 nxf_ver: ['19.10.0', '']
     ```
 
-* `.github/workflows/ci.yml` must pull the container with the command `docker pull <container>:dev && docker tag <container>:dev <container>:<tag>` under `jobs`,`test`,`steps`. E.g. for nfcore/tools container:
+    *. The `Docker` container for the pipeline must be tagged appropriately for development (`docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`) and released pipelines (`docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`):  
 
     ```yaml
     jobs:
@@ -154,11 +149,17 @@ For GitHub actions CI workflow:
         steps:
         - name: Pull image
             run: |
-            docker pull nfcore/tools:dev && docker tag nfcore/tools:dev nfcore/tools:1.0.0
+            docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
     ```
 
-* `.github/workflows/branch.yml` must be turned on for pull requests to `master`
-* `.github/workflows/branch.yml` must check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch. E.g. for nf-core/tools:
+2. `linting.yml` specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`  
+    *. Must be turned on for push and pull requests.  
+    *. Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.  
+    *. Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.  
+
+3. `branch.yml` ensures that pull requests to the protected `master` branch are coming from the correct branch  
+    *. Must be turned on for pull requests to `master`.  
+    *. Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:  
 
     ```yaml
     jobs:
@@ -168,26 +169,16 @@ For GitHub actions CI workflow:
       # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
       - name: Check PRs
         run: |
-          { [[ $(git remote get-url origin) == *nf-core/tools ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+          { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
     ```
-
-* `.github/workflows/linting.yml` must be turned on for push and pull requests
-* `.github/workflows/linting.yml` must perform markdown linting with the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml` under `jobs`, `Markdown`, `steps`.
-* `.github/workflows/linting.yml` must perform nf-core linting with the command `nf-core lint ${GITHUB_WORKSPACE}` under `jobs`, `nf-core`, `steps`.
 
 ### Travis
 
-Travis CI consists of one file which includes commands for running linting, branch protection, and your own tests for your pipline:
+For Travis CI, the commands required to test and lint the pipeline, and to check the branch protection are all specified in a single file i.e. `.travis.yml` which can be found in the top-level directory of the pipeline repository.  
 
-* `.travis.yml`
+This test will fail if the following requirements are not met in this file:  
 
-The tests fail if the following are not met:
-
-* `.travis.yml` must contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
-* `.travis.yml` must contain the string `docker pull <container>:dev` under `before_install`
-  * Where `<container>` is fetched from `process.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
-* `.travis.yml` must test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
-  * This is expected in the `env` section of the config, eg:
+* The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined in the `env` section of this file:  
 
     ```yaml
     env:
@@ -195,10 +186,14 @@ The tests fail if the following are not met:
       - NXF_VER=''
     ```
 
-  * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
-  * Other variables can be specified on these lines as long as they are space separated.
-* `.travis.yml` must check that pull requests are not opened directly to the `master` branch
-  * The following is expected in the `before_install` section:
+  * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline's `nextflow.config`  
+  * Other environment variables can be specified on these lines as long as they are space separated.  
+
+* The `Docker` container for the pipeline must be tagged appropriately for development (`docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`) and released pipelines (`docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`) in the `before_install` section.  
+
+* Must contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` in the `script` section.  
+
+* Ensures that pull requests to the protected `master` branch are coming from the correct branch and specified in the `before_install` section:  
 
     ```yaml
     before_install:
