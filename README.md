@@ -8,15 +8,15 @@ A python package with helper tools for the nf-core community.
 
 ## Table of contents <!-- omit in toc -->
 
-- [Installation](#installation)
-- [Listing pipelines](#listing-pipelines)
-- [Launch a pipeline](#launch-a-pipeline)
-- [Downloading pipelines for offline use](#downloading-pipelines-for-offline-use)
-- [Pipeline software licences](#pipeline-software-licences)
-- [Creating a new workflow](#creating-a-new-workflow)
-- [Linting a workflow](#linting-a-workflow)
-- [Bumping a pipeline version number](#bumping-a-pipeline-version-number)
-- [Sync a pipeline with the template](#sync-a-pipeline-with-the-template)
+ * [`nf-core` tools installation](#installation)
+ * [`nf-core list` - List available pipelines](#listing-pipelines)
+ * [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
+ * [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
+ * [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
+ * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
+ * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
+ * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
+ * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 - [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
