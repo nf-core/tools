@@ -6,6 +6,7 @@
 
 * Removed linting for CircleCI
 * Added whitespace padding to lint error URLs
+* Improved documentation for lint errors
 
 ## v1.8
 
