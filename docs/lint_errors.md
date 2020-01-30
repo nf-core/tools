@@ -127,8 +127,8 @@ There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `bran
 This test will fail if the following requirements are not met in these files:  
 
 1. `ci.yml`: Contains all the commands required to test the pipeline  
-  * Must be turned on for `push` and `pull_request`.  
-  * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:  
+    * Must be turned on for `push` and `pull_request`.  
+    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:  
 
     ```yaml
     jobs:
@@ -193,7 +193,7 @@ This test will fail if the following requirements are not met in this file:
 
 * The `Docker` container for the pipeline must be tagged appropriately in the `before_install` section for:
   * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
-  * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`)  
+  * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
 
 * Must contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` in the `script` section.  
 
