@@ -78,7 +78,6 @@
 * Updated Base Dockerfile to Conda 4.7.10
 * Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
 * Improved core documentation (`-profile`)
-* Improved error documentation for CI test linting
 
 ## v1.7
 
