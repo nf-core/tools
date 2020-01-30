@@ -8,16 +8,16 @@ A python package with helper tools for the nf-core community.
 
 ## Table of contents <!-- omit in toc -->
 
- * [`nf-core` tools installation](#installation)
- * [`nf-core list` - List available pipelines](#listing-pipelines)
- * [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
- * [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
- * [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
- * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
- * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
- * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
- * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
-- [Citation](#citation)
+* [`nf-core` tools installation](#installation)
+* [`nf-core list` - List available pipelines](#listing-pipelines)
+* [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
+* [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
+* [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
+* [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
+* [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
+* [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
+* [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+* [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
