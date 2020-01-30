@@ -120,7 +120,9 @@ The following variables are depreciated and fail the test if they are still pres
 
 nf-core pipelines must have CI testing with GitHub actions or Travis.
 
-There are three main CI test files
+### Github Actions
+
+There are three main CI test files:
 
   * `ci.yml` - this contains all test commands for your pipeline itself
   * `branch.yml` - this checks that major branches are protected from un-approved changes
@@ -173,7 +175,13 @@ For GitHub actions CI workflow:
 * `.github/workflows/linting.yml` must perform markdown linting with the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml` under `jobs`, `Markdown`, `steps`.
 * `.github/workflows/linting.yml` must perform nf-core linting with the command `nf-core lint ${GITHUB_WORKSPACE}` under `jobs`, `nf-core`, `steps`.
 
-For Travis CI:
+### Travis
+
+Travis CI consists of one file which includes commands for running linting, branch protection, and your own tests for your pipline:
+
+* `.travis.yml`
+
+The tests fail if the following are not met:
 
 * `.travis.yml` must contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
 * `.travis.yml` must contain the string `docker pull <container>:dev` under `before_install`
