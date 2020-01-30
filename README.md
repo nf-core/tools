@@ -8,51 +8,60 @@ A python package with helper tools for the nf-core community.
 
 ## Table of contents
 
-* [`nf-core` tools installation](#installation)
-* [`nf-core list` - List available pipelines](#listing-pipelines)
-* [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
-* [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
-* [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
-* [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
-* [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
-* [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
-* [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+- [!nf-core/tools](#nf-coretools)
+  - [Table of contents](#table-of-contents)
+  - [Installation](#installation)
+  - [Listing pipelines](#listing-pipelines)
+  - [Launch a pipeline](#launch-a-pipeline)
+  - [Downloading pipelines for offline use](#downloading-pipelines-for-offline-use)
+  - [Pipeline software licences](#pipeline-software-licences)
+  - [Creating a new workflow](#creating-a-new-workflow)
+  - [Linting a workflow](#linting-a-workflow)
+  - [Bumping a pipeline version number](#bumping-a-pipeline-version-number)
+  - [Sync a pipeline with the template](#sync-a-pipeline-with-the-template)
+  - [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
 
 ## Installation
 
-You can install `nf-core/tools` from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
-
-```bash
-pip install nf-core
-```
-
-Alternatively, it can be installed using [bioconda](https://bioconda.github.io/recipes/nf-core/README.html):
+You can install `nf-core/tools` using [bioconda](https://bioconda.github.io/recipes/nf-core/README.html):
 
 ```bash
 conda install -c bioconda nf-core
 ```
 
-If you would like the development version instead, the command is:
+It can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
 ```bash
-pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
+pip install nf-core
+```
+
+Or, if you would like the development version instead, the command is:
+
+```bash
+pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git@dev
 ```
 
 Alternatively, if you would like to edit the files locally:
+Clone the repository code - you should probably specify your fork instead
 
 ```bash
-# Clone the repository code - you should probably specify your fork instead
 git clone https://github.com/nf-core/tools.git nf-core-tools
 cd nf-core-tools
+```
 
-# Install the package
-python setup.py develop
+Install with pip
 
-# Alternatively, install with pip
+```bash
 pip install -e .
+```
+
+Alternatively, install the package with Python
+
+```bash
+python setup.py develop
 ```
 
 ## Listing pipelines
