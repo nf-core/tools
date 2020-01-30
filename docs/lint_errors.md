@@ -127,8 +127,8 @@ There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `bran
 This test will fail if the following requirements are not met in these files:  
 
 1. `ci.yml`: Contains all the commands required to test the pipeline  
-    * Must be turned on for `push` and `pull_request`.  
-    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:  
+  * Must be turned on for `push` and `pull_request`.  
+  * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:  
 
     ```yaml
     jobs:
@@ -140,7 +140,9 @@ This test will fail if the following requirements are not met in these files:
                 nxf_ver: ['19.10.0', '']
     ```
 
-    * The `Docker` container for the pipeline must be tagged appropriately for development (`docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`) and released pipelines (`docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`):  
+  * The `Docker` container for the pipeline must be tagged appropriately for:  
+    * Development pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
+    * Released pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
 
     ```yaml
     jobs:
@@ -153,13 +155,13 @@ This test will fail if the following requirements are not met in these files:
     ```
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`  
-    * Must be turned on for `push` and `pull_request`.  
-    * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.  
-    * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.  
+  * Must be turned on for `push` and `pull_request`.  
+  * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.  
+  * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.  
 
 3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch  
-    * Must be turned on for `pull_request` to `master`.  
-    * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:  
+  * Must be turned on for `pull_request` to `master`.  
+  * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:  
 
     ```yaml
     jobs:
@@ -189,7 +191,9 @@ This test will fail if the following requirements are not met in this file:
   * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline's `nextflow.config`.  
   * Other environment variables can be specified on these lines as long as they are space separated.  
 
-* The `Docker` container for the pipeline must be tagged appropriately for development (`docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`) and released pipelines (`docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`) in the `before_install` section.  
+* The `Docker` container for the pipeline must be tagged appropriately in the `before_install` section for:
+  * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
+  * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`)  
 
 * Must contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` in the `script` section.  
 
