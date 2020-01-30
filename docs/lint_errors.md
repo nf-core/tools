@@ -152,13 +152,13 @@ This test will fail if the following requirements are not met in these files:
             docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
     ```
 
-2. `linting.yml` specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`  
-    * Must be turned on for push and pull requests.  
+2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`  
+    * Must be turned on for `push` and `pull_request`.  
     * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.  
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.  
 
-3. `branch.yml` ensures that pull requests to the protected `master` branch are coming from the correct branch  
-    * Must be turned on for pull requests to `master`.  
+3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch  
+    * Must be turned on for `pull_request` to `master`.  
     * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:  
 
     ```yaml
@@ -186,7 +186,7 @@ This test will fail if the following requirements are not met in this file:
       - NXF_VER=''
     ```
 
-  * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline's `nextflow.config`  
+  * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline's `nextflow.config`.  
   * Other environment variables can be specified on these lines as long as they are space separated.  
 
 * The `Docker` container for the pipeline must be tagged appropriately for development (`docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`) and released pipelines (`docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`) in the `before_install` section.  
