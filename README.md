@@ -451,7 +451,7 @@ Running pipeline tests  [####################################]  100%  None
 INFO: ===========
  LINTING RESULTS
 =================
-  96 tests passed   0 tests had warnings   0 tests failed
+  118 tests passed   0 tests had warnings   0 tests failed
 
 INFO: Changing version number:
   Current version number is '1.0dev'
@@ -465,19 +465,19 @@ INFO: Updating version in nextflow.config
  - process.container = 'nfcore/mypipeline:dev'
  + process.container = 'nfcore/mypipeline:1.0'
 
-INFO: Updating version in .travis.yml
- - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
- + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
+INFO: Updating version in .github/workflows/ci.yml
+ - docker pull nfcore/mypipeline:dev && docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
+ + docker pull nfcore/mypipeline:dev && docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
  + name: nf-core-mypipeline-1.0
 
 INFO: Updating version in Dockerfile
- - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
  - ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
  + ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
+ + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
