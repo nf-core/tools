@@ -133,7 +133,7 @@ class TestLint(unittest.TestCase):
         bad_lint_obj.check_nextflow_config()
 
     def test_actions_wf_branch_pass(self):
-        """Tests that linting for GitHub actions workflow for branch protection works for a good example"""
+        """Tests that linting for GitHub Actions workflow for branch protection works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.pipeline_name = 'tools'
         lint_obj.check_actions_branch_protection()
@@ -141,7 +141,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_branch_fail(self):
-        """Tests that linting for Github actions workflow for branch protection fails for a bad example"""
+        """Tests that linting for GitHub Actions workflow for branch protection fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.pipeline_name = 'tools'
         lint_obj.check_actions_branch_protection()
@@ -149,7 +149,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_ci_pass(self):
-        """Tests that linting for GitHub actions CI workflow works for a good example"""
+        """Tests that linting for GitHub Actions CI workflow works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.minNextflowVersion = '19.10.0'
         lint_obj.pipeline_name = 'tools'
@@ -159,7 +159,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_ci_fail(self):
-        """Tests that linting for GitHub actions CI workflow fails for a bad example"""
+        """Tests that linting for GitHub Actions CI workflow fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.minNextflowVersion = '19.10.0'
         lint_obj.pipeline_name = 'tools'
@@ -169,7 +169,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_ci_fail_wrong_NF_version(self):
-        """Tests that linting for GitHub actions CI workflow fails for a bad NXF version"""
+        """Tests that linting for GitHub Actions CI workflow fails for a bad NXF version"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.minNextflowVersion = '0.28.0'
         lint_obj.pipeline_name = 'tools'
@@ -179,14 +179,14 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_lint_pass(self):
-        """Tests that linting for GitHub actions linting wf works for a good example"""
+        """Tests that linting for GitHub Actions linting wf works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.check_actions_lint()
         expectations = {"failed": 0, "warned": 0, "passed": 3}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_lint_fail(self):
-        """Tests that linting for GitHub actions linting wf fails for a bad example"""
+        """Tests that linting for GitHub Actions linting wf fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_actions_lint()
         expectations = {"failed": 3, "warned": 0, "passed": 0}
