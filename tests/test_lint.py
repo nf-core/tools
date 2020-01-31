@@ -62,7 +62,7 @@ class TestLint(unittest.TestCase):
         This should not result in any exception for the minimal
         working example"""
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
-        expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS}
+        expectations = {"failed": 0, "warned": 3, "passed": MAX_PASS_CHECKS}
         self.assess_lint_status(lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -77,7 +77,7 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.lint_pipeline(release_mode=True)
-        expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
+        expectations = {"failed": 0, "warned": 3, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_failing_dockerfile_example(self):
@@ -254,9 +254,8 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
-        lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
-        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        expectations = {"failed": 0, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_version_consistency_with_numeric_fail(self):
@@ -266,7 +265,7 @@ class TestLint(unittest.TestCase):
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
-        expectations = {"failed": 1, "warned": 0, "passed": 0}
+        expectations = {"failed": 0, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_version_consistency_with_no_docker_version_fail(self):
