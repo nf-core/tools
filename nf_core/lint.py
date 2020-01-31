@@ -486,7 +486,7 @@ class PipelineLint(object):
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
     def check_actions_branch_protection(self):
-        """Checks that the GitHub actions branch protection workflow is valid.
+        """Checks that the GitHub Actions branch protection workflow is valid.
 
         Makes sure PRs can only come from nf-core dev or 'patch' of a fork.
         """
@@ -499,9 +499,9 @@ class PipelineLint(object):
             try:
                 assert('master' in branchwf[True]['pull_request']['branches'])
             except (AssertionError, KeyError):
-                self.failed.append((5, "GitHub actions branch workflow must check for master branch PRs: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions branch workflow must check for master branch PRs: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions branch workflow checks for master branch PRs: '{}'".format(fn)))
 
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
             pipeline_version = self.config.get('manifest.version', '').strip(' \'"')
@@ -511,12 +511,12 @@ class PipelineLint(object):
                 steps = branchwf['jobs']['test']['steps']
                 assert(any([PRMasterCheck in step['run'] for step in steps]))
             except (AssertionError, KeyError):
-                self.failed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions branch workflow checks for master branch PRs: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions branch workflow checks for master branch PRs: '{}'".format(fn)))
 
     def check_actions_ci(self):
-        """Checks that the GitHub actions ci workflow is valid
+        """Checks that the GitHub Actions CI workflow is valid
 
         Makes sure tests run with the required nextflow version.
         """
@@ -530,9 +530,9 @@ class PipelineLint(object):
                 assert('push' in ciwf[True])
                 assert('pull_request' in ciwf[True])
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub actions ci workflow must be triggered on PR and push: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions CI workflow must be triggered on PR and push: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions ci workflow is triggered on PR and push: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions CI workflow is triggered on PR and push: '{}'".format(fn)))
 
             # Check that we're pulling the right docker image and tagging it properly
             if self.config.get('process.container', ''):
@@ -559,7 +559,7 @@ class PipelineLint(object):
                 self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
 
     def check_actions_lint(self):
-        """Checks that the GitHub actions lint workflow is valid
+        """Checks that the GitHub Actions lint workflow is valid
 
         Makes sure ``nf-core lint`` and ``markdownlint`` runs.
         """
@@ -573,9 +573,9 @@ class PipelineLint(object):
                 assert('push' in lintwf[True])
                 assert('pull_request' in lintwf[True])
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub actions linting workflow must be triggered on PR and push: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions linting workflow must be triggered on PR and push: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions linting workflow is triggered on PR and push: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions linting workflow is triggered on PR and push: '{}'".format(fn)))
 
             # Check that the Markdown linting runs
             Markdownlint_cmd = 'markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml'
