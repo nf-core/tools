@@ -84,7 +84,7 @@ def bump_nextflow_version(lint_obj, new_version):
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
     # Update GitHub Actions CI
-    nfconfig_pattern = r"nxf_ver: [[\'\"]?{}[\'\"]?, '']".format(current_version.replace('.',r'\.'))
+    nfconfig_pattern = r"nxf_ver: \[[\'\"]?{}[\'\"]?, ''\]".format(current_version.replace('.',r'\.'))
     nfconfig_newstr = "nxf_ver: ['{}', '']".format(new_version)
     update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr, True)
 
