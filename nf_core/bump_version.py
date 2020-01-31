@@ -83,6 +83,11 @@ def bump_nextflow_version(lint_obj, new_version):
     nfconfig_newstr = "nextflowVersion = '>={}'".format(new_version)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
+    # Update GitHub Actions CI
+    nfconfig_pattern = r"nxf_ver: [[\'\"]?{}[\'\"]?, '']".format(current_version.replace('.',r'\.'))
+    nfconfig_newstr = "nxf_ver: ['{}', '']".format(new_version)
+    update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr, True)
+
     # Update README badge
     nfconfig_pattern = r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace('.',r'\.'))
     nfconfig_newstr = "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version)
