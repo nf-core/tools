@@ -170,7 +170,6 @@ class PipelineLint(object):
             'check_actions_branch_protection',
             'check_actions_ci',
             'check_actions_lint',
-            'check_ci_config',
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
