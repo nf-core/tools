@@ -118,7 +118,7 @@ The following variables are depreciated and fail the test if they are still pres
 
 nf-core pipelines must have CI testing with GitHub Actions.
 
-### Github Actions
+### GitHub Actions
 
 There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory.  
 
