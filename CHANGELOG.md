@@ -2,6 +2,10 @@
 
 ## v1.9dev
 
+### Continuous integration
+
+* Travis CI tests are now deprecated. Please switch to GitHub Actions
+
 ### Linting
 
 * Removed linting for CircleCI
@@ -30,7 +34,7 @@
 * Updated documentation for `nf-core download`
 * Fixed typo in `nf-core launch` final command
 * Handle missing pipeline descriptions in `nf-core list`
-* Migrate tools package CI to GitHub actions
+* Migrate tools package CI to GitHub Actions
 
 ### Linting
 
