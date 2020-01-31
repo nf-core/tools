@@ -58,7 +58,7 @@ nf-core has a [set of guidelines](http://nf-co.re/guidelines) which all pipeline
 To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
 
 The nf-core/tools repo itself contains the master template for creating new nf-core pipelines.
-Once you have created a new pipeline from this template Github Actions is set up to run lint tests on it.
+Once you have created a new pipeline from this template GitHub Actions is set up to run lint tests on it.
 This ensures that any changes we make to either the linting or the template stay in sync.
 You can replicate this process locally with the following commands:
 
