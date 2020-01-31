@@ -237,18 +237,14 @@ class PipelineLint(object):
             os.path.join('docs','README.md'),
             os.path.join('docs','output.md'),
             os.path.join('docs','usage.md'),
-            ['.travis.yml', os.path.join('.github', 'workflows', 'branch.yml')],
-            ['.travis.yml', os.path.join('.github', 'workflows','ci.yml')],
-            ['.travis.yml', os.path.join('.github', 'workflows', 'linting.yml')]
-
+            os.path.join('.github', 'workflows', 'branch.yml'),
+            os.path.join('.github', 'workflows','ci.yml'),
+            os.path.join('.github', 'workflows', 'linting.yml')
         ]
         files_warn = [
             'main.nf',
             'environment.yml',
-            os.path.join('conf','base.config'),
-            os.path.join('.github', 'workflows', 'branch.yml'),
-            os.path.join('.github', 'workflows','ci.yml'),
-            os.path.join('.github', 'workflows', 'linting.yml')
+            os.path.join('conf','base.config')
         ]
         files_fail_ifexists = [
             'Singularity'
@@ -602,73 +598,6 @@ class PipelineLint(object):
             else:
                 self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
 
-    def check_ci_config(self):
-        """Checks that the Travis CI YAML config is valid.
-
-        Makes sure that ``nf-core lint`` runs in travis tests and that
-        tests run with the required nextflow version.
-        """
-        for cf in ['.travis.yml']:
-            fn = os.path.join(self.path, cf)
-            if os.path.isfile(fn):
-                with open(fn, 'r') as fh:
-                    ciconf = yaml.safe_load(fh)
-                # Check that we have the master branch protection, but allow patch as well
-                travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ]) || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]'
-
-                try:
-                    assert(travisMasterCheck in ciconf.get('before_install', {}))
-                except AssertionError:
-                    self.failed.append((5, "Continuous integration must check for master/patch branch PRs: '{}'".format(fn)))
-                else:
-                    self.passed.append((5, "Continuous integration checks for master/patch branch PRs: '{}'".format(fn)))
-                # Check that the nf-core linting runs
-                try:
-                    assert('nf-core lint ${TRAVIS_BUILD_DIR}' in ciconf['script'])
-                except AssertionError:
-                    self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
-                else:
-                    self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
-
-                # Check that we're pulling the right docker image
-                if self.config.get('process.container', ''):
-                    docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
-                    docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
-                    try:
-                        assert(docker_pull_cmd in ciconf.get('before_install', []))
-                    except AssertionError:
-                        self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
-                    else:
-                        self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
-
-                    # Check that we tag the docker image properly
-                    docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, self.config.get('process.container', '').strip('"\''))
-                    try:
-                        assert(docker_tag_cmd in ciconf.get('before_install'))
-                    except AssertionError:
-                        self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
-                    else:
-                        self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
-
-                # Check that we're testing the minimum nextflow version
-                minNextflowVersion = ""
-                env = ciconf.get('env', [])
-                if type(env) is dict:
-                    env = env.get('matrix', [])
-                for e in env:
-                    # Split using shlex so that we don't split "quoted whitespace"
-                    for s in shlex.split(e):
-                        k,v = s.split('=')
-                        if k == 'NXF_VER':
-                            ci_ver = v.strip('\'"')
-                            minNextflowVersion = ci_ver if v else minNextflowVersion
-                            if ci_ver == self.minNextflowVersion:
-                                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
-                if not minNextflowVersion:
-                    self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
-                elif minNextflowVersion != self.minNextflowVersion:
-                    self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
-
     def check_readme(self):
         """Checks the repository README file for errors.
 
@@ -704,7 +633,7 @@ class PipelineLint(object):
     def check_version_consistency(self):
         """Checks container tags versions.
 
-        Runs on ``process.container``, ``process.container`` and ``$TRAVIS_TAG`` (each only if set).
+        Runs on ``process.container`` and ``process.container`` (each only if set).
 
         Checks that:
             * the container has a tag
@@ -728,10 +657,6 @@ class PipelineLint(object):
             versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
         if self.config.get('process.container', ''):
             versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
-
-        # Get version from the TRAVIS_TAG env var
-        if os.environ.get('TRAVIS_TAG') and os.environ.get('TRAVIS_REPO_SLUG', '') != 'nf-core/tools':
-            versions['TRAVIS_TAG'] = os.environ.get('TRAVIS_TAG').strip(' \'"')
 
         # Check if they are all numeric
         for v_type, version in versions.items():
