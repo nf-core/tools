@@ -2,6 +2,11 @@
 
 ## v1.9dev
 
+### Template
+
+* Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Removed the requirement for R in the conda environment
+
 ### Linting
 
 * Removed linting for CircleCI
