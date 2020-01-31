@@ -196,11 +196,13 @@ The `README.md` files for a project are very important and must meet some requir
 
 ## Error #7 - Pipeline and container version numbers ## {#7}
 
-> This test only runs when `--release` is set
+> This test only runs when `--release` is set or `$GITHUB_REF` is equal to `master`
 
 These tests look at `process.container` and `$GITHUB_REF` only if they are set.
 
 * Container name must have a tag specified (eg. `nfcore/pipeline:version`)
+* Container tag / `$GITHUB_REF` must contain only numbers and dots
+* Tags and `$GITHUB_REF` must all match one another
 
 ## Error #8 - Conda environment tests ## {#8}
 
