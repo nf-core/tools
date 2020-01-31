@@ -155,7 +155,7 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['process.container'] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
-        expectations = {"failed": 0, "warned": 0, "passed": 3}
+        expectations = {"failed": 0, "warned": 0, "passed": 4}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_ci_fail(self):
@@ -165,7 +165,7 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['process.container'] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
-        expectations = {"failed": 3, "warned": 0, "passed": 0}
+        expectations = {"failed": 4, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_ci_fail_wrong_NF_version(self):
@@ -175,7 +175,7 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['process.container'] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
-        expectations = {"failed": 1, "warned": 0, "passed": 2}
+        expectations = {"failed": 1, "warned": 0, "passed": 3}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_lint_pass(self):
