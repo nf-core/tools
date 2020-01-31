@@ -12,9 +12,8 @@ The lint test looks for the following required files:
   * The main nextflow config file
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
-* Continuous integration tests with either [GitHub Actions](https://github.com/features/actions) or [Travis CI](https://travis-ci.com/)
+* Continuous integration tests with [GitHub Actions](https://github.com/features/actions)
   * GitHub Actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practice linting (`.github/workflows/linting.yml`)
-  * Alternatively, `.travis.yml` continuous integration testing is still allowed but will be deprecated in the near future
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
 * `README.md`
@@ -76,7 +75,6 @@ The following variables fail the test if missing:
 * `manifest.nextflowVersion`
   * The minimum version of Nextflow required to run the pipeline.
   * Should `>=` a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (check the [Nexftlow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest) for more.)
-  * This should correspond to the `NXF_VER` version tested by Travis.
 * `manifest.homePage`
   * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
     so beginning with `https://github.com/nf-core/`
@@ -118,7 +116,7 @@ The following variables are depreciated and fail the test if they are still pres
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
-nf-core pipelines must have CI testing with GitHub Actions or Travis.
+nf-core pipelines must have CI testing with GitHub Actions.
 
 ### Github Actions
 
@@ -174,36 +172,6 @@ This test will fail if the following requirements are not met in these files:
           { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
     ```
 
-### Travis
-
-For Travis CI, the commands required to test and lint the pipeline, and to check the branch protection are all specified in a single file i.e. `.travis.yml` which can be found in the top-level directory of the pipeline repository.  
-
-This test will fail if the following requirements are not met in this file:  
-
-* The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined in the `env` section of this file:  
-
-    ```yaml
-    env:
-      - NXF_VER=0.27.0
-      - NXF_VER=''
-    ```
-
-  * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline's `nextflow.config`.  
-  * Other environment variables can be specified on these lines as long as they are space separated.  
-
-* The `Docker` container for the pipeline must be tagged appropriately in the `before_install` section for:
-  * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
-  * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
-
-* Must contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` in the `script` section.  
-
-* Ensures that pull requests to the protected `master` branch are coming from the correct branch and specified in the `before_install` section:  
-
-    ```yaml
-    before_install:
-      - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && ([ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ] || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]))'
-    ```
-
 ## Error #6 - Repository `README.md` tests ## {#6}
 
 The `README.md` files for a project are very important and must meet some requirements:
@@ -227,14 +195,11 @@ The `README.md` files for a project are very important and must meet some requir
 
 ## Error #7 - Pipeline and container version numbers ## {#7}
 
-> This test only runs when `--release` is set or `$TRAVIS_BRANCH` is equal to `master`
+> This test only runs when `--release` is set
 
-These tests look at `process.container` and `$TRAVIS_TAG`, only
-if they are set.
+These tests look at `process.container` only if they are set.
 
 * Container name must have a tag specified (eg. `nfcore/pipeline:version`)
-* Container tag / `$TRAVIS_TAG` must contain only numbers and dots
-* Tags and `$TRAVIS_TAG` must all match one another
 
 ## Error #8 - Conda environment tests ## {#8}
 
