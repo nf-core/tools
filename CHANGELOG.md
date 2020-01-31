@@ -7,6 +7,11 @@
 * Travis CI tests are now deprecated within the pipeline template. Please switch to GitHub Actions.
   * `nf-core lint` and `nf-core bump-version` support has been removed for `.travis.yml`
 
+### Template
+
+* Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Removed the requirement for R in the conda environment
+
 ### Linting
 
 * Removed linting for CircleCI
