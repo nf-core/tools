@@ -546,7 +546,7 @@ class PipelineLint(object):
                 else:
                     self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
-                docker_tag_cmd = 'docker tag {}:dev {}\n'.format(docker_notag, docker_withtag)
+                docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, docker_withtag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
                     assert(any([docker_tag_cmd in step['run'] for step in steps if 'run' in step.keys()]))
