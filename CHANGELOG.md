@@ -30,6 +30,7 @@
 * Updated documentation for `nf-core download`
 * Fixed typo in `nf-core launch` final command
 * Handle missing pipeline descriptions in `nf-core list`
+* Migrate tools package CI to GitHub actions
 
 ### Linting
 
