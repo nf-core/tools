@@ -641,7 +641,7 @@ class PipelineLint(object):
     def check_version_consistency(self):
         """Checks container tags versions.
 
-        Runs on ``process.container`` and ``process.container`` (each only if set).
+        Runs on ``process.container`` and ``process.container`` and ``$GITHUB_REF`` (each only if set).
 
         Checks that:
             * the container has a tag
@@ -665,6 +665,10 @@ class PipelineLint(object):
             versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
         if self.config.get('process.container', ''):
             versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
+
+        # Get version from the GITHUB_REF env var
+        if os.environ.get('GITHUB_REF') and os.environ.get('GITHUB_REPOSITORY', '') != 'nf-core/tools':
+            versions['GITHUB_REF'] = os.environ.get('GITHUB_REF').strip(' \'"')
 
         # Check if they are all numeric
         for v_type, version in versions.items():
