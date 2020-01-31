@@ -668,7 +668,7 @@ class PipelineLint(object):
 
         # Get version from the GITHUB_REF env var
         if os.environ.get('GITHUB_REF') and os.environ.get('GITHUB_REPOSITORY', '') != 'nf-core/tools':
-            versions['GITHUB_REF'] = os.environ.get('GITHUB_REF').strip(' \'"')
+            versions['GITHUB_REF'] = os.path.basename(os.environ.get('GITHUB_REF'))
 
         # Check if they are all numeric
         for v_type, version in versions.items():
