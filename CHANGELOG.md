@@ -4,7 +4,8 @@
 
 ### Continuous integration
 
-* Travis CI tests are now deprecated. Please switch to GitHub Actions
+* Travis CI tests are now deprecated within the pipeline template. Please switch to GitHub Actions.
+  * `nf-core lint` and `nf-core bump-version` support has been removed for `.travis.yml`
 
 ### Linting
 
