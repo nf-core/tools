@@ -8,6 +8,10 @@
 * Added whitespace padding to lint error URLs
 * Improved documentation for lint errors
 
+### Other
+
+* Improve documentation for installing `nf-core/tools`
+
 ## v1.8
 
 ### Continuous integration
