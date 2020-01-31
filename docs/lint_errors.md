@@ -139,8 +139,8 @@ This test will fail if the following requirements are not met in these files:
       ```
 
     * The `Docker` container for the pipeline must be tagged appropriately for:  
-        * Development pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
-        * Released pipelines: `docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
+        * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
+        * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
 
       ```yaml
       jobs:
@@ -149,7 +149,8 @@ This test will fail if the following requirements are not met in these files:
           steps:
           - name: Pull image
               run: |
-              docker pull nfcore/<pipeline_name>:dev && docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
+              docker pull nfcore/<pipeline_name>:dev
+              docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
       ```
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`  

@@ -537,14 +537,23 @@ class PipelineLint(object):
             if self.config.get('process.container', ''):
                 docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
                 docker_withtag = self.config.get('process.container', '').strip('"\'')
-                docker_pull_cmd = 'docker pull {}:dev && docker tag {}:dev {}\n'.format(docker_notag, docker_notag, docker_withtag)
+                docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
                     assert(any([docker_pull_cmd in step['run'] for step in steps if 'run' in step.keys()]))
                 except (AssertionError, KeyError, TypeError):
-                    self.failed.append((5, "CI is not pulling and tagging the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
+                    self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                 else:
-                    self.passed.append((5, "CI is pulling and tagging the correct docker image: {}".format(docker_pull_cmd)))
+                    self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
+
+                docker_tag_cmd = 'docker tag {}:dev {}\n'.format(docker_notag, docker_withtag)
+                try:
+                    steps = ciwf['jobs']['test']['steps']
+                    assert(any([docker_tag_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                except (AssertionError, KeyError, TypeError):
+                    self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
+                else:
+                    self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
 
             # Check that we are testing the minimum nextflow version
             try:

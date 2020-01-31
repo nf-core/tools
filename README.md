@@ -466,8 +466,8 @@ INFO: Updating version in nextflow.config
  + process.container = 'nfcore/mypipeline:1.0'
 
 INFO: Updating version in .github/workflows/ci.yml
- - docker pull nfcore/mypipeline:dev && docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
- + docker pull nfcore/mypipeline:dev && docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
+ - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
+ + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
