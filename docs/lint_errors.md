@@ -198,7 +198,7 @@ The `README.md` files for a project are very important and must meet some requir
 
 > This test only runs when `--release` is set
 
-These tests look at `process.container` only if they are set.
+These tests look at `process.container` and `$GITHUB_REF` only if they are set.
 
 * Container name must have a tag specified (eg. `nfcore/pipeline:version`)
 
