@@ -95,7 +95,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 5, "warned": 2, "passed": 12}
+        expectations = {"failed": 5, "warned": 2, "passed": 9}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -192,28 +192,6 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 3, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
-    def test_ci_conf_pass(self):
-        """Tests that the continous integration config checks work with a good example"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = '19.10.0'
-        lint_obj.check_ci_config()
-        expectations = {"failed": 0, "warned": 0, "passed": 3}
-        self.assess_lint_status(lint_obj, **expectations)
-
-    def test_ci_conf_fail_wrong_nf_version(self):
-        """Tests that the CI check fails with the wrong NXF version"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = '0.28.0'
-        lint_obj.check_ci_config()
-        expectations = {"failed": 1, "warned": 0, "passed": 2}
-        self.assess_lint_status(lint_obj, **expectations)
-
-    def test_ci_conf_fail(self):
-        """Tests that the continous integration config checks work with a bad example"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-        lint_obj.check_ci_config()
-        expectations = {"failed": 2, "warned": 0, "passed": 0}
-
     def test_wrong_license_examples_with_failed(self):
         """Tests for checking the license test behavior"""
         for example in PATHS_WRONG_LICENSE_EXAMPLE:
@@ -273,8 +251,6 @@ class TestLint(unittest.TestCase):
     def test_version_consistency_with_env_fail(self):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong release tag"""
-        os.environ["TRAVIS_TAG"] = "0.5"
-        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
@@ -286,8 +262,6 @@ class TestLint(unittest.TestCase):
     def test_version_consistency_with_numeric_fail(self):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong release tag"""
-        os.environ["TRAVIS_TAG"] = "0.5dev"
-        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
@@ -298,8 +272,6 @@ class TestLint(unittest.TestCase):
     def test_version_consistency_with_no_docker_version_fail(self):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong missing docker version tag"""
-        os.environ["TRAVIS_TAG"] = "0.4"
-        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools"
@@ -310,8 +282,6 @@ class TestLint(unittest.TestCase):
     def test_version_consistency_with_env_pass(self):
         """Tests the behaviour, when a git activity is a release
         and simulate correct release tag"""
-        os.environ["TRAVIS_TAG"] = "0.4"
-        os.environ["TRAVIS_REPO_SLUG"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
