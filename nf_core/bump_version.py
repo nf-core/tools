@@ -47,7 +47,7 @@ def bump_pipeline_version(lint_obj, new_version):
     # Update GitHub Actions CI image tag
     nfconfig_pattern = r"docker pull nfcore/atacseq:dev && docker tag nfcore/{name}:dev nfcore/{name}:(?:{tag}|dev)".format(name=lint_obj.pipeline_name.lower(), tag=current_version.replace('.',r'\.'))
     nfconfig_newstr = "docker pull nfcore/atacseq:dev && docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(name=lint_obj.pipeline_name.lower(), tag=docker_tag)
-    update_file_version(".github/workflows/ci.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
+    update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr)
 
     if 'environment.yml' in lint_obj.files:
         # Update conda environment.yml
