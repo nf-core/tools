@@ -229,7 +229,7 @@ def create(name, description, author, new_version, no_git, force, outdir):
 @click.option(
     '--release',
     is_flag = True,
-    default = os.environ.get('TRAVIS_BRANCH') == 'master' and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('nf-core/') and not os.environ.get('TRAVIS_REPO_SLUG', '') == 'nf-core/tools',
+    default = os.environ.get('GITHUB_REF') == 'master' and os.environ.get('GITHUB_REPOSITORY', '').startswith('nf-core/') and not os.environ.get('GITHUB_REPOSITORY', '') == 'nf-core/tools',
     help = "Execute additional checks for release-ready workflows."
 )
 def lint(pipeline_dir, release):
