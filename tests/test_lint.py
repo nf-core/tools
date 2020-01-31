@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 76
+MAX_PASS_CHECKS = 69
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -255,7 +255,7 @@ class TestLint(unittest.TestCase):
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
-        expectations = {"failed": 0, "warned": 0, "passed": 0}
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_version_consistency_with_numeric_fail(self):
@@ -265,7 +265,7 @@ class TestLint(unittest.TestCase):
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
-        expectations = {"failed": 0, "warned": 0, "passed": 0}
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_version_consistency_with_no_docker_version_fail(self):
