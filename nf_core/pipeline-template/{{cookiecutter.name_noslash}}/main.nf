@@ -191,7 +191,7 @@ process get_software_versions {
     echo $workflow.nextflow.version > v_nextflow.txt
     fastqc --version > v_fastqc.txt
     multiqc --version > v_multiqc.txt
-    scrape_software_versions.py &> software_versions_mqc.yaml
+    python scrape_software_versions.py &> software_versions_mqc.yaml
     """
 }
 
@@ -259,7 +259,7 @@ process output_documentation {
 
     script:
     """
-    markdown_to_html.py $output_docs -o results_description.html
+    python markdown_to_html.py $output_docs -o results_description.html
     """
 }
 
