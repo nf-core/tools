@@ -640,7 +640,7 @@ class PipelineLint(object):
 
     def check_version_consistency(self):
         """Checks container tags versions.
-        
+
         Runs on ``process.container`` (if set) and ``$GITHUB_REF`` (if a GitHub Actions release).
 
         Checks that:
@@ -666,7 +666,7 @@ class PipelineLint(object):
         if self.config.get('process.container', ''):
             versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
 
-        # Get version from the GITHUB_REF env var
+        # Get version from the GITHUB_REF env var if this is a release
         if os.environ.get('GITHUB_REF') and os.environ.get('GITHUB_REPOSITORY', '') != 'nf-core/tools':
             versions['GITHUB_REF'] = os.path.basename(os.environ.get('GITHUB_REF'))
 
