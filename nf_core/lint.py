@@ -640,8 +640,8 @@ class PipelineLint(object):
 
     def check_version_consistency(self):
         """Checks container tags versions.
-
-        Runs on ``process.container`` and ``process.container`` and ``$GITHUB_REF`` (each only if set).
+        
+        Runs on ``process.container`` (if set) and ``$GITHUB_REF`` (if a GitHub Actions release).
 
         Checks that:
             * the container has a tag
