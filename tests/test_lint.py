@@ -251,26 +251,32 @@ class TestLint(unittest.TestCase):
     def test_version_consistency_with_env_fail(self):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong release tag"""
+        os.environ["GITHUB_REF"] = "refs/tags/0.5"
+        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
-        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_version_consistency_with_numeric_fail(self):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong release tag"""
+        os.environ["GITHUB_REF"] = "refs/tags/0.5dev"
+        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
         lint_obj.check_version_consistency()
-        expectations = {"failed": 0, "warned": 0, "passed": 1}
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_version_consistency_with_no_docker_version_fail(self):
         """Tests the behaviour, when a git activity is a release
         and simulate wrong missing docker version tag"""
+        os.environ["GITHUB_REF"] = "refs/tags/0.4"
+        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools"
@@ -281,6 +287,8 @@ class TestLint(unittest.TestCase):
     def test_version_consistency_with_env_pass(self):
         """Tests the behaviour, when a git activity is a release
         and simulate correct release tag"""
+        os.environ["GITHUB_REF"] = "refs/tags/0.4"
+        os.environ["GITHUB_REPOSITORY"] = "nf-core/testpipeline"
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.config["manifest.version"] = "0.4"
         lint_obj.config["process.container"] = "nfcore/tools:0.4"
