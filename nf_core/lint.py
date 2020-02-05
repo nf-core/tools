@@ -458,8 +458,8 @@ class PipelineLint(object):
 
         # Check that the minimum nextflowVersion is set properly
         if 'manifest.nextflowVersion' in self.config:
-            if self.config.get('manifest.nextflowVersion', '').strip('"\'').startswith('>='):
-                self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >="))
+            if self.config.get('manifest.nextflowVersion', '').strip('"\'').lstrip('!').startswith('>='):
+                self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >= or !>="))
                 # Save self.minNextflowVersion for convenience
                 nextflowVersionMatch = re.search(r'[0-9\.]+(-edge)?', self.config.get('manifest.nextflowVersion', ''))
                 if nextflowVersionMatch:
@@ -467,7 +467,7 @@ class PipelineLint(object):
                 else:
                     self.minNextflowVersion = None
             else:
-                self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
+                self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' or '!>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
 
         # Check that the process.container name is pulling the version tag or :dev
         if self.config.get('process.container'):
