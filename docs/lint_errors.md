@@ -132,28 +132,28 @@ This test will fail if the following requirements are not met in these files:
 
       ```yaml
       jobs:
-      test:
+        test:
           runs-on: ubuntu-18.04
           strategy:
-              matrix:
-                  # Nextflow versions: check pipeline minimum and current latest
-                  nxf_ver: ['19.10.0', '']
+            matrix:
+              # Nextflow versions: check pipeline minimum and current latest
+              nxf_ver: ['19.10.0', '']
       ```
 
     * The `Docker` container for the pipeline must be tagged appropriately for:
         * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`
         * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
 
-      ```yaml
-      jobs:
-      test:
-          runs-on: ubuntu-18.04
-          steps:
-          - name: Pull image
-              run: |
-              docker pull nfcore/<pipeline_name>:dev
-              docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
-      ```
+          ```yaml
+          jobs:
+            test:
+              runs-on: ubuntu-18.04
+              steps:
+                - name: Pull image
+                    run: |
+                    docker pull nfcore/<pipeline_name>:dev
+                    docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
+          ```
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
     * Must be turned on for `push` and `pull_request`.
@@ -162,18 +162,21 @@ This test will fail if the following requirements are not met in these files:
 
 3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch
     * Must be turned on for `pull_request` to `master`.
+      ```yaml
+      on:
+        pull_request:
+          branches:
+          - master
+      ```
     * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:
 
-    ```yaml
-    jobs:
-    test:
-    runs-on: ubuntu-18.04
-    steps:
-      # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-      - name: Check PRs
-        run: |
-          { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
-    ```
+      ```yaml
+      steps:
+        # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
+        - name: Check PRs
+          run: |
+            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+      ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 
