@@ -7,7 +7,7 @@
 * Travis CI tests are now deprecated within the pipeline template. Please switch to GitHub Actions.
   * `nf-core bump-version` support has been removed for `.travis.yml`
   * `nf-core lint` now fails if a `.travis.yml` file is found
-  
+
 ### Template
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
@@ -20,6 +20,7 @@
 * Added whitespace padding to lint error URLs
 * Improved documentation for lint errors
 * Allow either `>=` or `!>=` in nextflow version checks (the latter exits with an error instead of just warning) [#506](https://github.com/nf-core/tools/issues/506)
+* Tidied up error messages and syntax for linting GitHub actions branch tests
 
 ### Other
 
