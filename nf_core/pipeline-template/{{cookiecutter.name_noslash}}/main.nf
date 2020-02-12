@@ -154,9 +154,10 @@ log.info "-\033[2m--------------------------------------------------\033[0m-"
 // Check the hostnames against configured profiles
 checkHostname()
 
-def create_workflow_summary(summary) {
-    def yaml_file = workDir.resolve('workflow_summary_mqc.yaml')
-    yaml_file.text  = """
+Channel.from(summary.collect{ [it.key, it.value] })
+    .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
+    .reduce { a, b -> return [a, b].join("\n            ") }
+    .map { x -> """
     id: '{{ cookiecutter.name_noslash }}-summary'
     description: " - this information is collected when the pipeline is started."
     section_name: '{{ cookiecutter.name }} Workflow Summary'
@@ -164,12 +165,10 @@ def create_workflow_summary(summary) {
     plot_type: 'html'
     data: |
         <dl class=\"dl-horizontal\">
-${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }.join("\n")}
+            $x
         </dl>
-    """.stripIndent()
-
-   return yaml_file
-}
+    """.stripIndent() }
+    .set { ch_workflow_summary }
 
 /*
  * Parse software version numbers
@@ -231,7 +230,7 @@ process multiqc {
     // TODO nf-core: Add in log files from your new processes for MultiQC to find!
     file ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
     file ('software_versions/*') from ch_software_versions_yaml.collect()
-    file workflow_summary from create_workflow_summary(summary)
+    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
 
     output:
     file "*multiqc_report.html" into ch_multiqc_report

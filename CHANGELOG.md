@@ -19,6 +19,10 @@
 
 * Improve documentation for installing `nf-core/tools`
 
+### Template pipeline
+
+* Stage the workflow summary YAML file within MultiQC work directory
+
 ## v1.8
 
 ### Continuous integration
