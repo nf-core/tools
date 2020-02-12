@@ -121,8 +121,6 @@ The following variables are depreciated and fail the test if they are still pres
 Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
 `process.$fastqc` instead of `process withName:'fastqc'`.
 
-
-
 ## Error #5 - Continuous Integration configuration ## {#5}
 
 nf-core pipelines must have CI testing with GitHub Actions.
