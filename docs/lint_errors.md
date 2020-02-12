@@ -127,11 +127,12 @@ There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `bran
 This test will fail if the following requirements are not met in these files:
 
 1. `ci.yml`: Contains all the commands required to test the pipeline
-    * Must be turned on for `push` and `pull_request`.
-    
+    * Must be turned on for `push` and `pull_request`:
+
       ```yaml
       on: [push, pull_request]
       ```
+
     * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:
 
       ```yaml
