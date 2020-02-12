@@ -2,7 +2,6 @@
 
 **{{ cookiecutter.description }}**.
 
-[![Build Status](https://travis-ci.com/{{ cookiecutter.name }}.svg?branch=master)](https://travis-ci.com/{{ cookiecutter.name }})
 [![GitHub Actions CI Status](https://github.com/{{ cookiecutter.name }}/workflows/nf-core%20CI/badge.svg)](https://github.com/{{ cookiecutter.name }}/actions)
 [![GitHub Actions Linting Status](https://github.com/{{ cookiecutter.name }}/workflows/nf-core%20linting/badge.svg)](https://github.com/{{ cookiecutter.name }}/actions)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)

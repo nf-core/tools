@@ -2,6 +2,12 @@
 
 ## v1.9dev
 
+### Continuous integration
+
+* Travis CI tests are now deprecated within the pipeline template. Please switch to GitHub Actions.
+  * `nf-core bump-version` support has been removed for `.travis.yml`
+  * `nf-core lint` now fails if a `.travis.yml` file is found
+  
 ### Template
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
@@ -41,7 +47,7 @@
 * Updated documentation for `nf-core download`
 * Fixed typo in `nf-core launch` final command
 * Handle missing pipeline descriptions in `nf-core list`
-* Migrate tools package CI to GitHub actions
+* Migrate tools package CI to GitHub Actions
 
 ### Linting
 
