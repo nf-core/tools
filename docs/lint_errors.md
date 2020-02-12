@@ -162,12 +162,14 @@ This test will fail if the following requirements are not met in these files:
 
 3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch
     * Must be turned on for `pull_request` to `master`.
+
       ```yaml
       on:
         pull_request:
           branches:
           - master
       ```
+
     * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:
 
       ```yaml
