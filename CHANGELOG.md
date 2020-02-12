@@ -6,6 +6,7 @@
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
 * Removed the requirement for R in the conda environment
+* Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 
 ### Linting
 
