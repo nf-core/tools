@@ -484,6 +484,18 @@ class PipelineLint(object):
             else:
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
+        # Check that the pipeline version contains `dev`
+        if not self.release_mode and 'manifest.version' in self.config:
+            if self.config['manifest.version'].strip(' \'"').endswith('dev'):
+                self.passed.append((4, "Config variable manifest.version ends in 'dev': '{}'".format(self.config['manifest.version'])))
+            else:
+                self.warned.append((4, "Config variable manifest.version should end in 'dev': '{}'".format(self.config['manifest.version'])))
+        elif 'manifest.version' in self.config:
+            if 'dev' in self.config['manifest.version']:
+                self.failed.append((4, "Config variable manifest.version should not contain 'dev' for a release: '{}'".format(self.config['manifest.version'])))
+            else:
+                self.passed.append((4, "Config variable manifest.version does not contain 'dev' for release: '{}'".format(self.config['manifest.version'])))
+
     def check_actions_branch_protection(self):
         """Checks that the GitHub Actions branch protection workflow is valid.
 
