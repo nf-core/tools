@@ -17,6 +17,7 @@
 ### Other
 
 * Improve documentation for installing `nf-core/tools`
+* Add social preview image
 
 ## v1.8
 
