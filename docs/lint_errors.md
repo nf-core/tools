@@ -122,13 +122,13 @@ nf-core pipelines must have CI testing with GitHub Actions.
 
 ### GitHub Actions
 
-There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory.  
+There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory.
 
-This test will fail if the following requirements are not met in these files:  
+This test will fail if the following requirements are not met in these files:
 
-1. `ci.yml`: Contains all the commands required to test the pipeline  
-    * Must be turned on for `push` and `pull_request`.  
-    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:  
+1. `ci.yml`: Contains all the commands required to test the pipeline
+    * Must be turned on for `push` and `pull_request`.
+    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:
 
       ```yaml
       jobs:
@@ -140,9 +140,9 @@ This test will fail if the following requirements are not met in these files:
                   nxf_ver: ['19.10.0', '']
       ```
 
-    * The `Docker` container for the pipeline must be tagged appropriately for:  
-        * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`  
-        * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`  
+    * The `Docker` container for the pipeline must be tagged appropriately for:
+        * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`
+        * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
 
       ```yaml
       jobs:
@@ -155,14 +155,14 @@ This test will fail if the following requirements are not met in these files:
               docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
       ```
 
-2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`  
-    * Must be turned on for `push` and `pull_request`.  
-    * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.  
-    * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.  
+2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
+    * Must be turned on for `push` and `pull_request`.
+    * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.
+    * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
 
-3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch  
-    * Must be turned on for `pull_request` to `master`.  
-    * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:  
+3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch
+    * Must be turned on for `pull_request` to `master`.
+    * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:
 
     ```yaml
     jobs:
