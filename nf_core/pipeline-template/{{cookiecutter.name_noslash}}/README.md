@@ -73,5 +73,5 @@ You can cite the `nf-core` pre-print as follows:
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen
 >
-> [_Nat Biotechnolgy_ (2020)](https://doi.org/10.1038/s41587-020-0439-x);
+> [_Nat Biotechnology_ (2020)](https://doi.org/10.1038/s41587-020-0439-x);
 > doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x)
