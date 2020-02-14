@@ -72,6 +72,8 @@ The following variables fail the test if missing:
   * A description of the pipeline
 * `manifest.version`
   * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
+  * If `--release` is set when running `nf-core lint`, the version number must not contain the string `dev`
+  * If `--release` is _not_ set, the version should end in `dev` (warning triggered if not)
 * `manifest.nextflowVersion`
   * The minimum version of Nextflow required to run the pipeline.
   * Should be `>=` or `!>=` and a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (see [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest))
@@ -81,7 +83,7 @@ The following variables fail the test if missing:
   * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
     so beginning with `https://github.com/nf-core/`
 * `timeline.enabled`, `trace.enabled`, `report.enabled`, `dag.enabled`
-  * The nextflow timeline, trace, report and DAG should be enabled by default
+  * The nextflow timeline, trace, report and DAG should be enabled by default (set to `true`)
 * `process.cpus`, `process.memory`, `process.time`
   * Default CPUs, memory and time limits for tasks
 
@@ -97,7 +99,7 @@ The following variables throw warnings if missing:
 * `process.container`
   * Dockerhub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
-  * If the pipeline version number contains the string `dev`, the dockerhub tag must be `:dev`
+  * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
 * `params.single_end`
@@ -115,6 +117,9 @@ The following variables are depreciated and fail the test if they are still pres
 * `singleEnd` and `igenomesIgnore`
   * Changed to `single_end` and `igenomes_ignore`
   * The `snake_case` convention should now be used when defining pipeline parameters
+
+Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
+`process.$fastqc` instead of `process withName:'fastqc'`.
 
 ## Error #5 - Continuous Integration configuration ## {#5}
 
