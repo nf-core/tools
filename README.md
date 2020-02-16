@@ -567,7 +567,5 @@ If you use `nf-core tools` in your work, please cite the `nf-core` preprint as f
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen
 >
-> [_Nat Biotechnology_ (2020 Feb 13)](https://doi.org/10.1038/s41587-020-0439-x);
-> DOI: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x);
-> PubMed: [32055031](https://www.ncbi.nlm.nih.gov/pubmed/32055031)  
+> [_Nat Biotechnol._ 2020 Feb 13](https://doi.org/10.1038/s41587-020-0439-x). doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).  
 > ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)
