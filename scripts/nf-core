@@ -326,7 +326,7 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 
     # Pull and sync all nf-core pipelines
     if all:
-        nf_core.sync.sync_all_pipelines()
+        nf_core.sync.sync_all_pipelines(username, auth_token)
     else:
         # Manually check for the required parameter
         if not pipeline_dir or len(pipeline_dir) != 1:

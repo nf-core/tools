@@ -68,11 +68,6 @@ class PipelineSync(object):
         self.gh_username = gh_username
         self.gh_repo = gh_repo
         self.gh_auth_token = gh_auth_token
-        if self.gh_auth_token is None:
-            try:
-                self.gh_auth_token = os.environ['NF_CORE_BOT']
-            except KeyError:
-                pass
 
     def sync(self):
         """ Find workflow attributes, create a new template pipeline on TEMPLATE
@@ -274,7 +269,7 @@ class PipelineSync(object):
                     try:
                         self.repo.git.push('--set-upstream', 'origin', 'TEMPLATE')
                     except git.exc.GitCommandError as e:
-                        raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
+                        raise PullRequestException("Could not push new TEMPLATE branch:\n  {}".format(e))
                 else:
                     raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
         else:
@@ -353,7 +348,7 @@ class PipelineSync(object):
 
 
 
-def sync_all_pipelines(gh_username='nf-core-bot', gh_auth_token=None):
+def sync_all_pipelines(gh_username=None, gh_auth_token=None):
     """Sync all nf-core pipelines
     """
 
