@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## dev
+
+### Pipeline template
+
+* Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
+
 ## v1.8
 
 ### Continuous integration
