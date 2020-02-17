@@ -1,7 +1,7 @@
 name: Publish nf-core/tools API documentation
 on:
   push:
-    branches: [master]
+    branches: [master, dev]
 
 jobs:
   build-n-publish:

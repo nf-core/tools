@@ -7,7 +7,7 @@
 * Travis CI tests are now deprecated within the pipeline template. Please switch to GitHub Actions.
   * `nf-core bump-version` support has been removed for `.travis.yml`
   * `nf-core lint` now fails if a `.travis.yml` file is found
-* Ported Travis CI to GitHub Actions for this nf-core/tools repository
+* Ported nf-core/tools Travis CI to GitHub Actions
 
 ### Template
 
