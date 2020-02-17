@@ -26,6 +26,7 @@
 
 ### Other
 
+* Fix automatic synchronisation of the template after releases of nf-core/tools
 * Improve documentation for installing `nf-core/tools`
 * Add details of the new nf-core publication in Nature Biotechnolgy :champagne:
 
