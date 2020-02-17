@@ -170,7 +170,6 @@ class PipelineLint(object):
             'check_actions_branch_protection',
             'check_actions_ci',
             'check_actions_lint',
-            'check_ci_config',
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
@@ -237,25 +236,20 @@ class PipelineLint(object):
             os.path.join('docs','README.md'),
             os.path.join('docs','output.md'),
             os.path.join('docs','usage.md'),
-            ['.travis.yml', os.path.join('.github', 'workflows', 'branch.yml'), os.path.join('.circleci','config.yml')],
-            ['.travis.yml', os.path.join('.github', 'workflows','ci.yml'), os.path.join('.circleci','config.yml')],
-            ['.travis.yml', os.path.join('.github', 'workflows', 'linting.yml'), os.path.join('.circleci','config.yml')]
-
-        ]
-        files_warn = [
-            'main.nf',
-            'environment.yml',
-            os.path.join('conf','base.config'),
             os.path.join('.github', 'workflows', 'branch.yml'),
             os.path.join('.github', 'workflows','ci.yml'),
             os.path.join('.github', 'workflows', 'linting.yml')
         ]
+        files_warn = [
+            'main.nf',
+            'environment.yml',
+            os.path.join('conf','base.config')
+        ]
         files_fail_ifexists = [
-            'Singularity',
+            'Singularity'
         ]
         files_warn_ifexists = [
-            '.travis.yml',
-            os.path.join('.circleci','config.yml')
+            '.travis.yml'
         ]
 
         def pf(file_path):
@@ -293,7 +287,7 @@ class PipelineLint(object):
                 self.failed.append((1, "File must be removed: {}".format(files)))
             else:
                 self.passed.append((1, "File not found check: {}".format(files)))
-        
+
         # Files that cause a warning if they exist
         for files in files_warn_ifexists:
             if not isinstance(files, list):
@@ -464,8 +458,8 @@ class PipelineLint(object):
 
         # Check that the minimum nextflowVersion is set properly
         if 'manifest.nextflowVersion' in self.config:
-            if self.config.get('manifest.nextflowVersion', '').strip('"\'').startswith('>='):
-                self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >="))
+            if self.config.get('manifest.nextflowVersion', '').strip('"\'').lstrip('!').startswith('>='):
+                self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >= or !>="))
                 # Save self.minNextflowVersion for convenience
                 nextflowVersionMatch = re.search(r'[0-9\.]+(-edge)?', self.config.get('manifest.nextflowVersion', ''))
                 if nextflowVersionMatch:
@@ -473,7 +467,7 @@ class PipelineLint(object):
                 else:
                     self.minNextflowVersion = None
             else:
-                self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
+                self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' or '!>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
 
         # Check that the process.container name is pulling the version tag or :dev
         if self.config.get('process.container'):
@@ -490,8 +484,20 @@ class PipelineLint(object):
             else:
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
+        # Check that the pipeline version contains `dev`
+        if not self.release_mode and 'manifest.version' in self.config:
+            if self.config['manifest.version'].strip(' \'"').endswith('dev'):
+                self.passed.append((4, "Config variable manifest.version ends in 'dev': '{}'".format(self.config['manifest.version'])))
+            else:
+                self.warned.append((4, "Config variable manifest.version should end in 'dev': '{}'".format(self.config['manifest.version'])))
+        elif 'manifest.version' in self.config:
+            if 'dev' in self.config['manifest.version']:
+                self.failed.append((4, "Config variable manifest.version should not contain 'dev' for a release: '{}'".format(self.config['manifest.version'])))
+            else:
+                self.passed.append((4, "Config variable manifest.version does not contain 'dev' for release: '{}'".format(self.config['manifest.version'])))
+
     def check_actions_branch_protection(self):
-        """Checks that the GitHub actions branch protection workflow is valid.
+        """Checks that the GitHub Actions branch protection workflow is valid.
 
         Makes sure PRs can only come from nf-core dev or 'patch' of a fork.
         """
@@ -499,29 +505,28 @@ class PipelineLint(object):
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 branchwf = yaml.safe_load(fh)
-            
+
             # Check that the action is turned on for PRs to master
             try:
                 assert('master' in branchwf[True]['pull_request']['branches'])
             except (AssertionError, KeyError):
-                self.failed.append((5, "GitHub actions branch workflow must check for master branch PRs: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions 'branch' workflow is triggered for PRs to master: '{}'".format(fn)))
 
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-            pipeline_version = self.config.get('manifest.version', '').strip(' \'"')
             PRMasterCheck = "{{ [[ $(git remote get-url origin) == *nf-core/{} ]] && [[ ${{GITHUB_HEAD_REF}} = \"dev\" ]]; }} || [[ ${{GITHUB_HEAD_REF}} == \"patch\" ]]".format(self.pipeline_name.lower())
             steps = branchwf['jobs']['test']['steps']
             try:
                 steps = branchwf['jobs']['test']['steps']
-                assert(any([PRMasterCheck in step['run'] for step in steps]))
+                assert(any([PRMasterCheck in step.get('run', []) for step in steps]))
             except (AssertionError, KeyError):
-                self.failed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions 'branch' workflow should check that forks don't submit PRs to master: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions branch workflow checks for master branch PRs: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
 
     def check_actions_ci(self):
-        """Checks that the GitHub actions ci workflow is valid
+        """Checks that the GitHub Actions CI workflow is valid
 
         Makes sure tests run with the required nextflow version.
         """
@@ -535,25 +540,34 @@ class PipelineLint(object):
                 assert('push' in ciwf[True])
                 assert('pull_request' in ciwf[True])
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub actions ci workflow must be triggered on PR and push: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions CI workflow must be triggered on PR and push: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions ci workflow is triggered on PR and push: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions CI workflow is triggered on PR and push: '{}'".format(fn)))
 
             # Check that we're pulling the right docker image and tagging it properly
             if self.config.get('process.container', ''):
                 docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
                 docker_withtag = self.config.get('process.container', '').strip('"\'')
-                docker_pull_cmd = 'docker pull {}:dev && docker tag {}:dev {}\n'.format(docker_notag, docker_notag, docker_withtag)
+                docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
                     assert(any([docker_pull_cmd in step['run'] for step in steps if 'run' in step.keys()]))
                 except (AssertionError, KeyError, TypeError):
-                    self.failed.append((5, "CI is not pulling and tagging the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
+                    self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
                 else:
-                    self.passed.append((5, "CI is pulling and tagging the correct docker image: {}".format(docker_pull_cmd)))
-            
+                    self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
+
+                docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, docker_withtag)
+                try:
+                    steps = ciwf['jobs']['test']['steps']
+                    assert(any([docker_tag_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                except (AssertionError, KeyError, TypeError):
+                    self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
+                else:
+                    self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
+
             # Check that we are testing the minimum nextflow version
-            try: 
+            try:
                 matrix = ciwf['jobs']['test']['strategy']['matrix']['nxf_ver']
                 assert(any([self.minNextflowVersion in matrix]))
             except (KeyError, TypeError):
@@ -561,10 +575,10 @@ class PipelineLint(object):
             except AssertionError:
                 self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
             else:
-                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn))) 
-    
+                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
+
     def check_actions_lint(self):
-        """Checks that the GitHub actions lint workflow is valid
+        """Checks that the GitHub Actions lint workflow is valid
 
         Makes sure ``nf-core lint`` and ``markdownlint`` runs.
         """
@@ -578,9 +592,9 @@ class PipelineLint(object):
                 assert('push' in lintwf[True])
                 assert('pull_request' in lintwf[True])
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub actions linting workflow must be triggered on PR and push: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions linting workflow must be triggered on PR and push: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub actions linting workflow is triggered on PR and push: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions linting workflow is triggered on PR and push: '{}'".format(fn)))
 
             # Check that the Markdown linting runs
             Markdownlint_cmd = 'markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml'
@@ -602,73 +616,6 @@ class PipelineLint(object):
                 self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
             else:
                 self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
-
-    def check_ci_config(self):
-        """Checks that the Travis or Circle CI YAML config is valid.
-
-        Makes sure that ``nf-core lint`` runs in travis tests and that
-        tests run with the required nextflow version.
-        """
-        for cf in ['.travis.yml', os.path.join('.circleci','config.yml')]:
-            fn = os.path.join(self.path, cf)
-            if os.path.isfile(fn):
-                with open(fn, 'r') as fh:
-                    ciconf = yaml.safe_load(fh)
-                # Check that we have the master branch protection, but allow patch as well
-                travisMasterCheck = '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && [ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ]) || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]'
-
-                try:
-                    assert(travisMasterCheck in ciconf.get('before_install', {}))
-                except AssertionError:
-                    self.failed.append((5, "Continuous integration must check for master/patch branch PRs: '{}'".format(fn)))
-                else:
-                    self.passed.append((5, "Continuous integration checks for master/patch branch PRs: '{}'".format(fn)))
-                # Check that the nf-core linting runs
-                try:
-                    assert('nf-core lint ${TRAVIS_BUILD_DIR}' in ciconf['script'])
-                except AssertionError:
-                    self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
-                else:
-                    self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
-
-                # Check that we're pulling the right docker image
-                if self.config.get('process.container', ''):
-                    docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
-                    docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
-                    try:
-                        assert(docker_pull_cmd in ciconf.get('before_install', []))
-                    except AssertionError:
-                        self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
-                    else:
-                        self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
-
-                    # Check that we tag the docker image properly
-                    docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, self.config.get('process.container', '').strip('"\''))
-                    try:
-                        assert(docker_tag_cmd in ciconf.get('before_install'))
-                    except AssertionError:
-                        self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
-                    else:
-                        self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
-
-                # Check that we're testing the minimum nextflow version
-                minNextflowVersion = ""
-                env = ciconf.get('env', [])
-                if type(env) is dict:
-                    env = env.get('matrix', [])
-                for e in env:
-                    # Split using shlex so that we don't split "quoted whitespace"
-                    for s in shlex.split(e):
-                        k,v = s.split('=')
-                        if k == 'NXF_VER':
-                            ci_ver = v.strip('\'"')
-                            minNextflowVersion = ci_ver if v else minNextflowVersion
-                            if ci_ver == self.minNextflowVersion:
-                                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
-                if not minNextflowVersion:
-                    self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
-                elif minNextflowVersion != self.minNextflowVersion:
-                    self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
 
     def check_readme(self):
         """Checks the repository README file for errors.
@@ -705,7 +652,7 @@ class PipelineLint(object):
     def check_version_consistency(self):
         """Checks container tags versions.
 
-        Runs on ``process.container``, ``process.container`` and ``$TRAVIS_TAG`` (each only if set).
+        Runs on ``process.container`` (if set) and ``$GITHUB_REF`` (if a GitHub Actions release).
 
         Checks that:
             * the container has a tag
@@ -730,9 +677,9 @@ class PipelineLint(object):
         if self.config.get('process.container', ''):
             versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
 
-        # Get version from the TRAVIS_TAG env var
-        if os.environ.get('TRAVIS_TAG') and os.environ.get('TRAVIS_REPO_SLUG', '') != 'nf-core/tools':
-            versions['TRAVIS_TAG'] = os.environ.get('TRAVIS_TAG').strip(' \'"')
+        # Get version from the GITHUB_REF env var if this is a release
+        if os.environ.get('GITHUB_REF', '').startswith('refs/tags/') and os.environ.get('GITHUB_REPOSITORY', '') != 'nf-core/tools':
+            versions['GITHUB_REF'] = os.path.basename(os.environ['GITHUB_REF'].strip(' \'"'))
 
         # Check if they are all numeric
         for v_type, version in versions.items():
@@ -956,7 +903,7 @@ class PipelineLint(object):
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
-       
+
         if self.pipeline_name.islower() and self.pipeline_name.isalpha():
             self.passed.append((12, "Name adheres to nf-core convention"))
         if not self.pipeline_name.islower():
@@ -964,8 +911,8 @@ class PipelineLint(object):
         if not self.pipeline_name.isalpha():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphabetical characters"))
 
-            
-        
+
+
     def print_results(self):
         # Print results
         rl = "\n  Using --release mode linting tests" if self.release_mode else ''
@@ -975,8 +922,8 @@ class PipelineLint(object):
             click.style("{0:>4} tests failed".format(len(self.failed)), fg='red') + rl
         )
         if len(self.passed) > 0:
-            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.passed])))
+            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.passed])))
         if len(self.warned) > 0:
-            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.warned])))
+            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.warned])))
         if len(self.failed) > 0:
-            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), "\n  ".join(["http://nf-co.re/errors#{}: {}".format(eid, msg) for eid, msg in self.failed])))
+            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.failed])))

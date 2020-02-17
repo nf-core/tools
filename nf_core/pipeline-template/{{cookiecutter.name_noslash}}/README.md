@@ -2,7 +2,6 @@
 
 **{{ cookiecutter.description }}**.
 
-[![Build Status](https://travis-ci.com/{{ cookiecutter.name }}.svg?branch=master)](https://travis-ci.com/{{ cookiecutter.name }})
 [![GitHub Actions CI Status](https://github.com/{{ cookiecutter.name }}/workflows/nf-core%20CI/badge.svg)](https://github.com/{{ cookiecutter.name }}/actions)
 [![GitHub Actions Linting Status](https://github.com/{{ cookiecutter.name }}/workflows/nf-core%20linting/badge.svg)](https://github.com/{{ cookiecutter.name }}/actions)
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A519.10.0-brightgreen.svg)](https://www.nextflow.io/)
@@ -26,7 +25,7 @@ iii. Download the pipeline and test it on a minimal dataset with a single comman
 nextflow run {{ cookiecutter.name }} -profile test,<docker/singularity/conda/institute>
 ```
 
-> Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile institute` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
+> Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
 
 iv. Start running your own analysis!
 
@@ -68,6 +67,11 @@ For further information or help, don't hesitate to get in touch on [Slack](https
 <!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
 <!-- If you use  {{ cookiecutter.name }} for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
-You can cite the `nf-core` pre-print as follows:  
+You can cite the `nf-core` pre-print as follows:
 
-> Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
+> **The nf-core framework for community-curated bioinformatics pipelines**
+>
+> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen
+>
+> [_Nat Biotechnology_ (2020)](https://doi.org/10.1038/s41587-020-0439-x);
+> doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x)

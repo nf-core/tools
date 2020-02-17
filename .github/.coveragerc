@@ -1,0 +1,2 @@
+[run]
+omit = nf_core/pipeline-template/*

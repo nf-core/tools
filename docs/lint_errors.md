@@ -12,9 +12,8 @@ The lint test looks for the following required files:
   * The main nextflow config file
 * `Dockerfile`
   * A docker build script to generate a docker image with the required software
-* Continuous integration tests with either [GitHub actions](https://github.com/features/actions) or [Travis CI](https://travis-ci.com/)
-  * GitHub actions workflows for CI (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and linting (`.github/workflows/linting.yml`)
-  * Alternatively, `.travis.yml` continuous integration testing is still allowed but will be deprecated in the near future
+* Continuous integration tests with [GitHub Actions](https://github.com/features/actions)
+  * GitHub Actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practice linting (`.github/workflows/linting.yml`)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
   * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
 * `README.md`
@@ -73,15 +72,18 @@ The following variables fail the test if missing:
   * A description of the pipeline
 * `manifest.version`
   * The version of this pipeline. This should correspond to a [GitHub release](https://help.github.com/articles/creating-releases/).
+  * If `--release` is set when running `nf-core lint`, the version number must not contain the string `dev`
+  * If `--release` is _not_ set, the version should end in `dev` (warning triggered if not)
 * `manifest.nextflowVersion`
   * The minimum version of Nextflow required to run the pipeline.
-  * Should `>=` a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (check the [Nexftlow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest) for more.)
-  * This should correspond to the `NXF_VER` version tested by Travis.
+  * Should be `>=` or `!>=` and a version number, eg. `manifest.nextflowVersion = '>=0.31.0'` (see [Nextflow documentation](https://www.nextflow.io/docs/latest/config.html#scope-manifest))
+  * `>=` warns about old versions but tries to run anyway, `!>=` fails for old versions. Only use the latter if you _know_ that the pipeline will certainly fail before this version.
+  * This should correspond to the `NXF_VER` version tested by GitHub Actions.
 * `manifest.homePage`
   * The homepage for the pipeline. Should be the nf-core GitHub repository URL,
     so beginning with `https://github.com/nf-core/`
 * `timeline.enabled`, `trace.enabled`, `report.enabled`, `dag.enabled`
-  * The nextflow timeline, trace, report and DAG should be enabled by default
+  * The nextflow timeline, trace, report and DAG should be enabled by default (set to `true`)
 * `process.cpus`, `process.memory`, `process.time`
   * Default CPUs, memory and time limits for tasks
 
@@ -97,7 +99,7 @@ The following variables throw warnings if missing:
 * `process.container`
   * Dockerhub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
-  * If the pipeline version number contains the string `dev`, the dockerhub tag must be `:dev`
+  * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
 * `params.reads`
   * Input parameter to specify input data (typically FastQ files / pairs)
 * `params.single_end`
@@ -116,80 +118,77 @@ The following variables are depreciated and fail the test if they are still pres
   * Changed to `single_end` and `igenomes_ignore`
   * The `snake_case` convention should now be used when defining pipeline parameters
 
+Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
+`process.$fastqc` instead of `process withName:'fastqc'`.
+
 ## Error #5 - Continuous Integration configuration ## {#5}
 
-nf-core pipelines must have CI testing with GitHub actions or Travis.
+nf-core pipelines must have CI testing with GitHub Actions.
 
-This test fails if the following requirements are not met:
+### GitHub Actions
 
-For GitHub actions CI workflow:
+There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory.
 
-* `.github/workflows/ci.yml` must be turned on for `push` and `pull_request``
-* `.github/workflows/ci.yml` must test with the minimum Nextflow version specified in the pipline as `manifest.nextflowVersion` under `jobs`, `test`, `strategy`, `matrix`, `nxf_ver`. E.g.:
+This test will fail if the following requirements are not met in these files:
 
-    ```yaml
-    jobs:
-    test:
-        runs-on: ubuntu-18.04
-        strategy:
+1. `ci.yml`: Contains all the commands required to test the pipeline
+    * Must be turned on for `push` and `pull_request`:
+
+      ```yaml
+      on: [push, pull_request]
+      ```
+
+    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:
+
+      ```yaml
+      jobs:
+        test:
+          runs-on: ubuntu-18.04
+          strategy:
             matrix:
-                # Nextflow versions: check pipeline minimum and current latest
-                nxf_ver: ['19.10.0', '']
-    ```
+              # Nextflow versions: check pipeline minimum and current latest
+              nxf_ver: ['19.10.0', '']
+      ```
 
-* `.github/workflows/ci.yml` must pull the container with the command `docker pull <container>:dev && docker tag <container>:dev <container>:<tag>` under `jobs`,`test`,`steps`. E.g. for nfcore/tools container:
+    * The `Docker` container for the pipeline must be tagged appropriately for:
+        * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`
+        * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
 
-    ```yaml
-    jobs:
-    test:
-        runs-on: ubuntu-18.04
-        steps:
-        - name: Pull image
-            run: |
-            docker pull nfcore/tools:dev && docker tag nfcore/tools:dev nfcore/tools:1.0.0
-    ```
+          ```yaml
+          jobs:
+            test:
+              runs-on: ubuntu-18.04
+              steps:
+                - name: Pull image
+                    run: |
+                    docker pull nfcore/<pipeline_name>:dev
+                    docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
+          ```
 
-* `.github/workflows/branch.yml` must be turned on for pull requests to `master`
-* `.github/workflows/branch.yml` must check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch. E.g. for nf-core/tools:
+2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
+    * Must be turned on for `push` and `pull_request`.
+    * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.
+    * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
 
-    ```yaml
-    jobs:
-    test:
-    runs-on: ubuntu-18.04
-    steps:
-      # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-      - name: Check PRs
-        run: |
-          { [[ $(git remote get-url origin) == *nf-core/tools ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
-    ```
+3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch
+    * Must be turned on for `pull_request` to `master`.
 
-* `.github/workflows/linting.yml` must be turned on for push and pull requests
-* `.github/workflows/linting.yml` must perform markdown linting with the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml` under `jobs`, `Markdown`, `steps`.
-* `.github/workflows/linting.yml` must perform nf-core linting with the command `nf-core lint ${GITHUB_WORKSPACE}` under `jobs`, `nf-core`, `steps`.
+      ```yaml
+      on:
+        pull_request:
+          branches:
+          - master
+      ```
 
-For Travis CI:
+    * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:
 
-* `.travis.yml` must contain the string `nf-core lint ${TRAVIS_BUILD_DIR}` under `script`
-* `.travis.yml` must contain the string `docker pull <container>:dev` under `before_install`
-  * Where `<container>` is fetched from `process.container` in the `nextflow.config` file, without the docker tag _(if we have the tag the tests fail when making a release)_
-* `.travis.yml` must test the Nextflow version specified in the pipeline as `manifest.nextflowVersion`
-  * This is expected in the `env` section of the config, eg:
-
-    ```yaml
-    env:
-      - NXF_VER=0.27.0
-      - NXF_VER=''
-    ```
-
-  * At least one of these `NXF_VER` variables must match the `manifest.nextflowVersion` version specified in the pipeline config
-  * Other variables can be specified on these lines as long as they are space separated.
-* `.travis.yml` must check that pull requests are not opened directly to the `master` branch
-  * The following is expected in the `before_install` section:
-
-    ```yaml
-    before_install:
-      - '[ $TRAVIS_PULL_REQUEST = "false" ] || [ $TRAVIS_BRANCH != "master" ] || ([ $TRAVIS_PULL_REQUEST_SLUG = $TRAVIS_REPO_SLUG ] && ([ $TRAVIS_PULL_REQUEST_BRANCH = "dev" ] || [ $TRAVIS_PULL_REQUEST_BRANCH = "patch" ]))'
-    ```
+      ```yaml
+      steps:
+        # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
+        - name: Check PRs
+          run: |
+            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+      ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 
@@ -214,14 +213,13 @@ The `README.md` files for a project are very important and must meet some requir
 
 ## Error #7 - Pipeline and container version numbers ## {#7}
 
-> This test only runs when `--release` is set or `$TRAVIS_BRANCH` is equal to `master`
+> This test only runs when `--release` is set or `$GITHUB_REF` is equal to `master`
 
-These tests look at `process.container` and `$TRAVIS_TAG`, only
-if they are set.
+These tests look at `process.container` and `$GITHUB_REF` only if they are set.
 
 * Container name must have a tag specified (eg. `nfcore/pipeline:version`)
-* Container tag / `$TRAVIS_TAG` must contain only numbers and dots
-* Tags and `$TRAVIS_TAG` must all match one another
+* Container tag / `$GITHUB_REF` must contain only numbers and dots
+* Tags and `$GITHUB_REF` must all match one another
 
 ## Error #8 - Conda environment tests ## {#8}
 
@@ -290,7 +288,7 @@ This lint test runs through all files in the pipeline and searches for these lin
 
 ## Error #11 - Singularity file found ##{#11}
 
-As we are relying on [Docker Hub](https://https://hub.docker.com/) instead of Singularity and all containers are automatically pulled from there, repositories should not have a `Singularity` file present.
+As we are relying on [Docker Hub](https://hub.docker.com/) instead of Singularity and all containers are automatically pulled from there, repositories should not have a `Singularity` file present.
 
 ## Error #12 - Pipeline name ## {#12}
 

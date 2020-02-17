@@ -1,0 +1,39 @@
+name: Publish nf-core to PyPI
+on: push
+
+jobs:
+  build-n-publish:
+    name: Build and publish nf-core to PyPI
+    runs-on: ubuntu-18.04
+
+    steps:
+      - uses: actions/checkout@v2
+        name: Check out source-code repository
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip setuptools wheel
+          pip install .
+
+      - name: Build the distribution
+        run: python setup.py sdist bdist_wheel
+
+      # Push every commit to the Test PyPI to check that deployments work
+      - name: Publish dist to Test PyPI
+        if: github.repository == 'nf-core/tools'
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.test_pypi_password }}
+          repository_url: https://test.pypi.org/legacy/
+
+      # Push releases to the real PyPI
+      - name: Publish dist to PyPI
+        if: github.repository == 'nf-core/tools' && startsWith(github.event.ref, 'refs/tags')
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.pypi_password }}
