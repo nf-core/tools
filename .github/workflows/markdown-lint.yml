@@ -1,6 +1,7 @@
 name: Lint Markdown
 on: [push, pull_request]
 
+jobs:
   Markdown:
     runs-on: ubuntu-latest
     steps:
