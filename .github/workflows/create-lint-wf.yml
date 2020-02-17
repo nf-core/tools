@@ -1,5 +1,7 @@
 name: Create a pipeline and lint it
 on: [push, pull_request]
+
+jobs:
   MakeTestWorkflow:
     runs-on: ubuntu-latest
     strategy:
