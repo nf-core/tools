@@ -1,0 +1,14 @@
+name: Lint Markdown
+on: [push, pull_request]
+
+  Markdown:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          node-version: '10'
+      - name: Install markdownlint
+        run: npm install -g markdownlint-cli
+      - name: Run Markdownlint
+        run: markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml
