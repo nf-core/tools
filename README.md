@@ -1,6 +1,6 @@
 # ![nf-core/tools](docs/images/nfcore-tools_logo.png) <!-- omit in toc -->
 
-[![Build Status](https://travis-ci.com/nf-core/tools.svg?branch=master)](https://travis-ci.com/nf-core/tools)
+[![GitHub Actions CI Status](https://github.com/nf-core/tools/workflows/CI%20tests/badge.svg)](https://github.com/nf-core/tools/actions)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
 
@@ -451,7 +451,7 @@ Running pipeline tests  [####################################]  100%  None
 INFO: ===========
  LINTING RESULTS
 =================
-  96 tests passed   0 tests had warnings   0 tests failed
+  118 tests passed   0 tests had warnings   0 tests failed
 
 INFO: Changing version number:
   Current version number is '1.0dev'
@@ -465,19 +465,19 @@ INFO: Updating version in nextflow.config
  - process.container = 'nfcore/mypipeline:dev'
  + process.container = 'nfcore/mypipeline:1.0'
 
-INFO: Updating version in .travis.yml
- - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
- + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
+INFO: Updating version in .github/workflows/ci.yml
+ - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
+ + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
  + name: nf-core-mypipeline-1.0
 
 INFO: Updating version in Dockerfile
- - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
  - ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
  + ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
+ + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
@@ -561,5 +561,11 @@ INFO: Successfully synchronised [n] pipelines
 
 ## Citation
 
-If you use `nf-core tools` in your work, please cite the `nf-core` preprint as follows:  
-Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
+If you use `nf-core tools` in your work, please cite the `nf-core` preprint as follows:
+
+> **The nf-core framework for community-curated bioinformatics pipelines**
+>
+> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen
+>
+> [_Nat Biotechnology_ (2020)](https://doi.org/10.1038/s41587-020-0439-x);
+> doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x)

@@ -2,10 +2,17 @@
 
 ## v1.9dev
 
+### Continuous integration
+
+* Travis CI tests are now deprecated within the pipeline template. Please switch to GitHub Actions.
+  * `nf-core bump-version` support has been removed for `.travis.yml`
+  * `nf-core lint` now fails if a `.travis.yml` file is found
+
 ### Template
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
 * Removed the requirement for R in the conda environment
+* Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 
 ### Linting
 
@@ -13,11 +20,19 @@
 * Added whitespace padding to lint error URLs
 * Improved documentation for lint errors
 * Allow either `>=` or `!>=` in nextflow version checks (the latter exits with an error instead of just warning) [#506](https://github.com/nf-core/tools/issues/506)
+* Check that `manifest.version` ends in `dev` and throw a warning if not
+  * If running with `--release` check the opposite and fail if not
+* Tidied up error messages and syntax for linting GitHub actions branch tests
 
 ### Other
 
 * Improve documentation for installing `nf-core/tools`
 * Add social preview image
+* Add details of the new nf-core publication in Nature Biotechnolgy :champagne:
+
+### Template pipeline
+
+* Stage the workflow summary YAML file within MultiQC work directory
 
 ## v1.8
 
@@ -37,7 +52,7 @@
 * Updated documentation for `nf-core download`
 * Fixed typo in `nf-core launch` final command
 * Handle missing pipeline descriptions in `nf-core list`
-* Migrate tools package CI to GitHub actions
+* Migrate tools package CI to GitHub Actions
 
 ### Linting
 

@@ -21,7 +21,8 @@ jobs:
           sudo mv nextflow /usr/local/bin/
       - name: Pull docker image
         run: |
-          docker pull {{ cookiecutter.name_docker }}:dev && docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
+          docker pull {{ cookiecutter.name_docker }}:dev
+          docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
       - name: Run pipeline with test data
         run: |
           # TODO nf-core: You can customise CI pipeline run tests as required
