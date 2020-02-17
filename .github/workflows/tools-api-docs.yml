@@ -16,6 +16,7 @@ jobs:
         run: make --directory ./docs/api html
 
       - name: Push docs to api-doc branch
+        if: github.repository == 'nf-core/tools'
         run: |
           git checkout --orphan api-doc
           git rm -r --cache .
