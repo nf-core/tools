@@ -30,7 +30,12 @@ jobs:
         run: |
           git checkout --orphan api-doc
           git rm -r --cache .
+          git config user.email "core@nf-co.re"
+          git config user.name "nf-core-bot"
           git add docs
-          git commit --message "nf-core/tools docs build"
+          git commit --message "nf-core/tools docs build
+
+          $GITHUB_REF - $GITHUB_SHA
+          "
           git remote add nf-core "https://${NF_CORE_BOT}@github.com/nf-core/tools.git" > /dev/null 2>&1
           git push --force --quiet --set-upstream nf-core api-doc
