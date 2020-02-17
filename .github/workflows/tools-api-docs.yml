@@ -1,4 +1,4 @@
-name: Publish nf-core/tools API documentation
+name: nf-core/tools API docs
 on:
   push:
     branches: [master, dev]
@@ -11,6 +11,16 @@ jobs:
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v2
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip Sphinx sphinxcontrib-napoleon
+          pip install .
 
       - name: Build HTML docs
         run: make --directory ./docs/api html
