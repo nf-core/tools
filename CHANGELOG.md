@@ -30,6 +30,7 @@
 ### Other
 
 * Improve documentation for installing `nf-core/tools`
+* Use `stderr` instead of `stdout` for header artwork
 * Add details of the new nf-core publication in Nature Biotechnology :champagne:
 
 ### Template pipeline
