@@ -1,9 +1,18 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
+import subprocess
 import sys
 
 version = '1.9dev'
+
+# Try to append the git hash if we can
+if 'dev' in version:
+    try:
+        git_hash = str(subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip()).strip('"\'').lstrip("b'")
+        version = '{}-{}'.format(version, git_hash)
+    except IndexError:
+        pass
 
 with open('README.md') as f:
     readme = f.read()
