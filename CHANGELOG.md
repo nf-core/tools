@@ -31,6 +31,8 @@
 ### Other
 
 * Improve documentation for installing `nf-core/tools`
+* Add details of the new nf-core publication in Nature Biotechnology :champagne:
+* Tolerate unexpected output from `nextflow config` command
 * Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
 
 ### Template pipeline
