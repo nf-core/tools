@@ -381,9 +381,6 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
     # Let's do some updating!
     for wf in wfs.remote_workflows:
 
-        if wf.full_name != 'nf-core/rnaseq':
-            continue
-
         logging.info("Syncing {}".format(wf.full_name))
 
         # Make a local working directory
