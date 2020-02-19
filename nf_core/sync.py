@@ -311,7 +311,10 @@ class PipelineSync(object):
             'body': "Some important changes have been made in the nf-core/tools pipeline template. " \
                     "Please make sure to merge this pull-request as soon as possible. " \
                     "Once complete, make a new minor release of your pipeline.\n\n" \
-                    "For more information, please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).".format(tag=nf_core.__version__),
+                    "For instructions on how to merge this PR, please see " \
+                    "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync).\n\n" \
+                    "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), " \
+                    "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).".format(tag=nf_core.__version__),
             'head': "TEMPLATE",
             'base': self.from_branch
         }
