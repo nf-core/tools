@@ -345,9 +345,9 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 
 
 if __name__ == '__main__':
-    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'))
-    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'))
-    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'))
-    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'))
-    click.secho("                                          `._,._,'\n", fg='green')
+    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'), err=True)
+    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'), err=True)
+    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'), err=True)
+    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'), err=True)
+    click.secho("                                          `._,._,'\n", fg='green', err=True)
     nf_core_cli()
