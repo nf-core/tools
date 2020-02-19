@@ -534,8 +534,7 @@ with `--username` and `--repository`.
 
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
-Supply this using the `--auth-token` flag, or setting it as the environment variable `NF_CORE_BOT`:
-`export NF_CORE_BOT=my_auth_token`.
+Supply this using the `--auth-token` flag.
 
 Finally, if `--all` is supplied, then the command attempts to pull and synchronise all nf-core workflows.
 This is used by the nf-core/tools release automation to synchronise all nf-core pipelines

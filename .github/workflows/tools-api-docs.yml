@@ -27,6 +27,8 @@ jobs:
 
       - name: Push docs to api-doc branch
         if: github.repository == 'nf-core/tools'
+        env:
+          AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
         run: |
           git checkout --orphan api-doc
           git rm -r --cache .
@@ -37,5 +39,5 @@ jobs:
 
           $GITHUB_REF - $GITHUB_SHA
           "
-          git remote add nf-core "https://${NF_CORE_BOT}@github.com/nf-core/tools.git" > /dev/null 2>&1
+          git remote add nf-core "https://${AUTH_TOKEN}@github.com/nf-core/tools.git" > /dev/null 2>&1
           git push --force --quiet --set-upstream nf-core api-doc
