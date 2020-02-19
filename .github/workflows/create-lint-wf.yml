@@ -1,0 +1,26 @@
+name: Create a pipeline and lint it
+on: [push, pull_request]
+
+jobs:
+  MakeTestWorkflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+      - name: Install Nextflow
+        run: |
+          mkdir /tmp/nextflow
+          cd /tmp/nextflow
+          wget -qO- get.nextflow.io | bash
+          sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+      - name: Run nf-core tools
+        run: |
+          nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          nf-core lint nf-core-testpipeline
