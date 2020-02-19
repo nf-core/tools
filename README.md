@@ -561,7 +561,7 @@ INFO: Successfully synchronised [n] pipelines
 
 ## Citation
 
-If you use `nf-core tools` in your work, please cite the `nf-core` preprint as follows:
+If you use `nf-core tools` in your work, please cite the `nf-core` publication as follows:
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
 >
