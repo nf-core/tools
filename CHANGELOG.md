@@ -32,6 +32,7 @@
 
 * Improve documentation for installing `nf-core/tools`
 * Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
+* Use `stderr` instead of `stdout` for header artwork
 * Tolerate unexpected output from `nextflow config` command
 * Add social preview image
 
