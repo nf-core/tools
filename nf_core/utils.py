@@ -59,7 +59,7 @@ def fetch_wf_config(wf_path, wf=None):
             try:
                 k, v = ul.split(' = ', 1)
                 config[k] = v
-            except ValueError(e):
+            except ValueError:
                 logging.debug("Couldn't find key=value config pair:\n  {}".format(ul))
 
     # If we can, save a cached copy
