@@ -295,7 +295,7 @@ class PipelineSync(object):
         try:
             assert self.gh_username is not None
             assert self.gh_repo is not None
-        except AssertionError as e:
+        except AssertionError:
             raise PullRequestException("Could not find GitHub username and repo name")
 
         # If we've been asked to make a PR, check that we have the credentials
