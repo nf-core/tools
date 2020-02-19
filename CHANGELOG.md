@@ -31,7 +31,8 @@
 ### Other
 
 * Improve documentation for installing `nf-core/tools`
-* Add details of the new nf-core publication in Nature Biotechnology :champagne:
+* Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
+* Tolerate unexpected output from `nextflow config` command
 * Add social preview image
 
 ### Template pipeline
@@ -152,7 +153,7 @@
   to avoid weird behavior such as making an `s3:/` directory locally when using
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
-* Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* Update URL for joining the nf-core slack to [https://nf-co.re/join/slack](https://nf-co.re/join/slack)
 * Add GitHub Action for CI and Linting
 * [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
 * Add direct link to the pipeline slack channel in the contribution guidelines
@@ -163,7 +164,7 @@
 * Template configured to use logo fetched from website
 * New option `--email_on_fail` which only sends emails if the workflow is not successful
 * Add file existence check when checking software versions
-* Fixed issue [https://github.com/nf-core/tools/issues/165] - Use `checkIfExists`
+* Fixed issue [#165](https://github.com/nf-core/tools/issues/165) - Use `checkIfExists`
 * Consistent spacing for `if` statements
 * Add sensible resource labels to `base.config`
 
