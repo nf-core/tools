@@ -19,7 +19,6 @@ i. Install [`nextflow`](https://nf-co.re/usage/installation)
 
 ii. Install either [`docker`](https://docs.docker.com/engine/installation/) or [`singularity`](https://www.sylabs.io/guides/3.0/user-guide/) for full pipeline reproducibility (or when these are not possible, [`conda`](https://conda.io/miniconda.html))
 
-
 iii. Download the pipeline and test it on a minimal dataset with a single command
 
 ```bash
