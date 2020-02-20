@@ -226,7 +226,7 @@ class PipelineLint(object):
         """
 
         # NB: Should all be files, not directories
-        # Supplying a list means if any are present it's a pass - lists
+        # List of lists. Passes if any of the files in the sublist are found.
         files_fail = [
             ['nextflow.config'],
             ['Dockerfile'],
