@@ -14,5 +14,5 @@
 
 1. Check the automated template synchronisation has been triggered properly. This should automatically open PRs directly to individual pipeline repos with the appropriate changes to update the pipeline template.
 2. Check that the automatic `PyPi` deployment has worked: https://pypi.org/project/nf-core/
-3. Check `BioConda` has an automated PR to bump the version, and merge. eg. https://github.com/bioconda/bioconda-recipes/pull/20065
+3. Check `BioConda` has an automated PR to bump the version, and merge. eg. [bioconda/bioconda-recipes #20065](https://github.com/bioconda/bioconda-recipes/pull/20065)
 4. Create a tools PR to `dev` to bump back to the next development version in  `CHANGELOG.md` and `setup.py`
