@@ -17,6 +17,7 @@
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
 * Rephrase docs to promote usage of containers over Conda to ensure reproducibility
+* Stage the workflow summary YAML file within MultiQC work directory
 
 ### Linting
 
@@ -40,10 +41,6 @@
 * Tolerate unexpected output from `nextflow config` command
 * Add social preview image
 * Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
-
-### Template pipeline
-
-* Stage the workflow summary YAML file within MultiQC work directory
 
 ## v1.8
 
