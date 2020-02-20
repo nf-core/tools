@@ -2,6 +2,7 @@
 """Synchronise a pipeline TEMPLATE branch with the template.
 """
 
+import click
 import git
 import json
 import logging
@@ -58,6 +59,7 @@ class PipelineSync(object):
         self.orphan_branch = False
         self.made_changes = False
         self.make_pr = make_pr
+        self.gh_pr_returned_data = {}
         self.required_config_vars = [
             'manifest.name',
             'manifest.description',
@@ -68,11 +70,6 @@ class PipelineSync(object):
         self.gh_username = gh_username
         self.gh_repo = gh_repo
         self.gh_auth_token = gh_auth_token
-        if self.gh_auth_token is None:
-            try:
-                self.gh_auth_token = os.environ['NF_CORE_BOT']
-            except KeyError:
-                pass
 
     def sync(self):
         """ Find workflow attributes, create a new template pipeline on TEMPLATE
@@ -98,6 +95,7 @@ class PipelineSync(object):
         self.commit_template_changes()
 
         # Push and make a pull request if we've been asked to
+        pr_exception = False
         if self.make_pr:
             try:
                 self.push_template_branch()
@@ -105,11 +103,14 @@ class PipelineSync(object):
             except PullRequestException as e:
                 # Keep going - we want to clean up the target directory still
                 logging.error(e)
+                pr_exception = e
 
         self.reset_target_dir()
 
         if not self.make_pr:
             self.git_merge_help()
+        elif pr_exception:
+            raise PullRequestException(pr_exception)
 
 
     def inspect_sync_dir(self):
@@ -151,16 +152,17 @@ class PipelineSync(object):
 
         # Figure out the GitHub username and repo name from the 'origin' remote if we can
         try:
-            gh_ssh_username_match = re.search(r'git@github\.com:([^\/]+)/([^\/]+)\.git$', self.repo.remotes.origin.url)
-            if gh_ssh_username_match:
-                self.gh_username = gh_ssh_username_match.group(1)
-                self.gh_repo = gh_ssh_username_match.group(2)
-            gh_url_username_match = re.search(r'https://github\.com/([^\/]+)/([^\/]+)\.git$', self.repo.remotes.origin.url)
-            if gh_url_username_match:
-                self.gh_username = gh_url_username_match.group(1)
-                self.gh_repo = gh_url_username_match.group(2)
+            origin_url = self.repo.remotes.origin.url.rstrip('.git')
+            gh_origin_match = re.search(r'github\.com[:\/]([^\/]+)/([^\/]+)$', origin_url)
+            if gh_origin_match:
+                self.gh_username = gh_origin_match.group(1)
+                self.gh_repo = gh_origin_match.group(2)
+            else:
+                raise AttributeError
         except AttributeError as e:
-            logging.debug("Could not find repository URL for remote called 'origin'")
+            logging.debug("Could not find repository URL for remote called 'origin' from remote: {}".format(self.repo.remotes.origin.url))
+        else:
+            logging.debug("Found username and repo from remote: {}, {} - {}".format(self.gh_username, self.gh_repo, self.repo.remotes.origin.url))
 
         # Fetch workflow variables
         logging.info("Fetching workflow config variables")
@@ -274,7 +276,7 @@ class PipelineSync(object):
                     try:
                         self.repo.git.push('--set-upstream', 'origin', 'TEMPLATE')
                     except git.exc.GitCommandError as e:
-                        raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
+                        raise PullRequestException("Could not push new TEMPLATE branch:\n  {}".format(e))
                 else:
                     raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
         else:
@@ -294,7 +296,7 @@ class PipelineSync(object):
             assert self.gh_username is not None
             assert self.gh_repo is not None
         except AssertionError:
-            raise PullRequestException("Could not find GitHub username and repo from git remote 'origin'")
+            raise PullRequestException("Could not find GitHub username and repo name")
 
         # If we've been asked to make a PR, check that we have the credentials
         try:
@@ -309,7 +311,10 @@ class PipelineSync(object):
             'body': "Some important changes have been made in the nf-core/tools pipeline template. " \
                     "Please make sure to merge this pull-request as soon as possible. " \
                     "Once complete, make a new minor release of your pipeline.\n\n" \
-                    "For more information, please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).".format(tag=nf_core.__version__),
+                    "For instructions on how to merge this PR, please see " \
+                    "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).\n\n" \
+                    "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), " \
+                    "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).".format(tag=nf_core.__version__),
             'head': "TEMPLATE",
             'base': self.from_branch
         }
@@ -318,9 +323,18 @@ class PipelineSync(object):
             data = json.dumps(pr_content),
             auth = requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token)
         )
-        if r.status_code != 200:
-            raise PullRequestException("GitHub API returned code {}: {}".format(r.status_code, r.text))
-        logging.debug(r.json)
+        try:
+            self.gh_pr_returned_data = json.loads(r.text)
+            returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
+        except:
+            self.gh_pr_returned_data = r.text
+            returned_data_prettyprint = r.text
+
+        if r.status_code != 201:
+            raise PullRequestException("GitHub API returned code {}: \n{}".format(r.status_code, returned_data_prettyprint))
+        else:
+            logging.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
+            logging.info("GitHub PR created: {}".format(self.gh_pr_returned_data['html_url']))
 
     def reset_target_dir(self):
         """Reset the target pipeline directory. Check out the original branch.
@@ -353,7 +367,7 @@ class PipelineSync(object):
 
 
 
-def sync_all_pipelines(gh_username='nf-core-bot', gh_auth_token=None):
+def sync_all_pipelines(gh_username=None, gh_auth_token=None):
     """Sync all nf-core pipelines
     """
 
@@ -393,26 +407,31 @@ def sync_all_pipelines(gh_username='nf-core-bot', gh_auth_token=None):
             pipeline_dir=wf_local_path,
             from_branch='dev',
             make_pr=True,
-            gh_username=gh_username
+            gh_username=gh_username,
+            gh_auth_token=gh_auth_token
         )
         try:
             sync_obj.sync()
-        except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
-            logging.error("Sync failed for {}:\n{}".format(wf.full_name, e))
+        except (SyncException, PullRequestException) as e:
+            logging.getLogger().setLevel(orig_loglevel) # Reset logging
+            logging.error(click.style("Sync failed for {}:\n{}".format(wf.full_name, e), fg='yellow'))
+            failed_syncs.append(wf.name)
+        except Exception as e:
+            logging.getLogger().setLevel(orig_loglevel) # Reset logging
+            logging.error(click.style("Something went wrong when syncing {}:\n{}".format(wf.full_name, e), fg='yellow'))
             failed_syncs.append(wf.name)
         else:
-            logging.debug("Sync successful for {}".format(wf.full_name))
+            logging.getLogger().setLevel(orig_loglevel) # Reset logging
+            logging.info("Sync successful for {}: {}".format(wf.full_name, click.style(sync_obj.gh_pr_returned_data.get('html_url'), fg='blue')))
             successful_syncs.append(wf.name)
-
-        # Reset logging
-        logging.getLogger().setLevel(orig_loglevel)
 
         # Clean up
         logging.debug("Removing work directory: {}".format(wf_local_path))
         shutil.rmtree(wf_local_path)
 
-    logging.info("Successfully synchronised {} pipelines".format(len(successful_syncs)))
+    if len(successful_syncs) > 0:
+        logging.info(click.style("Finished. Successfully synchronised {} pipelines".format(len(successful_syncs)), fg='green'))
 
     if len(failed_syncs) > 0:
         failed_list = '\n - '.join(failed_syncs)
-        logging.error("Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list))
+        logging.error(click.style("Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list), fg='red'))

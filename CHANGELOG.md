@@ -16,10 +16,12 @@
 * Removed the requirement for R in the conda environment
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
+* Rephrase docs to promote usage of containers over Conda to ensure reproducibility
 
 ### Linting
 
 * Removed linting for CircleCI
+* Allow any one of `params.reads` or `params.input` or `params.design` before warning
 * Added whitespace padding to lint error URLs
 * Improved documentation for lint errors
 * Allow either `>=` or `!>=` in nextflow version checks (the latter exits with an error instead of just warning) [#506](https://github.com/nf-core/tools/issues/506)
@@ -27,14 +29,17 @@
   * If running with `--release` check the opposite and fail if not
 * Tidied up error messages and syntax for linting GitHub actions branch tests
 * Add YAML validator
+* Don't print test results if we have a critical error
 
 ### Other
 
+* Fix automatic synchronisation of the template after releases of nf-core/tools
 * Improve documentation for installing `nf-core/tools`
 * Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
 * Use `stderr` instead of `stdout` for header artwork
 * Tolerate unexpected output from `nextflow config` command
 * Add social preview image
+* Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
 
 ### Template pipeline
 

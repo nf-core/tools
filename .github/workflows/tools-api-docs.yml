@@ -37,5 +37,5 @@ jobs:
 
           $GITHUB_REF - $GITHUB_SHA
           "
-          git remote add nf-core "https://${NF_CORE_BOT}@github.com/nf-core/tools.git" > /dev/null 2>&1
-          git push --force --quiet --set-upstream nf-core api-doc
+          git remote add nf-core https://github.com/nf-core/tools.git
+          git push --force --set-upstream nf-core api-doc
