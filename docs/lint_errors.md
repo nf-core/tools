@@ -174,7 +174,8 @@ This test will fail if the following requirements are not met in these files:
     * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
 
-3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch
+3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch when a PR
+is opened against the _nf-core_ repository.
     * Must be turned on for `pull_request` to `master`.
 
       ```yaml
@@ -192,6 +193,19 @@ This test will fail if the following requirements are not met in these files:
         - name: Check PRs
           run: |
             { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+      ```
+
+    * For branch protection in repositories outside of _nf-core_, you can add an additional step to this workflow. Do keep the _nf-core_ branch protection step, though, to ensure that the `nf-core lint` tests pass. Here's an example:
+
+      ```yaml
+      steps:
+        # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
+        - name: Check PRs
+          run: |
+            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+        - name: Check PRs in another repository
+          run: |
+            { [[ $(git remote get-url origin) == *<repo_name>/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
       ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
