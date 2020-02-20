@@ -38,6 +38,7 @@
 * Use `stderr` instead of `stdout` for header artwork
 * Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
 * Tolerate unexpected output from `nextflow config` command
+* Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
 
 ### Template pipeline
 
