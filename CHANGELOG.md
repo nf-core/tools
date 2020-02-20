@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## v1.10dev
+
+### Other
+
+* Added CI test to check for PRs against `master` in tools repo
+
 ## v1.9
 
 ### Continuous integration
