@@ -22,6 +22,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
 
+      - name: Install Nextflow
+        run: |
+          mkdir /tmp/nextflow
+          cd /tmp/nextflow
+          wget -qO- get.nextflow.io | bash
+          sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
         env:
