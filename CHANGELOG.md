@@ -16,6 +16,7 @@
 * Removed the requirement for R in the conda environment
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
+* Rephrase docs to promote usage of containers over Conda to ensure reproducibility
 
 ### Linting
 
