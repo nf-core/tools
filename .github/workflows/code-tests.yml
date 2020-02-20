@@ -2,7 +2,6 @@ name: Python tests
 # This workflow is triggered on pushes and PRs to the repository.
 on: [push, pull_request]
 
-
 jobs:
   PythonLint:
 
