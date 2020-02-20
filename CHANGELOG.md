@@ -2,7 +2,9 @@
 
 ## v1.10dev
 
-_..nothing yet.._
+### Other
+
+* Added CI test to check for PRs against `master` in tools repo
 
 ## v1.9
 
