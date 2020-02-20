@@ -1,5 +1,9 @@
 # nf-core/tools: Changelog
 
+## v1.10dev
+
+_..nothing yet.._
+
 ## v1.9
 
 ### Continuous integration
