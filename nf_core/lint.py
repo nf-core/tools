@@ -225,25 +225,27 @@ class PipelineLint(object):
         """
 
         # NB: Should all be files, not directories
-        # Supplying a list means if any are present it's a pass
+        # List of lists. Passes if any of the files in the sublist are found.
         files_fail = [
-            'nextflow.config',
-            'Dockerfile',
+            ['nextflow.config'],
+            ['Dockerfile'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
-            'README.md',
-            'CHANGELOG.md',
-            os.path.join('docs','README.md'),
-            os.path.join('docs','output.md'),
-            os.path.join('docs','usage.md'),
-            os.path.join('.github', 'workflows', 'branch.yml'),
-            os.path.join('.github', 'workflows','ci.yml'),
-            os.path.join('.github', 'workflows', 'linting.yml')
+            ['README.md'],
+            ['CHANGELOG.md'],
+            [os.path.join('docs','README.md')],
+            [os.path.join('docs','output.md')],
+            [os.path.join('docs','usage.md')],
+            [os.path.join('.github', 'workflows', 'branch.yml')],
+            [os.path.join('.github', 'workflows','ci.yml')],
+            [os.path.join('.github', 'workflows', 'linting.yml')]
         ]
         files_warn = [
-            'main.nf',
-            'environment.yml',
-            os.path.join('conf','base.config')
+            ['main.nf'],
+            ['environment.yml'],
+            [os.path.join('conf','base.config')]
         ]
+
+        # List of strings. Dails / warns if any of the strings exist.
         files_fail_ifexists = [
             'Singularity'
         ]
@@ -260,41 +262,33 @@ class PipelineLint(object):
 
         # Files that cause an error if they don't exist
         for files in files_fail:
-            if not isinstance(files, list):
-                files = [files]
             if any([os.path.isfile(pf(f)) for f in files]):
-                self.passed.append((1, "File found: {}".format(files)))
+                self.passed.append((1, "File found: {}".format(self._bold_list_items(files))))
                 self.files.extend(files)
             else:
-                self.failed.append((1, "File not found: {}".format(files)))
+                self.failed.append((1, "File not found: {}".format(self._bold_list_items(files))))
 
         # Files that cause a warning if they don't exist
         for files in files_warn:
-            if not isinstance(files, list):
-                files = [files]
             if any([os.path.isfile(pf(f)) for f in files]):
-                self.passed.append((1, "File found: {}".format(files)))
+                self.passed.append((1, "File found: {}".format(self._bold_list_items(files))))
                 self.files.extend(files)
             else:
-                self.warned.append((1, "File not found: {}".format(files)))
+                self.warned.append((1, "File not found: {}".format(self._bold_list_items(files))))
 
         # Files that cause an error if they exist
-        for files in files_fail_ifexists:
-            if not isinstance(files, list):
-                files = [files]
-            if any([os.path.isfile(pf(f)) for f in files]):
-                self.failed.append((1, "File must be removed: {}".format(files)))
+        for file in files_fail_ifexists:
+            if os.path.isfile(pf(file)):
+                self.failed.append((1, "File must be removed: {}".format(self._bold_list_items(file))))
             else:
-                self.passed.append((1, "File not found check: {}".format(files)))
+                self.passed.append((1, "File not found check: {}".format(self._bold_list_items(file))))
 
         # Files that cause a warning if they exist
-        for files in files_warn_ifexists:
-            if not isinstance(files, list):
-                files = [files]
-            if any ([os.path.isfile(pf(f)) for f in files]):
-                self.warned.append((1, "File should be removed: {}".format(files)))
+        for file in files_warn_ifexists:
+            if os.path.isfile(pf(file)):
+                self.warned.append((1, "File should be removed: {}".format(self._bold_list_items(file))))
             else:
-                self.passed.append((1, "File not found check: {}".format(files)))
+                self.passed.append((1, "File not found check: {}".format(self._bold_list_items(file))))
 
         # Load and parse files for later
         if 'environment.yml' in self.files:
@@ -360,6 +354,9 @@ class PipelineLint(object):
     def check_nextflow_config(self):
         """Checks a given pipeline for required config variables.
 
+        At least one string in each list must be present for fail and warn.
+        Any config in config_fail_ifdefined results in a failure.
+
         Uses ``nextflow config -flat`` to parse pipeline ``nextflow.config``
         and print all config variables.
         NB: Does NOT parse contents of main.nf / nextflow script
@@ -367,30 +364,30 @@ class PipelineLint(object):
 
         # Fail tests if these are missing
         config_fail = [
-            'manifest.name',
-            'manifest.nextflowVersion',
-            'manifest.description',
-            'manifest.version',
-            'manifest.homePage',
-            'timeline.enabled',
-            'trace.enabled',
-            'report.enabled',
-            'dag.enabled',
-            'process.cpus',
-            'process.memory',
-            'process.time',
-            'params.outdir'
+            ['manifest.name'],
+            ['manifest.nextflowVersion'],
+            ['manifest.description'],
+            ['manifest.version'],
+            ['manifest.homePage'],
+            ['timeline.enabled'],
+            ['trace.enabled'],
+            ['report.enabled'],
+            ['dag.enabled'],
+            ['process.cpus'],
+            ['process.memory'],
+            ['process.time'],
+            ['params.outdir']
         ]
         # Throw a warning if these are missing
         config_warn = [
-            'manifest.mainScript',
-            'timeline.file',
-            'trace.file',
-            'report.file',
-            'dag.file',
-            'params.reads',
-            'process.container',
-            'params.single_end'
+            ['manifest.mainScript'],
+            ['timeline.file'],
+            ['trace.file'],
+            ['report.file'],
+            ['dag.file'],
+            ['params.reads','params.input','params.design'],
+            ['process.container'],
+            ['params.single_end']
         ]
         # Old depreciated vars - fail if present
         config_fail_ifdefined = [
@@ -403,21 +400,25 @@ class PipelineLint(object):
 
         # Get the nextflow config for this pipeline
         self.config = nf_core.utils.fetch_wf_config(self.path)
-        for cf in config_fail:
-            if cf in self.config.keys():
-                self.passed.append((4, "Config variable found: {}".format(cf)))
+        for cfs in config_fail:
+            for cf in cfs:
+                if cf in self.config.keys():
+                    self.passed.append((4, "Config variable found: {}".format(self._bold_list_items(cf))))
+                    break
             else:
-                self.failed.append((4, "Config variable not found: {}".format(cf)))
-        for cf in config_warn:
-            if cf in self.config.keys():
-                self.passed.append((4, "Config variable found: {}".format(cf)))
+                self.failed.append((4, "Config variable not found: {}".format(self._bold_list_items(cfs))))
+        for cfs in config_warn:
+            for cf in cfs:
+                if cf in self.config.keys():
+                    self.passed.append((4, "Config variable found: {}".format(self._bold_list_items(cf))))
+                    break
             else:
-                self.warned.append((4, "Config variable not found: {}".format(cf)))
+                self.warned.append((4, "Config variable not found: {}".format(self._bold_list_items(cfs))))
         for cf in config_fail_ifdefined:
             if cf not in self.config.keys():
-                self.passed.append((4, "Config variable (correctly) not found: {}".format(cf)))
+                self.passed.append((4, "Config variable (correctly) not found: {}".format(self._bold_list_items(cf))))
             else:
-                self.failed.append((4, "Config variable (incorrectly) found: {}".format(cf)))
+                self.failed.append((4, "Config variable (incorrectly) found: {}".format(self._bold_list_items(cf))))
 
         # Check and warn if the process configuration is done with deprecated syntax
         process_with_deprecated_syntax = list(set([re.search('^(process\.\$.*?)\.+.*$', ck).group(1) for ck in self.config.keys() if re.match(r'^(process\.\$.*?)\.+.*$', ck)]))
@@ -915,14 +916,34 @@ class PipelineLint(object):
     def print_results(self):
         # Print results
         rl = "\n  Using --release mode linting tests" if self.release_mode else ''
-        logging.info("===========\n LINTING RESULTS\n=================\n" +
-            click.style("{0:>4} tests passed".format(len(self.passed)), fg='green') +
-            click.style("{0:>4} tests had warnings".format(len(self.warned)), fg='yellow') +
-            click.style("{0:>4} tests failed".format(len(self.failed)), fg='red') + rl
+        logging.info("{}\n          LINTING RESULTS\n{}\n".format(click.style('='*29, dim=True), click.style('='*35, dim=True)) +
+            click.style("  [{}] {:>4} tests passed\n".format(u'\u2714', len(self.passed)), fg='green') +
+            click.style("  [!] {:>4} tests had warnings\n".format(len(self.warned)), fg='yellow') +
+            click.style("  [{}] {:>4} tests failed".format(u'\u2717', len(self.failed)), fg='red') + rl
         )
+
+        # Helper function to format test links nicely
+        def format_result(test_results):
+            """
+            Given an error message ID and the message text, return a nicely formatted
+            string for the terminal with appropriate ASCII colours.
+            """
+            print_results = []
+            for eid, msg in test_results:
+                url = click.style("http://nf-co.re/errors#{}".format(eid), fg='blue')
+                print_results.append('{} : {}'.format(url, msg))
+            return "\n  ".join(print_results)
+
         if len(self.passed) > 0:
-            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.passed])))
+            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), format_result(self.passed)))
         if len(self.warned) > 0:
-            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.warned])))
+            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), format_result(self.warned)))
         if len(self.failed) > 0:
-            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), "\n  ".join(["http://nf-co.re/errors#{} : {}".format(eid, msg) for eid, msg in self.failed])))
+            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), format_result(self.failed)))
+
+
+    def _bold_list_items(self, files):
+        if not isinstance(files, list):
+            files = [files]
+        bfiles = [click.style(f, bold=True) for f in files]
+        return ' or '.join(bfiles)
