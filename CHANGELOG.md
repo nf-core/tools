@@ -20,6 +20,7 @@
 ### Linting
 
 * Removed linting for CircleCI
+* Allow any one of `params.reads` or `params.input` or `params.design` before warning
 * Added whitespace padding to lint error URLs
 * Improved documentation for lint errors
 * Allow either `>=` or `!>=` in nextflow version checks (the latter exits with an error instead of just warning) [#506](https://github.com/nf-core/tools/issues/506)

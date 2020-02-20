@@ -100,8 +100,12 @@ The following variables throw warnings if missing:
   * Dockerhub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
   * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
-* `params.reads`
-  * Input parameter to specify input data (typically FastQ files / pairs)
+* `params.reads` or `params.input` or `params.design`
+  * Input parameter to specify input data - one or more of these can be used to avoid a warning
+  * Typical usage:
+    * `params.reads`: FastQ files (or pairs)
+    * `params.input`: Input data that is not NGS sequencing data
+    * `params.design`: A CSV design file specifying input files and metadata for the run
 * `params.single_end`
   * Specify to work with single-end sequence data instead of paired-end by default
   * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
