@@ -174,8 +174,7 @@ This test will fail if the following requirements are not met in these files:
     * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
 
-3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch when a PR
-is opened against the _nf-core_ repository.
+3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch when a PR is opened against the _nf-core_ repository.
     * Must be turned on for `pull_request` to `master`.
 
       ```yaml
