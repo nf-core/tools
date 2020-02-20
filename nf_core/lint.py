@@ -246,7 +246,7 @@ class PipelineLint(object):
             [os.path.join('conf','base.config')]
         ]
 
-        # These trigger fails / warns if any exist - strings
+        # List of strings. Dails / warns if any of the strings exist.
         files_fail_ifexists = [
             'Singularity'
         ]
