@@ -30,6 +30,7 @@
 
 ### Other
 
+* Fix automatic synchronisation of the template after releases of nf-core/tools
 * Improve documentation for installing `nf-core/tools`
 * Use `stderr` instead of `stdout` for header artwork
 * Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
