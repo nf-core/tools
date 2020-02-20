@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.9dev
+## v1.9
 
 ### Continuous integration
 
