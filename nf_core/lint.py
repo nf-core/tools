@@ -48,7 +48,6 @@ def run_linting(pipeline_dir, release_mode=False):
     except AssertionError as e:
         logging.critical("Critical error: {}".format(e))
         logging.info("Stopping tests...")
-        lint_obj.print_results()
         return lint_obj
 
     # Print the results

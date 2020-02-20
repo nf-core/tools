@@ -27,6 +27,7 @@
   * If running with `--release` check the opposite and fail if not
 * Tidied up error messages and syntax for linting GitHub actions branch tests
 * Add YAML validator
+* Don't print test results if we have a critical error
 
 ### Other
 
