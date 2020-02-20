@@ -2,6 +2,10 @@
 
 ## v1.10dev
 
+### Linting
+
+* Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
+
 ### Other
 
 * Added CI test to check for PRs against `master` in tools repo
