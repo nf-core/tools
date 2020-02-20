@@ -20,7 +20,7 @@ import nf_core.utils
 
 
 class DownloadWorkflow(object):
-    """Downloads a nf-core workflow from Github to the local file system.
+    """Downloads a nf-core workflow from GitHub to the local file system.
 
     Can also download its Singularity container image if required.
 
@@ -185,7 +185,7 @@ class DownloadWorkflow(object):
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
-        """Downloads workflow files from Github to the :attr:`self.outdir`.
+        """Downloads workflow files from GitHub to the :attr:`self.outdir`.
         """
         logging.debug("Downloading {}".format(self.wf_download_url))
 

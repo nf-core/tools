@@ -229,7 +229,7 @@ def create(name, description, author, new_version, no_git, force, outdir):
 @click.option(
     '--release',
     is_flag = True,
-    default = os.environ.get('TRAVIS_BRANCH') == 'master' and os.environ.get('TRAVIS_REPO_SLUG', '').startswith('nf-core/') and not os.environ.get('TRAVIS_REPO_SLUG', '') == 'nf-core/tools',
+    default = os.path.basename(os.path.dirname(os.environ.get('GITHUB_REF','').strip(' \'"'))) == 'master' and os.environ.get('GITHUB_REPOSITORY', '').startswith('nf-core/') and not os.environ.get('GITHUB_REPOSITORY', '') == 'nf-core/tools',
     help = "Execute additional checks for release-ready workflows."
 )
 def lint(pipeline_dir, release):
@@ -326,7 +326,7 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 
     # Pull and sync all nf-core pipelines
     if all:
-        nf_core.sync.sync_all_pipelines()
+        nf_core.sync.sync_all_pipelines(username, auth_token)
     else:
         # Manually check for the required parameter
         if not pipeline_dir or len(pipeline_dir) != 1:
@@ -345,9 +345,9 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 
 
 if __name__ == '__main__':
-    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'))
-    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'))
-    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'))
-    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'))
-    click.secho("                                          `._,._,'\n", fg='green')
+    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'), err=True)
+    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'), err=True)
+    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'), err=True)
+    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'), err=True)
+    click.secho("                                          `._,._,'\n", fg='green', err=True)
     nf_core_cli()
