@@ -1,10 +1,120 @@
 # nf-core/tools: Changelog
 
+## v1.9
+
+### Continuous integration
+
+* Travis CI tests are now deprecated in favor of GitHub Actions within the pipeline template.
+  * `nf-core bump-version` support has been removed for `.travis.yml`
+  * `nf-core lint` now fails if a `.travis.yml` file is found
+* Ported nf-core/tools Travis CI automation to GitHub Actions.
+* Fixed the build for the nf-core/tools API documentation on the website
+
+### Template
+
+* Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Removed the requirement for R in the conda environment
+* Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
+* Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
+* Rephrase docs to promote usage of containers over Conda to ensure reproducibility
+* Stage the workflow summary YAML file within MultiQC work directory
+
+### Linting
+
+* Removed linting for CircleCI
+* Allow any one of `params.reads` or `params.input` or `params.design` before warning
+* Added whitespace padding to lint error URLs
+* Improved documentation for lint errors
+* Allow either `>=` or `!>=` in nextflow version checks (the latter exits with an error instead of just warning) [#506](https://github.com/nf-core/tools/issues/506)
+* Check that `manifest.version` ends in `dev` and throw a warning if not
+  * If running with `--release` check the opposite and fail if not
+* Tidied up error messages and syntax for linting GitHub actions branch tests
+* Add YAML validator
+* Don't print test results if we have a critical error
+
+### Other
+
+* Fix automatic synchronisation of the template after releases of nf-core/tools
+* Improve documentation for installing `nf-core/tools`
+* Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
+* Use `stderr` instead of `stdout` for header artwork
+* Tolerate unexpected output from `nextflow config` command
+* Add social preview image
+* Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
+
+## v1.8
+
+### Continuous integration
+
+* GitHub Actions CI workflows are now included in the template pipeline
+  * Please update these files to match the existing tests that you have in `.travis.yml`
+* Travis CI tests will be deprecated from the next `tools` release
+* Linting will generate a warning if GitHub Actions workflows do not exist and if applicable to remove Travis CI workflow file i.e. `.travis.yml`.
+
+### Tools helper code
+
+* Refactored the template synchronisation code to be part of the main nf-core tool
+* `nf-core bump-version` now also bumps the version string of the exported conda environment in the Dockerfile
+* Updated Blacklist of synced pipelines
+* Ignore pre-releases in `nf-core list`
+* Updated documentation for `nf-core download`
+* Fixed typo in `nf-core launch` final command
+* Handle missing pipeline descriptions in `nf-core list`
+* Migrate tools package CI to GitHub Actions
+
+### Linting
+
+* Adjusted linting to enable `patch` branches from being tested
+* Warn if GitHub Actions workflows do not exist, warn if `.travis.yml` and circleCI are there
+* Lint for `Singularity` file and raise error if found [#458](https://github.com/nf-core/tools/issues/458)
+* Added linting of GitHub Actions workflows `linting.yml`, `ci.yml` and `branch.yml`
+* Warn if pipeline name contains upper case letters or non alphabetical characters [#85](https://github.com/nf-core/tools/issues/85)
+* Make CI tests of lint code pass for releases
+
+### Template pipeline
+
+* Fixed incorrect paths in iGenomes config as described in issue [#418](https://github.com/nf-core/tools/issues/418)
+* Fixed incorrect usage of non-existent parameter in the template [#446](https://github.com/nf-core/tools/issues/446)
+* Add UCSC genomes to `igenomes.config` and add paths to all genome indices
+* Change `maxMultiqcEmailFileSize` parameter to `max_multiqc_email_size`
+* Export conda environment in Docker file [#349](https://github.com/nf-core/tools/issues/349)
+* Change remaining parameters from `camelCase` to `snake_case` [#39](https://github.com/nf-core/hic/issues/39)
+  * `--singleEnd` to `--single_end`
+  * `--igenomesIgnore` to `--igenomes_ignore`
+  * Having the old camelCase versions of these will now throw an error
+* Add `autoMounts=true` to default singularity profile
+* Add in `markdownlint` checks that were being ignored by default
+* Disable ansi logging in the travis CI tests
+* Move `params`section from `base.config` to `nextflow.config`
+* Use `env` scope to export `PYTHONNOUSERSITE` in `nextflow.config` to prevent conflicts with host Python environment
+* Bump minimum Nextflow version to `19.10.0` - required to properly use `env` scope in `nextflow.config`
+* Added support for nf-tower in the travis tests, using public mailbox nf-core@mailinator.com
+* Add link to [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and [Semantic Versioning](http://semver.org/spec/v2.0.0.html) to CHANGELOG
+* Adjusted `.travis.yml` checks to allow for `patch` branches to be tested
+* Add Python 3.7 dependency to the `environment.yml` file
+* Remove `awsbatch` profile cf [nf-core/configs#71](https://github.com/nf-core/configs/pull/71)
+* Make `scrape_software_versions.py` compatible with Python3 to enable miniconda3 in    [base image PR](https://github.com/nf-core/tools/pull/462)
+* Add GitHub Actions workflows and respective linting
+* Add `NXF_ANSI_LOG` as global environment variable to template GitHub Actions CI workflow
+* Fixed global environment variable in GitHub Actions CI workflow
+* Add `--awscli` parameter
+* Add `README.txt` path for genomes in `igenomes.config` [nf-core/atacseq#75](https://github.com/nf-core/atacseq/issues/75)
+* Fix buggy ANSI codes in pipeline summary log messages
+* Add a `TODO` line in the new GitHub Actions CI test files
+
+### Base Docker image
+
+* Use miniconda3 instead of miniconda for a Python 3k base environment
+  * If you still need Python 2 for your pipeline, add `conda-forge::python=2.7.4` to the dependencies in your `environment.yml`
+* Update conda version to 4.7.12
+
+### Other
+
+* Updated Base Dockerfile to Conda 4.7.10
+* Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
+* Improved core documentation (`-profile`)
+
 ## v1.7
-
-### PyPI package description
-
-* The readme should now be rendered properly on PyPI.
 
 ### Tools helper code
 
@@ -17,6 +127,7 @@
 * When listing pipelines, a nicer message is given for the rare case of a detached `HEAD` ref in a locally pulled pipeline. [#297](https://github.com/nf-core/tools/issues/297)
 * The `download` command can now compress files into a single archive.
 * `nf-core create` now fetches a logo for the pipeline from the nf-core website
+* The readme should now be rendered properly on PyPI.
 
 ### Syncing
 
@@ -29,7 +140,7 @@
 
 * If the container slug does not contain the nf-core organisation (for example during development on a fork), linting will raise a warning, and an error with release mode on
 
-### Template
+### Template pipeline
 
 * Add new code for Travis CI to allow PRs from patch branches too
 * Fix small typo in central readme of tools for future releases
@@ -45,7 +156,8 @@
   to avoid weird behavior such as making an `s3:/` directory locally when using
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
-* Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* Update URL for joining the nf-core slack to [https://nf-co.re/join/slack](https://nf-co.re/join/slack)
+* Add GitHub Action for CI and Linting
 * [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
 * Add direct link to the pipeline slack channel in the contribution guidelines
 * Add contributions and support heading with links to contribution guidelines and link to the pipeline slack channel in the main README
@@ -55,7 +167,7 @@
 * Template configured to use logo fetched from website
 * New option `--email_on_fail` which only sends emails if the workflow is not successful
 * Add file existence check when checking software versions
-* Fixed issue [https://github.com/nf-core/tools/issues/165] - Use `checkIfExists`
+* Fixed issue [#165](https://github.com/nf-core/tools/issues/165) - Use `checkIfExists`
 * Consistent spacing for `if` statements
 * Add sensible resource labels to `base.config`
 
@@ -217,7 +329,7 @@ Very large release containing lots of work from the first nf-core hackathon, hel
   * New pipelines are now created using the command `nf-core create`
   * The nf-core template and associated linting are now controlled under the same version system
 * Large number of template updates and associated linting changes
-  * New simplified cookicutter variable usage
+  * New simplified cookiecutter variable usage
   * Refactored documentation - simplified and reduced duplication
   * Better `manifest` variables instead of `params` for pipeline name and version
   * New integrated nextflow version checking

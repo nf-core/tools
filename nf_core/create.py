@@ -81,6 +81,7 @@ class PipelineCreate(object):
                 'author': self.author,
                 'name_noslash': self.name_noslash,
                 'name_docker': self.name_docker,
+                'short_name': self.short_name,
                 'version': self.new_version,
                 'nf_core_version': nf_core.__version__
             },
