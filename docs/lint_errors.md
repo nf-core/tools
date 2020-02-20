@@ -105,7 +105,7 @@ The following variables throw warnings if missing:
   * Typical usage:
     * `params.reads`: FastQ files (or pairs)
     * `params.input`: Input data that is not NGS sequencing data
-    * `params.design`: A CSV design file specifying input files and metadata for the run
+    * `params.design`: A CSV/TSV design file specifying input files and metadata for the run
 * `params.single_end`
   * Specify to work with single-end sequence data instead of paired-end by default
   * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
