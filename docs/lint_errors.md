@@ -190,8 +190,8 @@ This test will fail if the following requirements are not met in these files:
       steps:
         # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
         - name: Check PRs
-          run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+          if: github.repository == 'nf-core/<pipeline_name>'
+          run: [[ $GITHUB_HEAD_REF == "dev" ]] || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}

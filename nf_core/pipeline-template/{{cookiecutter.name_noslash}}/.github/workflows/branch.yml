@@ -3,14 +3,13 @@ name: nf-core branch protection
 # It fails when someone tries to make a PR against the nf-core `master` branch instead of `dev`
 on:
   pull_request:
-    branches:
-    - master
+    branches: [master]
 
 jobs:
   test:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
-      # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
+      # PRs to the nf-core repo are only ok if coming from the `dev` or `patch` branches
       - name: Check PRs
-        run: |
-          { [[ $(git remote get-url origin) == *{{cookiecutter.name}} ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+        if: github.repository == '{{cookiecutter.name}}'
+        run: '[[ $GITHUB_HEAD_REF == "dev" ]] || [[ $GITHUB_HEAD_REF == "patch" ]]'

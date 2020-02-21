@@ -508,6 +508,7 @@ class PipelineLint(object):
 
             # Check that the action is turned on for PRs to master
             try:
+                # Yaml 'on' parses as True - super weird
                 assert('master' in branchwf[True]['pull_request']['branches'])
             except (AssertionError, KeyError):
                 self.failed.append((5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: '{}'".format(fn)))
@@ -515,15 +516,17 @@ class PipelineLint(object):
                 self.passed.append((5, "GitHub Actions 'branch' workflow is triggered for PRs to master: '{}'".format(fn)))
 
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-            PRMasterCheck = "{{ [[ $(git remote get-url origin) == *nf-core/{} ]] && [[ ${{GITHUB_HEAD_REF}} = \"dev\" ]]; }} || [[ ${{GITHUB_HEAD_REF}} == \"patch\" ]]".format(self.pipeline_name.lower())
-            steps = branchwf['jobs']['test']['steps']
-            try:
-                steps = branchwf['jobs']['test']['steps']
-                assert(any([PRMasterCheck in step.get('run', []) for step in steps]))
-            except (AssertionError, KeyError):
-                self.failed.append((5, "GitHub Actions 'branch' workflow should check that forks don't submit PRs to master: '{}'".format(fn)))
+            PRMasterCheck = '[[ $GITHUB_HEAD_REF == "dev" ]] || [[ $GITHUB_HEAD_REF == "patch" ]]'
+            steps = branchwf.get('jobs', {}).get('test', {}).get('steps', [])
+            for step in steps:
+                has_name = step.get('name') == 'Check PRs'
+                has_if = step.get('if') == "github.repository == 'nf-core/{}'".format(self.pipeline_name.lower())
+                has_run = step.get('run') == '[[ $GITHUB_HEAD_REF == "dev" ]] || [[ $GITHUB_HEAD_REF == "patch" ]]'
+                if has_name and has_if and has_run:
+                    self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
+                    break
             else:
-                self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
+                self.failed.append((5, "Couldn't find GitHub Actions 'branch' workflow step to check that forks don't submit PRs to master: '{}'".format(fn)))
 
     def check_actions_ci(self):
         """Checks that the GitHub Actions CI workflow is valid

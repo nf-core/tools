@@ -2,6 +2,10 @@
 
 ## v1.10dev
 
+### Linting
+
+* Refactored PR branch tests to be a little clearer
+
 ### Other
 
 * Added CI test to check for PRs against `master` in tools repo
