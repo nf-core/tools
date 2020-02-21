@@ -518,9 +518,9 @@ class PipelineLint(object):
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
             steps = branchwf.get('jobs', {}).get('test', {}).get('steps', [])
             for step in steps:
-                has_name = step.get('name').strip() == 'Check PRs'
-                has_if = step.get('if').strip() == "github.repository == 'nf-core/{}'".format(self.pipeline_name.lower())
-                has_run = step.get('run').strip() == '{{ [[ $(git remote get-url origin) == *nf-core/{} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; }} || [[ $GITHUB_HEAD_REF == "patch" ]]'.format(self.pipeline_name.lower())
+                has_name = step.get('name', '').strip() == 'Check PRs'
+                has_if = step.get('if', '').strip() == "github.repository == 'nf-core/{}'".format(self.pipeline_name.lower())
+                has_run = step.get('run', '').strip() == '{{ [[ $(git remote get-url origin) == *nf-core/{} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; }} || [[ $GITHUB_HEAD_REF == "patch" ]]'.format(self.pipeline_name.lower())
                 if has_name and has_if and has_run:
                     self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
                     break
