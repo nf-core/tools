@@ -131,7 +131,7 @@ nf-core pipelines must have CI testing with GitHub Actions.
 
 ### GitHub Actions
 
-There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory.
+There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory. You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
 
 This test will fail if the following requirements are not met in these files:
 
@@ -190,21 +190,24 @@ This test will fail if the following requirements are not met in these files:
       steps:
         # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
         - name: Check PRs
+          if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
-    * For branch protection in repositories outside of _nf-core_, you can add an additional step to this workflow. Do keep the _nf-core_ branch protection step, though, to ensure that the `nf-core lint` tests pass. Here's an example:
+    * For branch protection in repositories outside of _nf-core_, you can add an additional step to this workflow. Keep the _nf-core_ branch protection step, to ensure that the `nf-core lint` tests pass. Here's an example:
 
       ```yaml
       steps:
         # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
         - name: Check PRs
+          if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
         - name: Check PRs in another repository
+          if: github.repository == '<repo_name>/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *<repo_name>/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+            { [[ $(git remote get-url origin) == *<repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
