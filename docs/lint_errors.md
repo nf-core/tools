@@ -192,7 +192,7 @@ This test will fail if the following requirements are not met in these files:
         - name: Check PRs
           if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/tools ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}

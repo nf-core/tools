@@ -516,7 +516,6 @@ class PipelineLint(object):
                 self.passed.append((5, "GitHub Actions 'branch' workflow is triggered for PRs to master: '{}'".format(fn)))
 
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-            PRMasterCheck = '[[ $GITHUB_HEAD_REF == "dev" ]] || [[ $GITHUB_HEAD_REF == "patch" ]]'
             steps = branchwf.get('jobs', {}).get('test', {}).get('steps', [])
             for step in steps:
                 has_name = step.get('name').strip() == 'Check PRs'
