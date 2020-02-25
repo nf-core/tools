@@ -43,10 +43,10 @@ def test_params_as_json_dump(example_json):
     """Tests the JSON dump that can be consumed by Nextflow."""
     result = pms.Parameters.create_from_json(example_json)
     parameter = result[0]
-    assert parameter.name == "reads"
+    assert parameter.name == "input"
     expected_output = """
     {
-        "reads": "path/to/reads.fastq.gz"
+        "input": "path/to/reads.fastq.gz"
     }"""
     parsed_output = json.loads(expected_output)
     assert len(parsed_output.keys()) == 1
