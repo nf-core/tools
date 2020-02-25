@@ -123,7 +123,7 @@ class TestLint(unittest.TestCase):
         """Tests that config variable existence test fails with bad pipeline example"""
         bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         bad_lint_obj.check_nextflow_config()
-        expectations = {"failed": 19, "warned": 7, "passed": 9}
+        expectations = {"failed": 19, "warned": 6, "passed": 9}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
     @pytest.mark.xfail(raises=AssertionError)
