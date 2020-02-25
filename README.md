@@ -195,7 +195,7 @@ Do you want to change the group's defaults? [y/N]: y
 
 Input files
 Specify the location of your input FastQ files.
- --reads ['data/*{1,2}.fastq.gz']: '/path/to/reads_*{R1,R2}.fq.gz'
+ --input ['data/*{1,2}.fastq.gz']: '/path/to/reads_*{R1,R2}.fq.gz'
 
 [..truncated..]
 
@@ -310,7 +310,7 @@ nextflow run /path/to/nf-core-methylseq-1.4/workflow/ \
      -profile singularity \
      -with-singularity /path/to/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg \
      # .. other normal pipeline parameters from here on..
-     --reads '*_R{1,2}.fastq.gz' --genome GRCh38
+     --input '*_R{1,2}.fastq.gz' --genome GRCh38
 ```
 
 ## Pipeline software licences
