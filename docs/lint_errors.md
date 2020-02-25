@@ -100,15 +100,10 @@ The following variables throw warnings if missing:
   * Dockerhub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
   * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
-* `params.reads` or `params.input` or `params.design`
-  * Input parameter to specify input data - one or more of these can be used to avoid a warning
+* `params.input`
+  * Input parameter to specify input data, specify this to avoid a warning
   * Typical usage:
-    * `params.reads`: FastQ files (or pairs)
     * `params.input`: Input data that is not NGS sequencing data
-    * `params.design`: A CSV/TSV design file specifying input files and metadata for the run
-* `params.single_end`
-  * Specify to work with single-end sequence data instead of paired-end by default
-  * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -118,8 +113,8 @@ The following variables are depreciated and fail the test if they are still pres
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
   * The old method for specifying the dockerhub container address. Replaced by `process.container`
-* `singleEnd` and `igenomesIgnore`
-  * Changed to `single_end` and `igenomes_ignore`
+* `igenomesIgnore`
+  * Changed to `igenomes_ignore`
   * The `snake_case` convention should now be used when defining pipeline parameters
 
 Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
