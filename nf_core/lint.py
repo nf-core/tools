@@ -385,16 +385,14 @@ class PipelineLint(object):
             ['trace.file'],
             ['report.file'],
             ['dag.file'],
-            ['params.reads','params.input','params.design'],
-            ['process.container'],
-            ['params.single_end']
+            ['params.input'],
+            ['process.container']
         ]
         # Old depreciated vars - fail if present
         config_fail_ifdefined = [
             'params.version',
             'params.nf_required_version',
             'params.container',
-            'params.singleEnd',
             'params.igenomesIgnore'
         ]
 
