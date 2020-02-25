@@ -1,7 +1,7 @@
 {
     "parameters": [
         {
-            "name": "reads",
+            "name": "input",
             "label": "WGS single-end fastq file.",
             "usage": "Needs to be provided as workflow input data.",
             "type": "string",
