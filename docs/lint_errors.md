@@ -86,6 +86,10 @@ The following variables fail the test if missing:
   * The nextflow timeline, trace, report and DAG should be enabled by default (set to `true`)
 * `process.cpus`, `process.memory`, `process.time`
   * Default CPUs, memory and time limits for tasks
+* `params.input`
+  * Input parameter to specify input data, specify this to avoid a warning
+  * Typical usage:
+    * `params.input`: Input data that is not NGS sequencing data
 
 The following variables throw warnings if missing:
 
@@ -100,10 +104,6 @@ The following variables throw warnings if missing:
   * Dockerhub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
   * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
-* `params.input`
-  * Input parameter to specify input data, specify this to avoid a warning
-  * Typical usage:
-    * `params.input`: Input data that is not NGS sequencing data
 
 The following variables are depreciated and fail the test if they are still present:
 
