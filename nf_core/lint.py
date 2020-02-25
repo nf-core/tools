@@ -376,7 +376,8 @@ class PipelineLint(object):
             ['process.cpus'],
             ['process.memory'],
             ['process.time'],
-            ['params.outdir']
+            ['params.outdir'],
+            ['params.input']
         ]
         # Throw a warning if these are missing
         config_warn = [
@@ -385,7 +386,6 @@ class PipelineLint(object):
             ['trace.file'],
             ['report.file'],
             ['dag.file'],
-            ['params.input'],
             ['process.container']
         ]
         # Old depreciated vars - fail if present
