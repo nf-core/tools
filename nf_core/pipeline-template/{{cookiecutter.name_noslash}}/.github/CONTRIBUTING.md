@@ -54,4 +54,4 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 ## Getting help
 
-For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://nf-co.re/{{ cookiecutter.name }}/docs) and don't hesitate to get in touch on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://nf-co.re/{{ cookiecutter.short_name }}/docs) and don't hesitate to get in touch on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
