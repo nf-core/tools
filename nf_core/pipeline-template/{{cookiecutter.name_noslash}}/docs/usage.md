@@ -2,8 +2,6 @@
 
 ## Table of contents
 
-<!-- Install Atom plugin markdown-toc-auto for this ToC to auto-update on save -->
-<!-- TOC START min:2 max:3 link:true asterisk:true update:true -->
 * [Table of contents](#table-of-contents)
 * [Introduction](#introduction)
 * [Running the pipeline](#running-the-pipeline)
@@ -23,6 +21,7 @@
 * [AWS Batch specific parameters](#aws-batch-specific-parameters)
   * [`--awsqueue`](#--awsqueue)
   * [`--awsregion`](#--awsregion)
+  * [`--awscli`](#--awscli)
 * [Other command line parameters](#other-command-line-parameters)
   * [`--outdir`](#--outdir)
   * [`--email`](#--email)
@@ -39,7 +38,6 @@
   * [`--plaintext_email`](#--plaintext_email)
   * [`--monochrome_logs`](#--monochrome_logs)
   * [`--multiqc_config`](#--multiqc_config)
-<!-- TOC END -->
 
 ## Introduction
 
@@ -96,6 +94,8 @@ Use this parameter to choose a configuration profile. Profiles can give configur
 
 Several generic profiles are bundled with the pipeline which instruct the pipeline to use software packaged using different methods (Docker, Singularity, Conda) - see below.
 
+> We highly recommend the use of Docker or Singularity containers for full pipeline reproducibility, however when this is not possible, Conda is also supported.
+
 The pipeline also dynamically loads configurations from [https://github.com/nf-core/configs](https://github.com/nf-core/configs) when it runs, making multiple config profiles for various institutional clusters available at run time. For more information and to see if your system is available in these configs please see the [nf-core/configs documentation](https://github.com/nf-core/configs#documentation).
 
 Note that multiple profiles can be loaded, for example: `-profile test,docker` - the order of arguments is important!
@@ -103,17 +103,16 @@ They are loaded in sequence, so later profiles can overwrite earlier profiles.
 
 If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended.
 
-* `awsbatch`
-  * A generic configuration profile to be used with AWS Batch.
-* `conda`
-  * A generic configuration profile to be used with [conda](https://conda.io/docs/)
-  * Pulls most software from [Bioconda](https://bioconda.github.io/)
 * `docker`
   * A generic configuration profile to be used with [Docker](http://docker.com/)
   * Pulls software from dockerhub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `singularity`
   * A generic configuration profile to be used with [Singularity](http://singularity.lbl.gov/)
   * Pulls software from DockerHub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+* `conda`
+  * Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker or Singularity.
+  * A generic configuration profile to be used with [Conda](https://conda.io/docs/)
+  * Pulls most software from [Bioconda](https://bioconda.github.io/)
 * `test`
   * A profile with a complete configuration for automated testing
   * Includes links to test data so needs no other parameters
@@ -185,6 +184,7 @@ params {
 ```
 
 <!-- TODO nf-core: Describe reference path flags -->
+
 ### `--fasta`
 
 If you prefer, you can specify the full path to your reference genome when you run the pipeline:
@@ -213,7 +213,7 @@ If you have any questions or issues please send us a message on [Slack](https://
 
 ## AWS Batch specific parameters
 
-Running the pipeline on AWS Batch requires a couple of specific parameters to be set according to your AWS Batch configuration. Please use the `-awsbatch` profile and then specify all of the following parameters.
+Running the pipeline on AWS Batch requires a couple of specific parameters to be set according to your AWS Batch configuration. Please use [`-profile awsbatch`](https://github.com/nf-core/configs/blob/master/conf/awsbatch.config) and then specify all of the following parameters.
 
 ### `--awsqueue`
 
@@ -221,7 +221,11 @@ The JobQueue that you intend to use on AWS Batch.
 
 ### `--awsregion`
 
-The AWS region to run your job in. Default is set to `eu-west-1` but can be adjusted to your needs.
+The AWS region in which to run your job. Default is set to `eu-west-1` but can be adjusted to your needs.
+
+### `--awscli`
+
+The [AWS CLI](https://www.nextflow.io/docs/latest/awscloud.html#aws-cli-installation) path in your custom AMI. Default: `/home/ec2-user/miniconda/bin/aws`.
 
 Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a S3 storage bucket of your choice - you'll get an error message notifying you if you didn't.
 
@@ -271,7 +275,7 @@ Note - you can use this to override pipeline defaults.
 
 ### `--custom_config_version`
 
-Provide git commit id for custom Institutional configs hosted at `nf-core/configs`. This was implemented for reproducibility purposes. Default is set to `master`.
+Provide git commit id for custom Institutional configs hosted at `nf-core/configs`. This was implemented for reproducibility purposes. Default: `master`.
 
 ```bash
 ## Download and use config file with following git commid id

@@ -145,8 +145,8 @@ class Workflows(object):
         filtered_workflows = []
         for wf in self.remote_workflows:
             for k in self.keyword_filters:
-                in_name = k in wf.name
-                in_desc = k in wf.description
+                in_name = k in wf.name if wf.name else False
+                in_desc = k in wf.description if wf.description else False
                 in_topics = any([ k in t for t in wf.topics])
                 if not in_name and not in_desc and not in_topics:
                     break
@@ -223,7 +223,7 @@ class RemoteWorkflow(object):
     """A information container for a remote workflow.
 
     Args:
-        data (dict): workflow information as they are retrieved from the Github repository REST API request
+        data (dict): workflow information as they are retrieved from the GitHub repository REST API request
             (https://developer.github.com/v3/repos/#get).
     """
 

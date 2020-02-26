@@ -38,7 +38,7 @@ The HTML will then be generated in `docs/api/_build/html`.
 
 
 ## Tests
-When you create a pull request with changes, [Travis CI](https://travis-ci.com/) will run automatic tests.
+When you create a pull request with changes, [GitHub Actions](https://github.com/features/actions) will run automatic tests.
 Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
 
 There are two types of tests that run:
@@ -54,11 +54,11 @@ python -m pytest .
 ```
 
 ### Lint Tests
-The nf-core has a [set of guidelines](http://nf-co.re/guidelines) which all pipelines must adhere to.
+nf-core has a [set of guidelines](http://nf-co.re/guidelines) which all pipelines must adhere to.
 To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
 
 The nf-core/tools repo itself contains the master template for creating new nf-core pipelines.
-Travis is set up to create a new pipeline from this template and then run the lint tests on it.
+Once you have created a new pipeline from this template GitHub Actions is automatically set up to run lint tests on it.
 This ensures that any changes we make to either the linting or the template stay in sync.
 You can replicate this process locally with the following commands:
 

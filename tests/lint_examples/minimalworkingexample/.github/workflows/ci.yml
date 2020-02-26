@@ -5,26 +5,22 @@ on: [push, pull_request]
 
 jobs:
   test:
-    env:
-      NXF_VER: {% raw %}${{ matrix.nxf_ver }}{% endraw %}
-      NXF_ANSI_LOG: false
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     strategy:
       matrix:
         # Nextflow versions: check pipeline minimum and current latest
         nxf_ver: ['19.10.0', '']
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v1
       - name: Install Nextflow
         run: |
+          {% raw %}export NXF_VER=${{ matrix.nxf_ver }}{% endraw %}
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-      - name: Pull docker image
+      - name: Pull container
         run: |
-          docker pull {{ cookiecutter.name_docker }}:dev
-          docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
-      - name: Run pipeline with test data
+          docker pull nfcore/tools:dev
+          docker tag nfcore/tools:dev nfcore/tools:0.4
+      - name: Run test
         run: |
-          # TODO nf-core: You can customise CI pipeline run tests as required
-          # (eg. adding multiple test runs with different parameters)
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker
