@@ -949,9 +949,3 @@ class PipelineLint(object):
             files = [files]
         bfiles = [click.style(f, bold=True) for f in files]
         return ' or '.join(bfiles)
-
-
-if __name__ == "__main__":
-    path = "/Users/olgabot/code/nf-predictorthologs"
-    run_linting(path)
-
