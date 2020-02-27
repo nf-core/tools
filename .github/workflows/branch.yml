@@ -26,8 +26,7 @@ jobs:
 
             It looks like this pull-request is has been made against the ${{github.event.pull_request.head.repo.full_name}} `master` branch.
             The `master` branch on nf-core repositories should always contain code from the latest release.
-            Beacuse of this, PRs to `master` are only allowed if they come from the ${{github.event.pull_request.head.repo.full_name}} `dev` branch
-            or from a forked repo branch called `patch` (for minor patch pipeline releases).
+            Beacuse of this, PRs to `master` are only allowed if they come from the ${{github.event.pull_request.head.repo.full_name}} `dev` branch.
 
             You do not need to close this PR, you can change the target branch to `dev` by clicking the _"Edit"_ button at the top of this page.
 
