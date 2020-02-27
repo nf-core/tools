@@ -524,8 +524,8 @@ class PipelineLint(object):
                 if has_name and has_if and has_run:
                     self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
                     break
-            else:
-                self.failed.append((5, "Couldn't find GitHub Actions 'branch' workflow step to check that forks don't submit PRs to master: '{}'".format(fn)))
+        else:
+            self.failed.append((5, "Couldn't find GitHub Actions 'branch' workflow step to check that forks don't submit PRs to master: '{}'".format(fn)))
 
     def check_actions_ci(self):
         """Checks that the GitHub Actions CI workflow is valid
@@ -949,3 +949,9 @@ class PipelineLint(object):
             files = [files]
         bfiles = [click.style(f, bold=True) for f in files]
         return ' or '.join(bfiles)
+
+
+if __name__ == "__main__":
+    path = "/Users/olgabot/code/nf-predictorthologs"
+    run_linting(path)
+
