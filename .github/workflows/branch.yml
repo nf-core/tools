@@ -29,7 +29,7 @@ jobs:
             Beacuse of this, PRs to `master` are only allowed if they come from the ${{github.event.pull_request.head.repo.full_name}} `dev` branch
             or from a forked repo branch called `patch` (for minor patch pipeline releases).
 
-            You do not need to close this PR, you can change the target branch to `dev` by clicking on _EDIT_ at the top of this page.
+            You do not need to close this PR, you can change the target branch to `dev` by clicking the _"Edit"_ button at the top of this page.
 
             Thanks again for your contribution!
           repo-token: ${{ secrets.GITHUB_TOKEN }}
