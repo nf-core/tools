@@ -97,9 +97,9 @@ The following variables throw warnings if missing:
   * The DAG file path should end with `.svg`
     * If Graphviz is not installed, Nextflow will generate a `.dot` file instead
 * `process.container`
-  * Dockerhub handle for a single default container for use by all processes.
+  * Docker Hub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
-  * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
+  * If the pipeline version number contains the string `dev`, the Docker Hub tag must be `:dev`
 * `params.reads` or `params.input` or `params.design`
   * Input parameter to specify input data - one or more of these can be used to avoid a warning
   * Typical usage:
@@ -117,7 +117,7 @@ The following variables are depreciated and fail the test if they are still pres
 * `params.nf_required_version`
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
-  * The old method for specifying the dockerhub container address. Replaced by `process.container`
+  * The old method for specifying the Docker Hub container address. Replaced by `process.container`
 * `singleEnd` and `igenomesIgnore`
   * Changed to `single_end` and `igenomes_ignore`
   * The `snake_case` convention should now be used when defining pipeline parameters
