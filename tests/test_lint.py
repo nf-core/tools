@@ -229,7 +229,7 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.files = ['environment.yml']
         lint_obj.check_readme()
-        expectations = {"failed": 1, "warned": 1, "passed": 0}
+        expectations = {"failed": 0, "warned": 2, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_dockerfile_pass(self):
