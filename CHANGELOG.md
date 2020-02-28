@@ -11,7 +11,7 @@
 ### Other
 
 * Added CI test to check for PRs against `master` in tools repo
-* CI PR branch tests now automatically add a comment on the PR if failing, explaining what is wrong
+* CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
 
 ## v1.9
 
