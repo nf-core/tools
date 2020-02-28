@@ -921,8 +921,8 @@ class PipelineLint(object):
         """
         try:
             # First, try to get the list of files using git
-            git_ls_files = subprocess.check_output(['git','ls-files']).splitlines()
-            list_of_files = [s.decode("utf-8") for s in git_ls_files]
+            git_ls_files = subprocess.check_output(['git','ls-files'], cwd=self.path).splitlines()
+            list_of_files = [os.path.join(self.path, s.decode("utf-8")) for s in git_ls_files]
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
             logging.debug("Couldn't call 'git ls-files': {}".format(e))
