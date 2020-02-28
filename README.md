@@ -244,7 +244,7 @@ INFO: Downloading centralised configs from GitHub
 
 INFO: Downloading 1 singularity container
 
-INFO: Building singularity image from dockerhub: docker://nfcore/methylseq:1.4
+INFO: Building singularity image from Docker Hub: docker://nfcore/methylseq:1.4
 INFO:    Converting OCI blobs to SIF format
 INFO:    Starting build...
 Getting image source signatures
@@ -567,5 +567,5 @@ If you use `nf-core tools` in your work, please cite the `nf-core` publication a
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).  
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
 > ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)
