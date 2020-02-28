@@ -192,7 +192,7 @@ This test will fail if the following requirements are not met in these files:
         - name: Check PRs
           if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
     * For branch protection in repositories outside of _nf-core_, you can add an additional step to this workflow. Keep the _nf-core_ branch protection step, to ensure that the `nf-core lint` tests pass. Here's an example:
@@ -203,11 +203,11 @@ This test will fail if the following requirements are not met in these files:
         - name: Check PRs
           if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
         - name: Check PRs in another repository
           if: github.repository == '<repo_name>/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *<repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
