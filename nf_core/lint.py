@@ -9,7 +9,7 @@ import logging
 import io
 import os
 import re
-import shlex
+import subprocess
 
 import click
 import requests
@@ -173,7 +173,8 @@ class PipelineLint(object):
             'check_conda_env_yaml',
             'check_conda_dockerfile',
             'check_pipeline_todos',
-            'check_pipeline_name'
+            'check_pipeline_name',
+            'check_cookiecutter_strings'
         ]
         if release_mode:
             self.release_mode = True
@@ -913,6 +914,39 @@ class PipelineLint(object):
         if not self.pipeline_name.isalpha():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphabetical characters"))
 
+    def check_cookiecutter_strings(self):
+        """
+        Look for the string 'cookiecutter' in all pipeline files.
+        Finding it probably means that there has been a copy+paste error from the template.
+        """
+        try:
+            # First, try to get the list of files using git
+            git_ls_files = subprocess.check_output(['git','ls-files']).splitlines()
+            list_of_files = [s.decode("utf-8") for s in git_ls_files]
+        except subprocess.CalledProcessError as e:
+            # Failed, so probably not initialised as a git repository - just a list of all files
+            logging.debug("Couldn't call 'git ls-files': {}".format(e))
+            list_of_files = []
+            for subdir, dirs, files in os.walk(self.path):
+                for file in files:
+                    list_of_files.append(os.path.join(subdir, file))
+
+        # Loop through files, searching for string
+        num_matches = 0
+        num_files = 0
+        for fn in list_of_files:
+            num_files += 1
+            with io.open(fn, 'r', encoding='latin1') as fh:
+                lnum = 0
+                for l in fh:
+                    lnum += 1
+                    cc_matches = re.findall(r"{{\s*cookiecutter[^}]*}}", l)
+                    if len(cc_matches) > 0:
+                        for cc_match in cc_matches:
+                            self.failed.append((13, "Found a cookiecutter template string in '{}' L{}: {}".format(fn, lnum, cc_match)))
+                            num_matches += 1
+        if num_matches == 0:
+            self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
 
 
     def print_results(self):
