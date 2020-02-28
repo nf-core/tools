@@ -520,7 +520,8 @@ class PipelineLint(object):
             for step in steps:
                 has_name = step.get('name', '').strip() == 'Check PRs'
                 has_if = step.get('if', '').strip() == "github.repository == 'nf-core/{}'".format(self.pipeline_name.lower())
-                has_run = step.get('run', '').strip() == '{{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/{} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; }} || [[ $GITHUB_HEAD_REF == "patch" ]]'.format(self.pipeline_name.lower())
+                # Don't use .format() as the squiggly brackets get ridiculous
+                has_run = step.get('run', '').strip() == '{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace('PIPELINENAME', self.pipeline_name.lower())
                 if has_name and has_if and has_run:
                     self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
                     break
