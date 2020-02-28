@@ -313,3 +313,9 @@ As we are relying on [Docker Hub](https://hub.docker.com/) instead of Singularit
 ## Error #12 - Pipeline name ## {#12}
 
 In order to ensure consistent naming, pipeline names should contain only lower case, alphabetical characters. Otherwise a warning is displayed.
+
+## Error #13 - Pipeline name ## {#13}
+
+The `nf-core create` pipeline template uses [cookiecutter](https://github.com/cookiecutter/cookiecutter) behind the scenes.
+This check fails if any cookiecutter template variables such as `{{ cookiecutter.pipeline_name }}` are fouund in your pipeline code.
+Finding a placeholder like this means that something was probably copied and pasted from the template without being properly rendered for your pipeline.
