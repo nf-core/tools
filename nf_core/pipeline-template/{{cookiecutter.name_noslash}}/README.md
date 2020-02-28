@@ -39,16 +39,7 @@ See [usage docs](docs/usage.md) for all of the available options when running th
 
 ## Documentation
 
-The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline, found in the `docs/` directory:
-
-1. [Installation](https://nf-co.re/usage/installation)
-2. Pipeline configuration
-    * [Local installation](https://nf-co.re/usage/local_installation)
-    * [Adding your own system config](https://nf-co.re/usage/adding_own_config)
-    * [Reference genomes](https://nf-co.re/usage/reference_genomes)
-3. [Running the pipeline](docs/usage.md)
-4. [Output and how to interpret the results](docs/output.md)
-5. [Troubleshooting](https://nf-co.re/usage/troubleshooting)
+The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline which you can read at [https://nf-core/{{ cookiecutter.short_name }}/docs](https://nf-core/{{ cookiecutter.short_name }}/docs) or find in the [`docs/` directory](docs).
 
 <!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
 
@@ -73,5 +64,5 @@ You can cite the `nf-core` publication as follows:
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).  
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
 > ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)

@@ -7,6 +7,8 @@
 
 A python package with helper tools for the nf-core community.
 
+> **Read this documentation on the nf-core website: [https://nf-co.re/tools](https://nf-co.re/tools)**
+
 ## Table of contents <!-- omit in toc -->
 
 * [`nf-core` tools installation](#installation)
@@ -567,5 +569,5 @@ If you use `nf-core tools` in your work, please cite the `nf-core` publication a
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).  
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
 > ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)
