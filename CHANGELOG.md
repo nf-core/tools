@@ -7,6 +7,7 @@
 * Refactored PR branch tests to be a little clearer.
 * Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
 * Adapted linting docs to the new PR branch tests.
+* Added test for template `{{ cookiecutter.var }}` placeholders
 
 ### Other
 
