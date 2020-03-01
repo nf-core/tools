@@ -13,6 +13,7 @@
 
 * Added CI test to check for PRs against `master` in tools repo
 * CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
+* Describe alternative installation method via conda with `conda env create`
 
 ## v1.9
 
