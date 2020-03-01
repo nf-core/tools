@@ -97,11 +97,15 @@ The following variables throw warnings if missing:
   * The DAG file path should end with `.svg`
     * If Graphviz is not installed, Nextflow will generate a `.dot` file instead
 * `process.container`
-  * Dockerhub handle for a single default container for use by all processes.
+  * Docker Hub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
-  * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
-* `params.reads`
-  * Input parameter to specify input data (typically FastQ files / pairs)
+  * If the pipeline version number contains the string `dev`, the Docker Hub tag must be `:dev`
+* `params.reads` or `params.input` or `params.design`
+  * Input parameter to specify input data - one or more of these can be used to avoid a warning
+  * Typical usage:
+    * `params.reads`: FastQ files (or pairs)
+    * `params.input`: Input data that is not NGS sequencing data
+    * `params.design`: A CSV/TSV design file specifying input files and metadata for the run
 * `params.single_end`
   * Specify to work with single-end sequence data instead of paired-end by default
   * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
@@ -113,7 +117,7 @@ The following variables are depreciated and fail the test if they are still pres
 * `params.nf_required_version`
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
-  * The old method for specifying the dockerhub container address. Replaced by `process.container`
+  * The old method for specifying the Docker Hub container address. Replaced by `process.container`
 * `singleEnd` and `igenomesIgnore`
   * Changed to `single_end` and `igenomes_ignore`
   * The `snake_case` convention should now be used when defining pipeline parameters
@@ -127,7 +131,7 @@ nf-core pipelines must have CI testing with GitHub Actions.
 
 ### GitHub Actions
 
-There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory.
+There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory. You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
 
 This test will fail if the following requirements are not met in these files:
 
@@ -170,7 +174,7 @@ This test will fail if the following requirements are not met in these files:
     * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
 
-3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch
+3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch when a PR is opened against the _nf-core_ repository.
     * Must be turned on for `pull_request` to `master`.
 
       ```yaml
@@ -180,14 +184,30 @@ This test will fail if the following requirements are not met in these files:
           - master
       ```
 
-    * Checks that PRs to the protected `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:
+    * Checks that PRs to the protected nf-core repo `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:
+
+      ```yaml
+      steps:
+        # PRs to the nf-core repo master branch are only ok if coming from the nf-core repo `dev` or any `patch` branches
+        - name: Check PRs
+          if: github.repository == 'nf-core/<pipeline_name>'
+          run: |
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+      ```
+
+    * For branch protection in repositories outside of _nf-core_, you can add an additional step to this workflow. Keep the _nf-core_ branch protection step, to ensure that the `nf-core lint` tests pass. Here's an example:
 
       ```yaml
       steps:
         # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
         - name: Check PRs
+          if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ ${GITHUB_HEAD_REF} = "dev" ]]; } || [[ ${GITHUB_HEAD_REF} == "patch" ]]
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+        - name: Check PRs in another repository
+          if: github.repository == '<repo_name>/<pipeline_name>'
+          run: |
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
@@ -293,3 +313,9 @@ As we are relying on [Docker Hub](https://hub.docker.com/) instead of Singularit
 ## Error #12 - Pipeline name ## {#12}
 
 In order to ensure consistent naming, pipeline names should contain only lower case, alphabetical characters. Otherwise a warning is displayed.
+
+## Error #13 - Pipeline name ## {#13}
+
+The `nf-core create` pipeline template uses [cookiecutter](https://github.com/cookiecutter/cookiecutter) behind the scenes.
+This check fails if any cookiecutter template variables such as `{{ cookiecutter.pipeline_name }}` are fouund in your pipeline code.
+Finding a placeholder like this means that something was probably copied and pasted from the template without being properly rendered for your pipeline.

@@ -1,13 +1,27 @@
 # nf-core/tools: Changelog
 
-## v1.9dev
+## v1.10dev
+
+### Linting
+
+* Refactored PR branch tests to be a little clearer.
+* Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
+* Adapted linting docs to the new PR branch tests.
+* Added test for template `{{ cookiecutter.var }}` placeholders
+
+### Other
+
+* Added CI test to check for PRs against `master` in tools repo
+* CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
+
+## v1.9
 
 ### Continuous integration
 
-* Travis CI tests are now deprecated within the pipeline template. Please switch to GitHub Actions.
+* Travis CI tests are now deprecated in favor of GitHub Actions within the pipeline template.
   * `nf-core bump-version` support has been removed for `.travis.yml`
   * `nf-core lint` now fails if a `.travis.yml` file is found
-* Ported nf-core/tools Travis CI automation to GitHub Actions
+* Ported nf-core/tools Travis CI automation to GitHub Actions.
 * Fixed the build for the nf-core/tools API documentation on the website
 
 ### Template
@@ -16,10 +30,13 @@
 * Removed the requirement for R in the conda environment
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
+* Rephrase docs to promote usage of containers over Conda to ensure reproducibility
+* Stage the workflow summary YAML file within MultiQC work directory
 
 ### Linting
 
 * Removed linting for CircleCI
+* Allow any one of `params.reads` or `params.input` or `params.design` before warning
 * Added whitespace padding to lint error URLs
 * Improved documentation for lint errors
 * Allow either `>=` or `!>=` in nextflow version checks (the latter exits with an error instead of just warning) [#506](https://github.com/nf-core/tools/issues/506)
@@ -27,17 +44,17 @@
   * If running with `--release` check the opposite and fail if not
 * Tidied up error messages and syntax for linting GitHub actions branch tests
 * Add YAML validator
+* Don't print test results if we have a critical error
 
 ### Other
 
+* Fix automatic synchronisation of the template after releases of nf-core/tools
 * Improve documentation for installing `nf-core/tools`
-* Use `stderr` instead of `stdout` for header artwork
 * Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
+* Use `stderr` instead of `stdout` for header artwork
 * Tolerate unexpected output from `nextflow config` command
-
-### Template pipeline
-
-* Stage the workflow summary YAML file within MultiQC work directory
+* Add social preview image
+* Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
 
 ## v1.8
 

@@ -1,10 +1,13 @@
 # ![nf-core/tools](docs/images/nfcore-tools_logo.png) <!-- omit in toc -->
 
-[![GitHub Actions CI Status](https://github.com/nf-core/tools/workflows/CI%20tests/badge.svg)](https://github.com/nf-core/tools/actions)
+[![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
-[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
+[![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/recipes/nf-core/README.html)
+[![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
 
 A python package with helper tools for the nf-core community.
+
+> **Read this documentation on the nf-core website: [https://nf-co.re/tools](https://nf-co.re/tools)**
 
 ## Table of contents <!-- omit in toc -->
 
@@ -243,7 +246,7 @@ INFO: Downloading centralised configs from GitHub
 
 INFO: Downloading 1 singularity container
 
-INFO: Building singularity image from dockerhub: docker://nfcore/methylseq:1.4
+INFO: Building singularity image from Docker Hub: docker://nfcore/methylseq:1.4
 INFO:    Converting OCI blobs to SIF format
 INFO:    Starting build...
 Getting image source signatures
@@ -534,8 +537,7 @@ with `--username` and `--repository`.
 
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
-Supply this using the `--auth-token` flag, or setting it as the environment variable `NF_CORE_BOT`:
-`export NF_CORE_BOT=my_auth_token`.
+Supply this using the `--auth-token` flag.
 
 Finally, if `--all` is supplied, then the command attempts to pull and synchronise all nf-core workflows.
 This is used by the nf-core/tools release automation to synchronise all nf-core pipelines
@@ -567,5 +569,5 @@ If you use `nf-core tools` in your work, please cite the `nf-core` publication a
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).  
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
 > ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)

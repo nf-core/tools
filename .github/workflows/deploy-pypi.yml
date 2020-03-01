@@ -1,10 +1,11 @@
 name: Publish nf-core to PyPI
-on: push
+on:
+  release:
+    types: [published]
 
 jobs:
   build-n-publish:
-    name: Build and publish nf-core to PyPI
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v2
@@ -24,7 +25,7 @@ jobs:
         run: python setup.py sdist bdist_wheel
 
       - name: Publish dist to PyPI
-        if: github.repository == 'nf-core/tools' && startsWith(github.event.ref, 'refs/tags')
+        if: github.repository == 'nf-core/tools'
         uses: pypa/gh-action-pypi-publish@master
         with:
           password: ${{ secrets.pypi_password }}
