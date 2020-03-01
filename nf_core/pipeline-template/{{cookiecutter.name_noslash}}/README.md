@@ -35,6 +35,12 @@ iv. Start running your own analysis!
 nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
 ```
 
+v. Once the pipeline has completed successfully remove all of the intermediate files to free up disk space
+
+```bash
+nextflow clean -k
+```
+
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
 
 ## Documentation
