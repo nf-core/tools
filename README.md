@@ -45,7 +45,7 @@ dependencies:
   - bioconda::nf-core=1.9
 ```
 
-and create the environment with ` conda env create -f environment.yml`. Ensure to activate the environment to find `nf-core` in your path.
+and create the environment with `conda env create -f environment.yml`. Ensure to activate the environment to find `nf-core` in your path.
 
 `nf-core/tools` can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
