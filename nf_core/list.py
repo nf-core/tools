@@ -223,7 +223,7 @@ class RemoteWorkflow(object):
     """A information container for a remote workflow.
 
     Args:
-        data (dict): workflow information as they are retrieved from the Github repository REST API request
+        data (dict): workflow information as they are retrieved from the GitHub repository REST API request
             (https://developer.github.com/v3/repos/#get).
     """
 

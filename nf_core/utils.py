@@ -56,8 +56,11 @@ def fetch_wf_config(wf_path, wf=None):
     else:
         for l in nfconfig_raw.splitlines():
             ul = l.decode('utf-8')
-            k, v = ul.split(' = ', 1)
-            config[k] = v
+            try:
+                k, v = ul.split(' = ', 1)
+                config[k] = v
+            except ValueError:
+                logging.debug("Couldn't find key=value config pair:\n  {}".format(ul))
 
     # If we can, save a cached copy
     if cache_path:

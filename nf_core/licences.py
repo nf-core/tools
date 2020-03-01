@@ -67,7 +67,7 @@ class WorkflowLicences(object):
                         except KeyError:
                             pass
                 # Main licence field
-                if len(list(licences)) == 0 and isinstance(data['license'], basestring):
+                if len(list(licences)) == 0 and isinstance(data['license'], str):
                     licences.add(data['license'])
                 self.conda_package_licences[dep] = self.clean_licence_names(list(licences))
             except KeyError:

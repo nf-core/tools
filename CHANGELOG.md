@@ -1,5 +1,47 @@
 # nf-core/tools: Changelog
 
+## v1.9
+
+### Continuous integration
+
+* Travis CI tests are now deprecated in favor of GitHub Actions within the pipeline template.
+  * `nf-core bump-version` support has been removed for `.travis.yml`
+  * `nf-core lint` now fails if a `.travis.yml` file is found
+* Ported nf-core/tools Travis CI automation to GitHub Actions.
+* Fixed the build for the nf-core/tools API documentation on the website
+
+### Template
+
+* Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Removed the requirement for R in the conda environment
+* Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
+* Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
+* Rephrase docs to promote usage of containers over Conda to ensure reproducibility
+* Stage the workflow summary YAML file within MultiQC work directory
+
+### Linting
+
+* Removed linting for CircleCI
+* Allow any one of `params.reads` or `params.input` or `params.design` before warning
+* Added whitespace padding to lint error URLs
+* Improved documentation for lint errors
+* Allow either `>=` or `!>=` in nextflow version checks (the latter exits with an error instead of just warning) [#506](https://github.com/nf-core/tools/issues/506)
+* Check that `manifest.version` ends in `dev` and throw a warning if not
+  * If running with `--release` check the opposite and fail if not
+* Tidied up error messages and syntax for linting GitHub actions branch tests
+* Add YAML validator
+* Don't print test results if we have a critical error
+
+### Other
+
+* Fix automatic synchronisation of the template after releases of nf-core/tools
+* Improve documentation for installing `nf-core/tools`
+* Replace preprint by the new nf-core publication in Nature Biotechnology :champagne:
+* Use `stderr` instead of `stdout` for header artwork
+* Tolerate unexpected output from `nextflow config` command
+* Add social preview image
+* Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
+
 ## v1.8
 
 ### Continuous integration
@@ -18,6 +60,7 @@
 * Updated documentation for `nf-core download`
 * Fixed typo in `nf-core launch` final command
 * Handle missing pipeline descriptions in `nf-core list`
+* Migrate tools package CI to GitHub Actions
 
 ### Linting
 
@@ -113,7 +156,7 @@
   to avoid weird behavior such as making an `s3:/` directory locally when using
   an AWS S3 bucket as the `--outdir`.
 * Fix workflow.onComplete() message when finishing pipeline
-* Update URL for joining the nf-core slack to https://nf-co.re/join/slack
+* Update URL for joining the nf-core slack to [https://nf-co.re/join/slack](https://nf-co.re/join/slack)
 * Add GitHub Action for CI and Linting
 * [Increased default time limit](https://github.com/nf-core/tools/issues/370) to 4h
 * Add direct link to the pipeline slack channel in the contribution guidelines
@@ -124,7 +167,7 @@
 * Template configured to use logo fetched from website
 * New option `--email_on_fail` which only sends emails if the workflow is not successful
 * Add file existence check when checking software versions
-* Fixed issue [https://github.com/nf-core/tools/issues/165] - Use `checkIfExists`
+* Fixed issue [#165](https://github.com/nf-core/tools/issues/165) - Use `checkIfExists`
 * Consistent spacing for `if` statements
 * Add sensible resource labels to `base.config`
 

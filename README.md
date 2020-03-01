@@ -1,12 +1,12 @@
-# ![nf-core/tools](docs/images/nfcore-tools_logo.png)
+# ![nf-core/tools](docs/images/nfcore-tools_logo.png) <!-- omit in toc -->
 
-[![Build Status](https://travis-ci.com/nf-core/tools.svg?branch=master)](https://travis-ci.com/nf-core/tools)
+[![GitHub Actions CI Status](https://github.com/nf-core/tools/workflows/CI%20tests/badge.svg)](https://github.com/nf-core/tools/actions)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg?style=flat-square)](http://bioconda.github.io/recipes/nf-core/README.html)
 
 A python package with helper tools for the nf-core community.
 
-## Table of contents
+## Table of contents <!-- omit in toc -->
 
 * [`nf-core` tools installation](#installation)
 * [`nf-core list` - List available pipelines](#listing-pipelines)
@@ -17,42 +17,49 @@ A python package with helper tools for the nf-core community.
 * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+* [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
 
 ## Installation
 
-You can install `nf-core/tools` from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
-
-```bash
-pip install nf-core
-```
-
-Alternatively, it can be installed using [bioconda](https://bioconda.github.io/recipes/nf-core/README.html):
+You can install `nf-core/tools` using [bioconda](https://bioconda.github.io/recipes/nf-core/README.html):
 
 ```bash
 conda install -c bioconda nf-core
 ```
 
-If you would like the development version instead, the command is:
+It can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
 ```bash
-pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
+pip install nf-core
+```
+
+Or, if you would like the development version instead, the command is:
+
+```bash
+pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git@dev
 ```
 
 Alternatively, if you would like to edit the files locally:
+Clone the repository code - you should probably specify your fork instead
 
 ```bash
-# Clone the repository code - you should probably specify your fork instead
 git clone https://github.com/nf-core/tools.git nf-core-tools
 cd nf-core-tools
+```
 
-# Install the package
-python setup.py develop
+Install with pip
 
-# Alternatively, install with pip
+```bash
 pip install -e .
+```
+
+Alternatively, install the package with Python
+
+```bash
+python setup.py develop
 ```
 
 ## Listing pipelines
@@ -444,7 +451,7 @@ Running pipeline tests  [####################################]  100%  None
 INFO: ===========
  LINTING RESULTS
 =================
-  96 tests passed   0 tests had warnings   0 tests failed
+  118 tests passed   0 tests had warnings   0 tests failed
 
 INFO: Changing version number:
   Current version number is '1.0dev'
@@ -458,19 +465,19 @@ INFO: Updating version in nextflow.config
  - process.container = 'nfcore/mypipeline:dev'
  + process.container = 'nfcore/mypipeline:1.0'
 
-INFO: Updating version in .travis.yml
- - - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
- + - docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
+INFO: Updating version in .github/workflows/ci.yml
+ - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
+ + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
 
 INFO: Updating version in environment.yml
  - name: nf-core-mypipeline-1.0dev
  + name: nf-core-mypipeline-1.0
 
 INFO: Updating version in Dockerfile
- - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
  - ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+ - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
  + ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
+ + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
@@ -527,8 +534,7 @@ with `--username` and `--repository`.
 
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
-Supply this using the `--auth-token` flag, or setting it as the environment variable `NF_CORE_BOT`:
-`export NF_CORE_BOT=my_auth_token`.
+Supply this using the `--auth-token` flag.
 
 Finally, if `--all` is supplied, then the command attempts to pull and synchronise all nf-core workflows.
 This is used by the nf-core/tools release automation to synchronise all nf-core pipelines
@@ -554,5 +560,11 @@ INFO: Successfully synchronised [n] pipelines
 
 ## Citation
 
-If you use `nf-core tools` in your work, please cite the `nf-core` preprint as follows:  
-Ewels PA, Peltzer A, Fillinger S, Alneberg JA, Patel H, Wilm A, Garcia MU, Di Tommaso P, Nahnsen S. **nf-core: Community curated bioinformatics pipelines**. *bioRxiv*. 2019. p. 610741. [doi: 10.1101/610741](https://www.biorxiv.org/content/10.1101/610741v1).
+If you use `nf-core tools` in your work, please cite the `nf-core` publication as follows:
+
+> **The nf-core framework for community-curated bioinformatics pipelines.**
+>
+> Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
+>
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).  
+> ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)

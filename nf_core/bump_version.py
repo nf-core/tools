@@ -44,10 +44,10 @@ def bump_pipeline_version(lint_obj, new_version):
     nfconfig_newstr = "container = 'nfcore/{}:{}'".format(lint_obj.pipeline_name.lower(), docker_tag)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-    # Update travis image tag
+    # Update GitHub Actions CI image tag
     nfconfig_pattern = r"docker tag nfcore/{name}:dev nfcore/{name}:(?:{tag}|dev)".format(name=lint_obj.pipeline_name.lower(), tag=current_version.replace('.',r'\.'))
     nfconfig_newstr = "docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(name=lint_obj.pipeline_name.lower(), tag=docker_tag)
-    update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
+    update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr)
 
     if 'environment.yml' in lint_obj.files:
         # Update conda environment.yml
@@ -83,10 +83,10 @@ def bump_nextflow_version(lint_obj, new_version):
     nfconfig_newstr = "nextflowVersion = '>={}'".format(new_version)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-    # Update travis config
-    nfconfig_pattern = r"NXF_VER=[\'\"]?{}[\'\"]?".format(current_version.replace('.',r'\.'))
-    nfconfig_newstr = "NXF_VER='{}'".format(new_version)
-    update_file_version(".travis.yml", lint_obj, nfconfig_pattern, nfconfig_newstr, True)
+    # Update GitHub Actions CI
+    nfconfig_pattern = r"nxf_ver: \[[\'\"]?{}[\'\"]?, ''\]".format(current_version.replace('.',r'\.'))
+    nfconfig_newstr = "nxf_ver: ['{}', '']".format(new_version)
+    update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr, True)
 
     # Update README badge
     nfconfig_pattern = r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace('.',r'\.'))
