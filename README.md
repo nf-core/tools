@@ -7,6 +7,8 @@
 
 A python package with helper tools for the nf-core community.
 
+> **Read this documentation on the nf-core website: [https://nf-co.re/tools](https://nf-co.re/tools)**
+
 ## Table of contents <!-- omit in toc -->
 
 * [`nf-core` tools installation](#installation)
@@ -31,7 +33,21 @@ You can install `nf-core/tools` using [bioconda](https://bioconda.github.io/reci
 conda install -c bioconda nf-core
 ```
 
-It can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
+Alternatively, if `conda install` doesn't work, you can also try creating an `environment.yml` file as containing:
+
+```yaml
+name: nf-core-1.9
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - bioconda::nf-core=1.9
+```
+
+and create the environment with `conda env create -f environment.yml`. Ensure to activate the environment to find `nf-core` in your path.
+
+`nf-core/tools` can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
 ```bash
 pip install nf-core
@@ -244,7 +260,7 @@ INFO: Downloading centralised configs from GitHub
 
 INFO: Downloading 1 singularity container
 
-INFO: Building singularity image from dockerhub: docker://nfcore/methylseq:1.4
+INFO: Building singularity image from Docker Hub: docker://nfcore/methylseq:1.4
 INFO:    Converting OCI blobs to SIF format
 INFO:    Starting build...
 Getting image source signatures
@@ -567,5 +583,5 @@ If you use `nf-core tools` in your work, please cite the `nf-core` publication a
 >
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
-> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).  
+> _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
 > ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)

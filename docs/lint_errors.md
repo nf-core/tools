@@ -101,7 +101,7 @@ The following variables throw warnings if missing:
   * The DAG file path should end with `.svg`
     * If Graphviz is not installed, Nextflow will generate a `.dot` file instead
 * `process.container`
-  * Dockerhub handle for a single default container for use by all processes.
+  * Docker Hub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
   * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
 
@@ -187,7 +187,7 @@ This test will fail if the following requirements are not met in these files:
         - name: Check PRs
           if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
     * For branch protection in repositories outside of _nf-core_, you can add an additional step to this workflow. Keep the _nf-core_ branch protection step, to ensure that the `nf-core lint` tests pass. Here's an example:
@@ -198,11 +198,11 @@ This test will fail if the following requirements are not met in these files:
         - name: Check PRs
           if: github.repository == 'nf-core/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
         - name: Check PRs in another repository
           if: github.repository == '<repo_name>/<pipeline_name>'
           run: |
-            { [[ $(git remote get-url origin) == *<repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+            { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
 ## Error #6 - Repository `README.md` tests ## {#6}
@@ -308,3 +308,9 @@ As we are relying on [Docker Hub](https://hub.docker.com/) instead of Singularit
 ## Error #12 - Pipeline name ## {#12}
 
 In order to ensure consistent naming, pipeline names should contain only lower case, alphabetical characters. Otherwise a warning is displayed.
+
+## Error #13 - Pipeline name ## {#13}
+
+The `nf-core create` pipeline template uses [cookiecutter](https://github.com/cookiecutter/cookiecutter) behind the scenes.
+This check fails if any cookiecutter template variables such as `{{ cookiecutter.pipeline_name }}` are fouund in your pipeline code.
+Finding a placeholder like this means that something was probably copied and pasted from the template without being properly rendered for your pipeline.

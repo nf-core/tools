@@ -14,10 +14,13 @@
 * Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
 * Adapted linting docs to the new PR branch tests.
 * Fail if `params.input` isnt defined.
+* Added test for template `{{ cookiecutter.var }}` placeholders
 
 ### Other
 
 * Added CI test to check for PRs against `master` in tools repo
+* CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
+* Describe alternative installation method via conda with `conda env create`
 
 ## v1.9
 

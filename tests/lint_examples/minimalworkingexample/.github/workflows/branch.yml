@@ -13,4 +13,4 @@ jobs:
       - name: Check PRs
         if: github.repository == 'nf-core/tools'
         run: |
-          { [[ $(git remote get-url origin) == *nf-core/tools ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+          { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/tools ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
