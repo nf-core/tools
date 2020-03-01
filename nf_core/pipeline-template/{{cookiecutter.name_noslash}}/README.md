@@ -38,7 +38,7 @@ nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda/institut
 v. Once the pipeline has completed successfully remove all of the intermediate files to free up disk space
 
 ```bash
-nextflow clean -k
+nextflow clean -f -k
 ```
 
 See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
