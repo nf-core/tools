@@ -33,7 +33,7 @@ You can install `nf-core/tools` using [bioconda](https://bioconda.github.io/reci
 conda install -c bioconda nf-core
 ```
 
-Alternatively, if `conda install` doesn't work, you can also try creating an `environment.yml` file as containing: 
+Alternatively, if `conda install` doesn't work, you can also try creating an `environment.yml` file as containing:
 
 ``` 
 name: nf-core-1.9
@@ -44,7 +44,7 @@ channels:
 dependencies:
   - bioconda::nf-core=1.9
 ```
-and create the environment with ` conda env create -f environment.yml`. Ensure to activate the environment to  find the `nf-core` in your path.
+and create the environment with ` conda env create -f environment.yml`. Ensure to activate the environment to find `nf-core` in your path.
 
 `nf-core/tools` can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
