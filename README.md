@@ -29,7 +29,7 @@ For documentation of the internal Python functions, please refer to the [Tools P
 
 ### Bioconda
 
-You can install `nf-core/tools` using [bioconda](https://bioconda.github.io/recipes/nf-core/README.html).
+You can install `nf-core/tools` from [bioconda](https://bioconda.github.io/recipes/nf-core/README.html).
 
 First, install conda and configure the channels to use bioconda
 (see the [bioconda documentation](https://bioconda.github.io/user/install.html)).
