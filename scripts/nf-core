@@ -346,29 +346,62 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 
 ## nf-core module subcommands
 @nf_core_cli.group(cls=CustomHelpOrder)
-def module():
+def modules():
     """ Manage DSL 2 module imports """
     pass
 
-@module.command(help_priority=1)
-def install():
+@modules.command(help_priority=1)
+def list():
+    """ List available tools """
+    mods = nf_core.modules.PipelineModules()
+    mods.list_modules()
+
+@modules.command(help_priority=2)
+@click.argument(
+    'tool',
+    type = str,
+    required = True,
+    metavar = "<tool name>"
+)
+def install(tool):
     """ Install a DSL2 module """
-    pass
+    mods = nf_core.modules.PipelineModules()
+    mods.install(tool)
 
-@module.command(help_priority=2)
-def remove():
+@modules.command(help_priority=3)
+@click.argument(
+    'tool',
+    type = str,
+    metavar = "<tool name>"
+)
+def update(tool):
+    """ Update one or all DSL2 modules """
+    mods = nf_core.modules.PipelineModules()
+    mods.update(tool)
+
+@modules.command(help_priority=4)
+@click.argument(
+    'tool',
+    type = str,
+    required = True,
+    metavar = "<tool name>"
+)
+def remove(tool):
     """ Remove a DSL2 module """
-    pass
+    mods = nf_core.modules.PipelineModules()
+    mods.remove(tool)
 
-@module.command(help_priority=3)
+@modules.command(help_priority=5)
 def check():
     """ Check that imported module code has not been modified """
-    pass
+    mods = nf_core.modules.PipelineModules()
+    mods.check_modules()
 
-@module.command(help_priority=4)
+@modules.command(help_priority=6)
 def fix():
     """ Replace imported module code with a freshly downloaded copy """
-    pass
+    mods = nf_core.modules.PipelineModules()
+    mods.fix_modules()
 
 if __name__ == '__main__':
     click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'), err=True)
