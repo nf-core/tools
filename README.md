@@ -27,25 +27,26 @@ For documentation of the internal Python functions, please refer to the [Tools P
 
 ## Installation
 
-You can install `nf-core/tools` using [bioconda](https://bioconda.github.io/recipes/nf-core/README.html):
+### Bioconda
+
+You can install `nf-core/tools` from [bioconda](https://bioconda.github.io/recipes/nf-core/README.html).
+
+First, install conda and configure the channels to use bioconda
+(see the [bioconda documentation](https://bioconda.github.io/user/install.html)).
+Then, just run the conda installation command:
 
 ```bash
-conda install -c bioconda nf-core
+conda install nf-core
 ```
 
-Alternatively, if `conda install` doesn't work, you can also try creating an `environment.yml` file as containing:
+Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
-```yaml
-name: nf-core-1.9
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - bioconda::nf-core=1.9
+```bash
+conda create --name nf-core python=3.7 nf-core nextflow
+conda activate nf-core
 ```
 
-and create the environment with `conda env create -f environment.yml`. Ensure to activate the environment to find `nf-core` in your path.
+### Python Package Index
 
 `nf-core/tools` can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
@@ -53,27 +54,22 @@ and create the environment with `conda env create -f environment.yml`. Ensure to
 pip install nf-core
 ```
 
-Or, if you would like the development version instead, the command is:
+### Development version
+
+If you would like the latest development version of tools, the command is:
 
 ```bash
 pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git@dev
 ```
 
-Alternatively, if you would like to edit the files locally:
-Clone the repository code - you should probably specify your fork instead
-
-```bash
-git clone https://github.com/nf-core/tools.git nf-core-tools
-cd nf-core-tools
-```
-
-Install with pip
+If you intend to make edits to the code, first make a fork of the repository and then clone it locally.
+Go to the cloned directory and either install with pip:
 
 ```bash
 pip install -e .
 ```
 
-Alternatively, install the package with Python
+Or install directly using Python:
 
 ```bash
 python setup.py develop
