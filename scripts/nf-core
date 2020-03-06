@@ -261,9 +261,21 @@ def lint(schema_path):
     schema_obj.lint_schema(schema_path)
 
 @schema.command(help_priority=2)
-def build():
+@click.argument(
+    'pipeline_dir',
+    type = click.Path(exists=True),
+    required = True,
+    metavar = "<pipeline directory>"
+)
+@click.option(
+    '--quiet',
+    is_flag = True,
+    help = "Do not build interactively, just use Nextflow defaults"
+)
+def build(pipeline_dir, quiet):
     """ Interactively build a schema from Nextflow params """
-    raise NotImplementedError('This function has not yet been written')
+    schema_obj = nf_core.schema.PipelineSchema()
+    schema_obj.build_schema(pipeline_dir, quiet)
 
 @schema.command(help_priority=3)
 def validate():
