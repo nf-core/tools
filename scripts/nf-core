@@ -270,12 +270,18 @@ def lint(schema_path):
 @click.option(
     '--use_defaults',
     is_flag = True,
-    help = "Do not build interactively, just use Nextflow defaults"
+    help = "Do not build interactively, just use Nextflow defaults and exit"
 )
-def build(pipeline_dir, use_defaults):
+@click.option(
+    '--url',
+    type = str,
+    default = 'https://nf-co.re/json_schema_build',
+    help = 'URL for the web-based Schema builder'
+)
+def build(pipeline_dir, use_defaults, url):
     """ Interactively build a schema from Nextflow params """
     schema_obj = nf_core.schema.PipelineSchema()
-    schema_obj.build_schema(pipeline_dir, use_defaults)
+    schema_obj.build_schema(pipeline_dir, use_defaults, url)
 
 @schema.command(help_priority=3)
 def validate():

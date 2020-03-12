@@ -9,8 +9,12 @@ import jsonschema
 import logging
 import os
 import re
+import requests
+import requests_cache
 import subprocess
 import sys
+import time
+import webbrowser
 
 import nf_core.utils
 
@@ -23,72 +27,91 @@ class PipelineSchema (object):
         """ Initialise the object """
 
         self.schema = None
+        self.schema_filename = None
         self.pipeline_params = {}
         self.use_defaults = False
+        self.web_schema_build_url = 'https://nf-co.re/json_schema_build'
+        self.web_schema_build_web_url = None
+        self.web_schema_build_api_url = None
 
-    def lint_schema(self, schema_path):
+    def lint_schema(self, schema_filename=None):
         """ Lint a given schema to see if it looks valid """
+
+        if schema_filename is not None:
+            self.schema_filename = schema_filename
+
         try:
-            self.load_schema(schema_path)
+            self.load_schema()
+            self.validate_schema()
         except json.decoder.JSONDecodeError as e:
             logging.error("Could not parse JSON:\n {}".format(e))
             sys.exit(1)
         except AssertionError as e:
             logging.info("JSON Schema does not follow nf-core specs:\n {}".format(e))
             sys.exit(1)
-        except jsonschema.exceptions.SchemaError as e:
-            logging.error("Schema does not validate as Draft 7 JSONSchema:\n {}".format(e))
-            sys.exit(1)
         else:
             logging.info("JSON Schema looks valid!")
 
-    def load_schema(self, schema_path):
+    def load_schema(self):
         """ Load a JSON Schema from a file """
-        with open(schema_path, 'r') as fh:
+        with open(self.schema_filename, 'r') as fh:
             self.schema = json.load(fh)
-        logging.debug("JSON file loaded: {}".format(schema_path))
+        logging.debug("JSON file loaded: {}".format(self.schema_filename))
 
+    def save_schema(self):
+        """ Load a JSON Schema from a file """
+        # Write results to a JSON file
+        logging.info("Writing JSON schema with {} params: {}".format(len(self.schema['properties']['input']['properties']), self.schema_filename))
+        with open(self.schema_filename, 'w') as fh:
+            json.dump(self.schema, fh, indent=4)
+
+    def validate_schema(self):
         # Check that the Schema is valid
-        jsonschema.Draft7Validator.check_schema(self.schema)
-        logging.debug("JSON Schema Draft7 validated")
+        try:
+            jsonschema.Draft7Validator.check_schema(self.schema)
+            logging.debug("JSON Schema Draft7 validated")
+        except jsonschema.exceptions.SchemaError as e:
+            raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
 
         # Check for nf-core schema keys
         assert 'properties' in self.schema, "Schema should have 'properties' section"
         assert 'input' in self.schema['properties'], "properties should have section 'input'"
         assert 'properties' in self.schema['properties']['input'], "properties.input should have section 'properties'"
 
-    def build_schema(self, pipeline_dir, use_defaults):
+    def build_schema(self, pipeline_dir, use_defaults, url):
         """ Interactively build a new JSON Schema for a pipeline """
 
         if use_defaults:
             self.use_defaults = True
+        if url:
+            self.web_schema_build_url = url
 
         # Load a JSON Schema file if we find one
-        pipeline_schema_file = os.path.join(pipeline_dir, 'parameters.settings.json')
-        if(os.path.exists(pipeline_schema_file)):
-            logging.debug("Parsing existing JSON Schema: {}".format(pipeline_schema_file))
+        self.schema_filename = os.path.join(pipeline_dir, 'parameters.settings.json')
+        if(os.path.exists(self.schema_filename)):
+            logging.debug("Parsing existing JSON Schema: {}".format(self.schema_filename))
             try:
-                self.load_schema(pipeline_schema_file)
+                self.load_schema()
             except Exception as e:
                 logging.error("Existing JSON Schema found, but it is invalid:\n {}".format(click.style(str(e), fg='red')))
                 logging.info(
                     "Please fix or delete this file, then try again.\n" \
                     "For more details, run the following command:\n  " + \
-                    click.style("nf-core schema lint {}".format(pipeline_schema_file), fg='blue')
+                    click.style("nf-core schema lint {}".format(self.schema_filename), fg='blue')
                 )
                 sys.exit(1)
-            logging.info("Loaded existing JSON schema with {} params: {}\n".format(len(self.schema['properties']['input']['properties']), pipeline_schema_file))
+            logging.info("Loaded existing JSON schema with {} params: {}\n".format(len(self.schema['properties']['input']['properties']), self.schema_filename))
         else:
-            logging.debug("Existing JSON Schema not found: {}".format(pipeline_schema_file))
+            logging.debug("Existing JSON Schema not found: {}".format(self.schema_filename))
 
         self.get_wf_params(pipeline_dir)
         self.remove_schema_notfound_config()
         self.add_schema_found_config()
+        self.save_schema()
 
-        # Write results to a JSON file
-        logging.info("Writing JSON schema with {} params: {}".format(len(self.schema['properties']['input']['properties']), pipeline_schema_file))
-        with open(pipeline_schema_file, 'w') as fh:
-            json.dump(self.schema, fh, indent=4)
+        # If running interactively, send to the web for customisation
+        if not self.use_defaults or click.confirm("Launch web builder for customisation and editing?", True):
+            self.launch_web_builder()
 
     def get_wf_params(self, pipeline_dir):
         """
@@ -133,7 +156,7 @@ class PipelineSchema (object):
                 p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
                 add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
                 if self.use_defaults or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
-                    self.schema['properties']['input'][p_key] = self.build_schema_input(p_key, p_val)
+                    self.schema['properties']['input']['properties'][p_key] = self.build_schema_input(p_key, p_val)
                     logging.debug("Adding '{}' to JSON Schema".format(p_key))
                     params_added.append(click.style(p_key, fg='white', bold=True))
         if len(params_added) > 0:
@@ -155,3 +178,84 @@ class PipelineSchema (object):
                 "default": p_val
             }
         return p_schema
+
+    def launch_web_builder(self):
+        """
+        Send JSON Schema to web builder and wait for response
+        """
+        content = {
+            'post_content': 'json_schema',
+            'api': 'true',
+            'version': nf_core.__version__,
+            'schema': self.schema
+        }
+        try:
+            response = requests.post(url=self.web_schema_build_url, data=content)
+        except (requests.exceptions.Timeout):
+            logging.error("Schema builder URL timed out: {}".format(self.web_schema_build_url))
+        except (requests.exceptions.ConnectionError):
+            logging.error("Could not connect to schema builder URL: {}".format(self.web_schema_build_url))
+        else:
+            if response.status_code != 200:
+                logging.error("Could not access remote JSON Schema builder: {} (HTML {} Error)".format(self.web_schema_build_url, response.status_code))
+                logging.debug("Response content:\n{}".format(response.content))
+            else:
+                try:
+                    web_response = json.loads(response.content)
+                    assert 'status' in web_response
+                    assert 'api_url' in web_response
+                    assert 'web_url' in web_response
+                    assert web_response['status'] == 'recieved'
+                except (json.decoder.JSONDecodeError, AssertionError) as e:
+                    logging.error("JSON Schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(self.web_schema_build_url))
+                    logging.debug("Response content:\n{}".format(response.content))
+                else:
+                    self.web_schema_build_web_url = web_response['web_url']
+                    self.web_schema_build_api_url = web_response['api_url']
+                    logging.info("Opening URL: {}".format(web_response['web_url']))
+                    webbrowser.open(web_response['web_url'])
+                    logging.info("Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.")
+                    self.get_web_builder_response()
+
+    def get_web_builder_response(self):
+        """
+        Given a URL for a Schema build response, recursively query it until results are ready.
+        Once ready, validate Schema and write to disk.
+        """
+        # Clear requests_cache so that we get the updated statuses
+        requests_cache.clear()
+        try:
+            response = requests.get(self.web_schema_build_api_url, headers={'Cache-Control': 'no-cache'})
+        except (requests.exceptions.Timeout):
+            logging.error("Schema builder URL timed out: {}".format(self.web_schema_build_api_url))
+        except (requests.exceptions.ConnectionError):
+            logging.error("Could not connect to schema builder URL: {}".format(self.web_schema_build_api_url))
+        else:
+            if response.status_code != 200:
+                logging.error("Could not access remote JSON Schema builder results: {} (HTML {} Error)".format(self.web_schema_build_api_url, response.status_code))
+                logging.debug("Response content:\n{}".format(response.content))
+            else:
+                try:
+                    web_response = json.loads(response.content)
+                    assert 'status' in web_response
+                except (json.decoder.JSONDecodeError, AssertionError) as e:
+                    logging.error("JSON Schema builder results response not recognised: {}\n See verbose log for full response".format(self.web_schema_build_api_url))
+                    logging.debug("Response content:\n{}".format(response.content))
+                else:
+                    if web_response['status'] == 'error':
+                        logging.error("Got error from JSON Schema builder ( {} )".format(click.style(web_response.get('message'), fg='red')))
+                    elif web_response['status'] == 'waiting_for_user':
+                        time.sleep(5) # wait 5 seconds before trying again
+                        sys.stdout.write('.')
+                        sys.stdout.flush()
+                        self.get_web_builder_response()
+                    else:
+                        logging.info("Found saved status from JSON Schema builder")
+                        self.schema = web_response['schema']
+                        try:
+                            self.validate_schema()
+                        except AssertionError as e:
+                            logging.info("Response from JSON Builder did not pass validation:\n {}".format(e))
+                            sys.exit(1)
+                        else:
+                            self.save_schema()
