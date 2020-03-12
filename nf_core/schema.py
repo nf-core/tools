@@ -187,7 +187,7 @@ class PipelineSchema (object):
             'post_content': 'json_schema',
             'api': 'true',
             'version': nf_core.__version__,
-            'schema': self.schema
+            'schema': json.dumps(self.schema)
         }
         try:
             response = requests.post(url=self.web_schema_build_url, data=content)
