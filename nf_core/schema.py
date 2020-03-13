@@ -110,8 +110,9 @@ class PipelineSchema (object):
         self.save_schema()
 
         # If running interactively, send to the web for customisation
-        if not self.use_defaults or click.confirm("Launch web builder for customisation and editing?", True):
-            self.launch_web_builder()
+        if not self.use_defaults:
+            if click.confirm(click.style("\nLaunch web builder for customisation and editing?", fg='magenta'), True):
+                self.launch_web_builder()
 
     def get_wf_params(self, pipeline_dir):
         """
@@ -187,6 +188,7 @@ class PipelineSchema (object):
             'post_content': 'json_schema',
             'api': 'true',
             'version': nf_core.__version__,
+            'status': 'waiting_for_user',
             'schema': json.dumps(self.schema)
         }
         try:
@@ -249,13 +251,19 @@ class PipelineSchema (object):
                         sys.stdout.write('.')
                         sys.stdout.flush()
                         self.get_web_builder_response()
-                    else:
-                        logging.info("Found saved status from JSON Schema builder")
-                        self.schema = web_response['schema']
+                    elif web_response['status'] == 'web_builder_edited':
+                        logging.info("Found saved status from nf-core JSON Schema builder")
                         try:
+                            self.schema = json.loads(web_response['schema'])
                             self.validate_schema()
+                        except json.decoder.JSONDecodeError as e:
+                            logging.error("Could not parse returned JSON:\n {}".format(e))
+                            sys.exit(1)
                         except AssertionError as e:
                             logging.info("Response from JSON Builder did not pass validation:\n {}".format(e))
                             sys.exit(1)
                         else:
                             self.save_schema()
+                    else:
+                        logging.error("JSON Schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(web_response['status'], self.web_schema_build_api_url))
+                        logging.debug("Response content:\n{}".format(response.content))
