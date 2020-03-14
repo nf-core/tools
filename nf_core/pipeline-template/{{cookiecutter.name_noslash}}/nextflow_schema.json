@@ -5,8 +5,9 @@
     "description": "{{ cookiecutter.description }}",
     "type": "object",
     "properties": {
-        "input": {
-            "title": "Pipeline Input",
+        "params": {
+            "title": "Pipeline parameters",
+            "description": "Nextflow params config options",
             "type": "object",
             "properties": {
                 "genome": {

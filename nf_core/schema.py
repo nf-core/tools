@@ -61,7 +61,7 @@ class PipelineSchema (object):
     def save_schema(self):
         """ Load a JSON Schema from a file """
         # Write results to a JSON file
-        logging.info("Writing JSON schema with {} params: {}".format(len(self.schema['properties']['input']['properties']), self.schema_filename))
+        logging.info("Writing JSON schema with {} params: {}".format(len(self.schema['properties']['params']['properties']), self.schema_filename))
         with open(self.schema_filename, 'w') as fh:
             json.dump(self.schema, fh, indent=4)
 
@@ -75,8 +75,8 @@ class PipelineSchema (object):
 
         # Check for nf-core schema keys
         assert 'properties' in self.schema, "Schema should have 'properties' section"
-        assert 'input' in self.schema['properties'], "properties should have section 'input'"
-        assert 'properties' in self.schema['properties']['input'], "properties.input should have section 'properties'"
+        assert 'params' in self.schema['properties'], "top-level properties should have object 'params'"
+        assert 'properties' in self.schema['properties']['params'], "properties.params should have section 'properties'"
 
     def build_schema(self, pipeline_dir, use_defaults, url):
         """ Interactively build a new JSON Schema for a pipeline """
@@ -87,7 +87,7 @@ class PipelineSchema (object):
             self.web_schema_build_url = url
 
         # Load a JSON Schema file if we find one
-        self.schema_filename = os.path.join(pipeline_dir, 'parameters.settings.json')
+        self.schema_filename = os.path.join(pipeline_dir, 'nextflow_schema.json')
         if(os.path.exists(self.schema_filename)):
             logging.debug("Parsing existing JSON Schema: {}".format(self.schema_filename))
             try:
@@ -100,7 +100,7 @@ class PipelineSchema (object):
                     click.style("nf-core schema lint {}".format(self.schema_filename), fg='blue')
                 )
                 sys.exit(1)
-            logging.info("Loaded existing JSON schema with {} params: {}\n".format(len(self.schema['properties']['input']['properties']), self.schema_filename))
+            logging.info("Loaded existing JSON schema with {} params: {}\n".format(len(self.schema['properties']['params']['properties']), self.schema_filename))
         else:
             logging.debug("Existing JSON Schema not found: {}".format(self.schema_filename))
 
@@ -136,16 +136,16 @@ class PipelineSchema (object):
         """
         params_removed = []
         # Use iterator so that we can delete the key whilst iterating
-        for p_key in [k for k in self.schema['properties']['input']['properties'].keys()]:
+        for p_key in [k for k in self.schema['properties']['params']['properties'].keys()]:
             if p_key not in self.pipeline_params.keys():
                 p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
                 remove_it_nice = click.style('Remove it?', fg='yellow')
                 if self.use_defaults or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
-                    del self.schema['properties']['input']['properties'][p_key]
+                    del self.schema['properties']['params']['properties'][p_key]
                     logging.debug("Removing '{}' from JSON Schema".format(p_key))
                     params_removed.append(click.style(p_key, fg='white', bold=True))
         if len(params_removed) > 0:
-            logging.info("Removed {} inputs from existing JSON Schema that were not found with `nextflow config`:\n {}\n".format(len(params_removed), ', '.join(params_removed)))
+            logging.info("Removed {} params from existing JSON Schema that were not found with `nextflow config`:\n {}\n".format(len(params_removed), ', '.join(params_removed)))
 
     def add_schema_found_config(self):
         """
@@ -153,19 +153,19 @@ class PipelineSchema (object):
         """
         params_added = []
         for p_key, p_val in self.pipeline_params.items():
-            if p_key not in self.schema['properties']['input']['properties'].keys():
+            if p_key not in self.schema['properties']['params']['properties'].keys():
                 p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
                 add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
                 if self.use_defaults or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
-                    self.schema['properties']['input']['properties'][p_key] = self.build_schema_input(p_key, p_val)
+                    self.schema['properties']['params']['properties'][p_key] = self.build_schema_param(p_key, p_val)
                     logging.debug("Adding '{}' to JSON Schema".format(p_key))
                     params_added.append(click.style(p_key, fg='white', bold=True))
         if len(params_added) > 0:
-            logging.info("Added {} inputs to JSON Schema that were found with `nextflow config`:\n {}".format(len(params_added), ', '.join(params_added)))
+            logging.info("Added {} params to JSON Schema that were found with `nextflow config`:\n {}".format(len(params_added), ', '.join(params_added)))
 
-    def build_schema_input(self, p_key, p_val, p_schema = None):
+    def build_schema_param(self, p_key, p_val, p_schema = None):
         """
-        Build a JSON Schema dictionary for an input interactively
+        Build a JSON Schema dictionary for an param interactively
         """
         if p_schema is None:
             p_type = "string"
