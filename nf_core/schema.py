@@ -30,6 +30,7 @@ class PipelineSchema (object):
         self.schema_filename = None
         self.pipeline_params = {}
         self.use_defaults = False
+        self.web_only = False
         self.web_schema_build_url = 'https://nf-co.re/json_schema_build'
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
@@ -78,11 +79,13 @@ class PipelineSchema (object):
         assert 'params' in self.schema['properties'], "top-level properties should have object 'params'"
         assert 'properties' in self.schema['properties']['params'], "properties.params should have section 'properties'"
 
-    def build_schema(self, pipeline_dir, use_defaults, url):
+    def build_schema(self, pipeline_dir, use_defaults, web_only, url):
         """ Interactively build a new JSON Schema for a pipeline """
 
         if use_defaults:
             self.use_defaults = True
+        if web_only:
+            self.web_only = True
         if url:
             self.web_schema_build_url = url
 
@@ -104,10 +107,11 @@ class PipelineSchema (object):
         else:
             logging.debug("Existing JSON Schema not found: {}".format(self.schema_filename))
 
-        self.get_wf_params(pipeline_dir)
-        self.remove_schema_notfound_config()
-        self.add_schema_found_config()
-        self.save_schema()
+        if not self.web_only:
+            self.get_wf_params(pipeline_dir)
+            self.remove_schema_notfound_config()
+            self.add_schema_found_config()
+            self.save_schema()
 
         # If running interactively, send to the web for customisation
         if not self.use_defaults:
