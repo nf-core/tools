@@ -109,8 +109,8 @@ class PipelineSchema (object):
 
         if not self.web_only:
             self.get_wf_params(pipeline_dir)
-            self.remove_schema_notfound_config()
-            self.add_schema_found_config()
+            self.remove_schema_notfound_configs()
+            self.add_schema_found_configs()
             self.save_schema()
 
         # If running interactively, send to the web for customisation
@@ -134,36 +134,61 @@ class PipelineSchema (object):
                     continue
                 self.pipeline_params[ckey[7:]] = cval
 
-    def remove_schema_notfound_config(self):
+    def remove_schema_notfound_configs(self):
         """
         Strip out anything from the existing JSON Schema that's not in the nextflow params
         """
         params_removed = []
         # Use iterator so that we can delete the key whilst iterating
         for p_key in [k for k in self.schema['properties']['params']['properties'].keys()]:
-            if p_key not in self.pipeline_params.keys():
-                p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
-                remove_it_nice = click.style('Remove it?', fg='yellow')
-                if self.use_defaults or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
+            # Groups - we assume only one-deep
+            if self.schema['properties']['params']['properties'][p_key]['type'] == 'object':
+                for p_child_key in [k for k in self.schema['properties']['params']['properties'][p_key].get('properties', {}).keys()]:
+                    if self.prompt_remove_schema_notfound_config(p_child_key):
+                        del self.schema['properties']['params']['properties'][p_key]['properties'][p_child_key]
+                        logging.debug("Removing '{}' from JSON Schema".format(p_child_key))
+                        params_removed.append(click.style(p_child_key, fg='white', bold=True))
+
+            # Top-level params
+            else:
+                if self.prompt_remove_schema_notfound_config(p_key):
                     del self.schema['properties']['params']['properties'][p_key]
                     logging.debug("Removing '{}' from JSON Schema".format(p_key))
                     params_removed.append(click.style(p_key, fg='white', bold=True))
+
+
         if len(params_removed) > 0:
             logging.info("Removed {} params from existing JSON Schema that were not found with `nextflow config`:\n {}\n".format(len(params_removed), ', '.join(params_removed)))
 
-    def add_schema_found_config(self):
+    def prompt_remove_schema_notfound_config(self, p_key):
+        """
+        Check if a given key is found in the nextflow config params and prompt to remove it if note
+
+        Returns True if it should be removed, False if not.
+        """
+        if p_key not in self.pipeline_params.keys():
+            p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
+            remove_it_nice = click.style('Remove it?', fg='yellow')
+            if self.use_defaults or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
+                return True
+        return False
+
+    def add_schema_found_configs(self):
         """
         Add anything that's found in the Nextflow params that's missing in the JSON Schema
         """
         params_added = []
         for p_key, p_val in self.pipeline_params.items():
-            if p_key not in self.schema['properties']['params']['properties'].keys():
-                p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
-                add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
-                if self.use_defaults or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
-                    self.schema['properties']['params']['properties'][p_key] = self.build_schema_param(p_key, p_val)
-                    logging.debug("Adding '{}' to JSON Schema".format(p_key))
-                    params_added.append(click.style(p_key, fg='white', bold=True))
+            # Check if key is in top-level params
+            if not p_key in self.schema['properties']['params']['properties'].keys():
+                # Check if key is in group-level params
+                if not any( [ p_key in param.get('properties', {}) for k, param in self.schema['properties']['params']['properties'].items() ] ):
+                    p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
+                    add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
+                    if self.use_defaults or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
+                        self.schema['properties']['params']['properties'][p_key] = self.build_schema_param(p_key, p_val)
+                        logging.debug("Adding '{}' to JSON Schema".format(p_key))
+                        params_added.append(click.style(p_key, fg='white', bold=True))
         if len(params_added) > 0:
             logging.info("Added {} params to JSON Schema that were found with `nextflow config`:\n {}".format(len(params_added), ', '.join(params_added)))
 
