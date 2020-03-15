@@ -268,12 +268,12 @@ def lint(schema_path):
     metavar = "<pipeline directory>"
 )
 @click.option(
-    '--use_defaults',
+    '--use-defaults',
     is_flag = True,
     help = "Do not build interactively, just use Nextflow defaults and exit"
 )
 @click.option(
-    '--web_only',
+    '--web-only',
     is_flag = True,
     help = "Skip building using Nextflow config, just launch the web tool"
 )
