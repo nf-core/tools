@@ -10,135 +10,168 @@
             "description": "Nextflow params config options",
             "type": "object",
             "properties": {
-                "genome": {
-                    "type": "string",
-                    "description": "genome"
-                },
                 "reads": {
                     "type": "string",
-                    "description": "reads",
-                    "default": "data/*{1,2}.fastq.gz"
-                },
-                "single_end": {
-                    "type": "boolean",
-                    "description": "single_end"
+                    "description": "Input FastQ files",
+                    "default": "data/*{1,2}.fastq.gz",
+                    "fa_icon": "<i class=\"fas fa-dna\"></i>"
                 },
                 "outdir": {
                     "type": "string",
-                    "description": "outdir",
-                    "default": "./results"
+                    "description": "Output directory for results",
+                    "default": "./results",
+                    "fa_icon": "<i class=\"fas fa-folder-open\"></i>"
+                },
+                "genome": {
+                    "type": "string",
+                    "description": "Reference genome ID",
+                    "fa_icon": "<i class=\"fas fa-book\"></i>"
+                },
+                "single_end": {
+                    "type": "boolean",
+                    "description": "Single-end sequencing data",
+                    "fa_icon": "<i class=\"fas fa-align-center\"></i>",
+                    "default": "False"
                 },
                 "name": {
                     "type": "string",
-                    "description": "Workflow name"
-                },
-                "multiqc_config": {
-                    "type": "string",
-                    "description": "multiqc_config",
-                    "default": "$baseDir/assets/multiqc_config.yaml"
+                    "description": "Workflow name",
+                    "fa_icon": "<i class=\"fas fa-fingerprint\"></i>"
                 },
                 "email": {
                     "type": "string",
-                    "description": "email"
+                    "description": "Email address for completion summary",
+                    "fa_icon": "<i class=\"fas fa-envelope\"></i>"
                 },
                 "email_on_fail": {
                     "type": "string",
-                    "description": "email_on_fail"
-                },
-                "max_multiqc_email_size": {
-                    "type": "string",
-                    "description": "max_multiqc_email_size",
-                    "default": "25 MB"
+                    "description": "Email address for completion summary, only when pipeline fails",
+                    "fa_icon": "<i class=\"fas fa-exclamation-triangle\"></i>"
                 },
                 "plaintext_email": {
                     "type": "boolean",
-                    "description": "plaintext_email"
+                    "description": "Send plain-text email instead of HTML",
+                    "fa_icon": "<i class=\"fas fa-remove-format\"></i>",
+                    "hidden": true
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "description": "Custom config file to supply to MultiQC",
+                    "default": "",
+                    "fa_icon": "<i class=\"fas fa-cog\"></i>",
+                    "hidden": true
+                },
+                "max_multiqc_email_size": {
+                    "type": "string",
+                    "description": "File size limit when attaching MultiQC reports to summary emails",
+                    "default": "25 MB",
+                    "fa_icon": "<i class=\"fas fa-file-upload\"></i>",
+                    "hidden": true
                 },
                 "monochrome_logs": {
                     "type": "boolean",
-                    "description": "monochrome_logs"
-                },
-                "help": {
-                    "type": "boolean",
-                    "description": "help"
-                },
-                "igenomes_base": {
-                    "type": "string",
-                    "description": "igenomes_base",
-                    "default": "s3://ngi-igenomes/igenomes/"
+                    "description": "Do not use coloured log outputs",
+                    "fa_icon": "<i class=\"fas fa-palette\"></i>",
+                    "hidden": true
                 },
                 "tracedir": {
                     "type": "string",
-                    "description": "tracedir",
-                    "default": "./results/pipeline_info"
+                    "description": "Directory to keep pipeline Nextflow logs and reports",
+                    "default": "./results/pipeline_info",
+                    "fa_icon": "<i class=\"fas fa-cogs\"></i>",
+                    "hidden": true
+                },
+                "igenomes_base": {
+                    "type": "string",
+                    "description": "Directory / URL base for iGenomes references",
+                    "default": "s3://ngi-igenomes/igenomes/",
+                    "fa_icon": "<i class=\"fas fa-cloud-download-alt\"></i>",
+                    "hidden": true
                 },
                 "igenomes_ignore": {
                     "type": "boolean",
-                    "description": "igenomes_ignore"
+                    "description": "Do not load the iGenomes reference config",
+                    "fa_icon": "<i class=\"fas fa-ban\"></i>",
+                    "hidden": true
                 },
-                "custom_config_version": {
-                    "type": "string",
-                    "description": "custom_config_version",
-                    "default": "master"
+                "Maximum job request limits": {
+                    "type": "object",
+                    "description": "Limit the maximum computational requirements that a single job can request",
+                    "default": "",
+                    "properties": {
+                        "max_cpus": {
+                            "type": "integer",
+                            "description": "max_cpus",
+                            "default": 16,
+                            "fa_icon": "<i class=\"fas fa-microchip\"></i>",
+                            "hidden": true
+                        },
+                        "max_memory": {
+                            "type": "string",
+                            "description": "max_memory",
+                            "default": "128 GB",
+                            "fa_icon": "<i class=\"fas fa-memory\"></i>",
+                            "hidden": true
+                        },
+                        "max_time": {
+                            "type": "string",
+                            "description": "max_time",
+                            "default": "10d",
+                            "fa_icon": "<i class=\"far fa-clock\"></i>",
+                            "hidden": true
+                        }
+                    }
                 },
-                "custom_config_base": {
-                    "type": "string",
-                    "description": "custom_config_base",
-                    "default": "https://raw.githubusercontent.com/nf-core/configs/master"
+                "Institutional config params": {
+                    "type": "object",
+                    "description": "Params used by nf-core/configs",
+                    "default": "",
+                    "properties": {
+                        "custom_config_version": {
+                            "type": "string",
+                            "description": "nf-core/configs parameter",
+                            "default": "master",
+                            "hidden": true
+                        },
+                        "custom_config_base": {
+                            "type": "string",
+                            "description": "nf-core/configs parameter",
+                            "default": "https://raw.githubusercontent.com/nf-core/configs/master",
+                            "hidden": true
+                        },
+                        "hostnames": {
+                            "type": "string",
+                            "description": "nf-core/configs parameter",
+                            "default": "",
+                            "hidden": true
+                        },
+                        "config_profile_description": {
+                            "type": "string",
+                            "description": "nf-core/configs parameter",
+                            "hidden": true
+                        },
+                        "config_profile_contact": {
+                            "type": "string",
+                            "description": "nf-core/configs parameter",
+                            "hidden": true
+                        },
+                        "config_profile_url": {
+                            "type": "string",
+                            "description": "nf-core/configs parameter",
+                            "hidden": true
+                        }
+                    }
                 },
-                "hostnames": {
-                    "type": "string",
-                    "description": "hostnames",
-                    "default": "[crick:['.thecrick.org'], genotoul:['.genologin1.toulouse.inra.fr', '.genologin2.toulouse.inra.fr'], genouest:['.genouest.org'], uppmax:['.uppmax.uu.se']]"
-                },
-                "config_profile_description": {
-                    "type": "string",
-                    "description": "config_profile_description"
-                },
-                "config_profile_contact": {
-                    "type": "string",
-                    "description": "config_profile_contact"
-                },
-                "config_profile_url": {
-                    "type": "string",
-                    "description": "config_profile_url"
-                },
-                "max_memory": {
-                    "type": "string",
-                    "description": "max_memory",
-                    "default": "128 GB"
-                },
-                "max_cpus": {
-                    "type": "integer",
-                    "description": "max_cpus",
-                    "default": 16
-                },
-                "max_time": {
-                    "type": "string",
-                    "description": "max_time",
-                    "default": "10d"
-                },
-                "genomes": {
-                    "type": "string",
-                    "description": "genomes"
-                },
-                "fasta": {
-                    "type": "string",
-                    "description": "fasta"
-                },
-                "awsqueue": {
-                    "type": "string",
-                    "description": "awsqueue"
-                },
-                "readPaths": {
-                    "type": "string",
-                    "description": "readPaths"
-                },
-                "awsregion": {
-                    "type": "string",
-                    "description": "awsregion"
+                "help": {
+                    "type": "boolean",
+                    "description": "Display help text",
+                    "hidden": true,
+                    "fa_icon": "<i class=\"fas fa-question-circle\"></i>"
                 }
-            }
+            },
+            "required": [
+                "reads"
+            ]
         }
     }
 }
