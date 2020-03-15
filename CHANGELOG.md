@@ -2,6 +2,10 @@
 
 ## v1.10dev
 
+### Template
+
+* Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
+
 ### Linting
 
 * Refactored PR branch tests to be a little clearer.
