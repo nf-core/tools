@@ -2,6 +2,10 @@
 
 ## v1.10dev
 
+### Template
+
+* Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
+
 ### Linting
 
 * Refactored PR branch tests to be a little clearer.
