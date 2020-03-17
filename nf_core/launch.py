@@ -279,10 +279,10 @@ class Launch(object):
                 click.style('Parameter group: ', bold=True, underline=True),
                 click.style(group_label, bold=True, underline=True, fg='red')
             ))
-            use_defaults = click.confirm(
+            no_prompts = click.confirm(
                 "Do you want to change the group's defaults? "+click.style('[y/N]', fg='green'),
                     default=False, show_default=False)
-            if not use_defaults:
+            if not no_prompts:
                 continue
             for parameter in params:
                 # Skip this option if the render mode is none

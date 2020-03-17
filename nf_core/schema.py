@@ -33,7 +33,7 @@ class PipelineSchema (object):
         self.input_params = {}
         self.pipeline_params = {}
         self.schema_from_scratch = False
-        self.use_defaults = False
+        self.no_prompts = False
         self.web_only = False
         self.web_schema_build_url = 'https://nf-co.re/json_schema_build'
         self.web_schema_build_web_url = None
@@ -153,11 +153,11 @@ class PipelineSchema (object):
         # Check for nf-core schema keys
         assert 'properties' in self.schema, "Schema should have 'properties' section"
 
-    def build_schema(self, pipeline_dir, use_defaults, web_only, url):
+    def build_schema(self, pipeline_dir, no_prompts, web_only, url):
         """ Interactively build a new JSON Schema for a pipeline """
 
-        if use_defaults:
-            self.use_defaults = True
+        if no_prompts:
+            self.no_prompts = True
         if web_only:
             self.web_only = True
         if url:
@@ -202,7 +202,7 @@ class PipelineSchema (object):
             self.save_schema()
 
         # If running interactively, send to the web for customisation
-        if not self.use_defaults:
+        if not self.no_prompts:
             if click.confirm(click.style("\nLaunch web builder for customisation and editing?", fg='magenta'), True):
                 self.launch_web_builder()
 
@@ -259,7 +259,7 @@ class PipelineSchema (object):
         if p_key not in self.pipeline_params.keys():
             p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
             remove_it_nice = click.style('Remove it?', fg='yellow')
-            if self.use_defaults or self.schema_from_scratch or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
+            if self.no_prompts or self.schema_from_scratch or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
                 return True
         return False
 
@@ -275,7 +275,7 @@ class PipelineSchema (object):
                 if not any( [ p_key in param.get('properties', {}) for k, param in self.schema['properties'].items() ] ):
                     p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
                     add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
-                    if self.use_defaults or self.schema_from_scratch or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
+                    if self.no_prompts or self.schema_from_scratch or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
                         self.schema['properties'][p_key] = self.build_schema_param(p_key, p_val)
                         logging.debug("Adding '{}' to JSON Schema".format(p_key))
                         params_added.append(click.style(p_key, fg='white', bold=True))

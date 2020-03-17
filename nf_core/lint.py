@@ -979,7 +979,7 @@ class PipelineLint(object):
         # First, get the top-level config options for the pipeline
         # Schema object already created in the previous test
         self.schema_obj.get_wf_params(self.path)
-        self.schema_obj.use_defaults = True
+        self.schema_obj.no_prompts = True
 
         # Remove any schema params not found in the config
         removed_params = self.schema_obj.remove_schema_notfound_configs()

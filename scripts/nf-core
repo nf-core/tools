@@ -285,9 +285,9 @@ def validate(pipeline, params):
     metavar = "<pipeline directory>"
 )
 @click.option(
-    '--use-defaults',
+    '--no-prompts',
     is_flag = True,
-    help = "Do not build interactively, just use Nextflow defaults and exit"
+    help = "Do not confirm changes, just update parameters and exit"
 )
 @click.option(
     '--web-only',
@@ -300,10 +300,10 @@ def validate(pipeline, params):
     default = 'https://nf-co.re/json_schema_build',
     help = 'URL for the web-based Schema builder'
 )
-def build(pipeline_dir, use_defaults, web_only, url):
+def build(pipeline_dir, no_prompts, web_only, url):
     """ Interactively build a schema from Nextflow params. """
     schema_obj = nf_core.schema.PipelineSchema()
-    schema_obj.build_schema(pipeline_dir, use_defaults, web_only, url)
+    schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url)
 
 @schema.command(help_priority=3)
 @click.argument(
