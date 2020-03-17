@@ -250,20 +250,30 @@ def schema():
 
 @schema.command(help_priority=1)
 @click.argument(
-    'schema_path',
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+@click.option(
+    '--params',
     type = click.Path(exists=True),
     required = True,
-    metavar = "<JSON Schema file>"
+    help = 'JSON parameter file'
 )
-def lint(schema_path):
-    """ Check that a given JSON Schema is valid.
+def validate(pipeline, params):
+    """ Validate supplied parameters against a schema.
 
-    Runs as part of the nf-core lint command, this is a convenience
-    command that does just the schema linting nice and quickly.
+    Nextflow can be run using the -params-file flag, which loads
+    script parameters from a JSON/YAML file.
+
+    This command takes such a file and validates it against the
+    schema for the given pipeline.
     """
     schema_obj = nf_core.schema.PipelineSchema()
+    schema_obj.get_schema_from_name(pipeline)
+    schema_obj.load_input_params(params)
     try:
-        schema_obj.lint_schema(schema_path)
+        schema_obj.validate_params()
     except AssertionError as e:
         sys.exit(1)
 
@@ -297,33 +307,22 @@ def build(pipeline_dir, use_defaults, web_only, url):
 
 @schema.command(help_priority=3)
 @click.argument(
-    'pipeline',
-    required = True,
-    metavar = "<pipeline name>"
-)
-@click.option(
-    '--params',
+    'schema_path',
     type = click.Path(exists=True),
     required = True,
-    help = 'JSON parameter file'
+    metavar = "<JSON Schema file>"
 )
-def validate(pipeline, params):
-    """ Validate supplied parameters against a schema.
+def lint(schema_path):
+    """ Check that a given JSON Schema is valid.
 
-    Nextflow can be run using the -params-file flag, which loads
-    script parameters from a JSON/YAML file.
-
-    This command takes such a file and validates it against the
-    schema for the given pipeline.
+    Runs as part of the nf-core lint command, this is a convenience
+    command that does just the schema linting nice and quickly.
     """
     schema_obj = nf_core.schema.PipelineSchema()
-    schema_obj.get_schema_from_name(pipeline)
-    schema_obj.load_input_params(params)
     try:
-        schema_obj.validate_params()
+        schema_obj.lint_schema(schema_path)
     except AssertionError as e:
         sys.exit(1)
-
 
 @nf_core_cli.command('bump-version', help_priority=7)
 @click.argument(
