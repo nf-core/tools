@@ -482,7 +482,6 @@ Manually building JSONSchema documents is not trivial and can be very error pron
 Instead, the `nf-core schema build` command collects your pipeline parameters and gives interactive prompts about any missing or unexpected params.
 If no existing schema is found it will create one for you.
 
-
 Once built, the tool can send the schema to the nf-core website so that you can use a graphical interface to organise and fill in the schema.
 The tool checks the status of your schema on the website and once complete, saves your changes locally.
 
