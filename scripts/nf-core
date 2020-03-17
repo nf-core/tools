@@ -262,7 +262,10 @@ def lint(schema_path):
     command that does just the schema linting nice and quickly.
     """
     schema_obj = nf_core.schema.PipelineSchema()
-    schema_obj.lint_schema(schema_path)
+    try:
+        schema_obj.lint_schema(schema_path)
+    except AssertionError as e:
+        sys.exit(1)
 
 @schema.command(help_priority=2)
 @click.argument(
@@ -316,7 +319,9 @@ def validate(pipeline, params):
     schema_obj = nf_core.schema.PipelineSchema()
     schema_obj.get_schema_from_name(pipeline)
     schema_obj.load_input_params(params)
-    if not schema_obj.validate_params():
+    try:
+        schema_obj.validate_params()
+    except AssertionError as e:
         sys.exit(1)
 
 

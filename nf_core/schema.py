@@ -42,17 +42,30 @@ class PipelineSchema (object):
         """ Lint a given schema to see if it looks valid """
 
         if schema_filename is not None:
-            self.schema_filename = schema_filename
+            if os.path.isdir(schema_filename):
+                self.schema_filename = os.path.join(schema_filename, 'nextflow_schema.json')
+            else:
+                self.schema_filename = schema_filename
+
+        try:
+            assert os.path.exists(self.schema_filename)
+            assert os.path.isfile(self.schema_filename)
+        except AssertionError as e:
+            error_msg = "Schema filename not found: {}".format(self.schema_filename)
+            logging.error(click.style(error_msg, fg='red'))
+            raise AssertionError(error_msg)
 
         try:
             self.load_schema()
             self.validate_schema()
         except json.decoder.JSONDecodeError as e:
-            logging.error("Could not parse JSON:\n {}".format(e))
-            sys.exit(1)
+            error_msg = "Could not parse JSON:\n {}".format(e)
+            logging.error(click.style(error_msg, fg='red'))
+            raise AssertionError(error_msg)
         except AssertionError as e:
-            logging.info(click.style("[✗] JSON Schema does not follow nf-core specs:\n {}", fg='red').format(e))
-            sys.exit(1)
+            error_msg = "[✗] JSON Schema does not follow nf-core specs:\n {}".format(e)
+            logging.error(click.style(error_msg, fg='red'))
+            raise AssertionError(error_msg)
         else:
             logging.info(click.style("[✓] Pipeline schema looks valid", fg='green'))
 
@@ -74,11 +87,12 @@ class PipelineSchema (object):
 
         # Check that the schema file exists
         if not os.path.exists(self.schema_filename):
-            logging.error("Could not find pipeline schema for '{}': {}".format(pipeline, self.schema_filename))
-            sys.exit(1)
+            error = "Could not find pipeline schema for '{}': {}".format(pipeline, self.schema_filename)
+            logging.error(error)
+            raise AssertionError(error)
 
         # Load and check schema
-        self.lint_schema()
+        return self.lint_schema()
 
     def load_schema(self):
         """ Load a JSON Schema from a file """
@@ -112,8 +126,9 @@ class PipelineSchema (object):
                     self.input_params = yaml.safe_load(fh)
                     logging.debug("Loaded YAML input params: {}".format(params_path))
             except Exception as yaml_e:
-                logging.error("Could not load params file as either JSON or YAML:\n JSON: {}\n YAML: {}".format(json_e, yaml_e))
-                sys.exit(1)
+                error_msg = "Could not load params file as either JSON or YAML:\n JSON: {}\n YAML: {}".format(json_e, yaml_e)
+                logging.error(error_msg)
+                raise AssertionError(error_msg)
 
     def validate_params(self):
         """ Check given parameters against a schema and validate """
