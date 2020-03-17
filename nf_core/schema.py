@@ -32,6 +32,7 @@ class PipelineSchema (object):
         self.schema_filename = None
         self.input_params = {}
         self.pipeline_params = {}
+        self.schema_from_scratch = False
         self.use_defaults = False
         self.web_only = False
         self.web_schema_build_url = 'https://nf-co.re/json_schema_build'
@@ -180,6 +181,20 @@ class PipelineSchema (object):
         else:
             logging.debug("Existing JSON Schema not found: {}".format(self.schema_filename))
 
+        # Build a skeleton schema if none already existed
+        if not self.schema:
+            logging.info("No existing schema found - creating a new one from scratch")
+            self.schema_from_scratch = True
+            config = nf_core.utils.fetch_wf_config(pipeline_dir)
+            self.schema = {
+                "$schema": "http://json-schema.org/draft-07/schema",
+                "$id": "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(config['manifest.name']),
+                "title": "{} pipeline parameters".format(config['manifest.name']),
+                "description": config['manifest.description'],
+                "type": "object",
+                "properties": {}
+            }
+
         if not self.web_only:
             self.get_wf_params(pipeline_dir)
             self.remove_schema_notfound_configs()
@@ -233,6 +248,8 @@ class PipelineSchema (object):
         if len(params_removed) > 0:
             logging.info("Removed {} params from existing JSON Schema that were not found with `nextflow config`:\n {}\n".format(len(params_removed), ', '.join(params_removed)))
 
+        return params_removed
+
     def prompt_remove_schema_notfound_config(self, p_key):
         """
         Check if a given key is found in the nextflow config params and prompt to remove it if note
@@ -242,7 +259,7 @@ class PipelineSchema (object):
         if p_key not in self.pipeline_params.keys():
             p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
             remove_it_nice = click.style('Remove it?', fg='yellow')
-            if self.use_defaults or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
+            if self.use_defaults or self.schema_from_scratch or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
                 return True
         return False
 
@@ -258,12 +275,14 @@ class PipelineSchema (object):
                 if not any( [ p_key in param.get('properties', {}) for k, param in self.schema['properties'].items() ] ):
                     p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
                     add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
-                    if self.use_defaults or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
+                    if self.use_defaults or self.schema_from_scratch or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
                         self.schema['properties'][p_key] = self.build_schema_param(p_key, p_val)
                         logging.debug("Adding '{}' to JSON Schema".format(p_key))
                         params_added.append(click.style(p_key, fg='white', bold=True))
         if len(params_added) > 0:
             logging.info("Added {} params to JSON Schema that were found with `nextflow config`:\n {}".format(len(params_added), ', '.join(params_added)))
+
+        return params_added
 
     def build_schema_param(self, p_key, p_val, p_schema = None):
         """
