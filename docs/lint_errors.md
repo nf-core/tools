@@ -30,9 +30,15 @@ The following files are suggested but not a hard requirement. If they are missin
 * `conf/base.config`
   * A `conf` directory with at least one config called `base.config`
 
-Additionally, the following files must not be present:
+The following files will cause a failure if the _are_ present (to fix, delete them):
 
 * `Singularity`
+  * As we are relying on [Docker Hub](https://https://hub.docker.com/) instead of Singularity
+    and all containers are automatically pulled from there, repositories should not
+    have a `Singularity` file present.
+* `parameters.settings.json`
+  * The syntax for pipeline schema has changed - old `parameters.settings.json` should be
+    deleted and new `nextflow_schema.json` files created instead.
 
 ## Error #2 - Docker file check failed ## {#2}
 
@@ -306,16 +312,30 @@ The nf-core workflow template contains a number of comment lines with the follow
 
 This lint test runs through all files in the pipeline and searches for these lines.
 
-## Error #11 - Singularity file found ##{#11}
+## Error #11 - Pipeline name ## {#11}
 
-As we are relying on [Docker Hub](https://hub.docker.com/) instead of Singularity and all containers are automatically pulled from there, repositories should not have a `Singularity` file present.
+_..removed.._
 
 ## Error #12 - Pipeline name ## {#12}
 
-In order to ensure consistent naming, pipeline names should contain only lower case, alphabetical characters. Otherwise a warning is displayed.
+In order to ensure consistent naming, pipeline names should contain only lower case, alphanumeric characters. Otherwise a warning is displayed.
 
 ## Error #13 - Pipeline name ## {#13}
 
 The `nf-core create` pipeline template uses [cookiecutter](https://github.com/cookiecutter/cookiecutter) behind the scenes.
 This check fails if any cookiecutter template variables such as `{{ cookiecutter.pipeline_name }}` are fouund in your pipeline code.
 Finding a placeholder like this means that something was probably copied and pasted from the template without being properly rendered for your pipeline.
+
+## Error #14 - Pipeline schema syntax ## {#14}
+
+Pipelines should have a `nextflow_schema.json` file that describes the different pipeline parameters (eg. `params.something`, `--something`).
+
+Schema should be valid JSON files and adhere to [JSONSchema](https://json-schema.org/), Draft 7.
+The top-level schema should be an `object`, where each of the `properties` corresponds to a pipeline parameter.
+
+## Error #15 - Schema config check ## {#15}
+
+The `nextflow_schema.json` pipeline schema should describe every flat parameter returned from the `nextflow config` command (params that are objects or more complex structures are ignored).
+Missing parameters result in a lint failure.
+
+If any parameters are found in the schema that were not returned from `nextflow config` a warning is given.

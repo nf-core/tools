@@ -24,6 +24,7 @@
   * [`--awscli`](#--awscli)
 * [Other command line parameters](#other-command-line-parameters)
   * [`--outdir`](#--outdir)
+  * [`--publish_dir_mode`](#--publish_dir_mode)
   * [`--email`](#--email)
   * [`--email_on_fail`](#--email_on_fail)
   * [`--max_multiqc_email_size`](#--max_multiqc_email_size)
@@ -236,6 +237,10 @@ Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a 
 ### `--outdir`
 
 The output directory where the results will be saved.
+
+### `--publish_dir_mode`
+
+Value passed to Nextflow [`publishDir`](https://www.nextflow.io/docs/latest/process.html#publishdir) directive for publishing results in the output directory. Available: 'symlink', 'rellink', 'link', 'copy', 'copyNoFollow' and 'move' (Default: 'copy').
 
 ### `--email`
 

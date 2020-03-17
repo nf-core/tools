@@ -2,6 +2,11 @@
 
 ## v1.10dev
 
+### Template
+
+* Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
+* Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
+
 ### Linting
 
 * Refactored PR branch tests to be a little clearer.
@@ -14,6 +19,7 @@
 * Added CI test to check for PRs against `master` in tools repo
 * CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
 * Describe alternative installation method via conda with `conda env create`
+* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 
 ## v1.9
 
