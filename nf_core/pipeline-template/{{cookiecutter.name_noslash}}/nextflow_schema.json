@@ -1,6 +1,6 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/{{ cookiecutter.name }}/master/parameters.schema.json",
+    "$id": "https://raw.githubusercontent.com/{{ cookiecutter.name }}/master/nextflow_schema.json",
     "title": "{{ cookiecutter.name }} pipeline parameters",
     "description": "{{ cookiecutter.description }}",
     "type": "object",
@@ -70,6 +70,22 @@
             "default": "25 MB",
             "fa_icon": "<i class=\"fas fa-file-upload\"></i>",
             "hidden": true
+        },
+        "publish_dir_mode": {
+            "type": "string",
+            "default": "copy",
+            "hidden": true,
+            "description": "Method used to save pipeline results to output directory",
+            "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See https://www.nextflow.io/docs/latest/process.html#publishdir for details.",
+            "fa_icon": "<i class=\"fas fa-copy\"></i>",
+            "enum": [
+                "symlink",
+                "rellink",
+                "link",
+                "copy",
+                "copyNoFollow",
+                "mov"
+            ]
         },
         "monochrome_logs": {
             "type": "boolean",
