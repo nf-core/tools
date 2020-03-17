@@ -130,6 +130,7 @@ class PipelineLint(object):
         self.dockerfile = []
         self.conda_config = {}
         self.conda_package_info = {}
+        self.schema_obj = None
         self.passed = []
         self.warned = []
         self.failed = []
@@ -174,9 +175,10 @@ class PipelineLint(object):
             'check_conda_env_yaml',
             'check_conda_dockerfile',
             'check_pipeline_todos',
-            'check_schema_lint'
             'check_pipeline_name',
-            'check_cookiecutter_strings'
+            'check_cookiecutter_strings',
+            'check_schema_lint',
+            'check_schema_params'
         ]
         if release_mode:
             self.release_mode = True
@@ -908,24 +910,6 @@ class PipelineLint(object):
                                 l = '{}..'.format(l[:50-len(fname)])
                             self.warned.append((10, "TODO string found in '{}': {}".format(fname,l)))
 
-    def check_schema_lint(self):
-        """ Lint the pipeline JSON schema file """
-        # Suppress log messages
-        logger = logging.getLogger()
-        logger.disabled = True
-
-        # Lint the schema
-        schema_obj = nf_core.schema.PipelineSchema()
-        schema_path = os.path.join(self.path, 'nextflow_schema.json')
-        try:
-            schema_obj.lint_schema(schema_path)
-            self.passed.append((100, "Schema lint passed"))
-        except AssertionError as e:
-            self.failed.append((100, "Schema lint failed: {}".format(e)))
-
-        # Reset logger
-        logger.disabled = False
-
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
 
@@ -969,6 +953,50 @@ class PipelineLint(object):
                             num_matches += 1
         if num_matches == 0:
             self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
+
+
+    def check_schema_lint(self):
+        """ Lint the pipeline JSON schema file """
+        # Suppress log messages
+        logger = logging.getLogger()
+        logger.disabled = True
+
+        # Lint the schema
+        self.schema_obj = nf_core.schema.PipelineSchema()
+        schema_path = os.path.join(self.path, 'nextflow_schema.json')
+        try:
+            self.schema_obj.lint_schema(schema_path)
+            self.passed.append((14, "Schema lint passed"))
+        except AssertionError as e:
+            self.failed.append((14, "Schema lint failed: {}".format(e)))
+
+        # Reset logger
+        logger.disabled = False
+
+    def check_schema_params(self):
+        """ Check that the schema describes all flat params in the pipeline """
+
+        # First, get the top-level config options for the pipeline
+        # Schema object already created in the previous test
+        self.schema_obj.get_wf_params(self.path)
+        self.schema_obj.use_defaults = True
+
+        # Remove any schema params not found in the config
+        removed_params = self.schema_obj.remove_schema_notfound_configs()
+
+        # Add schema params found in the config but not the schema
+        added_params = self.schema_obj.add_schema_found_configs()
+
+        if len(removed_params) > 0:
+            for param in removed_params:
+                self.warned.append((15, "Schema param '{}' not found from nextflow config".format(param)))
+
+        if len(added_params) > 0:
+            for param in added_params:
+                self.failed.append((15, "Param '{}' from `nextflow config` not found in nextflow_schema.json".format(param)))
+
+        if len(removed_params) == 0 and len(added_params) == 0:
+            self.passed.append((15, "Schema matched params returned from nextflow config"))
 
 
     def print_results(self):
