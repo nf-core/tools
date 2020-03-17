@@ -18,6 +18,7 @@ A python package with helper tools for the nf-core community.
 * [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
 * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
+* [`nf-core schema` - Work with pipeline schema files](#working-with-pipeline-schema)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 * [Citation](#citation)
@@ -438,6 +439,117 @@ WARNING: Test Warnings:
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
+
+## Working with pipeline schema
+
+nf-core pipelines have a `nextflow_schema.json` file in their root which describes the different parameters used by the workflow.
+These files allow automated validation of inputs when running the pipeline, are used to generate command line help and can be used to build interfaces to launch pipelines.
+Pipeline schema files are built according to the [JSONSchema specification](https://json-schema.org/) (Draft 7).
+
+To help developers working with pipeline schema, nf-core tools has three `schema` sub-commands:
+
+* `nf-core schema validate`
+* `nf-core schema build`
+* `nf-core schema lint`
+
+### nf-core schema validate
+
+Nextflow can take input parameters in a JSON or YAML file when running a pipeline using the `-params-file` option.
+This command validates such a file against the pipeline schema.
+
+Usage is `nextflow schema validate <pipeline> --params <parameter file>`, eg:
+
+```console
+$ nf-core schema validate my_pipeline --params my_inputs.json
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: [✓] Pipeline schema looks valid
+
+ERROR: [✗] Input parameters are invalid: 'reads' is a required property
+```
+
+The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
+
+### nf-core schema build
+
+Manually building JSONSchema documents is not trivial and can be very error prone.
+Instead, the `nf-core schema build` command collects your pipeline parameters and gives interactive prompts about any missing or unexpected params.
+If no existing schema is found it will create one for you.
+
+Once built, the tool can send the schema to the nf-core website so that you can use a graphical interface to organise and fill in the schema.
+The tool checks the status of your schema on the website and once complete, saves your changes locally.
+
+Usage is `nextflow schema build <pipeline_directory>`, eg:
+
+```console
+$ nf-core schema build nf-core-testpipeline
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Loaded existing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
+
+Unrecognised 'params.old_param' found in schema but not in Nextflow config. Remove it? [Y/n]:
+Unrecognised 'params.we_removed_this_too' found in schema but not in Nextflow config. Remove it? [Y/n]:
+
+INFO: Removed 2 params from existing JSON Schema that were not found with `nextflow config`:
+ old_param, we_removed_this_too
+
+Found 'params.reads' in Nextflow config. Add to JSON Schema? [Y/n]:
+Found 'params.outdir' in Nextflow config. Add to JSON Schema? [Y/n]:
+
+INFO: Added 2 params to JSON Schema that were found with `nextflow config`:
+ reads, outdir
+
+INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
+
+Launch web builder for customisation and editing? [Y/n]:
+
+INFO: Opening URL: http://localhost:8888/json_schema_build?id=1584441828_b990ac785cd6
+
+INFO: Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.
+..........
+INFO: Found saved status from nf-core JSON Schema builder
+
+INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
+```
+
+There are three flags that you can use with this command:
+
+* `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
+* `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
+* `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
+
+### nf-core schema lint
+
+The pipeline schema is linted as part of the main `nf-core lint` command,
+however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
+
+Usage is `nextflow schema lint <schema>`, eg:
+
+```console
+$ nf-core schema lint nextflow_schema.json
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+ERROR: [✗] JSON Schema does not follow nf-core specs:
+ Schema should have 'properties' section
+```
 
 ## Bumping a pipeline version number
 
