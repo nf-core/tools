@@ -234,6 +234,12 @@ class PipelineSchema (object):
                 for p_child_key in [k for k in self.schema['properties'][p_key].get('properties', {}).keys()]:
                     if self.prompt_remove_schema_notfound_config(p_child_key):
                         del self.schema['properties'][p_key]['properties'][p_child_key]
+                        # Remove required flag if set
+                        if p_child_key in self.schema['properties'][p_key].get('required', []):
+                            self.schema['properties'][p_key]['required'].remove(p_child_key)
+                        # Remove required list if now empty
+                        if 'required' in self.schema['properties'][p_key] and len(self.schema['properties'][p_key]['required']) == 0:
+                            del self.schema['properties'][p_key]['required']
                         logging.debug("Removing '{}' from JSON Schema".format(p_child_key))
                         params_removed.append(click.style(p_child_key, fg='white', bold=True))
 
@@ -241,6 +247,12 @@ class PipelineSchema (object):
             else:
                 if self.prompt_remove_schema_notfound_config(p_key):
                     del self.schema['properties'][p_key]
+                    # Remove required flag if set
+                    if p_key in self.schema.get('required', []):
+                        self.schema['required'].remove(p_key)
+                    # Remove required list if now empty
+                    if 'required' in self.schema and len(self.schema['required']) == 0:
+                        del self.schema['required']
                     logging.debug("Removing '{}' from JSON Schema".format(p_key))
                     params_removed.append(click.style(p_key, fg='white', bold=True))
 
