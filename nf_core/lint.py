@@ -16,6 +16,7 @@ import requests
 import yaml
 
 import nf_core.utils
+import nf_core.schema
 
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
@@ -173,6 +174,7 @@ class PipelineLint(object):
             'check_conda_env_yaml',
             'check_conda_dockerfile',
             'check_pipeline_todos',
+            'check_schema_lint'
             'check_pipeline_name',
             'check_cookiecutter_strings'
         ]
@@ -248,7 +250,8 @@ class PipelineLint(object):
 
         # List of strings. Dails / warns if any of the strings exist.
         files_fail_ifexists = [
-            'Singularity'
+            'Singularity',
+            'parameters.settings.json'
         ]
         files_warn_ifexists = [
             '.travis.yml'
@@ -905,15 +908,33 @@ class PipelineLint(object):
                                 l = '{}..'.format(l[:50-len(fname)])
                             self.warned.append((10, "TODO string found in '{}': {}".format(fname,l)))
 
+    def check_schema_lint(self):
+        """ Lint the pipeline JSON schema file """
+        # Suppress log messages
+        logger = logging.getLogger()
+        logger.disabled = True
+
+        # Lint the schema
+        schema_obj = nf_core.schema.PipelineSchema()
+        schema_path = os.path.join(self.path, 'nextflow_schema.json')
+        try:
+            schema_obj.lint_schema(schema_path)
+            self.passed.append((100, "Schema lint passed"))
+        except AssertionError as e:
+            self.failed.append((100, "Schema lint failed: {}".format(e)))
+
+        # Reset logger
+        logger.disabled = False
+
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
 
-        if self.pipeline_name.islower() and self.pipeline_name.isalpha():
+        if self.pipeline_name.islower() and self.pipeline_name.isalnum():
             self.passed.append((12, "Name adheres to nf-core convention"))
         if not self.pipeline_name.islower():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains uppercase letters"))
-        if not self.pipeline_name.isalpha():
-            self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphabetical characters"))
+        if not self.pipeline_name.isalnum():
+            self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphanumeric characters"))
 
     def check_cookiecutter_strings(self):
         """
