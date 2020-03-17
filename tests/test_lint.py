@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 72
+MAX_PASS_CHECKS = 75
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -95,7 +95,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 5, "warned": 2, "passed": 9}
+        expectations = {"failed": 5, "warned": 2, "passed": 10}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -472,5 +472,5 @@ class TestLint(unittest.TestCase):
         critical_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         critical_lint_obj.pipeline_name = 'Tools123'
         critical_lint_obj.check_pipeline_name()
-        expectations = {"failed": 0, "warned": 2, "passed": 0}
+        expectations = {"failed": 0, "warned": 1, "passed": 0}
         self.assess_lint_status(critical_lint_obj, **expectations)
