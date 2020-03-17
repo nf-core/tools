@@ -14,7 +14,8 @@
                     "type": "string",
                     "description": "Input FastQ files",
                     "default": "data/*{1,2}.fastq.gz",
-                    "fa_icon": "<i class=\"fas fa-dna\"></i>"
+                    "fa_icon": "<i class=\"fas fa-dna\"></i>",
+                    "help_text": "A glob pattern for input FastQ files. Should include at least one asterisk (*). For paired-end data, should contain curly brackets with two patterns differentiating the paired reads. For example: `*_R{1,2}.fastq.gz`"
                 },
                 "outdir": {
                     "type": "string",
@@ -25,28 +26,35 @@
                 "genome": {
                     "type": "string",
                     "description": "Reference genome ID",
-                    "fa_icon": "<i class=\"fas fa-book\"></i>"
+                    "fa_icon": "<i class=\"fas fa-book\"></i>",
+                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files. For example: `--genome GRCh38`"
                 },
                 "single_end": {
                     "type": "boolean",
                     "description": "Single-end sequencing data",
                     "fa_icon": "<i class=\"fas fa-align-center\"></i>",
-                    "default": "False"
+                    "default": "False",
+                    "help_text": "If using single-end FastQ files as an input, specify this flag to run the pipeline in single-end mode."
                 },
                 "name": {
                     "type": "string",
                     "description": "Workflow name",
-                    "fa_icon": "<i class=\"fas fa-fingerprint\"></i>"
+                    "fa_icon": "<i class=\"fas fa-fingerprint\"></i>",
+                    "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles."
                 },
                 "email": {
                     "type": "string",
                     "description": "Email address for completion summary",
-                    "fa_icon": "<i class=\"fas fa-envelope\"></i>"
+                    "fa_icon": "<i class=\"fas fa-envelope\"></i>",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 },
                 "email_on_fail": {
                     "type": "string",
                     "description": "Email address for completion summary, only when pipeline fails",
-                    "fa_icon": "<i class=\"fas fa-exclamation-triangle\"></i>"
+                    "fa_icon": "<i class=\"fas fa-exclamation-triangle\"></i>",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully."
                 },
                 "plaintext_email": {
                     "type": "boolean",
@@ -101,21 +109,21 @@
                     "properties": {
                         "max_cpus": {
                             "type": "integer",
-                            "description": "max_cpus",
+                            "description": "Maximum number of CPUs that can be requested  for any single job",
                             "default": 16,
                             "fa_icon": "<i class=\"fas fa-microchip\"></i>",
                             "hidden": true
                         },
                         "max_memory": {
                             "type": "string",
-                            "description": "max_memory",
+                            "description": "Maximum amount of memory that can be requested for any single job",
                             "default": "128 GB",
                             "fa_icon": "<i class=\"fas fa-memory\"></i>",
                             "hidden": true
                         },
                         "max_time": {
                             "type": "string",
-                            "description": "max_time",
+                            "description": "Maximum amount of time that can be requested for any single job",
                             "default": "10d",
                             "fa_icon": "<i class=\"far fa-clock\"></i>",
                             "hidden": true
