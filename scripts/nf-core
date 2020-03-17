@@ -256,7 +256,11 @@ def schema():
     metavar = "<JSON Schema file>"
 )
 def lint(schema_path):
-    """ Check that a given JSON Schema is valid """
+    """ Check that a given JSON Schema is valid.
+
+    Runs as part of the nf-core lint command, this is a convenience
+    command that does just the schema linting nice and quickly.
+    """
     schema_obj = nf_core.schema.PipelineSchema()
     schema_obj.lint_schema(schema_path)
 
@@ -284,14 +288,36 @@ def lint(schema_path):
     help = 'URL for the web-based Schema builder'
 )
 def build(pipeline_dir, use_defaults, web_only, url):
-    """ Interactively build a schema from Nextflow params """
+    """ Interactively build a schema from Nextflow params. """
     schema_obj = nf_core.schema.PipelineSchema()
     schema_obj.build_schema(pipeline_dir, use_defaults, web_only, url)
 
 @schema.command(help_priority=3)
-def validate():
-    """ Validate supplied parameters against a schema """
-    raise NotImplementedError('This function has not yet been written')
+@click.argument(
+    'pipeline',
+    required = True,
+    metavar = "<pipeline name>"
+)
+@click.option(
+    '--params',
+    type = click.Path(exists=True),
+    required = True,
+    help = 'JSON parameter file'
+)
+def validate(pipeline, params):
+    """ Validate supplied parameters against a schema.
+
+    Nextflow can be run using the -params-file flag, which loads
+    script parameters from a JSON/YAML file.
+
+    This command takes such a file and validates it against the
+    schema for the given pipeline.
+    """
+    schema_obj = nf_core.schema.PipelineSchema()
+    schema_obj.get_schema_from_name(pipeline)
+    schema_obj.load_input_params(params)
+    if not schema_obj.validate_params():
+        sys.exit(1)
 
 
 @nf_core_cli.command('bump-version', help_priority=7)
