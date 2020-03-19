@@ -270,7 +270,13 @@ def validate(pipeline, params):
     schema for the given pipeline.
     """
     schema_obj = nf_core.schema.PipelineSchema()
-    schema_obj.get_schema_from_name(pipeline)
+    try:
+        schema_obj.get_schema_from_name(pipeline)
+        # Load and check schema
+        schema_obj.lint_schema()
+    except AssertionError as e:
+        logging.error(e)
+        sys.exit(1)
     schema_obj.load_input_params(params)
     try:
         schema_obj.validate_params()

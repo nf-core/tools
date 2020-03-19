@@ -39,22 +39,37 @@ class PipelineSchema (object):
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
-    def lint_schema(self, schema_filename=None):
+    def get_schema_from_name(self, path, local_only=False):
+        """ Given a pipeline name, directory, or path, set self.schema_filename """
+
+        # Supplied path exists - assume a local pipeline directory or schema
+        if os.path.exists(path):
+            if os.path.isdir(path):
+                self.schema_filename = os.path.join(path, 'nextflow_schema.json')
+            else:
+                self.schema_filename = path
+
+        # Path does not exist - assume a name of a remote workflow
+        elif not local_only:
+            wf = nf_core.launch.Launch(path)
+            wf.get_local_wf()
+            self.schema_filename = os.path.join(wf.local_wf.local_path, 'nextflow_schema.json')
+
+        # Only looking for local paths, overwrite with None to be safe
+        else:
+            self.schema_filename = None
+
+        # Check that the schema file exists
+        if self.schema_filename is None or not os.path.exists(self.schema_filename):
+            error = "Could not find pipeline schema for '{}': {}".format(path, self.schema_filename)
+            logging.error(error)
+            raise AssertionError(error)
+
+    def lint_schema(self, path=None):
         """ Lint a given schema to see if it looks valid """
 
-        if schema_filename is not None:
-            if os.path.isdir(schema_filename):
-                self.schema_filename = os.path.join(schema_filename, 'nextflow_schema.json')
-            else:
-                self.schema_filename = schema_filename
-
-        try:
-            assert os.path.exists(self.schema_filename)
-            assert os.path.isfile(self.schema_filename)
-        except AssertionError as e:
-            error_msg = "Schema filename not found: {}".format(self.schema_filename)
-            logging.error(click.style(error_msg, fg='red'))
-            raise AssertionError(error_msg)
+        if path is not None:
+            self.get_schema_from_name(path)
 
         try:
             self.load_schema()
@@ -69,31 +84,6 @@ class PipelineSchema (object):
             raise AssertionError(error_msg)
         else:
             logging.info(click.style("[✓] Pipeline schema looks valid", fg='green'))
-
-    def get_schema_from_name(self, pipeline):
-        """ Given a pipeline name, try to get the JSON Schema """
-
-        # Supplied path exists - assume a local pipeline directory or schema
-        if os.path.exists(pipeline):
-            if os.path.basename(pipeline) == 'nextflow_schema.json':
-                self.schema_filename = pipeline
-            else:
-                self.schema_filename = os.path.join(pipeline, 'nextflow_schema.json')
-
-        # Path does not exist - assume a name of a remote workflow
-        else:
-            wf = nf_core.launch.Launch(pipeline)
-            wf.get_local_wf()
-            self.schema_filename = os.path.join(wf.local_wf.local_path, 'nextflow_schema.json')
-
-        # Check that the schema file exists
-        if not os.path.exists(self.schema_filename):
-            error = "Could not find pipeline schema for '{}': {}".format(pipeline, self.schema_filename)
-            logging.error(error)
-            raise AssertionError(error)
-
-        # Load and check schema
-        return self.lint_schema()
 
     def load_schema(self):
         """ Load a JSON Schema from a file """
@@ -153,6 +143,19 @@ class PipelineSchema (object):
         # Check for nf-core schema keys
         assert 'properties' in self.schema, "Schema should have 'properties' section"
 
+    def make_skeleton_schema(self):
+        """ Make an empty JSON Schema skeleton """
+        self.schema_from_scratch = True
+        config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
+        self.schema = {
+            "$schema": "http://json-schema.org/draft-07/schema",
+            "$id": "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(config['manifest.name']),
+            "title": "{} pipeline parameters".format(config['manifest.name']),
+            "description": config['manifest.description'],
+            "type": "object",
+            "properties": {}
+        }
+
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
         """ Interactively build a new JSON Schema for a pipeline """
 
@@ -163,40 +166,23 @@ class PipelineSchema (object):
         if url:
             self.web_schema_build_url = url
 
-        # Load a JSON Schema file if we find one
-        self.schema_filename = os.path.join(pipeline_dir, 'nextflow_schema.json')
-        if(os.path.exists(self.schema_filename)):
-            logging.debug("Parsing existing JSON Schema: {}".format(self.schema_filename))
-            try:
-                self.load_schema()
-            except Exception as e:
-                logging.error("Existing JSON Schema found, but it is invalid:\n {}".format(click.style(str(e), fg='red')))
-                logging.info(
-                    "Please fix or delete this file, then try again.\n" \
-                    "For more details, run the following command:\n  " + \
-                    click.style("nf-core schema lint {}".format(self.schema_filename), fg='blue')
-                )
-                sys.exit(1)
-            logging.info("Loaded existing JSON schema with {} params: {}\n".format(len(self.schema['properties']), self.schema_filename))
-        else:
-            logging.debug("Existing JSON Schema not found: {}".format(self.schema_filename))
-
-        # Build a skeleton schema if none already existed
-        if not self.schema:
+        # Get JSON Schema filename
+        try:
+            self.get_schema_from_name(pipeline_dir, local_only=True)
+        except AssertionError:
             logging.info("No existing schema found - creating a new one from scratch")
-            self.schema_from_scratch = True
-            config = nf_core.utils.fetch_wf_config(pipeline_dir)
-            self.schema = {
-                "$schema": "http://json-schema.org/draft-07/schema",
-                "$id": "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(config['manifest.name']),
-                "title": "{} pipeline parameters".format(config['manifest.name']),
-                "description": config['manifest.description'],
-                "type": "object",
-                "properties": {}
-            }
+            self.make_skeleton_schema()
+
+        # Load and validate Schema
+        try:
+            self.lint_schema()
+        except AssertionError as e:
+            logging.error("Existing JSON Schema found, but it is invalid: {}".format(click.style(str(self.schema_filename), fg='red')))
+            logging.info("Please fix or delete this file, then try again.")
+            sys.exit(1)
 
         if not self.web_only:
-            self.get_wf_params(pipeline_dir)
+            self.get_wf_params()
             self.remove_schema_notfound_configs()
             self.add_schema_found_configs()
             self.save_schema()
@@ -204,15 +190,18 @@ class PipelineSchema (object):
         # If running interactively, send to the web for customisation
         if not self.no_prompts:
             if click.confirm(click.style("\nLaunch web builder for customisation and editing?", fg='magenta'), True):
-                self.launch_web_builder()
+                try:
+                    self.launch_web_builder()
+                except AssertionError:
+                    sys.exit(1)
 
-    def get_wf_params(self, pipeline_dir):
+    def get_wf_params(self):
         """
         Load the pipeline parameter defaults using `nextflow config`
         Strip out only the params. values and ignore anything that is not a flat variable
         """
         logging.debug("Collecting pipeline parameter defaults\n")
-        config = nf_core.utils.fetch_wf_config(pipeline_dir)
+        config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
         # Pull out just the params. values
         for ckey, cval in config.items():
             if ckey.startswith('params.'):
@@ -288,7 +277,7 @@ class PipelineSchema (object):
                     p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
                     add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
                     if self.no_prompts or self.schema_from_scratch or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
-                        self.schema['properties'][p_key] = self.build_schema_param(p_key, p_val)
+                        self.schema['properties'][p_key] = self.build_schema_param(p_val)
                         logging.debug("Adding '{}' to JSON Schema".format(p_key))
                         params_added.append(click.style(p_key, fg='white', bold=True))
         if len(params_added) > 0:
@@ -296,21 +285,23 @@ class PipelineSchema (object):
 
         return params_added
 
-    def build_schema_param(self, p_key, p_val, p_schema = None):
+    def build_schema_param(self, p_val):
         """
         Build a JSON Schema dictionary for an param interactively
         """
-        if p_schema is None:
-            p_type = "string"
-            if isinstance(p_val, bool):
-                p_type = 'boolean'
-            if isinstance(p_val, int):
-                p_type = 'integer'
+        p_type = "string"
+        if isinstance(p_val, bool):
+            p_type = 'boolean'
+        elif isinstance(p_val, int):
+            # Careful! booleans are a subclass of int
+            p_type = 'integer'
+        elif isinstance(p_val, float):
+            p_type = 'number'
 
-            p_schema = {
-                "type": p_type,
-                "default": p_val
-            }
+        p_schema = {
+            "type": p_type,
+            "default": p_val
+        }
         return p_schema
 
     def launch_web_builder(self):
@@ -328,12 +319,15 @@ class PipelineSchema (object):
             response = requests.post(url=self.web_schema_build_url, data=content)
         except (requests.exceptions.Timeout):
             logging.error("Schema builder URL timed out: {}".format(self.web_schema_build_url))
+            raise AssertionError
         except (requests.exceptions.ConnectionError):
             logging.error("Could not connect to schema builder URL: {}".format(self.web_schema_build_url))
+            raise AssertionError
         else:
             if response.status_code != 200:
                 logging.error("Could not access remote JSON Schema builder: {} (HTML {} Error)".format(self.web_schema_build_url, response.status_code))
                 logging.debug("Response content:\n{}".format(response.content))
+                raise AssertionError
             else:
                 try:
                     web_response = json.loads(response.content)
@@ -363,12 +357,15 @@ class PipelineSchema (object):
             response = requests.get(self.web_schema_build_api_url, headers={'Cache-Control': 'no-cache'})
         except (requests.exceptions.Timeout):
             logging.error("Schema builder URL timed out: {}".format(self.web_schema_build_api_url))
+            raise AssertionError
         except (requests.exceptions.ConnectionError):
             logging.error("Could not connect to schema builder URL: {}".format(self.web_schema_build_api_url))
+            raise AssertionError
         else:
             if response.status_code != 200:
                 logging.error("Could not access remote JSON Schema builder results: {} (HTML {} Error)".format(self.web_schema_build_api_url, response.status_code))
                 logging.debug("Response content:\n{}".format(response.content))
+                raise AssertionError
             else:
                 try:
                     web_response = json.loads(response.content)
@@ -376,14 +373,19 @@ class PipelineSchema (object):
                 except (json.decoder.JSONDecodeError, AssertionError) as e:
                     logging.error("JSON Schema builder results response not recognised: {}\n See verbose log for full response".format(self.web_schema_build_api_url))
                     logging.debug("Response content:\n{}".format(response.content))
+                    raise AssertionError
                 else:
                     if web_response['status'] == 'error':
                         logging.error("Got error from JSON Schema builder ( {} )".format(click.style(web_response.get('message'), fg='red')))
                     elif web_response['status'] == 'waiting_for_user':
-                        time.sleep(5) # wait 5 seconds before trying again
+                        time.sleep(5)
                         sys.stdout.write('.')
                         sys.stdout.flush()
-                        self.get_web_builder_response()
+                        try:
+                            self.get_web_builder_response()
+                        except RecursionError as e:
+                            logging.info("Reached maximum wait time for web builder. Exiting.")
+                            sys.exit(1)
                     elif web_response['status'] == 'web_builder_edited':
                         logging.info("Found saved status from nf-core JSON Schema builder")
                         try:
