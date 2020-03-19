@@ -144,7 +144,12 @@ class TestSchema(unittest.TestCase):
 
     @pytest.mark.xfail(raises=AssertionError)
     def test_validate_schema_fail_nfcore(self):
-        """ Check that the schema validation fails nf-core addons """
+        """
+        Check that the schema validation fails nf-core addons
+
+        An empty object {} is valid JSON Schema, but we want to have
+        at least a 'properties' key, so this should fail with nf-core specific error.
+        """
         self.schema_obj.schema = {}
         self.schema_obj.validate_schema()
 
@@ -166,7 +171,7 @@ class TestSchema(unittest.TestCase):
         assert self.schema_obj.prompt_remove_schema_notfound_config('baz')
 
     def test_prompt_remove_schema_notfound_config_returnfalse(self):
-        """ Do not temove unrecognised params from the schema """
+        """ Do not remove unrecognised params from the schema """
         self.schema_obj.pipeline_params = {'foo': 'bar'}
         self.schema_obj.no_prompts = True
         assert not self.schema_obj.prompt_remove_schema_notfound_config('foo')
@@ -284,7 +289,7 @@ class TestSchema(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError)
     @mock.patch('requests.post')
     def test_get_web_builder_response_timeout(self, mock_post):
-        """ Mock chekcing for a web builder response, but timeout on the request """
+        """ Mock checking for a web builder response, but timeout on the request """
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.Timeout()
         self.schema_obj.launch_web_builder()
@@ -292,7 +297,7 @@ class TestSchema(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError)
     @mock.patch('requests.post')
     def test_get_web_builder_response_connection_error(self, mock_post):
-        """ Mock chekcing for a web builder response, but get a connection error """
+        """ Mock checking for a web builder response, but get a connection error """
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.ConnectionError()
         self.schema_obj.launch_web_builder()
