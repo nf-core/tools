@@ -35,9 +35,13 @@ class TestSchema(unittest.TestCase):
         """ Check that linting raises properly if a non-existant file is given """
         self.schema_obj.lint_schema('fake_file')
 
-    def test_get_schema_from_name_path(self):
+    def test_get_schema_from_name_dir(self):
         """ Get schema file from directory """
         self.schema_obj.get_schema_from_name(self.template_dir)
+
+    def test_get_schema_from_name_path(self):
+        """ Get schema file from a path """
+        self.schema_obj.get_schema_from_name(self.template_schema)
 
     # TODO - Update when we do have a released pipeline with a valid schema
     @pytest.mark.xfail(raises=AssertionError)
@@ -234,6 +238,13 @@ class TestSchema(unittest.TestCase):
             'type': 'number',
             'default': 12.34
         }
+
+    def test_build_schema(self):
+        """
+        Build a new schema param from a pipeline
+        Run code to ensure it doesn't crash. Individual functions tested separately.
+        """
+        param = self.schema_obj.build_schema(self.template_dir, True, False, None)
 
     @pytest.mark.xfail(raises=AssertionError)
     @mock.patch('requests.post')
