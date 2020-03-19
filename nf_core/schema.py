@@ -380,10 +380,14 @@ class PipelineSchema (object):
                     if web_response['status'] == 'error':
                         logging.error("Got error from JSON Schema builder ( {} )".format(click.style(web_response.get('message'), fg='red')))
                     elif web_response['status'] == 'waiting_for_user':
-                        time.sleep(5) # wait 5 seconds before trying again
+                        time.sleep(5)
                         sys.stdout.write('.')
                         sys.stdout.flush()
-                        self.get_web_builder_response()
+                        try:
+                            self.get_web_builder_response()
+                        except RecursionError as e:
+                            logging.info("Reached maximum wait time for web builder. Exiting.")
+                            sys.exit(1)
                     elif web_response['status'] == 'web_builder_edited':
                         logging.info("Found saved status from nf-core JSON Schema builder")
                         try:
