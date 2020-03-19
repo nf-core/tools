@@ -35,6 +35,20 @@ class TestSchema(unittest.TestCase):
         """ Check that linting raises properly if a non-existant file is given """
         self.schema_obj.lint_schema('fake_file')
 
+    @pytest.mark.xfail(raises=AssertionError)
+    def test_lint_schema_notjson(self):
+        """ Check that linting raises properly if a non-JSON file is given """
+        self.schema_obj.lint_schema(os.path.join(self.template_dir, 'nextflow.config'))
+
+    @pytest.mark.xfail(raises=AssertionError)
+    def test_lint_schema_invalidjson(self):
+        """ Check that linting raises properly if a JSON file is given with an invalid schema """
+        # Make a temporary file to write schema to
+        tmp_file = tempfile.NamedTemporaryFile()
+        with open(tmp_file.name, 'w') as fh:
+            json.dump({'type': 'fubar'}, fh)
+        self.schema_obj.lint_schema(tmp_file.name)
+
     def test_get_schema_from_name_dir(self):
         """ Get schema file from directory """
         self.schema_obj.get_schema_from_name(self.template_dir)
@@ -42,6 +56,11 @@ class TestSchema(unittest.TestCase):
     def test_get_schema_from_name_path(self):
         """ Get schema file from a path """
         self.schema_obj.get_schema_from_name(self.template_schema)
+
+    @pytest.mark.xfail(raises=AssertionError)
+    def test_get_schema_from_name_path_notexist(self):
+        """ Get schema file from a path """
+        self.schema_obj.get_schema_from_name('fubar', local_only=True)
 
     # TODO - Update when we do have a released pipeline with a valid schema
     @pytest.mark.xfail(raises=AssertionError)
