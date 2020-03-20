@@ -114,15 +114,23 @@ def list(keywords, sort, json):
     help = "Path to save parameters JSON file to."
 )
 @click.option(
+    '-a', '--save-all',
+    is_flag = True,
+    default = False,
+    help = """Save all parameters, even if default.
+    Instead of just saving values that have been modified from the default,
+    save every possible parameter."""
+)
+@click.option(
     '-h', '--show-hidden',
     is_flag = True,
     default = False,
     help = """Show hidden parameters.
     Show all pipeline parameters, even those set as hidden in the pipeline schema."""
 )
-def launch(pipeline, command_only, params_in, params_out, show_hidden):
+def launch(pipeline, command_only, params_in, params_out, save_all, show_hidden):
     """ Run pipeline, interactive parameter prompts """
-    nf_core.launch.launch_pipeline(pipeline, command_only, params_in, params_out, show_hidden)
+    nf_core.launch.launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden)
 
 # nf-core download
 @nf_core_cli.command(help_priority=3)

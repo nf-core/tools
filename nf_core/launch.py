@@ -21,7 +21,7 @@ import nf_core.utils, nf_core.list, nf_core.schema
 # add raise_keyboard_interrupt=True argument to PyInquirer.prompt() calls
 # Requires a new release of PyInquirer. See https://github.com/CITGuru/PyInquirer/issues/90
 
-def launch_pipeline(pipeline, command_only, params_in, params_out, show_hidden):
+def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden):
 
     # Get the schema
     schema_obj = nf_core.schema.PipelineSchema()
@@ -50,6 +50,14 @@ def launch_pipeline(pipeline, command_only, params_in, params_out, show_hidden):
 
     # Kick off the interactive wizard to collect user inputs
     launcher.prompt_schema()
+
+    # Validate the parameters that we have, just in case
+    schema_obj.input_params = launcher.params_user
+    schema_obj.validate_params()
+
+    # Strip out the defaults
+    if not save_all:
+        launcher.strip_default_params()
 
     # Build and launch the `nextflow run` command
     launcher.build_command()
@@ -145,7 +153,9 @@ class Launch(object):
 
         # Split answers into core nextflow options and params
         for key, answer in answers.items():
-            if key in self.nxf_flag_schema['Nextflow command-line flags']['properties']:
+            if key == 'Nextflow command-line flags':
+                continue
+            elif key in self.nxf_flag_schema['Nextflow command-line flags']['properties']:
                 self.nxf_flags[key] = answer
             else:
                 self.params_user[key] = answer
@@ -166,17 +176,10 @@ class Launch(object):
             click.secho("Error - this property is required.", fg='red', err=True)
             answer = PyInquirer.prompt([question])
 
-        # Some default flags if missing
-        if param_obj['type'] == 'boolean' and 'default' not in param_obj:
-            param_obj['default'] = False
-        elif 'default' not in param_obj:
-            param_obj['default'] = ''
-
-        # Only return if the value we got was not the default
-        if answer[param_id] == param_obj['default']:
+        # Don't return empty answers
+        if answer[param_id] == '':
             return {}
-        else:
-            return answer
+        return answer
 
     def prompt_group(self, param_id, param_obj):
         """Prompt for edits to a group of parameters
@@ -275,6 +278,22 @@ class Launch(object):
 
         return question
 
+    def strip_default_params(self):
+        """ Strip parameters if they have not changed from the default """
+
+        for param_id, param_obj in self.schema_obj.schema['properties'].items():
+            if param_obj['type'] == 'object':
+                continue
+
+            # Some default flags if missing
+            if param_obj['type'] == 'boolean' and 'default' not in param_obj:
+                param_obj['default'] = False
+            elif 'default' not in param_obj:
+                param_obj['default'] = ''
+
+            # Delete if it hasn't changed from the default
+            if param_id in self.params_user and self.params_user[param_id] == param_obj['default']:
+                del self.params_user[param_id]
 
 
     def build_command(self):
