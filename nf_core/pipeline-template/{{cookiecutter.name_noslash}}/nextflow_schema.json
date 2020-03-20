@@ -35,7 +35,8 @@
             "type": "string",
             "description": "Workflow name",
             "fa_icon": "fas fa-fingerprint",
-            "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles."
+            "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles.",
+            "hidden": true
         },
         "email": {
             "type": "string",
