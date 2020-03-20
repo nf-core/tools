@@ -17,8 +17,7 @@ import time
 import webbrowser
 import yaml
 
-import nf_core.utils
-import nf_core.launch
+import nf_core.list
 
 
 class PipelineSchema (object):
@@ -51,9 +50,8 @@ class PipelineSchema (object):
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
-            wf = nf_core.launch.Launch(path)
-            wf.get_local_wf()
-            self.schema_filename = os.path.join(wf.local_wf.local_path, 'nextflow_schema.json')
+            pipeline_dir = nf_core.list.get_local_wf(path)
+            self.schema_filename = os.path.join(pipeline_dir, 'nextflow_schema.json')
 
         # Only looking for local paths, overwrite with None to be safe
         else:
@@ -172,6 +170,7 @@ class PipelineSchema (object):
         except AssertionError:
             logging.info("No existing schema found - creating a new one from scratch")
             self.make_skeleton_schema()
+            self.save_schema()
 
         # Load and validate Schema
         try:
@@ -289,19 +288,33 @@ class PipelineSchema (object):
         """
         Build a JSON Schema dictionary for an param interactively
         """
-        p_type = "string"
-        if isinstance(p_val, bool):
+        p_val = p_val.strip('"\'')
+        # p_val is always a string as it is parsed from nextflow config this way
+        try:
+            p_val = float(p_val)
+            if p_val == int(p_val):
+                p_val = int(p_val)
+                p_type = "integer"
+            else:
+                p_type = "number"
+        except ValueError:
+            p_type = "string"
+
+        # NB: Only test "True" for booleans, as it is very common to initialise
+        # an empty param as false when really we expect a string at a later date..
+        if p_val == 'True':
+            p_val = True
             p_type = 'boolean'
-        elif isinstance(p_val, int):
-            # Careful! booleans are a subclass of int
-            p_type = 'integer'
-        elif isinstance(p_val, float):
-            p_type = 'number'
 
         p_schema = {
             "type": p_type,
             "default": p_val
         }
+
+        # Assume that false and empty strings shouldn't be a default
+        if p_val == 'false' or p_val == '':
+            del p_schema['default']
+
         return p_schema
 
     def launch_web_builder(self):

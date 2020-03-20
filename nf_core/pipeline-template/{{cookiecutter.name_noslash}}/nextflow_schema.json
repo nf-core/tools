@@ -28,7 +28,7 @@
             "type": "boolean",
             "description": "Single-end sequencing data",
             "fa_icon": "fas fa-align-center",
-            "default": "False",
+            "default": false,
             "help_text": "If using single-end FastQ files as an input, specify this flag to run the pipeline in single-end mode."
         },
         "name": {
@@ -55,7 +55,8 @@
             "type": "boolean",
             "description": "Send plain-text email instead of HTML",
             "fa_icon": "fas fa-remove-format",
-            "hidden": true
+            "hidden": true,
+            "default": false
         },
         "multiqc_config": {
             "type": "string",
@@ -91,7 +92,8 @@
             "type": "boolean",
             "description": "Do not use coloured log outputs",
             "fa_icon": "fas fa-palette",
-            "hidden": true
+            "hidden": true,
+            "default": false
         },
         "tracedir": {
             "type": "string",
@@ -111,7 +113,8 @@
             "type": "boolean",
             "description": "Do not load the iGenomes reference config",
             "fa_icon": "fas fa-ban",
-            "hidden": true
+            "hidden": true,
+            "default": false
         },
         "Maximum job request limits": {
             "type": "object",
@@ -185,7 +188,8 @@
             "type": "boolean",
             "description": "Display help text",
             "hidden": true,
-            "fa_icon": "fas fa-question-circle"
+            "fa_icon": "fas fa-question-circle",
+            "default": false
         }
     },
     "required": [
