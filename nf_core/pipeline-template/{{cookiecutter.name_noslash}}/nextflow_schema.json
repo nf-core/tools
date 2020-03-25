@@ -28,14 +28,15 @@
             "type": "boolean",
             "description": "Single-end sequencing data",
             "fa_icon": "fas fa-align-center",
-            "default": "False",
+            "default": false,
             "help_text": "If using single-end FastQ files as an input, specify this flag to run the pipeline in single-end mode."
         },
         "name": {
             "type": "string",
             "description": "Workflow name",
             "fa_icon": "fas fa-fingerprint",
-            "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles."
+            "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles.",
+            "hidden": true
         },
         "email": {
             "type": "string",
@@ -55,7 +56,8 @@
             "type": "boolean",
             "description": "Send plain-text email instead of HTML",
             "fa_icon": "fas fa-remove-format",
-            "hidden": true
+            "hidden": true,
+            "default": false
         },
         "multiqc_config": {
             "type": "string",
@@ -91,7 +93,8 @@
             "type": "boolean",
             "description": "Do not use coloured log outputs",
             "fa_icon": "fas fa-palette",
-            "hidden": true
+            "hidden": true,
+            "default": false
         },
         "tracedir": {
             "type": "string",
@@ -111,7 +114,8 @@
             "type": "boolean",
             "description": "Do not load the iGenomes reference config",
             "fa_icon": "fas fa-ban",
-            "hidden": true
+            "hidden": true,
+            "default": false
         },
         "Maximum job request limits": {
             "type": "object",
@@ -185,7 +189,8 @@
             "type": "boolean",
             "description": "Display help text",
             "hidden": true,
-            "fa_icon": "fas fa-question-circle"
+            "fa_icon": "fas fa-question-circle",
+            "default": false
         }
     },
     "required": [

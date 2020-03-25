@@ -95,18 +95,42 @@ def list(keywords, sort, json):
     metavar = "<pipeline name>"
 )
 @click.option(
-    '-p', '--params',
-    type = str,
-    help = "Local parameter settings file in JSON."
+    '-c', '--command-only',
+    is_flag = True,
+    default = False,
+    help = """Set params in the command instead of saving to file.
+    Do not use a -params-file paramaters JSON file,
+    just construct a command with all parameters on the command-line."""
 )
 @click.option(
-    '-d', '--direct',
-    is_flag = True,
-    help = "Uses given values from the parameter file directly."
+    '-p', '--params-in',
+    type = click.Path(exists=True),
+    help = "Input parameters JSON file."
 )
-def launch(pipeline, params, direct):
+@click.option(
+    '-o', '--params-out',
+    type = click.Path(),
+    default = os.path.join(os.getcwd(), 'nf-params.json'),
+    help = "Path to save parameters JSON file to."
+)
+@click.option(
+    '-a', '--save-all',
+    is_flag = True,
+    default = False,
+    help = """Save all parameters, even if default.
+    Instead of just saving values that have been modified from the default,
+    save every possible parameter."""
+)
+@click.option(
+    '-h', '--show-hidden',
+    is_flag = True,
+    default = False,
+    help = """Show hidden parameters.
+    Show all pipeline parameters, even those set as hidden in the pipeline schema."""
+)
+def launch(pipeline, command_only, params_in, params_out, save_all, show_hidden):
     """ Run pipeline, interactive parameter prompts """
-    nf_core.launch.launch_pipeline(pipeline, params, direct)
+    nf_core.launch.launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden)
 
 # nf-core download
 @nf_core_cli.command(help_priority=3)
