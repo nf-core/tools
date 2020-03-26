@@ -963,9 +963,9 @@ class PipelineLint(object):
 
         # Lint the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
-        schema_path = os.path.join(self.path, 'nextflow_schema.json')
+        self.schema_obj.get_schema_from_name(self.path)
         try:
-            self.schema_obj.lint_schema(schema_path)
+            self.schema_obj.lint_schema()
             self.passed.append((14, "Schema lint passed"))
         except AssertionError as e:
             self.failed.append((14, "Schema lint failed: {}".format(e)))
@@ -978,7 +978,8 @@ class PipelineLint(object):
 
         # First, get the top-level config options for the pipeline
         # Schema object already created in the previous test
-        self.schema_obj.get_wf_params(self.path)
+        self.schema_obj.get_schema_from_name(self.path)
+        self.schema_obj.get_wf_params()
         self.schema_obj.no_prompts = True
 
         # Remove any schema params not found in the config
