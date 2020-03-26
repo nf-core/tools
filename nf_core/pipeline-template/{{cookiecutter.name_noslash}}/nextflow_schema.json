@@ -5,195 +5,234 @@
     "description": "{{ cookiecutter.description }}",
     "type": "object",
     "properties": {
-        "reads": {
-            "type": "string",
-            "description": "Input FastQ files",
-            "default": "data/*{1,2}.fastq.gz",
-            "fa_icon": "fas fa-dna",
-            "help_text": "A glob pattern for input FastQ files. Should include at least one asterisk (*). For paired-end data, should contain curly brackets with two patterns differentiating the paired reads. For example: `*_R{1,2}.fastq.gz`"
-        },
-        "outdir": {
-            "type": "string",
-            "description": "Output directory for results",
-            "default": "./results",
-            "fa_icon": "fas fa-folder-open"
-        },
-        "genome": {
-            "type": "string",
-            "description": "Reference genome ID",
-            "fa_icon": "fas fa-book",
-            "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files. For example: `--genome GRCh38`"
-        },
-        "single_end": {
-            "type": "boolean",
-            "description": "Single-end sequencing data",
-            "fa_icon": "fas fa-align-center",
-            "default": false,
-            "help_text": "If using single-end FastQ files as an input, specify this flag to run the pipeline in single-end mode."
-        },
-        "name": {
-            "type": "string",
-            "description": "Workflow name",
-            "fa_icon": "fas fa-fingerprint",
-            "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles.",
-            "hidden": true
-        },
-        "email": {
-            "type": "string",
-            "description": "Email address for completion summary",
-            "fa_icon": "fas fa-envelope",
-            "help_text": "An email address to send a summary email to when the pipeline is completed.",
-            "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
-        },
-        "email_on_fail": {
-            "type": "string",
-            "description": "Email address for completion summary, only when pipeline fails",
-            "fa_icon": "fas fa-exclamation-triangle",
-            "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
-            "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully."
-        },
-        "plaintext_email": {
-            "type": "boolean",
-            "description": "Send plain-text email instead of HTML",
-            "fa_icon": "fas fa-remove-format",
-            "hidden": true,
-            "default": false
-        },
-        "multiqc_config": {
-            "type": "string",
-            "description": "Custom config file to supply to MultiQC",
-            "default": "",
-            "fa_icon": "fas fa-cog",
-            "hidden": true
-        },
-        "max_multiqc_email_size": {
-            "type": "string",
-            "description": "File size limit when attaching MultiQC reports to summary emails",
-            "default": "25 MB",
-            "fa_icon": "fas fa-file-upload",
-            "hidden": true
-        },
-        "publish_dir_mode": {
-            "type": "string",
-            "default": "copy",
-            "hidden": true,
-            "description": "Method used to save pipeline results to output directory",
-            "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See https://www.nextflow.io/docs/latest/process.html#publishdir for details.",
-            "fa_icon": "fas fa-copy",
-            "enum": [
-                "symlink",
-                "rellink",
-                "link",
-                "copy",
-                "copyNoFollow",
-                "mov"
-            ]
-        },
-        "monochrome_logs": {
-            "type": "boolean",
-            "description": "Do not use coloured log outputs",
-            "fa_icon": "fas fa-palette",
-            "hidden": true,
-            "default": false
-        },
-        "tracedir": {
-            "type": "string",
-            "description": "Directory to keep pipeline Nextflow logs and reports",
-            "default": "./results/pipeline_info",
-            "fa_icon": "fas fa-cogs",
-            "hidden": true
-        },
-        "igenomes_base": {
-            "type": "string",
-            "description": "Directory / URL base for iGenomes references",
-            "default": "s3://ngi-igenomes/igenomes/",
-            "fa_icon": "fas fa-cloud-download-alt",
-            "hidden": true
-        },
-        "igenomes_ignore": {
-            "type": "boolean",
-            "description": "Do not load the iGenomes reference config",
-            "fa_icon": "fas fa-ban",
-            "hidden": true,
-            "default": false
-        },
-        "Maximum job request limits": {
+        "Generic options": {
             "type": "object",
-            "description": "Limit the maximum computational requirements that a single job can request",
-            "default": "",
             "properties": {
-                "max_cpus": {
-                    "type": "integer",
-                    "description": "Maximum number of CPUs that can be requested  for any single job",
-                    "default": 16,
-                    "fa_icon": "fas fa-microchip",
-                    "hidden": true
-                },
-                "max_memory": {
+                "reads": {
                     "type": "string",
-                    "description": "Maximum amount of memory that can be requested for any single job",
-                    "default": "128 GB",
-                    "fa_icon": "fas fa-memory",
-                    "hidden": true
+                    "default": "data/*{1,2}.fastq.gz",
+                    "fa_icon": "fas fa-dna",
+                    "description": "Input FastQ files.",
+                    "help_text": "A glob pattern for input FastQ files. Should include at least one asterisk (*). For paired-end data, should contain curly brackets with two patterns differentiating the paired reads e.g. `*_R{1,2}.fastq.gz`"
                 },
-                "max_time": {
-                    "type": "string",
-                    "description": "Maximum amount of time that can be requested for any single job",
-                    "default": "10d",
-                    "fa_icon": "far fa-clock",
-                    "hidden": true
+                "single_end": {
+                    "type": "boolean",
+                    "description": "Specifies that the input is single-end reads.",
+                    "fa_icon": "fas fa-align-center",
+                    "default": false,
+                    "help_text": "By default, the pipeline expects paired-end data. If you have single-end data, specify this parameter on the command line when you launch the pipeline. It is not possible to run a mixture of single-end and paired-end files in one run."
                 }
-            }
+            },
+            "fa_icon": "fas fa-terminal"
         },
-        "Institutional config params": {
+        "Reference genome options": {
             "type": "object",
-            "description": "Params used by nf-core/configs",
-            "default": "",
+            "properties": {
+                "genome": {
+                    "type": "string",
+                    "description": "Name of iGenomes reference.",
+                    "fa_icon": "fas fa-book",
+                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`."
+                },
+                "igenomes_base": {
+                    "type": "string",
+                    "description": "Directory / URL base for iGenomes references.",
+                    "default": "s3://ngi-igenomes/igenomes/",
+                    "fa_icon": "fas fa-cloud-download-alt",
+                    "hidden": true,
+                    "help_text": ""
+                },
+                "igenomes_ignore": {
+                    "type": "boolean",
+                    "description": "Do not load the iGenomes reference config.",
+                    "fa_icon": "fas fa-ban",
+                    "hidden": true,
+                    "default": false,
+                    "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
+                }
+            },
+            "fa_icon": "fas fa-dna"
+        },
+        "Pipeline config options": {
+            "type": "object",
+            "properties": {
+                "multiqc_config": {
+                    "type": "string",
+                    "description": "Custom config file to supply to MultiQC.",
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true,
+                    "help_text": ""
+                }
+            },
+            "fa_icon": "fas fa-cog"
+        },
+        "Institutional config options": {
+            "type": "object",
             "properties": {
                 "custom_config_version": {
                     "type": "string",
-                    "description": "nf-core/configs parameter",
+                    "description": "Git commit id for Institutional configs.",
                     "default": "master",
-                    "hidden": true
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog",
+                    "help_text": ""
                 },
                 "custom_config_base": {
                     "type": "string",
-                    "description": "nf-core/configs parameter",
+                    "description": "Base directory for Institutional configs.",
                     "default": "https://raw.githubusercontent.com/nf-core/configs/master",
-                    "hidden": true
+                    "hidden": true,
+                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell Nextflow where to find them with this parameter.",
+                    "fa_icon": "fas fa-users-cog"
                 },
                 "hostnames": {
                     "type": "string",
-                    "description": "nf-core/configs parameter",
-                    "default": "",
-                    "hidden": true
+                    "description": "Institutional configs hostname.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog",
+                    "help_text": ""
                 },
                 "config_profile_description": {
                     "type": "string",
-                    "description": "nf-core/configs parameter",
-                    "hidden": true
+                    "description": "Institutional config description.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog",
+                    "help_text": ""
                 },
                 "config_profile_contact": {
                     "type": "string",
-                    "description": "nf-core/configs parameter",
-                    "hidden": true
+                    "description": "Institutional config contact information.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog",
+                    "help_text": ""
                 },
                 "config_profile_url": {
                     "type": "string",
-                    "description": "nf-core/configs parameter",
-                    "hidden": true
+                    "description": "Institutional config URL link.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog",
+                    "help_text": ""
                 }
-            }
+            },
+            "fa_icon": "fas fa-university"
         },
-        "help": {
-            "type": "boolean",
-            "description": "Display help text",
-            "hidden": true,
-            "fa_icon": "fas fa-question-circle",
-            "default": false
+        "Max job request options": {
+            "type": "object",
+            "properties": {
+                "max_cpus": {
+                    "type": "integer",
+                    "description": "Maximum number of CPUs that can be requested  for any single job.",
+                    "default": 16,
+                    "fa_icon": "fas fa-microchip",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
+                },
+                "max_memory": {
+                    "type": "string",
+                    "description": "Maximum amount of memory that can be requested for any single job.",
+                    "default": "128.GB",
+                    "fa_icon": "fas fa-memory",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
+                },
+                "max_time": {
+                    "type": "string",
+                    "description": "Maximum amount of time that can be requested for any single job.",
+                    "default": "240.h",
+                    "fa_icon": "far fa-clock",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the time requirement for each process. Should be a string in the format integer-unit e.g. `--max_time '2.h'`"
+                }
+            },
+            "fa_icon": "fab fa-acquisitions-incorporated"
+        },
+        "Pipeline template options": {
+            "type": "object",
+            "properties": {
+                "help": {
+                    "type": "boolean",
+                    "description": "Display help text.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-question-circle",
+                    "default": false
+                },
+                "outdir": {
+                    "type": "string",
+                    "description": "The output directory where the results will be saved.",
+                    "default": "./results",
+                    "fa_icon": "fas fa-folder-open",
+                    "help_text": ""
+                },
+                "publish_dir_mode": {
+                    "type": "string",
+                    "default": "copy",
+                    "hidden": true,
+                    "description": "Method used to save pipeline results to output directory.",
+                    "help_text": "The Nextflow `publishDir` option specifies which intermediate files should be saved to the output directory. This option tells the pipeline what method should be used to move these files. See [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#publishdir) for details.",
+                    "fa_icon": "fas fa-copy",
+                    "enum": [
+                        "symlink",
+                        "rellink",
+                        "link",
+                        "copy",
+                        "copyNoFollow",
+                        "mov"
+                    ]
+                },
+                "name": {
+                    "type": "string",
+                    "description": "Workflow name.",
+                    "fa_icon": "fas fa-fingerprint",
+                    "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles."
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+                },
+                "email_on_fail": {
+                    "type": "string",
+                    "description": "Email address for completion summary, only when pipeline fails.",
+                    "fa_icon": "fas fa-exclamation-triangle",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully."
+                },
+                "plaintext_email": {
+                    "type": "boolean",
+                    "description": "Send plain-text email instead of HTML.",
+                    "fa_icon": "fas fa-remove-format",
+                    "hidden": true,
+                    "default": false,
+                    "help_text": ""
+                },
+                "max_multiqc_email_size": {
+                    "type": "string",
+                    "description": "File size limit when attaching MultiQC reports to summary emails.",
+                    "default": "25.MB",
+                    "fa_icon": "fas fa-file-upload",
+                    "hidden": true,
+                    "help_text": ""
+                },
+                "monochrome_logs": {
+                    "type": "boolean",
+                    "description": "Do not use coloured log outputs.",
+                    "fa_icon": "fas fa-palette",
+                    "hidden": true,
+                    "default": false,
+                    "help_text": ""
+                },
+                "tracedir": {
+                    "type": "string",
+                    "description": "Directory to keep pipeline Nextflow logs and reports.",
+                    "default": "${params.outdir}/pipeline_info",
+                    "fa_icon": "fas fa-cogs",
+                    "hidden": true,
+                    "help_text": ""
+                }
+            },
+            "fa_icon": "fas fa-file-import"
         }
-    },
-    "required": [
-        "reads"
-    ]
+    }
 }
