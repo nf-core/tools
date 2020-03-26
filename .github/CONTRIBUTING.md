@@ -30,7 +30,7 @@ important, as nf-core tool's code documentation is generated out of these automa
 
 In order to test the documentation, you have to install Sphinx on the machine, where the documentation should be generated.
 
-Please follow Sphinx's [installation instruction](http://www.sphinx-doc.org/en/master/usage/installation.html).
+Please follow Sphinx's [installation instruction](https://www.sphinx-doc.org/en/master/usage/installation.html).
 
 Once done, you can run `make clean` and then `make html` in the root directory of `nf-core tools`, where the `Makefile` is located.
 
@@ -54,7 +54,7 @@ python -m pytest .
 ```
 
 ### Lint Tests
-nf-core has a [set of guidelines](http://nf-co.re/guidelines) which all pipelines must adhere to.
+nf-core has a [set of guidelines](https://nf-co.re/guidelines) which all pipelines must adhere to.
 To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
 
 The nf-core/tools repo itself contains the master template for creating new nf-core pipelines.

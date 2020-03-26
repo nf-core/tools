@@ -62,13 +62,13 @@ class Workflows(object):
         self.sort_workflows_by = sort_by
 
     def get_remote_workflows(self):
-        """Retrieves remote workflows from `nf-co.re <http://nf-co.re>`_.
+        """Retrieves remote workflows from `nf-co.re <https://nf-co.re>`_.
 
         Remote workflows are stored in :attr:`self.remote_workflows` list.
         """
         # List all repositories at nf-core
         logging.debug("Fetching list of nf-core workflows")
-        nfcore_url = 'http://nf-co.re/pipelines.json'
+        nfcore_url = 'https://nf-co.re/pipelines.json'
         response = requests.get(nfcore_url, timeout=10)
         if response.status_code == 200:
             repos = response.json()['remote_workflows']

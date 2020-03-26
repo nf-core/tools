@@ -234,7 +234,7 @@ The `README.md` files for a project are very important and must meet some requir
   * Required badge code:
 
     ```markdown
-    [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
+    [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
     ```
 
 ## Error #7 - Pipeline and container version numbers ## {#7}
