@@ -651,7 +651,7 @@ class PipelineLint(object):
 
         # Check that we have a bioconda badge if we have a bioconda environment file
         if 'environment.yml' in self.files:
-            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)'
+            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)'
             if bioconda_badge in content:
                 self.passed.append((6, "README had a bioconda badge"))
             else:
@@ -1017,7 +1017,7 @@ class PipelineLint(object):
             """
             print_results = []
             for eid, msg in test_results:
-                url = click.style("http://nf-co.re/errors#{}".format(eid), fg='blue')
+                url = click.style("https://nf-co.re/errors#{}".format(eid), fg='blue')
                 print_results.append('{} : {}'.format(url, msg))
             return "\n  ".join(print_results)
 

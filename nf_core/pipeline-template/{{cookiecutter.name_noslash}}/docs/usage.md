@@ -105,11 +105,11 @@ They are loaded in sequence, so later profiles can overwrite earlier profiles.
 If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended.
 
 * `docker`
-  * A generic configuration profile to be used with [Docker](http://docker.com/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * A generic configuration profile to be used with [Docker](https://docker.com/)
+  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `singularity`
-  * A generic configuration profile to be used with [Singularity](http://singularity.lbl.gov/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * A generic configuration profile to be used with [Singularity](https://sylabs.io/docs/)
+  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `conda`
   * Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker or Singularity.
   * A generic configuration profile to be used with [Conda](https://conda.io/docs/)

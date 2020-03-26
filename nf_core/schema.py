@@ -146,7 +146,7 @@ class PipelineSchema (object):
         self.schema_from_scratch = True
         config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
         self.schema = {
-            "$schema": "http://json-schema.org/draft-07/schema",
+            "$schema": "https://json-schema.org/draft-07/schema",
             "$id": "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(config['manifest.name']),
             "title": "{} pipeline parameters".format(config['manifest.name']),
             "description": config['manifest.description'],
