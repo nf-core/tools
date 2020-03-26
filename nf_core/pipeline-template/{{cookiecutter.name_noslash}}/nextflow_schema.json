@@ -23,6 +23,9 @@
                     "help_text": "By default, the pipeline expects paired-end data. If you have single-end data, specify this parameter on the command line when you launch the pipeline. It is not possible to run a mixture of single-end and paired-end files in one run."
                 }
             },
+            "required": [
+                "reads"
+            ],
             "fa_icon": "fas fa-terminal"
         },
         "Reference genome options": {
