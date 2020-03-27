@@ -56,19 +56,6 @@
             },
             "fa_icon": "fas fa-dna"
         },
-        "Pipeline config options": {
-            "type": "object",
-            "properties": {
-                "multiqc_config": {
-                    "type": "string",
-                    "description": "Custom config file to supply to MultiQC.",
-                    "fa_icon": "fas fa-cog",
-                    "hidden": true,
-                    "help_text": ""
-                }
-            },
-            "fa_icon": "fas fa-cog"
-        },
         "Institutional config options": {
             "type": "object",
             "properties": {
@@ -224,6 +211,13 @@
                     "fa_icon": "fas fa-palette",
                     "hidden": true,
                     "default": false,
+                    "help_text": ""
+                },
+                "multiqc_config": {
+                    "type": "string",
+                    "description": "Custom config file to supply to MultiQC.",
+                    "fa_icon": "fas fa-cog",
+                    "hidden": true,
                     "help_text": ""
                 },
                 "tracedir": {
