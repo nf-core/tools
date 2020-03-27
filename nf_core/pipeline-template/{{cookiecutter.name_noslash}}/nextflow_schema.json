@@ -5,7 +5,7 @@
     "description": "{{ cookiecutter.description }}",
     "type": "object",
     "properties": {
-        "Input data options": {
+        "Input/output options": {
             "type": "object",
             "properties": {
                 "reads": {
@@ -21,6 +21,20 @@
                     "fa_icon": "fas fa-align-center",
                     "default": false,
                     "help_text": "By default, the pipeline expects paired-end data. If you have single-end data, specify this parameter on the command line when you launch the pipeline. It is not possible to run a mixture of single-end and paired-end files in one run."
+                },
+                "outdir": {
+                    "type": "string",
+                    "description": "The output directory where the results will be saved.",
+                    "default": "./results",
+                    "fa_icon": "fas fa-folder-open",
+                    "help_text": ""
+                },
+                "email": {
+                    "type": "string",
+                    "description": "Email address for completion summary.",
+                    "fa_icon": "fas fa-envelope",
+                    "help_text": "An email address to send a summary email to when the pipeline is completed.",
+                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 }
             },
             "required": [
@@ -146,13 +160,6 @@
                     "fa_icon": "fas fa-question-circle",
                     "default": false
                 },
-                "outdir": {
-                    "type": "string",
-                    "description": "The output directory where the results will be saved.",
-                    "default": "./results",
-                    "fa_icon": "fas fa-folder-open",
-                    "help_text": ""
-                },
                 "publish_dir_mode": {
                     "type": "string",
                     "default": "copy",
@@ -173,20 +180,15 @@
                     "type": "string",
                     "description": "Workflow name.",
                     "fa_icon": "fas fa-fingerprint",
+                    "hidden": true,
                     "help_text": "A custom name for the pipeline run. Unlike the core nextflow `-name` option with one hyphen this parameter can be reused multiple times, for example if using `-resume`. Passed through to steps such as MultiQC and used for things like report filenames and titles."
-                },
-                "email": {
-                    "type": "string",
-                    "description": "Email address for completion summary.",
-                    "fa_icon": "fas fa-envelope",
-                    "help_text": "An email address to send a summary email to when the pipeline is completed.",
-                    "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 },
                 "email_on_fail": {
                     "type": "string",
                     "description": "Email address for completion summary, only when pipeline fails.",
                     "fa_icon": "fas fa-exclamation-triangle",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
+                    "hidden": true,
                     "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully."
                 },
                 "plaintext_email": {
