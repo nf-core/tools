@@ -150,7 +150,7 @@
             },
             "fa_icon": "fab fa-acquisitions-incorporated"
         },
-        "Pipeline template options": {
+        "Generic options": {
             "type": "object",
             "properties": {
                 "help": {
