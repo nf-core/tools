@@ -13,6 +13,7 @@
 ### Template
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Fixed rendering of images in output documentation [#391](https://github.com/nf-core/tools/issues/391)
 * Removed the requirement for R in the conda environment
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
