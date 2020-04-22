@@ -13,6 +13,7 @@
 * Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
 * Adapted linting docs to the new PR branch tests.
 * Added test for template `{{ cookiecutter.var }}` placeholders
+* Fix failure when providing version along with build id for Conda packages 
 
 ### Other
 
