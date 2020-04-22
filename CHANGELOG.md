@@ -6,6 +6,7 @@
 
 * Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
 * Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
+* Prefixed `python` to `scrape_software_versions.py` command to avoid script permission errors
 
 ### Linting
 
