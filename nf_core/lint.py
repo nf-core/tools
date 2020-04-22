@@ -730,7 +730,7 @@ class PipelineLint(object):
             if isinstance(dep, str):
                 # Check that each dependency has a version number
                 try:
-                    assert dep.count('=') == 1
+                    assert dep.count('=') in [1,2]
                 except AssertionError:
                     self.failed.append((8, "Conda dependency did not have pinned version number: {}".format(dep)))
                 else:
