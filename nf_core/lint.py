@@ -737,7 +737,7 @@ class PipelineLint(object):
                     self.passed.append((8, "Conda dependency had pinned version number: {}".format(dep)))
 
                     try:
-                        depname, depver = dep.split('=', 1)
+                        depname, depver = dep.split('=')[:2]
                         self.check_anaconda_package(dep)
                     except ValueError:
                         pass
