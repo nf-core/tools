@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 75
+MAX_PASS_CHECKS = 76
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -305,7 +305,7 @@ class TestLint(unittest.TestCase):
         lint_obj.pipeline_name = 'tools'
         lint_obj.config['manifest.version'] = '0.4'
         lint_obj.check_conda_env_yaml()
-        expectations = {"failed": 0, "warned": 4, "passed": 4}
+        expectations = {"failed": 0, "warned": 4, "passed": 5}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_env_fail(self):
