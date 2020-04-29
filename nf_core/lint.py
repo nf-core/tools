@@ -655,7 +655,7 @@ class PipelineLint(object):
             if bioconda_badge in content:
                 self.passed.append((6, "README had a bioconda badge"))
             else:
-                self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
+                self.warned.append((6, "Found a bioconda environment.yml file but no badge in the README"))
 
 
     def check_version_consistency(self):
