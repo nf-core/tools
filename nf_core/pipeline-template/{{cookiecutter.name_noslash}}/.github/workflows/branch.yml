@@ -13,7 +13,7 @@ jobs:
       - name: Check PRs
         if: github.repository == '{{cookiecutter.name}}'
         run: |
-          { [[ $(git remote get-url origin) == *{{cookiecutter.name}} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+          { [[ {% raw %}${{github.event.pull_request.head.repo.full_name}}{% endraw %} == {{cookiecutter.name}} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
 
 {% raw %}
       # If the above check failed, post a comment on the PR explaining the failure

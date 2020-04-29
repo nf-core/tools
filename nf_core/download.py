@@ -98,7 +98,7 @@ class DownloadWorkflow(object):
                 logging.info("Downloading {} singularity container{}".format(len(self.containers), 's' if len(self.containers) > 1 else ''))
                 for container in self.containers:
                     try:
-                        # Download from Dockerhub in all cases
+                        # Download from Docker Hub in all cases
                         self.pull_singularity_image(container)
                     except RuntimeWarning as r:
                         # Raise exception if this is not possible
@@ -269,7 +269,7 @@ class DownloadWorkflow(object):
         out_path = os.path.abspath(os.path.join(self.outdir, 'singularity-images', out_name))
         address = 'docker://{}'.format(container.replace('docker://', ''))
         singularity_command = ["singularity", "pull", "--name", out_path, address]
-        logging.info("Building singularity image from dockerhub: {}".format(address))
+        logging.info("Building singularity image from Docker Hub: {}".format(address))
         logging.debug("Singularity command: {}".format(' '.join(singularity_command)))
 
         # Try to use singularity to pull image
