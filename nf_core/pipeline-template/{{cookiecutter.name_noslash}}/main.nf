@@ -349,11 +349,11 @@ workflow.onComplete {
             log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $email_address (sendmail)"
         } catch (all) {
             // Catch failures and try with plaintext
+            def mail_cmd = [ 'mail', '-s', subject, email_address ]
             if ( mqc_report.size() <= params.max_multiqc_email_size.toBytes() ) {
-              [ 'mail', '-s', subject, email_address, '-A', mqc_report ].execute() << email_txt 
-            } else {
-              [ 'mail', '-s', subject, email_address ].execute() << email_txt 
+              mail_cmd += [ '-A', mqc_report ]
             }
+            mail_cmd.execute() << email_txt 
             log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $email_address (mail)"
         }
     }
