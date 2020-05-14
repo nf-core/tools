@@ -20,6 +20,7 @@
 * CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
 * Describe alternative installation method via conda with `conda env create`
 * Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
+* nf-core/tools version number now printed underneath header artwork
 
 ## v1.9
 
