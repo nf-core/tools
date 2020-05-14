@@ -463,4 +463,5 @@ if __name__ == '__main__':
     click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'), err=True)
     click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'), err=True)
     click.secho("                                          `._,._,'\n", fg='green', err=True)
+    click.secho("    nf-core/tools version {}\n".format(nf_core.__version__), fg='black', err=True)
     nf_core_cli()
