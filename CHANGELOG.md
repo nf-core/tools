@@ -2,6 +2,10 @@
 
 ## v1.10dev
 
+### Tools helper code
+
+* Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
+
 ### Template
 
 * Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
