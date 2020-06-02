@@ -25,6 +25,7 @@ setup(
         'click',
         'GitPython',
         'jsonschema',
+        'PyInquirer',
         'pyyaml',
         'requests',
         'requests_cache',

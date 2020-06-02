@@ -2,15 +2,34 @@
 
 ## v1.10dev
 
+### Tools helper code
+
+* Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
+
+### Template
+
+* Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
+* Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
+* Add ability to attach MultiQC reports to completion emails when using `mail`
+* Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
+
 ### Linting
 
 * Refactored PR branch tests to be a little clearer.
 * Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
 * Adapted linting docs to the new PR branch tests.
+* Failure for missing the readme bioconda badge is now a warn, in case this badge is not relevant
+* Added test for template `{{ cookiecutter.var }}` placeholders
+* Fix failure when providing version along with build id for Conda packages
 
 ### Other
 
 * Added CI test to check for PRs against `master` in tools repo
+* CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
+* Describe alternative installation method via conda with `conda env create`
+* Move some of the issue and PR templates into HTML `<!-- comments -->` so that they don't show in issues / PRs
+* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
+* nf-core/tools version number now printed underneath header artwork
 
 ## v1.9
 
@@ -25,6 +44,7 @@
 ### Template
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Fixed rendering of images in output documentation [#391](https://github.com/nf-core/tools/issues/391)
 * Removed the requirement for R in the conda environment
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file

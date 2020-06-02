@@ -9,13 +9,14 @@ import logging
 import io
 import os
 import re
-import shlex
+import subprocess
 
 import click
 import requests
 import yaml
 
 import nf_core.utils
+import nf_core.schema
 
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
@@ -129,6 +130,7 @@ class PipelineLint(object):
         self.dockerfile = []
         self.conda_config = {}
         self.conda_package_info = {}
+        self.schema_obj = None
         self.passed = []
         self.warned = []
         self.failed = []
@@ -173,7 +175,10 @@ class PipelineLint(object):
             'check_conda_env_yaml',
             'check_conda_dockerfile',
             'check_pipeline_todos',
-            'check_pipeline_name'
+            'check_pipeline_name',
+            'check_cookiecutter_strings',
+            'check_schema_lint',
+            'check_schema_params'
         ]
         if release_mode:
             self.release_mode = True
@@ -247,7 +252,8 @@ class PipelineLint(object):
 
         # List of strings. Dails / warns if any of the strings exist.
         files_fail_ifexists = [
-            'Singularity'
+            'Singularity',
+            'parameters.settings.json'
         ]
         files_warn_ifexists = [
             '.travis.yml'
@@ -520,7 +526,8 @@ class PipelineLint(object):
             for step in steps:
                 has_name = step.get('name', '').strip() == 'Check PRs'
                 has_if = step.get('if', '').strip() == "github.repository == 'nf-core/{}'".format(self.pipeline_name.lower())
-                has_run = step.get('run', '').strip() == '{{ [[ $(git remote get-url origin) == *nf-core/{} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; }} || [[ $GITHUB_HEAD_REF == "patch" ]]'.format(self.pipeline_name.lower())
+                # Don't use .format() as the squiggly brackets get ridiculous
+                has_run = step.get('run', '').strip() == '{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace('PIPELINENAME', self.pipeline_name.lower())
                 if has_name and has_if and has_run:
                     self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
                     break
@@ -644,11 +651,11 @@ class PipelineLint(object):
 
         # Check that we have a bioconda badge if we have a bioconda environment file
         if 'environment.yml' in self.files:
-            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)'
+            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)'
             if bioconda_badge in content:
                 self.passed.append((6, "README had a bioconda badge"))
             else:
-                self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
+                self.warned.append((6, "Found a bioconda environment.yml file but no badge in the README"))
 
 
     def check_version_consistency(self):
@@ -723,14 +730,14 @@ class PipelineLint(object):
             if isinstance(dep, str):
                 # Check that each dependency has a version number
                 try:
-                    assert dep.count('=') == 1
+                    assert dep.count('=') in [1,2]
                 except AssertionError:
                     self.failed.append((8, "Conda dependency did not have pinned version number: {}".format(dep)))
                 else:
                     self.passed.append((8, "Conda dependency had pinned version number: {}".format(dep)))
 
                     try:
-                        depname, depver = dep.split('=', 1)
+                        depname, depver = dep.split('=')[:2]
                         self.check_anaconda_package(dep)
                     except ValueError:
                         pass
@@ -906,13 +913,91 @@ class PipelineLint(object):
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
 
-        if self.pipeline_name.islower() and self.pipeline_name.isalpha():
+        if self.pipeline_name.islower() and self.pipeline_name.isalnum():
             self.passed.append((12, "Name adheres to nf-core convention"))
         if not self.pipeline_name.islower():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains uppercase letters"))
-        if not self.pipeline_name.isalpha():
-            self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphabetical characters"))
+        if not self.pipeline_name.isalnum():
+            self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphanumeric characters"))
 
+    def check_cookiecutter_strings(self):
+        """
+        Look for the string 'cookiecutter' in all pipeline files.
+        Finding it probably means that there has been a copy+paste error from the template.
+        """
+        try:
+            # First, try to get the list of files using git
+            git_ls_files = subprocess.check_output(['git','ls-files'], cwd=self.path).splitlines()
+            list_of_files = [os.path.join(self.path, s.decode("utf-8")) for s in git_ls_files]
+        except subprocess.CalledProcessError as e:
+            # Failed, so probably not initialised as a git repository - just a list of all files
+            logging.debug("Couldn't call 'git ls-files': {}".format(e))
+            list_of_files = []
+            for subdir, dirs, files in os.walk(self.path):
+                for file in files:
+                    list_of_files.append(os.path.join(subdir, file))
+
+        # Loop through files, searching for string
+        num_matches = 0
+        num_files = 0
+        for fn in list_of_files:
+            num_files += 1
+            with io.open(fn, 'r', encoding='latin1') as fh:
+                lnum = 0
+                for l in fh:
+                    lnum += 1
+                    cc_matches = re.findall(r"{{\s*cookiecutter[^}]*}}", l)
+                    if len(cc_matches) > 0:
+                        for cc_match in cc_matches:
+                            self.failed.append((13, "Found a cookiecutter template string in '{}' L{}: {}".format(fn, lnum, cc_match)))
+                            num_matches += 1
+        if num_matches == 0:
+            self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
+
+
+    def check_schema_lint(self):
+        """ Lint the pipeline JSON schema file """
+        # Suppress log messages
+        logger = logging.getLogger()
+        logger.disabled = True
+
+        # Lint the schema
+        self.schema_obj = nf_core.schema.PipelineSchema()
+        self.schema_obj.get_schema_from_name(self.path)
+        try:
+            self.schema_obj.lint_schema()
+            self.passed.append((14, "Schema lint passed"))
+        except AssertionError as e:
+            self.failed.append((14, "Schema lint failed: {}".format(e)))
+
+        # Reset logger
+        logger.disabled = False
+
+    def check_schema_params(self):
+        """ Check that the schema describes all flat params in the pipeline """
+
+        # First, get the top-level config options for the pipeline
+        # Schema object already created in the previous test
+        self.schema_obj.get_schema_from_name(self.path)
+        self.schema_obj.get_wf_params()
+        self.schema_obj.no_prompts = True
+
+        # Remove any schema params not found in the config
+        removed_params = self.schema_obj.remove_schema_notfound_configs()
+
+        # Add schema params found in the config but not the schema
+        added_params = self.schema_obj.add_schema_found_configs()
+
+        if len(removed_params) > 0:
+            for param in removed_params:
+                self.warned.append((15, "Schema param '{}' not found from nextflow config".format(param)))
+
+        if len(added_params) > 0:
+            for param in added_params:
+                self.failed.append((15, "Param '{}' from `nextflow config` not found in nextflow_schema.json".format(param)))
+
+        if len(removed_params) == 0 and len(added_params) == 0:
+            self.passed.append((15, "Schema matched params returned from nextflow config"))
 
 
     def print_results(self):
@@ -932,7 +1017,7 @@ class PipelineLint(object):
             """
             print_results = []
             for eid, msg in test_results:
-                url = click.style("http://nf-co.re/errors#{}".format(eid), fg='blue')
+                url = click.style("https://nf-co.re/errors#{}".format(eid), fg='blue')
                 print_results.append('{} : {}'.format(url, msg))
             return "\n  ".join(print_results)
 
