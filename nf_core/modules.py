@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Code to handle DSL2 module imports from nf-core/modules
+Code to handle DSL2 module imports from a GitHub repository
 """
 
 from __future__ import print_function
@@ -12,13 +12,25 @@ import requests
 import sys
 import tempfile
 
+class ModulesRepo(object):
+    """
+    An object to store details about the repository being used for modules.
+
+    Used by the `nf-core modules` top-level command with -r and -b flags,
+    so that this can be used in the same way by all sucommands.
+    """
+
+    def __init__(self, repo='nf-core/modules', branch='master'):
+        self.name = repo
+        self.branch = branch
 
 class PipelineModules(object):
 
-    def __init__(self):
+    def __init__(self, repo_obj):
         """
         Initialise the PipelineModules object
         """
+        self.repo = repo_obj
         self.pipeline_dir = os.getcwd()
         self.modules_file_tree = {}
         self.modules_current_hash = None
@@ -27,25 +39,23 @@ class PipelineModules(object):
 
     def list_modules(self):
         """
-        Get available tool names from GitHub tree for nf-core/modules
+        Get available tool names from GitHub tree for repo
         and print as list to stdout
         """
-        mods = PipelineModules()
-        mods.get_modules_file_tree()
-        logging.info("Tools available from nf-core/modules:\n")
+        self.get_modules_file_tree()
+        logging.info("Tools available from {}:\n".format(self.repo.name))
         # Print results to stdout
-        print("\n".join(mods.modules_avail_tool_names))
+        print("\n".join(self.modules_avail_tool_names))
 
     def install(self, tool):
-        mods = PipelineModules()
-        mods.get_modules_file_tree()
+        self.get_modules_file_tree()
 
         # Check that the supplied name is an available tool
-        if tool not in mods.modules_avail_tool_names:
+        if tool not in self.modules_avail_tool_names:
             logging.error("Tool '{}' not found in list of available modules.".format(tool))
             logging.info("Use the command 'nf-core modules list' to view available tools")
             return
-        logging.debug("Installing tool '{}' at modules hash {}".format(tool, mods.modules_current_hash))
+        logging.debug("Installing tool '{}' at modules hash {}".format(tool, self.modules_current_hash))
 
         # Check that we don't already have a folder for this tool
         tool_dir = os.path.join(self.pipeline_dir, 'modules', 'tools', tool)
@@ -55,15 +65,14 @@ class PipelineModules(object):
             return
 
         # Download tool files
-        files = mods.get_tool_file_urls(tool)
+        files = self.get_tool_file_urls(tool)
         logging.debug("Fetching tool files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             dl_filename = os.path.join(self.pipeline_dir, 'modules', filename)
             self.download_gh_file(dl_filename, api_url)
 
     def update(self, tool):
-        mods = PipelineModules()
-        mods.get_modules_file_tree()
+        self.get_modules_file_tree()
 
     def remove(self, tool):
         pass
@@ -77,15 +86,16 @@ class PipelineModules(object):
 
     def get_modules_file_tree(self):
         """
-        Fetch the file list from nf-core/modules, using the GitHub API
+        Fetch the file list from the repo, using the GitHub API
 
         Sets self.modules_file_tree
              self.modules_current_hash
              self.modules_avail_tool_names
         """
-        r = requests.get("https://api.github.com/repos/nf-core/modules/git/trees/master?recursive=1")
+        api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.repo.name, self.repo.branch)
+        r = requests.get(api_url)
         if r.status_code != 200:
-            raise SystemError("Could not fetch nf-core/modules tree: {}".format(r.status_code))
+            raise SystemError("Could not fetch {} tree: {}\n{}".format(self.repo.name, r.status_code, api_url))
 
         result = r.json()
         assert result['truncated'] == False
@@ -99,7 +109,7 @@ class PipelineModules(object):
     def get_tool_file_urls(self, tool):
         """Fetch list of URLs for a specific tool
 
-        Takes the name of a tool and iterates over the GitHub nf-core/modules file tree.
+        Takes the name of a tool and iterates over the GitHub repo file tree.
         Loops over items that are prefixed with the path 'tools/<tool_name>' and ignores
         anything that's not a blob.
 
@@ -142,7 +152,7 @@ class PipelineModules(object):
         # Call the GitHub API
         r = requests.get(api_url)
         if r.status_code != 200:
-            raise SystemError("Could not fetch nf-core/modules file: {}\n {}".format(r.status_code, api_url))
+            raise SystemError("Could not fetch {} file: {}\n {}".format(self.repo.name, r.status_code, api_url))
         result = r.json()
         file_contents = base64.b64decode(result['content'])
 
