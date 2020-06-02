@@ -43,9 +43,13 @@ class PipelineModules(object):
         and print as list to stdout
         """
         self.get_modules_file_tree()
-        logging.info("Tools available from {}:\n".format(self.repo.name))
-        # Print results to stdout
-        print("\n".join(self.modules_avail_tool_names))
+
+        if len(self.modules_avail_tool_names) > 0:
+            logging.info("Tools available from {} ({}):\n".format(self.repo.name, self.repo.branch))
+            # Print results to stdout
+            print("\n".join(self.modules_avail_tool_names))
+        else:
+            logging.info("No available tools found in {} ({}):\n".format(self.repo.name, self.repo.branch))
 
     def install(self, tool):
         self.get_modules_file_tree()
@@ -72,15 +76,19 @@ class PipelineModules(object):
             self.download_gh_file(dl_filename, api_url)
 
     def update(self, tool):
-        self.get_modules_file_tree()
+        logging.error("This command is not yet implemented")
+        pass
 
     def remove(self, tool):
+        logging.error("This command is not yet implemented")
         pass
 
     def check_modules(self):
+        logging.error("This command is not yet implemented")
         pass
 
     def fix_modules(self):
+        logging.error("This command is not yet implemented")
         pass
 
 
@@ -94,8 +102,11 @@ class PipelineModules(object):
         """
         api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.repo.name, self.repo.branch)
         r = requests.get(api_url)
-        if r.status_code != 200:
-            raise SystemError("Could not fetch {} tree: {}\n{}".format(self.repo.name, r.status_code, api_url))
+        if r.status_code == 404:
+            logging.error("Repository / branch not found: {} ({})\n{}".format(self.repo.name, self.repo.branch, api_url))
+            sys.exit(1)
+        elif r.status_code != 200:
+            raise SystemError("Could not fetch {} ({}) tree: {}\n{}".format(self.repo.name, self.repo.branch, r.status_code, api_url))
 
         result = r.json()
         assert result['truncated'] == False

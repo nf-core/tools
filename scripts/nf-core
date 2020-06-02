@@ -462,7 +462,7 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 @click.option(
     '-r', '--repository',
     type = str,
-    default = 'nf-core',
+    default = 'nf-core/modules',
     help = 'GitHub repository name.'
 )
 @click.option(
