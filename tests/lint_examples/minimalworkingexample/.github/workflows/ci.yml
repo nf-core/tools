@@ -35,13 +35,13 @@ jobs:
 
       - name: Build new docker image
         if: env.GIT_DIFF
-        run: docker build --no-cache . -t nfcore/tools:dev
+        run: docker build --no-cache . -t nfcore/tools:0.4
 
       - name: Pull docker image
         if: ${{ !env.GIT_DIFF }}
         run: |
           docker pull nfcore/tools:dev
-          docker tag nfcore/tools:dev nfcore/tools:dev
+          docker tag nfcore/tools:dev nfcore/tools:0.4
 
       - name: Install Nextflow
         run: |
@@ -49,9 +49,6 @@ jobs:
           sudo mv nextflow /usr/local/bin/
 
       - name: Run pipeline with test data
-        # TODO nf-core: You can customise CI pipeline run tests as required
-        # For example: adding multiple test runs with different parameters
-        # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker
 
