@@ -544,19 +544,36 @@ class PipelineLint(object):
             with open(fn, 'r') as fh:
                 ciwf = yaml.safe_load(fh)
 
-            # Check that the action is turned on for push and pull requests
+            # Check that the action is turned on for the correct events
             try:
-                assert('push' in ciwf[True])
-                assert('pull_request' in ciwf[True])
+                expected = {
+                  'push': { 'branches': { [ 'dev' ] } },
+                  'pull_request': {},
+                  'release': { 'types': { ['published'] } }
+                }
+                # NB: YAML dict key 'on' is evaluated to a Python dict key True
+                assert(ciwf[True] == expected)
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions CI workflow must be triggered on PR and push: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions CI workflow is not triggered on expected GitHub Actions events: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub Actions CI workflow is triggered on PR and push: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions CI workflow is triggered on expected GitHub Actions events: '{}'".format(fn)))
 
             # Check that we're pulling the right docker image and tagging it properly
             if self.config.get('process.container', ''):
                 docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
                 docker_withtag = self.config.get('process.container', '').strip('"\'')
+
+                # docker build
+                docker_build_cmd = 'docker build --no-cache . -t {}'.format(docker_withtag)
+                try:
+                    steps = ciwf['jobs']['test']['steps']
+                    assert(any([docker_pull_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                except (AssertionError, KeyError, TypeError):
+                    self.failed.append((5, "CI is not building the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
+                else:
+                    self.passed.append((5, "CI is building the correct docker image: {}".format(docker_pull_cmd)))
+
+                # docker pull
                 docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
@@ -566,6 +583,7 @@ class PipelineLint(object):
                 else:
                     self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
+                # docker tag
                 docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, docker_withtag)
                 try:
                     steps = ciwf['jobs']['test']['steps']

@@ -142,22 +142,25 @@ There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `bran
 This test will fail if the following requirements are not met in these files:
 
 1. `ci.yml`: Contains all the commands required to test the pipeline
-    * Must be turned on for `push` and `pull_request`:
+    * Must be triggered on the following events:
 
       ```yaml
-      on: [push, pull_request]
+      on:
+        push:
+          branches:
+            - dev
+        pull_request:
+        release:
+          types: [published]
       ```
 
-    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:
+    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in the test matrix:
 
       ```yaml
-      jobs:
-        test:
-          runs-on: ubuntu-18.04
-          strategy:
-            matrix:
-              # Nextflow versions: check pipeline minimum and current latest
-              nxf_ver: ['19.10.0', '']
+      strategy:
+        matrix:
+          # Nextflow versions: check pipeline minimum and current latest
+          nxf_ver: ['19.10.0', '']
       ```
 
     * The `Docker` container for the pipeline must be tagged appropriately for:
@@ -165,14 +168,15 @@ This test will fail if the following requirements are not met in these files:
         * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
 
           ```yaml
-          jobs:
-            test:
-              runs-on: ubuntu-18.04
-              steps:
-                - name: Pull image
-                    run: |
-                    docker pull nfcore/<pipeline_name>:dev
-                    docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
+          - name: Build new docker image
+            if: env.GIT_DIFF
+            run: docker build --no-cache . -t nfcore/<pipeline_name>:1.0.0
+
+          - name: Pull docker image
+            if: ${{ !env.GIT_DIFF }}
+            run: |
+              docker pull nfcore/<pipeline_name>:dev
+              docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
           ```
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
