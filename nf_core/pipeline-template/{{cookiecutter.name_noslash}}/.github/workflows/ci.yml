@@ -70,19 +70,19 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build new docker image
-        run: docker build --no-cache . -t {{ cookiecutter.name_docker }}:dev
+        run: docker build --no-cache . -t {{ cookiecutter.name_docker }}:latest
 
       - name: Push Docker image to DockerHub (dev)
         if: {% raw %}${{ github.event == 'push' }}{% endraw %}
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker tag {{ cookiecutter.name_docker }}:latest {{ cookiecutter.name_docker }}:dev
           docker push {{ cookiecutter.name_docker }}:dev
 
       - name: Push Docker image to DockerHub (release)
         if: {% raw %}${{ github.event == 'release' }}{% endraw %}
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:{% raw %}${{ github.ref }}{% endraw %}
-          docker push {{ cookiecutter.name_docker }}:{% raw %}${{ github.ref }}{% endraw %}
-          docker tag {{ cookiecutter.name_docker }}:{% raw %}${{ github.ref }}{% endraw %} {{ cookiecutter.name_docker }}:latest
           docker push {{ cookiecutter.name_docker }}:latest
+          docker tag {{ cookiecutter.name_docker }}:latest {{ cookiecutter.name_docker }}:{% raw %}${{ github.ref }}{% endraw %}
+          docker push {{ cookiecutter.name_docker }}:{% raw %}${{ github.ref }}{% endraw %}
