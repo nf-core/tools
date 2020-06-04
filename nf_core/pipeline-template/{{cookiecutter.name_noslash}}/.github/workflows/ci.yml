@@ -13,7 +13,7 @@ jobs:
   test:
     name: Run workflow tests
     # Only run on push if this is the nf-core dev branch (merged PRs)
-    if: {% raw %}${{{% endraw %} github.event != 'push' || (github.event == 'push' && github.repository == '{{ cookiecutter.name }}') {% raw %}}}{% endraw %}
+    if: {% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ cookiecutter.name }}') {% raw %}}}{% endraw %}
     runs-on: ubuntu-latest
     env:
       NXF_VER: {% raw %}${{ matrix.nxf_ver }}{% endraw %}
@@ -61,7 +61,7 @@ jobs:
     # Only run if the tests passed
     needs: test
     # Only run for the nf-core repo, for releases and merged PRs
-    if: {% raw %}${{{% endraw %} github.repository == '{{ cookiecutter.name }}' && (github.event == 'release' || github.event == 'push') {% raw %}}}{% endraw %}
+    if: {% raw %}${{{% endraw %} github.repository == '{{ cookiecutter.name }}' && (github.event_name == 'release' || github.event_name == 'push') {% raw %}}}{% endraw %}
     env:
       DOCKERHUB_USERNAME: {% raw %}${{ secrets.DOCKERHUB_USERNAME }}{% endraw %}
       DOCKERHUB_PASS: {% raw %}${{ secrets.DOCKERHUB_PASS }}{% endraw %}
@@ -73,14 +73,14 @@ jobs:
         run: docker build --no-cache . -t {{ cookiecutter.name_docker }}:latest
 
       - name: Push Docker image to DockerHub (dev)
-        if: {% raw %}${{ github.event == 'push' }}{% endraw %}
+        if: {% raw %}${{ github.event_name == 'push' }}{% endraw %}
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker tag {{ cookiecutter.name_docker }}:latest {{ cookiecutter.name_docker }}:dev
           docker push {{ cookiecutter.name_docker }}:dev
 
       - name: Push Docker image to DockerHub (release)
-        if: {% raw %}${{ github.event == 'release' }}{% endraw %}
+        if: {% raw %}${{ github.event_name == 'release' }}{% endraw %}
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push {{ cookiecutter.name_docker }}:latest
