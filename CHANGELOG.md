@@ -21,6 +21,7 @@
 * Failure for missing the readme bioconda badge is now a warn, in case this badge is not relevant
 * Added test for template `{{ cookiecutter.var }}` placeholders
 * Fix failure when providing version along with build id for Conda packages
+* New `--json` option to print lint results to a JSON file
 
 ### Other
 

@@ -5,8 +5,10 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
+import datetime
 import logging
 import io
+import json
 import os
 import re
 import subprocess
@@ -26,7 +28,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def run_linting(pipeline_dir, release_mode=False):
+def run_linting(pipeline_dir, release_mode=False, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -53,6 +55,10 @@ def run_linting(pipeline_dir, release_mode=False):
 
     # Print the results
     lint_obj.print_results()
+
+    # Save results to JSON file
+    if json_fn is not None:
+        lint_obj.save_json_results(json_fn)
 
     # Exit code
     if len(lint_obj.failed) > 0:
@@ -1028,9 +1034,34 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), format_result(self.failed)))
 
+    def save_json_results(self, json_fn):
+
+        logging.info("Writing lint results to {}".format(json_fn))
+        now = datetime.datetime.now()
+        results = {
+            'nf_core_tools_version': nf_core.__version__,
+            'date_run': now.strftime("%Y-%m-%d %H:%M:%S"),
+            'tests_pass': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
+            'tests_warned': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
+            'tests_failed': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
+            'num_tests_pass': len(self.passed),
+            'num_tests_warned': len(self.warned),
+            'num_tests_failed': len(self.failed),
+            'has_tests_pass': len(self.passed) > 0,
+            'has_tests_warned': len(self.warned) > 0,
+            'has_tests_failed': len(self.failed) > 0,
+        }
+        with open(json_fn, 'w') as fh:
+            json.dump(results, fh, indent=4)
+
 
     def _bold_list_items(self, files):
         if not isinstance(files, list):
             files = [files]
         bfiles = [click.style(f, bold=True) for f in files]
         return ' or '.join(bfiles)
+
+    def _strip_ansi_codes(self, string):
+        # https://stackoverflow.com/a/14693789/713980
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub('', string)
