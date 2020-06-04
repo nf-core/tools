@@ -875,7 +875,7 @@ class PipelineLint(object):
         expected_strings = [
             "FROM nfcore/base:{}".format('dev' if 'dev' in nf_core.__version__ else nf_core.__version__),
             'COPY environment.yml /',
-            'RUN conda env create -f /environment.yml && conda clean -a',
+            'RUN conda env create --quiet -f /environment.yml && conda clean -a',
             'RUN conda env export --name {} > {}.yml'.format(self.conda_config['name'], self.conda_config['name']),
             'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
         ]
