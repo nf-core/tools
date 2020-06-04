@@ -547,9 +547,9 @@ class PipelineLint(object):
             # Check that the action is turned on for the correct events
             try:
                 expected = {
-                  'push': { 'branches': { [ 'dev' ] } },
-                  'pull_request': {},
-                  'release': { 'types': { ['published'] } }
+                    'push': { 'branches': ['dev'] },
+                    'pull_request': None,
+                    'release': { 'types': ['published'] }
                 }
                 # NB: YAML dict key 'on' is evaluated to a Python dict key True
                 assert(ciwf[True] == expected)
@@ -567,11 +567,11 @@ class PipelineLint(object):
                 docker_build_cmd = 'docker build --no-cache . -t {}'.format(docker_withtag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
-                    assert(any([docker_pull_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                    assert(any([docker_build_cmd in step['run'] for step in steps if 'run' in step.keys()]))
                 except (AssertionError, KeyError, TypeError):
-                    self.failed.append((5, "CI is not building the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
+                    self.failed.append((5, "CI is not building the correct docker image. Should be:\n    '{}'".format(docker_build_cmd)))
                 else:
-                    self.passed.append((5, "CI is building the correct docker image: {}".format(docker_pull_cmd)))
+                    self.passed.append((5, "CI is building the correct docker image: {}".format(docker_build_cmd)))
 
                 # docker pull
                 docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
