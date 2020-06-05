@@ -607,6 +607,8 @@ INFO: Updating version in Dockerfile
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
+To export the lint results to a JSON file, use `--json [filename]`
+
 ## Sync a pipeline with the template
 
 Over time, the main nf-core pipeline template is updated. To keep all nf-core pipelines up to date,
