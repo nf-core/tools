@@ -4,6 +4,7 @@
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
 [![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
 [![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
+[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23tools-4A154B?style=plastic&logo=slack)](https://nfcore.slack.com/channels/tools)
 
 A python package with helper tools for the nf-core community.
 
