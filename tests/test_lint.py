@@ -11,12 +11,15 @@ Provide example wokflow directory contents like:
         |     |...
         |--test_lint.py
 """
-import os
-import yaml
-import requests
-import pytest
-import unittest
+import json
 import mock
+import os
+import pytest
+import requests
+import tempfile
+import unittest
+import yaml
+
 import nf_core.lint
 
 
@@ -474,3 +477,44 @@ class TestLint(unittest.TestCase):
         critical_lint_obj.check_pipeline_name()
         expectations = {"failed": 0, "warned": 1, "passed": 0}
         self.assess_lint_status(critical_lint_obj, **expectations)
+
+    def test_json_output(self):
+        """
+        Test creation of a JSON file with lint results
+
+        Expected JSON output:
+        {
+            "nf_core_tools_version": "1.10.dev0",
+            "date_run": "2020-06-05 10:56:42",
+            "tests_pass": [
+                [ 1, "This test passed"],
+                [ 2, "This test also passed"]
+            ],
+            "tests_warned": [
+                [ 2, "This test gave a warning"]
+            ],
+            "tests_failed": [],
+            "num_tests_pass": 2,
+            "num_tests_warned": 1,
+            "num_tests_failed": 0,
+            "has_tests_pass": true,
+            "has_tests_warned": true,
+            "has_tests_failed": false
+        }
+        """
+        # Don't run testing, just fake some testing results
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.passed.append((1, "This test passed"))
+        lint_obj.passed.append((2, "This test also passed"))
+        lint_obj.warned.append((2, "This test gave a warning"))
+        tmpdir = tempfile.mkdtemp()
+        json_fn = os.path.join(tmpdir, 'lint_results.json')
+        lint_obj.save_json_results(json_fn)
+        with open(json_fn, 'r') as fh:
+            saved_json = json.load(fh)
+        assert(saved_json['num_tests_pass'] == 2)
+        assert(saved_json['num_tests_warned'] == 1)
+        assert(saved_json['num_tests_failed'] == 0)
+        assert(saved_json['has_tests_pass'])
+        assert(saved_json['has_tests_warned'])
+        assert(not saved_json['has_tests_failed'])

@@ -1049,7 +1049,7 @@ class PipelineLint(object):
             'num_tests_failed': len(self.failed),
             'has_tests_pass': len(self.passed) > 0,
             'has_tests_warned': len(self.warned) > 0,
-            'has_tests_failed': len(self.failed) > 0,
+            'has_tests_failed': len(self.failed) > 0
         }
         with open(json_fn, 'w') as fh:
             json.dump(results, fh, indent=4)
