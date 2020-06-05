@@ -1068,17 +1068,13 @@ class PipelineLint(object):
 
         now = datetime.datetime.now()
         markdown = textwrap.dedent("""
-        ### `nf-core lint` overall result: {}
-
-        <h3>
+        #### `nf-core lint` overall result: {}
 
         ```diff
         +| ✅ {:2d} tests passed       |+
         !| ❗ {:2d} tests had warnings |!
         -| ❌ {:2d} tests failed       |-
         ```
-
-        </h3>
 
         <details>
 
