@@ -59,7 +59,10 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
 
     # Save results to Markdown file
     if md_fn is not None:
-        lint_obj.save_results_md(md_fn)
+        logging.info("Writing lint results to {}".format(md_fn))
+        markdown = lint_obj.get_results_md()
+        with open(md_fn, 'w') as fh:
+            fh.write(markdown)
 
     # Save results to JSON file
     if json_fn is not None:
@@ -1039,11 +1042,10 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), format_result(self.failed)))
 
-    def save_results_md(self, md_fn):
+    def get_results_md(self):
         """
         Function to create a markdown file suitable for posting in a GitHub comment
         """
-        logging.info("Writing lint results to {}".format(md_fn))
         overall_result = 'Passed :white_check_mark:'
         if len(self.failed) > 0:
             overall_result = 'Failed :x:'
@@ -1096,8 +1098,7 @@ class PipelineLint(object):
             now.strftime("%Y-%m-%d %H:%M:%S")
         )
 
-        with open(md_fn, 'w') as fh:
-            fh.write(markdown)
+        return markdown
 
     def save_json_results(self, json_fn):
         """
@@ -1117,7 +1118,8 @@ class PipelineLint(object):
             'num_tests_failed': len(self.failed),
             'has_tests_pass': len(self.passed) > 0,
             'has_tests_warned': len(self.warned) > 0,
-            'has_tests_failed': len(self.failed) > 0
+            'has_tests_failed': len(self.failed) > 0,
+            'markdown_result': self.get_results_md()
         }
         with open(json_fn, 'w') as fh:
             json.dump(results, fh, indent=4)
