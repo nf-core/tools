@@ -12,6 +12,7 @@
 * Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
 * Add ability to attach MultiQC reports to completion emails when using `mail`
 * Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
+* New Slack channel badge in pipeline readme
 
 ### Linting
 
