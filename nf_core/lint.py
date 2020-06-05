@@ -12,6 +12,7 @@ import json
 import os
 import re
 import subprocess
+import textwrap
 
 import click
 import requests
@@ -28,7 +29,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def run_linting(pipeline_dir, release_mode=False, json_fn=None):
+def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -55,6 +56,10 @@ def run_linting(pipeline_dir, release_mode=False, json_fn=None):
 
     # Print the results
     lint_obj.print_results()
+
+    # Save results to Markdown file
+    if md_fn is not None:
+        lint_obj.save_results_md(md_fn)
 
     # Save results to JSON file
     if json_fn is not None:
@@ -1018,7 +1023,7 @@ class PipelineLint(object):
         # Helper function to format test links nicely
         def format_result(test_results):
             """
-            Given an error message ID and the message text, return a nicely formatted
+            Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
             print_results = []
@@ -1034,7 +1039,74 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), format_result(self.failed)))
 
+    def save_results_md(self, md_fn):
+        """
+        Function to create a markdown file suitable for posting in a GitHub comment
+        """
+        logging.info("Writing lint results to {}".format(md_fn))
+        overall_result = 'Passed :white_check_mark:'
+        if len(self.failed) > 0:
+            overall_result = 'Failed :x:'
+
+        test_failures = ''
+        if len(self.failed) > 0:
+            test_failures = "### :x: Test failures:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.failed])
+            )
+
+        test_warnings = ''
+        if len(self.warned) > 0:
+            test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.warned])
+            )
+
+        test_passes = ''
+        if len(self.passed) > 0:
+            test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.passed])
+            )
+
+        now = datetime.datetime.now()
+        markdown = textwrap.dedent("""
+        ### `nf-core lint` overall result: {}
+
+        <h3>
+
+        ```diff
+        +| ✅ {:2d} tests passed       |+
+        !| ❗ {:2d} tests had warnings |!
+        -| ❌ {:2d} tests failed       |-
+        ```
+
+        </h3>
+
+        <details>
+
+        {}{}{}### Run details
+
+        * nf-core/tools version `{}`
+        * Linting run at {}
+
+        </details>
+        """).format(
+            overall_result,
+            len(self.passed),
+            len(self.warned),
+            len(self.failed),
+            test_failures,
+            test_warnings,
+            test_passes,
+            nf_core.__version__,
+            now.strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        with open(md_fn, 'w') as fh:
+            fh.write(markdown)
+
     def save_json_results(self, json_fn):
+        """
+        Function to dump lint results to a JSON file for downstream use
+        """
 
         logging.info("Writing lint results to {}".format(json_fn))
         now = datetime.datetime.now()
@@ -1061,7 +1133,7 @@ class PipelineLint(object):
         bfiles = [click.style(f, bold=True) for f in files]
         return ' or '.join(bfiles)
 
-    def _strip_ansi_codes(self, string):
+    def _strip_ansi_codes(self, string, replace_with=''):
         # https://stackoverflow.com/a/14693789/713980
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
-        return ansi_escape.sub('', string)
+        return ansi_escape.sub(replace_with, string)
