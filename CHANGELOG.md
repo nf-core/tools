@@ -13,6 +13,7 @@
 * Add ability to attach MultiQC reports to completion emails when using `mail`
 * Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
 * Build Docker image using GitHub Actions, then push to Docker Hub (instead of building on Docker Hub)
+* New Slack channel badge in pipeline readme
 
 ### Linting
 

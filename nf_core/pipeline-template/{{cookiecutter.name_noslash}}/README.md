@@ -8,6 +8,7 @@
 
 [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
 [![Docker](https://img.shields.io/docker/automated/{{ cookiecutter.name_docker }}.svg)](https://hub.docker.com/r/{{ cookiecutter.name_docker }})
+![[Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23{{ cookiecutter.short_name }}-4A154B?logo=slack)](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }})
 
 ## Introduction
 
