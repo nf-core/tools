@@ -6,11 +6,13 @@ the nf-core community guidelines.
 """
 
 import datetime
+import git
 import logging
 import io
 import json
 import os
 import re
+import requests
 import subprocess
 import textwrap
 
@@ -67,6 +69,9 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
     # Save results to JSON file
     if json_fn is not None:
         lint_obj.save_json_results(json_fn)
+
+    # Try to post comment to a GitHub PR
+    lint_obj.github_comment()
 
     # Exit code
     if len(lint_obj.failed) > 0:
@@ -137,6 +142,7 @@ class PipelineLint(object):
         """ Initialise linting object """
         self.release_mode = False
         self.path = path
+        self.git_sha = None
         self.files = []
         self.config = {}
         self.pipeline_name = None
@@ -148,6 +154,16 @@ class PipelineLint(object):
         self.passed = []
         self.warned = []
         self.failed = []
+
+        try:
+            repo = git.Repo(self.path)
+            self.git_sha = repo.head.object.hexsha
+        except:
+            pass
+
+        # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
+        if 'GITHUB_PR_COMMIT' in os.environ:
+            self.git_sha = os.environ['GITHUB_PR_COMMIT']
 
     def lint_pipeline(self, release_mode=False):
         """Main linting function.
@@ -1069,8 +1085,11 @@ class PipelineLint(object):
             )
 
         now = datetime.datetime.now()
+
         markdown = textwrap.dedent("""
         #### `nf-core lint` overall result: {}
+
+        {}
 
         ```diff
         +| ✅ {:2d} tests passed       |+
@@ -1080,14 +1099,15 @@ class PipelineLint(object):
 
         <details>
 
-        {}{}{}### Run details
+        {}{}{}### Run details:
 
-        * nf-core/tools version `{}`
-        * Linting run at {}
+        * nf-core/tools version {}
+        * Run at `{}`
 
         </details>
         """).format(
             overall_result,
+            'Posted for pipeline commit {}'.format(self.git_sha[:7]) if self.git_sha is not None else '',
             len(self.passed),
             len(self.warned),
             len(self.failed),
@@ -1123,6 +1143,45 @@ class PipelineLint(object):
         }
         with open(json_fn, 'w') as fh:
             json.dump(results, fh, indent=4)
+
+    def github_comment(self):
+        """
+        If we are running in a GitHub PR, try to post results as a comment
+        """
+        if os.environ.get('GITHUB_TOKEN', '') != '' and os.environ.get('GITHUB_COMMENTS_URL', '') != '':
+            try:
+                headers = { 'Authorization': 'token {}'.format(os.environ['GITHUB_TOKEN']) }
+                # Get existing comments - GET
+                get_r = requests.get(
+                    url = os.environ['GITHUB_COMMENTS_URL'],
+                    headers = headers
+                )
+                if get_r.status_code == 200:
+
+                    # Look for an existing comment to update
+                    update_url = False
+                    for comment in get_r.json():
+                        if comment['user']['login'] == 'github-actions[bot]' and comment['body'].startswith("\n#### `nf-core lint` overall result"):
+                            # Update existing comment - PATCH
+                            logging.info("Updating GitHub comment")
+                            update_r = requests.patch(
+                                url = comment['url'],
+                                data = json.dumps({ 'body': self.get_results_md().replace('Posted', '**Updated**') }),
+                                headers = headers
+                            )
+                            return
+
+                    # Create new comment - POST
+                    if len(self.warned) > 0 or len(self.failed) > 0:
+                        logging.info("Posting GitHub comment")
+                        post_r = requests.post(
+                            url = os.environ['GITHUB_COMMENTS_URL'],
+                            data = json.dumps({ 'body': self.get_results_md() }),
+                            headers = headers
+                        )
+
+            except Exception as e:
+                logging.warning("Could not post GitHub comment: {}\n{}".format(os.environ['GITHUB_COMMENTS_URL'], e))
 
 
     def _bold_list_items(self, files):
