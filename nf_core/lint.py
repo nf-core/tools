@@ -162,7 +162,7 @@ class PipelineLint(object):
             pass
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
-        if 'GITHUB_PR_COMMIT' in os.environ:
+        if os.environ.get('GITHUB_PR_COMMIT', '') != '':
             self.git_sha = os.environ['GITHUB_PR_COMMIT']
 
     def lint_pipeline(self, release_mode=False):
@@ -1062,10 +1062,12 @@ class PipelineLint(object):
         """
         Function to create a markdown file suitable for posting in a GitHub comment
         """
+        # Overall header
         overall_result = 'Passed :white_check_mark:'
         if len(self.failed) > 0:
             overall_result = 'Failed :x:'
 
+        # List of tests for details
         test_failures = ''
         if len(self.failed) > 0:
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
