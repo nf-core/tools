@@ -1,6 +1,6 @@
-name: nf-core AWS tests
+name: nf-core AWS full size tests
 # This workflow is triggered on push to the master branch.
-# It runs the -profile 'test' on AWS batch
+# It runs the -profile 'test_full' on AWS batch
 
 on:
   push:
@@ -33,4 +33,4 @@ jobs:
             --job-name nf-core-{{ cookiecutter.name_noslash }} \
             --job-queue 'default-8b3836e0-5eda-11ea-96e5-0a2c3f6a2a32' \
             --job-definition nextflow \
-            --container-overrides '{"command": ["{{ cookiecutter.name }}", "-r '"${GITHUB_SHA}"' -profile test --outdir s3://nf-core-awsmegatests/{{ cookiecutter.name_noslash }}/results-'"${GITHUB_SHA}"' -w s3://nf-core-awsmegatests/{{ cookiecutter.name_noslash }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'
+            --container-overrides '{"command": ["{{ cookiecutter.name }}", "-r '"${GITHUB_SHA}"' -profile test_full --outdir s3://nf-core-awsmegatests/{{ cookiecutter.name_noslash }}/results-'"${GITHUB_SHA}"' -w s3://nf-core-awsmegatests/{{ cookiecutter.name_noslash }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'
