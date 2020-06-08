@@ -524,16 +524,19 @@ class TestLint(unittest.TestCase):
         """ Helper function to emulate requests responses from the web """
 
         class MockResponse:
-            def __init__(self, data, status_code):
+            def __init__(self, url):
                 self.status_code = 200
+                self.url = url
             def json(self):
-                if kwargs['url'] == 'existing_comment':
+                if self.url == 'existing_comment':
                     return [{
                         'user': { 'login': 'github-actions[bot]' },
                         'body': "\n#### `nf-core lint` overall result"
                     }]
                 else:
                     return []
+
+        return MockResponse(kwargs['url'])
 
     @mock.patch('requests.get', side_effect=mock_gh_get_comments)
     @mock.patch('requests.post')
