@@ -531,7 +531,8 @@ class TestLint(unittest.TestCase):
                 if self.url == 'existing_comment':
                     return [{
                         'user': { 'login': 'github-actions[bot]' },
-                        'body': "\n#### `nf-core lint` overall result"
+                        'body': "\n#### `nf-core lint` overall result",
+                        'url': 'https://github.com'
                     }]
                 else:
                     return []
@@ -546,6 +547,7 @@ class TestLint(unittest.TestCase):
         """
         os.environ['GITHUB_COMMENTS_URL'] = 'https://github.com'
         os.environ['GITHUB_TOKEN'] = 'testing'
+        os.environ['GITHUB_PR_COMMIT'] = 'abcdefg'
         # Don't run testing, just fake some testing results
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.failed.append((1, "This test failed"))
