@@ -11,12 +11,15 @@ Provide example wokflow directory contents like:
         |     |...
         |--test_lint.py
 """
-import os
-import yaml
-import requests
-import pytest
-import unittest
+import json
 import mock
+import os
+import pytest
+import requests
+import tempfile
+import unittest
+import yaml
+
 import nf_core.lint
 
 
@@ -474,3 +477,95 @@ class TestLint(unittest.TestCase):
         critical_lint_obj.check_pipeline_name()
         expectations = {"failed": 0, "warned": 1, "passed": 0}
         self.assess_lint_status(critical_lint_obj, **expectations)
+
+    def test_json_output(self):
+        """
+        Test creation of a JSON file with lint results
+
+        Expected JSON output:
+        {
+            "nf_core_tools_version": "1.10.dev0",
+            "date_run": "2020-06-05 10:56:42",
+            "tests_pass": [
+                [ 1, "This test passed"],
+                [ 2, "This test also passed"]
+            ],
+            "tests_warned": [
+                [ 2, "This test gave a warning"]
+            ],
+            "tests_failed": [],
+            "num_tests_pass": 2,
+            "num_tests_warned": 1,
+            "num_tests_failed": 0,
+            "has_tests_pass": true,
+            "has_tests_warned": true,
+            "has_tests_failed": false
+        }
+        """
+        # Don't run testing, just fake some testing results
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.passed.append((1, "This test passed"))
+        lint_obj.passed.append((2, "This test also passed"))
+        lint_obj.warned.append((2, "This test gave a warning"))
+        tmpdir = tempfile.mkdtemp()
+        json_fn = os.path.join(tmpdir, 'lint_results.json')
+        lint_obj.save_json_results(json_fn)
+        with open(json_fn, 'r') as fh:
+            saved_json = json.load(fh)
+        assert(saved_json['num_tests_pass'] == 2)
+        assert(saved_json['num_tests_warned'] == 1)
+        assert(saved_json['num_tests_failed'] == 0)
+        assert(saved_json['has_tests_pass'])
+        assert(saved_json['has_tests_warned'])
+        assert(not saved_json['has_tests_failed'])
+
+
+    def mock_gh_get_comments(**kwargs):
+        """ Helper function to emulate requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, url):
+                self.status_code = 200
+                self.url = url
+            def json(self):
+                if self.url == 'existing_comment':
+                    return [{
+                        'user': { 'login': 'github-actions[bot]' },
+                        'body': "\n#### `nf-core lint` overall result",
+                        'url': 'https://github.com'
+                    }]
+                else:
+                    return []
+
+        return MockResponse(kwargs['url'])
+
+    @mock.patch('requests.get', side_effect=mock_gh_get_comments)
+    @mock.patch('requests.post')
+    def test_gh_comment_post(self, mock_get, mock_post):
+        """
+        Test updating a Github comment with the lint results
+        """
+        os.environ['GITHUB_COMMENTS_URL'] = 'https://github.com'
+        os.environ['GITHUB_TOKEN'] = 'testing'
+        os.environ['GITHUB_PR_COMMIT'] = 'abcdefg'
+        # Don't run testing, just fake some testing results
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.failed.append((1, "This test failed"))
+        lint_obj.passed.append((2, "This test also passed"))
+        lint_obj.warned.append((2, "This test gave a warning"))
+        lint_obj.github_comment()
+
+    @mock.patch('requests.get', side_effect=mock_gh_get_comments)
+    @mock.patch('requests.post')
+    def test_gh_comment_update(self, mock_get, mock_post):
+        """
+        Test updating a Github comment with the lint results
+        """
+        os.environ['GITHUB_COMMENTS_URL'] = 'existing_comment'
+        os.environ['GITHUB_TOKEN'] = 'testing'
+        # Don't run testing, just fake some testing results
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.failed.append((1, "This test failed"))
+        lint_obj.passed.append((2, "This test also passed"))
+        lint_obj.warned.append((2, "This test gave a warning"))
+        lint_obj.github_comment()
