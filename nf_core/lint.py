@@ -644,6 +644,64 @@ class PipelineLint(object):
             else:
                 self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
 
+    def check_actions_awstests(self):
+        """Checks the GitHub Actions awstests is valid.
+
+        Makes sure it is triggered only on ``push`` to ``master``. 
+        """
+        fn = os.path.join(self.path, '.github', 'workflows', 'awstests.yml')
+        if os.path.isfile(fn):
+            with open(fn, 'r') as fh:
+                wf = yaml.safe_load(fh)
+            
+            # Check that the action is only turned on for push
+            try:
+                assert('push' in wf[True])
+                assert('pull_request' not in wf[True])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub Actions AWS test should be triggered on push and not PRs: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub Actions AWS test is triggered on push and not PRs: '{}'".format(fn)))
+
+            # Check that the action is only turned on for push to master
+            try:
+                assert('master' in wf[True]['push']['branches'])
+                assert('dev' not in wf[True]['push']['branches'])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub Actions AWS test should be triggered only on push to master: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: '{}'".format(fn)))
+            
+    def check_actions_awsfulltests(self):
+        """Checks the GitHub Actions awsfulltests is valid.
+
+        Makes sure it is triggered only on ``release``.
+        """
+        fn = os.path.join(self.path, '.github', 'workflows', 'awsfulltests.yml')
+        if os.path.isfile(fn):
+            with open(fn, 'r') as fh:
+                wf = yaml.safe_load(fh)
+
+            aws_profile = '-profile test '
+
+            # Check that the action is only turned on for published releases
+            try:
+                assert('release' in wf[True])
+                assert('published' in wf[True]['release'])
+                assert('push' not in wf[True])
+                assert('pull_request' not in wf[True])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub Actions AWS full test should be triggered only on published release: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub Actions AWS full test is triggered only on published release: '{}'".format(fn)))
+
+            # Warn if -profile test is still not -profile test_full
+            try:
+                steps = wf['jobs']['run-awstest']['steps']
+                assert(any([aws_profile in step['run'] for step in steps if 'run' in step.keys()]))
+            except (AssertionError, KeyError, TypeError):
+                self.warned.append((5, "GitHub Actions AWS full test should test full datasets: '{}'".format(fn)))
+
     def check_readme(self):
         """Checks the repository README file for errors.
 

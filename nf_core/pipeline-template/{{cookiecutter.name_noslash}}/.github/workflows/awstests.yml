@@ -23,6 +23,9 @@ jobs:
       - name: Install awscli
         run: conda install -c conda-forge awscli
       - name: Start AWS batch job
+        # TODO nf-core: You can customise CI pipeline run tests as required
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
         env:
           AWS_ACCESS_KEY_ID: {% raw %}${{ secrets.AWSTEST_KEY_ID }}{% endraw %}
           AWS_SECRET_ACCESS_KEY: {% raw %}${{ secrets.AWSTEST_KEY_SECRET }}{% endraw %}
