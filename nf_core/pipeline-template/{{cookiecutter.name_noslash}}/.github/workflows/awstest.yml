@@ -1,0 +1,39 @@
+name: nf-core AWS test
+# This workflow is triggered on push to the master branch.
+# It runs the -profile 'test' on AWS batch
+
+on:
+  push:
+    branches:
+      - master
+  release:
+    types: [published]
+
+jobs:
+  run-awstest:
+    name: Run AWS tests
+    if: github.repository == '{{ cookiecutter.name }}'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Miniconda
+        uses: goanpeca/setup-miniconda@v1.0.2
+        with:
+          auto-update-conda: true
+          python-version: 3.7
+      - name: Install awscli
+        run: conda install -c conda-forge awscli
+      - name: Start AWS batch job
+        # TODO nf-core: You can customise CI pipeline run tests as required
+        # For example: adding multiple test runs with different parameters
+        # Remember that you can parallelise this by using strategy.matrix
+        env:
+          AWS_ACCESS_KEY_ID: {% raw %}${{ secrets.AWSTEST_KEY_ID }}{% endraw %}
+          AWS_SECRET_ACCESS_KEY: {% raw %}${{ secrets.AWSTEST_KEY_SECRET }}{% endraw %}
+          TOWER_ACCESS_TOKEN: {% raw %}${{ secrets.AWSTEST_TOWER_TOKEN }}{% endraw %}
+        run: |
+          aws batch submit-job \
+            --region eu-west-1 \
+            --job-name nf-core-{{ cookiecutter.name_noslash }} \
+            --job-queue 'default-8b3836e0-5eda-11ea-96e5-0a2c3f6a2a32' \
+            --job-definition nextflow \
+            --container-overrides '{"command": ["{{ cookiecutter.name }}", "-r '"${GITHUB_SHA}"' -profile test --outdir s3://nf-core-awsmegatests/{{ cookiecutter.name_noslash }}/results-'"${GITHUB_SHA}"' -w s3://nf-core-awsmegatests/{{ cookiecutter.name_noslash }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'

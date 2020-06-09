@@ -1,0 +1,33 @@
+name: nf-core AWS full size tests
+# This workflow is triggered on push to the master branch.
+# It runs the -profile 'test_full' on AWS batch
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  run-awstest:
+    name: Run AWS tests
+    if: github.repository == 'nf-core/tools'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup Miniconda
+        uses: goanpeca/setup-miniconda@v1.0.2
+        with:
+          auto-update-conda: true
+          python-version: 3.7
+      - name: Install awscli
+        run: conda install -c conda-forge awscli
+      - name: Start AWS batch job
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWSTEST_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWSTEST_KEY_SECRET }}
+          TOWER_ACCESS_TOKEN: ${{ secrets.AWSTEST_TOWER_TOKEN }}
+        run: |
+          aws batch submit-job \
+            --region eu-west-1 \
+            --job-name nf-core-{{ cookiecutter.name_noslash }} \
+            --job-queue 'default-8b3836e0-5eda-11ea-96e5-0a2c3f6a2a32' \
+            --job-definition nextflow \
+            --container-overrides '{"command": ["nf-core/tools", "-r '"${GITHUB_SHA}"' -profile test_full --outdir s3://nf-core-awsmegatests/tools/results-'"${GITHUB_SHA}"' -w s3://nf-core-awsmegatests/tools/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'

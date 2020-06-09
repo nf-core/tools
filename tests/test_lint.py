@@ -38,7 +38,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 77
+MAX_PASS_CHECKS = 83
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -95,7 +95,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 5, "warned": 2, "passed": 10}
+        expectations = {"failed": 5, "warned": 2, "passed": 12}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -190,6 +190,34 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_actions_lint()
         expectations = {"failed": 3, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+    
+    def test_actions_wf_awstest_pass(self):
+        """Tests that linting for GitHub Actions AWS test wf works for a good example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.check_actions_awstest()
+        expectations = {"failed": 0, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+    
+    def test_actions_wf_awstest_fail(self):
+        """Tests that linting for GitHub Actions AWS test wf fails for a bad example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.check_actions_awstest()
+        expectations = {"failed": 2, "warned": 0, "passed": 0}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_actions_wf_awsfulltest_pass(self):
+        """Tests that linting for GitHub Actions AWS full test wf works for a good example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.check_actions_awsfulltest()
+        expectations = {"failed": 0, "warned": 0, "passed": 2}
+        self.assess_lint_status(lint_obj, **expectations)
+
+    def test_actions_wf_awsfulltest_fail(self):
+        """Tests that linting for GitHub Actions AWS full test wf fails for a bad example"""
+        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.check_actions_awsfulltest()
+        expectations = {"failed": 1, "warned": 1, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_wrong_license_examples_with_failed(self):
