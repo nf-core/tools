@@ -24,10 +24,13 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWSTEST_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWSTEST_KEY_SECRET }}
           TOWER_ACCESS_TOKEN: ${{ secrets.AWSTEST_TOWER_TOKEN }}
+          AWS_JOB_DEFINITION: {% raw %}${{ secrets.AWS_JOB_DEFINITION }}{% endraw %}
+          AWS_JOB_QUEUE: {% raw %}${{ secrets.AWS_JOB_QUEUE }}{% endraw %}
+          AWS_S3_BUCKET: {% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}
         run: |
           aws batch submit-job \
             --region eu-west-1 \
             --job-name nf-core-tools \
-            --job-queue 'default-8b3836e0-5eda-11ea-96e5-0a2c3f6a2a32' \
-            --job-definition nextflow \
+            --job-queue $AWS_JOB_QUEUE \
+            --job-definition $AWS_JOB_DEFINITION \
             --container-overrides '{"command": ["nf-core/tools", "-r '"${GITHUB_SHA}"' -profile test_full --outdir s3://nf-core-awsmegatests/tools/results-'"${GITHUB_SHA}"' -w s3://nf-core-awsmegatests/tools/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'

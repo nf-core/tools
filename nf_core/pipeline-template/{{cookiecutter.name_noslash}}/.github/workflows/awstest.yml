@@ -28,10 +28,13 @@ jobs:
           AWS_ACCESS_KEY_ID: {% raw %}${{ secrets.AWSTEST_KEY_ID }}{% endraw %}
           AWS_SECRET_ACCESS_KEY: {% raw %}${{ secrets.AWSTEST_KEY_SECRET }}{% endraw %}
           TOWER_ACCESS_TOKEN: {% raw %}${{ secrets.AWSTEST_TOWER_TOKEN }}{% endraw %}
+          AWS_JOB_DEFINITION: {% raw %}${{ secrets.AWS_JOB_DEFINITION }}{% endraw %}
+          AWS_JOB_QUEUE: {% raw %}${{ secrets.AWS_JOB_QUEUE }}{% endraw %}
+          AWS_S3_BUCKET: {% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}
         run: |
-          aws batch submit-job \
-            --region eu-west-1 \
-            --job-name nf-core-{{ cookiecutter.short_name }} \
-            --job-queue 'default-8b3836e0-5eda-11ea-96e5-0a2c3f6a2a32' \
-            --job-definition nextflow \
-            --container-overrides '{"command": ["{{ cookiecutter.name }}", "-r '"${GITHUB_SHA}"' -profile test --outdir s3://nf-core-awsmegatests/{{ cookiecutter.short_name }}/results-'"${GITHUB_SHA}"' -w s3://nf-core-awsmegatests/{{ cookiecutter.short_name }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'
+        aws batch submit-job \
+        --region eu-west-1 \
+        --job-name nf-core-{{ cookiecutter.short_name }} \
+        --job-queue $AWS_JOB_QUEUE \
+        --job-definition $AWS_JOB_DEFINITION \
+        --container-overrides '{"command": ["{{ cookiecutter.name }}", "-r '"${GITHUB_SHA}"' -profile test --outdir s3://'"${AWS_S3_BUCKET}"'/{{ cookiecutter.short_name }}/results-'"${GITHUB_SHA}"' -w s3://'"${AWS_S3_BUCKET}"'/{{ cookiecutter.short_name }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'{{ cookiecutter.short_name }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'
