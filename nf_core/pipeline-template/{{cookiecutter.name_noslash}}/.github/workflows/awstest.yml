@@ -32,9 +32,9 @@ jobs:
           AWS_JOB_QUEUE: {% raw %}${{ secrets.AWS_JOB_QUEUE }}{% endraw %}
           AWS_S3_BUCKET: {% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}
         run: |
-        aws batch submit-job \
-        --region eu-west-1 \
-        --job-name nf-core-{{ cookiecutter.short_name }} \
-        --job-queue $AWS_JOB_QUEUE \
-        --job-definition $AWS_JOB_DEFINITION \
-        --container-overrides '{"command": ["{{ cookiecutter.name }}", "-r '"${GITHUB_SHA}"' -profile test --outdir s3://'"${AWS_S3_BUCKET}"'/{{ cookiecutter.short_name }}/results-'"${GITHUB_SHA}"' -w s3://'"${AWS_S3_BUCKET}"'/{{ cookiecutter.short_name }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'{{ cookiecutter.short_name }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'
+          aws batch submit-job \
+          --region eu-west-1 \
+          --job-name nf-core-{{ cookiecutter.short_name }} \
+          --job-queue $AWS_JOB_QUEUE \
+          --job-definition $AWS_JOB_DEFINITION \
+          --container-overrides '{"command": ["{{ cookiecutter.name }}", "-r '"${GITHUB_SHA}"' -profile test --outdir s3://'"${AWS_S3_BUCKET}"'/{{ cookiecutter.short_name }}/results-'"${GITHUB_SHA}"' -w s3://'"${AWS_S3_BUCKET}"'/{{ cookiecutter.short_name }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'{{ cookiecutter.short_name }}/work-'"${GITHUB_SHA}"' -with-tower"], "environment": [{"name": "TOWER_ACCESS_TOKEN", "value": "'"$TOWER_ACCESS_TOKEN"'"}]}'

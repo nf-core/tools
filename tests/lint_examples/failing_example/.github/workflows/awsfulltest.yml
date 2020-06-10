@@ -25,7 +25,6 @@ jobs:
         # Add full size test data (but still relatively small datasets for few samples) 
         # on the `test_full.config` test runs with only one set of parameters
         # Then specify `-profile test_full` instead of `-profile test` on the AWS batch command
-
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWSTEST_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWSTEST_KEY_SECRET }}
