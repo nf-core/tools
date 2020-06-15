@@ -24,13 +24,13 @@ jobs:
         # Add full size test data (but still relatively small datasets for few samples) 
         # on the `test_full.config` test runs with only one set of parameters
         # Then specify `-profile test_full` instead of `-profile test` on the AWS batch command
-        env:
-          AWS_ACCESS_KEY_ID: {% raw %}${{ secrets.AWSTEST_KEY_ID }}{% endraw %}
-          AWS_SECRET_ACCESS_KEY: {% raw %}${{ secrets.AWSTEST_KEY_SECRET }}{% endraw %}
-          TOWER_ACCESS_TOKEN: {% raw %}${{ secrets.AWSTEST_TOWER_TOKEN }}{% endraw %}
-          AWS_JOB_DEFINITION: {% raw %}${{ secrets.AWS_JOB_DEFINITION }}{% endraw %}
-          AWS_JOB_QUEUE: {% raw %}${{ secrets.AWS_JOB_QUEUE }}{% endraw %}
-          AWS_S3_BUCKET: {% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}
+        {% raw %}env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWSTEST_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWSTEST_KEY_SECRET }}
+          TOWER_ACCESS_TOKEN: ${{ secrets.AWSTEST_TOWER_TOKEN }}
+          AWS_JOB_DEFINITION: ${{ secrets.AWS_JOB_DEFINITION }}
+          AWS_JOB_QUEUE: ${{ secrets.AWS_JOB_QUEUE }}
+          AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}{% endraw %}
         run: |
           aws batch submit-job \
             --region eu-west-1 \
