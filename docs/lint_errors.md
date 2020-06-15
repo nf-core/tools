@@ -228,16 +228,15 @@ This test will fail if the following requirements are not met in these files:
 ### GitHub Actions AWS full tests
 
 Additionally, we provide the possibility of testing the pipeline on full size datasets on AWS.
-This should ensure that the pipeline runs as expected on AWS
-and provide a resource estimation.
-The GitHub Actions workflow is: `awsfulltests.yml`, and it can be found in the `.github/workflows/` directory.
+This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
+The GitHub Actions workflow is: `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
 This workflow incurrs higher AWS costs, therefore it should only be triggered on `release`.
 For tests on full data prior to release, the Launch option of Nextflow tower can be employed.
 
-`awsfulltests.yml`: Triggers full sized tests run on AWS batch after releasing.
+`awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
 
 * Must be only turned on for `release`.
-* Should run the profile `test_full`. If it runs the profile `test` a warining is given.
+* Should run the profile `test_full`. If it runs the profile `test` a warning is given.
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 
