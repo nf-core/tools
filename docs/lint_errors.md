@@ -135,9 +135,10 @@ Process-level configuration syntax is checked and fails if uses the old Nextflow
 
 nf-core pipelines must have CI testing with GitHub Actions.
 
-### GitHub Actions
+### GitHub Actions CI
 
-There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory. You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
+There are 4 main GitHub Actions CI test files: `ci.yml`, `linting.yml`, `branch.yml` and `awstests.yml`, and they can all be found in the `.github/workflows/` directory.
+You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
 
 This test will fail if the following requirements are not met in these files:
 
@@ -219,6 +220,23 @@ This test will fail if the following requirements are not met in these files:
           run: |
             { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
+
+4. `awstest.yml`: Triggers tests on AWS batch. As running tests on AWS incurs costs, they should be only triggered on `push` to `master` and `release`.
+    * Must be turned on for `push` to `master` and `release`.
+    * Must not be turned on for `pull_request` or other events.
+
+### GitHub Actions AWS full tests
+
+Additionally, we provide the possibility of testing the pipeline on full size datasets on AWS.
+This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
+The GitHub Actions workflow is: `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
+This workflow incurrs higher AWS costs, therefore it should only be triggered on `release`.
+For tests on full data prior to release, [https://tower.nf](Nextflow Tower's launch feature) can be employed.
+
+`awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
+
+* Must be only turned on for `release`.
+* Should run the profile `test_full`. If it runs the profile `test` a warning is given.
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 
