@@ -14,8 +14,7 @@
 * Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
 * Build Docker image using GitHub Actions, then push to Docker Hub (instead of building on Docker Hub)
 * New Slack channel badge in pipeline readme
-* Add AWS tests GitHub Actions workflow
-* Add AWS full size tests GitHub Actions workflow
+* Add AWS CI tests and full tests GitHub Actions workflows
 
 ### Linting
 
@@ -25,6 +24,7 @@
 * Failure for missing the readme bioconda badge is now a warn, in case this badge is not relevant
 * Added test for template `{{ cookiecutter.var }}` placeholders
 * Fix failure when providing version along with build id for Conda packages
+* Added AWS GitHub Actions workflows linting
 
 ### Other
 
