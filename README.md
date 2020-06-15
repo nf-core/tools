@@ -608,6 +608,25 @@ INFO: Updating version in Dockerfile
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
+To export the lint results to a JSON file, use `--json [filename]`. For markdown, use `--markdown [filename]`.
+
+As linting tests can give a pass state for CI but with warnings that need some effort to track down, the linting
+code attempts to post a comment to the GitHub pull-request with a summary of results if possible.
+It does this when the environment variables `GITHUB_COMMENTS_URL` and `GITHUB_TOKEN` are set and if there are
+any failing or warning tests. If a pull-request is updated with new commits, the original comment will be
+updated with the latest results instead of posting lots of new comments for each `git push`.
+
+A typical GitHub Actions step with the required environment variables may look like this (will only work on pull-request events):
+
+```yaml
+- name: Run nf-core lint
+  env:
+    GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
+  run: nf-core lint $GITHUB_WORKSPACE
+```
+
 ## Sync a pipeline with the template
 
 Over time, the main nf-core pipeline template is updated. To keep all nf-core pipelines up to date,
