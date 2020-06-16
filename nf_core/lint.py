@@ -5,11 +5,16 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
+import datetime
+import git
 import logging
 import io
+import json
 import os
 import re
+import requests
 import subprocess
+import textwrap
 
 import click
 import requests
@@ -26,7 +31,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def run_linting(pipeline_dir, release_mode=False):
+def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -53,6 +58,20 @@ def run_linting(pipeline_dir, release_mode=False):
 
     # Print the results
     lint_obj.print_results()
+
+    # Save results to Markdown file
+    if md_fn is not None:
+        logging.info("Writing lint results to {}".format(md_fn))
+        markdown = lint_obj.get_results_md()
+        with open(md_fn, 'w') as fh:
+            fh.write(markdown)
+
+    # Save results to JSON file
+    if json_fn is not None:
+        lint_obj.save_json_results(json_fn)
+
+    # Try to post comment to a GitHub PR
+    lint_obj.github_comment()
 
     # Exit code
     if len(lint_obj.failed) > 0:
@@ -123,6 +142,7 @@ class PipelineLint(object):
         """ Initialise linting object """
         self.release_mode = False
         self.path = path
+        self.git_sha = None
         self.files = []
         self.config = {}
         self.pipeline_name = None
@@ -134,6 +154,16 @@ class PipelineLint(object):
         self.passed = []
         self.warned = []
         self.failed = []
+
+        try:
+            repo = git.Repo(self.path)
+            self.git_sha = repo.head.object.hexsha
+        except:
+            pass
+
+        # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
+        if os.environ.get('GITHUB_PR_COMMIT', '') != '':
+            self.git_sha = os.environ['GITHUB_PR_COMMIT']
 
     def lint_pipeline(self, release_mode=False):
         """Main linting function.
@@ -171,6 +201,8 @@ class PipelineLint(object):
             'check_actions_branch_protection',
             'check_actions_ci',
             'check_actions_lint',
+            'check_actions_awstest',
+            'check_actions_awsfulltest',
             'check_readme',
             'check_conda_env_yaml',
             'check_conda_dockerfile',
@@ -206,16 +238,18 @@ class PipelineLint(object):
             'CHANGELOG.md',
             'docs/README.md',
             'docs/output.md',
-            'docs/usage.md'
+            'docs/usage.md',
+            '.github/workflows/branch.yml',
+            '.github/workflows/ci.yml',
+            '.github/workflows/linting.yml'
 
         Files that *should* be present::
 
             'main.nf',
             'environment.yml',
             'conf/base.config',
-            '.github/workflows/branch.yml',
-            '.github/workflows/ci.yml',
-            '.github/workfows/linting.yml'
+            '.github/workflows/awstest.yml',
+            '.github/workflows/awsfulltest.yml'
 
         Files that *must not* be present::
 
@@ -247,7 +281,9 @@ class PipelineLint(object):
         files_warn = [
             ['main.nf'],
             ['environment.yml'],
-            [os.path.join('conf','base.config')]
+            [os.path.join('conf','base.config')],
+            [os.path.join('.github', 'workflows','awstest.yml')],
+            [os.path.join('.github', 'workflows', 'awsfulltest.yml')]
         ]
 
         # List of strings. Dails / warns if any of the strings exist.
@@ -544,19 +580,36 @@ class PipelineLint(object):
             with open(fn, 'r') as fh:
                 ciwf = yaml.safe_load(fh)
 
-            # Check that the action is turned on for push and pull requests
+            # Check that the action is turned on for the correct events
             try:
-                assert('push' in ciwf[True])
-                assert('pull_request' in ciwf[True])
+                expected = {
+                    'push': { 'branches': ['dev'] },
+                    'pull_request': None,
+                    'release': { 'types': ['published'] }
+                }
+                # NB: YAML dict key 'on' is evaluated to a Python dict key True
+                assert(ciwf[True] == expected)
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions CI workflow must be triggered on PR and push: '{}'".format(fn)))
+                self.failed.append((5, "GitHub Actions CI workflow is not triggered on expected GitHub Actions events: '{}'".format(fn)))
             else:
-                self.passed.append((5, "GitHub Actions CI workflow is triggered on PR and push: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions CI workflow is triggered on expected GitHub Actions events: '{}'".format(fn)))
 
             # Check that we're pulling the right docker image and tagging it properly
             if self.config.get('process.container', ''):
                 docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
                 docker_withtag = self.config.get('process.container', '').strip('"\'')
+
+                # docker build
+                docker_build_cmd = 'docker build --no-cache . -t {}'.format(docker_withtag)
+                try:
+                    steps = ciwf['jobs']['test']['steps']
+                    assert(any([docker_build_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                except (AssertionError, KeyError, TypeError):
+                    self.failed.append((5, "CI is not building the correct docker image. Should be:\n    '{}'".format(docker_build_cmd)))
+                else:
+                    self.passed.append((5, "CI is building the correct docker image: {}".format(docker_build_cmd)))
+
+                # docker pull
                 docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
@@ -566,6 +619,7 @@ class PipelineLint(object):
                 else:
                     self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
+                # docker tag
                 docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, docker_withtag)
                 try:
                     steps = ciwf['jobs']['test']['steps']
@@ -626,6 +680,66 @@ class PipelineLint(object):
             else:
                 self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
 
+    def check_actions_awstest(self):
+        """Checks the GitHub Actions awstest is valid.
+
+        Makes sure it is triggered only on ``push`` to ``master``. 
+        """
+        fn = os.path.join(self.path, '.github', 'workflows', 'awstest.yml')
+        if os.path.isfile(fn):
+            with open(fn, 'r') as fh:
+                wf = yaml.safe_load(fh)
+            
+            # Check that the action is only turned on for push
+            try:
+                assert('push' in wf[True])
+                assert('pull_request' not in wf[True])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub Actions AWS test should be triggered on push and not PRs: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub Actions AWS test is triggered on push and not PRs: '{}'".format(fn)))
+
+            # Check that the action is only turned on for push to master
+            try:
+                assert('master' in wf[True]['push']['branches'])
+                assert('dev' not in wf[True]['push']['branches'])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub Actions AWS test should be triggered only on push to master: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: '{}'".format(fn)))
+            
+    def check_actions_awsfulltest(self):
+        """Checks the GitHub Actions awsfulltest is valid.
+
+        Makes sure it is triggered only on ``release``.
+        """
+        fn = os.path.join(self.path, '.github', 'workflows', 'awsfulltest.yml')
+        if os.path.isfile(fn):
+            with open(fn, 'r') as fh:
+                wf = yaml.safe_load(fh)
+
+            aws_profile = '-profile test '
+
+            # Check that the action is only turned on for published releases
+            try:
+                assert('release' in wf[True])
+                assert('published' in wf[True]['release']['types'])
+                assert('push' not in wf[True])
+                assert('pull_request' not in wf[True])
+            except (AssertionError, KeyError, TypeError):
+                self.failed.append((5, "GitHub Actions AWS full test should be triggered only on published release: '{}'".format(fn)))
+            else:
+                self.passed.append((5, "GitHub Actions AWS full test is triggered only on published release: '{}'".format(fn)))
+
+            # Warn if `-profile test` is still unchanged
+            try:
+                steps = wf['jobs']['run-awstest']['steps']
+                assert(any([aws_profile in step['run'] for step in steps if 'run' in step.keys()]))
+            except (AssertionError, KeyError, TypeError):
+                self.passed.append((5, "GitHub Actions AWS full test should test full datasets: '{}'".format(fn)))
+            else:
+                self.warned.append((5, "GitHub Actions AWS full test should test full datasets: '{}'".format(fn)))
+
     def check_readme(self):
         """Checks the repository README file for errors.
 
@@ -651,11 +765,11 @@ class PipelineLint(object):
 
         # Check that we have a bioconda badge if we have a bioconda environment file
         if 'environment.yml' in self.files:
-            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)'
+            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)'
             if bioconda_badge in content:
                 self.passed.append((6, "README had a bioconda badge"))
             else:
-                self.failed.append((6, "Found a bioconda environment.yml file but no badge in the README"))
+                self.warned.append((6, "Found a bioconda environment.yml file but no badge in the README"))
 
 
     def check_version_consistency(self):
@@ -730,14 +844,14 @@ class PipelineLint(object):
             if isinstance(dep, str):
                 # Check that each dependency has a version number
                 try:
-                    assert dep.count('=') == 1
+                    assert dep.count('=') in [1,2]
                 except AssertionError:
                     self.failed.append((8, "Conda dependency did not have pinned version number: {}".format(dep)))
                 else:
                     self.passed.append((8, "Conda dependency had pinned version number: {}".format(dep)))
 
                     try:
-                        depname, depver = dep.split('=', 1)
+                        depname, depver = dep.split('=')[:2]
                         self.check_anaconda_package(dep)
                     except ValueError:
                         pass
@@ -875,7 +989,7 @@ class PipelineLint(object):
         expected_strings = [
             "FROM nfcore/base:{}".format('dev' if 'dev' in nf_core.__version__ else nf_core.__version__),
             'COPY environment.yml /',
-            'RUN conda env create -f /environment.yml && conda clean -a',
+            'RUN conda env create --quiet -f /environment.yml && conda clean -a',
             'RUN conda env export --name {} > {}.yml'.format(self.conda_config['name'], self.conda_config['name']),
             'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
         ]
@@ -1012,12 +1126,12 @@ class PipelineLint(object):
         # Helper function to format test links nicely
         def format_result(test_results):
             """
-            Given an error message ID and the message text, return a nicely formatted
+            Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
             print_results = []
             for eid, msg in test_results:
-                url = click.style("http://nf-co.re/errors#{}".format(eid), fg='blue')
+                url = click.style("https://nf-co.re/errors#{}".format(eid), fg='blue')
                 print_results.append('{} : {}'.format(url, msg))
             return "\n  ".join(print_results)
 
@@ -1028,9 +1142,141 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), format_result(self.failed)))
 
+    def get_results_md(self):
+        """
+        Function to create a markdown file suitable for posting in a GitHub comment
+        """
+        # Overall header
+        overall_result = 'Passed :white_check_mark:'
+        if len(self.failed) > 0:
+            overall_result = 'Failed :x:'
+
+        # List of tests for details
+        test_failures = ''
+        if len(self.failed) > 0:
+            test_failures = "### :x: Test failures:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.failed])
+            )
+
+        test_warnings = ''
+        if len(self.warned) > 0:
+            test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.warned])
+            )
+
+        test_passes = ''
+        if len(self.passed) > 0:
+            test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.passed])
+            )
+
+        now = datetime.datetime.now()
+
+        markdown = textwrap.dedent("""
+        #### `nf-core lint` overall result: {}
+
+        {}
+
+        ```diff
+        +| ✅ {:2d} tests passed       |+
+        !| ❗ {:2d} tests had warnings |!
+        -| ❌ {:2d} tests failed       |-
+        ```
+
+        <details>
+
+        {}{}{}### Run details:
+
+        * nf-core/tools version {}
+        * Run at `{}`
+
+        </details>
+        """).format(
+            overall_result,
+            'Posted for pipeline commit {}'.format(self.git_sha[:7]) if self.git_sha is not None else '',
+            len(self.passed),
+            len(self.warned),
+            len(self.failed),
+            test_failures,
+            test_warnings,
+            test_passes,
+            nf_core.__version__,
+            now.strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        return markdown
+
+    def save_json_results(self, json_fn):
+        """
+        Function to dump lint results to a JSON file for downstream use
+        """
+
+        logging.info("Writing lint results to {}".format(json_fn))
+        now = datetime.datetime.now()
+        results = {
+            'nf_core_tools_version': nf_core.__version__,
+            'date_run': now.strftime("%Y-%m-%d %H:%M:%S"),
+            'tests_pass': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
+            'tests_warned': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
+            'tests_failed': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
+            'num_tests_pass': len(self.passed),
+            'num_tests_warned': len(self.warned),
+            'num_tests_failed': len(self.failed),
+            'has_tests_pass': len(self.passed) > 0,
+            'has_tests_warned': len(self.warned) > 0,
+            'has_tests_failed': len(self.failed) > 0,
+            'markdown_result': self.get_results_md()
+        }
+        with open(json_fn, 'w') as fh:
+            json.dump(results, fh, indent=4)
+
+    def github_comment(self):
+        """
+        If we are running in a GitHub PR, try to post results as a comment
+        """
+        if os.environ.get('GITHUB_TOKEN', '') != '' and os.environ.get('GITHUB_COMMENTS_URL', '') != '':
+            try:
+                headers = { 'Authorization': 'token {}'.format(os.environ['GITHUB_TOKEN']) }
+                # Get existing comments - GET
+                get_r = requests.get(
+                    url = os.environ['GITHUB_COMMENTS_URL'],
+                    headers = headers
+                )
+                if get_r.status_code == 200:
+
+                    # Look for an existing comment to update
+                    update_url = False
+                    for comment in get_r.json():
+                        if comment['user']['login'] == 'github-actions[bot]' and comment['body'].startswith("\n#### `nf-core lint` overall result"):
+                            # Update existing comment - PATCH
+                            logging.info("Updating GitHub comment")
+                            update_r = requests.patch(
+                                url = comment['url'],
+                                data = json.dumps({ 'body': self.get_results_md().replace('Posted', '**Updated**') }),
+                                headers = headers
+                            )
+                            return
+
+                    # Create new comment - POST
+                    if len(self.warned) > 0 or len(self.failed) > 0:
+                        logging.info("Posting GitHub comment")
+                        post_r = requests.post(
+                            url = os.environ['GITHUB_COMMENTS_URL'],
+                            data = json.dumps({ 'body': self.get_results_md() }),
+                            headers = headers
+                        )
+
+            except Exception as e:
+                logging.warning("Could not post GitHub comment: {}\n{}".format(os.environ['GITHUB_COMMENTS_URL'], e))
+
 
     def _bold_list_items(self, files):
         if not isinstance(files, list):
             files = [files]
         bfiles = [click.style(f, bold=True) for f in files]
         return ' or '.join(bfiles)
+
+    def _strip_ansi_codes(self, string, replace_with=''):
+        # https://stackoverflow.com/a/14693789/713980
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub(replace_with, string)

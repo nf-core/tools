@@ -257,11 +257,23 @@ def create(name, description, author, new_version, no_git, force, outdir):
     default = os.path.basename(os.path.dirname(os.environ.get('GITHUB_REF','').strip(' \'"'))) == 'master' and os.environ.get('GITHUB_REPOSITORY', '').startswith('nf-core/') and not os.environ.get('GITHUB_REPOSITORY', '') == 'nf-core/tools',
     help = "Execute additional checks for release-ready workflows."
 )
-def lint(pipeline_dir, release):
+@click.option(
+    '--markdown',
+    type = str,
+    metavar = "<filename>",
+    help = "File to write linting results to (Markdown)"
+)
+@click.option(
+    '--json',
+    type = str,
+    metavar = "<filename>",
+    help = "File to write linting results to (JSON)"
+)
+def lint(pipeline_dir, release, markdown, json):
     """ Check pipeline against nf-core guidelines """
 
     # Run the lint tests!
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, release)
+    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, markdown, json)
     if len(lint_obj.failed) > 0:
         sys.exit(1)
 
@@ -463,4 +475,5 @@ if __name__ == '__main__':
     click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'), err=True)
     click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'), err=True)
     click.secho("                                          `._,._,'\n", fg='green', err=True)
+    click.secho("    nf-core/tools version {}\n".format(nf_core.__version__), fg='black', err=True)
     nf_core_cli()

@@ -2,8 +2,9 @@
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
-[![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/recipes/nf-core/README.html)
+[![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
 [![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
+[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23tools-4A154B?logo=slack)](https://nfcore.slack.com/channels/tools)
 
 A python package with helper tools for the nf-core community.
 
@@ -434,8 +435,8 @@ INFO: ===========
   72 tests passed   2 tests had warnings   0 tests failed
 
 WARNING: Test Warnings:
-  http://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
-  http://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
+  https://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
+  https://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
@@ -606,6 +607,25 @@ INFO: Updating version in Dockerfile
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
+
+To export the lint results to a JSON file, use `--json [filename]`. For markdown, use `--markdown [filename]`.
+
+As linting tests can give a pass state for CI but with warnings that need some effort to track down, the linting
+code attempts to post a comment to the GitHub pull-request with a summary of results if possible.
+It does this when the environment variables `GITHUB_COMMENTS_URL` and `GITHUB_TOKEN` are set and if there are
+any failing or warning tests. If a pull-request is updated with new commits, the original comment will be
+updated with the latest results instead of posting lots of new comments for each `git push`.
+
+A typical GitHub Actions step with the required environment variables may look like this (will only work on pull-request events):
+
+```yaml
+- name: Run nf-core lint
+  env:
+    GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
+  run: nf-core lint $GITHUB_WORKSPACE
+```
 
 ## Sync a pipeline with the template
 

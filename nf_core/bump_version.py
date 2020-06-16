@@ -44,10 +44,15 @@ def bump_pipeline_version(lint_obj, new_version):
     nfconfig_newstr = "container = 'nfcore/{}:{}'".format(lint_obj.pipeline_name.lower(), docker_tag)
     update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-    # Update GitHub Actions CI image tag
+    # Update GitHub Actions CI image tag (build)
+    nfconfig_pattern = r"docker build --no-cache . -t nfcore/{name}:(?:{tag}|dev)".format(name=lint_obj.pipeline_name.lower(), tag=current_version.replace('.',r'\.'))
+    nfconfig_newstr = "docker build --no-cache . -t nfcore/{name}:{tag}".format(name=lint_obj.pipeline_name.lower(), tag=docker_tag)
+    update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr, allow_multiple=True)
+
+    # Update GitHub Actions CI image tag (pull)
     nfconfig_pattern = r"docker tag nfcore/{name}:dev nfcore/{name}:(?:{tag}|dev)".format(name=lint_obj.pipeline_name.lower(), tag=current_version.replace('.',r'\.'))
     nfconfig_newstr = "docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(name=lint_obj.pipeline_name.lower(), tag=docker_tag)
-    update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr)
+    update_file_version(os.path.join('.github', 'workflows','ci.yml'), lint_obj, nfconfig_pattern, nfconfig_newstr, allow_multiple=True)
 
     if 'environment.yml' in lint_obj.files:
         # Update conda environment.yml
