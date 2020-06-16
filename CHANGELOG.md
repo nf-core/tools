@@ -36,6 +36,7 @@
 * Move some of the issue and PR templates into HTML `<!-- comments -->` so that they don't show in issues / PRs
 * Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 * nf-core/tools version number now printed underneath header artwork
+* Bumped Conda version shipped with nfcore/base to 4.8.2
 
 ## v1.9
 
