@@ -118,6 +118,7 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
+        self.schema_obj.flatten_schema()
         self.schema_obj.input_params = {'reads': 'fubar'}
         assert self.schema_obj.validate_params()
 
@@ -126,6 +127,7 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
+        self.schema_obj.flatten_schema()
         self.schema_obj.input_params = {'fubar': 'reads'}
         assert not self.schema_obj.validate_params()
 
@@ -134,13 +136,14 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.validate_schema()
+        self.schema_obj.flatten_schema()
+        self.schema_obj.validate_schema(self.schema_obj.schema)
 
     @pytest.mark.xfail(raises=AssertionError)
     def test_validate_schema_fail_notjsonschema(self):
         """ Check that the schema validation fails when not JSONSchema """
         self.schema_obj.schema = {'type': 'invalidthing'}
-        self.schema_obj.validate_schema()
+        self.schema_obj.validate_schema(self.schema_obj.schema)
 
     @pytest.mark.xfail(raises=AssertionError)
     def test_validate_schema_fail_nfcore(self):
@@ -151,13 +154,13 @@ class TestSchema(unittest.TestCase):
         at least a 'properties' key, so this should fail with nf-core specific error.
         """
         self.schema_obj.schema = {}
-        self.schema_obj.validate_schema()
+        self.schema_obj.validate_schema(self.schema_obj.schema)
 
     def test_make_skeleton_schema(self):
         """ Test making a new schema skeleton """
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.make_skeleton_schema()
-        self.schema_obj.validate_schema()
+        self.schema_obj.validate_schema(self.schema_obj.schema)
 
     def test_get_wf_params(self):
         """ Test getting the workflow parameters from a pipeline """

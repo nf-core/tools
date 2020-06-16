@@ -233,6 +233,5 @@
             },
             "fa_icon": "fas fa-file-import"
         }
-    },
-    "required": ["Input/output options"]
+    }
 }

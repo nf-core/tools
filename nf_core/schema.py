@@ -4,6 +4,7 @@
 from __future__ import print_function
 
 import click
+import copy
 import json
 import jsonschema
 import logging
@@ -28,6 +29,7 @@ class PipelineSchema (object):
         """ Initialise the object """
 
         self.schema = None
+        self.flat_schema = None
         self.schema_filename = None
         self.input_params = {}
         self.pipeline_params = {}
@@ -71,7 +73,7 @@ class PipelineSchema (object):
 
         try:
             self.load_schema()
-            self.validate_schema()
+            self.validate_schema(self.schema)
         except json.decoder.JSONDecodeError as e:
             error_msg = "Could not parse JSON:\n {}".format(e)
             logging.error(click.style(error_msg, fg='red'))
@@ -81,13 +83,39 @@ class PipelineSchema (object):
             logging.error(click.style(error_msg, fg='red'))
             raise AssertionError(error_msg)
         else:
-            logging.info(click.style("[✓] Pipeline schema looks valid", fg='green'))
+            try:
+                self.flatten_schema()
+                self.validate_schema(self.flat_schema)
+            except AssertionError as e:
+                error_msg = "[✗] Flattened JSON Schema does not follow nf-core specs:\n {}".format(e)
+                logging.error(click.style(error_msg, fg='red'))
+                raise AssertionError(error_msg)
+            else:
+                logging.info(click.style("[✓] Pipeline schema looks valid", fg='green'))
 
     def load_schema(self):
         """ Load a JSON Schema from a file """
         with open(self.schema_filename, 'r') as fh:
             self.schema = json.load(fh)
         logging.debug("JSON file loaded: {}".format(self.schema_filename))
+
+    def flatten_schema(self):
+        """ Go through a schema and flatten all objects so that we have a single hierarchy of params """
+        self.flat_schema = copy.deepcopy(self.schema)
+        for p_key in self.schema['properties']:
+            if self.schema['properties'][p_key]['type'] == 'object':
+                # Add child properties to top-level object
+                for p_child_key in self.schema['properties'][p_key].get('properties', {}):
+                    if p_child_key in self.flat_schema['properties']:
+                        raise AssertionError("Duplicate parameter `{}` found".format(p_child_key))
+                    self.flat_schema['properties'][p_child_key] = self.schema['properties'][p_key]['properties'][p_child_key]
+                # Move required param keys to top level object
+                for p_child_required in self.schema['properties'][p_key].get('required', []):
+                    if 'required' not in self.flat_schema:
+                        self.flat_schema['required'] = []
+                    self.flat_schema['required'].append(p_child_required)
+                # Delete this object
+                del self.flat_schema['properties'][p_key]
 
     def save_schema(self):
         """ Load a JSON Schema from a file """
@@ -122,7 +150,11 @@ class PipelineSchema (object):
     def validate_params(self):
         """ Check given parameters against a schema and validate """
         try:
-            jsonschema.validate(self.input_params, self.schema)
+            assert self.flat_schema is not None
+            jsonschema.validate(self.input_params, self.flat_schema)
+        except AssertionError:
+            logging.error(click.style("[✗] Flattened JSON Schema not found", fg='red'))
+            return False
         except jsonschema.exceptions.ValidationError as e:
             logging.error(click.style("[✗] Input parameters are invalid: {}".format(e.message), fg='red'))
             return False
@@ -130,10 +162,10 @@ class PipelineSchema (object):
         return True
 
 
-    def validate_schema(self):
+    def validate_schema(self, schema):
         """ Check that the Schema is valid """
         try:
-            jsonschema.Draft7Validator.check_schema(self.schema)
+            jsonschema.Draft7Validator.check_schema(schema)
             logging.debug("JSON Schema Draft7 validated")
         except jsonschema.exceptions.SchemaError as e:
             raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
@@ -403,7 +435,7 @@ class PipelineSchema (object):
                         logging.info("Found saved status from nf-core JSON Schema builder")
                         try:
                             self.schema = json.loads(web_response['schema'])
-                            self.validate_schema()
+                            self.validate_schema(self.schema)
                         except json.decoder.JSONDecodeError as e:
                             logging.error("Could not parse returned JSON:\n {}".format(e))
                             sys.exit(1)
