@@ -5,6 +5,7 @@ from __future__ import print_function
 from collections import OrderedDict
 
 import click
+import copy
 import errno
 import json
 import jsonschema
@@ -39,21 +40,23 @@ def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, sho
             logging.error("Could not build pipeline schema: {}".format(e))
             sys.exit(1)
 
+    # Set the inputs to the schema defaults
+    schema_obj.input_params = copy.deepcopy(schema_obj.schema_defaults)
+
     # If we have a params_file, load and validate it against the schema
     if params_in:
         schema_obj.load_input_params(params_in)
         schema_obj.validate_params()
 
     # Create a pipeline launch object
-    launcher = Launch(schema_obj, command_only, params_in, params_out, show_hidden)
+    launcher = Launch(pipeline, schema_obj, command_only, params_in, params_out, show_hidden)
     launcher.merge_nxf_flag_schema()
 
     # Kick off the interactive wizard to collect user inputs
     launcher.prompt_schema()
 
     # Validate the parameters that we now have
-    schema_obj.input_params.update(launcher.params_user)
-    if not schema_obj.validate_params():
+    if not launcher.schema_obj.validate_params():
         return False
 
     # Strip out the defaults
@@ -67,13 +70,14 @@ def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, sho
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, schema_obj, command_only, params_in, params_out, show_hidden):
+    def __init__(self, pipeline, schema_obj, command_only, params_in, params_out, show_hidden):
         """Initialise the Launcher class
 
         Args:
           schema: An nf_core.schema.PipelineSchema() object
         """
 
+        self.pipeline = pipeline
         self.schema_obj = schema_obj
         self.use_params_file = True
         if command_only:
@@ -85,7 +89,7 @@ class Launch(object):
         if show_hidden:
             self.show_hidden = True
 
-        self.nextflow_cmd = 'nextflow run'
+        self.nextflow_cmd = 'nextflow run {}'.format(self.pipeline)
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
         self.nxf_flag_schema = {
@@ -160,6 +164,9 @@ class Launch(object):
                 self.nxf_flags[key] = answer
             else:
                 self.params_user[key] = answer
+
+        # Update schema with user params
+        self.schema_obj.input_params.update(self.params_user)
 
     def prompt_param(self, param_id, param_obj, is_required):
         """Prompt for a single parameter"""
@@ -282,20 +289,9 @@ class Launch(object):
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
 
-        for param_id, param_obj in self.schema_obj.schema['properties'].items():
-            if param_obj['type'] == 'object':
-                continue
-
-            # Some default flags if missing
-            if param_obj['type'] == 'boolean' and 'default' not in param_obj:
-                param_obj['default'] = False
-            elif 'default' not in param_obj:
-                param_obj['default'] = ''
-
-            # Delete if it hasn't changed from the default
-            if param_id in self.params_user and self.params_user[param_id] == param_obj['default']:
-                del self.params_user[param_id]
-
+        for param_id, val in self.schema_obj.schema_defaults.items():
+            if self.schema_obj.input_params[param_id] == val:
+                del self.schema_obj.input_params[param_id]
 
     def build_command(self):
         """ Build the nextflow run command based on what we know """
@@ -309,21 +305,24 @@ class Launch(object):
             else:
                 self.nextflow_cmd += ' {} "{}"'.format(flag, val.replace('"', '\\"'))
 
-        # Write the user selection to a file and run nextflow with that
-        if self.use_params_file:
-            with open(self.params_out, "w") as fp:
-                json.dump(self.params_user, fp, indent=4)
-            self.nextflow_cmd += ' {} "{}"'.format("-params-file", self.params_out)
+        # Pipeline parameters
+        if len(self.schema_obj.input_params) > 0:
 
-        # Call nextflow with a list of command line flags
-        else:
-            for param, val in self.params_user.items():
-                # Boolean flags like --saveTrimmed
-                if isinstance(val, bool) and val:
-                    self.nextflow_cmd += " --{}".format(param)
-                # everything else
-                else:
-                    self.nextflow_cmd += ' --{} "{}"'.format(param, val.replace('"', '\\"'))
+            # Write the user selection to a file and run nextflow with that
+            if self.use_params_file:
+                with open(self.params_out, "w") as fp:
+                    json.dump(self.schema_obj.input_params, fp, indent=4)
+                self.nextflow_cmd += ' {} "{}"'.format("-params-file", os.path.relpath(self.params_out))
+
+            # Call nextflow with a list of command line flags
+            else:
+                for param, val in self.schema_obj.input_params.items():
+                    # Boolean flags like --saveTrimmed
+                    if isinstance(val, bool) and val:
+                        self.nextflow_cmd += " --{}".format(param)
+                    # everything else
+                    else:
+                        self.nextflow_cmd += ' --{} "{}"'.format(param, val.replace('"', '\\"'))
 
 
     def launch_workflow(self):

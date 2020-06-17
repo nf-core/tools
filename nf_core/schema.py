@@ -31,6 +31,7 @@ class PipelineSchema (object):
         self.schema = None
         self.flat_schema = None
         self.schema_filename = None
+        self.schema_defaults = {}
         self.input_params = {}
         self.pipeline_params = {}
         self.schema_from_scratch = False
@@ -85,6 +86,7 @@ class PipelineSchema (object):
         else:
             try:
                 self.flatten_schema()
+                self.get_schema_defaults()
                 self.validate_schema(self.flat_schema)
             except AssertionError as e:
                 error_msg = "[✗] Flattened JSON Schema does not follow nf-core specs:\n {}".format(e)
@@ -116,6 +118,12 @@ class PipelineSchema (object):
                     self.flat_schema['required'].append(p_child_required)
                 # Delete this object
                 del self.flat_schema['properties'][p_key]
+
+    def get_schema_defaults(self):
+        """ Generate set of input parameters from flattened schema """
+        for p_key in self.flat_schema['properties']:
+            if 'default' in self.flat_schema['properties'][p_key]:
+                self.schema_defaults[p_key] = self.flat_schema['properties'][p_key]['default']
 
     def save_schema(self):
         """ Load a JSON Schema from a file """
