@@ -16,6 +16,7 @@
 * Build Docker image using GitHub Actions, then push to Docker Hub (instead of building on Docker Hub)
 * New Slack channel badge in pipeline readme
 * Add AWS CI tests and full tests GitHub Actions workflows
+* Update AWS CI tests and full tests secrets names
 
 ### Linting
 
