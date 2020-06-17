@@ -40,6 +40,8 @@ def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, sho
             logging.error("Could not build pipeline schema: {}".format(e))
             sys.exit(1)
 
+    logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
+
     # Set the inputs to the schema defaults
     schema_obj.input_params = copy.deepcopy(schema_obj.schema_defaults)
 
