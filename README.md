@@ -226,18 +226,18 @@ Do you want to run this command now? [y/N]: n
 ### Launch tool options
 
 * `-c`, `--command-only`
-    * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
+  * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
 * `-p`, `--params-in PATH`
-    * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
-    * This will overwrite the pipeline schema defaults before the wizard is launched.
+  * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
+  * This will overwrite the pipeline schema defaults before the wizard is launched.
 * `-o`, `--params-out PATH`
-    * Path to save parameters JSON file to. (Default: `nf-params.json`)
+  * Path to save parameters JSON file to. (Default: `nf-params.json`)
 * `-a`, `--save-all`
-    * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
-    * This option saves _all_ parameters found to the JSON file.
+  * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
+  * This option saves _all_ parameters found to the JSON file.
 * `-h`, `--show-hidden`
-    * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
-    * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
+  * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
+  * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
 
 ## Downloading pipelines for offline use
 

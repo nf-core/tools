@@ -2,9 +2,43 @@
 
 ## v1.10dev
 
-### Tools helper code
+### Pipeline schema
 
-* Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
+This release of nf-core/tools introduces a major change / new feature: pipeline schema.
+These are [JSON Schema](https://json-schema.org/) files that describe all of the parameters for a given
+pipeline with their ID, a description, a longer help text, an optional default value, a variable _type_
+(eg. `string` or `boolean`) and more.
+
+The files will be used in a number of places:
+
+* Automatic validation of supplied parameters when running pipelines
+  * Pipeline execution can be immediately stopped if a required `param` is missing,
+    or does not conform to the patterns / allowed values in the schema.
+* Generation of pipeline command-line help
+  * Running `nextflow run <pipeline> --help` will use the schema to generate a help text automatically
+* Building online documentation on the [nf-core website](https://nf-co.re)
+* Integration with 3rd party graphical user interfaces
+
+To support these new schema files, nf-core/tools now comes with a new set of commands: `nf-core schema`.
+
+* Pipeline schema can be generated or updated using `nf-core schema build` - this takes the parameters from
+  the pipeline config file and prompts the developer for any mismatch between schema and pipeline.
+  * Once a skeleton Schema file has been built, the command makes use of a new nf-core website tool to provide
+    a user friendly graphical interface for developers to add content to their schema: [https://nf-co.re/json_schema_build](https://nf-co.re/json_schema_build)
+* Pipelines will be automatically tested for valid schema that describe all pipeline parameters using the
+  `nf-core schema lint` command (also included as part of the main `nf-core lint` command).
+* Users can validate their set of pipeline inputs using the `nf-core schema validate` command.
+
+In addition to the new schema commands, the `nf-core launch` command has been completely rewritten from
+scratch to make use of the new pipeline schema. This command can use either an interactive command-line
+prompt or a rich web interface to help users set parameters for a pipeline run.
+
+The parameter descriptions and help text are fully used and embedded into the launch interfaces to make
+this process as user-friendly as possible. We hope that it's particularly well suited to those new to nf-core.
+
+Whilst we appreciate that this new feature will add a little work for pipeline developers, we're excited at
+the possibilities that it brings. If you have any feedback or suggestions, please let us know either here on
+GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com/channels/json-schema).
 
 ### Template
 
@@ -15,6 +49,7 @@
 * Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
 * Build Docker image using GitHub Actions, then push to Docker Hub (instead of building on Docker Hub)
 * New Slack channel badge in pipeline readme
+* Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
 * Add AWS CI tests and full tests GitHub Actions workflows
 
 ### Linting
@@ -29,12 +64,15 @@
 * Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
 * Added AWS GitHub Actions workflows linting
 
-### Other
+### nf-core/tools Continuous Integration
 
 * Added CI test to check for PRs against `master` in tools repo
 * CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
-* Describe alternative installation method via conda with `conda env create`
 * Move some of the issue and PR templates into HTML `<!-- comments -->` so that they don't show in issues / PRs
+
+### Other
+
+* Describe alternative installation method via conda with `conda env create`
 * Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 * nf-core/tools version number now printed underneath header artwork
 * Bumped Conda version shipped with nfcore/base to 4.8.2
