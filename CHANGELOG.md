@@ -10,6 +10,7 @@
 
 * Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
 * Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
+* Added new style of pipeline parameters JSON schema to pipeline template
 * Add ability to attach MultiQC reports to completion emails when using `mail`
 * Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
 * Build Docker image using GitHub Actions, then push to Docker Hub (instead of building on Docker Hub)
