@@ -5,11 +5,16 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
+import datetime
+import git
 import logging
 import io
+import json
 import os
 import re
+import requests
 import subprocess
+import textwrap
 
 import click
 import requests
@@ -26,7 +31,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def run_linting(pipeline_dir, release_mode=False):
+def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -53,6 +58,20 @@ def run_linting(pipeline_dir, release_mode=False):
 
     # Print the results
     lint_obj.print_results()
+
+    # Save results to Markdown file
+    if md_fn is not None:
+        logging.info("Writing lint results to {}".format(md_fn))
+        markdown = lint_obj.get_results_md()
+        with open(md_fn, 'w') as fh:
+            fh.write(markdown)
+
+    # Save results to JSON file
+    if json_fn is not None:
+        lint_obj.save_json_results(json_fn)
+
+    # Try to post comment to a GitHub PR
+    lint_obj.github_comment()
 
     # Exit code
     if len(lint_obj.failed) > 0:
@@ -123,6 +142,7 @@ class PipelineLint(object):
         """ Initialise linting object """
         self.release_mode = False
         self.path = path
+        self.git_sha = None
         self.files = []
         self.config = {}
         self.pipeline_name = None
@@ -134,6 +154,16 @@ class PipelineLint(object):
         self.passed = []
         self.warned = []
         self.failed = []
+
+        try:
+            repo = git.Repo(self.path)
+            self.git_sha = repo.head.object.hexsha
+        except:
+            pass
+
+        # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
+        if os.environ.get('GITHUB_PR_COMMIT', '') != '':
+            self.git_sha = os.environ['GITHUB_PR_COMMIT']
 
     def lint_pipeline(self, release_mode=False):
         """Main linting function.
@@ -1096,7 +1126,7 @@ class PipelineLint(object):
         # Helper function to format test links nicely
         def format_result(test_results):
             """
-            Given an error message ID and the message text, return a nicely formatted
+            Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
             print_results = []
@@ -1112,9 +1142,141 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), format_result(self.failed)))
 
+    def get_results_md(self):
+        """
+        Function to create a markdown file suitable for posting in a GitHub comment
+        """
+        # Overall header
+        overall_result = 'Passed :white_check_mark:'
+        if len(self.failed) > 0:
+            overall_result = 'Failed :x:'
+
+        # List of tests for details
+        test_failures = ''
+        if len(self.failed) > 0:
+            test_failures = "### :x: Test failures:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.failed])
+            )
+
+        test_warnings = ''
+        if len(self.warned) > 0:
+            test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.warned])
+            )
+
+        test_passes = ''
+        if len(self.passed) > 0:
+            test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
+                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.passed])
+            )
+
+        now = datetime.datetime.now()
+
+        markdown = textwrap.dedent("""
+        #### `nf-core lint` overall result: {}
+
+        {}
+
+        ```diff
+        +| ✅ {:2d} tests passed       |+
+        !| ❗ {:2d} tests had warnings |!
+        -| ❌ {:2d} tests failed       |-
+        ```
+
+        <details>
+
+        {}{}{}### Run details:
+
+        * nf-core/tools version {}
+        * Run at `{}`
+
+        </details>
+        """).format(
+            overall_result,
+            'Posted for pipeline commit {}'.format(self.git_sha[:7]) if self.git_sha is not None else '',
+            len(self.passed),
+            len(self.warned),
+            len(self.failed),
+            test_failures,
+            test_warnings,
+            test_passes,
+            nf_core.__version__,
+            now.strftime("%Y-%m-%d %H:%M:%S")
+        )
+
+        return markdown
+
+    def save_json_results(self, json_fn):
+        """
+        Function to dump lint results to a JSON file for downstream use
+        """
+
+        logging.info("Writing lint results to {}".format(json_fn))
+        now = datetime.datetime.now()
+        results = {
+            'nf_core_tools_version': nf_core.__version__,
+            'date_run': now.strftime("%Y-%m-%d %H:%M:%S"),
+            'tests_pass': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
+            'tests_warned': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
+            'tests_failed': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
+            'num_tests_pass': len(self.passed),
+            'num_tests_warned': len(self.warned),
+            'num_tests_failed': len(self.failed),
+            'has_tests_pass': len(self.passed) > 0,
+            'has_tests_warned': len(self.warned) > 0,
+            'has_tests_failed': len(self.failed) > 0,
+            'markdown_result': self.get_results_md()
+        }
+        with open(json_fn, 'w') as fh:
+            json.dump(results, fh, indent=4)
+
+    def github_comment(self):
+        """
+        If we are running in a GitHub PR, try to post results as a comment
+        """
+        if os.environ.get('GITHUB_TOKEN', '') != '' and os.environ.get('GITHUB_COMMENTS_URL', '') != '':
+            try:
+                headers = { 'Authorization': 'token {}'.format(os.environ['GITHUB_TOKEN']) }
+                # Get existing comments - GET
+                get_r = requests.get(
+                    url = os.environ['GITHUB_COMMENTS_URL'],
+                    headers = headers
+                )
+                if get_r.status_code == 200:
+
+                    # Look for an existing comment to update
+                    update_url = False
+                    for comment in get_r.json():
+                        if comment['user']['login'] == 'github-actions[bot]' and comment['body'].startswith("\n#### `nf-core lint` overall result"):
+                            # Update existing comment - PATCH
+                            logging.info("Updating GitHub comment")
+                            update_r = requests.patch(
+                                url = comment['url'],
+                                data = json.dumps({ 'body': self.get_results_md().replace('Posted', '**Updated**') }),
+                                headers = headers
+                            )
+                            return
+
+                    # Create new comment - POST
+                    if len(self.warned) > 0 or len(self.failed) > 0:
+                        logging.info("Posting GitHub comment")
+                        post_r = requests.post(
+                            url = os.environ['GITHUB_COMMENTS_URL'],
+                            data = json.dumps({ 'body': self.get_results_md() }),
+                            headers = headers
+                        )
+
+            except Exception as e:
+                logging.warning("Could not post GitHub comment: {}\n{}".format(os.environ['GITHUB_COMMENTS_URL'], e))
+
 
     def _bold_list_items(self, files):
         if not isinstance(files, list):
             files = [files]
         bfiles = [click.style(f, bold=True) for f in files]
         return ' or '.join(bfiles)
+
+    def _strip_ansi_codes(self, string, replace_with=''):
+        # https://stackoverflow.com/a/14693789/713980
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        return ansi_escape.sub(replace_with, string)
