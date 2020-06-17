@@ -133,14 +133,16 @@ class PipelineSchema (object):
         # First, try to load as JSON
         try:
             with open(params_path, 'r') as fh:
-                self.input_params = json.load(fh)
+                params = json.load(fh)
+                self.input_params.update(params)
             logging.debug("Loaded JSON input params: {}".format(params_path))
         except Exception as json_e:
             logging.debug("Could not load input params as JSON: {}".format(json_e))
             # This failed, try to load as YAML
             try:
                 with open(params_path, 'r') as fh:
-                    self.input_params = yaml.safe_load(fh)
+                    params = yaml.safe_load(fh)
+                    self.input_params.update(params)
                     logging.debug("Loaded YAML input params: {}".format(params_path))
             except Exception as yaml_e:
                 error_msg = "Could not load params file as either JSON or YAML:\n JSON: {}\n YAML: {}".format(json_e, yaml_e)

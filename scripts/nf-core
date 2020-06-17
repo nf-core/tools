@@ -98,9 +98,7 @@ def list(keywords, sort, json):
     '-c', '--command-only',
     is_flag = True,
     default = False,
-    help = """Set params in the command instead of saving to file.
-    Do not use a -params-file paramaters JSON file,
-    just construct a command with all parameters on the command-line."""
+    help = "Set params directly in the nextflow command."
 )
 @click.option(
     '-p', '--params-in',
@@ -117,20 +115,18 @@ def list(keywords, sort, json):
     '-a', '--save-all',
     is_flag = True,
     default = False,
-    help = """Save all parameters, even if default.
-    Instead of just saving values that have been modified from the default,
-    save every possible parameter."""
+    help = "Save all parameters, even if default."
 )
 @click.option(
     '-h', '--show-hidden',
     is_flag = True,
     default = False,
-    help = """Show hidden parameters.
-    Show all pipeline parameters, even those set as hidden in the pipeline schema."""
+    help = "Show hidden parameters."
 )
 def launch(pipeline, command_only, params_in, params_out, save_all, show_hidden):
     """ Run pipeline, interactive parameter prompts """
-    nf_core.launch.launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden)
+    if nf_core.launch.launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden) == False:
+        sys.exit(1)
 
 # nf-core download
 @nf_core_cli.command(help_priority=3)

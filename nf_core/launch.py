@@ -51,9 +51,10 @@ def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, sho
     # Kick off the interactive wizard to collect user inputs
     launcher.prompt_schema()
 
-    # Validate the parameters that we have, just in case
-    schema_obj.input_params = launcher.params_user
-    schema_obj.validate_params()
+    # Validate the parameters that we now have
+    schema_obj.input_params.update(launcher.params_user)
+    if not schema_obj.validate_params():
+        return False
 
     # Strip out the defaults
     if not save_all:
