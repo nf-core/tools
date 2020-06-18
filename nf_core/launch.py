@@ -22,36 +22,16 @@ import nf_core.utils, nf_core.list, nf_core.schema
 # add raise_keyboard_interrupt=True argument to PyInquirer.prompt() calls
 # Requires a new release of PyInquirer. See https://github.com/CITGuru/PyInquirer/issues/90
 
-def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden):
-
-    # Get the schema
-    schema_obj = nf_core.schema.PipelineSchema()
-    try:
-        # Get schema from name, load it and lint it
-        schema_obj.lint_schema(pipeline)
-    except AssertionError:
-        # No schema found, just scrape the pipeline for parameters
-        logging.info("No pipeline schema found - creating one from the config")
-        try:
-            schema_obj.make_skeleton_schema()
-            schema_obj.get_wf_params()
-            schema_obj.add_schema_found_configs()
-        except AssertionError as e:
-            logging.error("Could not build pipeline schema: {}".format(e))
-            sys.exit(1)
+def launch_pipeline(pipeline, command_only, params_in=None, params_out=None, save_all=False, show_hidden=False):
 
     logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
 
-    # Set the inputs to the schema defaults
-    schema_obj.input_params = copy.deepcopy(schema_obj.schema_defaults)
-
-    # If we have a params_file, load and validate it against the schema
-    if params_in:
-        schema_obj.load_input_params(params_in)
-        schema_obj.validate_params()
-
     # Create a pipeline launch object
-    launcher = Launch(pipeline, schema_obj, command_only, params_in, params_out, show_hidden)
+    launcher = Launch(pipeline, command_only, params_in, params_out, show_hidden)
+
+    # Build the schema and starting inputs
+    launcher.get_pipeline_schema()
+    launcher.set_schema_inputs()
     launcher.merge_nxf_flag_schema()
 
     # Kick off the interactive wizard to collect user inputs
@@ -72,7 +52,7 @@ def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, sho
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, pipeline, schema_obj, command_only, params_in, params_out, show_hidden):
+    def __init__(self, pipeline, command_only=False, params_in=None, params_out=None, show_hidden=False):
         """Initialise the Launcher class
 
         Args:
@@ -80,13 +60,15 @@ class Launch(object):
         """
 
         self.pipeline = pipeline
-        self.schema_obj = schema_obj
+        self.schema_obj = None
         self.use_params_file = True
         if command_only:
             self.use_params_file = False
-        if params_in:
-            self.params_in = params_in
-        self.params_out = params_out
+        self.params_in = params_in
+        if params_out:
+            self.params_out = params_out
+        else:
+            self.params_out = os.path.join(os.getcwd(), 'nf-params.json')
         self.show_hidden = False
         if show_hidden:
             self.show_hidden = True
@@ -137,6 +119,38 @@ class Launch(object):
         }
         self.nxf_flags = {}
         self.params_user = {}
+
+    def get_pipeline_schema(self):
+        """ Load and validate the schema from the supplied pipeline """
+
+        # Get the schema
+        self.schema_obj = nf_core.schema.PipelineSchema()
+        try:
+            # Get schema from name, load it and lint it
+            self.schema_obj.lint_schema(self.pipeline)
+        except AssertionError:
+            # No schema found, just scrape the pipeline for parameters
+            logging.info("No pipeline schema found - creating one from the config")
+            try:
+                self.schema_obj.make_skeleton_schema()
+                self.schema_obj.get_wf_params()
+                self.schema_obj.add_schema_found_configs()
+            except AssertionError as e:
+                logging.error("Could not build pipeline schema: {}".format(e))
+                return False
+
+    def set_schema_inputs(self):
+        """
+        Take the loaded schema and set the defaults as the input parameters
+        If a nf_params.json file is supplied, apply these over the top
+        """
+        # Set the inputs to the schema defaults
+        self.schema_obj.input_params = copy.deepcopy(self.schema_obj.schema_defaults)
+
+        # If we have a params_file, load and validate it against the schema
+        if self.params_in:
+            self.load_input_params(self.params_in)
+            self.validate_params()
 
     def merge_nxf_flag_schema(self):
         """ Take the Nextflow flag schema and merge it with the pipeline schema """
@@ -258,7 +272,7 @@ class Launch(object):
                 msg = "{} {}".format(msg, click.style('(? for help)', dim=True))
             click.echo("\n{}".format(msg), err=True)
 
-        if param_obj['type'] == 'boolean':
+        if param_obj.get('type') == 'boolean':
             question['type'] = 'confirm'
             question['default'] = False
 

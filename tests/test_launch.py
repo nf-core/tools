@@ -1,0 +1,149 @@
+#!/usr/bin/env python
+""" Tests covering the pipeline launch code.
+"""
+
+import nf_core.launch
+
+import copy
+import click
+import json
+import mock
+import os
+import git
+import pytest
+import requests
+import tempfile
+import time
+import unittest
+import yaml
+
+class TestLaunch(unittest.TestCase):
+    """Class for schema tests"""
+
+    def setUp(self):
+        """ Create a new PipelineSchema and Launch objects """
+        # Set up the schema
+        schema_obj = nf_core.schema.PipelineSchema()
+        root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
+        self.template_dir = os.path.join(root_repo_dir, 'nf_core', 'pipeline-template', '{{cookiecutter.name_noslash}}')
+        json_savedir = tempfile.mkdtemp()
+        self.nf_params_fn = os.path.join(json_savedir, 'nf-params.json')
+        self.launcher = nf_core.launch.Launch(self.template_dir, params_out = self.nf_params_fn)
+
+    def test_get_pipeline_schema(self):
+        self.launcher.get_pipeline_schema()
+        assert 'properties' in self.launcher.schema_obj.schema
+        assert len(self.launcher.schema_obj.schema['properties']) > 2
+
+    def test_get_pipeline_defaults(self):
+        self.launcher.get_pipeline_schema()
+        self.launcher.set_schema_inputs()
+        assert len(self.launcher.schema_obj.input_params) > 0
+        assert self.launcher.schema_obj.input_params['outdir'] == './results'
+
+    def test_nf_merge_schema(self):
+        """ Checking merging the nextflow JSON schema with the pipeline schema """
+        self.launcher.get_pipeline_schema()
+        self.launcher.set_schema_inputs()
+        self.launcher.merge_nxf_flag_schema()
+        assert list(self.launcher.schema_obj.schema['properties'].keys())[0] == 'Nextflow command-line flags'
+        assert '-resume' in self.launcher.schema_obj.schema['properties']['Nextflow command-line flags']['properties']
+
+    def test_ob_to_pyinquirer_string(self):
+        """ Check converting a python dict to a pyenquirer format - simple strings """
+        sc_obj = {
+            "type": "string",
+            "default": "data/*{1,2}.fastq.gz",
+        }
+        result = self.launcher.single_param_to_pyinquirer('reads', sc_obj)
+        assert result == {
+            'type': 'input',
+            'name': 'reads',
+            'message': 'reads',
+            'default': 'data/*{1,2}.fastq.gz'
+        }
+
+    def test_ob_to_pyinquirer_bool(self):
+        """ Check converting a python dict to a pyenquirer format - booleans """
+        sc_obj = {
+            "type": "boolean",
+            "default": "True",
+        }
+        result = self.launcher.single_param_to_pyinquirer('single_end', sc_obj)
+        assert result == {
+            'type': 'confirm',
+            'name': 'single_end',
+            'message': 'single_end',
+            'default': True
+        }
+
+    def test_ob_to_pyinquirer_enum(self):
+        """ Check converting a python dict to a pyenquirer format - with enum """
+        sc_obj = {
+            "type": "string",
+            "default": "copy",
+            "enum": [ "symlink", "rellink" ]
+        }
+        result = self.launcher.single_param_to_pyinquirer('publish_dir_mode', sc_obj)
+        assert result['type'] == 'input'
+        assert result['default'] == 'copy'
+        assert result['validate']('symlink')
+        assert result['validate']('')
+        assert result['validate']('not_allowed') == 'Must be one of: symlink, rellink'
+
+    def test_ob_to_pyinquirer_pattern(self):
+        """ Check converting a python dict to a pyenquirer format - with pattern """
+        sc_obj = {
+            "type": "string",
+            "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
+        }
+        result = self.launcher.single_param_to_pyinquirer('email', sc_obj)
+        assert result['type'] == 'input'
+        assert result['validate']('test@email.com')
+        assert result['validate']('')
+        assert result['validate']('not_an_email') == 'Must match pattern: ^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$'
+
+    def test_strip_default_params(self):
+        """ Test stripping default parameters """
+        self.launcher.get_pipeline_schema()
+        self.launcher.set_schema_inputs()
+        self.launcher.schema_obj.input_params.update({'reads': 'custom_input'})
+        assert len(self.launcher.schema_obj.input_params) > 1
+        self.launcher.strip_default_params()
+        assert self.launcher.schema_obj.input_params == {'reads': 'custom_input'}
+
+    def test_build_command_empty(self):
+        """ Test the functionality to build a nextflow command - nothing customsied """
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        self.launcher.build_command()
+        assert self.launcher.nextflow_cmd == 'nextflow run {}'.format(self.template_dir)
+
+    def test_build_command_nf(self):
+        """ Test the functionality to build a nextflow command - core nf customised """
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        self.launcher.nxf_flags['-name'] = 'Test_Workflow'
+        self.launcher.nxf_flags['-resume'] = True
+        self.launcher.build_command()
+        assert self.launcher.nextflow_cmd == 'nextflow run {} -name "Test_Workflow" -resume'.format(self.template_dir)
+
+    def test_build_command_params(self):
+        """ Test the functionality to build a nextflow command - params supplied """
+        self.launcher.get_pipeline_schema()
+        self.launcher.schema_obj.input_params.update({'reads': 'custom_input'})
+        self.launcher.build_command()
+        # Check command
+        assert self.launcher.nextflow_cmd == 'nextflow run {} -params-file "{}"'.format(self.template_dir, os.path.relpath(self.nf_params_fn))
+        # Check saved parameters file
+        with open(self.nf_params_fn, 'r') as fh:
+            saved_json = json.load(fh)
+        assert saved_json == {'reads': 'custom_input'}
+
+    def test_build_command_params_cl(self):
+        """ Test the functionality to build a nextflow command - params on Nextflow command line """
+        self.launcher.use_params_file = False
+        self.launcher.get_pipeline_schema()
+        self.launcher.schema_obj.input_params.update({'reads': 'custom_input'})
+        self.launcher.build_command()
+        assert self.launcher.nextflow_cmd == 'nextflow run {} --reads "custom_input"'.format(self.template_dir)
