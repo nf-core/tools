@@ -393,17 +393,19 @@ INFO: Initialising pipeline git repository
 INFO: Done. Remember to add a remote and push to GitHub:
   cd /path/to/nf-core-nextbigthing
   git remote add origin git@github.com:USERNAME/REPO_NAME.git
-  git push
+  git push --all origin
+
+INFO: This will also push your newly created dev branch and the TEMPLATE branch for syncing.
+
+INFO: !!!!!! IMPORTANT !!!!!!
+
+If you are interested in adding your pipeline to the nf-core community,
+PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
+
+Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
 ```
 
-Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet).
-On your computer, add this repository as a git remote and push to it:
-
-```console
-git remote add origin https://github.com/ewels/nf-core-nextbigthing.git
-git push --set-upstream origin master
-```
-
+Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet) and push the commits from your computer using the example commands in the above log.
 You can then continue to edit, commit and push normally as you build your pipeline.
 
 Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.

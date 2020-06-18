@@ -39,6 +39,7 @@
 * Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 * nf-core/tools version number now printed underneath header artwork
 * Bumped Conda version shipped with nfcore/base to 4.8.2
+* Added log message when creating new pipelines that people should talk to the community about their plans
 
 ## v1.9
 
