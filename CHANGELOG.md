@@ -17,6 +17,7 @@
 * New Slack channel badge in pipeline readme
 * Add AWS CI tests and full tests GitHub Actions workflows
 * Update AWS CI tests and full tests secrets names
+* Replace `check_max()` with an improved `check_resource()`, which is already used in `nf-core/sarek`
 
 ### Linting
 
@@ -29,10 +30,6 @@
 * New `--json` and `--markdown` options to print lint results to JSON / markdown files
 * Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
 * Added AWS GitHub Actions workflows linting
-
-### Template
-
-* Update `check_max()` with an improved `check_resource()`, which is already used in `nf-core/sarek`
 
 ### Other
 
