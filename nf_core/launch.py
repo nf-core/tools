@@ -2,21 +2,17 @@
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
-from collections import OrderedDict
 
 import click
 import copy
-import errno
 import json
-import jsonschema
 import logging
 import os
 import PyInquirer
 import re
 import subprocess
-import sys
 
-import nf_core.utils, nf_core.list, nf_core.schema
+import nf_core.schema
 
 # TODO: Would be nice to be able to capture keyboard interruptions in a nicer way
 # add raise_keyboard_interrupt=True argument to PyInquirer.prompt() calls

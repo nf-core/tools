@@ -9,10 +9,8 @@ import json
 import jsonschema
 import logging
 import os
-import re
 import requests
 import requests_cache
-import subprocess
 import sys
 import time
 import webbrowser
