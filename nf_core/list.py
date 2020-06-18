@@ -42,6 +42,30 @@ def list_workflows(filter_by=None, sort_by='release', as_json=False):
     else:
         wfs.print_summary()
 
+def get_local_wf(workflow):
+    """
+    Check if this workflow has a local copy and use nextflow to pull it if not
+    """
+    wfs = Workflows()
+    wfs.get_local_nf_workflows()
+    for wf in wfs.local_workflows:
+        if workflow == wf.full_name:
+            return wf.local_path
+
+    # Wasn't local, fetch it
+    logging.info("Downloading workflow: {}".format(workflow))
+    try:
+        with open(os.devnull, 'w') as devnull:
+            subprocess.check_output(['nextflow', 'pull', workflow], stderr=devnull)
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+    except subprocess.CalledProcessError as e:
+        raise AssertionError("`nextflow pull` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
+    else:
+        local_wf = LocalWorkflow(workflow)
+        local_wf.get_local_nf_workflow_details()
+        return wf.local_path
 
 class Workflows(object):
     """Workflow container class.
@@ -62,13 +86,13 @@ class Workflows(object):
         self.sort_workflows_by = sort_by
 
     def get_remote_workflows(self):
-        """Retrieves remote workflows from `nf-co.re <http://nf-co.re>`_.
+        """Retrieves remote workflows from `nf-co.re <https://nf-co.re>`_.
 
         Remote workflows are stored in :attr:`self.remote_workflows` list.
         """
         # List all repositories at nf-core
         logging.debug("Fetching list of nf-core workflows")
-        nfcore_url = 'http://nf-co.re/pipelines.json'
+        nfcore_url = 'https://nf-co.re/pipelines.json'
         response = requests.get(nfcore_url, timeout=10)
         if response.status_code == 200:
             repos = response.json()['remote_workflows']
@@ -297,6 +321,8 @@ class LocalWorkflow(object):
                         'repository': r"repository\s*: (.*)",
                         'local_path': r"local path\s*: (.*)"
                     }
+                    if isinstance(nfinfo_raw, bytes):
+                        nfinfo_raw = nfinfo_raw.decode()
                     for key, pattern in re_patterns.items():
                         m = re.search(pattern, nfinfo_raw)
                         if m:
