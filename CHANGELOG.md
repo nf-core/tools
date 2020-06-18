@@ -31,6 +31,7 @@
 * Added AWS GitHub Actions workflows linting
 
 ### Template
+
 * Update `check_max()` with an improved `check_resource()`, which is already used in `nf-core/sarek`
 
 ### Other
