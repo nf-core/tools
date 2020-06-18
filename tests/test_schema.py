@@ -8,11 +8,9 @@ import click
 import json
 import mock
 import os
-import git
 import pytest
 import requests
 import tempfile
-import time
 import unittest
 import yaml
 

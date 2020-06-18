@@ -4,18 +4,11 @@
 
 import nf_core.launch
 
-import copy
-import click
 import json
-import mock
 import os
-import git
-import pytest
-import requests
+import shutil
 import tempfile
-import time
 import unittest
-import yaml
 
 class TestLaunch(unittest.TestCase):
     """Class for schema tests"""
@@ -23,19 +16,30 @@ class TestLaunch(unittest.TestCase):
     def setUp(self):
         """ Create a new PipelineSchema and Launch objects """
         # Set up the schema
-        schema_obj = nf_core.schema.PipelineSchema()
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, 'nf_core', 'pipeline-template', '{{cookiecutter.name_noslash}}')
-        json_savedir = tempfile.mkdtemp()
-        self.nf_params_fn = os.path.join(json_savedir, 'nf-params.json')
+        self.nf_params_fn = os.path.join(tempfile.mkdtemp(), 'nf-params.json')
         self.launcher = nf_core.launch.Launch(self.template_dir, params_out = self.nf_params_fn)
 
     def test_get_pipeline_schema(self):
+        """ Test loading the params schema from a pipeline """
         self.launcher.get_pipeline_schema()
         assert 'properties' in self.launcher.schema_obj.schema
         assert len(self.launcher.schema_obj.schema['properties']) > 2
 
+    def test_make_pipeline_schema(self):
+        """ Make a copy of the template workflow, but delete the schema file, then try to load it """
+        test_pipeline_dir = os.path.join(tempfile.mkdtemp(), 'wf')
+        shutil.copytree(self.template_dir, test_pipeline_dir)
+        os.remove(os.path.join(test_pipeline_dir, 'nextflow_schema.json'))
+        self.launcher = nf_core.launch.Launch(test_pipeline_dir, params_out = self.nf_params_fn)
+        self.launcher.get_pipeline_schema()
+        assert 'properties' in self.launcher.schema_obj.schema
+        assert len(self.launcher.schema_obj.schema['properties']) > 2
+        assert self.launcher.schema_obj.schema['properties']['outdir'] == {'type': 'string', 'default': './results'}
+
     def test_get_pipeline_defaults(self):
+        """ Test fetching default inputs from the JSON schema """
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0

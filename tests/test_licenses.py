@@ -2,7 +2,7 @@
 """Some tests covering the pipeline creation sub command.
 """
 import pytest
-import nf_core.lint, nf_core.licences
+import nf_core.licences
 import unittest
 
 

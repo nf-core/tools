@@ -6,7 +6,6 @@ import nf_core.list
 
 import mock
 import os
-import git
 import pytest
 import time
 import unittest

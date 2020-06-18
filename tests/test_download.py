@@ -2,16 +2,13 @@
 """Tests for the download subcommand of nf-core tools
 """
 
-import nf_core.list
 import nf_core.utils
 from nf_core.download import DownloadWorkflow
 
 import hashlib
-import io
 import mock
 import os
 import pytest
-import requests
 import shutil
 import tempfile
 import unittest
