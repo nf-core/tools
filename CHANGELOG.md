@@ -17,7 +17,10 @@
 * New Slack channel badge in pipeline readme
 * Add AWS CI tests and full tests GitHub Actions workflows
 * Update AWS CI tests and full tests secrets names
-* Replace `check_max()` with an improved `check_resource()`, which is already used in `nf-core/sarek`
+* Replace `check_max()` with an improved `set_resource()`, which is already used in `nf-core/sarek`
+* Rename params `max_cpus` to `set_max_cpus` for more consistency
+* Rename params `max_memory` to `set_max_memory` for more consistency
+* Rename params `max_time` to `set_max_time` for more consistency
 
 ### Linting
 
