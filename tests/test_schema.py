@@ -157,6 +157,8 @@ class TestSchema(unittest.TestCase):
     def test_make_skeleton_schema(self):
         """ Test making a new schema skeleton """
         self.schema_obj.schema_filename = self.template_schema
+        self.schema_obj.pipeline_manifest['name'] = 'nf-core/test'
+        self.schema_obj.pipeline_manifest['description'] = 'Test pipeline'
         self.schema_obj.make_skeleton_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
