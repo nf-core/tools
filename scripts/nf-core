@@ -336,7 +336,7 @@ def validate(pipeline, params):
     '--url',
     type = str,
     default = 'https://nf-co.re/json_schema_build',
-    help = 'URL for the web-based Schema builder'
+    help = 'Customise the builder URL (for development work)'
 )
 def build(pipeline_dir, no_prompts, web_only, url):
     """ Interactively build a schema from Nextflow params. """
