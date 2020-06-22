@@ -341,7 +341,8 @@ def validate(pipeline, params):
 def build(pipeline_dir, no_prompts, web_only, url):
     """ Interactively build a schema from Nextflow params. """
     schema_obj = nf_core.schema.PipelineSchema()
-    schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url)
+    if schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url) is False:
+        sys.exit(1)
 
 @schema.command(help_priority=3)
 @click.argument(

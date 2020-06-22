@@ -218,7 +218,7 @@ class PipelineSchema (object):
         except AssertionError as e:
             logging.error("Existing JSON Schema found, but it is invalid: {}".format(click.style(str(self.schema_filename), fg='red')))
             logging.info("Please fix or delete this file, then try again.")
-            sys.exit(1)
+            return False
 
         if not self.web_only:
             self.get_wf_params()
@@ -232,8 +232,14 @@ class PipelineSchema (object):
                 try:
                     self.launch_web_builder()
                 except AssertionError as e:
-                    logging.error(e.msg)
-                    sys.exit(1)
+                    logging.error(click.style(e.args[0], fg='red'))
+                    logging.info(
+                        "To save your work, open {}\n"
+                        "Click the blue 'Finished' button, copy the schema and paste into this file: {}".format(
+                            self.web_schema_build_web_url, self.schema_filename
+                        )
+                    )
+                    return False
 
     def get_wf_params(self):
         """
@@ -372,16 +378,13 @@ class PipelineSchema (object):
         try:
             response = requests.post(url=self.web_schema_build_url, data=content)
         except (requests.exceptions.Timeout):
-            logging.error("Schema builder URL timed out: {}".format(self.web_schema_build_url))
-            raise AssertionError
+            raise AssertionError("Schema builder URL timed out: {}".format(self.web_schema_build_url))
         except (requests.exceptions.ConnectionError):
-            logging.error("Could not connect to schema builder URL: {}".format(self.web_schema_build_url))
-            raise AssertionError
+            raise AssertionError("Could not connect to schema builder URL: {}".format(self.web_schema_build_url))
         else:
             if response.status_code != 200:
-                logging.error("Could not access remote JSON Schema builder: {} (HTML {} Error)".format(self.web_schema_build_url, response.status_code))
                 logging.debug("Response content:\n{}".format(response.content))
-                raise AssertionError
+                raise AssertionError("Could not access remote JSON Schema builder: {} (HTML {} Error)".format(self.web_schema_build_url, response.status_code))
             else:
                 try:
                     web_response = json.loads(response.content)
@@ -390,8 +393,8 @@ class PipelineSchema (object):
                     assert 'web_url' in web_response
                     assert web_response['status'] == 'recieved'
                 except (json.decoder.JSONDecodeError, AssertionError) as e:
-                    logging.error("JSON Schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(self.web_schema_build_url))
                     logging.debug("Response content:\n{}".format(response.content))
+                    raise AssertionError("JSON Schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(self.web_schema_build_url))
                 else:
                     self.web_schema_build_web_url = web_response['web_url']
                     self.web_schema_build_api_url = web_response['api_url']
@@ -401,25 +404,28 @@ class PipelineSchema (object):
                     self.wait_web_builder_response()
 
     def wait_web_builder_response(self):
-        is_saved = False
-        check_count = 0
-        def spinning_cursor():
-            while True:
-                for cursor in '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏':
-                    yield '{} Use ctrl+c to stop waiting and force exit. '.format(cursor)
-        spinner = spinning_cursor()
-        while not is_saved:
-            # Show the loading spinner every 0.1s
-            time.sleep(0.1)
-            loading_text = next(spinner)
-            sys.stdout.write(loading_text)
-            sys.stdout.flush()
-            sys.stdout.write('\b'*len(loading_text))
-            # Only check every 2 seconds, but update the spinner every 0.1s
-            check_count += 1
-            if check_count > 20:
-                is_saved = self.get_web_builder_response()
-                check_count = 0
+        try:
+            is_saved = False
+            check_count = 0
+            def spinning_cursor():
+                while True:
+                    for cursor in '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏':
+                        yield '{} Use ctrl+c to stop waiting and force exit. '.format(cursor)
+            spinner = spinning_cursor()
+            while not is_saved:
+                # Show the loading spinner every 0.1s
+                time.sleep(0.1)
+                loading_text = next(spinner)
+                sys.stdout.write(loading_text)
+                sys.stdout.flush()
+                sys.stdout.write('\b'*len(loading_text))
+                # Only check every 2 seconds, but update the spinner every 0.1s
+                check_count += 1
+                if check_count > 20:
+                    is_saved = self.get_web_builder_response()
+                    check_count = 0
+        except KeyboardInterrupt:
+            raise AssertionError("Cancelled!")
 
 
     def get_web_builder_response(self):
@@ -448,7 +454,7 @@ class PipelineSchema (object):
                     raise AssertionError("JSON Schema builder results response not recognised: {}\n See verbose log for full response".format(self.web_schema_build_api_url))
                 else:
                     if web_response['status'] == 'error':
-                        logging.error("Got error from JSON Schema builder ( {} )".format(click.style(web_response.get('message'), fg='red')))
+                        raise AssertionError("Got error from JSON Schema builder ( {} )".format(click.style(web_response.get('message'), fg='red')))
                     elif web_response['status'] == 'waiting_for_user':
                         return False
                     elif web_response['status'] == 'web_builder_edited':
