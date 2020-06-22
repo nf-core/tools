@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import click
 import copy
+import jinja2
 import json
 import jsonschema
 import logging
@@ -16,7 +17,7 @@ import time
 import webbrowser
 import yaml
 
-import nf_core.list
+import nf_core.list, nf_core.utils
 
 
 class PipelineSchema (object):
@@ -32,6 +33,7 @@ class PipelineSchema (object):
         self.schema_defaults = {}
         self.input_params = {}
         self.pipeline_params = {}
+        self.pipeline_manifest = {}
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
@@ -182,17 +184,18 @@ class PipelineSchema (object):
         assert 'properties' in self.schema, "Schema should have 'properties' section"
 
     def make_skeleton_schema(self):
-        """ Make an empty JSON Schema skeleton """
+        """ Make a new JSON Schema from the template """
         self.schema_from_scratch = True
-        config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
-        self.schema = {
-            "$schema": "https://json-schema.org/draft-07/schema",
-            "$id": "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(config['manifest.name']),
-            "title": "{} pipeline parameters".format(config['manifest.name']),
-            "description": config['manifest.description'],
-            "type": "object",
-            "properties": {}
+        # Use Jinja to render the template schema file to a variable
+        # Bit confusing sorry, but cookiecutter only works with directories etc so this saves a bunch of code
+        templateLoader = jinja2.FileSystemLoader(searchpath=os.path.join(os.path.dirname(os.path.realpath(__file__)), 'pipeline-template', '{{cookiecutter.name_noslash}}'))
+        templateEnv = jinja2.Environment(loader=templateLoader)
+        schema_template = templateEnv.get_template('nextflow_schema.json')
+        cookiecutter_vars = {
+            'name': self.pipeline_manifest['name'].strip("'"),
+            'description': self.pipeline_manifest['description'].strip("'")
         }
+        self.schema = json.loads(schema_template.render(cookiecutter=cookiecutter_vars))
 
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
         """ Interactively build a new JSON Schema for a pipeline """
@@ -208,8 +211,10 @@ class PipelineSchema (object):
         try:
             self.get_schema_from_name(pipeline_dir, local_only=True)
         except AssertionError:
-            logging.info("No existing schema found - creating a new one from scratch")
+            logging.info("No existing schema found - creating a new one from the nf-core template")
+            self.get_wf_params()
             self.make_skeleton_schema()
+            self.remove_schema_notfound_configs()
             self.save_schema()
 
         # Load and validate Schema
@@ -246,6 +251,11 @@ class PipelineSchema (object):
         Load the pipeline parameter defaults using `nextflow config`
         Strip out only the params. values and ignore anything that is not a flat variable
         """
+        # Check that we haven't already pulled these (eg. skeleton schema)
+        if len(self.pipeline_params) > 0 and len(self.pipeline_manifest) > 0:
+            logging.debug("Skipping get_wf_params as we already have them")
+            return
+
         logging.debug("Collecting pipeline parameter defaults\n")
         config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
         # Pull out just the params. values
@@ -256,6 +266,8 @@ class PipelineSchema (object):
                     logging.debug("Skipping pipeline param '{}' because it has nested parameter values".format(ckey))
                     continue
                 self.pipeline_params[ckey[7:]] = cval
+            if ckey.startswith('manifest.'):
+                self.pipeline_manifest[ckey[9:]] = cval
 
     def remove_schema_notfound_configs(self):
         """
