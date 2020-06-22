@@ -397,16 +397,29 @@ class PipelineSchema (object):
                     self.web_schema_build_api_url = web_response['api_url']
                     logging.info("Opening URL: {}".format(web_response['web_url']))
                     webbrowser.open(web_response['web_url'])
-                    logging.info("Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.")
+                    logging.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n")
                     self.wait_web_builder_response()
 
     def wait_web_builder_response(self):
         is_saved = False
+        check_count = 0
+        def spinning_cursor():
+            while True:
+                for cursor in '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏':
+                    yield '{} Use ctrl+c to stop waiting and force exit. '.format(cursor)
+        spinner = spinning_cursor()
         while not is_saved:
-            is_saved = self.get_web_builder_response()
-            sys.stdout.write('.')
+            # Show the loading spinner every 0.1s
+            time.sleep(0.1)
+            loading_text = next(spinner)
+            sys.stdout.write(loading_text)
             sys.stdout.flush()
-            time.sleep(2)
+            sys.stdout.write('\b'*len(loading_text))
+            # Only check every 2 seconds, but update the spinner every 0.1s
+            check_count += 1
+            if check_count > 20:
+                is_saved = self.get_web_builder_response()
+                check_count = 0
 
 
     def get_web_builder_response(self):
