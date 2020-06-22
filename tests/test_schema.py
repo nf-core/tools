@@ -10,6 +10,7 @@ import mock
 import os
 import pytest
 import requests
+import shutil
 import tempfile
 import unittest
 import yaml
@@ -273,6 +274,19 @@ class TestSchema(unittest.TestCase):
         """
         param = self.schema_obj.build_schema(self.template_dir, True, False, None)
 
+    def test_build_schema_from_scratch(self):
+        """
+        Build a new schema param from a pipeline with no existing file
+        Run code to ensure it doesn't crash. Individual functions tested separately.
+
+        Pretty much a copy of test_launch.py test_make_pipeline_schema
+        """
+        test_pipeline_dir = os.path.join(tempfile.mkdtemp(), 'wf')
+        shutil.copytree(self.template_dir, test_pipeline_dir)
+        os.remove(os.path.join(test_pipeline_dir, 'nextflow_schema.json'))
+
+        param = self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
+
     @pytest.mark.xfail(raises=AssertionError)
     @mock.patch('requests.post')
     def test_launch_web_builder_timeout(self, mock_post):
@@ -306,7 +320,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.launch_web_builder()
 
     def mocked_requests_post(**kwargs):
-        """ Helper function to emulate requests responses from the web """
+        """ Helper function to emulate POST requests responses from the web """
 
         class MockResponse:
             def __init__(self, data, status_code):
@@ -316,16 +330,55 @@ class TestSchema(unittest.TestCase):
         if kwargs['url'] == 'invalid_url':
             return MockResponse({}, 404)
 
-        if kwargs['url'] == 'valid_url':
+        if kwargs['url'] == 'valid_url_error':
             response_data = {
-                'status': 'recieved',
+                'status': 'error',
                 'api_url': 'foo',
                 'web_url': 'bar'
             }
             return MockResponse(response_data, 200)
 
+        if kwargs['url'] == 'valid_url_success':
+            response_data = {
+                'status': 'recieved',
+                'api_url': 'https://nf-co.re',
+                'web_url': 'https://nf-co.re'
+            }
+            return MockResponse(response_data, 200)
+
+    @mock.patch('requests.post', side_effect=mocked_requests_post)
+    def test_launch_web_builder_404(self, mock_post):
+        """ Mock launching the web builder """
+        self.schema_obj.web_schema_build_url = 'invalid_url'
+        try:
+            self.schema_obj.launch_web_builder()
+        except AssertionError as e:
+            assert e.args[0] == 'Could not access remote JSON Schema builder: invalid_url (HTML 404 Error)'
+
+    @mock.patch('requests.post', side_effect=mocked_requests_post)
+    def test_launch_web_builder_invalid_status(self, mock_post):
+        """ Mock launching the web builder """
+        self.schema_obj.web_schema_build_url = 'valid_url_error'
+        try:
+            self.schema_obj.launch_web_builder()
+        except AssertionError as e:
+            assert e.args[0].startswith("JSON Schema builder response not recognised")
+
+    @mock.patch('requests.post', side_effect=mocked_requests_post)
+    @mock.patch('requests.get')
+    @mock.patch('webbrowser.open')
+    def test_launch_web_builder_success(self, mock_post, mock_get, mock_webbrowser):
+        """ Mock launching the web builder """
+        self.schema_obj.web_schema_build_url = 'valid_url_success'
+        try:
+            self.schema_obj.launch_web_builder()
+        except AssertionError as e:
+            # Assertion error comes from get_web_builder_response() function
+            assert e.args[0].startswith('Could not access remote JSON Schema builder results: https://nf-co.re')
+
+
     def mocked_requests_get(*args, **kwargs):
-        """ Helper function to emulate requests responses from the web """
+        """ Helper function to emulate GET requests responses from the web """
 
         class MockResponse:
             def __init__(self, data, status_code):
@@ -335,25 +388,59 @@ class TestSchema(unittest.TestCase):
         if args[0] == 'invalid_url':
             return MockResponse({}, 404)
 
-        if args[0] == 'valid_url':
+        if args[0] == 'valid_url_error':
             response_data = {
-                'status': 'recieved',
-                'api_url': 'foo',
-                'web_url': 'bar'
+                'status': 'error',
+                'message': 'testing'
             }
             return MockResponse(response_data, 200)
 
-    @pytest.mark.xfail(raises=AssertionError)
-    @mock.patch('requests.post', side_effect=mocked_requests_post)
-    def test_launch_web_builder_404(self, mock_post):
-        """ Mock launching the web builder """
-        self.schema_obj.web_schema_build_url = 'invalid_url'
-        self.schema_obj.launch_web_builder()
+        if args[0] == 'valid_url_waiting':
+            response_data = {
+                'status': 'waiting_for_user',
+                'message': 'testing'
+            }
+            return MockResponse(response_data, 200)
 
+        if args[0] == 'valid_url_saved':
+            response_data = {
+                'status': 'web_builder_edited',
+                'message': 'testing',
+                'schema': '{ "foo": "bar" }'
+            }
+            return MockResponse(response_data, 200)
 
-    @pytest.mark.xfail(raises=AssertionError)
     @mock.patch('requests.get', side_effect=mocked_requests_get)
     def test_get_web_builder_response_404(self, mock_post):
         """ Mock launching the web builder """
         self.schema_obj.web_schema_build_api_url = 'invalid_url'
-        self.schema_obj.get_web_builder_response()
+        try:
+            self.schema_obj.get_web_builder_response()
+        except AssertionError as e:
+            assert e.args[0] == "Could not access remote JSON Schema builder results: invalid_url (HTML 404 Error)"
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get)
+    def test_get_web_builder_response_error(self, mock_post):
+        """ Mock launching the web builder """
+        self.schema_obj.web_schema_build_api_url = 'valid_url_error'
+        try:
+            self.schema_obj.get_web_builder_response()
+        except AssertionError as e:
+            assert e.args[0].startswith("Got error from JSON Schema builder")
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get)
+    def test_get_web_builder_response_waiting(self, mock_post):
+        """ Mock launching the web builder """
+        self.schema_obj.web_schema_build_api_url = 'valid_url_waiting'
+        assert self.schema_obj.get_web_builder_response() is False
+
+    @mock.patch('requests.get', side_effect=mocked_requests_get)
+    def test_get_web_builder_response_saved(self, mock_post):
+        """ Mock launching the web builder """
+        self.schema_obj.web_schema_build_api_url = 'valid_url_saved'
+        try:
+            self.schema_obj.get_web_builder_response()
+        except AssertionError as e:
+            # Check that this is the expected AssertionError, as there are seveal
+            assert e.args[0].startswith("Response from JSON Builder did not pass validation")
+        assert self.schema_obj.schema == {'foo': 'bar'}
