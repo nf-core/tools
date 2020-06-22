@@ -215,6 +215,7 @@ class PipelineSchema (object):
             self.get_wf_params()
             self.make_skeleton_schema()
             self.remove_schema_notfound_configs()
+            self.add_schema_found_configs()
             self.save_schema()
 
         # Load and validate Schema
