@@ -36,7 +36,13 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         assert 'properties' in self.launcher.schema_obj.schema
         assert len(self.launcher.schema_obj.schema['properties']) > 2
-        assert self.launcher.schema_obj.schema['properties']['outdir'] == {'type': 'string', 'default': './results'}
+        assert self.launcher.schema_obj.schema['properties']['Input/output options']['properties']['outdir'] == {
+            'type': 'string',
+            'description': 'The output directory where the results will be saved.',
+            'default': './results',
+            'fa_icon': 'fas fa-folder-open',
+            'help_text': ''
+        }
 
     def test_get_pipeline_defaults(self):
         """ Test fetching default inputs from the JSON schema """

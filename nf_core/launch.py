@@ -26,7 +26,8 @@ def launch_pipeline(pipeline, command_only, params_in=None, params_out=None, sav
     launcher = Launch(pipeline, command_only, params_in, params_out, show_hidden)
 
     # Build the schema and starting inputs
-    launcher.get_pipeline_schema()
+    if launcher.get_pipeline_schema() is False:
+        return False
     launcher.set_schema_inputs()
     launcher.merge_nxf_flag_schema()
 
@@ -128,9 +129,12 @@ class Launch(object):
             # No schema found, just scrape the pipeline for parameters
             logging.info("No pipeline schema found - creating one from the config")
             try:
-                self.schema_obj.make_skeleton_schema()
                 self.schema_obj.get_wf_params()
+                self.schema_obj.make_skeleton_schema()
+                self.schema_obj.remove_schema_notfound_configs()
                 self.schema_obj.add_schema_found_configs()
+                self.schema_obj.flatten_schema()
+                self.schema_obj.get_schema_defaults()
             except AssertionError as e:
                 logging.error("Could not build pipeline schema: {}".format(e))
                 return False
