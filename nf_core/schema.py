@@ -231,7 +231,8 @@ class PipelineSchema (object):
             if click.confirm(click.style("\nLaunch web builder for customisation and editing?", fg='magenta'), True):
                 try:
                     self.launch_web_builder()
-                except AssertionError:
+                except AssertionError as e:
+                    logging.error(e.msg)
                     sys.exit(1)
 
     def get_wf_params(self):
@@ -397,7 +398,16 @@ class PipelineSchema (object):
                     logging.info("Opening URL: {}".format(web_response['web_url']))
                     webbrowser.open(web_response['web_url'])
                     logging.info("Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.")
-                    self.get_web_builder_response()
+                    self.wait_web_builder_response()
+
+    def wait_web_builder_response(self):
+        is_saved = False
+        while not is_saved:
+            is_saved = self.get_web_builder_response()
+            sys.stdout.write('.')
+            sys.stdout.flush()
+            time.sleep(2)
+
 
     def get_web_builder_response(self):
         """
@@ -409,49 +419,37 @@ class PipelineSchema (object):
         try:
             response = requests.get(self.web_schema_build_api_url, headers={'Cache-Control': 'no-cache'})
         except (requests.exceptions.Timeout):
-            logging.error("Schema builder URL timed out: {}".format(self.web_schema_build_api_url))
-            raise AssertionError
+            raise AssertionError("Schema builder URL timed out: {}".format(self.web_schema_build_api_url))
         except (requests.exceptions.ConnectionError):
-            logging.error("Could not connect to schema builder URL: {}".format(self.web_schema_build_api_url))
-            raise AssertionError
+            raise AssertionError("Could not connect to schema builder URL: {}".format(self.web_schema_build_api_url))
         else:
             if response.status_code != 200:
-                logging.error("Could not access remote JSON Schema builder results: {} (HTML {} Error)".format(self.web_schema_build_api_url, response.status_code))
                 logging.debug("Response content:\n{}".format(response.content))
-                raise AssertionError
+                raise AssertionError("Could not access remote JSON Schema builder results: {} (HTML {} Error)".format(self.web_schema_build_api_url, response.status_code))
             else:
                 try:
                     web_response = json.loads(response.content)
                     assert 'status' in web_response
                 except (json.decoder.JSONDecodeError, AssertionError) as e:
-                    logging.error("JSON Schema builder results response not recognised: {}\n See verbose log for full response".format(self.web_schema_build_api_url))
                     logging.debug("Response content:\n{}".format(response.content))
-                    raise AssertionError
+                    raise AssertionError("JSON Schema builder results response not recognised: {}\n See verbose log for full response".format(self.web_schema_build_api_url))
                 else:
                     if web_response['status'] == 'error':
                         logging.error("Got error from JSON Schema builder ( {} )".format(click.style(web_response.get('message'), fg='red')))
                     elif web_response['status'] == 'waiting_for_user':
-                        time.sleep(5)
-                        sys.stdout.write('.')
-                        sys.stdout.flush()
-                        try:
-                            self.get_web_builder_response()
-                        except RecursionError as e:
-                            logging.info("Reached maximum wait time for web builder. Exiting.")
-                            sys.exit(1)
+                        return False
                     elif web_response['status'] == 'web_builder_edited':
                         logging.info("Found saved status from nf-core JSON Schema builder")
                         try:
                             self.schema = json.loads(web_response['schema'])
                             self.validate_schema(self.schema)
                         except json.decoder.JSONDecodeError as e:
-                            logging.error("Could not parse returned JSON:\n {}".format(e))
-                            sys.exit(1)
+                            raise AssertionError("Could not parse returned JSON:\n {}".format(e))
                         except AssertionError as e:
-                            logging.info("Response from JSON Builder did not pass validation:\n {}".format(e))
-                            sys.exit(1)
+                            raise AssertionError("Response from JSON Builder did not pass validation:\n {}".format(e))
                         else:
                             self.save_schema()
+                            return True
                     else:
-                        logging.error("JSON Schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(web_response['status'], self.web_schema_build_api_url))
                         logging.debug("Response content:\n{}".format(response.content))
+                        raise AssertionError("JSON Schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(web_response['status'], self.web_schema_build_api_url))
