@@ -88,7 +88,7 @@ class Launch(object):
                     '-name': {
                         'type': 'string',
                         'description': 'Unique name for this nextflow run',
-                        'pattern': '^[a-zA-Z0-9-_]$'
+                        'pattern': '^[a-zA-Z0-9-_]+$'
                     },
                     '-revision': {
                         'type': 'string',
