@@ -53,6 +53,9 @@ def get_local_wf(workflow):
             return wf.local_path
 
     # Wasn't local, fetch it
+    # Assume nf-core if no org given
+    if workflow.count('/') == 0:
+        workflow = 'nf-core/{}'.format(workflow)
     logging.info("Downloading workflow: {}".format(workflow))
     try:
         with open(os.devnull, 'w') as devnull:
