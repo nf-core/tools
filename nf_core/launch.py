@@ -150,8 +150,9 @@ class Launch(object):
 
         # If we have a params_file, load and validate it against the schema
         if self.params_in:
-            self.load_input_params(self.params_in)
-            self.validate_params()
+            logging.info("Loading {}".format(self.params_in))
+            self.schema_obj.load_input_params(self.params_in)
+            self.schema_obj.validate_params()
 
     def merge_nxf_flag_schema(self):
         """ Take the Nextflow flag schema and merge it with the pipeline schema """
@@ -171,7 +172,7 @@ class Launch(object):
             else:
                 if not param_obj.get('hidden', False) or self.show_hidden:
                     is_required = param_id in self.schema_obj.schema.get('required', [])
-                    answers.update(self.prompt_param(param_id, param_obj, is_required))
+                    answers.update(self.prompt_param(param_id, param_obj, is_required, answers))
 
         # Split answers into core nextflow options and params
         for key, answer in answers.items():
@@ -185,11 +186,11 @@ class Launch(object):
         # Update schema with user params
         self.schema_obj.input_params.update(self.params_user)
 
-    def prompt_param(self, param_id, param_obj, is_required):
+    def prompt_param(self, param_id, param_obj, is_required, answers):
         """Prompt for a single parameter"""
 
         # Print the question
-        question = self.single_param_to_pyinquirer(param_id, param_obj)
+        question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
         answer = PyInquirer.prompt([question])
 
         # If got ? then print help and ask again
@@ -251,11 +252,11 @@ class Launch(object):
             else:
                 child_param = answer[param_id]
                 is_required = child_param in param_obj.get('required', [])
-                answers.update(self.prompt_param(child_param, param_obj['properties'][child_param], is_required))
+                answers.update(self.prompt_param(child_param, param_obj['properties'][child_param], is_required, answers))
 
         return answers
 
-    def single_param_to_pyinquirer(self, param_id, param_obj):
+    def single_param_to_pyinquirer(self, param_id, param_obj, answers):
         """Convert a JSONSchema param to a PyInquirer question
 
         Args:
@@ -279,12 +280,18 @@ class Launch(object):
             question['type'] = 'confirm'
             question['default'] = False
 
-        if 'default' in param_obj:
-            if param_obj['type'] == 'boolean' and type(param_obj['default']) is str:
-                question['default'] = 'true' == param_obj['default'].lower()
+        # Default value from parsed schema, with --params-in etc
+        if param_id in self.schema_obj.input_params:
+            if param_obj['type'] == 'boolean' and type(self.schema_obj.input_params[param_id]) is str:
+                question['default'] = 'true' == self.schema_obj.input_params[param_id].lower()
             else:
-                question['default'] = param_obj['default']
+                question['default'] = self.schema_obj.input_params[param_id]
 
+        # Overwrite if already had an answer
+        if param_id in answers:
+            question['default'] = answers[param_id]
+
+        # Validate enum from schema
         if 'enum' in param_obj:
             def validate_enum(val):
                 if val == '':
@@ -294,6 +301,7 @@ class Launch(object):
                 return "Must be one of: {}".format(", ".join(param_obj['enum']))
             question['validate'] = validate_enum
 
+        # Validate pattern from schema
         if 'pattern' in param_obj:
             def validate_pattern(val):
                 if val == '':
