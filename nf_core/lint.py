@@ -1079,9 +1079,9 @@ class PipelineLint(object):
 
         # Lint the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
-        self.schema_obj.get_schema_from_name(self.path)
+        self.schema_obj.get_schema_path(self.path)
         try:
-            self.schema_obj.lint_schema()
+            self.schema_obj.load_lint_schema()
             self.passed.append((14, "Schema lint passed"))
         except AssertionError as e:
             self.failed.append((14, "Schema lint failed: {}".format(e)))
@@ -1094,7 +1094,7 @@ class PipelineLint(object):
 
         # First, get the top-level config options for the pipeline
         # Schema object already created in the previous test
-        self.schema_obj.get_schema_from_name(self.path)
+        self.schema_obj.get_schema_path(self.path)
         self.schema_obj.get_wf_params()
         self.schema_obj.no_prompts = True
 

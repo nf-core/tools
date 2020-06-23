@@ -19,12 +19,12 @@ import nf_core.schema
 # add raise_keyboard_interrupt=True argument to PyInquirer.prompt() calls
 # Requires a new release of PyInquirer. See https://github.com/CITGuru/PyInquirer/issues/90
 
-def launch_pipeline(pipeline, command_only, params_in=None, params_out=None, save_all=False, show_hidden=False):
+def launch_pipeline(pipeline, revision=None, command_only=False, params_in=None, params_out=None, save_all=False, show_hidden=False):
 
     logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
 
     # Create a pipeline launch object
-    launcher = Launch(pipeline, command_only, params_in, params_out, show_hidden)
+    launcher = Launch(pipeline, revision, command_only, params_in, params_out, show_hidden)
 
     # Build the schema and starting inputs
     if launcher.get_pipeline_schema() is False:
@@ -50,7 +50,7 @@ def launch_pipeline(pipeline, command_only, params_in=None, params_out=None, sav
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, pipeline, command_only=False, params_in=None, params_out=None, show_hidden=False):
+    def __init__(self, pipeline, revision=None, command_only=False, params_in=None, params_out=None, show_hidden=False):
         """Initialise the Launcher class
 
         Args:
@@ -58,6 +58,7 @@ class Launch(object):
         """
 
         self.pipeline = pipeline
+        self.pipeline_revision = revision
         self.schema_obj = None
         self.use_params_file = True
         if command_only:
@@ -125,7 +126,8 @@ class Launch(object):
         self.schema_obj = nf_core.schema.PipelineSchema()
         try:
             # Get schema from name, load it and lint it
-            self.schema_obj.lint_schema(self.pipeline)
+            self.schema_obj.get_schema_path(self.pipeline, revision=self.pipeline_revision)
+            self.schema_obj.load_lint_schema()
         except AssertionError:
             # No schema found, just scrape the pipeline for parameters
             logging.info("No pipeline schema found - creating one from the config")

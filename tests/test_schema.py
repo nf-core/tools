@@ -25,55 +25,59 @@ class TestSchema(unittest.TestCase):
         self.template_dir = os.path.join(self.root_repo_dir, 'nf_core', 'pipeline-template', '{{cookiecutter.name_noslash}}')
         self.template_schema = os.path.join(self.template_dir, 'nextflow_schema.json')
 
-    def test_lint_schema(self):
+    def test_load_lint_schema(self):
         """ Check linting with the pipeline template directory """
-        self.schema_obj.lint_schema(self.template_dir)
+        self.schema_obj.get_schema_path(self.template_dir)
+        self.schema_obj.load_lint_schema()
 
     @pytest.mark.xfail(raises=AssertionError)
-    def test_lint_schema_nofile(self):
+    def test_load_lint_schema_nofile(self):
         """ Check that linting raises properly if a non-existant file is given """
-        self.schema_obj.lint_schema('fake_file')
+        self.schema_obj.get_schema_path('fake_file')
+        self.schema_obj.load_lint_schema()
 
     @pytest.mark.xfail(raises=AssertionError)
-    def test_lint_schema_notjson(self):
+    def test_load_lint_schema_notjson(self):
         """ Check that linting raises properly if a non-JSON file is given """
-        self.schema_obj.lint_schema(os.path.join(self.template_dir, 'nextflow.config'))
+        self.schema_obj.get_schema_path(os.path.join(self.template_dir, 'nextflow.config'))
+        self.schema_obj.load_lint_schema()
 
     @pytest.mark.xfail(raises=AssertionError)
-    def test_lint_schema_invalidjson(self):
+    def test_load_lint_schema_invalidjson(self):
         """ Check that linting raises properly if a JSON file is given with an invalid schema """
         # Make a temporary file to write schema to
         tmp_file = tempfile.NamedTemporaryFile()
         with open(tmp_file.name, 'w') as fh:
             json.dump({'type': 'fubar'}, fh)
-        self.schema_obj.lint_schema(tmp_file.name)
+        self.schema_obj.get_schema_path(tmp_file.name)
+        self.schema_obj.load_lint_schema()
 
-    def test_get_schema_from_name_dir(self):
+    def test_get_schema_path_dir(self):
         """ Get schema file from directory """
-        self.schema_obj.get_schema_from_name(self.template_dir)
+        self.schema_obj.get_schema_path(self.template_dir)
 
-    def test_get_schema_from_name_path(self):
+    def test_get_schema_path_path(self):
         """ Get schema file from a path """
-        self.schema_obj.get_schema_from_name(self.template_schema)
+        self.schema_obj.get_schema_path(self.template_schema)
 
     @pytest.mark.xfail(raises=AssertionError)
-    def test_get_schema_from_name_path_notexist(self):
+    def test_get_schema_path_path_notexist(self):
         """ Get schema file from a path """
-        self.schema_obj.get_schema_from_name('fubar', local_only=True)
+        self.schema_obj.get_schema_path('fubar', local_only=True)
 
     # TODO - Update when we do have a released pipeline with a valid schema
     @pytest.mark.xfail(raises=AssertionError)
-    def test_get_schema_from_name_name(self):
+    def test_get_schema_path_name(self):
         """ Get schema file from the name of a remote pipeline """
-        self.schema_obj.get_schema_from_name('atacseq')
+        self.schema_obj.get_schema_path('atacseq')
 
     @pytest.mark.xfail(raises=AssertionError)
-    def test_get_schema_from_name_name_notexist(self):
+    def test_get_schema_path_name_notexist(self):
         """
         Get schema file from the name of a remote pipeline
         that doesn't have a schema file
         """
-        self.schema_obj.get_schema_from_name('exoseq')
+        self.schema_obj.get_schema_path('exoseq')
 
     def test_load_schema(self):
         """ Try to load a schema from a file """

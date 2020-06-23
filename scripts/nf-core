@@ -95,6 +95,10 @@ def list(keywords, sort, json):
     metavar = "<pipeline name>"
 )
 @click.option(
+    '-r', '--revision',
+    help = "Release/branch/SHA of the project to run (if remote)"
+)
+@click.option(
     '-c', '--command-only',
     is_flag = True,
     default = False,
@@ -123,9 +127,9 @@ def list(keywords, sort, json):
     default = False,
     help = "Show hidden parameters."
 )
-def launch(pipeline, command_only, params_in, params_out, save_all, show_hidden):
+def launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden):
     """ Run pipeline, interactive parameter prompts """
-    if nf_core.launch.launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden) == False:
+    if nf_core.launch.launch_pipeline(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden) == False:
         sys.exit(1)
 
 # nf-core download
@@ -303,9 +307,9 @@ def validate(pipeline, params):
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
-        schema_obj.get_schema_from_name(pipeline)
+        schema_obj.get_schema_path(pipeline)
         # Load and check schema
-        schema_obj.lint_schema()
+        schema_obj.load_lint_schema()
     except AssertionError as e:
         logging.error(e)
         sys.exit(1)
@@ -359,7 +363,8 @@ def lint(schema_path):
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
-        schema_obj.lint_schema(schema_path)
+        schema_obj.get_schema_path(schema_path)
+        schema_obj.load_lint_schema()
     except AssertionError as e:
         sys.exit(1)
 

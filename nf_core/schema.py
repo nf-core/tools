@@ -41,7 +41,7 @@ class PipelineSchema (object):
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
-    def get_schema_from_name(self, path, local_only=False):
+    def get_schema_path(self, path, local_only=False, revision=None):
         """ Given a pipeline name, directory, or path, set self.schema_filename """
 
         # Supplied path exists - assume a local pipeline directory or schema
@@ -53,7 +53,7 @@ class PipelineSchema (object):
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
-            pipeline_dir = nf_core.list.get_local_wf(path)
+            pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
             self.schema_filename = os.path.join(pipeline_dir, 'nextflow_schema.json')
 
         # Only looking for local paths, overwrite with None to be safe
@@ -66,12 +66,8 @@ class PipelineSchema (object):
             logging.error(error)
             raise AssertionError(error)
 
-    def lint_schema(self, path=None):
-        """ Lint a given schema to see if it looks valid """
-
-        if path is not None:
-            self.get_schema_from_name(path)
-
+    def load_lint_schema(self):
+        """ Load and lint a given schema to see if it looks valid """
         try:
             self.load_schema()
             self.validate_schema(self.schema)
@@ -209,7 +205,7 @@ class PipelineSchema (object):
 
         # Get JSON Schema filename
         try:
-            self.get_schema_from_name(pipeline_dir, local_only=True)
+            self.get_schema_path(pipeline_dir, local_only=True)
         except AssertionError:
             logging.info("No existing schema found - creating a new one from the nf-core template")
             self.get_wf_params()
@@ -220,7 +216,7 @@ class PipelineSchema (object):
 
         # Load and validate Schema
         try:
-            self.lint_schema()
+            self.load_lint_schema()
         except AssertionError as e:
             logging.error("Existing JSON Schema found, but it is invalid: {}".format(click.style(str(self.schema_filename), fg='red')))
             logging.info("Please fix or delete this file, then try again.")
