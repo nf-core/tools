@@ -84,5 +84,5 @@ jobs:
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push {{ cookiecutter.name_docker }}:latest
-          docker tag {{ cookiecutter.name_docker }}:latest {{ cookiecutter.name_docker }}:{% raw %}${{ github.ref }}{% endraw %}
-          docker push {{ cookiecutter.name_docker }}:{% raw %}${{ github.ref }}{% endraw %}
+          docker tag {{ cookiecutter.name_docker }}:latest {{ cookiecutter.name_docker }}:{% raw %}${{ github.event.release.tag_name }}{% endraw %}
+          docker push {{ cookiecutter.name_docker }}:{% raw %}${{ github.event.release.tag_name }}{% endraw %}
