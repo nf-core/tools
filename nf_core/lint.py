@@ -232,6 +232,7 @@ class PipelineLint(object):
         Files that **must** be present::
 
             'nextflow.config',
+            'nextflow_schema.json',
             'Dockerfile',
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
@@ -267,6 +268,7 @@ class PipelineLint(object):
         # List of lists. Passes if any of the files in the sublist are found.
         files_fail = [
             ['nextflow.config'],
+            ['nextflow_schema.json'],
             ['Dockerfile'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             ['README.md'],
@@ -683,13 +685,13 @@ class PipelineLint(object):
     def check_actions_awstest(self):
         """Checks the GitHub Actions awstest is valid.
 
-        Makes sure it is triggered only on ``push`` to ``master``. 
+        Makes sure it is triggered only on ``push`` to ``master``.
         """
         fn = os.path.join(self.path, '.github', 'workflows', 'awstest.yml')
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 wf = yaml.safe_load(fh)
-            
+
             # Check that the action is only turned on for push
             try:
                 assert('push' in wf[True])
@@ -707,7 +709,7 @@ class PipelineLint(object):
                 self.failed.append((5, "GitHub Actions AWS test should be triggered only on push to master: '{}'".format(fn)))
             else:
                 self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: '{}'".format(fn)))
-            
+
     def check_actions_awsfulltest(self):
         """Checks the GitHub Actions awsfulltest is valid.
 
