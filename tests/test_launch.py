@@ -51,6 +51,17 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.input_params) > 0
         assert self.launcher.schema_obj.input_params['outdir'] == './results'
 
+    def test_get_pipeline_defaults_input_params(self):
+        """ Test fetching default inputs from the JSON schema with an input params file supplied """
+        tmp_filehandle, tmp_filename = tempfile.mkstemp()
+        with os.fdopen(tmp_filehandle, 'w') as fh:
+            json.dump({'outdir': 'fubar'}, fh)
+        self.launcher.params_in = tmp_filename
+        self.launcher.get_pipeline_schema()
+        self.launcher.set_schema_inputs()
+        assert len(self.launcher.schema_obj.input_params) > 0
+        assert self.launcher.schema_obj.input_params['outdir'] == 'fubar'
+
     def test_nf_merge_schema(self):
         """ Checking merging the nextflow JSON schema with the pipeline schema """
         self.launcher.get_pipeline_schema()
