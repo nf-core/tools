@@ -105,14 +105,15 @@ class Workflows(object):
         Local workflows are stored in :attr:`self.local_workflows` list.
         """
         # Try to guess the local cache directory (much faster than calling nextflow)
-        if os.environ.get('NXF_ASSETS'):
-            nf_wfdir = os.path.join(os.environ.get('NXF_ASSETS'), 'nf-core')
+        if len(os.environ.get('NXF_ASSETS', '')) > 0:
+            nextflow_wfdir = os.environ.get('NXF_ASSETS')
         else:
-            nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', 'nf-core')
-        if os.path.isdir(nf_wfdir):
-            logging.debug("Guessed nextflow assets directory - pulling nf-core dirnames")
-            for wf_name in os.listdir(nf_wfdir):
-                self.local_workflows.append( LocalWorkflow('nf-core/{}'.format(wf_name)) )
+            nextflow_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets')
+        if os.path.isdir(nextflow_wfdir):
+            logging.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
+            for org_name in os.listdir(nextflow_wfdir):
+                for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
+                    self.local_workflows.append( LocalWorkflow('{}/{}'.format(org_name, wf_name)) )
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:
