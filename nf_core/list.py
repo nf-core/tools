@@ -65,7 +65,7 @@ def get_local_wf(workflow):
     else:
         local_wf = LocalWorkflow(workflow)
         local_wf.get_local_nf_workflow_details()
-        return wf.local_path
+        return local_wf.local_path
 
 class Workflows(object):
     """Workflow container class.
@@ -298,12 +298,12 @@ class LocalWorkflow(object):
         if self.local_path is None:
 
             # Try to guess the local cache directory
-            if os.environ.get('NXF_ASSETS'):
+            if len(os.environ.get('NXF_ASSETS', '')) > 0:
                 nf_wfdir = os.path.join(os.environ.get('NXF_ASSETS'), self.full_name)
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', self.full_name)
             if os.path.isdir(nf_wfdir):
-                logging.debug("Guessed nextflow assets workflow directory")
+                logging.debug("Guessed nextflow assets workflow directory: {}".format(nf_wfdir))
                 self.local_path = nf_wfdir
 
             # Use `nextflow info` to get more details about the workflow
@@ -330,6 +330,7 @@ class LocalWorkflow(object):
 
         # Pull information from the local git repository
         if self.local_path is not None:
+            logging.debug("Pulling git info from {}".format(self.local_path))
             try:
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)
