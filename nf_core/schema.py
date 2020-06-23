@@ -46,6 +46,8 @@ class PipelineSchema (object):
 
         # Supplied path exists - assume a local pipeline directory or schema
         if os.path.exists(path):
+            if revision is not None:
+                logging.warning("Local workflow supplied, ignoring revision '{}'".format(revision))
             if os.path.isdir(path):
                 self.schema_filename = os.path.join(path, 'nextflow_schema.json')
             else:
