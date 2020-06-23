@@ -192,8 +192,8 @@ class PipelineSchema (object):
         templateEnv = jinja2.Environment(loader=templateLoader)
         schema_template = templateEnv.get_template('nextflow_schema.json')
         cookiecutter_vars = {
-            'name': self.pipeline_manifest['name'].strip("'"),
-            'description': self.pipeline_manifest['description'].strip("'")
+            'name': self.pipeline_manifest.get('name', os.path.dirname(self.schema_filename)).strip("'"),
+            'description': self.pipeline_manifest.get('description', '').strip("'")
         }
         self.schema = json.loads(schema_template.render(cookiecutter=cookiecutter_vars))
 
