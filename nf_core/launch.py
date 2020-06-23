@@ -11,6 +11,7 @@ import os
 import PyInquirer
 import re
 import subprocess
+import textwrap
 
 import nf_core.schema
 
@@ -186,6 +187,8 @@ class Launch(object):
 
     def prompt_param(self, param_id, param_obj, is_required):
         """Prompt for a single parameter"""
+
+        # Print the question
         question = self.single_param_to_pyinquirer(param_id, param_obj)
         answer = PyInquirer.prompt([question])
 
@@ -241,6 +244,7 @@ class Launch(object):
         while_break = False
         answers = {}
         while not while_break:
+            self.print_param_header(param_id, param_obj)
             answer = PyInquirer.prompt([question])
             if answer[param_id] == 'Continue >>':
                 while_break = True
@@ -266,11 +270,10 @@ class Launch(object):
             'name': param_id,
             'message': param_id
         }
-        if 'description' in param_obj:
-            msg = param_obj['description']
-            if 'help_text' in param_obj:
-                msg = "{} {}".format(msg, click.style('(? for help)', dim=True))
-            click.echo("\n{}".format(msg), err=True)
+
+        # Print the name, description & help text
+        nice_param_id = '--{}'.format(param_id) if not param_id.startswith('-') else param_id
+        self.print_param_header(nice_param_id, param_obj)
 
         if param_obj.get('type') == 'boolean':
             question['type'] = 'confirm'
@@ -301,6 +304,20 @@ class Launch(object):
             question['validate'] = validate_pattern
 
         return question
+
+    def print_param_header(self, param_id, param_obj):
+        if 'description' not in param_obj and 'help_text' not in param_obj:
+            return
+        header_str = click.style(param_id, bold=True)
+        if 'description' in param_obj:
+            header_str += ' - {}'.format(param_obj['description'])
+        if 'help_text' in param_obj:
+            # Strip indented and trailing whitespace
+            help_text = textwrap.dedent(param_obj['help_text']).strip()
+            # Replace single newlines, leave double newlines in place
+            help_text = re.sub(r'(?<!\n)\n(?!\n)', ' ', help_text)
+            header_str += "\n" + click.style(help_text, dim=True)
+        click.echo("\n"+header_str, err=True)
 
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
