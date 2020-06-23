@@ -81,5 +81,5 @@ jobs:
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push nfcore/tools:latest
-          docker tag nfcore/tools:latest nfcore/tools:${{ github.ref }}
-          docker push nfcore/tools:${{ github.ref }}
+          docker tag nfcore/tools:latest nfcore/tools:${{ github.event.release.tag_name }}
+          docker push nfcore/tools:${{ github.event.release.tag_name }}
