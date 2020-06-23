@@ -256,7 +256,7 @@ class Launch(object):
 
         return answers
 
-    def single_param_to_pyinquirer(self, param_id, param_obj, answers):
+    def single_param_to_pyinquirer(self, param_id, param_obj, answers=None):
         """Convert a JSONSchema param to a PyInquirer question
 
         Args:
@@ -266,6 +266,9 @@ class Launch(object):
         Returns:
           Single PyInquirer dict, to be appended to questions list
         """
+        if answers is None:
+            answers = {}
+
         question = {
             'type': 'input',
             'name': param_id,
@@ -280,19 +283,26 @@ class Launch(object):
             question['type'] = 'confirm'
             question['default'] = False
 
-        # Default value from parsed schema, with --params-in etc
-        if param_id in self.schema_obj.input_params:
+        # Start with the default from the param object
+        if 'default' in param_obj:
+            if param_obj['type'] == 'boolean' and type(param_obj['default']) is str:
+                question['default'] = 'true' == param_obj['default'].lower()
+            else:
+                question['default'] = param_obj['default']
+
+        # Overwrite default with parsed schema, includes --params-in etc
+        if self.schema_obj is not None and param_id in self.schema_obj.input_params:
             if param_obj['type'] == 'boolean' and type(self.schema_obj.input_params[param_id]) is str:
                 question['default'] = 'true' == self.schema_obj.input_params[param_id].lower()
             else:
                 question['default'] = self.schema_obj.input_params[param_id]
 
-        # Overwrite if already had an answer
+        # Overwrite default if already had an answer
         if param_id in answers:
             question['default'] = answers[param_id]
 
         # Coerce default to a string if not boolean
-        if param_obj.get('type') != 'boolean':
+        if param_obj.get('type') != 'boolean' and 'default' in question:
             question['default'] = str(question['default'])
 
         # Validate number type
@@ -322,13 +332,12 @@ class Launch(object):
             def validate_range(val):
                 try:
                     fval = float(val)
-                    assert str(fval) == str(val)
-                    if 'minimum' in param_obj and fval < param_obj['minimum']:
-                        return "Must be greater than or equal to {}".format(float(param_obj['minimum']))
-                    if 'maximum' in param_obj and fval > param_obj['maximum']:
-                        return "Must be less than or equal to {}".format(float(param_obj['maximum']))
+                    if 'minimum' in param_obj and fval < float(param_obj['minimum']):
+                        return "Must be greater than or equal to {}".format(param_obj['minimum'])
+                    if 'maximum' in param_obj and fval > float(param_obj['maximum']):
+                        return "Must be less than or equal to {}".format(param_obj['maximum'])
                     return True
-                except (AssertionError, ValueError):
+                except (ValueError):
                     return "Must be a number"
             question['validate'] = validate_range
 

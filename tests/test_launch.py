@@ -98,6 +98,53 @@ class TestLaunch(unittest.TestCase):
             'default': True
         }
 
+    def test_ob_to_pyinquirer_number(self):
+        """ Check converting a python dict to a pyenquirer format - with enum """
+        sc_obj = {
+            "type": "number",
+            "default": 0.1
+        }
+        result = self.launcher.single_param_to_pyinquirer('min_reps_consensus', sc_obj)
+        assert result['type'] == 'input'
+        assert result['default'] == '0.1'
+        assert result['validate']('123')
+        assert result['validate']('-123.56')
+        assert result['validate']('')
+        assert result['validate']('123.56.78') == 'Must be a number'
+        assert result['validate']('123.56sdkfjb') == 'Must be a number'
+
+    def test_ob_to_pyinquirer_integer(self):
+        """ Check converting a python dict to a pyenquirer format - with enum """
+        sc_obj = {
+            "type": "integer",
+            "default": 1
+        }
+        result = self.launcher.single_param_to_pyinquirer('broad_cutoff', sc_obj)
+        assert result['type'] == 'input'
+        assert result['default'] == '1'
+        assert result['validate']('123')
+        assert result['validate']('-123')
+        assert result['validate']('')
+        assert result['validate']('123.45') == 'Must be an integer'
+        assert result['validate']('123.56sdkfjb') == 'Must be an integer'
+
+    def test_ob_to_pyinquirer_range(self):
+        """ Check converting a python dict to a pyenquirer format - with enum """
+        sc_obj = {
+            "type": "range",
+            "minimum": "10",
+            "maximum": "20",
+            "default": 15
+        }
+        result = self.launcher.single_param_to_pyinquirer('broad_cutoff', sc_obj)
+        assert result['type'] == 'input'
+        assert result['default'] == '15'
+        assert result['validate']('20')
+        assert result['validate']('')
+        assert result['validate']('123.56sdkfjb') == 'Must be a number'
+        assert result['validate']('8') == 'Must be greater than or equal to 10'
+        assert result['validate']('25') == 'Must be less than or equal to 20'
+
     def test_ob_to_pyinquirer_enum(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
         sc_obj = {
