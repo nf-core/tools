@@ -291,6 +291,47 @@ class Launch(object):
         if param_id in answers:
             question['default'] = answers[param_id]
 
+        # Coerce default to a string if not boolean
+        if param_obj.get('type') != 'boolean':
+            question['default'] = str(question['default'])
+
+        # Validate number type
+        if param_obj.get('type') == 'number':
+            def validate_number(val):
+                try:
+                    float(val)
+                except (ValueError):
+                    return "Must be a number"
+                else:
+                    return True
+            question['validate'] = validate_number
+
+        # Validate integer type
+        if param_obj.get('type') == 'integer':
+            def validate_integer(val):
+                try:
+                    assert int(val) == float(val)
+                except (AssertionError, ValueError):
+                    return "Must be an integer"
+                else:
+                    return True
+            question['validate'] = validate_integer
+
+        # Validate range type
+        if param_obj.get('type') == 'range':
+            def validate_range(val):
+                try:
+                    fval = float(val)
+                    assert str(fval) == str(val)
+                    if 'minimum' in param_obj and fval < param_obj['minimum']:
+                        return "Must be greater than or equal to {}".format(float(param_obj['minimum']))
+                    if 'maximum' in param_obj and fval > param_obj['maximum']:
+                        return "Must be less than or equal to {}".format(float(param_obj['maximum']))
+                    return True
+                except (AssertionError, ValueError):
+                    return "Must be a number"
+            question['validate'] = validate_range
+
         # Validate enum from schema
         if 'enum' in param_obj:
             def validate_enum(val):
