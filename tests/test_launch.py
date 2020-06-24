@@ -112,6 +112,7 @@ class TestLaunch(unittest.TestCase):
         assert result['validate']('')
         assert result['validate']('123.56.78') == 'Must be a number'
         assert result['validate']('123.56sdkfjb') == 'Must be a number'
+        assert result['filter']('123.456') == float(123.456)
 
     def test_ob_to_pyinquirer_integer(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
@@ -127,6 +128,7 @@ class TestLaunch(unittest.TestCase):
         assert result['validate']('')
         assert result['validate']('123.45') == 'Must be an integer'
         assert result['validate']('123.56sdkfjb') == 'Must be an integer'
+        assert result['filter']('123') == int(123)
 
     def test_ob_to_pyinquirer_range(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
@@ -144,6 +146,7 @@ class TestLaunch(unittest.TestCase):
         assert result['validate']('123.56sdkfjb') == 'Must be a number'
         assert result['validate']('8') == 'Must be greater than or equal to 10'
         assert result['validate']('25') == 'Must be less than or equal to 20'
+        assert result['filter']('20') == float(20)
 
     def test_ob_to_pyinquirer_enum(self):
         """ Check converting a python dict to a pyenquirer format - with enum """

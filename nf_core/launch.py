@@ -307,8 +307,8 @@ class Launch(object):
         if param_obj.get('type') != 'boolean' and 'default' in question:
             question['default'] = str(question['default'])
 
-        # Validate number type
         if param_obj.get('type') == 'number':
+            # Validate number type
             def validate_number(val):
                 try:
                     float(val)
@@ -318,8 +318,13 @@ class Launch(object):
                     return True
             question['validate'] = validate_number
 
-        # Validate integer type
+            # Filter returned value
+            def filter_number(val):
+                return float(val)
+            question['filter'] = filter_number
+
         if param_obj.get('type') == 'integer':
+            # Validate integer type
             def validate_integer(val):
                 try:
                     assert int(val) == float(val)
@@ -329,8 +334,13 @@ class Launch(object):
                     return True
             question['validate'] = validate_integer
 
-        # Validate range type
+            # Filter returned value
+            def filter_integer(val):
+                return int(val)
+            question['filter'] = filter_integer
+
         if param_obj.get('type') == 'range':
+            # Validate range type
             def validate_range(val):
                 try:
                     fval = float(val)
@@ -342,6 +352,11 @@ class Launch(object):
                 except (ValueError):
                     return "Must be a number"
             question['validate'] = validate_range
+
+            # Filter returned value
+            def filter_range(val):
+                return float(val)
+            question['filter'] = filter_range
 
         # Validate enum from schema
         if 'enum' in param_obj:
