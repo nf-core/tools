@@ -358,8 +358,12 @@ class Launch(object):
                 return float(val)
             question['filter'] = filter_range
 
-        # Validate enum from schema
         if 'enum' in param_obj:
+            # Use a selection list instead of free text input
+            question['type'] = 'list'
+            question['choices'] = param_obj['enum']
+
+            # Validate enum from schema
             def validate_enum(val):
                 if val == '':
                     return True

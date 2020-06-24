@@ -156,8 +156,9 @@ class TestLaunch(unittest.TestCase):
             "enum": [ "symlink", "rellink" ]
         }
         result = self.launcher.single_param_to_pyinquirer('publish_dir_mode', sc_obj)
-        assert result['type'] == 'input'
+        assert result['type'] == 'list'
         assert result['default'] == 'copy'
+        assert result['choices'] == [ "symlink", "rellink" ]
         assert result['validate']('symlink')
         assert result['validate']('')
         assert result['validate']('not_allowed') == 'Must be one of: symlink, rellink'
