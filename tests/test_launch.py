@@ -40,8 +40,7 @@ class TestLaunch(unittest.TestCase):
             'type': 'string',
             'description': 'The output directory where the results will be saved.',
             'default': './results',
-            'fa_icon': 'fas fa-folder-open',
-            'help_text': ''
+            'fa_icon': 'fas fa-folder-open'
         }
 
     def test_get_pipeline_defaults(self):
