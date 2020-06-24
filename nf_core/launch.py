@@ -129,7 +129,16 @@ class Launch(object):
             self.schema_obj.get_schema_path(self.pipeline, revision=self.pipeline_revision)
             self.schema_obj.load_lint_schema()
         except AssertionError:
-            # No schema found, just scrape the pipeline for parameters
+            # No schema found
+            # Check that this was actually a pipeline
+            if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
+                logging.error("Could not find pipeline: {}".format(self.pipeline))
+                return False
+            if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, 'nextflow.config')) and not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, 'main.nf')):
+                logging.error("Could not find a main.nf or nextfow.config file, are you sure this is a pipeline?")
+                return False
+
+            # Build a schema for this pipeline
             logging.info("No pipeline schema found - creating one from the config")
             try:
                 self.schema_obj.get_wf_params()

@@ -29,6 +29,7 @@ class PipelineSchema (object):
 
         self.schema = None
         self.flat_schema = None
+        self.pipeline_dir = None
         self.schema_filename = None
         self.schema_defaults = {}
         self.input_params = {}
@@ -49,14 +50,16 @@ class PipelineSchema (object):
             if revision is not None:
                 logging.warning("Local workflow supplied, ignoring revision '{}'".format(revision))
             if os.path.isdir(path):
+                self.pipeline_dir = path
                 self.schema_filename = os.path.join(path, 'nextflow_schema.json')
             else:
+                self.pipeline_dir = os.path.dirname(path)
                 self.schema_filename = path
 
         # Path does not exist - assume a name of a remote workflow
         elif not local_only:
-            pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
-            self.schema_filename = os.path.join(pipeline_dir, 'nextflow_schema.json')
+            self.pipeline_dir = nf_core.list.get_local_wf(path, revision=revision)
+            self.schema_filename = os.path.join(self.pipeline_dir, 'nextflow_schema.json')
 
         # Only looking for local paths, overwrite with None to be safe
         else:
