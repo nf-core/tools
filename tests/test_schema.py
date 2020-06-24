@@ -357,7 +357,7 @@ class TestSchema(unittest.TestCase):
         try:
             self.schema_obj.launch_web_builder()
         except AssertionError as e:
-            assert e.args[0] == 'Could not access remote JSON Schema builder: invalid_url (HTML 404 Error)'
+            assert e.args[0] == 'Could not access remote API results: invalid_url (HTML 404 Error)'
 
     @mock.patch('requests.post', side_effect=mocked_requests_post)
     def test_launch_web_builder_invalid_status(self, mock_post):
@@ -378,7 +378,7 @@ class TestSchema(unittest.TestCase):
             self.schema_obj.launch_web_builder()
         except AssertionError as e:
             # Assertion error comes from get_web_builder_response() function
-            assert e.args[0].startswith('Could not access remote JSON Schema builder results: https://nf-co.re')
+            assert e.args[0].startswith('Could not access remote API results: https://nf-co.re')
 
 
     def mocked_requests_get(*args, **kwargs):
@@ -421,7 +421,7 @@ class TestSchema(unittest.TestCase):
         try:
             self.schema_obj.get_web_builder_response()
         except AssertionError as e:
-            assert e.args[0] == "Could not access remote JSON Schema builder results: invalid_url (HTML 404 Error)"
+            assert e.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
 
     @mock.patch('requests.get', side_effect=mocked_requests_get)
     def test_get_web_builder_response_error(self, mock_post):
