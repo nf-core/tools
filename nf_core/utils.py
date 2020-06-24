@@ -84,7 +84,7 @@ def fetch_wf_config(wf_path):
         main_nf = os.path.join(wf_path, 'main.nf')
         with open(main_nf, 'r') as fh:
             for l in fh:
-                match = re.match(r'^(params\.[a-zA-Z0-9_]+)\s*=', l)
+                match = re.match(r'^\s*(params\.[a-zA-Z0-9_]+)\s*=', l)
                 if match:
                     config[match.group(1)] = 'false'
     except FileNotFoundError as e:
