@@ -10,7 +10,6 @@
             "properties": {
                 "reads": {
                     "type": "string",
-                    "default": "data/*{1,2}.fastq.gz",
                     "fa_icon": "fas fa-dna",
                     "description": "Input FastQ files.",
                     "help_text": "A glob pattern for input FastQ files. Should include at least one asterisk (*). For paired-end data, should contain curly brackets with two patterns differentiating the paired reads e.g. `*_R{1,2}.fastq.gz`"

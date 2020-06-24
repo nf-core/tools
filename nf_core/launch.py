@@ -245,6 +245,14 @@ class Launch(object):
             answer = PyInquirer.prompt([question])
             if answer[param_id] == 'Continue >>':
                 while_break = True
+                # Check if there are any required parameters that don't have answers
+                if self.schema_obj is not None and param_id in self.schema_obj.schema['properties']:
+                    for p_required in self.schema_obj.schema['properties'][param_id].get('required', []):
+                        req_default = self.schema_obj.input_params.get(p_required, '')
+                        req_answer = answers.get(p_required, '')
+                        if req_default == '' and req_answer == '':
+                            click.secho("Error - '{}' is required.".format(p_required), fg='red', err=True)
+                            while_break = False
             else:
                 child_param = answer[param_id]
                 is_required = child_param in param_obj.get('required', [])
