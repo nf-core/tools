@@ -86,7 +86,7 @@ def fetch_wf_config(wf_path):
             for l in fh:
                 match = re.match(r'^(params\.[a-zA-Z0-9_]+)\s*=', l)
                 if match:
-                    config[match.group(1)] = False
+                    config[match.group(1)] = 'false'
     except FileNotFoundError as e:
         logging.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
 
