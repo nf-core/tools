@@ -2,58 +2,42 @@
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
-from collections import OrderedDict
 
 import click
-import errno
+import copy
 import json
-import jsonschema
 import logging
 import os
 import PyInquirer
 import re
 import subprocess
-import sys
+import textwrap
 
-import nf_core.utils, nf_core.list, nf_core.schema
+import nf_core.schema
 
 # TODO: Would be nice to be able to capture keyboard interruptions in a nicer way
 # add raise_keyboard_interrupt=True argument to PyInquirer.prompt() calls
 # Requires a new release of PyInquirer. See https://github.com/CITGuru/PyInquirer/issues/90
 
-def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden):
+def launch_pipeline(pipeline, revision=None, command_only=False, params_in=None, params_out=None, save_all=False, show_hidden=False):
 
-    # Get the schema
-    schema_obj = nf_core.schema.PipelineSchema()
-    try:
-        # Get schema from name, load it and lint it
-        schema_obj.lint_schema(pipeline)
-    except AssertionError:
-        # No schema found, just scrape the pipeline for parameters
-        logging.info("No pipeline schema found - creating one from the config")
-        try:
-            schema_obj.make_skeleton_schema()
-            schema_obj.get_wf_params()
-            schema_obj.add_schema_found_configs()
-        except AssertionError as e:
-            logging.error("Could not build pipeline schema: {}".format(e))
-            sys.exit(1)
-
-    # If we have a params_file, load and validate it against the schema
-    if params_in:
-        schema_obj.load_input_params(params_in)
-        schema_obj.validate_params()
+    logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
 
     # Create a pipeline launch object
-    launcher = Launch(schema_obj, command_only, params_in, params_out, show_hidden)
+    launcher = Launch(pipeline, revision, command_only, params_in, params_out, show_hidden)
+
+    # Build the schema and starting inputs
+    if launcher.get_pipeline_schema() is False:
+        return False
+    launcher.set_schema_inputs()
     launcher.merge_nxf_flag_schema()
 
     # Kick off the interactive wizard to collect user inputs
     launcher.prompt_schema()
 
-    # Validate the parameters that we have, just in case
-    schema_obj.input_params = launcher.params_user
-    schema_obj.validate_params()
+    # Validate the parameters that we now have
+    if not launcher.schema_obj.validate_params():
+        return False
 
     # Strip out the defaults
     if not save_all:
@@ -66,25 +50,29 @@ def launch_pipeline(pipeline, command_only, params_in, params_out, save_all, sho
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, schema_obj, command_only, params_in, params_out, show_hidden):
+    def __init__(self, pipeline, revision=None, command_only=False, params_in=None, params_out=None, show_hidden=False):
         """Initialise the Launcher class
 
         Args:
           schema: An nf_core.schema.PipelineSchema() object
         """
 
-        self.schema_obj = schema_obj
+        self.pipeline = pipeline
+        self.pipeline_revision = revision
+        self.schema_obj = None
         self.use_params_file = True
         if command_only:
             self.use_params_file = False
-        if params_in:
-            self.params_in = params_in
-        self.params_out = params_out
+        self.params_in = params_in
+        if params_out:
+            self.params_out = params_out
+        else:
+            self.params_out = os.path.join(os.getcwd(), 'nf-params.json')
         self.show_hidden = False
         if show_hidden:
             self.show_hidden = True
 
-        self.nextflow_cmd = 'nextflow run'
+        self.nextflow_cmd = 'nextflow run {}'.format(self.pipeline)
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
         self.nxf_flag_schema = {
@@ -100,7 +88,7 @@ class Launch(object):
                     '-name': {
                         'type': 'string',
                         'description': 'Unique name for this nextflow run',
-                        'pattern': '^[a-zA-Z0-9-_]$'
+                        'pattern': '^[a-zA-Z0-9-_]+$'
                     },
                     '-revision': {
                         'type': 'string',
@@ -131,6 +119,52 @@ class Launch(object):
         self.nxf_flags = {}
         self.params_user = {}
 
+    def get_pipeline_schema(self):
+        """ Load and validate the schema from the supplied pipeline """
+
+        # Get the schema
+        self.schema_obj = nf_core.schema.PipelineSchema()
+        try:
+            # Get schema from name, load it and lint it
+            self.schema_obj.get_schema_path(self.pipeline, revision=self.pipeline_revision)
+            self.schema_obj.load_lint_schema()
+        except AssertionError:
+            # No schema found
+            # Check that this was actually a pipeline
+            if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
+                logging.error("Could not find pipeline: {}".format(self.pipeline))
+                return False
+            if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, 'nextflow.config')) and not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, 'main.nf')):
+                logging.error("Could not find a main.nf or nextfow.config file, are you sure this is a pipeline?")
+                return False
+
+            # Build a schema for this pipeline
+            logging.info("No pipeline schema found - creating one from the config")
+            try:
+                self.schema_obj.get_wf_params()
+                self.schema_obj.make_skeleton_schema()
+                self.schema_obj.remove_schema_notfound_configs()
+                self.schema_obj.add_schema_found_configs()
+                self.schema_obj.flatten_schema()
+                self.schema_obj.get_schema_defaults()
+            except AssertionError as e:
+                logging.error("Could not build pipeline schema: {}".format(e))
+                return False
+
+    def set_schema_inputs(self):
+        """
+        Take the loaded schema and set the defaults as the input parameters
+        If a nf_params.json file is supplied, apply these over the top
+        """
+        # Set the inputs to the schema defaults
+        self.schema_obj.input_params = copy.deepcopy(self.schema_obj.schema_defaults)
+
+        # If we have a params_file, load and validate it against the schema
+        if self.params_in:
+            logging.info("Loading {}".format(self.params_in))
+            self.schema_obj.load_input_params(self.params_in)
+            self.schema_obj.validate_params()
+
     def merge_nxf_flag_schema(self):
         """ Take the Nextflow flag schema and merge it with the pipeline schema """
         # Do it like this so that the Nextflow params come first
@@ -149,7 +183,7 @@ class Launch(object):
             else:
                 if not param_obj.get('hidden', False) or self.show_hidden:
                     is_required = param_id in self.schema_obj.schema.get('required', [])
-                    answers.update(self.prompt_param(param_id, param_obj, is_required))
+                    answers.update(self.prompt_param(param_id, param_obj, is_required, answers))
 
         # Split answers into core nextflow options and params
         for key, answer in answers.items():
@@ -160,16 +194,15 @@ class Launch(object):
             else:
                 self.params_user[key] = answer
 
-    def prompt_param(self, param_id, param_obj, is_required):
-        """Prompt for a single parameter"""
-        question = self.single_param_to_pyinquirer(param_id, param_obj)
-        answer = PyInquirer.prompt([question])
+        # Update schema with user params
+        self.schema_obj.input_params.update(self.params_user)
 
-        # If got ? then print help and ask again
-        while answer[param_id] == '?':
-            if 'help_text' in param_obj:
-                click.secho("\n{}\n".format(param_obj['help_text']), dim=True, err=True)
-            answer = PyInquirer.prompt([question])
+    def prompt_param(self, param_id, param_obj, is_required, answers):
+        """Prompt for a single parameter"""
+
+        # Print the question
+        question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
+        answer = PyInquirer.prompt([question])
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == '' and is_required:
@@ -217,17 +250,26 @@ class Launch(object):
         while_break = False
         answers = {}
         while not while_break:
+            self.print_param_header(param_id, param_obj)
             answer = PyInquirer.prompt([question])
             if answer[param_id] == 'Continue >>':
                 while_break = True
+                # Check if there are any required parameters that don't have answers
+                if self.schema_obj is not None and param_id in self.schema_obj.schema['properties']:
+                    for p_required in self.schema_obj.schema['properties'][param_id].get('required', []):
+                        req_default = self.schema_obj.input_params.get(p_required, '')
+                        req_answer = answers.get(p_required, '')
+                        if req_default == '' and req_answer == '':
+                            click.secho("Error - '{}' is required.".format(p_required), fg='red', err=True)
+                            while_break = False
             else:
                 child_param = answer[param_id]
                 is_required = child_param in param_obj.get('required', [])
-                answers.update(self.prompt_param(child_param, param_obj['properties'][child_param], is_required))
+                answers.update(self.prompt_param(child_param, param_obj['properties'][child_param], is_required, answers))
 
         return answers
 
-    def single_param_to_pyinquirer(self, param_id, param_obj):
+    def single_param_to_pyinquirer(self, param_id, param_obj, answers=None):
         """Convert a JSONSchema param to a PyInquirer question
 
         Args:
@@ -237,28 +279,114 @@ class Launch(object):
         Returns:
           Single PyInquirer dict, to be appended to questions list
         """
+        if answers is None:
+            answers = {}
+
         question = {
             'type': 'input',
             'name': param_id,
             'message': param_id
         }
-        if 'description' in param_obj:
-            msg = param_obj['description']
-            if 'help_text' in param_obj:
-                msg = "{} {}".format(msg, click.style('(? for help)', dim=True))
-            click.echo("\n{}".format(msg), err=True)
 
-        if param_obj['type'] == 'boolean':
+        # Print the name, description & help text
+        nice_param_id = '--{}'.format(param_id) if not param_id.startswith('-') else param_id
+        self.print_param_header(nice_param_id, param_obj)
+
+        if param_obj.get('type') == 'boolean':
             question['type'] = 'confirm'
             question['default'] = False
 
+        # Start with the default from the param object
         if 'default' in param_obj:
             if param_obj['type'] == 'boolean' and type(param_obj['default']) is str:
                 question['default'] = 'true' == param_obj['default'].lower()
             else:
                 question['default'] = param_obj['default']
 
+        # Overwrite default with parsed schema, includes --params-in etc
+        if self.schema_obj is not None and param_id in self.schema_obj.input_params:
+            if param_obj['type'] == 'boolean' and type(self.schema_obj.input_params[param_id]) is str:
+                question['default'] = 'true' == self.schema_obj.input_params[param_id].lower()
+            else:
+                question['default'] = self.schema_obj.input_params[param_id]
+
+        # Overwrite default if already had an answer
+        if param_id in answers:
+            question['default'] = answers[param_id]
+
+        # Coerce default to a string if not boolean
+        if param_obj.get('type') != 'boolean' and 'default' in question:
+            question['default'] = str(question['default'])
+
+        if param_obj.get('type') == 'number':
+            # Validate number type
+            def validate_number(val):
+                try:
+                    if val.strip() == '':
+                        return True
+                    float(val)
+                except (ValueError):
+                    return "Must be a number"
+                else:
+                    return True
+            question['validate'] = validate_number
+
+            # Filter returned value
+            def filter_number(val):
+                if val.strip() == '':
+                    return ''
+                return float(val)
+            question['filter'] = filter_number
+
+        if param_obj.get('type') == 'integer':
+            # Validate integer type
+            def validate_integer(val):
+                try:
+                    if val.strip() == '':
+                        return True
+                    assert int(val) == float(val)
+                except (AssertionError, ValueError):
+                    return "Must be an integer"
+                else:
+                    return True
+            question['validate'] = validate_integer
+
+            # Filter returned value
+            def filter_integer(val):
+                if val.strip() == '':
+                    return ''
+                return int(val)
+            question['filter'] = filter_integer
+
+        if param_obj.get('type') == 'range':
+            # Validate range type
+            def validate_range(val):
+                try:
+                    if val.strip() == '':
+                        return True
+                    fval = float(val)
+                    if 'minimum' in param_obj and fval < float(param_obj['minimum']):
+                        return "Must be greater than or equal to {}".format(param_obj['minimum'])
+                    if 'maximum' in param_obj and fval > float(param_obj['maximum']):
+                        return "Must be less than or equal to {}".format(param_obj['maximum'])
+                    return True
+                except (ValueError):
+                    return "Must be a number"
+            question['validate'] = validate_range
+
+            # Filter returned value
+            def filter_range(val):
+                if val.strip() == '':
+                    return ''
+                return float(val)
+            question['filter'] = filter_range
+
         if 'enum' in param_obj:
+            # Use a selection list instead of free text input
+            question['type'] = 'list'
+            question['choices'] = param_obj['enum']
+
+            # Validate enum from schema
             def validate_enum(val):
                 if val == '':
                     return True
@@ -267,6 +395,7 @@ class Launch(object):
                 return "Must be one of: {}".format(", ".join(param_obj['enum']))
             question['validate'] = validate_enum
 
+        # Validate pattern from schema
         if 'pattern' in param_obj:
             def validate_pattern(val):
                 if val == '':
@@ -278,23 +407,26 @@ class Launch(object):
 
         return question
 
+    def print_param_header(self, param_id, param_obj):
+        if 'description' not in param_obj and 'help_text' not in param_obj:
+            return
+        header_str = click.style(param_id, bold=True)
+        if 'description' in param_obj:
+            header_str += ' - {}'.format(param_obj['description'])
+        if 'help_text' in param_obj:
+            # Strip indented and trailing whitespace
+            help_text = textwrap.dedent(param_obj['help_text']).strip()
+            # Replace single newlines, leave double newlines in place
+            help_text = re.sub(r'(?<!\n)\n(?!\n)', ' ', help_text)
+            header_str += "\n" + click.style(help_text, dim=True)
+        click.echo("\n"+header_str, err=True)
+
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
 
-        for param_id, param_obj in self.schema_obj.schema['properties'].items():
-            if param_obj['type'] == 'object':
-                continue
-
-            # Some default flags if missing
-            if param_obj['type'] == 'boolean' and 'default' not in param_obj:
-                param_obj['default'] = False
-            elif 'default' not in param_obj:
-                param_obj['default'] = ''
-
-            # Delete if it hasn't changed from the default
-            if param_id in self.params_user and self.params_user[param_id] == param_obj['default']:
-                del self.params_user[param_id]
-
+        for param_id, val in self.schema_obj.schema_defaults.items():
+            if self.schema_obj.input_params[param_id] == val:
+                del self.schema_obj.input_params[param_id]
 
     def build_command(self):
         """ Build the nextflow run command based on what we know """
@@ -308,21 +440,24 @@ class Launch(object):
             else:
                 self.nextflow_cmd += ' {} "{}"'.format(flag, val.replace('"', '\\"'))
 
-        # Write the user selection to a file and run nextflow with that
-        if self.use_params_file:
-            with open(self.params_out, "w") as fp:
-                json.dump(self.params_user, fp, indent=4)
-            self.nextflow_cmd += ' {} "{}"'.format("-params-file", self.params_out)
+        # Pipeline parameters
+        if len(self.schema_obj.input_params) > 0:
 
-        # Call nextflow with a list of command line flags
-        else:
-            for param, val in self.params_user.items():
-                # Boolean flags like --saveTrimmed
-                if isinstance(val, bool) and val:
-                    self.nextflow_cmd += " --{}".format(param)
-                # everything else
-                else:
-                    self.nextflow_cmd += ' --{} "{}"'.format(param, val.replace('"', '\\"'))
+            # Write the user selection to a file and run nextflow with that
+            if self.use_params_file:
+                with open(self.params_out, "w") as fp:
+                    json.dump(self.schema_obj.input_params, fp, indent=4)
+                self.nextflow_cmd += ' {} "{}"'.format("-params-file", os.path.relpath(self.params_out))
+
+            # Call nextflow with a list of command line flags
+            else:
+                for param, val in self.schema_obj.input_params.items():
+                    # Boolean flags like --saveTrimmed
+                    if isinstance(val, bool) and val:
+                        self.nextflow_cmd += " --{}".format(param)
+                    # everything else
+                    else:
+                        self.nextflow_cmd += ' --{} "{}"'.format(param, val.replace('"', '\\"'))
 
 
     def launch_workflow(self):

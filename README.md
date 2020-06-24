@@ -167,13 +167,14 @@ Some nextflow pipelines have a considerable number of command line flags that ca
 To help with this, the `nf-core launch` command uses an interactive command-line wizard tool to prompt you for
 values for running nextflow and the pipeline parameters.
 
-If the pipeline in question has a `parameters.settings.json` file following the [nf-core parameter JSON schema](https://nf-co.re/parameter-schema), parameters will be grouped and have associated description text and variable typing.
+The tool uses the `nextflow_schema.json` file from a pipeline to give parameter descriptions, defaults and grouping.
+If no file for the pipeline is found, one will be automatically generated at runtime.
 
-Nextflow `params` variables are saved in to a JSON file called `nfx-params.json` and used by nextflow with the `-params-file` flag.
+Nextflow `params` variables are saved in to a JSON file called `nf-params.json` and used by nextflow with the `-params-file` flag.
 This makes it easier to reuse these in the future.
 
-It is not essential to run the pipeline - the wizard will ask you if you want to launch the command at the end.
-If not, you finish with the `params` JSON file and a nextflow command that you can copy and paste.
+The `nf-core launch` command is an interactive command line tool and prompts you to overwrite the default values for each parameter.
+Entering `?` for any parameter will give a full description from the documentation of what that value does.
 
 ```console
 $ nf-core launch rnaseq
@@ -184,47 +185,59 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-
-INFO: Launching nf-core/rnaseq
-Main nextflow options
-
-Config profile to use
- -profile [standard]: docker
-
-Unique name for this nextflow run
- -name [None]: test_run
-
-Work directory for intermediate files
- -w [./work]:
-
-Resume a previous workflow run
- -resume [y/N]:
-
-Release / revision to use
- -r [None]: 1.3
+    nf-core/tools version 1.10.dev0
 
 
-Parameter group: Main options
-Do you want to change the group's defaults? [y/N]: y
+INFO: [✓] Pipeline schema looks valid
 
-Input files
-Specify the location of your input FastQ files.
- --reads ['data/*{1,2}.fastq.gz']: '/path/to/reads_*{R1,R2}.fq.gz'
+INFO: This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
 
-[..truncated..]
-
-Nextflow command:
-  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" -params-file "/Users/ewels/testing/nfx-params.json"
-
-
-Do you want to run this command now? [y/N]: y
-
-INFO: Launching workflow!
-N E X T F L O W  ~  version 19.01.0
-Launching `nf-core/rnaseq` [evil_engelbart] - revision: 37f260d360 [master]
-
-[..truncated..]
+? Nextflow command-line flags  (Use arrow keys)
+ ❯ Continue >>
+   ---------------
+   -name
+   -revision
+   -profile
+   -work-dir
+   -resume
 ```
+
+Once complete, the wizard will ask you if you want to launch the Nextflow run.
+If not, you can copy and paste the Nextflow command with the `nf-params.json` file of your inputs.
+
+```console
+? Nextflow command-line flags  Continue >>
+? Input/output options  reads
+
+Input FastQ files. (? for help)
+? reads  data/*{1,2}.fq.gz
+? Input/output options  Continue >>
+? Reference genome options  Continue >>
+
+INFO: [✓] Input parameters look valid
+
+INFO: Nextflow command:
+  nextflow run nf-core-testpipeline/ -params-file "nf-params.json"
+
+
+Do you want to run this command now? [y/N]: n
+```
+
+### Launch tool options
+
+* `-c`, `--command-only`
+  * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
+* `-p`, `--params-in PATH`
+  * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
+  * This will overwrite the pipeline schema defaults before the wizard is launched.
+* `-o`, `--params-out PATH`
+  * Path to save parameters JSON file to. (Default: `nf-params.json`)
+* `-a`, `--save-all`
+  * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
+  * This option saves _all_ parameters found to the JSON file.
+* `-h`, `--show-hidden`
+  * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
+  * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
 
 ## Downloading pipelines for offline use
 
@@ -306,7 +319,7 @@ nf-core-methylseq-1.4
     ├── LICENSE
     ├── main.nf
     ├── nextflow.config
-    ├── parameters.settings.json
+    ├── nextflow_schema.json
     └── README.md
 
 10 directories, 15 files

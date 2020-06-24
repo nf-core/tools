@@ -3,8 +3,6 @@
 """
 import os
 import pytest
-import shutil
-import unittest
 import nf_core.lint, nf_core.bump_version
 
 WD = os.path.dirname(__file__)

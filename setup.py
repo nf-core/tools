@@ -24,6 +24,7 @@ setup(
         'cookiecutter',
         'click',
         'GitPython',
+        'jinja2',
         'jsonschema',
         'PyInquirer',
         'pyyaml',

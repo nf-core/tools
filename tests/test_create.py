@@ -2,8 +2,7 @@
 """Some tests covering the pipeline creation sub command.
 """
 import os
-import pytest
-import nf_core.lint, nf_core.create
+import nf_core.create
 import tempfile
 import unittest
 

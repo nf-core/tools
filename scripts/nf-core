@@ -95,12 +95,14 @@ def list(keywords, sort, json):
     metavar = "<pipeline name>"
 )
 @click.option(
+    '-r', '--revision',
+    help = "Release/branch/SHA of the project to run (if remote)"
+)
+@click.option(
     '-c', '--command-only',
     is_flag = True,
     default = False,
-    help = """Set params in the command instead of saving to file.
-    Do not use a -params-file paramaters JSON file,
-    just construct a command with all parameters on the command-line."""
+    help = "Set params directly in the nextflow command."
 )
 @click.option(
     '-p', '--params-in',
@@ -117,20 +119,18 @@ def list(keywords, sort, json):
     '-a', '--save-all',
     is_flag = True,
     default = False,
-    help = """Save all parameters, even if default.
-    Instead of just saving values that have been modified from the default,
-    save every possible parameter."""
+    help = "Save all parameters, even if default."
 )
 @click.option(
     '-h', '--show-hidden',
     is_flag = True,
     default = False,
-    help = """Show hidden parameters.
-    Show all pipeline parameters, even those set as hidden in the pipeline schema."""
+    help = "Show hidden parameters."
 )
-def launch(pipeline, command_only, params_in, params_out, save_all, show_hidden):
+def launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden):
     """ Run pipeline, interactive parameter prompts """
-    nf_core.launch.launch_pipeline(pipeline, command_only, params_in, params_out, save_all, show_hidden)
+    if nf_core.launch.launch_pipeline(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden) == False:
+        sys.exit(1)
 
 # nf-core download
 @nf_core_cli.command(help_priority=3)
@@ -307,9 +307,9 @@ def validate(pipeline, params):
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
-        schema_obj.get_schema_from_name(pipeline)
+        schema_obj.get_schema_path(pipeline)
         # Load and check schema
-        schema_obj.lint_schema()
+        schema_obj.load_lint_schema()
     except AssertionError as e:
         logging.error(e)
         sys.exit(1)
@@ -340,12 +340,13 @@ def validate(pipeline, params):
     '--url',
     type = str,
     default = 'https://nf-co.re/json_schema_build',
-    help = 'URL for the web-based Schema builder'
+    help = 'Customise the builder URL (for development work)'
 )
 def build(pipeline_dir, no_prompts, web_only, url):
     """ Interactively build a schema from Nextflow params. """
     schema_obj = nf_core.schema.PipelineSchema()
-    schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url)
+    if schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url) is False:
+        sys.exit(1)
 
 @schema.command(help_priority=3)
 @click.argument(
@@ -362,7 +363,8 @@ def lint(schema_path):
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
-        schema_obj.lint_schema(schema_path)
+        schema_obj.get_schema_path(schema_path)
+        schema_obj.load_lint_schema()
     except AssertionError as e:
         sys.exit(1)
 

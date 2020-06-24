@@ -232,6 +232,7 @@ class PipelineLint(object):
         Files that **must** be present::
 
             'nextflow.config',
+            'nextflow_schema.json',
             'Dockerfile',
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
@@ -267,6 +268,7 @@ class PipelineLint(object):
         # List of lists. Passes if any of the files in the sublist are found.
         files_fail = [
             ['nextflow.config'],
+            ['nextflow_schema.json'],
             ['Dockerfile'],
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             ['README.md'],
@@ -683,13 +685,13 @@ class PipelineLint(object):
     def check_actions_awstest(self):
         """Checks the GitHub Actions awstest is valid.
 
-        Makes sure it is triggered only on ``push`` to ``master``. 
+        Makes sure it is triggered only on ``push`` to ``master``.
         """
         fn = os.path.join(self.path, '.github', 'workflows', 'awstest.yml')
         if os.path.isfile(fn):
             with open(fn, 'r') as fh:
                 wf = yaml.safe_load(fh)
-            
+
             # Check that the action is only turned on for push
             try:
                 assert('push' in wf[True])
@@ -707,7 +709,7 @@ class PipelineLint(object):
                 self.failed.append((5, "GitHub Actions AWS test should be triggered only on push to master: '{}'".format(fn)))
             else:
                 self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: '{}'".format(fn)))
-            
+
     def check_actions_awsfulltest(self):
         """Checks the GitHub Actions awsfulltest is valid.
 
@@ -1077,9 +1079,9 @@ class PipelineLint(object):
 
         # Lint the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
-        self.schema_obj.get_schema_from_name(self.path)
+        self.schema_obj.get_schema_path(self.path)
         try:
-            self.schema_obj.lint_schema()
+            self.schema_obj.load_lint_schema()
             self.passed.append((14, "Schema lint passed"))
         except AssertionError as e:
             self.failed.append((14, "Schema lint failed: {}".format(e)))
@@ -1092,7 +1094,7 @@ class PipelineLint(object):
 
         # First, get the top-level config options for the pipeline
         # Schema object already created in the previous test
-        self.schema_obj.get_schema_from_name(self.path)
+        self.schema_obj.get_schema_path(self.path)
         self.schema_obj.get_wf_params()
         self.schema_obj.no_prompts = True
 
