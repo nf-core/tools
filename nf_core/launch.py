@@ -195,12 +195,6 @@ class Launch(object):
         question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
         answer = PyInquirer.prompt([question])
 
-        # If got ? then print help and ask again
-        while answer[param_id] == '?':
-            if 'help_text' in param_obj:
-                click.secho("\n{}\n".format(param_obj['help_text']), dim=True, err=True)
-            answer = PyInquirer.prompt([question])
-
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == '' and is_required:
             click.secho("Error - this property is required.", fg='red', err=True)
@@ -311,6 +305,8 @@ class Launch(object):
             # Validate number type
             def validate_number(val):
                 try:
+                    if val.strip() == '':
+                        return True
                     float(val)
                 except (ValueError):
                     return "Must be a number"
@@ -320,6 +316,8 @@ class Launch(object):
 
             # Filter returned value
             def filter_number(val):
+                if val.strip() == '':
+                    return ''
                 return float(val)
             question['filter'] = filter_number
 
@@ -327,6 +325,8 @@ class Launch(object):
             # Validate integer type
             def validate_integer(val):
                 try:
+                    if val.strip() == '':
+                        return True
                     assert int(val) == float(val)
                 except (AssertionError, ValueError):
                     return "Must be an integer"
@@ -336,6 +336,8 @@ class Launch(object):
 
             # Filter returned value
             def filter_integer(val):
+                if val.strip() == '':
+                    return ''
                 return int(val)
             question['filter'] = filter_integer
 
@@ -343,6 +345,8 @@ class Launch(object):
             # Validate range type
             def validate_range(val):
                 try:
+                    if val.strip() == '':
+                        return True
                     fval = float(val)
                     if 'minimum' in param_obj and fval < float(param_obj['minimum']):
                         return "Must be greater than or equal to {}".format(param_obj['minimum'])
@@ -355,6 +359,8 @@ class Launch(object):
 
             # Filter returned value
             def filter_range(val):
+                if val.strip() == '':
+                    return ''
                 return float(val)
             question['filter'] = filter_range
 

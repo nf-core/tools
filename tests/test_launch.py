@@ -107,12 +107,13 @@ class TestLaunch(unittest.TestCase):
         result = self.launcher.single_param_to_pyinquirer('min_reps_consensus', sc_obj)
         assert result['type'] == 'input'
         assert result['default'] == '0.1'
-        assert result['validate']('123')
-        assert result['validate']('-123.56')
-        assert result['validate']('')
+        assert result['validate']('123') is True
+        assert result['validate']('-123.56') is True
+        assert result['validate']('') is True
         assert result['validate']('123.56.78') == 'Must be a number'
         assert result['validate']('123.56sdkfjb') == 'Must be a number'
         assert result['filter']('123.456') == float(123.456)
+        assert result['filter']('') == ''
 
     def test_ob_to_pyinquirer_integer(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
@@ -123,12 +124,13 @@ class TestLaunch(unittest.TestCase):
         result = self.launcher.single_param_to_pyinquirer('broad_cutoff', sc_obj)
         assert result['type'] == 'input'
         assert result['default'] == '1'
-        assert result['validate']('123')
-        assert result['validate']('-123')
-        assert result['validate']('')
+        assert result['validate']('123') is True
+        assert result['validate']('-123') is True
+        assert result['validate']('') is True
         assert result['validate']('123.45') == 'Must be an integer'
         assert result['validate']('123.56sdkfjb') == 'Must be an integer'
         assert result['filter']('123') == int(123)
+        assert result['filter']('') == ''
 
     def test_ob_to_pyinquirer_range(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
@@ -141,12 +143,13 @@ class TestLaunch(unittest.TestCase):
         result = self.launcher.single_param_to_pyinquirer('broad_cutoff', sc_obj)
         assert result['type'] == 'input'
         assert result['default'] == '15'
-        assert result['validate']('20')
-        assert result['validate']('')
+        assert result['validate']('20') is True
+        assert result['validate']('') is True
         assert result['validate']('123.56sdkfjb') == 'Must be a number'
         assert result['validate']('8') == 'Must be greater than or equal to 10'
         assert result['validate']('25') == 'Must be less than or equal to 20'
         assert result['filter']('20') == float(20)
+        assert result['filter']('') == ''
 
     def test_ob_to_pyinquirer_enum(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
@@ -159,8 +162,8 @@ class TestLaunch(unittest.TestCase):
         assert result['type'] == 'list'
         assert result['default'] == 'copy'
         assert result['choices'] == [ "symlink", "rellink" ]
-        assert result['validate']('symlink')
-        assert result['validate']('')
+        assert result['validate']('symlink') is True
+        assert result['validate']('') is True
         assert result['validate']('not_allowed') == 'Must be one of: symlink, rellink'
 
     def test_ob_to_pyinquirer_pattern(self):
@@ -171,8 +174,8 @@ class TestLaunch(unittest.TestCase):
         }
         result = self.launcher.single_param_to_pyinquirer('email', sc_obj)
         assert result['type'] == 'input'
-        assert result['validate']('test@email.com')
-        assert result['validate']('')
+        assert result['validate']('test@email.com') is True
+        assert result['validate']('') is True
         assert result['validate']('not_an_email') == 'Must match pattern: ^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$'
 
     def test_strip_default_params(self):
