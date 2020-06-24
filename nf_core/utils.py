@@ -6,12 +6,14 @@ Common utility functions for the nf-core python package.
 import datetime
 import errno
 import json
+import hashlib
 import logging
 import os
+import re
 import subprocess
 import sys
 
-def fetch_wf_config(wf_path, wf=None):
+def fetch_wf_config(wf_path):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
@@ -34,14 +36,28 @@ def fetch_wf_config(wf_path, wf=None):
             os.mkdir(cache_basedir)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
-    if cache_basedir and wf and wf.full_name and wf.commit_sha:
-        cache_fn = '{}-{}.json'.format(wf.full_name.replace(os.path.sep, '-'), wf.commit_sha)
+    cache_fn = None
+    # Make a filename based on file contents
+    concat_hash = ''
+    for fn in ['nextflow.config', 'main.nf']:
+        try:
+            with open(os.path.join(wf_path, fn), 'rb') as fh:
+                concat_hash += hashlib.sha256(fh.read()).hexdigest()
+        except FileNotFoundError as e:
+            pass
+    # Hash the hash
+    if len(concat_hash) > 0:
+        bighash = hashlib.sha256(concat_hash.encode('utf-8')).hexdigest()
+        cache_fn = 'wf-config-cache-{}.json'.format(bighash[:25])
+
+    if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
         if os.path.isfile(cache_path):
             logging.debug("Found a config cache, loading: {}".format(cache_path))
             with open(cache_path, 'r') as fh:
                 config = json.load(fh)
             return config
+    logging.debug("No config cache found")
 
 
     # Call `nextflow config` and pipe stderr to /dev/null
@@ -61,6 +77,18 @@ def fetch_wf_config(wf_path, wf=None):
                 config[k] = v
             except ValueError:
                 logging.debug("Couldn't find key=value config pair:\n  {}".format(ul))
+
+    # Scrape main.nf for additional parameter declarations
+    # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
+    try:
+        main_nf = os.path.join(wf_path, 'main.nf')
+        with open(main_nf, 'r') as fh:
+            for l in fh:
+                match = re.match(r'^(params\.[a-zA-Z0-9_]+)\s*=', l)
+                if match:
+                    config[match.group(1)] = False
+    except FileNotFoundError as e:
+        logging.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
 
     # If we can, save a cached copy
     if cache_path:

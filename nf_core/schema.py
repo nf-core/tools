@@ -260,16 +260,20 @@ class PipelineSchema (object):
 
         logging.debug("Collecting pipeline parameter defaults\n")
         config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
+        skipped_params = []
         # Pull out just the params. values
         for ckey, cval in config.items():
             if ckey.startswith('params.'):
                 # skip anything that's not a flat variable
                 if '.' in ckey[7:]:
-                    logging.debug("Skipping pipeline param '{}' because it has nested parameter values".format(ckey))
+                    skipped_params.append(ckey)
                     continue
                 self.pipeline_params[ckey[7:]] = cval
             if ckey.startswith('manifest.'):
                 self.pipeline_manifest[ckey[9:]] = cval
+        # Log skipped params
+        if len(skipped_params) > 0:
+            logging.debug("Skipped following pipeline params because they had nested parameter values:\n{}".format(', '.join(skipped_params)))
 
     def remove_schema_notfound_configs(self):
         """
@@ -320,7 +324,7 @@ class PipelineSchema (object):
         if p_key not in self.pipeline_params.keys():
             p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
             remove_it_nice = click.style('Remove it?', fg='yellow')
-            if self.no_prompts or self.schema_from_scratch or click.confirm("Unrecognised '{}' found in schema but not in Nextflow config. {}".format(p_key_nice, remove_it_nice), True):
+            if self.no_prompts or self.schema_from_scratch or click.confirm("Unrecognised '{}' found in schema but not pipeline. {}".format(p_key_nice, remove_it_nice), True):
                 return True
         return False
 
@@ -336,7 +340,7 @@ class PipelineSchema (object):
                 if not any( [ p_key in param.get('properties', {}) for k, param in self.schema['properties'].items() ] ):
                     p_key_nice = click.style('params.{}'.format(p_key), fg='white', bold=True)
                     add_it_nice = click.style('Add to JSON Schema?', fg='cyan')
-                    if self.no_prompts or self.schema_from_scratch or click.confirm("Found '{}' in Nextflow config. {}".format(p_key_nice, add_it_nice), True):
+                    if self.no_prompts or self.schema_from_scratch or click.confirm("Found '{}' in pipeline but not in schema. {}".format(p_key_nice, add_it_nice), True):
                         self.schema['properties'][p_key] = self.build_schema_param(p_val)
                         logging.debug("Adding '{}' to JSON Schema".format(p_key))
                         params_added.append(click.style(p_key, fg='white', bold=True))
