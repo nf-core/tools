@@ -95,6 +95,10 @@ def list(keywords, sort, json):
     metavar = "<pipeline name>"
 )
 @click.option(
+    '-i', '--id',
+    help = "ID for web-gui launch parameter set"
+)
+@click.option(
     '-r', '--revision',
     help = "Release/branch/SHA of the project to run (if remote)"
 )
@@ -127,9 +131,16 @@ def list(keywords, sort, json):
     default = False,
     help = "Show hidden parameters."
 )
-def launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden):
+@click.option(
+    '--url',
+    type = str,
+    default = 'https://nf-co.re/json_schema_build',
+    help = 'Customise the builder URL (for development work)'
+)
+def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
     """ Run pipeline, interactive parameter prompts """
-    if nf_core.launch.launch_pipeline(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden) == False:
+    launcher = nf_core.launch.Launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id)
+    if launcher.launch_pipeline() == False:
         sys.exit(1)
 
 # nf-core download

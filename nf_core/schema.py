@@ -416,7 +416,7 @@ class PipelineSchema (object):
         """
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_api_url)
         if web_response['status'] == 'error':
-            raise AssertionError("Got error from JSON Schema builder ( {} )".format(click.style(web_response.get('message'), fg='red')))
+            raise AssertionError("Got error from JSON Schema builder ( {} )".format(web_response.get('message')))
         elif web_response['status'] == 'waiting_for_user':
             return False
         elif web_response['status'] == 'web_builder_edited':
@@ -432,5 +432,5 @@ class PipelineSchema (object):
                 self.save_schema()
                 return True
         else:
-            logging.debug("Response content:\n{}".format(response.content))
+            logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError("JSON Schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(web_response['status'], self.web_schema_build_api_url))

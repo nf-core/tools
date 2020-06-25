@@ -12,45 +12,18 @@ import PyInquirer
 import re
 import subprocess
 import textwrap
+import webbrowser
 
-import nf_core.schema
+import nf_core.schema, nf_core.utils
 
 # TODO: Would be nice to be able to capture keyboard interruptions in a nicer way
 # add raise_keyboard_interrupt=True argument to PyInquirer.prompt() calls
 # Requires a new release of PyInquirer. See https://github.com/CITGuru/PyInquirer/issues/90
 
-def launch_pipeline(pipeline, revision=None, command_only=False, params_in=None, params_out=None, save_all=False, show_hidden=False):
-
-    logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
-
-    # Create a pipeline launch object
-    launcher = Launch(pipeline, revision, command_only, params_in, params_out, show_hidden)
-
-    # Build the schema and starting inputs
-    if launcher.get_pipeline_schema() is False:
-        return False
-    launcher.set_schema_inputs()
-    launcher.merge_nxf_flag_schema()
-
-    # Kick off the interactive wizard to collect user inputs
-    launcher.prompt_schema()
-
-    # Validate the parameters that we now have
-    if not launcher.schema_obj.validate_params():
-        return False
-
-    # Strip out the defaults
-    if not save_all:
-        launcher.strip_default_params()
-
-    # Build and launch the `nextflow run` command
-    launcher.build_command()
-    launcher.launch_workflow()
-
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, pipeline, revision=None, command_only=False, params_in=None, params_out=None, show_hidden=False):
+    def __init__(self, pipeline, revision=None, command_only=False, params_in=None, params_out=None, save_all=False, show_hidden=False, url=None, web_id=None):
         """Initialise the Launcher class
 
         Args:
@@ -60,17 +33,17 @@ class Launch(object):
         self.pipeline = pipeline
         self.pipeline_revision = revision
         self.schema_obj = None
-        self.use_params_file = True
-        if command_only:
-            self.use_params_file = False
+        self.use_params_file = False if command_only else True
         self.params_in = params_in
-        if params_out:
-            self.params_out = params_out
-        else:
-            self.params_out = os.path.join(os.getcwd(), 'nf-params.json')
-        self.show_hidden = False
-        if show_hidden:
-            self.show_hidden = True
+        self.params_out = params_out if params_out else os.path.join(os.getcwd(), 'nf-params.json')
+        self.save_all = save_all
+        self.show_hidden = show_hidden
+        self.web_schema_launch_url = url if url else 'https://nf-co.re/json_schema_launch'
+        self.web_schema_launch_web_url = None
+        self.web_schema_launch_api_url = None
+        if web_id:
+            self.web_schema_launch_web_url = '{}?id={}'.format(self.web_schema_launch_url, web_id)
+            self.web_schema_launch_api_url = '{}?id={}&api=true'.format(self.web_schema_launch_url, web_id)
 
         self.nextflow_cmd = 'nextflow run {}'.format(self.pipeline)
 
@@ -118,6 +91,38 @@ class Launch(object):
         }
         self.nxf_flags = {}
         self.params_user = {}
+
+    def launch_pipeline(self):
+
+        logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
+
+        # Build the schema and starting inputs
+        if self.get_pipeline_schema() is False:
+            return False
+        self.set_schema_inputs()
+        self.merge_nxf_flag_schema()
+
+        if self.prompt_web_gui():
+            try:
+                self.launch_web_gui()
+            except AssertionError as e:
+                logging.error(click.style(e.args[0], fg='red'))
+                return False
+        else:
+            # Kick off the interactive wizard to collect user inputs
+            self.prompt_schema()
+
+        # Validate the parameters that we now have
+        if not self.schema_obj.validate_params():
+            return False
+
+        # Strip out the defaults
+        if not self.save_all:
+            self.strip_default_params()
+
+        # Build and launch the `nextflow run` command
+        self.build_command()
+        self.launch_workflow()
 
     def get_pipeline_schema(self):
         """ Load and validate the schema from the supplied pipeline """
@@ -172,6 +177,109 @@ class Launch(object):
         schema_params.update(self.schema_obj.schema['properties'])
         self.schema_obj.schema['properties'] = schema_params
 
+    def prompt_web_gui(self):
+        """ Ask whether to use the web-based or cli wizard to collect params """
+
+        # Check whether --id was given and we're loading params from the web
+        if self.web_schema_launch_web_url is not None and self.web_schema_launch_api_url is not None:
+            return True
+
+        click.secho("\nWould you like to enter pipeline parameters using a web-based interface or a command-line wizard?\n", fg='magenta')
+        question = {
+            'type': 'list',
+            'name': 'use_web_gui',
+            'message': 'Choose launch method',
+            'choices': [
+                'Web based',
+                'Command line'
+            ]
+        }
+        answer = PyInquirer.prompt([question])
+        return answer['use_web_gui'] == 'Web based'
+
+    def launch_web_gui(self):
+        """ Send schema to nf-core website and launch input GUI """
+
+        # If --id given on the command line, we already know the URLs
+        if self.web_schema_launch_web_url is None and self.web_schema_launch_api_url is None:
+            content = {
+                'post_content': 'json_schema_launcher',
+                'api': 'true',
+                'version': nf_core.__version__,
+                'status': 'waiting_for_user',
+                'schema': json.dumps(self.schema_obj.schema),
+                'nxf_flags': json.dumps(self.nxf_flags),
+                'input_params': json.dumps(self.schema_obj.input_params)
+            }
+            web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
+            try:
+                assert 'api_url' in web_response
+                assert 'web_url' in web_response
+                assert web_response['status'] == 'recieved'
+            except (AssertionError) as e:
+                logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+                raise AssertionError("JSON Schema builder response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(self.web_schema_launch_url))
+            else:
+                self.web_schema_launch_web_url = web_response['web_url']
+                self.web_schema_launch_api_url = web_response['api_url']
+
+        # ID supplied - has it been completed or not?
+        else:
+            logging.debug("ID supplied - checking status at {}".format(self.web_schema_launch_api_url))
+            if self.get_web_launch_response():
+                return True
+
+        # Launch the web GUI
+        logging.info("Opening URL: {}".format(self.web_schema_launch_web_url))
+        webbrowser.open(self.web_schema_launch_web_url)
+        logging.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n")
+        nf_core.utils.wait_cli_function(self.get_web_launch_response)
+
+    def get_web_launch_response(self):
+        """
+        Given a URL for a web-gui launch response, recursively query it until results are ready.
+        """
+        web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_api_url)
+        if web_response['status'] == 'error':
+            raise AssertionError("Got error from launch API ({})".format(web_response.get('message')))
+        elif web_response['status'] == 'waiting_for_user':
+            return False
+        elif web_response['status'] == 'launch_params_complete':
+            logging.info("Found completed parameters from nf-core launch GUI")
+            try:
+                self.nxf_flags = json.loads(web_response['nxf_flags'])
+                self.schema_obj.input_params = json.loads(web_response['input_params'])
+                self.sanitise_web_response()
+            except json.decoder.JSONDecodeError as e:
+                raise AssertionError("Could not load JSON response from web API: {}".format(e))
+            except KeyError as e:
+                raise AssertionError("Missing return key from web API: {}".format(e))
+            return True
+        else:
+            logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            raise AssertionError("Web launch GUI returned unexpected status ({}): {}\n See verbose log for full response".format(web_response['status'], self.web_schema_launch_api_url))
+
+    def sanitise_web_response(self):
+        """
+        The web builder returns everything as strings.
+        Use the functions defined in the cli wizard to convert to the correct types.
+        """
+        # Collect pyinquirer objects for each defined input_param
+        pyinquirer_objects = {}
+        for param_id, param_obj in self.schema_obj.schema['properties'].items():
+            if(param_obj['type'] == 'object'):
+                for child_param_id, child_param_obj in param_obj['properties'].items():
+                    if child_param_id in self.schema_obj.input_params:
+                        pyinquirer_objects[child_param_id] = self.single_param_to_pyinquirer(child_param_id, child_param_obj, print_help=False)
+            else:
+                if param_id in self.schema_obj.input_params:
+                    pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
+
+        # Go through input params and sanitise
+        for param_id, val in self.schema_obj.input_params.items():
+            filter_func = pyinquirer_objects.get(param_id, {}).get('filter')
+            if filter_func is not None:
+                self.schema_obj.input_params[param_id] = filter_func(val)
 
     def prompt_schema(self):
         """ Go through the pipeline schema and prompt user to change defaults """
@@ -269,7 +377,7 @@ class Launch(object):
 
         return answers
 
-    def single_param_to_pyinquirer(self, param_id, param_obj, answers=None):
+    def single_param_to_pyinquirer(self, param_id, param_obj, answers=None, print_help=True):
         """Convert a JSONSchema param to a PyInquirer question
 
         Args:
@@ -289,8 +397,9 @@ class Launch(object):
         }
 
         # Print the name, description & help text
-        nice_param_id = '--{}'.format(param_id) if not param_id.startswith('-') else param_id
-        self.print_param_header(nice_param_id, param_obj)
+        if print_help:
+            nice_param_id = '--{}'.format(param_id) if not param_id.startswith('-') else param_id
+            self.print_param_header(nice_param_id, param_obj)
 
         if param_obj.get('type') == 'boolean':
             question['type'] = 'confirm'
@@ -425,7 +534,7 @@ class Launch(object):
         """ Strip parameters if they have not changed from the default """
 
         for param_id, val in self.schema_obj.schema_defaults.items():
-            if self.schema_obj.input_params[param_id] == val:
+            if self.schema_obj.input_params.get(param_id) == val:
                 del self.schema_obj.input_params[param_id]
 
     def build_command(self):
@@ -457,7 +566,7 @@ class Launch(object):
                         self.nextflow_cmd += " --{}".format(param)
                     # everything else
                     else:
-                        self.nextflow_cmd += ' --{} "{}"'.format(param, val.replace('"', '\\"'))
+                        self.nextflow_cmd += ' --{} "{}"'.format(param, str(val).replace('"', '\\"'))
 
 
     def launch_workflow(self):
