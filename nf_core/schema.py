@@ -422,7 +422,7 @@ class PipelineSchema (object):
         elif web_response['status'] == 'web_builder_edited':
             logging.info("Found saved status from nf-core JSON Schema builder")
             try:
-                self.schema = json.loads(web_response['schema'])
+                self.schema = web_response['schema']
                 self.validate_schema(self.schema)
             except json.decoder.JSONDecodeError as e:
                 raise AssertionError("Could not parse returned JSON:\n {}".format(e))

@@ -98,6 +98,17 @@ class Launch(object):
 
     def launch_pipeline(self):
 
+        # Check if the output file exists already
+        if os.path.exists(self.params_out):
+            logging.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
+            if click.confirm(click.style('Do you want to overwrite this file? ', fg='yellow')+click.style('[y/N]', fg='red'), default=False, show_default=False):
+                os.remove(self.params_out)
+                logging.info("Deleted {}\n".format(self.params_out))
+            else:
+                logging.info("Exiting. Use --params-out to specify a custom filename.")
+                return False
+
+
         logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
 
         # Build the schema and starting inputs
@@ -442,7 +453,7 @@ class Launch(object):
         if param_obj.get('type') == 'boolean':
             # Filter returned value
             def filter_boolean(val):
-                return val == 'True'
+                return val.lower() == 'true'
             question['filter'] = filter_boolean
 
         if param_obj.get('type') == 'number':
