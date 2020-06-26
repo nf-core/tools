@@ -16,9 +16,17 @@ import webbrowser
 
 import nf_core.schema, nf_core.utils
 
-# TODO: Would be nice to be able to capture keyboard interruptions in a nicer way
-# add raise_keyboard_interrupt=True argument to PyInquirer.prompt() calls
-# Requires a new release of PyInquirer. See https://github.com/CITGuru/PyInquirer/issues/90
+#
+# NOTE: WE ARE USING A PRE-RELEASE VERSION OF PYINQUIRER
+#
+# This is so that we can capture keyboard interruptions in a nicer way
+# with the raise_keyboard_interrupt=True argument in the PyInquirer.prompt() calls
+# It also allows list selections to have a default set.
+#
+# Waiting for a release of version of >1.0.3 of PyInquirer.
+# See https://github.com/CITGuru/PyInquirer/issues/90
+#
+# When available, update setup.py to use regular pip version
 
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
@@ -52,11 +60,7 @@ class Launch(object):
             'Nextflow command-line flags': {
                 'type': 'object',
                 'description': 'General Nextflow flags to control how the pipeline runs.',
-                'help_text': """
-                    These are not specific to the pipeline and will not be saved
-                    in any parameter file. They are just used when building the
-                    `nextflow run` launch command.
-                """,
+                'help_text': "These are not specific to the pipeline and will not be saved in any parameter file. They are just used when building the `nextflow run` launch command.",
                 'properties': {
                     '-name': {
                         'type': 'string',
@@ -194,7 +198,7 @@ class Launch(object):
                 'Command line'
             ]
         }
-        answer = PyInquirer.prompt([question])
+        answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
         return answer['use_web_gui'] == 'Web based'
 
     def launch_web_gui(self):
@@ -247,13 +251,16 @@ class Launch(object):
         elif web_response['status'] == 'launch_params_complete':
             logging.info("Found completed parameters from nf-core launch GUI")
             try:
-                self.nxf_flags = json.loads(web_response['nxf_flags'])
-                self.schema_obj.input_params = json.loads(web_response['input_params'])
+                self.nxf_flags = web_response['nxf_flags']
+                self.schema_obj.input_params = web_response['input_params']
                 self.sanitise_web_response()
             except json.decoder.JSONDecodeError as e:
                 raise AssertionError("Could not load JSON response from web API: {}".format(e))
             except KeyError as e:
                 raise AssertionError("Missing return key from web API: {}".format(e))
+            except Exception as e:
+                logging.debug(web_response)
+                raise AssertionError("Unknown exception - see verbose log for details: {}".format(e))
             return True
         else:
             logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
@@ -269,17 +276,20 @@ class Launch(object):
         for param_id, param_obj in self.schema_obj.schema['properties'].items():
             if(param_obj['type'] == 'object'):
                 for child_param_id, child_param_obj in param_obj['properties'].items():
-                    if child_param_id in self.schema_obj.input_params:
-                        pyinquirer_objects[child_param_id] = self.single_param_to_pyinquirer(child_param_id, child_param_obj, print_help=False)
+                    pyinquirer_objects[child_param_id] = self.single_param_to_pyinquirer(child_param_id, child_param_obj, print_help=False)
             else:
-                if param_id in self.schema_obj.input_params:
-                    pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
+                pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
 
         # Go through input params and sanitise
-        for param_id, val in self.schema_obj.input_params.items():
-            filter_func = pyinquirer_objects.get(param_id, {}).get('filter')
-            if filter_func is not None:
-                self.schema_obj.input_params[param_id] = filter_func(val)
+        for params in [self.nxf_flags, self.schema_obj.input_params]:
+            for param_id in list(params.keys()):
+                # Remove if an empty string
+                if str(params[param_id]).strip() == '':
+                    del params[param_id]
+                # Run filter function on value
+                filter_func = pyinquirer_objects.get(param_id, {}).get('filter')
+                if filter_func is not None:
+                    params[param_id] = filter_func(params[param_id])
 
     def prompt_schema(self):
         """ Go through the pipeline schema and prompt user to change defaults """
@@ -310,12 +320,12 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = PyInquirer.prompt([question])
+        answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == '' and is_required:
             click.secho("Error - this property is required.", fg='red', err=True)
-            answer = PyInquirer.prompt([question])
+            answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
 
         # Don't return empty answers
         if answer[param_id] == '':
@@ -359,7 +369,7 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(param_id, param_obj)
-            answer = PyInquirer.prompt([question])
+            answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
             if answer[param_id] == 'Continue >>':
                 while_break = True
                 # Check if there are any required parameters that don't have answers
@@ -402,13 +412,15 @@ class Launch(object):
             self.print_param_header(nice_param_id, param_obj)
 
         if param_obj.get('type') == 'boolean':
-            question['type'] = 'confirm'
-            question['default'] = False
+            question['type'] = 'list'
+            question['choices'] = ['True', 'False']
+            question['default'] = 'False'
 
         # Start with the default from the param object
         if 'default' in param_obj:
+            # Boolean default is cast back to a string later - this just normalises all inputs
             if param_obj['type'] == 'boolean' and type(param_obj['default']) is str:
-                question['default'] = 'true' == param_obj['default'].lower()
+                question['default'] = param_obj['default'].lower() == 'true'
             else:
                 question['default'] = param_obj['default']
 
@@ -423,9 +435,15 @@ class Launch(object):
         if param_id in answers:
             question['default'] = answers[param_id]
 
-        # Coerce default to a string if not boolean
-        if param_obj.get('type') != 'boolean' and 'default' in question:
+        # Coerce default to a string
+        if 'default' in question:
             question['default'] = str(question['default'])
+
+        if param_obj.get('type') == 'boolean':
+            # Filter returned value
+            def filter_boolean(val):
+                return val == 'True'
+            question['filter'] = filter_boolean
 
         if param_obj.get('type') == 'number':
             # Validate number type
@@ -533,9 +551,15 @@ class Launch(object):
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
 
+        # Schema defaults
         for param_id, val in self.schema_obj.schema_defaults.items():
             if self.schema_obj.input_params.get(param_id) == val:
                 del self.schema_obj.input_params[param_id]
+
+        # Nextflow flag defaults
+        for param_id, val in self.nxf_flag_schema['Nextflow command-line flags']['properties'].items():
+            if param_id in self.nxf_flags and self.nxf_flags[param_id] == val.get('default'):
+                del self.nxf_flags[param_id]
 
     def build_command(self):
         """ Build the nextflow run command based on what we know """
@@ -546,7 +570,7 @@ class Launch(object):
             if isinstance(val, bool) and val:
                 self.nextflow_cmd += " {}".format(flag)
             # String values
-            else:
+            elif not isinstance(val, bool):
                 self.nextflow_cmd += ' {} "{}"'.format(flag, val.replace('"', '\\"'))
 
         # Pipeline parameters
