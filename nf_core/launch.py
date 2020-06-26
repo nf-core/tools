@@ -53,6 +53,7 @@ class Launch(object):
             self.web_schema_launch_web_url = '{}?id={}'.format(self.web_schema_launch_url, web_id)
             self.web_schema_launch_api_url = '{}?id={}&api=true'.format(self.web_schema_launch_url, web_id)
 
+        self.nfcore_launch_command = 'nf-core launch {}'.format(self.pipeline)
         self.nextflow_cmd = 'nextflow run {}'.format(self.pipeline)
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
@@ -84,10 +85,7 @@ class Launch(object):
                     '-resume': {
                         'type': 'boolean',
                         'description': 'Resume previous run, if found',
-                        'help_text': """
-                            Execute the script using the cached results, useful to continue
-                            executions that was stopped by an error
-                        """,
+                        'help_text': "Execute the script using the cached results, useful to continue executions that was stopped by an error",
                         'default': False
                     }
                 }
@@ -142,10 +140,25 @@ class Launch(object):
     def get_pipeline_schema(self):
         """ Load and validate the schema from the supplied pipeline """
 
-        # Get the schema
+        # Set up the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
+
+        # Check if this is a local directory
+        if os.path.exists(self.pipeline):
+            # Remove the core -revision flag from the schema
+            logging.debug("Removing -revision from core nextflow schema, as local directory")
+            del self.nxf_flag_schema['Nextflow command-line flags']['properties']['-revision']
+            # Set the launch commands to use full paths
+            self.nfcore_launch_command = 'nf-core launch {}'.format(os.path.abspath(self.pipeline))
+            self.nextflow_cmd = 'nextflow run {}'.format(os.path.abspath(self.pipeline))
+        else:
+            # Assume nf-core if no org given
+            if self.pipeline.count('/') == 0:
+                self.nfcore_launch_command = 'nf-core launch nf-core/{}'.format(self.pipeline)
+                self.nextflow_cmd = 'nextflow run nf-core/{}'.format(self.pipeline)
+
+        # Get schema from name, load it and lint it
         try:
-            # Get schema from name, load it and lint it
             self.schema_obj.get_schema_path(self.pipeline, revision=self.pipeline_revision)
             self.schema_obj.load_lint_schema()
         except AssertionError:
@@ -224,7 +237,10 @@ class Launch(object):
                 'status': 'waiting_for_user',
                 'schema': json.dumps(self.schema_obj.schema),
                 'nxf_flags': json.dumps(self.nxf_flags),
-                'input_params': json.dumps(self.schema_obj.input_params)
+                'input_params': json.dumps(self.schema_obj.input_params),
+                'cli_launch': True,
+                'nfcore_launch_command': self.nfcore_launch_command,
+                'nextflow_cmd': self.nextflow_cmd
             }
             web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
             try:
