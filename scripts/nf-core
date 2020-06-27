@@ -134,7 +134,7 @@ def list(keywords, sort, json):
 @click.option(
     '--url',
     type = str,
-    default = 'https://nf-co.re/json_schema_build',
+    default = 'https://nf-co.re/json_schema_launch',
     help = 'Customise the builder URL (for development work)'
 )
 def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
