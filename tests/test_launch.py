@@ -145,6 +145,51 @@ class TestLaunch(unittest.TestCase):
         self.launcher.merge_nxf_flag_schema()
         assert self.launcher.launch_web_gui() == True
 
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'error', 'message': 'foo'}])
+    def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - status error """
+        try:
+            self.launcher.get_web_launch_response()
+        except AssertionError as e:
+            assert e.args[0] == 'Got error from launch API (foo)'
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'foo'}])
+    def test_get_web_launch_response_unexpected(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - status error """
+        try:
+            self.launcher.get_web_launch_response()
+        except AssertionError as e:
+            assert e.args[0].startswith('Web launch GUI returned unexpected status (foo): ')
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'waiting_for_user'}])
+    def test_get_web_launch_response_waiting(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - status waiting_for_user"""
+        assert self.launcher.get_web_launch_response() == False
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'launch_params_complete'}])
+    def test_get_web_launch_response_missing_keys(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - complete, but missing keys """
+        try:
+            self.launcher.get_web_launch_response()
+        except AssertionError as e:
+            assert e.args[0] == "Missing return key from web API: 'nxf_flags'"
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{
+        'status': 'launch_params_complete',
+        'nxf_flags': {'resume', 'true'},
+        'input_params': {'foo', 'bar'},
+        'schema': {},
+        'cli_launch': True,
+        'nextflow_cmd': 'nextflow run foo',
+        'pipeline': 'foo',
+        'revision': 'bar',
+    }])
+    @mock.patch.object(nf_core.launch.Launch, 'sanitise_web_response')
+    def test_get_web_launch_response_valid(self, mock_poll_nfcore_web_api, mock_sanitise):
+        """ Test polling the website for a launch response - complete, valid response """
+        self.launcher.get_pipeline_schema()
+        assert self.launcher.get_web_launch_response() == True
+
     def test_sanitise_web_response(self):
         """ Check that we can properly sanitise results from the web """
         self.launcher.get_pipeline_schema()

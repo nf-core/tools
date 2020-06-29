@@ -301,8 +301,6 @@ class Launch(object):
                 self.pipeline_revision = web_response['revision']
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
-            except json.decoder.JSONDecodeError as e:
-                raise AssertionError("Could not load JSON response from web API: {}".format(e))
             except KeyError as e:
                 raise AssertionError("Missing return key from web API: {}".format(e))
             except Exception as e:
