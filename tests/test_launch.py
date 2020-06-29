@@ -102,7 +102,7 @@ class TestLaunch(unittest.TestCase):
                 self.status_code = status_code
                 self.content = json.dumps(data)
 
-        if kwargs['url'] == 'https://nf-co.re/json_schema_launch':
+        if kwargs['url'] == 'https://nf-co.re/launch':
             response_data = {
                 'status': 'recieved',
                 'api_url': 'https://nf-co.re',

@@ -31,7 +31,7 @@ import nf_core.schema, nf_core.utils
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, pipeline, revision=None, command_only=False, params_in=None, params_out=None, save_all=False, show_hidden=False, url=None, web_id=None):
+    def __init__(self, pipeline=None, revision=None, command_only=False, params_in=None, params_out=None, save_all=False, show_hidden=False, url=None, web_id=None):
         """Initialise the Launcher class
 
         Args:
@@ -46,14 +46,13 @@ class Launch(object):
         self.params_out = params_out if params_out else os.path.join(os.getcwd(), 'nf-params.json')
         self.save_all = save_all
         self.show_hidden = show_hidden
-        self.web_schema_launch_url = url if url else 'https://nf-co.re/json_schema_launch'
+        self.web_schema_launch_url = url if url else 'https://nf-co.re/launch'
         self.web_schema_launch_web_url = None
         self.web_schema_launch_api_url = None
-        if web_id:
+        self.web_id = web_id
+        if self.web_id:
             self.web_schema_launch_web_url = '{}?id={}'.format(self.web_schema_launch_url, web_id)
             self.web_schema_launch_api_url = '{}?id={}&api=true'.format(self.web_schema_launch_url, web_id)
-
-        self.nfcore_launch_command = 'nf-core launch {}'.format(self.pipeline)
         self.nextflow_cmd = 'nextflow run {}'.format(self.pipeline)
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
@@ -91,6 +90,11 @@ class Launch(object):
 
     def launch_pipeline(self):
 
+        # Check that we have everything we need
+        if self.pipeline is None and self.web_id is None:
+            logging.error("Either a pipeline name or web cache ID is required. Please see nf-core launch --help for more information.")
+            return False
+
         # Check if the output file exists already
         if os.path.exists(self.params_out):
             logging.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
@@ -103,6 +107,18 @@ class Launch(object):
 
 
         logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
+
+        # Check if we have a web ID
+        if self.web_id is not None:
+            self.schema_obj = nf_core.schema.PipelineSchema()
+            try:
+                if not self.get_web_launch_response():
+                    logging.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.")
+                    logging.info("URL: {}".format(self.web_schema_launch_web_url))
+                    nf_core.utils.wait_cli_function(self.get_web_launch_response)
+            except AssertionError as e:
+                logging.error(click.style(e.args[0], fg='red'))
+                return False
 
         # Build the schema and starting inputs
         if self.get_pipeline_schema() is False:
@@ -140,17 +156,14 @@ class Launch(object):
 
         # Check if this is a local directory
         if os.path.exists(self.pipeline):
-            # Set the launch commands to use full paths
-            self.nfcore_launch_command = 'nf-core launch {}'.format(os.path.abspath(self.pipeline))
+            # Set the nextflow launch command to use full paths
             self.nextflow_cmd = 'nextflow run {}'.format(os.path.abspath(self.pipeline))
         else:
             # Assume nf-core if no org given
             if self.pipeline.count('/') == 0:
-                self.nfcore_launch_command = 'nf-core launch nf-core/{}'.format(self.pipeline)
                 self.nextflow_cmd = 'nextflow run nf-core/{}'.format(self.pipeline)
             # Add revision flag to commands if set
             if self.pipeline_revision:
-                self.nfcore_launch_command += ' -r {}'.format(self.pipeline_revision)
                 self.nextflow_cmd += ' -r {}'.format(self.pipeline_revision)
 
         # Get schema from name, load it and lint it
@@ -235,8 +248,9 @@ class Launch(object):
                 'nxf_flags': json.dumps(self.nxf_flags),
                 'input_params': json.dumps(self.schema_obj.input_params),
                 'cli_launch': True,
-                'nfcore_launch_command': self.nfcore_launch_command,
-                'nextflow_cmd': self.nextflow_cmd
+                'nextflow_cmd': self.nextflow_cmd,
+                'pipeline': self.pipeline,
+                'revision': self.revision
             }
             web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
             try:
@@ -274,8 +288,18 @@ class Launch(object):
         elif web_response['status'] == 'launch_params_complete':
             logging.info("Found completed parameters from nf-core launch GUI")
             try:
-                self.nxf_flags = web_response['nxf_flags']
-                self.schema_obj.input_params = web_response['input_params']
+                # Set everything that we can with the cache results
+                # NB: If using web builder, may have only run with --id and nothing else
+                if len(web_response['nxf_flags']) > 0:
+                    self.nxf_flags = web_response['nxf_flags']
+                if len(web_response['input_params']) > 0:
+                    self.schema_obj.input_params = web_response['input_params']
+                self.schema_obj.schema = web_response['schema']
+                self.cli_launch = web_response['cli_launch']
+                self.nextflow_cmd = web_response['nextflow_cmd']
+                self.pipeline = web_response['pipeline']
+                self.revision = web_response['revision']
+                # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except json.decoder.JSONDecodeError as e:
                 raise AssertionError("Could not load JSON response from web API: {}".format(e))
@@ -283,7 +307,7 @@ class Launch(object):
                 raise AssertionError("Missing return key from web API: {}".format(e))
             except Exception as e:
                 logging.debug(web_response)
-                raise AssertionError("Unknown exception - see verbose log for details: {}".format(e))
+                raise AssertionError("Unknown exception ({}) - see verbose log for details. {}".format(type(e).__name__, e))
             return True
         else:
             logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
