@@ -127,6 +127,16 @@ class TestLaunch(unittest.TestCase):
             }
             return MockResponse(response_data, 200)
 
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{}])
+    def test_launch_web_gui_missing_keys(self, mock_poll_nfcore_web_api):
+        """ Check the code that opens the web browser """
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        try:
+            self.launcher.launch_web_gui()
+        except AssertionError as e:
+            assert e.args[0].startswith('Web launch response not recognised:')
+
     @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'api_url': 'foo', 'web_url': 'bar', 'status': 'recieved'}])
     @mock.patch('webbrowser.open')
     @mock.patch('nf_core.utils.wait_cli_function')

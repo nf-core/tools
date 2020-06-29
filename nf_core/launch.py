@@ -259,7 +259,7 @@ class Launch(object):
                 assert web_response['status'] == 'recieved'
             except (AssertionError) as e:
                 logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
-                raise AssertionError("JSON Schema builder response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(self.web_schema_launch_url))
+                raise AssertionError("Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(self.web_schema_launch_url))
             else:
                 self.web_schema_launch_web_url = web_response['web_url']
                 self.web_schema_launch_api_url = web_response['api_url']

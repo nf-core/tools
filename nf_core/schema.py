@@ -424,8 +424,6 @@ class PipelineSchema (object):
             try:
                 self.schema = web_response['schema']
                 self.validate_schema(self.schema)
-            except json.decoder.JSONDecodeError as e:
-                raise AssertionError("Could not parse returned JSON:\n {}".format(e))
             except AssertionError as e:
                 raise AssertionError("Response from JSON Builder did not pass validation:\n {}".format(e))
             else:
