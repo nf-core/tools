@@ -68,11 +68,6 @@ class Launch(object):
                         'description': 'Unique name for this nextflow run',
                         'pattern': '^[a-zA-Z0-9-_]+$'
                     },
-                    '-revision': {
-                        'type': 'string',
-                        'description': 'Pipeline release / branch to use',
-                        'help_text': 'Revision of the project to run (either a git branch, tag or commit SHA number)'
-                    },
                     '-profile': {
                         'type': 'string',
                         'description': 'Configuration profile'
@@ -145,9 +140,6 @@ class Launch(object):
 
         # Check if this is a local directory
         if os.path.exists(self.pipeline):
-            # Remove the core -revision flag from the schema
-            logging.debug("Removing -revision from core nextflow schema, as local directory")
-            del self.nxf_flag_schema['Nextflow command-line flags']['properties']['-revision']
             # Set the launch commands to use full paths
             self.nfcore_launch_command = 'nf-core launch {}'.format(os.path.abspath(self.pipeline))
             self.nextflow_cmd = 'nextflow run {}'.format(os.path.abspath(self.pipeline))
@@ -156,6 +148,10 @@ class Launch(object):
             if self.pipeline.count('/') == 0:
                 self.nfcore_launch_command = 'nf-core launch nf-core/{}'.format(self.pipeline)
                 self.nextflow_cmd = 'nextflow run nf-core/{}'.format(self.pipeline)
+            # Add revision flag to commands if set
+            if self.pipeline_revision:
+                self.nfcore_launch_command += ' -r {}'.format(self.pipeline_revision)
+                self.nextflow_cmd += ' -r {}'.format(self.pipeline_revision)
 
         # Get schema from name, load it and lint it
         try:
