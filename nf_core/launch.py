@@ -250,7 +250,7 @@ class Launch(object):
                 'cli_launch': True,
                 'nextflow_cmd': self.nextflow_cmd,
                 'pipeline': self.pipeline,
-                'revision': self.revision
+                'revision': self.pipeline_revision
             }
             web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
             try:
@@ -298,7 +298,7 @@ class Launch(object):
                 self.cli_launch = web_response['cli_launch']
                 self.nextflow_cmd = web_response['nextflow_cmd']
                 self.pipeline = web_response['pipeline']
-                self.revision = web_response['revision']
+                self.pipeline_revision = web_response['revision']
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except json.decoder.JSONDecodeError as e:
