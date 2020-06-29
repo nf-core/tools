@@ -5,6 +5,7 @@
 import nf_core.launch
 
 import json
+import mock
 import os
 import shutil
 import tempfile
@@ -82,6 +83,67 @@ class TestLaunch(unittest.TestCase):
             'message': 'reads',
             'default': 'data/*{1,2}.fastq.gz'
         }
+
+    @mock.patch('PyInquirer.prompt', side_effect=[{'use_web_gui': 'Web based'}])
+    def test_prompt_web_gui_true(self, mock_prompt):
+        """ Check the prompt to launch the web schema or use the cli """
+        assert self.launcher.prompt_web_gui() == True
+
+    @mock.patch('PyInquirer.prompt', side_effect=[{'use_web_gui': 'Command line'}])
+    def test_prompt_web_gui_false(self, mock_prompt):
+        """ Check the prompt to launch the web schema or use the cli """
+        assert self.launcher.prompt_web_gui() == False
+
+    def mocked_requests_post(**kwargs):
+        """ Helper function to emulate POST requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.status_code = status_code
+                self.content = json.dumps(data)
+
+        if kwargs['url'] == 'https://nf-co.re/json_schema_launch':
+            response_data = {
+                'status': 'recieved',
+                'api_url': 'https://nf-co.re',
+                'web_url': 'https://nf-co.re',
+                'status': 'recieved'
+            }
+            return MockResponse(response_data, 200)
+
+    def mocked_requests_get(*args, **kwargs):
+        """ Helper function to emulate GET requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.status_code = status_code
+                self.content = json.dumps(data)
+
+        if args[0] == 'valid_url_saved':
+            response_data = {
+                'status': 'web_builder_edited',
+                'message': 'testing',
+                'schema': { "foo": "bar" }
+            }
+            return MockResponse(response_data, 200)
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'api_url': 'foo', 'web_url': 'bar', 'status': 'recieved'}])
+    @mock.patch('webbrowser.open')
+    @mock.patch('nf_core.utils.wait_cli_function')
+    def test_launch_web_gui(self, mock_poll_nfcore_web_api, mock_webbrowser, mock_wait_cli_function):
+        """ Check the code that opens the web browser """
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        assert self.launcher.launch_web_gui() == None
+
+    @mock.patch.object(nf_core.launch.Launch, 'get_web_launch_response')
+    def test_launch_web_gui_id_supplied(self, mock_get_web_launch_response):
+        """ Check the code that opens the web browser """
+        self.launcher.web_schema_launch_web_url = 'https://foo.com'
+        self.launcher.web_schema_launch_api_url = 'https://bar.com'
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        assert self.launcher.launch_web_gui() == True
 
     def test_ob_to_pyinquirer_bool(self):
         """ Check converting a python dict to a pyenquirer format - booleans """
