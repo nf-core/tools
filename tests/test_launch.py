@@ -90,12 +90,18 @@ class TestLaunch(unittest.TestCase):
             "default": "True",
         }
         result = self.launcher.single_param_to_pyinquirer('single_end', sc_obj)
-        assert result == {
-            'type': 'confirm',
-            'name': 'single_end',
-            'message': 'single_end',
-            'default': True
-        }
+        assert result['type'] == 'list'
+        assert result['name'] == 'single_end'
+        assert result['message'] == 'single_end'
+        assert result['choices'] == ['True', 'False']
+        assert result['default'] == 'True'
+        print(type(True))
+        assert result['filter']('True') == True
+        assert result['filter']('true') == True
+        assert result['filter'](True) == True
+        assert result['filter']('False') == False
+        assert result['filter']('false') == False
+        assert result['filter'](False) == False
 
     def test_ob_to_pyinquirer_number(self):
         """ Check converting a python dict to a pyenquirer format - with enum """

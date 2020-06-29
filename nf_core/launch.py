@@ -469,6 +469,8 @@ class Launch(object):
         if param_obj.get('type') == 'boolean':
             # Filter returned value
             def filter_boolean(val):
+                if isinstance(val, bool):
+                    return val
                 return val.lower() == 'true'
             question['filter'] = filter_boolean
 
