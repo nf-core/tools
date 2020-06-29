@@ -22,7 +22,10 @@ class TestSchema(unittest.TestCase):
         """ Create a new PipelineSchema object """
         self.schema_obj = nf_core.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(self.root_repo_dir, 'nf_core', 'pipeline-template', '{{cookiecutter.name_noslash}}')
+        # Copy the template to a temp directory so that we can use that for tests
+        self.template_dir = os.path.join(tempfile.mkdtemp(), 'wf')
+        template_dir = os.path.join(self.root_repo_dir, 'nf_core', 'pipeline-template', '{{cookiecutter.name_noslash}}')
+        shutil.copytree(template_dir, self.template_dir)
         self.template_schema = os.path.join(self.template_dir, 'nextflow_schema.json')
 
     def test_load_lint_schema(self):
@@ -410,7 +413,7 @@ class TestSchema(unittest.TestCase):
             response_data = {
                 'status': 'web_builder_edited',
                 'message': 'testing',
-                'schema': '{ "foo": "bar" }'
+                'schema': { "foo": "bar" }
             }
             return MockResponse(response_data, 200)
 
