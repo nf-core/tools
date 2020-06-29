@@ -22,6 +22,12 @@ class TestLaunch(unittest.TestCase):
         self.nf_params_fn = os.path.join(tempfile.mkdtemp(), 'nf-params.json')
         self.launcher = nf_core.launch.Launch(self.template_dir, params_out = self.nf_params_fn)
 
+    @mock.patch.object(nf_core.launch.Launch, 'prompt_web_gui', side_effect=[True])
+    @mock.patch.object(nf_core.launch.Launch, 'launch_web_gui')
+    def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
+        """ Test the main launch function """
+        self.launcher.launch_pipeline()
+
     def test_get_pipeline_schema(self):
         """ Test loading the params schema from a pipeline """
         self.launcher.get_pipeline_schema()
