@@ -95,41 +95,41 @@ def list(keywords, sort, json):
     metavar = "<pipeline name>"
 )
 @click.option(
-    '-i', '--id',
-    help = "ID for web-gui launch parameter set"
-)
-@click.option(
     '-r', '--revision',
     help = "Release/branch/SHA of the project to run (if remote)"
+)
+@click.option(
+    '-i', '--id',
+    help = "ID for web-gui launch parameter set"
 )
 @click.option(
     '-c', '--command-only',
     is_flag = True,
     default = False,
-    help = "Set params directly in the nextflow command."
-)
-@click.option(
-    '-p', '--params-in',
-    type = click.Path(exists=True),
-    help = "Input parameters JSON file."
+    help = "Set params in the nextflow command (no params file)"
 )
 @click.option(
     '-o', '--params-out',
     type = click.Path(),
     default = os.path.join(os.getcwd(), 'nf-params.json'),
-    help = "Path to save parameters JSON file to."
+    help = "Path to save run parameters to"
+)
+@click.option(
+    '-p', '--params-in',
+    type = click.Path(exists=True),
+    help = "Set of input run params to use from a previous run"
 )
 @click.option(
     '-a', '--save-all',
     is_flag = True,
     default = False,
-    help = "Save all parameters, even if default."
+    help = "Save all parameters, even if unchanged from default"
 )
 @click.option(
     '-h', '--show-hidden',
     is_flag = True,
     default = False,
-    help = "Show hidden parameters."
+    help = "Show hidden params which don't normally need changing"
 )
 @click.option(
     '--url',
@@ -138,7 +138,13 @@ def list(keywords, sort, json):
     help = 'Customise the builder URL (for development work)'
 )
 def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
-    """ Run pipeline, interactive parameter prompts """
+    """
+    Launch a pipeline using either an interactive web GUI or command line prompts to set parameter values.
+
+    When finished, saves a file with the selected parameters which can be passed to Nextflow using the -params-file option.
+
+    Run using a remote pipeline name (org/repo), a local pipeline directory or an ID from the nf-core web launch tool.
+    """
     launcher = nf_core.launch.Launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id)
     if launcher.launch_pipeline() == False:
         sys.exit(1)
@@ -292,7 +298,7 @@ def lint(pipeline_dir, release, markdown, json):
 ## nf-core schema subcommands
 @nf_core_cli.group(cls=CustomHelpOrder)
 def schema():
-    """ Manage pipeline JSON Schema """
+    """ Suite of tools to help developers to manage pipeline JSON Schema """
     pass
 
 @schema.command(help_priority=1)
@@ -354,7 +360,7 @@ def validate(pipeline, params):
     help = 'Customise the builder URL (for development work)'
 )
 def build(pipeline_dir, no_prompts, web_only, url):
-    """ Interactively build a schema from Nextflow params. """
+    """ Interactively build a pipeline schema from Nextflow params. """
     schema_obj = nf_core.schema.PipelineSchema()
     if schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url) is False:
         sys.exit(1)
