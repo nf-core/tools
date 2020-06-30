@@ -10,8 +10,11 @@ import hashlib
 import logging
 import os
 import re
+import requests
+import requests_cache
 import subprocess
 import sys
+import time
 
 def fetch_wf_config(wf_path):
     """Uses Nextflow to retrieve the the configuration variables
@@ -117,3 +120,72 @@ def setup_requests_cachedir():
         expire_after=datetime.timedelta(hours=1),
         backend='sqlite',
     )
+
+def wait_cli_function(poll_func, poll_every=20):
+    """
+    Display a command-line spinner while calling a function repeatedly.
+
+    Keep waiting until that function returns True
+
+    Arguments:
+       poll_func (function): Function to call
+       poll_every (int): How many tenths of a second to wait between function calls. Default: 20.
+
+    Returns:
+       None. Just sits in an infite loop until the function returns True.
+    """
+    try:
+        is_finished = False
+        check_count = 0
+        def spinning_cursor():
+            while True:
+                for cursor in '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏':
+                    yield '{} Use ctrl+c to stop waiting and force exit. '.format(cursor)
+        spinner = spinning_cursor()
+        while not is_finished:
+            # Show the loading spinner every 0.1s
+            time.sleep(0.1)
+            loading_text = next(spinner)
+            sys.stdout.write(loading_text)
+            sys.stdout.flush()
+            sys.stdout.write('\b'*len(loading_text))
+            # Only check every 2 seconds, but update the spinner every 0.1s
+            check_count += 1
+            if check_count > poll_every:
+                is_finished = poll_func()
+                check_count = 0
+    except KeyboardInterrupt:
+        raise AssertionError("Cancelled!")
+
+def poll_nfcore_web_api(api_url, post_data=None):
+    """
+    Poll the nf-core website API
+
+    Takes argument api_url for URL
+
+    Expects API reponse to be valid JSON and contain a top-level 'status' key.
+    """
+    # Clear requests_cache so that we get the updated statuses
+    requests_cache.clear()
+    try:
+        if post_data is None:
+            response = requests.get(api_url, headers={'Cache-Control': 'no-cache'})
+        else:
+            response = requests.post(url=api_url, data=post_data)
+    except (requests.exceptions.Timeout):
+        raise AssertionError("URL timed out: {}".format(api_url))
+    except (requests.exceptions.ConnectionError):
+        raise AssertionError("Could not connect to URL: {}".format(api_url))
+    else:
+        if response.status_code != 200:
+            logging.debug("Response content:\n{}".format(response.content))
+            raise AssertionError("Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code))
+        else:
+            try:
+                web_response = json.loads(response.content)
+                assert 'status' in web_response
+            except (json.decoder.JSONDecodeError, AssertionError) as e:
+                logging.debug("Response content:\n{}".format(response.content))
+                raise AssertionError("nf-core website API results response not recognised: {}\n See verbose log for full response".format(api_url))
+            else:
+                return web_response

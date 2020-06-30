@@ -5,6 +5,7 @@
 import nf_core.launch
 
 import json
+import mock
 import os
 import shutil
 import tempfile
@@ -20,6 +21,12 @@ class TestLaunch(unittest.TestCase):
         self.template_dir = os.path.join(root_repo_dir, 'nf_core', 'pipeline-template', '{{cookiecutter.name_noslash}}')
         self.nf_params_fn = os.path.join(tempfile.mkdtemp(), 'nf-params.json')
         self.launcher = nf_core.launch.Launch(self.template_dir, params_out = self.nf_params_fn)
+
+    @mock.patch.object(nf_core.launch.Launch, 'prompt_web_gui', side_effect=[True])
+    @mock.patch.object(nf_core.launch.Launch, 'launch_web_gui')
+    def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
+        """ Test the main launch function """
+        self.launcher.launch_pipeline()
 
     def test_get_pipeline_schema(self):
         """ Test loading the params schema from a pipeline """
@@ -83,6 +90,133 @@ class TestLaunch(unittest.TestCase):
             'default': 'data/*{1,2}.fastq.gz'
         }
 
+    @mock.patch('PyInquirer.prompt', side_effect=[{'use_web_gui': 'Web based'}])
+    def test_prompt_web_gui_true(self, mock_prompt):
+        """ Check the prompt to launch the web schema or use the cli """
+        assert self.launcher.prompt_web_gui() == True
+
+    @mock.patch('PyInquirer.prompt', side_effect=[{'use_web_gui': 'Command line'}])
+    def test_prompt_web_gui_false(self, mock_prompt):
+        """ Check the prompt to launch the web schema or use the cli """
+        assert self.launcher.prompt_web_gui() == False
+
+    def mocked_requests_post(**kwargs):
+        """ Helper function to emulate POST requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.status_code = status_code
+                self.content = json.dumps(data)
+
+        if kwargs['url'] == 'https://nf-co.re/launch':
+            response_data = {
+                'status': 'recieved',
+                'api_url': 'https://nf-co.re',
+                'web_url': 'https://nf-co.re',
+                'status': 'recieved'
+            }
+            return MockResponse(response_data, 200)
+
+    def mocked_requests_get(*args, **kwargs):
+        """ Helper function to emulate GET requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.status_code = status_code
+                self.content = json.dumps(data)
+
+        if args[0] == 'valid_url_saved':
+            response_data = {
+                'status': 'web_builder_edited',
+                'message': 'testing',
+                'schema': { "foo": "bar" }
+            }
+            return MockResponse(response_data, 200)
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{}])
+    def test_launch_web_gui_missing_keys(self, mock_poll_nfcore_web_api):
+        """ Check the code that opens the web browser """
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        try:
+            self.launcher.launch_web_gui()
+        except AssertionError as e:
+            assert e.args[0].startswith('Web launch response not recognised:')
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'api_url': 'foo', 'web_url': 'bar', 'status': 'recieved'}])
+    @mock.patch('webbrowser.open')
+    @mock.patch('nf_core.utils.wait_cli_function')
+    def test_launch_web_gui(self, mock_poll_nfcore_web_api, mock_webbrowser, mock_wait_cli_function):
+        """ Check the code that opens the web browser """
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        assert self.launcher.launch_web_gui() == None
+
+    @mock.patch.object(nf_core.launch.Launch, 'get_web_launch_response')
+    def test_launch_web_gui_id_supplied(self, mock_get_web_launch_response):
+        """ Check the code that opens the web browser """
+        self.launcher.web_schema_launch_web_url = 'https://foo.com'
+        self.launcher.web_schema_launch_api_url = 'https://bar.com'
+        self.launcher.get_pipeline_schema()
+        self.launcher.merge_nxf_flag_schema()
+        assert self.launcher.launch_web_gui() == True
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'error', 'message': 'foo'}])
+    def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - status error """
+        try:
+            self.launcher.get_web_launch_response()
+        except AssertionError as e:
+            assert e.args[0] == 'Got error from launch API (foo)'
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'foo'}])
+    def test_get_web_launch_response_unexpected(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - status error """
+        try:
+            self.launcher.get_web_launch_response()
+        except AssertionError as e:
+            assert e.args[0].startswith('Web launch GUI returned unexpected status (foo): ')
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'waiting_for_user'}])
+    def test_get_web_launch_response_waiting(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - status waiting_for_user"""
+        assert self.launcher.get_web_launch_response() == False
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{'status': 'launch_params_complete'}])
+    def test_get_web_launch_response_missing_keys(self, mock_poll_nfcore_web_api):
+        """ Test polling the website for a launch response - complete, but missing keys """
+        try:
+            self.launcher.get_web_launch_response()
+        except AssertionError as e:
+            assert e.args[0] == "Missing return key from web API: 'nxf_flags'"
+
+    @mock.patch('nf_core.utils.poll_nfcore_web_api', side_effect=[{
+        'status': 'launch_params_complete',
+        'nxf_flags': {'resume', 'true'},
+        'input_params': {'foo', 'bar'},
+        'schema': {},
+        'cli_launch': True,
+        'nextflow_cmd': 'nextflow run foo',
+        'pipeline': 'foo',
+        'revision': 'bar',
+    }])
+    @mock.patch.object(nf_core.launch.Launch, 'sanitise_web_response')
+    def test_get_web_launch_response_valid(self, mock_poll_nfcore_web_api, mock_sanitise):
+        """ Test polling the website for a launch response - complete, valid response """
+        self.launcher.get_pipeline_schema()
+        assert self.launcher.get_web_launch_response() == True
+
+    def test_sanitise_web_response(self):
+        """ Check that we can properly sanitise results from the web """
+        self.launcher.get_pipeline_schema()
+        self.launcher.nxf_flags['-name'] = ''
+        self.launcher.schema_obj.input_params['single_end'] = 'true'
+        self.launcher.schema_obj.input_params['max_cpus'] = '12'
+        self.launcher.sanitise_web_response()
+        assert '-name' not in self.launcher.nxf_flags
+        assert self.launcher.schema_obj.input_params['single_end'] == True
+        assert self.launcher.schema_obj.input_params['max_cpus'] == 12
+
     def test_ob_to_pyinquirer_bool(self):
         """ Check converting a python dict to a pyenquirer format - booleans """
         sc_obj = {
@@ -90,12 +224,18 @@ class TestLaunch(unittest.TestCase):
             "default": "True",
         }
         result = self.launcher.single_param_to_pyinquirer('single_end', sc_obj)
-        assert result == {
-            'type': 'confirm',
-            'name': 'single_end',
-            'message': 'single_end',
-            'default': True
-        }
+        assert result['type'] == 'list'
+        assert result['name'] == 'single_end'
+        assert result['message'] == 'single_end'
+        assert result['choices'] == ['True', 'False']
+        assert result['default'] == 'True'
+        print(type(True))
+        assert result['filter']('True') == True
+        assert result['filter']('true') == True
+        assert result['filter'](True) == True
+        assert result['filter']('False') == False
+        assert result['filter']('false') == False
+        assert result['filter'](False) == False
 
     def test_ob_to_pyinquirer_number(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
