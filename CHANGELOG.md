@@ -78,6 +78,7 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * nf-core/tools version number now printed underneath header artwork
 * Bumped Conda version shipped with nfcore/base to 4.8.2
 * Added log message when creating new pipelines that people should talk to the community about their plans
+* Fixed 'on completion' emails sent using the `mail` command not containing body text. 
 
 ## v1.9
 
