@@ -52,6 +52,7 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
 * Add AWS CI tests and full tests GitHub Actions workflows
 * Update AWS CI tests and full tests secrets names
+* Add information about config files used for workflow execution (`workflow.configFiles`) to summary
 
 ### Linting
 
