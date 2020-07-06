@@ -207,10 +207,10 @@ If not, you can copy and paste the Nextflow command with the `nf-params.json` fi
 
 ```console
 ? Nextflow command-line flags  Continue >>
-? Input/output options  reads
+? Input/output options  input
 
 Input FastQ files. (? for help)
-? reads  data/*{1,2}.fq.gz
+? input  data/*{1,2}.fq.gz
 ? Input/output options  Continue >>
 ? Reference genome options  Continue >>
 
@@ -337,7 +337,7 @@ nextflow run /path/to/nf-core-methylseq-1.4/workflow/ \
      -profile singularity \
      -with-singularity /path/to/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg \
      # .. other normal pipeline parameters from here on..
-     --reads '*_R{1,2}.fastq.gz' --genome GRCh38
+     --input '*_R{1,2}.fastq.gz' --genome GRCh38
 ```
 
 ## Pipeline software licences
@@ -487,7 +487,7 @@ $ nf-core schema validate my_pipeline --params my_inputs.json
 
 INFO: [✓] Pipeline schema looks valid
 
-ERROR: [✗] Input parameters are invalid: 'reads' is a required property
+ERROR: [✗] Input parameters are invalid: 'input' is a required property
 ```
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
@@ -521,11 +521,11 @@ Unrecognised 'params.we_removed_this_too' found in schema but not in Nextflow co
 INFO: Removed 2 params from existing JSON Schema that were not found with `nextflow config`:
  old_param, we_removed_this_too
 
-Found 'params.reads' in Nextflow config. Add to JSON Schema? [Y/n]:
+Found 'params.input' in Nextflow config. Add to JSON Schema? [Y/n]:
 Found 'params.outdir' in Nextflow config. Add to JSON Schema? [Y/n]:
 
 INFO: Added 2 params to JSON Schema that were found with `nextflow config`:
- reads, outdir
+ input, outdir
 
 INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
 

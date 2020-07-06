@@ -53,6 +53,9 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * Add AWS CI tests and full tests GitHub Actions workflows
 * Update AWS CI tests and full tests secrets names
 * Add information about config files used for workflow execution (`workflow.configFiles`) to summary
+* Fix `markdown_to_html.py` to work with Python 2 and 3.
+* Change `params.reads` -> `params.input`
+* Change `params.readPaths` -> `params.input_paths`
 
 ### Linting
 
@@ -65,6 +68,7 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * New `--json` and `--markdown` options to print lint results to JSON / markdown files
 * Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
 * Added AWS GitHub Actions workflows linting
+* Fail if `params.input` isnt defined.
 
 ### nf-core/tools Continuous Integration
 

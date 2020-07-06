@@ -18,12 +18,12 @@ def helpMessage() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile docker
+    nextflow run {{ cookiecutter.name }} --input '*_R{1,2}.fastq.gz' -profile docker
 
     Mandatory arguments:
-      --reads [file]                Path to input data (must be surrounded with quotes)
-      -profile [str]                Configuration profile to use. Can use multiple (comma separated)
-                                    Available: conda, docker, singularity, test, awsbatch, <institute> and more
+      --input [file]                  Path to input data (must be surrounded with quotes)
+      -profile [str]                  Configuration profile to use. Can use multiple (comma separated)
+                                      Available: conda, docker, singularity, test, awsbatch, <institute> and more
 
     Options:
       --genome [str]                  Name of iGenomes reference
@@ -80,7 +80,7 @@ if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
     custom_runName = workflow.runName
 }
 
-// AWS batch settings
+// Check AWS batch settings
 if (workflow.profile.contains('awsbatch')) {
     // AWSBatch sanity checking
     if (!params.awsqueue || !params.awsregion) exit 1, "Specify correct --awsqueue and --awsregion parameters on AWSBatch!"
@@ -100,24 +100,24 @@ ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 /*
  * Create a channel for input read files
  */
-if (params.readPaths) {
+if (params.input_paths) {
     if (params.single_end) {
         Channel
-            .from(params.readPaths)
+            .from(params.input_paths)
             .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.readPaths was empty - no input files supplied" }
+            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
             .into { ch_read_files_fastqc; ch_read_files_trimming }
     } else {
         Channel
-            .from(params.readPaths)
+            .from(params.input_paths)
             .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true), file(row[1][1], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.readPaths was empty - no input files supplied" }
+            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
             .into { ch_read_files_fastqc; ch_read_files_trimming }
     }
 } else {
     Channel
-        .fromFilePairs(params.reads, size: params.single_end ? 1 : 2)
-        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.reads}\nNB: Path needs to be enclosed in quotes!\nIf this is single-end data, please specify --single_end on the command line." }
+        .fromFilePairs(params.input, size: params.single_end ? 1 : 2)
+        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.input}\nNB: Path needs to be enclosed in quotes!\nIf this is single-end data, please specify --single_end on the command line." }
         .into { ch_read_files_fastqc; ch_read_files_trimming }
 }
 
@@ -127,7 +127,7 @@ def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName
 // TODO nf-core: Report custom parameters here
-summary['Reads']            = params.reads
+summary['Reads']            = params.input
 summary['Fasta Ref']        = params.fasta
 summary['Data Type']        = params.single_end ? 'Single-End' : 'Paired-End'
 summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
@@ -354,7 +354,7 @@ workflow.onComplete {
             if ( mqc_report.size() <= params.max_multiqc_email_size.toBytes() ) {
               mail_cmd += [ '-A', mqc_report ]
             }
-            mail_cmd.execute() << email_html 
+            mail_cmd.execute() << email_html
             log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $email_address (mail)"
         }
     }

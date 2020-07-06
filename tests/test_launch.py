@@ -82,11 +82,11 @@ class TestLaunch(unittest.TestCase):
             "type": "string",
             "default": "data/*{1,2}.fastq.gz",
         }
-        result = self.launcher.single_param_to_pyinquirer('reads', sc_obj)
+        result = self.launcher.single_param_to_pyinquirer('input', sc_obj)
         assert result == {
             'type': 'input',
-            'name': 'reads',
-            'message': 'reads',
+            'name': 'input',
+            'message': 'input',
             'default': 'data/*{1,2}.fastq.gz'
         }
 
@@ -321,10 +321,10 @@ class TestLaunch(unittest.TestCase):
         """ Test stripping default parameters """
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
-        self.launcher.schema_obj.input_params.update({'reads': 'custom_input'})
+        self.launcher.schema_obj.input_params.update({'input': 'custom_input'})
         assert len(self.launcher.schema_obj.input_params) > 1
         self.launcher.strip_default_params()
-        assert self.launcher.schema_obj.input_params == {'reads': 'custom_input'}
+        assert self.launcher.schema_obj.input_params == {'input': 'custom_input'}
 
     def test_build_command_empty(self):
         """ Test the functionality to build a nextflow command - nothing customsied """
@@ -345,19 +345,19 @@ class TestLaunch(unittest.TestCase):
     def test_build_command_params(self):
         """ Test the functionality to build a nextflow command - params supplied """
         self.launcher.get_pipeline_schema()
-        self.launcher.schema_obj.input_params.update({'reads': 'custom_input'})
+        self.launcher.schema_obj.input_params.update({'input': 'custom_input'})
         self.launcher.build_command()
         # Check command
         assert self.launcher.nextflow_cmd == 'nextflow run {} -params-file "{}"'.format(self.template_dir, os.path.relpath(self.nf_params_fn))
         # Check saved parameters file
         with open(self.nf_params_fn, 'r') as fh:
             saved_json = json.load(fh)
-        assert saved_json == {'reads': 'custom_input'}
+        assert saved_json == {'input': 'custom_input'}
 
     def test_build_command_params_cl(self):
         """ Test the functionality to build a nextflow command - params on Nextflow command line """
         self.launcher.use_params_file = False
         self.launcher.get_pipeline_schema()
-        self.launcher.schema_obj.input_params.update({'reads': 'custom_input'})
+        self.launcher.schema_obj.input_params.update({'input': 'custom_input'})
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == 'nextflow run {} --reads "custom_input"'.format(self.template_dir)
+        assert self.launcher.nextflow_cmd == 'nextflow run {} --input "custom_input"'.format(self.template_dir)

@@ -8,7 +8,7 @@
         "Input/output options": {
             "type": "object",
             "properties": {
-                "reads": {
+                "input": {
                     "type": "string",
                     "fa_icon": "fas fa-dna",
                     "description": "Input FastQ files.",
@@ -36,7 +36,7 @@
                 }
             },
             "required": [
-                "reads"
+                "input"
             ],
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data."
