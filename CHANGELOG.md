@@ -2,8 +2,57 @@
 
 ## v1.10dev
 
+### Pipeline schema
+
+This release of nf-core/tools introduces a major change / new feature: pipeline schema.
+These are [JSON Schema](https://json-schema.org/) files that describe all of the parameters for a given
+pipeline with their ID, a description, a longer help text, an optional default value, a variable _type_
+(eg. `string` or `boolean`) and more.
+
+The files will be used in a number of places:
+
+* Automatic validation of supplied parameters when running pipelines
+  * Pipeline execution can be immediately stopped if a required `param` is missing,
+    or does not conform to the patterns / allowed values in the schema.
+* Generation of pipeline command-line help
+  * Running `nextflow run <pipeline> --help` will use the schema to generate a help text automatically
+* Building online documentation on the [nf-core website](https://nf-co.re)
+* Integration with 3rd party graphical user interfaces
+
+To support these new schema files, nf-core/tools now comes with a new set of commands: `nf-core schema`.
+
+* Pipeline schema can be generated or updated using `nf-core schema build` - this takes the parameters from
+  the pipeline config file and prompts the developer for any mismatch between schema and pipeline.
+  * Once a skeleton Schema file has been built, the command makes use of a new nf-core website tool to provide
+    a user friendly graphical interface for developers to add content to their schema: [https://nf-co.re/json_schema_build](https://nf-co.re/json_schema_build)
+* Pipelines will be automatically tested for valid schema that describe all pipeline parameters using the
+  `nf-core schema lint` command (also included as part of the main `nf-core lint` command).
+* Users can validate their set of pipeline inputs using the `nf-core schema validate` command.
+
+In addition to the new schema commands, the `nf-core launch` command has been completely rewritten from
+scratch to make use of the new pipeline schema. This command can use either an interactive command-line
+prompt or a rich web interface to help users set parameters for a pipeline run.
+
+The parameter descriptions and help text are fully used and embedded into the launch interfaces to make
+this process as user-friendly as possible. We hope that it's particularly well suited to those new to nf-core.
+
+Whilst we appreciate that this new feature will add a little work for pipeline developers, we're excited at
+the possibilities that it brings. If you have any feedback or suggestions, please let us know either here on
+GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com/channels/json-schema).
+
 ### Template
 
+* Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
+* Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
+* Added new style of pipeline parameters JSON schema to pipeline template
+* Add ability to attach MultiQC reports to completion emails when using `mail`
+* Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
+* Build Docker image using GitHub Actions, then push to Docker Hub (instead of building on Docker Hub)
+* Add Slack channel badge in pipeline README
+* Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
+* Add AWS CI tests and full tests GitHub Actions workflows
+* Update AWS CI tests and full tests secrets names
+* Add information about config files used for workflow execution (`workflow.configFiles`) to summary
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
 * Change `params.readPaths` -> `params.input_paths`
@@ -13,14 +62,28 @@
 * Refactored PR branch tests to be a little clearer.
 * Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
 * Adapted linting docs to the new PR branch tests.
-* Fail if `params.input` isnt defined.
+* Failure for missing the readme bioconda badge is now a warn, in case this badge is not relevant
 * Added test for template `{{ cookiecutter.var }}` placeholders
+* Fix failure when providing version along with build id for Conda packages
+* New `--json` and `--markdown` options to print lint results to JSON / markdown files
+* Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
+* Added AWS GitHub Actions workflows linting
+* Warn if `params.input` isnt defined.
 
-### Other
+### nf-core/tools Continuous Integration
 
 * Added CI test to check for PRs against `master` in tools repo
 * CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
+* Move some of the issue and PR templates into HTML `<!-- comments -->` so that they don't show in issues / PRs
+
+### Other
+
 * Describe alternative installation method via conda with `conda env create`
+* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
+* nf-core/tools version number now printed underneath header artwork
+* Bumped Conda version shipped with nfcore/base to 4.8.2
+* Added log message when creating new pipelines that people should talk to the community about their plans
+* Fixed 'on completion' emails sent using the `mail` command not containing body text.
 
 ## v1.9
 
@@ -35,6 +98,7 @@
 ### Template
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Fixed rendering of images in output documentation [#391](https://github.com/nf-core/tools/issues/391)
 * Removed the requirement for R in the conda environment
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file

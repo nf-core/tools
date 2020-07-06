@@ -24,6 +24,7 @@
   * [`--awscli`](#--awscli)
 * [Other command line parameters](#other-command-line-parameters)
   * [`--outdir`](#--outdir)
+  * [`--publish_dir_mode`](#--publish_dir_mode)
   * [`--email`](#--email)
   * [`--email_on_fail`](#--email_on_fail)
   * [`--max_multiqc_email_size`](#--max_multiqc_email_size)
@@ -104,11 +105,11 @@ They are loaded in sequence, so later profiles can overwrite earlier profiles.
 If `-profile` is not specified, the pipeline will run locally and expect all software to be installed and available on the `PATH`. This is _not_ recommended.
 
 * `docker`
-  * A generic configuration profile to be used with [Docker](http://docker.com/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * A generic configuration profile to be used with [Docker](https://docker.com/)
+  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `singularity`
-  * A generic configuration profile to be used with [Singularity](http://singularity.lbl.gov/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](http://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * A generic configuration profile to be used with [Singularity](https://sylabs.io/docs/)
+  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `conda`
   * Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker or Singularity.
   * A generic configuration profile to be used with [Conda](https://conda.io/docs/)
@@ -236,6 +237,10 @@ Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a 
 ### `--outdir`
 
 The output directory where the results will be saved.
+
+### `--publish_dir_mode`
+
+Value passed to Nextflow [`publishDir`](https://www.nextflow.io/docs/latest/process.html#publishdir) directive for publishing results in the output directory. Available: 'symlink', 'rellink', 'link', 'copy', 'copyNoFollow' and 'move' (Default: 'copy').
 
 ### `--email`
 

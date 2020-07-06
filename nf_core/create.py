@@ -2,6 +2,7 @@
 """Creates a nf-core pipeline matching the current
 organization's specification based on a template.
 """
+import click
 import cookiecutter.main, cookiecutter.exceptions
 import git
 import logging
@@ -10,6 +11,7 @@ import requests
 import shutil
 import sys
 import tempfile
+import textwrap
 
 import nf_core
 
@@ -53,6 +55,14 @@ class PipelineCreate(object):
         # Init the git repository and make the first commit
         if not self.no_git:
             self.git_init_pipeline()
+
+        logging.info(click.style(textwrap.dedent("""            !!!!!! IMPORTANT !!!!!!
+
+            If you are interested in adding your pipeline to the nf-core community,
+            PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
+
+            Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
+            """), fg='green'))
 
     def run_cookiecutter(self):
         """Runs cookiecutter to create a new nf-core pipeline.
@@ -129,7 +139,7 @@ class PipelineCreate(object):
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
         repo.index.commit("initial template build from nf-core/tools, version {}".format(nf_core.__version__))
-        #Add TEMPLATE branch to git repository
+        # Add TEMPLATE branch to git repository
         repo.git.branch('TEMPLATE')
         repo.git.branch('dev')
         logging.info("Done. Remember to add a remote and push to GitHub:\n  cd {}\n  git remote add origin git@github.com:USERNAME/REPO_NAME.git\n  git push --all origin".format(self.outdir))

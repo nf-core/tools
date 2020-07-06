@@ -2,8 +2,9 @@
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
-[![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/recipes/nf-core/README.html)
+[![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
 [![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
+[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23tools-4A154B?logo=slack)](https://nfcore.slack.com/channels/tools)
 
 A python package with helper tools for the nf-core community.
 
@@ -18,6 +19,7 @@ A python package with helper tools for the nf-core community.
 * [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
 * [`nf-core create` - Create a new workflow from the nf-core template](#creating-a-new-workflow)
 * [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
+* [`nf-core schema` - Work with pipeline schema files](#working-with-pipeline-schema)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 * [Citation](#citation)
@@ -27,25 +29,26 @@ For documentation of the internal Python functions, please refer to the [Tools P
 
 ## Installation
 
-You can install `nf-core/tools` using [bioconda](https://bioconda.github.io/recipes/nf-core/README.html):
+### Bioconda
+
+You can install `nf-core/tools` from [bioconda](https://bioconda.github.io/recipes/nf-core/README.html).
+
+First, install conda and configure the channels to use bioconda
+(see the [bioconda documentation](https://bioconda.github.io/user/install.html)).
+Then, just run the conda installation command:
 
 ```bash
-conda install -c bioconda nf-core
+conda install nf-core
 ```
 
-Alternatively, if `conda install` doesn't work, you can also try creating an `environment.yml` file as containing:
+Alternatively, you can create a new environment with both nf-core/tools and nextflow:
 
-```yaml
-name: nf-core-1.9
-channels:
-  - conda-forge
-  - bioconda
-  - defaults
-dependencies:
-  - bioconda::nf-core=1.9
+```bash
+conda create --name nf-core python=3.7 nf-core nextflow
+conda activate nf-core
 ```
 
-and create the environment with `conda env create -f environment.yml`. Ensure to activate the environment to find `nf-core` in your path.
+### Python Package Index
 
 `nf-core/tools` can also be installed from [PyPI](https://pypi.python.org/pypi/nf-core/) using pip as follows:
 
@@ -53,27 +56,22 @@ and create the environment with `conda env create -f environment.yml`. Ensure to
 pip install nf-core
 ```
 
-Or, if you would like the development version instead, the command is:
+### Development version
+
+If you would like the latest development version of tools, the command is:
 
 ```bash
 pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git@dev
 ```
 
-Alternatively, if you would like to edit the files locally:
-Clone the repository code - you should probably specify your fork instead
-
-```bash
-git clone https://github.com/nf-core/tools.git nf-core-tools
-cd nf-core-tools
-```
-
-Install with pip
+If you intend to make edits to the code, first make a fork of the repository and then clone it locally.
+Go to the cloned directory and either install with pip:
 
 ```bash
 pip install -e .
 ```
 
-Alternatively, install the package with Python
+Or install directly using Python:
 
 ```bash
 python setup.py develop
@@ -169,13 +167,14 @@ Some nextflow pipelines have a considerable number of command line flags that ca
 To help with this, the `nf-core launch` command uses an interactive command-line wizard tool to prompt you for
 values for running nextflow and the pipeline parameters.
 
-If the pipeline in question has a `parameters.settings.json` file following the [nf-core parameter JSON schema](https://nf-co.re/parameter-schema), parameters will be grouped and have associated description text and variable typing.
+The tool uses the `nextflow_schema.json` file from a pipeline to give parameter descriptions, defaults and grouping.
+If no file for the pipeline is found, one will be automatically generated at runtime.
 
-Nextflow `params` variables are saved in to a JSON file called `nfx-params.json` and used by nextflow with the `-params-file` flag.
+Nextflow `params` variables are saved in to a JSON file called `nf-params.json` and used by nextflow with the `-params-file` flag.
 This makes it easier to reuse these in the future.
 
-It is not essential to run the pipeline - the wizard will ask you if you want to launch the command at the end.
-If not, you finish with the `params` JSON file and a nextflow command that you can copy and paste.
+The `nf-core launch` command is an interactive command line tool and prompts you to overwrite the default values for each parameter.
+Entering `?` for any parameter will give a full description from the documentation of what that value does.
 
 ```console
 $ nf-core launch rnaseq
@@ -186,47 +185,59 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-
-INFO: Launching nf-core/rnaseq
-Main nextflow options
-
-Config profile to use
- -profile [standard]: docker
-
-Unique name for this nextflow run
- -name [None]: test_run
-
-Work directory for intermediate files
- -w [./work]:
-
-Resume a previous workflow run
- -resume [y/N]:
-
-Release / revision to use
- -r [None]: 1.3
+    nf-core/tools version 1.10.dev0
 
 
-Parameter group: Main options
-Do you want to change the group's defaults? [y/N]: y
+INFO: [✓] Pipeline schema looks valid
 
-Input files
-Specify the location of your input FastQ files.
- --input ['data/*{1,2}.fastq.gz']: '/path/to/reads_*{R1,R2}.fq.gz'
+INFO: This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
 
-[..truncated..]
-
-Nextflow command:
-  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" -params-file "/Users/ewels/testing/nfx-params.json"
-
-
-Do you want to run this command now? [y/N]: y
-
-INFO: Launching workflow!
-N E X T F L O W  ~  version 19.01.0
-Launching `nf-core/rnaseq` [evil_engelbart] - revision: 37f260d360 [master]
-
-[..truncated..]
+? Nextflow command-line flags  (Use arrow keys)
+ ❯ Continue >>
+   ---------------
+   -name
+   -revision
+   -profile
+   -work-dir
+   -resume
 ```
+
+Once complete, the wizard will ask you if you want to launch the Nextflow run.
+If not, you can copy and paste the Nextflow command with the `nf-params.json` file of your inputs.
+
+```console
+? Nextflow command-line flags  Continue >>
+? Input/output options  reads
+
+Input FastQ files. (? for help)
+? reads  data/*{1,2}.fq.gz
+? Input/output options  Continue >>
+? Reference genome options  Continue >>
+
+INFO: [✓] Input parameters look valid
+
+INFO: Nextflow command:
+  nextflow run nf-core-testpipeline/ -params-file "nf-params.json"
+
+
+Do you want to run this command now? [y/N]: n
+```
+
+### Launch tool options
+
+* `-c`, `--command-only`
+  * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
+* `-p`, `--params-in PATH`
+  * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
+  * This will overwrite the pipeline schema defaults before the wizard is launched.
+* `-o`, `--params-out PATH`
+  * Path to save parameters JSON file to. (Default: `nf-params.json`)
+* `-a`, `--save-all`
+  * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
+  * This option saves _all_ parameters found to the JSON file.
+* `-h`, `--show-hidden`
+  * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
+  * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
 
 ## Downloading pipelines for offline use
 
@@ -308,7 +319,7 @@ nf-core-methylseq-1.4
     ├── LICENSE
     ├── main.nf
     ├── nextflow.config
-    ├── parameters.settings.json
+    ├── nextflow_schema.json
     └── README.md
 
 10 directories, 15 files
@@ -395,17 +406,19 @@ INFO: Initialising pipeline git repository
 INFO: Done. Remember to add a remote and push to GitHub:
   cd /path/to/nf-core-nextbigthing
   git remote add origin git@github.com:USERNAME/REPO_NAME.git
-  git push
+  git push --all origin
+
+INFO: This will also push your newly created dev branch and the TEMPLATE branch for syncing.
+
+INFO: !!!!!! IMPORTANT !!!!!!
+
+If you are interested in adding your pipeline to the nf-core community,
+PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
+
+Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
 ```
 
-Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet).
-On your computer, add this repository as a git remote and push to it:
-
-```console
-git remote add origin https://github.com/ewels/nf-core-nextbigthing.git
-git push --set-upstream origin master
-```
-
+Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet) and push the commits from your computer using the example commands in the above log.
 You can then continue to edit, commit and push normally as you build your pipeline.
 
 Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
@@ -437,11 +450,122 @@ INFO: ===========
   72 tests passed   2 tests had warnings   0 tests failed
 
 WARNING: Test Warnings:
-  http://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
-  http://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
+  https://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
+  https://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
+
+## Working with pipeline schema
+
+nf-core pipelines have a `nextflow_schema.json` file in their root which describes the different parameters used by the workflow.
+These files allow automated validation of inputs when running the pipeline, are used to generate command line help and can be used to build interfaces to launch pipelines.
+Pipeline schema files are built according to the [JSONSchema specification](https://json-schema.org/) (Draft 7).
+
+To help developers working with pipeline schema, nf-core tools has three `schema` sub-commands:
+
+* `nf-core schema validate`
+* `nf-core schema build`
+* `nf-core schema lint`
+
+### nf-core schema validate
+
+Nextflow can take input parameters in a JSON or YAML file when running a pipeline using the `-params-file` option.
+This command validates such a file against the pipeline schema.
+
+Usage is `nextflow schema validate <pipeline> --params <parameter file>`, eg:
+
+```console
+$ nf-core schema validate my_pipeline --params my_inputs.json
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: [✓] Pipeline schema looks valid
+
+ERROR: [✗] Input parameters are invalid: 'reads' is a required property
+```
+
+The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
+
+### nf-core schema build
+
+Manually building JSONSchema documents is not trivial and can be very error prone.
+Instead, the `nf-core schema build` command collects your pipeline parameters and gives interactive prompts about any missing or unexpected params.
+If no existing schema is found it will create one for you.
+
+Once built, the tool can send the schema to the nf-core website so that you can use a graphical interface to organise and fill in the schema.
+The tool checks the status of your schema on the website and once complete, saves your changes locally.
+
+Usage is `nextflow schema build <pipeline_directory>`, eg:
+
+```console
+$ nf-core schema build nf-core-testpipeline
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+INFO: Loaded existing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
+
+Unrecognised 'params.old_param' found in schema but not in Nextflow config. Remove it? [Y/n]:
+Unrecognised 'params.we_removed_this_too' found in schema but not in Nextflow config. Remove it? [Y/n]:
+
+INFO: Removed 2 params from existing JSON Schema that were not found with `nextflow config`:
+ old_param, we_removed_this_too
+
+Found 'params.reads' in Nextflow config. Add to JSON Schema? [Y/n]:
+Found 'params.outdir' in Nextflow config. Add to JSON Schema? [Y/n]:
+
+INFO: Added 2 params to JSON Schema that were found with `nextflow config`:
+ reads, outdir
+
+INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
+
+Launch web builder for customisation and editing? [Y/n]:
+
+INFO: Opening URL: http://localhost:8888/json_schema_build?id=1584441828_b990ac785cd6
+
+INFO: Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.
+..........
+INFO: Found saved status from nf-core JSON Schema builder
+
+INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
+```
+
+There are three flags that you can use with this command:
+
+* `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
+* `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
+* `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
+
+### nf-core schema lint
+
+The pipeline schema is linted as part of the main `nf-core lint` command,
+however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
+
+Usage is `nextflow schema lint <schema>`, eg:
+
+```console
+$ nf-core schema lint nextflow_schema.json
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+
+ERROR: [✗] JSON Schema does not follow nf-core specs:
+ Schema should have 'properties' section
+```
 
 ## Bumping a pipeline version number
 
@@ -498,6 +622,25 @@ INFO: Updating version in Dockerfile
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
+
+To export the lint results to a JSON file, use `--json [filename]`. For markdown, use `--markdown [filename]`.
+
+As linting tests can give a pass state for CI but with warnings that need some effort to track down, the linting
+code attempts to post a comment to the GitHub pull-request with a summary of results if possible.
+It does this when the environment variables `GITHUB_COMMENTS_URL` and `GITHUB_TOKEN` are set and if there are
+any failing or warning tests. If a pull-request is updated with new commits, the original comment will be
+updated with the latest results instead of posting lots of new comments for each `git push`.
+
+A typical GitHub Actions step with the required environment variables may look like this (will only work on pull-request events):
+
+```yaml
+- name: Run nf-core lint
+  env:
+    GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
+  run: nf-core lint $GITHUB_WORKSPACE
+```
 
 ## Sync a pipeline with the template
 

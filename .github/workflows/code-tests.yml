@@ -1,6 +1,13 @@
 name: Python tests
 # This workflow is triggered on pushes and PRs to the repository.
-on: [push, pull_request]
+# Only run if we changed a Python file
+on:
+  push:
+    paths:
+      - '**.py'
+  pull_request:
+    paths:
+      - '**.py'
 
 jobs:
   PythonLint:
