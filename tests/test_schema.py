@@ -103,7 +103,7 @@ class TestSchema(unittest.TestCase):
         # Make a temporary file to write schema to
         tmp_file = tempfile.NamedTemporaryFile()
         with open(tmp_file.name, 'w') as fh:
-            json.dump({'reads': 'fubar'}, fh)
+            json.dump({'input': 'fubar'}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
     def test_load_input_params_yaml(self):
@@ -111,7 +111,7 @@ class TestSchema(unittest.TestCase):
         # Make a temporary file to write schema to
         tmp_file = tempfile.NamedTemporaryFile()
         with open(tmp_file.name, 'w') as fh:
-            yaml.dump({'reads': 'fubar'}, fh)
+            yaml.dump({'input': 'fubar'}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
     @pytest.mark.xfail(raises=AssertionError)
@@ -125,7 +125,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
         self.schema_obj.flatten_schema()
-        self.schema_obj.input_params = {'reads': 'fubar'}
+        self.schema_obj.input_params = {'input': 'fubar'}
         assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):
@@ -134,7 +134,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
         self.schema_obj.flatten_schema()
-        self.schema_obj.input_params = {'fubar': 'reads'}
+        self.schema_obj.input_params = {'fubar': 'input'}
         assert not self.schema_obj.validate_params()
 
     def test_validate_schema_pass(self):
