@@ -9,7 +9,7 @@
             "type": "string",
             "default": "'./results'"
         },
-        "reads": {
+        "input": {
             "type": "string",
             "default": "'data/*.fastq'"
         },
