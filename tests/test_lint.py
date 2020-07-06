@@ -41,7 +41,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [pf(WD, 'lint_examples/wrong_license_example'),
     pf(WD, 'lint_examples/license_incomplete_example')]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 84
+MAX_PASS_CHECKS = 82
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
