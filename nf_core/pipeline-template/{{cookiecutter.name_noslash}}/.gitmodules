@@ -1,3 +1,0 @@
-[submodule "nf-core"]
-	path = modules/nf-core
-	url = https://github.com/nf-core/modules.git
