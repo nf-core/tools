@@ -106,13 +106,13 @@ def list(keywords, sort, json):
     '-c', '--command-only',
     is_flag = True,
     default = False,
-    help = "Set params in the nextflow command (no params file)"
+    help = "Create Nextflow command with params (no params file)"
 )
 @click.option(
     '-o', '--params-out',
     type = click.Path(),
     default = os.path.join(os.getcwd(), 'nf-params.json'),
-    help = "Path to save run parameters to"
+    help = "Path to save run parameters file"
 )
 @click.option(
     '-p', '--params-in',
