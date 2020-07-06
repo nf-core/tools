@@ -86,7 +86,7 @@ class TestLaunch(unittest.TestCase):
         assert result == {
             'type': 'input',
             'name': 'input',
-            'message': 'input reads',
+            'message': 'input',
             'default': 'data/*{1,2}.fastq.gz'
         }
 
