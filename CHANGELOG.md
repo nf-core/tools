@@ -68,7 +68,7 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * New `--json` and `--markdown` options to print lint results to JSON / markdown files
 * Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
 * Added AWS GitHub Actions workflows linting
-* Warn if `params.input` isnt defined.
+* Fail if `params.input` isnt defined.
 
 ### nf-core/tools Continuous Integration
 
