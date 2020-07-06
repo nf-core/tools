@@ -437,6 +437,7 @@ class PipelineLint(object):
             'params.version',
             'params.nf_required_version',
             'params.container',
+            'params.singleEnd',
             'params.igenomesIgnore'
         ]
 
