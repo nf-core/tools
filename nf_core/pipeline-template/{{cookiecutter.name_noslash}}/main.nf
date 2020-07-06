@@ -9,6 +9,8 @@
 ----------------------------------------------------------------------------------------
 */
 
+nextflow.preview.dsl = 2
+
 def helpMessage() {
     // TODO nf-core: Add to this help message with new command line parameters
     log.info nfcoreHeader()
