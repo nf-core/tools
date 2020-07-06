@@ -8,7 +8,7 @@
         "Input/output options": {
             "type": "object",
             "properties": {
-                "reads": {
+                "input": {
                     "type": "string",
                     "fa_icon": "fas fa-dna",
                     "description": "Input FastQ files.",
