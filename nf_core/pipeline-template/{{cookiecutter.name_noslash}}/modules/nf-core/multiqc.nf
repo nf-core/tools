@@ -1,21 +1,44 @@
+// Has the run name been specified by the user?
+// this has the bonus effect of catching both -name and --name
+custom_runName = params.name
+if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
+    custom_runName = workflow.runName
+}
+
+// Channel.from(summary.collect{ [it.key, it.value] })
+//     .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
+//     .reduce { a, b -> return [a, b].join("\n            ") }
+//     .map { x -> """
+//     id: '{{ cookiecutter.name_noslash }}-summary'
+//     description: " - this information is collected when the pipeline is started."
+//     section_name: '{{ cookiecutter.name }} Workflow Summary'
+//     section_href: 'https://github.com/{{ cookiecutter.name }}'
+//     plot_type: 'html'
+//     data: |
+//         <dl class=\"dl-horizontal\">
+//             $x
+//         </dl>
+//     """.stripIndent() }
+//     .set { ch_workflow_summary }
+
 /*
- * STEP 2 - MultiQC
+ * MultiQC
  */
 process MULTIQC {
-    publishDir "${params.outdir}/MultiQC", mode: params.publish_dir_mode
+    publishDir "${params.outdir}/multiqc", mode: params.publish_dir_mode
 
     input:
-    file (multiqc_config) from ch_multiqc_config
-    file (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
+    path (multiqc_config) from ch_multiqc_config
+    path (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
     // TODO nf-core: Add in log files from your new processes for MultiQC to find!
-    file ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
-    file ('software_versions/*') from ch_software_versions_yaml.collect()
-    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
+    path ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
+    path ('software_versions/*') from ch_software_versions_yaml.collect()
+    path workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
 
     output:
-    file "*multiqc_report.html" into ch_multiqc_report
-    file "*_data"
-    file "multiqc_plots"
+    path "*multiqc_report.html"
+    path "*_data"
+    path "multiqc_plots"
 
     script:
     rtitle = custom_runName ? "--title \"$custom_runName\"" : ''
