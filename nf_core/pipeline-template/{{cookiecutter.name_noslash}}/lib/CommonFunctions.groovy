@@ -99,6 +99,7 @@ class CommonFunctions {
 
     static String prettyFormatJSON(paramsWithUsage){
     //Todo make this really nicer ... this is just experimental code
+    //ASCII codes seem to work fine 
         String output = ""
         for(group in paramsWithUsage.keySet()) {
             output += "Group: " + group + "\n"
