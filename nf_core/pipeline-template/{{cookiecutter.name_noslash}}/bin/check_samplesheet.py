@@ -65,7 +65,7 @@ def check_samplesheet(FileIn,FileOut):
                 if fastq:
                     if fastq.find(' ') != -1:
                         print_error("FastQ file contains spaces!",line)
-                    if fastq[-9:] != '.fastq.gz' and fastq[-6:] != '.fq.gz':
+                    if not fastq.endswith('.fastq.gz') and not fastq.endswith('.fq.gz'):
                         print_error("FastQ file does not have extension '.fastq.gz' or '.fq.gz'!",line)
 
             ## Auto-detect paired-end/single-end
