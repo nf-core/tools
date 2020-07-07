@@ -26,8 +26,7 @@ process FASTQC {
         """
         [ ! -f  ${name}_1.fastq.gz ] && ln -s ${reads[0]} ${name}_1.fastq.gz
         [ ! -f  ${name}_2.fastq.gz ] && ln -s ${reads[1]} ${name}_2.fastq.gz
-        fastqc --quiet --threads $task.cpus ${name}_1.fastq.gz
-        fastqc --quiet --threads $task.cpus ${name}_2.fastq.gz
+        fastqc --quiet --threads $task.cpus ${name}_1.fastq.gz ${name}_2.fastq.gz
         """
     }
 }
