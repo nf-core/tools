@@ -7,7 +7,7 @@ import argparse
 
 def parse_args(args=None):
     Description = 'Reformat {{ cookiecutter.name }} samplesheet file and check its contents.'
-    Epilog = 'Example usage: python check_samplesheet.py <FILE_IN> <FILE_OUT>'
+    Epilog = """Example usage: python check_samplesheet.py <FILE_IN> <FILE_OUT>"""
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
     parser.add_argument('FILE_IN', help="Input samplesheet file.")
@@ -30,18 +30,19 @@ def print_error(error,line):
 
 
 def check_samplesheet(file_in,file_out):
-    ## Check header
-    HEADER = ['sample', 'fastq_1', 'fastq_2']
-    fin = open(file_in,'r')
-    header = fin.readline().strip().split(',')
-    if header != HEADER:
-        print("ERROR: Please check samplesheet header -> {} != {}".format(','.join(header),','.join(HEADER)))
-        sys.exit(1)
 
     sample_run_dict = {}
-    while True:
-        line = fin.readline()
-        if line:
+    with open(file_in, 'r') as fin:
+
+        ## Check header
+        HEADER = ['sample', 'fastq_1', 'fastq_2']
+        header = fin.readline().strip().split(',')
+        if header != HEADER:
+            print("ERROR: Please check samplesheet header -> {} != {}".format(','.join(header),','.join(HEADER)))
+            sys.exit(1)
+
+        ## Check sample entries
+        for line in fin:
             lspl = [x.strip() for x in line.strip().split(',')]
 
             ## Check valid number of columns per row
@@ -85,9 +86,6 @@ def check_samplesheet(file_in,file_out):
                     print_error("Samplesheet contains duplicate rows!",line)
                 else:
                     sample_run_dict[sample].append(sample_info)
-        else:
-            fin.close()
-            break
 
     ## Write validated samplesheet with appropriate columns
     if len(sample_run_dict) > 0:
