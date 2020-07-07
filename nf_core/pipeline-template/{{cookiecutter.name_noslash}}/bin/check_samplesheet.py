@@ -21,7 +21,7 @@ def make_dir(path):
             os.makedirs(path)
         except OSError as exception:
             if exception.errno != errno.EEXIST:
-                raise
+                raise exception
 
 
 def print_error(error,line):
