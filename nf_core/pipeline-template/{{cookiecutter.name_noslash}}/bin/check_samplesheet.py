@@ -16,7 +16,7 @@ def parse_args(args=None):
 
 
 def make_dir(path):
-    if not len(path) == 0:
+    if len(path) > 0:
         try:
             os.makedirs(path)
         except OSError as exception:
