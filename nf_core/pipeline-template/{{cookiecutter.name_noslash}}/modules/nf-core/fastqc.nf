@@ -1,7 +1,7 @@
 /*
  * FastQC
  */
-process fastqc {
+process FASTQC {
     tag "$name"
     label 'process_medium'
     publishDir "${params.outdir}/fastqc", mode: params.publish_dir_mode,
@@ -10,14 +10,23 @@ process fastqc {
                 }
 
     input:
-    set val(name), file(reads) from ch_read_files_fastqc
+    tuple val(name), val(single_end), path(reads)
 
     output:
-    file "*_fastqc.{zip,html}" into ch_fastqc_results
+    path "*.{zip,html}"
 
     script:
-    """
-    fastqc --quiet --threads $task.cpus $reads
-    """
+    // Add soft-links to original FastQs for consistent naming in pipeline
+    if (single_end) {
+        """
+        [ ! -f  ${name}.fastq.gz ] && ln -s $reads ${name}.fastq.gz
+        fastqc --quiet --threads $task.cpus ${name}.fastq.gz
+        """
+    } else {
+        """
+        [ ! -f  ${name}_1.fastq.gz ] && ln -s ${reads[0]} ${name}_1.fastq.gz
+        [ ! -f  ${name}_2.fastq.gz ] && ln -s ${reads[1]} ${name}_2.fastq.gz
+        fastqc --quiet --threads $task.cpus ${name}_1.fastq.gz ${name}_2.fastq.gz
+        """
+    }
 }
-

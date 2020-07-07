@@ -1,15 +1,15 @@
 /*
- * Output description HTML
+ * Output Markdown documentation to HTML
  */
-process output_documentation {
+process OUTPUT_DOCUMENTATION {
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode
 
     input:
-    file output_docs from ch_output_docs
-    file images from ch_output_docs_images
+    path output_docs
+    path images
 
     output:
-    file "results_description.html"
+    path "results_description.html"
 
     script:
     """

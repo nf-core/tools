@@ -1,21 +1,9 @@
-// // TODO nf-core: Add any reference files that are needed
-// // Configurable reference genomes
-// //
-// // NOTE - THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
-// // If you want to use the channel below in a process, define the following:
-// //   input:
-// //   file fasta from ch_fasta
-// //
-// params.fasta = params.genome ? params.genomes[ params.genome ].fasta ?: false : false
-// if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
-
-
-// // Has the run name been specified by the user?
-// // this has the bonus effect of catching both -name and --name
-// custom_runName = params.name
-// if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
-//     custom_runName = workflow.runName
-// }
+// Has the run name been specified by the user?
+// this has the bonus effect of catching both -name and --name
+custom_runName = params.name
+if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
+    custom_runName = workflow.runName
+}
 
 /*
  * Print help
@@ -29,16 +17,15 @@ def print_help() {
 
     The typical command for running the pipeline is as follows:
 
-    nextflow run {{ cookiecutter.name }} --input '*_R{1,2}.fastq.gz' -profile docker
+    nextflow run {{ cookiecutter.name }} --input samplesheet.csv -profile docker
 
     Mandatory arguments:
-      --input [file]                  Path to input data (must be surrounded with quotes)
+      --input [file]                  Comma-separated file containing information about the samples in the experiment (see docs/usage.md)
       -profile [str]                  Configuration profile to use. Can use multiple (comma separated)
                                       Available: conda, docker, singularity, test, awsbatch, <institute> and more
 
     Options:
       --genome [str]                  Name of iGenomes reference
-      --single_end [bool]             Specifies that the input is single-end reads
 
     References                        If not specified in the configuration file or you wish to overwrite any of the references
       --fasta [file]                  Path to fasta reference
@@ -77,9 +64,8 @@ def create_summary() {
     if (workflow.revision) summary['Pipeline Release'] = workflow.revision
     summary['Run Name']         = custom_runName ?: workflow.runName
     // TODO nf-core: Report custom parameters here
-    summary['Reads']            = params.input
-    summary['Fasta Ref']        = params.fasta
-    summary['Data Type']        = params.single_end ? 'Single-End' : 'Paired-End'
+    summary['Samplesheet']      = params.input
+    summary['Fasta File']       = params.fasta
     summary['Max Resources']    = "$params.max_memory memory, $params.max_cpus cpus, $params.max_time time per job"
     if (workflow.containerEngine) summary['Container'] = "$workflow.containerEngine - $workflow.container"
     summary['Output dir']       = params.outdir
