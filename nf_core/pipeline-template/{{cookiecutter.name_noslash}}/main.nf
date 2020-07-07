@@ -14,14 +14,14 @@ nextflow.preview.dsl = 2
 /*
  * Print help message if required
  */
-include 'modules/nf-core/functions' params(params)
+include { print_help; check_genome; check_hostname; check_awsbatch; create_summary; send_email } from './modules/local/functions'
 if (params.help) {
     print_help()
     exit 0
 }
 
 /*
- * Stage and check config files
+ * Stage config files
  */
 ch_multiqc_config = file("$baseDir/assets/multiqc_config.yaml", checkIfExists: true)
 ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
@@ -29,28 +29,21 @@ ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
 
 /*
- * Create a channel for input read files
+ * Validate parameters
  */
-if (params.input_paths) {
-    if (params.single_end) {
-        Channel
-            .from(params.input_paths)
-            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
-            .into { ch_read_files_fastqc; ch_read_files_trimming }
-    } else {
-        Channel
-            .from(params.input_paths)
-            .map { row -> [ row[0], [ file(row[1][0], checkIfExists: true), file(row[1][1], checkIfExists: true) ] ] }
-            .ifEmpty { exit 1, "params.input_paths was empty - no input files supplied" }
-            .into { ch_read_files_fastqc; ch_read_files_trimming }
-    }
-} else {
-    Channel
-        .fromFilePairs(params.input, size: params.single_end ? 1 : 2)
-        .ifEmpty { exit 1, "Cannot find any reads matching: ${params.input}\nNB: Path needs to be enclosed in quotes!\nIf this is single-end data, please specify --single_end on the command line." }
-        .into { ch_read_files_fastqc; ch_read_files_trimming }
-}
+if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { exit 1, "Input samplesheet file not specified!" }
+
+/*
+ * Reference genomes
+ */
+// TODO nf-core: Add any reference files that are needed
+// NOTE - FOR SIMPLICITY THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
+// If you want to use the channel below in a process, define the following:
+//   input:
+//   file fasta from ch_fasta
+//
+params.fasta = params.genomes[params.genome]?.fasta
+if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
 /*
  * Check and print summary for parameters
@@ -61,26 +54,42 @@ check_awsbatch()               // Check AWS batch settings
 summary = create_summary()     // Print parameter summary
 
 /*
- * FastQC
+ * Include local pipeline modules
  */
-//include 'modules/nf-core/fastqc' params(params)
+include { OUTPUT_DOCUMENTATION } from './modules/local/output_documentation' params(params)
+include { GET_SOFTWARE_VERSIONS } from './modules/local/get_software_versions' params(params)
+include { CHECK_SAMPLESHEET; check_samplesheet_paths } from './modules/local/check_samplesheet' params(params)
 
 /*
- * MultQC
+ * Include nf-core modules
  */
-//include 'modules/nf-core/multiqc' params(params)
+include { FASTQC } from './modules/nf-core/fastqc' params(params)
+include { MULTIQC } from './modules/nf-core/multiqc' params(params)
 
 /*
- * Get software versions
+ * Run the workflow
  */
-include 'modules/nf-core/get_software_versions' params(params)
-get_software_versions()
+workflow {
 
-/*
- * Output markdown documentation as HTML
- */
-include 'modules/nf-core/output_documentation' params(params)
-output_documentation()
+    CHECK_SAMPLESHEET(ch_input)
+        .splitCsv(header:true, sep:',')
+        .map { check_samplesheet_paths(it) }
+        .set { ch_raw_reads }
+
+    FASTQC(ch_raw_reads)
+
+    OUTPUT_DOCUMENTATION(
+        ch_output_docs,
+        ch_output_docs_images)
+
+    GET_SOFTWARE_VERSIONS()
+
+    // MULTIQC(
+    //     summary,
+    //     fastqc.out,
+    //     ch_multiqc_config
+    // )
+}
 
 /*
  * Send completion email
@@ -88,19 +97,3 @@ output_documentation()
 workflow.onComplete {
     send_email(summary)
 }
-
-// Channel.from(summary.collect{ [it.key, it.value] })
-//     .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
-//     .reduce { a, b -> return [a, b].join("\n            ") }
-//     .map { x -> """
-//     id: '{{ cookiecutter.name_noslash }}-summary'
-//     description: " - this information is collected when the pipeline is started."
-//     section_name: '{{ cookiecutter.name }} Workflow Summary'
-//     section_href: 'https://github.com/{{ cookiecutter.name }}'
-//     plot_type: 'html'
-//     data: |
-//         <dl class=\"dl-horizontal\">
-//             $x
-//         </dl>
-//     """.stripIndent() }
-//     .set { ch_workflow_summary }
