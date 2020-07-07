@@ -1,7 +1,7 @@
 /*
  * Parse software version numbers
  */
-process get_software_versions {
+process GET_SOFTWARE_VERSIONS {
     publishDir "${params.outdir}/pipeline_info", mode: params.publish_dir_mode,
         saveAs: { filename ->
                       if (filename.indexOf(".csv") > 0) filename
@@ -9,8 +9,8 @@ process get_software_versions {
                 }
 
     output:
-    file 'software_versions_mqc.yaml'
-    file "software_versions.csv"
+    path 'software_versions_mqc.yaml'
+    path "software_versions.csv"
 
     script:
     // TODO nf-core: Get all tools to print their version number here
