@@ -146,9 +146,15 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     """
     Launch a pipeline using a web GUI or command line prompts.
 
-    When finished, saves a file with the selected parameters which can be passed to Nextflow using the -params-file option.
+    Uses the pipeline schema file to collect inputs for all available pipeline
+    parameters. Parameter names, descriptions and help text are shown.
+    The pipeline schema is used to validate all inputs as they are entered.
 
-    Run using a remote pipeline name (org/repo), a local pipeline directory or an ID from the nf-core web launch tool.
+    When finished, saves a file with the selected parameters which can be
+    passed to Nextflow using the -params-file option.
+
+    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
+    a local pipeline directory or an ID from the nf-core web launch tool.
     """
     launcher = nf_core.launch.Launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id)
     if launcher.launch_pipeline() == False:
@@ -207,7 +213,13 @@ def download(pipeline, release, singularity, outdir, compress):
     help = "Print output in JSON"
 )
 def licences(pipeline, json):
-    """ List software licences for a given workflow """
+    """
+    List software licences for a given workflow.
+
+    Checks the pipeline environment.yml file which lists all conda software packages.
+    Each of these is queried against the anaconda.org API to find the licence.
+    Package name, version and licence is printed to the command line.
+    """
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.fetch_conda_licences()
     lic.print_licences(as_json=json)
@@ -268,7 +280,7 @@ def validate_wf_name_prompt(ctx, opts, value):
 )
 def create(name, description, author, new_version, no_git, force, outdir):
     """
-    Create a new pipeline using the template.
+    Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
@@ -302,7 +314,13 @@ def create(name, description, author, new_version, no_git, force, outdir):
     help = "File to write linting results to (JSON)"
 )
 def lint(pipeline_dir, release, markdown, json):
-    """ Check pipeline against nf-core guidelines """
+    """
+    Check pipeline code against nf-core guidelines.
+
+    Runs a large number of automated tests to ensure that the supplied pipeline
+    meets the nf-core guidelines. Documentation of all lint tests can be found
+    on the nf-core website: https://nf-co.re/errors
+    """
 
     # Run the lint tests!
     lint_obj = nf_core.lint.run_linting(pipeline_dir, release, markdown, json)
