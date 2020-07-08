@@ -2,6 +2,8 @@
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
+from rich.console import Console
+from rich.markdown import Markdown
 
 import click
 import copy
@@ -584,16 +586,24 @@ class Launch(object):
     def print_param_header(self, param_id, param_obj):
         if 'description' not in param_obj and 'help_text' not in param_obj:
             return
-        header_str = click.style(param_id, bold=True)
+        console = Console()
+        console.print("\n")
+        console.print(param_id, style = "bold")
         if 'description' in param_obj:
-            header_str += ' - {}'.format(param_obj['description'])
+            md = Markdown(param_obj['description'])
+            console.print(md)
         if 'help_text' in param_obj:
             # Strip indented and trailing whitespace
-            help_text = textwrap.dedent(param_obj['help_text']).strip()
+            #help_text = textwrap.dedent(param_obj['help_text']).strip()
             # Replace single newlines, leave double newlines in place
-            help_text = re.sub(r'(?<!\n)\n(?!\n)', ' ', help_text)
-            header_str += "\n" + click.style(help_text, dim=True)
-        click.echo("\n"+header_str, err=True)
+            #help_text = re.sub(r'(?<!\n)\n(?!\n)', ' ', help_text)
+            #header_str += "\n" + click.style(help_text, dim=True)
+            divider = Markdown("-----")
+            console.print(divider)
+            md = Markdown(param_obj['help_text'].strip())
+            console.print(md)
+            console.print("\n")
+        #click.echo("\n"+header_str, err=True)
 
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """

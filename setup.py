@@ -32,6 +32,7 @@ setup(
         'pyyaml',
         'requests',
         'requests_cache',
+        'rich',
         'tabulate'
     ],
     setup_requires=[
