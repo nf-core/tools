@@ -30,10 +30,12 @@ import nf_core.schema, nf_core.utils
 #
 # When available, update setup.py to use regular pip version
 
+
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, pipeline=None, revision=None, command_only=False, params_in=None, params_out=None, save_all=False, show_hidden=False, url=None, web_id=None):
+    def __init__(self, pipeline=None, revision=None, command_only=False, params_in=None, params_out=None,
+                 save_all=False, show_hidden=False, url=None, web_id=None):
         """Initialise the Launcher class
 
         Args:
@@ -89,6 +91,7 @@ class Launch(object):
         }
         self.nxf_flags = {}
         self.params_user = {}
+        self.cli_launch = True
 
     def launch_pipeline(self):
 
@@ -259,7 +262,7 @@ class Launch(object):
                 assert 'api_url' in web_response
                 assert 'web_url' in web_response
                 assert web_response['status'] == 'recieved'
-            except (AssertionError) as e:
+            except AssertionError:
                 logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
                 raise AssertionError("Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(self.web_schema_launch_url))
             else:
@@ -321,7 +324,7 @@ class Launch(object):
         # Collect pyinquirer objects for each defined input_param
         pyinquirer_objects = {}
         for param_id, param_obj in self.schema_obj.schema['properties'].items():
-            if(param_obj['type'] == 'object'):
+            if param_obj['type'] == 'object':
                 for child_param_id, child_param_obj in param_obj['properties'].items():
                     pyinquirer_objects[child_param_id] = self.single_param_to_pyinquirer(child_param_id, child_param_obj, print_help=False)
             else:
@@ -342,7 +345,7 @@ class Launch(object):
         """ Go through the pipeline schema and prompt user to change defaults """
         answers = {}
         for param_id, param_obj in self.schema_obj.schema['properties'].items():
-            if(param_obj['type'] == 'object'):
+            if param_obj['type'] == 'object':
                 if not param_obj.get('hidden', False) or self.show_hidden:
                     answers.update(self.prompt_group(param_id, param_obj))
             else:
@@ -401,7 +404,7 @@ class Launch(object):
         }
 
         for child_param, child_param_obj in param_obj['properties'].items():
-            if(child_param_obj['type'] == 'object'):
+            if child_param_obj['type'] == 'object':
                 logging.error("nf-core only supports groups 1-level deep")
                 return {}
             else:
@@ -438,8 +441,10 @@ class Launch(object):
         """Convert a JSONSchema param to a PyInquirer question
 
         Args:
-          param_id: Paramater ID (string)
+          param_id: Parameter ID (string)
           param_obj: JSON Schema keys - no objects (dict)
+          answers: Optional preexisting answers (dict)
+          print_help: If description and help_text should be printed (bool)
 
         Returns:
           Single PyInquirer dict, to be appended to questions list
@@ -501,7 +506,7 @@ class Launch(object):
                     if val.strip() == '':
                         return True
                     float(val)
-                except (ValueError):
+                except ValueError:
                     return "Must be a number"
                 else:
                     return True
@@ -546,7 +551,7 @@ class Launch(object):
                     if 'maximum' in param_obj and fval > float(param_obj['maximum']):
                         return "Must be less than or equal to {}".format(param_obj['maximum'])
                     return True
-                except (ValueError):
+                except ValueError:
                     return "Must be a number"
             question['validate'] = validate_range
 
@@ -593,17 +598,11 @@ class Launch(object):
             md = Markdown(param_obj['description'])
             console.print(md)
         if 'help_text' in param_obj:
-            # Strip indented and trailing whitespace
-            #help_text = textwrap.dedent(param_obj['help_text']).strip()
-            # Replace single newlines, leave double newlines in place
-            #help_text = re.sub(r'(?<!\n)\n(?!\n)', ' ', help_text)
-            #header_str += "\n" + click.style(help_text, dim=True)
             divider = Markdown("-----")
             console.print(divider)
             md = Markdown(param_obj['help_text'].strip())
             console.print(md)
             console.print("\n")
-        #click.echo("\n"+header_str, err=True)
 
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
@@ -648,7 +647,6 @@ class Launch(object):
                     # everything else
                     else:
                         self.nextflow_cmd += ' --{} "{}"'.format(param, str(val).replace('"', '\\"'))
-
 
     def launch_workflow(self):
         """ Launch nextflow if required  """
