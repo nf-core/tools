@@ -34,8 +34,18 @@ import nf_core.schema, nf_core.utils
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
-    def __init__(self, pipeline=None, revision=None, command_only=False, params_in=None, params_out=None,
-                 save_all=False, show_hidden=False, url=None, web_id=None):
+    def __init__(
+        self,
+        pipeline=None,
+        revision=None,
+        command_only=False,
+        params_in=None,
+        params_out=None,
+        save_all=False,
+        show_hidden=False,
+        url=None,
+        web_id=None,
+    ):
         """Initialise the Launcher class
 
         Args:
@@ -47,46 +57,43 @@ class Launch(object):
         self.schema_obj = None
         self.use_params_file = False if command_only else True
         self.params_in = params_in
-        self.params_out = params_out if params_out else os.path.join(os.getcwd(), 'nf-params.json')
+        self.params_out = params_out if params_out else os.path.join(os.getcwd(), "nf-params.json")
         self.save_all = save_all
         self.show_hidden = show_hidden
-        self.web_schema_launch_url = url if url else 'https://nf-co.re/launch'
+        self.web_schema_launch_url = url if url else "https://nf-co.re/launch"
         self.web_schema_launch_web_url = None
         self.web_schema_launch_api_url = None
         self.web_id = web_id
         if self.web_id:
-            self.web_schema_launch_web_url = '{}?id={}'.format(self.web_schema_launch_url, web_id)
-            self.web_schema_launch_api_url = '{}?id={}&api=true'.format(self.web_schema_launch_url, web_id)
-        self.nextflow_cmd = 'nextflow run {}'.format(self.pipeline)
+            self.web_schema_launch_web_url = "{}?id={}".format(self.web_schema_launch_url, web_id)
+            self.web_schema_launch_api_url = "{}?id={}&api=true".format(self.web_schema_launch_url, web_id)
+        self.nextflow_cmd = "nextflow run {}".format(self.pipeline)
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
         self.nxf_flag_schema = {
-            'Nextflow command-line flags': {
-                'type': 'object',
-                'description': 'General Nextflow flags to control how the pipeline runs.',
-                'help_text': "These are not specific to the pipeline and will not be saved in any parameter file. They are just used when building the `nextflow run` launch command.",
-                'properties': {
-                    '-name': {
-                        'type': 'string',
-                        'description': 'Unique name for this nextflow run',
-                        'pattern': '^[a-zA-Z0-9-_]+$'
+            "Nextflow command-line flags": {
+                "type": "object",
+                "description": "General Nextflow flags to control how the pipeline runs.",
+                "help_text": "These are not specific to the pipeline and will not be saved in any parameter file. They are just used when building the `nextflow run` launch command.",
+                "properties": {
+                    "-name": {
+                        "type": "string",
+                        "description": "Unique name for this nextflow run",
+                        "pattern": "^[a-zA-Z0-9-_]+$",
                     },
-                    '-profile': {
-                        'type': 'string',
-                        'description': 'Configuration profile'
+                    "-profile": {"type": "string", "description": "Configuration profile"},
+                    "-work-dir": {
+                        "type": "string",
+                        "description": "Work directory for intermediate files",
+                        "default": os.getenv("NXF_WORK") if os.getenv("NXF_WORK") else "./work",
                     },
-                    '-work-dir': {
-                        'type': 'string',
-                        'description': 'Work directory for intermediate files',
-                        'default': os.getenv('NXF_WORK') if os.getenv('NXF_WORK') else './work',
+                    "-resume": {
+                        "type": "boolean",
+                        "description": "Resume previous run, if found",
+                        "help_text": "Execute the script using the cached results, useful to continue executions that was stopped by an error",
+                        "default": False,
                     },
-                    '-resume': {
-                        'type': 'boolean',
-                        'description': 'Resume previous run, if found',
-                        'help_text': "Execute the script using the cached results, useful to continue executions that was stopped by an error",
-                        'default': False
-                    }
-                }
+                },
             }
         }
         self.nxf_flags = {}
@@ -97,32 +104,41 @@ class Launch(object):
 
         # Check that we have everything we need
         if self.pipeline is None and self.web_id is None:
-            logging.error("Either a pipeline name or web cache ID is required. Please see nf-core launch --help for more information.")
+            logging.error(
+                "Either a pipeline name or web cache ID is required. Please see nf-core launch --help for more information."
+            )
             return False
 
         # Check if the output file exists already
         if os.path.exists(self.params_out):
             logging.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
-            if click.confirm(click.style('Do you want to overwrite this file? ', fg='yellow')+click.style('[y/N]', fg='red'), default=False, show_default=False):
+            if click.confirm(
+                click.style("Do you want to overwrite this file? ", fg="yellow") + click.style("[y/N]", fg="red"),
+                default=False,
+                show_default=False,
+            ):
                 os.remove(self.params_out)
                 logging.info("Deleted {}\n".format(self.params_out))
             else:
                 logging.info("Exiting. Use --params-out to specify a custom filename.")
                 return False
 
-
-        logging.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
+        logging.info(
+            "This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n"
+        )
 
         # Check if we have a web ID
         if self.web_id is not None:
             self.schema_obj = nf_core.schema.PipelineSchema()
             try:
                 if not self.get_web_launch_response():
-                    logging.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.")
+                    logging.info(
+                        "Waiting for form to be completed in the browser. Remember to click Finished when you're done."
+                    )
                     logging.info("URL: {}".format(self.web_schema_launch_web_url))
                     nf_core.utils.wait_cli_function(self.get_web_launch_response)
             except AssertionError as e:
-                logging.error(click.style(e.args[0], fg='red'))
+                logging.error(click.style(e.args[0], fg="red"))
                 return False
 
         # Build the schema and starting inputs
@@ -135,7 +151,7 @@ class Launch(object):
             try:
                 self.launch_web_gui()
             except AssertionError as e:
-                logging.error(click.style(e.args[0], fg='red'))
+                logging.error(click.style(e.args[0], fg="red"))
                 return False
         else:
             # Kick off the interactive wizard to collect user inputs
@@ -162,14 +178,14 @@ class Launch(object):
         # Check if this is a local directory
         if os.path.exists(self.pipeline):
             # Set the nextflow launch command to use full paths
-            self.nextflow_cmd = 'nextflow run {}'.format(os.path.abspath(self.pipeline))
+            self.nextflow_cmd = "nextflow run {}".format(os.path.abspath(self.pipeline))
         else:
             # Assume nf-core if no org given
-            if self.pipeline.count('/') == 0:
-                self.nextflow_cmd = 'nextflow run nf-core/{}'.format(self.pipeline)
+            if self.pipeline.count("/") == 0:
+                self.nextflow_cmd = "nextflow run nf-core/{}".format(self.pipeline)
             # Add revision flag to commands if set
             if self.pipeline_revision:
-                self.nextflow_cmd += ' -r {}'.format(self.pipeline_revision)
+                self.nextflow_cmd += " -r {}".format(self.pipeline_revision)
 
         # Get schema from name, load it and lint it
         try:
@@ -181,7 +197,9 @@ class Launch(object):
             if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
                 logging.error("Could not find pipeline: {}".format(self.pipeline))
                 return False
-            if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, 'nextflow.config')) and not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, 'main.nf')):
+            if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
+                os.path.join(self.schema_obj.pipeline_dir, "main.nf")
+            ):
                 logging.error("Could not find a main.nf or nextfow.config file, are you sure this is a pipeline?")
                 return False
 
@@ -216,8 +234,8 @@ class Launch(object):
         """ Take the Nextflow flag schema and merge it with the pipeline schema """
         # Do it like this so that the Nextflow params come first
         schema_params = self.nxf_flag_schema
-        schema_params.update(self.schema_obj.schema['properties'])
-        self.schema_obj.schema['properties'] = schema_params
+        schema_params.update(self.schema_obj.schema["properties"])
+        self.schema_obj.schema["properties"] = schema_params
 
     def prompt_web_gui(self):
         """ Ask whether to use the web-based or cli wizard to collect params """
@@ -226,18 +244,18 @@ class Launch(object):
         if self.web_schema_launch_web_url is not None and self.web_schema_launch_api_url is not None:
             return True
 
-        click.secho("\nWould you like to enter pipeline parameters using a web-based interface or a command-line wizard?\n", fg='magenta')
+        click.secho(
+            "\nWould you like to enter pipeline parameters using a web-based interface or a command-line wizard?\n",
+            fg="magenta",
+        )
         question = {
-            'type': 'list',
-            'name': 'use_web_gui',
-            'message': 'Choose launch method',
-            'choices': [
-                'Web based',
-                'Command line'
-            ]
+            "type": "list",
+            "name": "use_web_gui",
+            "message": "Choose launch method",
+            "choices": ["Web based", "Command line"],
         }
         answer = prompt.prompt([question], raise_keyboard_interrupt=True)
-        return answer['use_web_gui'] == 'Web based'
+        return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
         """ Send schema to nf-core website and launch input GUI """
@@ -245,29 +263,33 @@ class Launch(object):
         # If --id given on the command line, we already know the URLs
         if self.web_schema_launch_web_url is None and self.web_schema_launch_api_url is None:
             content = {
-                'post_content': 'json_schema_launcher',
-                'api': 'true',
-                'version': nf_core.__version__,
-                'status': 'waiting_for_user',
-                'schema': json.dumps(self.schema_obj.schema),
-                'nxf_flags': json.dumps(self.nxf_flags),
-                'input_params': json.dumps(self.schema_obj.input_params),
-                'cli_launch': True,
-                'nextflow_cmd': self.nextflow_cmd,
-                'pipeline': self.pipeline,
-                'revision': self.pipeline_revision
+                "post_content": "json_schema_launcher",
+                "api": "true",
+                "version": nf_core.__version__,
+                "status": "waiting_for_user",
+                "schema": json.dumps(self.schema_obj.schema),
+                "nxf_flags": json.dumps(self.nxf_flags),
+                "input_params": json.dumps(self.schema_obj.input_params),
+                "cli_launch": True,
+                "nextflow_cmd": self.nextflow_cmd,
+                "pipeline": self.pipeline,
+                "revision": self.pipeline_revision,
             }
             web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
             try:
-                assert 'api_url' in web_response
-                assert 'web_url' in web_response
-                assert web_response['status'] == 'recieved'
+                assert "api_url" in web_response
+                assert "web_url" in web_response
+                assert web_response["status"] == "recieved"
             except AssertionError:
                 logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
-                raise AssertionError("Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(self.web_schema_launch_url))
+                raise AssertionError(
+                    "Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(
+                        self.web_schema_launch_url
+                    )
+                )
             else:
-                self.web_schema_launch_web_url = web_response['web_url']
-                self.web_schema_launch_api_url = web_response['api_url']
+                self.web_schema_launch_web_url = web_response["web_url"]
+                self.web_schema_launch_api_url = web_response["api_url"]
 
         # ID supplied - has it been completed or not?
         else:
@@ -286,35 +308,41 @@ class Launch(object):
         Given a URL for a web-gui launch response, recursively query it until results are ready.
         """
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_api_url)
-        if web_response['status'] == 'error':
-            raise AssertionError("Got error from launch API ({})".format(web_response.get('message')))
-        elif web_response['status'] == 'waiting_for_user':
+        if web_response["status"] == "error":
+            raise AssertionError("Got error from launch API ({})".format(web_response.get("message")))
+        elif web_response["status"] == "waiting_for_user":
             return False
-        elif web_response['status'] == 'launch_params_complete':
+        elif web_response["status"] == "launch_params_complete":
             logging.info("Found completed parameters from nf-core launch GUI")
             try:
                 # Set everything that we can with the cache results
                 # NB: If using web builder, may have only run with --id and nothing else
-                if len(web_response['nxf_flags']) > 0:
-                    self.nxf_flags = web_response['nxf_flags']
-                if len(web_response['input_params']) > 0:
-                    self.schema_obj.input_params = web_response['input_params']
-                self.schema_obj.schema = web_response['schema']
-                self.cli_launch = web_response['cli_launch']
-                self.nextflow_cmd = web_response['nextflow_cmd']
-                self.pipeline = web_response['pipeline']
-                self.pipeline_revision = web_response['revision']
+                if len(web_response["nxf_flags"]) > 0:
+                    self.nxf_flags = web_response["nxf_flags"]
+                if len(web_response["input_params"]) > 0:
+                    self.schema_obj.input_params = web_response["input_params"]
+                self.schema_obj.schema = web_response["schema"]
+                self.cli_launch = web_response["cli_launch"]
+                self.nextflow_cmd = web_response["nextflow_cmd"]
+                self.pipeline = web_response["pipeline"]
+                self.pipeline_revision = web_response["revision"]
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except KeyError as e:
                 raise AssertionError("Missing return key from web API: {}".format(e))
             except Exception as e:
                 logging.debug(web_response)
-                raise AssertionError("Unknown exception ({}) - see verbose log for details. {}".format(type(e).__name__, e))
+                raise AssertionError(
+                    "Unknown exception ({}) - see verbose log for details. {}".format(type(e).__name__, e)
+                )
             return True
         else:
             logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
-            raise AssertionError("Web launch GUI returned unexpected status ({}): {}\n See verbose log for full response".format(web_response['status'], self.web_schema_launch_api_url))
+            raise AssertionError(
+                "Web launch GUI returned unexpected status ({}): {}\n See verbose log for full response".format(
+                    web_response["status"], self.web_schema_launch_api_url
+                )
+            )
 
     def sanitise_web_response(self):
         """
@@ -323,10 +351,12 @@ class Launch(object):
         """
         # Collect pyinquirer objects for each defined input_param
         pyinquirer_objects = {}
-        for param_id, param_obj in self.schema_obj.schema['properties'].items():
-            if param_obj['type'] == 'object':
-                for child_param_id, child_param_obj in param_obj['properties'].items():
-                    pyinquirer_objects[child_param_id] = self.single_param_to_pyinquirer(child_param_id, child_param_obj, print_help=False)
+        for param_id, param_obj in self.schema_obj.schema["properties"].items():
+            if param_obj["type"] == "object":
+                for child_param_id, child_param_obj in param_obj["properties"].items():
+                    pyinquirer_objects[child_param_id] = self.single_param_to_pyinquirer(
+                        child_param_id, child_param_obj, print_help=False
+                    )
             else:
                 pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
 
@@ -334,30 +364,30 @@ class Launch(object):
         for params in [self.nxf_flags, self.schema_obj.input_params]:
             for param_id in list(params.keys()):
                 # Remove if an empty string
-                if str(params[param_id]).strip() == '':
+                if str(params[param_id]).strip() == "":
                     del params[param_id]
                 # Run filter function on value
-                filter_func = pyinquirer_objects.get(param_id, {}).get('filter')
+                filter_func = pyinquirer_objects.get(param_id, {}).get("filter")
                 if filter_func is not None:
                     params[param_id] = filter_func(params[param_id])
 
     def prompt_schema(self):
         """ Go through the pipeline schema and prompt user to change defaults """
         answers = {}
-        for param_id, param_obj in self.schema_obj.schema['properties'].items():
-            if param_obj['type'] == 'object':
-                if not param_obj.get('hidden', False) or self.show_hidden:
+        for param_id, param_obj in self.schema_obj.schema["properties"].items():
+            if param_obj["type"] == "object":
+                if not param_obj.get("hidden", False) or self.show_hidden:
                     answers.update(self.prompt_group(param_id, param_obj))
             else:
-                if not param_obj.get('hidden', False) or self.show_hidden:
-                    is_required = param_id in self.schema_obj.schema.get('required', [])
+                if not param_obj.get("hidden", False) or self.show_hidden:
+                    is_required = param_id in self.schema_obj.schema.get("required", [])
                     answers.update(self.prompt_param(param_id, param_obj, is_required, answers))
 
         # Split answers into core nextflow options and params
         for key, answer in answers.items():
-            if key == 'Nextflow command-line flags':
+            if key == "Nextflow command-line flags":
                 continue
-            elif key in self.nxf_flag_schema['Nextflow command-line flags']['properties']:
+            elif key in self.nxf_flag_schema["Nextflow command-line flags"]["properties"]:
                 self.nxf_flags[key] = answer
             else:
                 self.params_user[key] = answer
@@ -373,12 +403,12 @@ class Launch(object):
         answer = prompt.prompt([question], raise_keyboard_interrupt=True)
 
         # If required and got an empty reponse, ask again
-        while type(answer[param_id]) is str and answer[param_id].strip() == '' and is_required:
-            click.secho("Error - this property is required.", fg='red', err=True)
+        while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
+            click.secho("Error - this property is required.", fg="red", err=True)
             answer = prompt.prompt([question], raise_keyboard_interrupt=True)
 
         # Don't return empty answers
-        if answer[param_id] == '':
+        if answer[param_id] == "":
             return {}
         return answer
 
@@ -394,25 +424,22 @@ class Launch(object):
           Dict of param_id:val answers
         """
         question = {
-            'type': 'list',
-            'name': param_id,
-            'message': param_id,
-            'choices': [
-                'Continue >>',
-                Separator()
-            ],
+            "type": "list",
+            "name": param_id,
+            "message": param_id,
+            "choices": ["Continue >>", Separator()],
         }
 
-        for child_param, child_param_obj in param_obj['properties'].items():
-            if child_param_obj['type'] == 'object':
+        for child_param, child_param_obj in param_obj["properties"].items():
+            if child_param_obj["type"] == "object":
                 logging.error("nf-core only supports groups 1-level deep")
                 return {}
             else:
-                if not child_param_obj.get('hidden', False) or self.show_hidden:
-                    question['choices'].append(child_param)
+                if not child_param_obj.get("hidden", False) or self.show_hidden:
+                    question["choices"].append(child_param)
 
         # Skip if all questions hidden
-        if len(question['choices']) == 2:
+        if len(question["choices"]) == 2:
             return {}
 
         while_break = False
@@ -420,20 +447,22 @@ class Launch(object):
         while not while_break:
             self.print_param_header(param_id, param_obj)
             answer = prompt.prompt([question], raise_keyboard_interrupt=True)
-            if answer[param_id] == 'Continue >>':
+            if answer[param_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
-                if self.schema_obj is not None and param_id in self.schema_obj.schema['properties']:
-                    for p_required in self.schema_obj.schema['properties'][param_id].get('required', []):
-                        req_default = self.schema_obj.input_params.get(p_required, '')
-                        req_answer = answers.get(p_required, '')
-                        if req_default == '' and req_answer == '':
-                            click.secho("Error - '{}' is required.".format(p_required), fg='red', err=True)
+                if self.schema_obj is not None and param_id in self.schema_obj.schema["properties"]:
+                    for p_required in self.schema_obj.schema["properties"][param_id].get("required", []):
+                        req_default = self.schema_obj.input_params.get(p_required, "")
+                        req_answer = answers.get(p_required, "")
+                        if req_default == "" and req_answer == "":
+                            click.secho("Error - '{}' is required.".format(p_required), fg="red", err=True)
                             while_break = False
             else:
                 child_param = answer[param_id]
-                is_required = child_param in param_obj.get('required', [])
-                answers.update(self.prompt_param(child_param, param_obj['properties'][child_param], is_required, answers))
+                is_required = child_param in param_obj.get("required", [])
+                answers.update(
+                    self.prompt_param(child_param, param_obj["properties"][child_param], is_required, answers)
+                )
 
         return answers
 
@@ -452,153 +481,159 @@ class Launch(object):
         if answers is None:
             answers = {}
 
-        question = {
-            'type': 'input',
-            'name': param_id,
-            'message': param_id
-        }
+        question = {"type": "input", "name": param_id, "message": param_id}
 
         # Print the name, description & help text
         if print_help:
-            nice_param_id = '--{}'.format(param_id) if not param_id.startswith('-') else param_id
+            nice_param_id = "--{}".format(param_id) if not param_id.startswith("-") else param_id
             self.print_param_header(nice_param_id, param_obj)
 
-        if param_obj.get('type') == 'boolean':
-            question['type'] = 'list'
-            question['choices'] = ['True', 'False']
-            question['default'] = 'False'
+        if param_obj.get("type") == "boolean":
+            question["type"] = "list"
+            question["choices"] = ["True", "False"]
+            question["default"] = "False"
 
         # Start with the default from the param object
-        if 'default' in param_obj:
+        if "default" in param_obj:
             # Boolean default is cast back to a string later - this just normalises all inputs
-            if param_obj['type'] == 'boolean' and type(param_obj['default']) is str:
-                question['default'] = param_obj['default'].lower() == 'true'
+            if param_obj["type"] == "boolean" and type(param_obj["default"]) is str:
+                question["default"] = param_obj["default"].lower() == "true"
             else:
-                question['default'] = param_obj['default']
+                question["default"] = param_obj["default"]
 
         # Overwrite default with parsed schema, includes --params-in etc
         if self.schema_obj is not None and param_id in self.schema_obj.input_params:
-            if param_obj['type'] == 'boolean' and type(self.schema_obj.input_params[param_id]) is str:
-                question['default'] = 'true' == self.schema_obj.input_params[param_id].lower()
+            if param_obj["type"] == "boolean" and type(self.schema_obj.input_params[param_id]) is str:
+                question["default"] = "true" == self.schema_obj.input_params[param_id].lower()
             else:
-                question['default'] = self.schema_obj.input_params[param_id]
+                question["default"] = self.schema_obj.input_params[param_id]
 
         # Overwrite default if already had an answer
         if param_id in answers:
-            question['default'] = answers[param_id]
+            question["default"] = answers[param_id]
 
         # Coerce default to a string
-        if 'default' in question:
-            question['default'] = str(question['default'])
+        if "default" in question:
+            question["default"] = str(question["default"])
 
-        if param_obj.get('type') == 'boolean':
+        if param_obj.get("type") == "boolean":
             # Filter returned value
             def filter_boolean(val):
                 if isinstance(val, bool):
                     return val
-                return val.lower() == 'true'
-            question['filter'] = filter_boolean
+                return val.lower() == "true"
 
-        if param_obj.get('type') == 'number':
+            question["filter"] = filter_boolean
+
+        if param_obj.get("type") == "number":
             # Validate number type
             def validate_number(val):
                 try:
-                    if val.strip() == '':
+                    if val.strip() == "":
                         return True
                     float(val)
                 except ValueError:
                     return "Must be a number"
                 else:
                     return True
-            question['validate'] = validate_number
+
+            question["validate"] = validate_number
 
             # Filter returned value
             def filter_number(val):
-                if val.strip() == '':
-                    return ''
+                if val.strip() == "":
+                    return ""
                 return float(val)
-            question['filter'] = filter_number
 
-        if param_obj.get('type') == 'integer':
+            question["filter"] = filter_number
+
+        if param_obj.get("type") == "integer":
             # Validate integer type
             def validate_integer(val):
                 try:
-                    if val.strip() == '':
+                    if val.strip() == "":
                         return True
                     assert int(val) == float(val)
                 except (AssertionError, ValueError):
                     return "Must be an integer"
                 else:
                     return True
-            question['validate'] = validate_integer
+
+            question["validate"] = validate_integer
 
             # Filter returned value
             def filter_integer(val):
-                if val.strip() == '':
-                    return ''
+                if val.strip() == "":
+                    return ""
                 return int(val)
-            question['filter'] = filter_integer
 
-        if param_obj.get('type') == 'range':
+            question["filter"] = filter_integer
+
+        if param_obj.get("type") == "range":
             # Validate range type
             def validate_range(val):
                 try:
-                    if val.strip() == '':
+                    if val.strip() == "":
                         return True
                     fval = float(val)
-                    if 'minimum' in param_obj and fval < float(param_obj['minimum']):
-                        return "Must be greater than or equal to {}".format(param_obj['minimum'])
-                    if 'maximum' in param_obj and fval > float(param_obj['maximum']):
-                        return "Must be less than or equal to {}".format(param_obj['maximum'])
+                    if "minimum" in param_obj and fval < float(param_obj["minimum"]):
+                        return "Must be greater than or equal to {}".format(param_obj["minimum"])
+                    if "maximum" in param_obj and fval > float(param_obj["maximum"]):
+                        return "Must be less than or equal to {}".format(param_obj["maximum"])
                     return True
                 except ValueError:
                     return "Must be a number"
-            question['validate'] = validate_range
+
+            question["validate"] = validate_range
 
             # Filter returned value
             def filter_range(val):
-                if val.strip() == '':
-                    return ''
+                if val.strip() == "":
+                    return ""
                 return float(val)
-            question['filter'] = filter_range
 
-        if 'enum' in param_obj:
+            question["filter"] = filter_range
+
+        if "enum" in param_obj:
             # Use a selection list instead of free text input
-            question['type'] = 'list'
-            question['choices'] = param_obj['enum']
+            question["type"] = "list"
+            question["choices"] = param_obj["enum"]
 
             # Validate enum from schema
             def validate_enum(val):
-                if val == '':
+                if val == "":
                     return True
-                if val in param_obj['enum']:
+                if val in param_obj["enum"]:
                     return True
-                return "Must be one of: {}".format(", ".join(param_obj['enum']))
-            question['validate'] = validate_enum
+                return "Must be one of: {}".format(", ".join(param_obj["enum"]))
+
+            question["validate"] = validate_enum
 
         # Validate pattern from schema
-        if 'pattern' in param_obj:
+        if "pattern" in param_obj:
+
             def validate_pattern(val):
-                if val == '':
+                if val == "":
                     return True
-                if re.search(param_obj['pattern'], val) is not None:
+                if re.search(param_obj["pattern"], val) is not None:
                     return True
-                return "Must match pattern: {}".format(param_obj['pattern'])
-            question['validate'] = validate_pattern
+                return "Must match pattern: {}".format(param_obj["pattern"])
+
+            question["validate"] = validate_pattern
 
         return question
 
     def print_param_header(self, param_id, param_obj):
-        if 'description' not in param_obj and 'help_text' not in param_obj:
+        if "description" not in param_obj and "help_text" not in param_obj:
             return
         console = Console()
         console.print("\n")
-        console.print(param_id, style = "bold")
-        if 'description' in param_obj:
-            md = Markdown(param_obj['description'])
+        console.print(param_id, style="bold")
+        if "description" in param_obj:
+            md = Markdown(param_obj["description"])
             console.print(md)
-        if 'help_text' in param_obj:
-            help_md = Markdown(param_obj['help_text'].strip())
+        if "help_text" in param_obj:
+            help_md = Markdown(param_obj["help_text"].strip())
             console.print(help_md, style="dim")
             console.print("\n")
 
@@ -611,8 +646,8 @@ class Launch(object):
                 del self.schema_obj.input_params[param_id]
 
         # Nextflow flag defaults
-        for param_id, val in self.nxf_flag_schema['Nextflow command-line flags']['properties'].items():
-            if param_id in self.nxf_flags and self.nxf_flags[param_id] == val.get('default'):
+        for param_id, val in self.nxf_flag_schema["Nextflow command-line flags"]["properties"].items():
+            if param_id in self.nxf_flags and self.nxf_flags[param_id] == val.get("default"):
                 del self.nxf_flags[param_id]
 
     def build_command(self):
@@ -649,9 +684,13 @@ class Launch(object):
     def launch_workflow(self):
         """ Launch nextflow if required  """
         intro = click.style("Nextflow command:", bold=True, underline=True)
-        cmd = click.style(self.nextflow_cmd, fg='magenta')
+        cmd = click.style(self.nextflow_cmd, fg="magenta")
         logging.info("{}\n  {}\n\n".format(intro, cmd))
 
-        if click.confirm('Do you want to run this command now? '+click.style('[y/N]', fg='green'), default=False, show_default=False):
+        if click.confirm(
+            "Do you want to run this command now? " + click.style("[y/N]", fg="green"),
+            default=False,
+            show_default=False,
+        ):
             logging.info("Launching workflow!")
             subprocess.call(self.nextflow_cmd, shell=True)

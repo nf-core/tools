@@ -24,7 +24,7 @@ import nf_core.utils
 nf_core.utils.setup_requests_cachedir()
 
 
-def list_workflows(filter_by=None, sort_by='release', as_json=False):
+def list_workflows(filter_by=None, sort_by="release", as_json=False):
     """Prints out a list of all nf-core workflows.
 
     Args:
@@ -42,13 +42,14 @@ def list_workflows(filter_by=None, sort_by='release', as_json=False):
     else:
         wfs.print_summary()
 
+
 def get_local_wf(workflow, revision=None):
     """
     Check if this workflow has a local copy and use nextflow to pull it if not
     """
     # Assume nf-core if no org given
-    if workflow.count('/') == 0:
-        workflow = 'nf-core/{}'.format(workflow)
+    if workflow.count("/") == 0:
+        workflow = "nf-core/{}".format(workflow)
 
     wfs = Workflows()
     wfs.get_local_nf_workflows()
@@ -56,9 +57,9 @@ def get_local_wf(workflow, revision=None):
         if workflow == wf.full_name:
             if revision is None or revision == wf.commit_sha or revision == wf.branch or revision == wf.active_tag:
                 if wf.active_tag:
-                    print_revision = 'v{}'.format(wf.active_tag)
+                    print_revision = "v{}".format(wf.active_tag)
                 elif wf.branch:
-                    print_revision = '{} - {}'.format(wf.branch, wf.commit_sha[:7])
+                    print_revision = "{} - {}".format(wf.branch, wf.commit_sha[:7])
                 else:
                     print_revision = wf.commit_sha
                 logging.info("Using local workflow: {} ({})".format(workflow, print_revision))
@@ -67,10 +68,10 @@ def get_local_wf(workflow, revision=None):
     # Wasn't local, fetch it
     logging.info("Downloading workflow: {} ({})".format(workflow, revision))
     try:
-        with open(os.devnull, 'w') as devnull:
-            cmd = ['nextflow', 'pull', workflow]
+        with open(os.devnull, "w") as devnull:
+            cmd = ["nextflow", "pull", workflow]
             if revision is not None:
-                cmd.extend(['-r', revision])
+                cmd.extend(["-r", revision])
             subprocess.check_output(cmd, stderr=devnull)
     except OSError as e:
         if e.errno == errno.ENOENT:
@@ -81,6 +82,7 @@ def get_local_wf(workflow, revision=None):
         local_wf = LocalWorkflow(workflow)
         local_wf.get_local_nf_workflow_details()
         return local_wf.local_path
+
 
 class Workflows(object):
     """Workflow container class.
@@ -93,7 +95,8 @@ class Workflows(object):
         sort_by (str): workflows can be sorted by keywords. Keyword must be one of
             `release` (default), `name`, `stars`.
     """
-    def __init__(self, filter_by=None, sort_by='release'):
+
+    def __init__(self, filter_by=None, sort_by="release"):
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
@@ -107,10 +110,10 @@ class Workflows(object):
         """
         # List all repositories at nf-core
         logging.debug("Fetching list of nf-core workflows")
-        nfcore_url = 'https://nf-co.re/pipelines.json'
+        nfcore_url = "https://nf-co.re/pipelines.json"
         response = requests.get(nfcore_url, timeout=10)
         if response.status_code == 200:
-            repos = response.json()['remote_workflows']
+            repos = response.json()["remote_workflows"]
             for repo in repos:
                 self.remote_workflows.append(RemoteWorkflow(repo))
 
@@ -120,33 +123,35 @@ class Workflows(object):
         Local workflows are stored in :attr:`self.local_workflows` list.
         """
         # Try to guess the local cache directory (much faster than calling nextflow)
-        if len(os.environ.get('NXF_ASSETS', '')) > 0:
-            nextflow_wfdir = os.environ.get('NXF_ASSETS')
+        if len(os.environ.get("NXF_ASSETS", "")) > 0:
+            nextflow_wfdir = os.environ.get("NXF_ASSETS")
         else:
-            nextflow_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets')
+            nextflow_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets")
         if os.path.isdir(nextflow_wfdir):
             logging.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
             for org_name in os.listdir(nextflow_wfdir):
                 for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
-                    self.local_workflows.append( LocalWorkflow('{}/{}'.format(org_name, wf_name)) )
+                    self.local_workflows.append(LocalWorkflow("{}/{}".format(org_name, wf_name)))
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:
             logging.debug("Getting list of local nextflow workflows")
             try:
-                with open(os.devnull, 'w') as devnull:
-                    nflist_raw = subprocess.check_output(['nextflow', 'list'], stderr=devnull)
+                with open(os.devnull, "w") as devnull:
+                    nflist_raw = subprocess.check_output(["nextflow", "list"], stderr=devnull)
             except OSError as e:
                 if e.errno == errno.ENOENT:
-                    raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+                    raise AssertionError(
+                        "It looks like Nextflow is not installed. It is required for most nf-core functions."
+                    )
             except subprocess.CalledProcessError as e:
                 raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
             else:
                 for wf_name in nflist_raw.splitlines():
-                    if not str(wf_name).startswith('nf-core/'):
+                    if not str(wf_name).startswith("nf-core/"):
                         self.local_unmatched.append(wf_name)
                     else:
-                        self.local_workflows.append( LocalWorkflow(wf_name) )
+                        self.local_workflows.append(LocalWorkflow(wf_name))
 
         # Find additional information about each workflow by checking its git history
         logging.debug("Fetching extra info about {} local workflows".format(len(self.local_workflows)))
@@ -167,7 +172,7 @@ class Workflows(object):
                 if rwf.full_name == lwf.full_name:
                     rwf.local_wf = lwf
                     if rwf.releases:
-                        if rwf.releases[-1]['tag_sha'] == lwf.commit_sha:
+                        if rwf.releases[-1]["tag_sha"] == lwf.commit_sha:
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
@@ -187,7 +192,7 @@ class Workflows(object):
             for k in self.keyword_filters:
                 in_name = k in wf.name if wf.name else False
                 in_desc = k in wf.description if wf.description else False
-                in_topics = any([ k in t for t in wf.topics])
+                in_topics = any([k in t for t in wf.topics])
                 if not in_name and not in_desc and not in_topics:
                     break
             else:
@@ -201,60 +206,61 @@ class Workflows(object):
         filtered_workflows = self.filtered_workflows()
 
         # Sort by released / dev, then alphabetical
-        if not self.sort_workflows_by or self.sort_workflows_by == 'release':
+        if not self.sort_workflows_by or self.sort_workflows_by == "release":
             filtered_workflows.sort(
                 key=lambda wf: (
-                    (wf.releases[-1].get('published_at_timestamp', 0) if len(wf.releases) > 0 else 0) * -1,
-                    wf.full_name.lower()
+                    (wf.releases[-1].get("published_at_timestamp", 0) if len(wf.releases) > 0 else 0) * -1,
+                    wf.full_name.lower(),
                 )
             )
         # Sort by date pulled
-        elif self.sort_workflows_by == 'pulled':
+        elif self.sort_workflows_by == "pulled":
+
             def sort_pulled_date(wf):
                 try:
                     return wf.local_wf.last_pull * -1
                 except:
                     return 0
+
             filtered_workflows.sort(key=sort_pulled_date)
         # Sort by name
-        elif self.sort_workflows_by == 'name':
-            filtered_workflows.sort( key=lambda wf: wf.full_name.lower() )
+        elif self.sort_workflows_by == "name":
+            filtered_workflows.sort(key=lambda wf: wf.full_name.lower())
         # Sort by stars, then name
-        elif self.sort_workflows_by == 'stars':
-            filtered_workflows.sort(
-                key=lambda wf: (
-                    wf.stargazers_count * -1,
-                    wf.full_name.lower()
-                )
-            )
+        elif self.sort_workflows_by == "stars":
+            filtered_workflows.sort(key=lambda wf: (wf.stargazers_count * -1, wf.full_name.lower()))
 
         # Build summary list to print
         summary = list()
         for wf in filtered_workflows:
-            version = click.style(wf.releases[-1]['tag_name'], fg='blue') if len(wf.releases) > 0 else click.style('dev', fg='yellow')
-            published = wf.releases[-1]['published_at_pretty'] if len(wf.releases) > 0 else '-'
-            pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else '-'
+            version = (
+                click.style(wf.releases[-1]["tag_name"], fg="blue")
+                if len(wf.releases) > 0
+                else click.style("dev", fg="yellow")
+            )
+            published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "-"
+            pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "-"
             if wf.local_wf is not None:
-                revision = ''
+                revision = ""
                 if wf.local_wf.active_tag is not None:
-                    revision = 'v{}'.format(wf.local_wf.active_tag)
+                    revision = "v{}".format(wf.local_wf.active_tag)
                 elif wf.local_wf.branch is not None:
-                    revision = '{} - {}'.format(wf.local_wf.branch, wf.local_wf.commit_sha[:7])
+                    revision = "{} - {}".format(wf.local_wf.branch, wf.local_wf.commit_sha[:7])
                 else:
                     revision = wf.local_wf.commit_sha
                 if wf.local_is_latest:
-                    is_latest = click.style('Yes ({})'.format(revision), fg='green')
+                    is_latest = click.style("Yes ({})".format(revision), fg="green")
                 else:
-                    is_latest = click.style('No ({})'.format(revision), fg='red')
+                    is_latest = click.style("No ({})".format(revision), fg="red")
             else:
-                is_latest = '-'
-            rowdata = [ wf.full_name, version, published, pulled, is_latest ]
-            if self.sort_workflows_by == 'stars':
+                is_latest = "-"
+            rowdata = [wf.full_name, version, published, pulled, is_latest]
+            if self.sort_workflows_by == "stars":
                 rowdata.insert(1, wf.stargazers_count)
             summary.append(rowdata)
-        t_headers = ['Name', 'Latest Release', 'Released', 'Last Pulled', 'Have latest release?']
-        if self.sort_workflows_by == 'stars':
-            t_headers.insert(1, 'Stargazers')
+        t_headers = ["Name", "Latest Release", "Released", "Last Pulled", "Have latest release?"]
+        if self.sort_workflows_by == "stars":
+            t_headers.insert(1, "Stargazers")
 
         # Print summary table
         print("", file=sys.stderr)
@@ -263,10 +269,13 @@ class Workflows(object):
 
     def print_json(self):
         """ Dump JSON of all parsed information """
-        print(json.dumps({
-            'local_workflows': self.local_workflows,
-            'remote_workflows': self.remote_workflows
-        }, default=lambda o: o.__dict__, indent=4))
+        print(
+            json.dumps(
+                {"local_workflows": self.local_workflows, "remote_workflows": self.remote_workflows},
+                default=lambda o: o.__dict__,
+                indent=4,
+            )
+        )
 
 
 class RemoteWorkflow(object):
@@ -279,17 +288,17 @@ class RemoteWorkflow(object):
 
     def __init__(self, data):
         # Vars from the initial data payload
-        self.name = data.get('name')
-        self.full_name = data.get('full_name')
-        self.description = data.get('description')
-        self.topics = data.get('topics', [])
-        self.archived = data.get('archived')
-        self.stargazers_count = data.get('stargazers_count')
-        self.watchers_count = data.get('watchers_count')
-        self.forks_count = data.get('forks_count')
+        self.name = data.get("name")
+        self.full_name = data.get("full_name")
+        self.description = data.get("description")
+        self.topics = data.get("topics", [])
+        self.archived = data.get("archived")
+        self.stargazers_count = data.get("stargazers_count")
+        self.watchers_count = data.get("watchers_count")
+        self.forks_count = data.get("forks_count")
 
         # Placeholder vars for releases info (ignore pre-releases)
-        self.releases = [ r for r in data.get('releases', []) if r.get('published_at') is not None ]
+        self.releases = [r for r in data.get("releases", []) if r.get("published_at") is not None]
 
         # Placeholder vars for local comparison
         self.local_wf = None
@@ -297,10 +306,12 @@ class RemoteWorkflow(object):
 
         # Beautify date
         for release in self.releases:
-            release['published_at_pretty'] = pretty_date(
-                datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ")
+            release["published_at_pretty"] = pretty_date(
+                datetime.datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ")
             )
-            release['published_at_timestamp'] = int(datetime.datetime.strptime(release.get('published_at'), "%Y-%m-%dT%H:%M:%SZ").strftime("%s"))
+            release["published_at_timestamp"] = int(
+                datetime.datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ").strftime("%s")
+            )
 
 
 class LocalWorkflow(object):
@@ -325,10 +336,10 @@ class LocalWorkflow(object):
         if self.local_path is None:
 
             # Try to guess the local cache directory
-            if len(os.environ.get('NXF_ASSETS', '')) > 0:
-                nf_wfdir = os.path.join(os.environ.get('NXF_ASSETS'), self.full_name)
+            if len(os.environ.get("NXF_ASSETS", "")) > 0:
+                nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)
             else:
-                nf_wfdir = os.path.join(os.getenv("HOME"), '.nextflow', 'assets', self.full_name)
+                nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):
                 logging.debug("Guessed nextflow assets workflow directory: {}".format(nf_wfdir))
                 self.local_path = nf_wfdir
@@ -336,18 +347,19 @@ class LocalWorkflow(object):
             # Use `nextflow info` to get more details about the workflow
             else:
                 try:
-                    with open(os.devnull, 'w') as devnull:
-                        nfinfo_raw = subprocess.check_output(['nextflow', 'info', '-d', self.full_name], stderr=devnull)
+                    with open(os.devnull, "w") as devnull:
+                        nfinfo_raw = subprocess.check_output(["nextflow", "info", "-d", self.full_name], stderr=devnull)
                 except OSError as e:
                     if e.errno == errno.ENOENT:
-                        raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+                        raise AssertionError(
+                            "It looks like Nextflow is not installed. It is required for most nf-core functions."
+                        )
                 except subprocess.CalledProcessError as e:
-                    raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
+                    raise AssertionError(
+                        "`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output
+                    )
                 else:
-                    re_patterns = {
-                        'repository': r"repository\s*: (.*)",
-                        'local_path': r"local path\s*: (.*)"
-                    }
+                    re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
                     if isinstance(nfinfo_raw, bytes):
                         nfinfo_raw = nfinfo_raw.decode()
                     for key, pattern in re_patterns.items():
@@ -362,7 +374,7 @@ class LocalWorkflow(object):
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)
                 self.remote_url = str(repo.remotes.origin.url)
-                self.last_pull = os.stat(os.path.join(self.local_path, '.git', 'FETCH_HEAD')).st_mtime
+                self.last_pull = os.stat(os.path.join(self.local_path, ".git", "FETCH_HEAD")).st_mtime
                 self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
                 self.last_pull_pretty = pretty_date(self.last_pull)
 
@@ -378,15 +390,14 @@ class LocalWorkflow(object):
                     if str(tag.commit) == str(self.commit_sha):
                         self.active_tag = tag
 
-
             # I'm not sure that we need this any more, it predated the self.branch catch above for detacted HEAD
             except TypeError as e:
                 logging.error(
-                    "Could not fetch status of local Nextflow copy of {}:".format(self.full_name) +
-                    "\n   {}".format(str(e)) +
-                    "\n\nIt's probably a good idea to delete this local copy and pull again:".format(self.local_path) +
-                    "\n   rm -rf {}".format(self.local_path) +
-                    "\n   nextflow pull {}".format(self.full_name)
+                    "Could not fetch status of local Nextflow copy of {}:".format(self.full_name)
+                    + "\n   {}".format(str(e))
+                    + "\n\nIt's probably a good idea to delete this local copy and pull again:".format(self.local_path)
+                    + "\n   rm -rf {}".format(self.local_path)
+                    + "\n   nextflow pull {}".format(self.full_name)
                 )
 
 
@@ -399,6 +410,7 @@ def pretty_date(time):
     Adapted by sven1103
     """
     from datetime import datetime
+
     now = datetime.now()
     if isinstance(time, datetime):
         diff = now - time
@@ -408,28 +420,26 @@ def pretty_date(time):
     day_diff = diff.days
 
     pretty_msg = OrderedDict()
-    pretty_msg[0] = [(float('inf'), 1, 'from the future')]
+    pretty_msg[0] = [(float("inf"), 1, "from the future")]
     pretty_msg[1] = [
-            (10, 1, "just now"),
-            (60, 1, "{sec:.0f} seconds ago"),
-            (120, 1, "a minute ago"),
-            (3600, 60, "{sec:.0f} minutes ago"),
-            (7200, 1, "an hour ago"),
-            (86400, 3600, "{sec:.0f} hours ago")
-        ]
-    pretty_msg[2] = [(float('inf'), 1, 'yesterday')]
-    pretty_msg[7] = [(float('inf'), 1, '{days:.0f} day{day_s} ago')]
-    pretty_msg[31] = [(float('inf'), 7, '{days:.0f} week{day_s} ago')]
-    pretty_msg[365] = [(float('inf'), 30, '{days:.0f} months ago')]
-    pretty_msg[float('inf')] = [(float('inf'), 365, '{days:.0f} year{day_s} ago')]
+        (10, 1, "just now"),
+        (60, 1, "{sec:.0f} seconds ago"),
+        (120, 1, "a minute ago"),
+        (3600, 60, "{sec:.0f} minutes ago"),
+        (7200, 1, "an hour ago"),
+        (86400, 3600, "{sec:.0f} hours ago"),
+    ]
+    pretty_msg[2] = [(float("inf"), 1, "yesterday")]
+    pretty_msg[7] = [(float("inf"), 1, "{days:.0f} day{day_s} ago")]
+    pretty_msg[31] = [(float("inf"), 7, "{days:.0f} week{day_s} ago")]
+    pretty_msg[365] = [(float("inf"), 30, "{days:.0f} months ago")]
+    pretty_msg[float("inf")] = [(float("inf"), 365, "{days:.0f} year{day_s} ago")]
 
     for days, seconds in pretty_msg.items():
         if day_diff < days:
             for sec in seconds:
                 if second_diff < sec[0]:
                     return sec[2].format(
-                            days = day_diff/sec[1],
-                            sec = second_diff/sec[1],
-                            day_s = 's' if day_diff/sec[1] > 1 else ''
-                        )
-    return '... time is relative anyway'
+                        days=day_diff / sec[1], sec=second_diff / sec[1], day_s="s" if day_diff / sec[1] > 1 else ""
+                    )
+    return "... time is relative anyway"
