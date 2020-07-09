@@ -6,4 +6,4 @@ LABEL authors="phil.ewels@scilifelab.se,alexander.peltzer@qbic.uni-tuebingen.de"
 # deep clean the apt cache to reduce image/layer size
 RUN apt-get update \
  && apt-get install -y procps \
- && apt-get clean && rm -rf /var/lib/apt/lists/*
+ && apt-get clean -y && rm -rf /var/lib/apt/lists/*
