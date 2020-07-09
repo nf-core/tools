@@ -42,6 +42,7 @@ setup(
         "pyyaml",
         "requests",
         "requests_cache",
+        "rich",
         "tabulate",
     ],
     setup_requires=["twine>=1.11.0", "setuptools>=38.6."],

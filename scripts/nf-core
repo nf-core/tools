@@ -55,7 +55,7 @@ class CustomHelpOrder(click.Group):
     '-v', '--verbose',
     is_flag = True,
     default = False,
-    help = "Verbose output (print debug statements)"
+    help = "Verbose output (print debug statements)."
 )
 def nf_core_cli(verbose):
     if verbose:
@@ -84,7 +84,12 @@ def nf_core_cli(verbose):
     help = "Print full output as JSON"
 )
 def list(keywords, sort, json):
-    """ List nf-core pipelines with local info """
+    """
+    List available nf-core pipelines with local info.
+
+    Checks the web for a list of nf-core pipelines with their latest releases.
+    Shows which nf-core pipelines you have pulled locally and whether they are up to date.
+    """
     nf_core.list.list_workflows(keywords, sort, json)
 
 # nf-core launch
@@ -139,11 +144,17 @@ def list(keywords, sort, json):
 )
 def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
     """
-    Launch a pipeline using either an interactive web GUI or command line prompts to set parameter values.
+    Launch a pipeline using a web GUI or command line prompts.
 
-    When finished, saves a file with the selected parameters which can be passed to Nextflow using the -params-file option.
+    Uses the pipeline schema file to collect inputs for all available pipeline
+    parameters. Parameter names, descriptions and help text are shown.
+    The pipeline schema is used to validate all inputs as they are entered.
 
-    Run using a remote pipeline name (org/repo), a local pipeline directory or an ID from the nf-core web launch tool.
+    When finished, saves a file with the selected parameters which can be
+    passed to Nextflow using the -params-file option.
+
+    Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
+    a local pipeline directory or an ID from the nf-core web launch tool.
     """
     launcher = nf_core.launch.Launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id)
     if launcher.launch_pipeline() == False:
@@ -179,7 +190,12 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     help = "Compression type"
 )
 def download(pipeline, release, singularity, outdir, compress):
-    """ Download a pipeline and singularity container """
+    """
+    Download a pipeline, configs and singularity container.
+
+    Collects all workflow files and shared configs from nf-core/configs.
+    Configures the downloaded workflow to use the relative path to the configs.
+    """
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress)
     dl.download_workflow()
 
@@ -197,7 +213,13 @@ def download(pipeline, release, singularity, outdir, compress):
     help = "Print output in JSON"
 )
 def licences(pipeline, json):
-    """ List software licences for a given workflow """
+    """
+    List software licences for a given workflow.
+
+    Checks the pipeline environment.yml file which lists all conda software packages.
+    Each of these is queried against the anaconda.org API to find the licence.
+    Package name, version and licence is printed to the command line.
+    """
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.fetch_conda_licences()
     lic.print_licences(as_json=json)
@@ -257,7 +279,12 @@ def validate_wf_name_prompt(ctx, opts, value):
     help = "Output directory for new pipeline (default: pipeline name)"
 )
 def create(name, description, author, new_version, no_git, force, outdir):
-    """ Create a new pipeline using the template """
+    """
+    Create a new pipeline using the nf-core template.
+
+    Uses the nf-core template to make a skeleton Nextflow pipeline with all required
+    files, boilerplate code and best-practices.
+    """
     create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
 
@@ -287,7 +314,13 @@ def create(name, description, author, new_version, no_git, force, outdir):
     help = "File to write linting results to (JSON)"
 )
 def lint(pipeline_dir, release, markdown, json):
-    """ Check pipeline against nf-core guidelines """
+    """
+    Check pipeline code against nf-core guidelines.
+
+    Runs a large number of automated tests to ensure that the supplied pipeline
+    meets the nf-core guidelines. Documentation of all lint tests can be found
+    on the nf-core website: https://nf-co.re/errors
+    """
 
     # Run the lint tests!
     lint_obj = nf_core.lint.run_linting(pipeline_dir, release, markdown, json)
@@ -298,7 +331,13 @@ def lint(pipeline_dir, release, markdown, json):
 ## nf-core schema subcommands
 @nf_core_cli.group(cls=CustomHelpOrder)
 def schema():
-    """ Suite of tools to help developers to manage pipeline JSON Schema """
+    """
+    Suite of tools for developers to manage pipeline schema.
+
+    All nf-core pipelines should have a nextflow_schema.json file in their
+    root directory. This is a JSON Schema that describes the different
+    pipeline parameters.
+    """
     pass
 
 @schema.command(help_priority=1)
@@ -314,13 +353,14 @@ def schema():
     help = 'JSON parameter file'
 )
 def validate(pipeline, params):
-    """ Validate supplied parameters against a schema.
+    """
+    Validate a set of parameters against a pipeline schema.
 
     Nextflow can be run using the -params-file flag, which loads
     script parameters from a JSON/YAML file.
 
-    This command takes such a file and validates it against the
-    schema for the given pipeline.
+    This command takes such a file and validates it against the pipeline
+    schema, checking whether all schema rules are satisfied.
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
@@ -360,7 +400,17 @@ def validate(pipeline, params):
     help = 'Customise the builder URL (for development work)'
 )
 def build(pipeline_dir, no_prompts, web_only, url):
-    """ Interactively build a pipeline schema from Nextflow params. """
+    """
+    Interactively build a pipeline schema from Nextflow params.
+
+    Automatically detects parameters from the pipeline config and main.nf and
+    compares these to the pipeline schema. Prompts to add or remove parameters
+    if the two do not match one another.
+
+    Once all parameters are accounted for, can launch a web GUI tool on the
+    https://nf-co.re website where you can annotate and organise parameters.
+    Listens for this to be completed and saves the updated schema.
+    """
     schema_obj = nf_core.schema.PipelineSchema()
     if schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url) is False:
         sys.exit(1)
@@ -373,9 +423,13 @@ def build(pipeline_dir, no_prompts, web_only, url):
     metavar = "<JSON Schema file>"
 )
 def lint(schema_path):
-    """ Check that a given JSON Schema is valid.
+    """
+    Check that a given pipeline schema is valid.
 
-    Runs as part of the nf-core lint command, this is a convenience
+    Checks whether the pipeline schema validates as JSON Schema Draft 7
+    and adheres to the additional nf-core schema requirements.
+
+    This function runs as part of the nf-core lint command, this is a convenience
     command that does just the schema linting nice and quickly.
     """
     schema_obj = nf_core.schema.PipelineSchema()
@@ -404,7 +458,18 @@ def lint(schema_path):
     help = "Bump required nextflow version instead of pipeline version"
 )
 def bump_version(pipeline_dir, new_version, nextflow):
-    """ Update nf-core pipeline version number """
+    """
+    Update nf-core pipeline version number.
+
+    The pipeline version number is mentioned in a lot of different places
+    in nf-core pipelines. This tool updates the version for you automatically,
+    so that you don't accidentally miss any.
+
+    Should be used for each pipeline release, and again for the next
+    development version after release.
+
+    As well as the pipeline version, you can also change the required version of Nextflow.
+    """
 
     # First, lint the pipeline to check everything is in order
     logging.info("Running nf-core lint tests")
@@ -466,7 +531,18 @@ def bump_version(pipeline_dir, new_version, nextflow):
     help = "Sync template for all nf-core pipelines."
 )
 def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username, repository, auth_token, all):
-    """ Sync a pipeline TEMPLATE branch with the nf-core template"""
+    """
+    Sync a pipeline TEMPLATE branch with the nf-core template.
+
+    To keep nf-core pipelines up to date with improvements in the main
+    template, we use a method of synchronisation that uses a special
+    git branch called TEMPLATE.
+
+    This command updates the TEMPLATE branch with the latest version of
+    the nf-core template, so that these updates can be synchronised with
+    the pipeline. It is run automatically for all pipelines when ever a
+    new release of nf-core/tools (and the included template) is made.
+    """
 
     # Pull and sync all nf-core pipelines
     if all:

@@ -92,22 +92,20 @@ $ nf-core list
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
-Name                       Version    Released      Last Pulled     Have latest release?
--------------------------  ---------  ------------  --------------  ----------------------
-nf-core/rnaseq             1.3        4 days ago    27 minutes ago  Yes
-nf-core/hlatyping          1.1.4      3 weeks ago   1 months ago    No
-nf-core/eager              2.0.6      3 weeks ago   -               -
-nf-core/mhcquant           1.2.6      3 weeks ago   -               -
-nf-core/rnafusion          1.0        1 months ago  -               -
-nf-core/methylseq          1.3        1 months ago  3 months ago    No
-nf-core/ampliseq           1.0.0      3 months ago  -               -
-nf-core/deepvariant        1.0        4 months ago  -               -
-nf-core/atacseq            dev        -             1 months ago    No
-nf-core/bacass             dev        -             -               -
-nf-core/bcellmagic         dev        -             -               -
-nf-core/chipseq            dev        -             1 months ago    No
-nf-core/clinvap            dev        -             -               -
+
+Name                       Latest Release    Released       Last Pulled    Have latest release?
+-------------------------  ----------------  -------------  -------------  ----------------------
+nf-core/chipseq            1.2.0             6 days ago     1 weeks ago    No (dev - bfe7eb3)
+nf-core/atacseq            1.2.0             6 days ago     1 weeks ago    No (dev - 12b8d0b)
+nf-core/viralrecon         1.1.0             2 weeks ago    2 weeks ago    Yes (v1.1.0)
+nf-core/sarek              2.6.1             2 weeks ago    -              -
+nf-core/imcyto             1.0.0             1 months ago   -              -
+nf-core/slamseq            1.0.0             2 months ago   -              -
+nf-core/coproid            1.1               2 months ago   -              -
+nf-core/mhcquant           1.5.1             2 months ago   -              -
+[..truncated..]
 ```
 
 To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
@@ -121,13 +119,15 @@ $ nf-core list rna rna-seq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
-Name               Version    Released      Last Pulled     Have latest release?
------------------  ---------  ------------  --------------  ----------------------
-nf-core/rnaseq     1.3        4 days ago    28 minutes ago  Yes
-nf-core/rnafusion  1.0        1 months ago  -               -
-nf-core/lncpipe    dev        -             -               -
-nf-core/smrnaseq   dev        -             -               -
+
+Name               Latest Release    Released       Last Pulled    Have latest release?
+-----------------  ----------------  -------------  -------------  ----------------------
+nf-core/rnafusion  1.1.0             5 months ago   -              -
+nf-core/rnaseq     1.4.2             9 months ago   2 weeks ago    No (v1.2)
+nf-core/smrnaseq   1.0.0             10 months ago  -              -
+nf-core/lncpipe    dev               -              -              -
 ```
 
 You can sort the results by latest release (`-s release`, default),
@@ -144,19 +144,19 @@ $ nf-core list -s stars
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
-Name                         Stargazers  Version    Released      Last Pulled     Have latest release?
--------------------------  ------------  ---------  ------------  --------------  ----------------------
-nf-core/rnaseq                       81  1.3        4 days ago    30 minutes ago  Yes
-nf-core/methylseq                    22  1.3        1 months ago  3 months ago    No
-nf-core/ampliseq                     21  1.0.0      3 months ago  -               -
-nf-core/chipseq                      20  dev        -             1 months ago    No
-nf-core/deepvariant                  15  1.0        4 months ago  -               -
-nf-core/eager                        14  2.0.6      3 weeks ago   -               -
-nf-core/rnafusion                    14  1.0        1 months ago  -               -
-nf-core/lncpipe                       9  dev        -             -               -
-nf-core/exoseq                        8  dev        -             -               -
-nf-core/mag                           8  dev        -             -               -
+
+Name                         Stargazers  Latest Release    Released       Last Pulled    Have latest release?
+-------------------------  ------------  ----------------  -------------  -------------  ----------------------
+nf-core/rnaseq                      201  1.4.2             9 months ago   2 weeks ago    No (v1.2)
+nf-core/chipseq                      56  1.2.0             6 days ago     1 weeks ago    No (dev - bfe7eb3)
+nf-core/sarek                        52  2.6.1             2 weeks ago    -              -
+nf-core/methylseq                    45  1.5               3 months ago   -              -
+nf-core/rnafusion                    45  1.1.0             5 months ago   -              -
+nf-core/ampliseq                     40  1.1.2             7 months ago   -              -
+nf-core/atacseq                      37  1.2.0             6 days ago     1 weeks ago    No (dev - 12b8d0b)
+[..truncated..]
 ```
 
 Finally, to return machine-readable JSON output, use the `--json` flag.
@@ -185,7 +185,7 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.10.dev0
+    nf-core/tools version 1.10
 
 
 INFO: [✓] Pipeline schema looks valid
@@ -259,6 +259,7 @@ $ nf-core download methylseq -r 1.4 --singularity
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Saving methylseq
  Pipeline release: 1.4
@@ -353,6 +354,7 @@ $ nf-core licences rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Warning: This tool only prints licence information for the software tools packaged using conda.
         The pipeline may use other software and dependencies not described here.
@@ -394,6 +396,8 @@ $ nf-core create
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
+
+    nf-core/tools version 1.10
 
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
@@ -442,12 +446,16 @@ $ nf-core lint .
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
+
 Running pipeline tests  [####################################]  100%  None
 
-INFO: ===========
- LINTING RESULTS
-=================
-  72 tests passed   2 tests had warnings   0 tests failed
+INFO: =============================
+          LINTING RESULTS
+===================================
+  [✔]  118 tests passed
+  [!]    2 tests had warnings
+  [✗]    0 tests failed
 
 WARNING: Test Warnings:
   https://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
@@ -484,6 +492,7 @@ $ nf-core schema validate my_pipeline --params my_inputs.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: [✓] Pipeline schema looks valid
 
@@ -512,6 +521,7 @@ $ nf-core schema build nf-core-testpipeline
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Loaded existing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
 
@@ -531,7 +541,7 @@ INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.j
 
 Launch web builder for customisation and editing? [Y/n]:
 
-INFO: Opening URL: http://localhost:8888/json_schema_build?id=1584441828_b990ac785cd6
+INFO: Opening URL: http://localhost:8888/json_schema_build?id=1234567890_abc123def456
 
 INFO: Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.
 ..........
@@ -562,6 +572,7 @@ $ nf-core schema lint nextflow_schema.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 ERROR: [✗] JSON Schema does not follow nf-core specs:
  Schema should have 'properties' section
@@ -585,14 +596,17 @@ $ nf-core bump-version . 1.0
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Running nf-core lint tests
 Running pipeline tests  [####################################]  100%  None
 
-INFO: ===========
- LINTING RESULTS
-=================
-  118 tests passed   0 tests had warnings   0 tests failed
+INFO: =============================
+          LINTING RESULTS
+===================================
+  [✔]  120 tests passed
+  [!]    0 tests had warnings
+  [✗]    0 tests failed
 
 INFO: Changing version number:
   Current version number is '1.0dev'
@@ -662,6 +676,7 @@ $ nf-core sync my_pipeline/
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Pipeline directory: /path/to/my_pipeline
 
@@ -710,6 +725,7 @@ $ nf-core sync --all
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Syncing nf-core/ampliseq
 

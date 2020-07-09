@@ -2,6 +2,8 @@
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
+from rich.console import Console
+from rich.markdown import Markdown
 
 import click
 import copy
@@ -96,6 +98,7 @@ class Launch(object):
         }
         self.nxf_flags = {}
         self.params_user = {}
+        self.cli_launch = True
 
     def launch_pipeline(self):
 
@@ -277,7 +280,7 @@ class Launch(object):
                 assert "api_url" in web_response
                 assert "web_url" in web_response
                 assert web_response["status"] == "recieved"
-            except (AssertionError) as e:
+            except AssertionError:
                 logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
                 raise AssertionError(
                     "Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(
@@ -467,8 +470,10 @@ class Launch(object):
         """Convert a JSONSchema param to a PyInquirer question
 
         Args:
-          param_id: Paramater ID (string)
+          param_id: Parameter ID (string)
           param_obj: JSON Schema keys - no objects (dict)
+          answers: Optional preexisting answers (dict)
+          print_help: If description and help_text should be printed (bool)
 
         Returns:
           Single PyInquirer dict, to be appended to questions list
@@ -527,7 +532,7 @@ class Launch(object):
                     if val.strip() == "":
                         return True
                     float(val)
-                except (ValueError):
+                except ValueError:
                     return "Must be a number"
                 else:
                     return True
@@ -576,7 +581,7 @@ class Launch(object):
                     if "maximum" in param_obj and fval > float(param_obj["maximum"]):
                         return "Must be less than or equal to {}".format(param_obj["maximum"])
                     return True
-                except (ValueError):
+                except ValueError:
                     return "Must be a number"
 
             question["validate"] = validate_range
@@ -621,16 +626,16 @@ class Launch(object):
     def print_param_header(self, param_id, param_obj):
         if "description" not in param_obj and "help_text" not in param_obj:
             return
-        header_str = click.style(param_id, bold=True)
+        console = Console()
+        console.print("\n")
+        console.print(param_id, style="bold")
         if "description" in param_obj:
-            header_str += " - {}".format(param_obj["description"])
+            md = Markdown(param_obj["description"])
+            console.print(md)
         if "help_text" in param_obj:
-            # Strip indented and trailing whitespace
-            help_text = textwrap.dedent(param_obj["help_text"]).strip()
-            # Replace single newlines, leave double newlines in place
-            help_text = re.sub(r"(?<!\n)\n(?!\n)", " ", help_text)
-            header_str += "\n" + click.style(help_text, dim=True)
-        click.echo("\n" + header_str, err=True)
+            help_md = Markdown(param_obj["help_text"].strip())
+            console.print(help_md, style="dim")
+            console.print("\n")
 
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
