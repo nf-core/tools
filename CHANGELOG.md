@@ -40,6 +40,13 @@ Whilst we appreciate that this new feature will add a little work for pipeline d
 the possibilities that it brings. If you have any feedback or suggestions, please let us know either here on
 GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com/channels/json-schema).
 
+### Python code formatting
+
+We have adopted the use of the [Black Python code formatter](https://black.readthedocs.io/en/stable/).
+This ensures a harmonised code formatting style throughout the package, from all contributors.
+If you are editing any Python code in nf-core/tools you must now pass the files through Black when
+making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) for details.
+
 ### Template
 
 * Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
