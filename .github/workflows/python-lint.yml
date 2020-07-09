@@ -22,6 +22,6 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           # Fail if "new" violations detected or "any", default "new"
-          failIf: any
+          failIf: new
           # Additional arguments to pass to flake8, default "." (current directory)
-          args: "--max-complexity=10 ."
+          args: "--max-complexity=10 --max-line-length=120 ."
