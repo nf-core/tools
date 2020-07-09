@@ -29,6 +29,24 @@ class TestLaunch(unittest.TestCase):
         """ Test the main launch function """
         self.launcher.launch_pipeline()
 
+    @mock.patch("click.confirm", side_effect=[False])
+    def test_launch_file_exists(self, mock_click_confirm):
+        """ Test that we detect an existing params file and return """
+        # Make an empty params file to be overwritten
+        open(self.nf_params_fn, "a").close()
+        # Try and to launch, return with error
+        assert self.launcher.launch_pipeline() is False
+
+    @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
+    @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
+    @mock.patch("click.confirm", side_effect=[True])
+    def test_launch_file_exists_overwrite(self, mock_webbrowser, mock_lauch_web_gui, mock_click_confirm):
+        """ Test that we detect an existing params file and we overwrite it """
+        # Make an empty params file to be overwritten
+        open(self.nf_params_fn, "a").close()
+        # Try and to launch, return with error
+        self.launcher.launch_pipeline()
+
     def test_get_pipeline_schema(self):
         """ Test loading the params schema from a pipeline """
         self.launcher.get_pipeline_schema()
@@ -96,35 +114,6 @@ class TestLaunch(unittest.TestCase):
         """ Check the prompt to launch the web schema or use the cli """
         assert self.launcher.prompt_web_gui() == False
 
-    def mocked_requests_post(**kwargs):
-        """ Helper function to emulate POST requests responses from the web """
-
-        class MockResponse:
-            def __init__(self, data, status_code):
-                self.status_code = status_code
-                self.content = json.dumps(data)
-
-        if kwargs["url"] == "https://nf-co.re/launch":
-            response_data = {
-                "status": "recieved",
-                "api_url": "https://nf-co.re",
-                "web_url": "https://nf-co.re",
-                "status": "recieved",
-            }
-            return MockResponse(response_data, 200)
-
-    def mocked_requests_get(*args, **kwargs):
-        """ Helper function to emulate GET requests responses from the web """
-
-        class MockResponse:
-            def __init__(self, data, status_code):
-                self.status_code = status_code
-                self.content = json.dumps(data)
-
-        if args[0] == "valid_url_saved":
-            response_data = {"status": "web_builder_edited", "message": "testing", "schema": {"foo": "bar"}}
-            return MockResponse(response_data, 200)
-
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{}])
     def test_launch_web_gui_missing_keys(self, mock_poll_nfcore_web_api):
         """ Check the code that opens the web browser """
@@ -145,15 +134,6 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         assert self.launcher.launch_web_gui() == None
-
-    @mock.patch.object(nf_core.launch.Launch, "get_web_launch_response")
-    def test_launch_web_gui_id_supplied(self, mock_get_web_launch_response):
-        """ Check the code that opens the web browser """
-        self.launcher.web_schema_launch_web_url = "https://foo.com"
-        self.launcher.web_schema_launch_api_url = "https://bar.com"
-        self.launcher.get_pipeline_schema()
-        self.launcher.merge_nxf_flag_schema()
-        assert self.launcher.launch_web_gui() == True
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "error", "message": "foo"}])
     def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
