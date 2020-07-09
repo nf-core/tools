@@ -141,21 +141,31 @@ class Launch(object):
                 logging.error(click.style(e.args[0], fg="red"))
                 return False
 
-        # Build the schema and starting inputs
-        if self.get_pipeline_schema() is False:
-            return False
-        self.set_schema_inputs()
-        self.merge_nxf_flag_schema()
+            # Make a flat version of the schema
+            self.schema_obj.flatten_schema()
+            # Load local params if supplied
+            self.set_schema_inputs()
+            # Load schema defaults
+            self.schema_obj.get_schema_defaults()
 
-        if self.prompt_web_gui():
-            try:
-                self.launch_web_gui()
-            except AssertionError as e:
-                logging.error(click.style(e.args[0], fg="red"))
-                return False
+        # No --id supplied, fetch parameter inputs
         else:
-            # Kick off the interactive wizard to collect user inputs
-            self.prompt_schema()
+            # Build the schema and starting inputs
+            if self.get_pipeline_schema() is False:
+                return False
+            self.set_schema_inputs()
+            self.merge_nxf_flag_schema()
+
+            # Collect user inputs via web or cli
+            if self.prompt_web_gui():
+                try:
+                    self.launch_web_gui()
+                except AssertionError as e:
+                    logging.error(click.style(e.args[0], fg="red"))
+                    return False
+            else:
+                # Kick off the interactive wizard to collect user inputs
+                self.prompt_schema()
 
         # Validate the parameters that we now have
         if not self.schema_obj.validate_params():
@@ -195,7 +205,7 @@ class Launch(object):
             # No schema found
             # Check that this was actually a pipeline
             if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
-                logging.error("Could not find pipeline: {}".format(self.pipeline))
+                logging.error("Could not find pipeline: {} ({})".format(self.pipeline, self.schema_obj.pipeline_dir))
                 return False
             if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
                 os.path.join(self.schema_obj.pipeline_dir, "main.nf")
@@ -221,8 +231,9 @@ class Launch(object):
         Take the loaded schema and set the defaults as the input parameters
         If a nf_params.json file is supplied, apply these over the top
         """
-        # Set the inputs to the schema defaults
-        self.schema_obj.input_params = copy.deepcopy(self.schema_obj.schema_defaults)
+        # Set the inputs to the schema defaults unless already set by --id
+        if len(self.schema_obj.input_params) == 0:
+            self.schema_obj.input_params = copy.deepcopy(self.schema_obj.schema_defaults)
 
         # If we have a params_file, load and validate it against the schema
         if self.params_in:
@@ -239,11 +250,6 @@ class Launch(object):
 
     def prompt_web_gui(self):
         """ Ask whether to use the web-based or cli wizard to collect params """
-
-        # Check whether --id was given and we're loading params from the web
-        if self.web_schema_launch_web_url is not None and self.web_schema_launch_api_url is not None:
-            return True
-
         click.secho(
             "\nWould you like to enter pipeline parameters using a web-based interface or a command-line wizard?\n",
             fg="magenta",
@@ -260,42 +266,34 @@ class Launch(object):
     def launch_web_gui(self):
         """ Send schema to nf-core website and launch input GUI """
 
-        # If --id given on the command line, we already know the URLs
-        if self.web_schema_launch_web_url is None and self.web_schema_launch_api_url is None:
-            content = {
-                "post_content": "json_schema_launcher",
-                "api": "true",
-                "version": nf_core.__version__,
-                "status": "waiting_for_user",
-                "schema": json.dumps(self.schema_obj.schema),
-                "nxf_flags": json.dumps(self.nxf_flags),
-                "input_params": json.dumps(self.schema_obj.input_params),
-                "cli_launch": True,
-                "nextflow_cmd": self.nextflow_cmd,
-                "pipeline": self.pipeline,
-                "revision": self.pipeline_revision,
-            }
-            web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
-            try:
-                assert "api_url" in web_response
-                assert "web_url" in web_response
-                assert web_response["status"] == "recieved"
-            except AssertionError:
-                logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
-                raise AssertionError(
-                    "Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(
-                        self.web_schema_launch_url
-                    )
+        content = {
+            "post_content": "json_schema_launcher",
+            "api": "true",
+            "version": nf_core.__version__,
+            "status": "waiting_for_user",
+            "schema": json.dumps(self.schema_obj.schema),
+            "nxf_flags": json.dumps(self.nxf_flags),
+            "input_params": json.dumps(self.schema_obj.input_params),
+            "cli_launch": True,
+            "nextflow_cmd": self.nextflow_cmd,
+            "pipeline": self.pipeline,
+            "revision": self.pipeline_revision,
+        }
+        web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
+        try:
+            assert "api_url" in web_response
+            assert "web_url" in web_response
+            assert web_response["status"] == "recieved"
+        except AssertionError:
+            logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            raise AssertionError(
+                "Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(
+                    self.web_schema_launch_url
                 )
-            else:
-                self.web_schema_launch_web_url = web_response["web_url"]
-                self.web_schema_launch_api_url = web_response["api_url"]
-
-        # ID supplied - has it been completed or not?
+            )
         else:
-            logging.debug("ID supplied - checking status at {}".format(self.web_schema_launch_api_url))
-            if self.get_web_launch_response():
-                return True
+            self.web_schema_launch_web_url = web_response["web_url"]
+            self.web_schema_launch_api_url = web_response["api_url"]
 
         # Launch the web GUI
         logging.info("Opening URL: {}".format(self.web_schema_launch_web_url))
@@ -329,7 +327,7 @@ class Launch(object):
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except KeyError as e:
-                raise AssertionError("Missing return key from web API: {}".format(e))
+                raise KeyError("Missing return key from web API: {}".format(e))
             except Exception as e:
                 logging.debug(web_response)
                 raise AssertionError(
