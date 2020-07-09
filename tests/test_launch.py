@@ -146,15 +146,6 @@ class TestLaunch(unittest.TestCase):
         self.launcher.merge_nxf_flag_schema()
         assert self.launcher.launch_web_gui() == None
 
-    @mock.patch.object(nf_core.launch.Launch, "get_web_launch_response")
-    def test_launch_web_gui_id_supplied(self, mock_get_web_launch_response):
-        """ Check the code that opens the web browser """
-        self.launcher.web_schema_launch_web_url = "https://foo.com"
-        self.launcher.web_schema_launch_api_url = "https://bar.com"
-        self.launcher.get_pipeline_schema()
-        self.launcher.merge_nxf_flag_schema()
-        assert self.launcher.launch_web_gui() == True
-
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "error", "message": "foo"}])
     def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
         """ Test polling the website for a launch response - status error """
