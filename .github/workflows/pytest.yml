@@ -10,7 +10,7 @@ on:
       - '**.py'
 
 jobs:
-  PythonLint:
+  pytest:
 
     runs-on: ubuntu-latest
     strategy:
