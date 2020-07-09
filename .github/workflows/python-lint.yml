@@ -1,0 +1,27 @@
+name: Lint Python
+on:
+  push:
+    paths:
+      - '**.py'
+  pull_request:
+    paths:
+      - '**.py'
+
+jobs:
+  PythonLint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Check code lints with Black
+        uses: jpetrucciani/black-check@master
+
+      - name: Lint with flake8
+        if: github.event_name == 'pull_request'
+        uses: grantmcconnaughey/lintly-flake8-github-action@v1.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          # Fail if "new" violations detected or "any", default "new"
+          failIf: any
+          # Additional arguments to pass to flake8, default "." (current directory)
+          args: "--max-complexity=10 ."
