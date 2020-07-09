@@ -598,10 +598,8 @@ class Launch(object):
             md = Markdown(param_obj['description'])
             console.print(md)
         if 'help_text' in param_obj:
-            divider = Markdown("-----")
-            console.print(divider)
-            md = Markdown(param_obj['help_text'].strip())
-            console.print(md)
+            help_md = Markdown(param_obj['help_text'].strip())
+            console.print(help_md, style="dim")
             console.print("\n")
 
     def strip_default_params(self):
