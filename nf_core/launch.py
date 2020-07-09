@@ -366,6 +366,7 @@ class Launch(object):
                 # Remove if an empty string
                 if str(params[param_id]).strip() == "":
                     del params[param_id]
+                    continue
                 # Run filter function on value
                 filter_func = pyinquirer_objects.get(param_id, {}).get("filter")
                 if filter_func is not None:
