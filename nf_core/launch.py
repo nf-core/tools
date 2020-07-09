@@ -327,7 +327,7 @@ class Launch(object):
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except KeyError as e:
-                raise KeyError("Missing return key from web API: {}".format(e))
+                raise AssertionError("Missing return key from web API: {}".format(e))
             except Exception as e:
                 logging.debug(web_response)
                 raise AssertionError(
