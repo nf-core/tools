@@ -1293,9 +1293,9 @@ class PipelineLint(object):
             "{}\n          LINTING RESULTS\n{}\n".format(
                 click.style("=" * 29, dim=True), click.style("=" * 35, dim=True)
             )
-            + click.style("  [{}] {:>4} tests passed\n".format(u"\u2714", len(self.passed)), fg="green")
+            + click.style("  [{}] {:>4} tests passed\n".format("\u2714", len(self.passed)), fg="green")
             + click.style("  [!] {:>4} tests had warnings\n".format(len(self.warned)), fg="yellow")
-            + click.style("  [{}] {:>4} tests failed".format(u"\u2717", len(self.failed)), fg="red")
+            + click.style("  [{}] {:>4} tests failed".format("\u2717", len(self.failed)), fg="red")
             + rl
         )
 
