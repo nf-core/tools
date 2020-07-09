@@ -52,6 +52,7 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
 * Add AWS CI tests and full tests GitHub Actions workflows
 * Update AWS CI tests and full tests secrets names
+* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 * Add information about config files used for workflow execution (`workflow.configFiles`) to summary
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
@@ -79,11 +80,11 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 ### Other
 
 * Describe alternative installation method via conda with `conda env create`
-* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 * nf-core/tools version number now printed underneath header artwork
 * Bumped Conda version shipped with nfcore/base to 4.8.2
 * Added log message when creating new pipelines that people should talk to the community about their plans
 * Fixed 'on completion' emails sent using the `mail` command not containing body text.
+* Improved command-line help text for nf-core/tools
 
 ## v1.9
 
