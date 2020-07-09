@@ -427,7 +427,7 @@ def lint(schema_path):
     Check that a given pipeline schema is valid.
 
     Checks whether the pipeline schema validates as JSON Schema Draft 7
-    and adheres to te additional nf-core schema requirements.
+    and adheres to the additional nf-core schema requirements.
 
     This function runs as part of the nf-core lint command, this is a convenience
     command that does just the schema linting nice and quickly.
