@@ -8,7 +8,7 @@ import copy
 import json
 import logging
 import os
-import PyInquirer
+from PyInquirer import prompt, Separator
 import re
 import subprocess
 import textwrap
@@ -20,7 +20,7 @@ import nf_core.schema, nf_core.utils
 # NOTE: WE ARE USING A PRE-RELEASE VERSION OF PYINQUIRER
 #
 # This is so that we can capture keyboard interruptions in a nicer way
-# with the raise_keyboard_interrupt=True argument in the PyInquirer.prompt() calls
+# with the raise_keyboard_interrupt=True argument in the prompt.prompt() calls
 # It also allows list selections to have a default set.
 #
 # Waiting for a release of version of >1.0.3 of PyInquirer.
@@ -231,7 +231,7 @@ class Launch(object):
                 'Command line'
             ]
         }
-        answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
+        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
         return answer['use_web_gui'] == 'Web based'
 
     def launch_web_gui(self):
@@ -365,12 +365,12 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
+        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == '' and is_required:
             click.secho("Error - this property is required.", fg='red', err=True)
-            answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
+            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
 
         # Don't return empty answers
         if answer[param_id] == '':
@@ -394,8 +394,8 @@ class Launch(object):
             'message': param_id,
             'choices': [
                 'Continue >>',
-                PyInquirer.Separator()
-            ]
+                Separator()
+            ],
         }
 
         for child_param, child_param_obj in param_obj['properties'].items():
@@ -414,7 +414,7 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(param_id, param_obj)
-            answer = PyInquirer.prompt([question], raise_keyboard_interrupt=True)
+            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
             if answer[param_id] == 'Continue >>':
                 while_break = True
                 # Check if there are any required parameters that don't have answers
