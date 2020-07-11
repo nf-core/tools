@@ -35,51 +35,51 @@ class PipelineModules(object):
         self.pipeline_dir = os.getcwd()
         self.modules_file_tree = {}
         self.modules_current_hash = None
-        self.modules_avail_tool_names = []
+        self.modules_avail_module_names = []
 
     def list_modules(self):
         """
-        Get available tool names from GitHub tree for repo
+        Get available module names from GitHub tree for repo
         and print as list to stdout
         """
         self.get_modules_file_tree()
 
-        if len(self.modules_avail_tool_names) > 0:
+        if len(self.modules_avail_module_names) > 0:
             logging.info("Software available from {} ({}):\n".format(self.repo.name, self.repo.branch))
             # Print results to stdout
-            print("\n".join(self.modules_avail_tool_names))
+            print("\n".join(self.modules_avail_module_names))
         else:
             logging.info("No available software found in {} ({}):\n".format(self.repo.name, self.repo.branch))
 
-    def install(self, tool):
+    def install(self, module):
         self.get_modules_file_tree()
 
-        # Check that the supplied name is an available tool
-        if tool not in self.modules_avail_tool_names:
-            logging.error("Tool '{}' not found in list of available modules.".format(tool))
+        # Check that the supplied name is an available module
+        if module not in self.modules_avail_module_names:
+            logging.error("Module '{}' not found in list of available modules.".format(module))
             logging.info("Use the command 'nf-core modules list' to view available software")
             return
-        logging.debug("Installing tool '{}' at modules hash {}".format(tool, self.modules_current_hash))
+        logging.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
 
-        # Check that we don't already have a folder for this tool
-        tool_dir = os.path.join(self.pipeline_dir, "modules", "software", tool)
-        if os.path.exists(tool_dir):
-            logging.error("Tool directory already exists: {}".format(tool_dir))
-            logging.info("To update an existing tool, use the commands 'nf-core update' or 'nf-core fix'")
+        # Check that we don't already have a folder for this module
+        module_dir = os.path.join(self.pipeline_dir, "modules", "software", module)
+        if os.path.exists(module_dir):
+            logging.error("Module directory already exists: {}".format(module_dir))
+            logging.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
             return
 
-        # Download tool files
-        files = self.get_tool_file_urls(tool)
-        logging.debug("Fetching tool files:\n - {}".format("\n - ".join(files.keys())))
+        # Download module files
+        files = self.get_module_file_urls(module)
+        logging.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             dl_filename = os.path.join(self.pipeline_dir, "modules", filename)
             self.download_gh_file(dl_filename, api_url)
 
-    def update(self, tool):
+    def update(self, module):
         logging.error("This command is not yet implemented")
         pass
 
-    def remove(self, tool):
+    def remove(self, module):
         logging.error("This command is not yet implemented")
         pass
 
@@ -93,7 +93,7 @@ class PipelineModules(object):
 
         Sets self.modules_file_tree
              self.modules_current_hash
-             self.modules_avail_tool_names
+             self.modules_avail_module_names
         """
         api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.repo.name, self.repo.branch)
         r = requests.get(api_url)
@@ -114,20 +114,20 @@ class PipelineModules(object):
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
             if f["path"].startswith("software/") and f["path"].count("/") == 1:
-                self.modules_avail_tool_names.append(f["path"].replace("software/", ""))
+                self.modules_avail_module_names.append(f["path"].replace("software/", ""))
 
-    def get_tool_file_urls(self, tool):
-        """Fetch list of URLs for a specific tool
+    def get_module_file_urls(self, module):
+        """Fetch list of URLs for a specific module
 
-        Takes the name of a tool and iterates over the GitHub repo file tree.
-        Loops over items that are prefixed with the path 'software/<tool_name>' and ignores
+        Takes the name of a module and iterates over the GitHub repo file tree.
+        Loops over items that are prefixed with the path 'software/<module_name>' and ignores
         anything that's not a blob.
 
         Returns a dictionary with keys as filenames and values as GitHub API URIs.
         These can be used to then download file contents.
 
         Args:
-            tool (string): Name of tool for which to fetch a set of URLs
+            module (string): Name of module for which to fetch a set of URLs
 
         Returns:
             dict: Set of files and associated URLs as follows:
@@ -139,7 +139,7 @@ class PipelineModules(object):
         """
         results = {}
         for f in self.modules_file_tree:
-            if f["path"].startswith("software/{}".format(tool)) and f["type"] == "blob":
+            if f["path"].startswith("software/{}".format(module)) and f["type"] == "blob":
                 results[f["path"]] = f["url"]
         return results
 
