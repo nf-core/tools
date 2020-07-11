@@ -87,10 +87,6 @@ class PipelineModules(object):
         logging.error("This command is not yet implemented")
         pass
 
-    def fix_modules(self):
-        logging.error("This command is not yet implemented")
-        pass
-
     def get_modules_file_tree(self):
         """
         Fetch the file list from the repo, using the GitHub API

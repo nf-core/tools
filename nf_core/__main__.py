@@ -273,7 +273,11 @@ def lint(pipeline_dir, release, markdown, json):
 @click.option("-b", "--branch", type=str, default="master", help="The git branch to use.")
 @click.pass_context
 def modules(ctx, repository, branch):
-    """ Manage DSL 2 module imports """
+    """
+    Work with the nf-core/modules software wrappers.
+
+    Tools to manage DSL 2 nf-core/modules software wrapper imports.
+    """
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
@@ -285,7 +289,11 @@ def modules(ctx, repository, branch):
 @modules.command(help_priority=1)
 @click.pass_context
 def list(ctx):
-    """ List available tools """
+    """
+    List available software modules.
+
+    Lists all currently available software wrappers in the nf-core/modules repository.
+    """
     mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
     mods.list_modules()
 
@@ -294,7 +302,12 @@ def list(ctx):
 @click.pass_context
 @click.argument("tool", type=str, required=True, metavar="<tool name>")
 def install(ctx, tool):
-    """ Install a DSL2 module """
+    """
+    Add a DSL2 software wrapper module to a pipeline.
+
+    Given a software name, finds the relevant files in nf-core/modules
+    and copies to the pipeline along with associated metadata.
+    """
     mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
     mods.install(tool)
 
@@ -302,8 +315,17 @@ def install(ctx, tool):
 @modules.command(help_priority=3)
 @click.pass_context
 @click.argument("tool", type=str, metavar="<tool name>")
+# --force - overwrite files even if no update found
 def update(ctx, tool):
-    """ Update one or all DSL2 modules """
+    """
+    Update one or all software wrapper modules.
+
+    Compares a currently installed module against what is available in nf-core/modules.
+    Fetchs files and updates all relevant files for that software wrapper.
+
+    If no module name is specified, loops through all currently installed modules.
+    If no version is specified, looks for the latest available version on nf-core/modules.
+    """
     mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
     mods.update(tool)
 
@@ -312,7 +334,9 @@ def update(ctx, tool):
 @click.pass_context
 @click.argument("tool", type=str, required=True, metavar="<tool name>")
 def remove(ctx, tool):
-    """ Remove a DSL2 module """
+    """
+    Remove a software wrapper from a pipeline.
+    """
     mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
     mods.remove(tool)
 
@@ -320,17 +344,18 @@ def remove(ctx, tool):
 @modules.command(help_priority=5)
 @click.pass_context
 def check(ctx):
-    """ Check that imported module code has not been modified """
+    """
+    Check that imported module code has not been modified.
+
+    Compares a software module against the copy on nf-core/modules.
+    If any local modifications are found, the command logs an error
+    and exits with a non-zero exit code.
+
+    Use by the lint tests and automated CI to check that centralised
+    software wrapper code is only modified in the central repository.
+    """
     mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
     mods.check_modules()
-
-
-@modules.command(help_priority=6)
-@click.pass_context
-def fix(ctx):
-    """ Replace imported module code with a freshly downloaded copy """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
-    mods.fix_modules()
 
 
 ## nf-core schema subcommands
