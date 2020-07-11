@@ -22,6 +22,21 @@ import nf_core.sync
 
 import logging
 
+
+def run_nf_core():
+    # Print nf-core header to STDERR
+    stderr = rich.console.Console(file=sys.stderr)
+    stderr.print("\n[green]{},--.[black]/[green],-.".format(" " * 42))
+    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
+    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
+    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
+    stderr.print("[green]                                          `._,._,'\n")
+    stderr.print("[black]    nf-core/tools version {}\n\n".format(nf_core.__version__))
+
+    # Lanch the click cli
+    nf_core_cli()
+
+
 # Customise the order of subcommands for --help
 # https://stackoverflow.com/a/47984810/713980
 class CustomHelpOrder(click.Group):
@@ -405,11 +420,4 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 
 
 if __name__ == "__main__":
-    stderr = rich.console.Console(file=sys.stderr)
-    stderr.print("\n[green]{},--.[black]/[green],-.".format(" " * 42))
-    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
-    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
-    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
-    stderr.print("[green]                                          `._,._,'\n")
-    stderr.print("[black]    nf-core/tools version {}\n".format(nf_core.__version__))
-    nf_core_cli()
+    run_nf_core()

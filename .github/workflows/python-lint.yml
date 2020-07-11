@@ -3,11 +3,9 @@ on:
   push:
     paths:
       - '**.py'
-      - scripts/nf-core
   pull_request:
     paths:
       - '**.py'
-      - scripts/nf-core
 
 jobs:
   PythonLint:

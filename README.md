@@ -73,6 +73,35 @@ Go to the cloned directory and either install with pip:
 pip install -e .
 ```
 
+### Using a specific Python interpreter
+
+If you prefer, you can also run tools with a specific Python interpreter.
+The command line usage and flags are then exactly the same as if you ran with the `nf-core` command.
+Note that the module is `nf_core` with an underscore, not a hyphen like the console command.
+
+For example:
+
+```bash
+python -m nf_core --help
+python3 -m nf_core list
+~/my_env/bin/python -m nf_core create --name mypipeline --description "This is a new skeleton pipeline"
+```
+
+### Using with your own Python scripts
+
+The tools functionality is written in such a way that you can import it into your own scripts.
+For example, if you would like to get a list of all available nf-core pipelines:
+
+```python
+import nf_core.list
+wfs = nf_core.list.Workflows()
+wfs.get_remote_workflows()
+for wf in wfs.remote_workflows:
+    print(wf.full_name)
+```
+
+Please see [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/) for the function documentation.
+
 ## Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version,  when that was published and how recently the pipeline code was pulled to your local system (if at all).

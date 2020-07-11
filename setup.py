@@ -29,7 +29,7 @@ setup(
     author_email="phil.ewels@scilifelab.se",
     url="https://github.com/nf-core/tools",
     license="MIT",
-    scripts=["scripts/nf-core"],
+    entry_points={"console_scripts": ["nf-core=nf_core.__main__:run_nf_core"]},
     install_requires=[
         "cookiecutter",
         "click",
