@@ -68,6 +68,20 @@ class CustomHelpOrder(click.Group):
 
         return decorator
 
+    def group(self, *args, **kwargs):
+        """Behaves the same as `click.Group.group()` except capture
+        a priority for listing command names in help.
+        """
+        help_priority = kwargs.pop("help_priority", 1000)
+        help_priorities = self.help_priorities
+
+        def decorator(f):
+            cmd = super(CustomHelpOrder, self).command(*args, **kwargs)(f)
+            help_priorities[cmd.name] = help_priority
+            return cmd
+
+        return decorator
+
 
 @click.group(cls=CustomHelpOrder)
 @click.version_option(nf_core.__version__)
@@ -253,8 +267,74 @@ def lint(pipeline_dir, release, markdown, json):
         sys.exit(1)
 
 
+## nf-core module subcommands
+@nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
+@click.option("-r", "--repository", type=str, default="nf-core/modules", help="GitHub repository name.")
+@click.option("-b", "--branch", type=str, default="master", help="The git branch to use.")
+@click.pass_context
+def modules(ctx, repository, branch):
+    """ Manage DSL 2 module imports """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+    # Make repository object to pass to subcommands
+    ctx.obj["repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
+
+
+@modules.command(help_priority=1)
+@click.pass_context
+def list(ctx):
+    """ List available tools """
+    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods.list_modules()
+
+
+@modules.command(help_priority=2)
+@click.pass_context
+@click.argument("tool", type=str, required=True, metavar="<tool name>")
+def install(ctx, tool):
+    """ Install a DSL2 module """
+    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods.install(tool)
+
+
+@modules.command(help_priority=3)
+@click.pass_context
+@click.argument("tool", type=str, metavar="<tool name>")
+def update(ctx, tool):
+    """ Update one or all DSL2 modules """
+    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods.update(tool)
+
+
+@modules.command(help_priority=4)
+@click.pass_context
+@click.argument("tool", type=str, required=True, metavar="<tool name>")
+def remove(ctx, tool):
+    """ Remove a DSL2 module """
+    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods.remove(tool)
+
+
+@modules.command(help_priority=5)
+@click.pass_context
+def check(ctx):
+    """ Check that imported module code has not been modified """
+    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods.check_modules()
+
+
+@modules.command(help_priority=6)
+@click.pass_context
+def fix(ctx):
+    """ Replace imported module code with a freshly downloaded copy """
+    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods.fix_modules()
+
+
 ## nf-core schema subcommands
-@nf_core_cli.group(cls=CustomHelpOrder)
+@nf_core_cli.group(cls=CustomHelpOrder, help_priority=8)
 def schema():
     """
     Suite of tools for developers to manage pipeline schema.
@@ -341,7 +421,7 @@ def lint(schema_path):
         sys.exit(1)
 
 
-@nf_core_cli.command("bump-version", help_priority=7)
+@nf_core_cli.command("bump-version", help_priority=9)
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.argument("new_version", required=True, metavar="<new version>")
 @click.option(
@@ -375,7 +455,7 @@ def bump_version(pipeline_dir, new_version, nextflow):
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
 
-@nf_core_cli.command("sync", help_priority=8)
+@nf_core_cli.command("sync", help_priority=10)
 @click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
 @click.option(
     "-t", "--make-template-branch", is_flag=True, default=False, help="Create a TEMPLATE branch if none is found."
@@ -418,72 +498,6 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
         except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
             logging.error(e)
             sys.exit(1)
-
-
-## nf-core module subcommands
-@nf_core_cli.group(cls=CustomHelpOrder)
-@click.option("-r", "--repository", type=str, default="nf-core/modules", help="GitHub repository name.")
-@click.option("-b", "--branch", type=str, default="master", help="The git branch to use.")
-@click.pass_context
-def modules(ctx, repository, branch):
-    """ Manage DSL 2 module imports """
-    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
-    # by means other than the `if` block below)
-    ctx.ensure_object(dict)
-
-    # Make repository object to pass to subcommands
-    ctx.obj["repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
-
-
-@modules.command(help_priority=1)
-@click.pass_context
-def list(ctx):
-    """ List available tools """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
-    mods.list_modules()
-
-
-@modules.command(help_priority=2)
-@click.pass_context
-@click.argument("tool", type=str, required=True, metavar="<tool name>")
-def install(ctx, tool):
-    """ Install a DSL2 module """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
-    mods.install(tool)
-
-
-@modules.command(help_priority=3)
-@click.pass_context
-@click.argument("tool", type=str, metavar="<tool name>")
-def update(ctx, tool):
-    """ Update one or all DSL2 modules """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
-    mods.update(tool)
-
-
-@modules.command(help_priority=4)
-@click.pass_context
-@click.argument("tool", type=str, required=True, metavar="<tool name>")
-def remove(ctx, tool):
-    """ Remove a DSL2 module """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
-    mods.remove(tool)
-
-
-@modules.command(help_priority=5)
-@click.pass_context
-def check(ctx):
-    """ Check that imported module code has not been modified """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
-    mods.check_modules()
-
-
-@modules.command(help_priority=6)
-@click.pass_context
-def fix(ctx):
-    """ Replace imported module code with a freshly downloaded copy """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
-    mods.fix_modules()
 
 
 if __name__ == "__main__":
