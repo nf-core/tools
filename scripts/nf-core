@@ -7,6 +7,7 @@ import click
 import sys
 import os
 import re
+import rich
 
 import nf_core
 import nf_core.bump_version
@@ -404,24 +405,11 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
 
 
 if __name__ == "__main__":
-    click.echo(
-        click.style("\n                                          ,--.", fg="green")
-        + click.style("/", fg="black")
-        + click.style(",-.", fg="green"),
-        err=True,
-    )
-    click.echo(
-        click.style("          ___     __   __   __   ___     ", fg="blue") + click.style("/,-._.--~\\", fg="green"),
-        err=True,
-    )
-    click.echo(
-        click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg="blue") + click.style("   }  {", fg="yellow"),
-        err=True,
-    )
-    click.echo(
-        click.style("    | \| |       \__, \__/ |  \ |___     ", fg="blue") + click.style("\`-._,-`-,", fg="green"),
-        err=True,
-    )
-    click.secho("                                          `._,._,'\n", fg="green", err=True)
-    click.secho("    nf-core/tools version {}\n".format(nf_core.__version__), fg="black", err=True)
+    stderr = rich.console.Console(file=sys.stderr)
+    stderr.print("\n[green]{},--.[black]/[green],-.".format(" " * 42))
+    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
+    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
+    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
+    stderr.print("[green]                                          `._,._,'\n")
+    stderr.print("[black]    nf-core/tools version {}\n".format(nf_core.__version__))
     nf_core_cli()
