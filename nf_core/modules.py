@@ -113,8 +113,9 @@ class PipelineModules(object):
         self.modules_current_hash = result["sha"]
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
-            if f["path"].startswith("software/") and f["path"].count("/") == 1:
-                self.modules_avail_module_names.append(f["path"].replace("software/", ""))
+            if f["path"].startswith("software/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
+                # remove software/ and /main.nf
+                self.modules_avail_module_names.append(f["path"][9:-8])
 
     def get_module_file_urls(self, module):
         """Fetch list of URLs for a specific module
