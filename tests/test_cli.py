@@ -12,7 +12,7 @@ import unittest
 @mock.patch("nf_core.__main__.nf_core_cli")
 def test_header(mock_cli):
     """ Just try to execute the header function """
-    nf_core.__main__.nf_core_cli()
+    nf_core.__main__.run_nf_core()
 
 
 def test_cli_help():
