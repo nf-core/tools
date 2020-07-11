@@ -12,6 +12,7 @@ import requests
 import sys
 import tempfile
 
+
 class ModulesRepo(object):
     """
     An object to store details about the repository being used for modules.
@@ -20,12 +21,12 @@ class ModulesRepo(object):
     so that this can be used in the same way by all sucommands.
     """
 
-    def __init__(self, repo='nf-core/modules', branch='master'):
+    def __init__(self, repo="nf-core/modules", branch="master"):
         self.name = repo
         self.branch = branch
 
-class PipelineModules(object):
 
+class PipelineModules(object):
     def __init__(self, repo_obj):
         """
         Initialise the PipelineModules object
@@ -35,7 +36,6 @@ class PipelineModules(object):
         self.modules_file_tree = {}
         self.modules_current_hash = None
         self.modules_avail_tool_names = []
-
 
     def list_modules(self):
         """
@@ -62,8 +62,8 @@ class PipelineModules(object):
         logging.debug("Installing tool '{}' at modules hash {}".format(tool, self.modules_current_hash))
 
         # Check that we don't already have a folder for this tool
-        tool_dir = os.path.join(self.pipeline_dir, 'modules', 'tools', tool)
-        if(os.path.exists(tool_dir)):
+        tool_dir = os.path.join(self.pipeline_dir, "modules", "tools", tool)
+        if os.path.exists(tool_dir):
             logging.error("Tool directory already exists: {}".format(tool_dir))
             logging.info("To update an existing tool, use the commands 'nf-core update' or 'nf-core fix'")
             return
@@ -72,7 +72,7 @@ class PipelineModules(object):
         files = self.get_tool_file_urls(tool)
         logging.debug("Fetching tool files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
-            dl_filename = os.path.join(self.pipeline_dir, 'modules', filename)
+            dl_filename = os.path.join(self.pipeline_dir, "modules", filename)
             self.download_gh_file(dl_filename, api_url)
 
     def update(self, tool):
@@ -91,7 +91,6 @@ class PipelineModules(object):
         logging.error("This command is not yet implemented")
         pass
 
-
     def get_modules_file_tree(self):
         """
         Fetch the file list from the repo, using the GitHub API
@@ -103,19 +102,23 @@ class PipelineModules(object):
         api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.repo.name, self.repo.branch)
         r = requests.get(api_url)
         if r.status_code == 404:
-            logging.error("Repository / branch not found: {} ({})\n{}".format(self.repo.name, self.repo.branch, api_url))
+            logging.error(
+                "Repository / branch not found: {} ({})\n{}".format(self.repo.name, self.repo.branch, api_url)
+            )
             sys.exit(1)
         elif r.status_code != 200:
-            raise SystemError("Could not fetch {} ({}) tree: {}\n{}".format(self.repo.name, self.repo.branch, r.status_code, api_url))
+            raise SystemError(
+                "Could not fetch {} ({}) tree: {}\n{}".format(self.repo.name, self.repo.branch, r.status_code, api_url)
+            )
 
         result = r.json()
-        assert result['truncated'] == False
+        assert result["truncated"] == False
 
-        self.modules_current_hash = result['sha']
-        self.modules_file_tree = result['tree']
-        for f in result['tree']:
-            if f['path'].startswith('tools/') and f['path'].count('/') == 1:
-                self.modules_avail_tool_names.append(f['path'].replace('tools/', ''))
+        self.modules_current_hash = result["sha"]
+        self.modules_file_tree = result["tree"]
+        for f in result["tree"]:
+            if f["path"].startswith("tools/") and f["path"].count("/") == 1:
+                self.modules_avail_tool_names.append(f["path"].replace("tools/", ""))
 
     def get_tool_file_urls(self, tool):
         """Fetch list of URLs for a specific tool
@@ -140,8 +143,8 @@ class PipelineModules(object):
         """
         results = {}
         for f in self.modules_file_tree:
-            if f['path'].startswith('tools/{}'.format(tool)) and f['type'] == 'blob':
-                results[f['path']] = f['url']
+            if f["path"].startswith("tools/{}".format(tool)) and f["type"] == "blob":
+                results[f["path"]] = f["url"]
         return results
 
     def download_gh_file(self, dl_filename, api_url):
@@ -165,8 +168,8 @@ class PipelineModules(object):
         if r.status_code != 200:
             raise SystemError("Could not fetch {} file: {}\n {}".format(self.repo.name, r.status_code, api_url))
         result = r.json()
-        file_contents = base64.b64decode(result['content'])
+        file_contents = base64.b64decode(result["content"])
 
         # Write the file contents
-        with open(dl_filename, 'wb') as fh:
+        with open(dl_filename, "wb") as fh:
             fh.write(file_contents)
