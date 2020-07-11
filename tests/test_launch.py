@@ -13,7 +13,7 @@ import unittest
 
 
 class TestLaunch(unittest.TestCase):
-    """Class for schema tests"""
+    """Class for launch tests"""
 
     def setUp(self):
         """ Create a new PipelineSchema and Launch objects """
