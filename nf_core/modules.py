@@ -45,11 +45,11 @@ class PipelineModules(object):
         self.get_modules_file_tree()
 
         if len(self.modules_avail_tool_names) > 0:
-            logging.info("Tools available from {} ({}):\n".format(self.repo.name, self.repo.branch))
+            logging.info("Software available from {} ({}):\n".format(self.repo.name, self.repo.branch))
             # Print results to stdout
             print("\n".join(self.modules_avail_tool_names))
         else:
-            logging.info("No available tools found in {} ({}):\n".format(self.repo.name, self.repo.branch))
+            logging.info("No available software found in {} ({}):\n".format(self.repo.name, self.repo.branch))
 
     def install(self, tool):
         self.get_modules_file_tree()
@@ -57,12 +57,12 @@ class PipelineModules(object):
         # Check that the supplied name is an available tool
         if tool not in self.modules_avail_tool_names:
             logging.error("Tool '{}' not found in list of available modules.".format(tool))
-            logging.info("Use the command 'nf-core modules list' to view available tools")
+            logging.info("Use the command 'nf-core modules list' to view available software")
             return
         logging.debug("Installing tool '{}' at modules hash {}".format(tool, self.modules_current_hash))
 
         # Check that we don't already have a folder for this tool
-        tool_dir = os.path.join(self.pipeline_dir, "modules", "tools", tool)
+        tool_dir = os.path.join(self.pipeline_dir, "modules", "software", tool)
         if os.path.exists(tool_dir):
             logging.error("Tool directory already exists: {}".format(tool_dir))
             logging.info("To update an existing tool, use the commands 'nf-core update' or 'nf-core fix'")
@@ -117,14 +117,14 @@ class PipelineModules(object):
         self.modules_current_hash = result["sha"]
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
-            if f["path"].startswith("tools/") and f["path"].count("/") == 1:
-                self.modules_avail_tool_names.append(f["path"].replace("tools/", ""))
+            if f["path"].startswith("software/") and f["path"].count("/") == 1:
+                self.modules_avail_tool_names.append(f["path"].replace("software/", ""))
 
     def get_tool_file_urls(self, tool):
         """Fetch list of URLs for a specific tool
 
         Takes the name of a tool and iterates over the GitHub repo file tree.
-        Loops over items that are prefixed with the path 'tools/<tool_name>' and ignores
+        Loops over items that are prefixed with the path 'software/<tool_name>' and ignores
         anything that's not a blob.
 
         Returns a dictionary with keys as filenames and values as GitHub API URIs.
@@ -137,13 +137,13 @@ class PipelineModules(object):
             dict: Set of files and associated URLs as follows:
 
             {
-                'tools/fastqc/main.nf': 'https://api.github.com/repos/nf-core/modules/git/blobs/65ba598119206a2b851b86a9b5880b5476e263c3',
-                'tools/fastqc/meta.yml': 'https://api.github.com/repos/nf-core/modules/git/blobs/0d5afc23ba44d44a805c35902febc0a382b17651'
+                'software/fastqc/main.nf': 'https://api.github.com/repos/nf-core/modules/git/blobs/65ba598119206a2b851b86a9b5880b5476e263c3',
+                'software/fastqc/meta.yml': 'https://api.github.com/repos/nf-core/modules/git/blobs/0d5afc23ba44d44a805c35902febc0a382b17651'
             }
         """
         results = {}
         for f in self.modules_file_tree:
-            if f["path"].startswith("tools/{}".format(tool)) and f["type"] == "blob":
+            if f["path"].startswith("software/{}".format(tool)) and f["type"] == "blob":
                 results[f["path"]] = f["url"]
         return results
 
