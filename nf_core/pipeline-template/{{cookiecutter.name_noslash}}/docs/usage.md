@@ -9,7 +9,7 @@
   * [Reproducibility](#reproducibility)
 * [Main arguments](#main-arguments)
   * [`-profile`](#-profile)
-  * [`--reads`](#--reads)
+  * [`--input`](#--input)
   * [`--single_end`](#--single_end)
 * [Reference genomes](#reference-genomes)
   * [`--genome` (using iGenomes)](#--genome-using-igenomes)
@@ -57,7 +57,7 @@ NXF_OPTS='-Xms1g -Xmx4g'
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run {{ cookiecutter.name }} --reads '*_R{1,2}.fastq.gz' -profile docker
+nextflow run {{ cookiecutter.name }} --input '*_R{1,2}.fastq.gz' -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -120,12 +120,12 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 
 <!-- TODO nf-core: Document required command line parameters -->
 
-### `--reads`
+### `--input`
 
 Use this to specify the location of your input FastQ files. For example:
 
 ```bash
---reads 'path/to/data/sample_*_{1,2}.fastq'
+--input 'path/to/data/sample_*_{1,2}.fastq'
 ```
 
 Please note the following requirements:
@@ -138,10 +138,10 @@ If left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`
 
 ### `--single_end`
 
-By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--single_end` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--reads`. For example:
+By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--single_end` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--input`. For example:
 
 ```bash
---single_end --reads '*.fastq'
+--single_end --input '*.fastq'
 ```
 
 It is not possible to run a mixture of single-end and paired-end files in one run.

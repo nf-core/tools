@@ -2,8 +2,11 @@
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+
 [![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
 [![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
+[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23tools-4A154B?logo=slack)](https://nfcore.slack.com/channels/tools)
 
 A python package with helper tools for the nf-core community.
 
@@ -70,12 +73,6 @@ Go to the cloned directory and either install with pip:
 pip install -e .
 ```
 
-Or install directly using Python:
-
-```bash
-python setup.py develop
-```
-
 ## Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version,  when that was published and how recently the pipeline code was pulled to your local system (if at all).
@@ -91,22 +88,20 @@ $ nf-core list
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
-Name                       Version    Released      Last Pulled     Have latest release?
--------------------------  ---------  ------------  --------------  ----------------------
-nf-core/rnaseq             1.3        4 days ago    27 minutes ago  Yes
-nf-core/hlatyping          1.1.4      3 weeks ago   1 months ago    No
-nf-core/eager              2.0.6      3 weeks ago   -               -
-nf-core/mhcquant           1.2.6      3 weeks ago   -               -
-nf-core/rnafusion          1.0        1 months ago  -               -
-nf-core/methylseq          1.3        1 months ago  3 months ago    No
-nf-core/ampliseq           1.0.0      3 months ago  -               -
-nf-core/deepvariant        1.0        4 months ago  -               -
-nf-core/atacseq            dev        -             1 months ago    No
-nf-core/bacass             dev        -             -               -
-nf-core/bcellmagic         dev        -             -               -
-nf-core/chipseq            dev        -             1 months ago    No
-nf-core/clinvap            dev        -             -               -
+
+Name                       Latest Release    Released       Last Pulled    Have latest release?
+-------------------------  ----------------  -------------  -------------  ----------------------
+nf-core/chipseq            1.2.0             6 days ago     1 weeks ago    No (dev - bfe7eb3)
+nf-core/atacseq            1.2.0             6 days ago     1 weeks ago    No (dev - 12b8d0b)
+nf-core/viralrecon         1.1.0             2 weeks ago    2 weeks ago    Yes (v1.1.0)
+nf-core/sarek              2.6.1             2 weeks ago    -              -
+nf-core/imcyto             1.0.0             1 months ago   -              -
+nf-core/slamseq            1.0.0             2 months ago   -              -
+nf-core/coproid            1.1               2 months ago   -              -
+nf-core/mhcquant           1.5.1             2 months ago   -              -
+[..truncated..]
 ```
 
 To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
@@ -120,13 +115,15 @@ $ nf-core list rna rna-seq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
-Name               Version    Released      Last Pulled     Have latest release?
------------------  ---------  ------------  --------------  ----------------------
-nf-core/rnaseq     1.3        4 days ago    28 minutes ago  Yes
-nf-core/rnafusion  1.0        1 months ago  -               -
-nf-core/lncpipe    dev        -             -               -
-nf-core/smrnaseq   dev        -             -               -
+
+Name               Latest Release    Released       Last Pulled    Have latest release?
+-----------------  ----------------  -------------  -------------  ----------------------
+nf-core/rnafusion  1.1.0             5 months ago   -              -
+nf-core/rnaseq     1.4.2             9 months ago   2 weeks ago    No (v1.2)
+nf-core/smrnaseq   1.0.0             10 months ago  -              -
+nf-core/lncpipe    dev               -              -              -
 ```
 
 You can sort the results by latest release (`-s release`, default),
@@ -143,19 +140,19 @@ $ nf-core list -s stars
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
-Name                         Stargazers  Version    Released      Last Pulled     Have latest release?
--------------------------  ------------  ---------  ------------  --------------  ----------------------
-nf-core/rnaseq                       81  1.3        4 days ago    30 minutes ago  Yes
-nf-core/methylseq                    22  1.3        1 months ago  3 months ago    No
-nf-core/ampliseq                     21  1.0.0      3 months ago  -               -
-nf-core/chipseq                      20  dev        -             1 months ago    No
-nf-core/deepvariant                  15  1.0        4 months ago  -               -
-nf-core/eager                        14  2.0.6      3 weeks ago   -               -
-nf-core/rnafusion                    14  1.0        1 months ago  -               -
-nf-core/lncpipe                       9  dev        -             -               -
-nf-core/exoseq                        8  dev        -             -               -
-nf-core/mag                           8  dev        -             -               -
+
+Name                         Stargazers  Latest Release    Released       Last Pulled    Have latest release?
+-------------------------  ------------  ----------------  -------------  -------------  ----------------------
+nf-core/rnaseq                      201  1.4.2             9 months ago   2 weeks ago    No (v1.2)
+nf-core/chipseq                      56  1.2.0             6 days ago     1 weeks ago    No (dev - bfe7eb3)
+nf-core/sarek                        52  2.6.1             2 weeks ago    -              -
+nf-core/methylseq                    45  1.5               3 months ago   -              -
+nf-core/rnafusion                    45  1.1.0             5 months ago   -              -
+nf-core/ampliseq                     40  1.1.2             7 months ago   -              -
+nf-core/atacseq                      37  1.2.0             6 days ago     1 weeks ago    No (dev - 12b8d0b)
+[..truncated..]
 ```
 
 Finally, to return machine-readable JSON output, use the `--json` flag.
@@ -166,13 +163,14 @@ Some nextflow pipelines have a considerable number of command line flags that ca
 To help with this, the `nf-core launch` command uses an interactive command-line wizard tool to prompt you for
 values for running nextflow and the pipeline parameters.
 
-If the pipeline in question has a `parameters.settings.json` file following the [nf-core parameter JSON schema](https://nf-co.re/parameter-schema), parameters will be grouped and have associated description text and variable typing.
+The tool uses the `nextflow_schema.json` file from a pipeline to give parameter descriptions, defaults and grouping.
+If no file for the pipeline is found, one will be automatically generated at runtime.
 
-Nextflow `params` variables are saved in to a JSON file called `nfx-params.json` and used by nextflow with the `-params-file` flag.
+Nextflow `params` variables are saved in to a JSON file called `nf-params.json` and used by nextflow with the `-params-file` flag.
 This makes it easier to reuse these in the future.
 
-It is not essential to run the pipeline - the wizard will ask you if you want to launch the command at the end.
-If not, you finish with the `params` JSON file and a nextflow command that you can copy and paste.
+The `nf-core launch` command is an interactive command line tool and prompts you to overwrite the default values for each parameter.
+Entering `?` for any parameter will give a full description from the documentation of what that value does.
 
 ```console
 $ nf-core launch rnaseq
@@ -183,47 +181,59 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-
-INFO: Launching nf-core/rnaseq
-Main nextflow options
-
-Config profile to use
- -profile [standard]: docker
-
-Unique name for this nextflow run
- -name [None]: test_run
-
-Work directory for intermediate files
- -w [./work]:
-
-Resume a previous workflow run
- -resume [y/N]:
-
-Release / revision to use
- -r [None]: 1.3
+    nf-core/tools version 1.10
 
 
-Parameter group: Main options
-Do you want to change the group's defaults? [y/N]: y
+INFO: [✓] Pipeline schema looks valid
 
-Input files
-Specify the location of your input FastQ files.
- --reads ['data/*{1,2}.fastq.gz']: '/path/to/reads_*{R1,R2}.fq.gz'
+INFO: This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
 
-[..truncated..]
-
-Nextflow command:
-  nextflow run nf-core/rnaseq -profile "docker" -name "test_run" -r "1.3" -params-file "/Users/ewels/testing/nfx-params.json"
-
-
-Do you want to run this command now? [y/N]: y
-
-INFO: Launching workflow!
-N E X T F L O W  ~  version 19.01.0
-Launching `nf-core/rnaseq` [evil_engelbart] - revision: 37f260d360 [master]
-
-[..truncated..]
+? Nextflow command-line flags  (Use arrow keys)
+ ❯ Continue >>
+   ---------------
+   -name
+   -revision
+   -profile
+   -work-dir
+   -resume
 ```
+
+Once complete, the wizard will ask you if you want to launch the Nextflow run.
+If not, you can copy and paste the Nextflow command with the `nf-params.json` file of your inputs.
+
+```console
+? Nextflow command-line flags  Continue >>
+? Input/output options  input
+
+Input FastQ files. (? for help)
+? input  data/*{1,2}.fq.gz
+? Input/output options  Continue >>
+? Reference genome options  Continue >>
+
+INFO: [✓] Input parameters look valid
+
+INFO: Nextflow command:
+  nextflow run nf-core-testpipeline/ -params-file "nf-params.json"
+
+
+Do you want to run this command now? [y/N]: n
+```
+
+### Launch tool options
+
+* `-c`, `--command-only`
+  * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
+* `-p`, `--params-in PATH`
+  * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
+  * This will overwrite the pipeline schema defaults before the wizard is launched.
+* `-o`, `--params-out PATH`
+  * Path to save parameters JSON file to. (Default: `nf-params.json`)
+* `-a`, `--save-all`
+  * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
+  * This option saves _all_ parameters found to the JSON file.
+* `-h`, `--show-hidden`
+  * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
+  * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
 
 ## Downloading pipelines for offline use
 
@@ -245,6 +255,7 @@ $ nf-core download methylseq -r 1.4 --singularity
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Saving methylseq
  Pipeline release: 1.4
@@ -305,7 +316,7 @@ nf-core-methylseq-1.4
     ├── LICENSE
     ├── main.nf
     ├── nextflow.config
-    ├── parameters.settings.json
+    ├── nextflow_schema.json
     └── README.md
 
 10 directories, 15 files
@@ -323,7 +334,7 @@ nextflow run /path/to/nf-core-methylseq-1.4/workflow/ \
      -profile singularity \
      -with-singularity /path/to/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg \
      # .. other normal pipeline parameters from here on..
-     --reads '*_R{1,2}.fastq.gz' --genome GRCh38
+     --input '*_R{1,2}.fastq.gz' --genome GRCh38
 ```
 
 ## Pipeline software licences
@@ -339,6 +350,7 @@ $ nf-core licences rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Warning: This tool only prints licence information for the software tools packaged using conda.
         The pipeline may use other software and dependencies not described here.
@@ -381,6 +393,8 @@ $ nf-core create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
+
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
 Author: Big Steve
@@ -392,17 +406,19 @@ INFO: Initialising pipeline git repository
 INFO: Done. Remember to add a remote and push to GitHub:
   cd /path/to/nf-core-nextbigthing
   git remote add origin git@github.com:USERNAME/REPO_NAME.git
-  git push
+  git push --all origin
+
+INFO: This will also push your newly created dev branch and the TEMPLATE branch for syncing.
+
+INFO: !!!!!! IMPORTANT !!!!!!
+
+If you are interested in adding your pipeline to the nf-core community,
+PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
+
+Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
 ```
 
-Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet).
-On your computer, add this repository as a git remote and push to it:
-
-```console
-git remote add origin https://github.com/ewels/nf-core-nextbigthing.git
-git push --set-upstream origin master
-```
-
+Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet) and push the commits from your computer using the example commands in the above log.
 You can then continue to edit, commit and push normally as you build your pipeline.
 
 Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipelines) for a full walkthrough of how to create a new nf-core workflow.
@@ -426,12 +442,16 @@ $ nf-core lint .
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
+
 Running pipeline tests  [####################################]  100%  None
 
-INFO: ===========
- LINTING RESULTS
-=================
-  72 tests passed   2 tests had warnings   0 tests failed
+INFO: =============================
+          LINTING RESULTS
+===================================
+  [✔]  118 tests passed
+  [!]    2 tests had warnings
+  [✗]    0 tests failed
 
 WARNING: Test Warnings:
   https://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
@@ -468,10 +488,11 @@ $ nf-core schema validate my_pipeline --params my_inputs.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: [✓] Pipeline schema looks valid
 
-ERROR: [✗] Input parameters are invalid: 'reads' is a required property
+ERROR: [✗] Input parameters are invalid: 'input' is a required property
 ```
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
@@ -496,6 +517,7 @@ $ nf-core schema build nf-core-testpipeline
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Loaded existing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
 
@@ -505,17 +527,17 @@ Unrecognised 'params.we_removed_this_too' found in schema but not in Nextflow co
 INFO: Removed 2 params from existing JSON Schema that were not found with `nextflow config`:
  old_param, we_removed_this_too
 
-Found 'params.reads' in Nextflow config. Add to JSON Schema? [Y/n]:
+Found 'params.input' in Nextflow config. Add to JSON Schema? [Y/n]:
 Found 'params.outdir' in Nextflow config. Add to JSON Schema? [Y/n]:
 
 INFO: Added 2 params to JSON Schema that were found with `nextflow config`:
- reads, outdir
+ input, outdir
 
 INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
 
 Launch web builder for customisation and editing? [Y/n]:
 
-INFO: Opening URL: http://localhost:8888/json_schema_build?id=1584441828_b990ac785cd6
+INFO: Opening URL: http://localhost:8888/json_schema_build?id=1234567890_abc123def456
 
 INFO: Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.
 ..........
@@ -546,6 +568,7 @@ $ nf-core schema lint nextflow_schema.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 ERROR: [✗] JSON Schema does not follow nf-core specs:
  Schema should have 'properties' section
@@ -569,14 +592,17 @@ $ nf-core bump-version . 1.0
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Running nf-core lint tests
 Running pipeline tests  [####################################]  100%  None
 
-INFO: ===========
- LINTING RESULTS
-=================
-  118 tests passed   0 tests had warnings   0 tests failed
+INFO: =============================
+          LINTING RESULTS
+===================================
+  [✔]  120 tests passed
+  [!]    0 tests had warnings
+  [✗]    0 tests failed
 
 INFO: Changing version number:
   Current version number is '1.0dev'
@@ -607,6 +633,25 @@ INFO: Updating version in Dockerfile
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
+To export the lint results to a JSON file, use `--json [filename]`. For markdown, use `--markdown [filename]`.
+
+As linting tests can give a pass state for CI but with warnings that need some effort to track down, the linting
+code attempts to post a comment to the GitHub pull-request with a summary of results if possible.
+It does this when the environment variables `GITHUB_COMMENTS_URL` and `GITHUB_TOKEN` are set and if there are
+any failing or warning tests. If a pull-request is updated with new commits, the original comment will be
+updated with the latest results instead of posting lots of new comments for each `git push`.
+
+A typical GitHub Actions step with the required environment variables may look like this (will only work on pull-request events):
+
+```yaml
+- name: Run nf-core lint
+  env:
+    GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
+    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    GITHUB_PR_COMMIT: ${{ github.event.pull_request.head.sha }}
+  run: nf-core lint $GITHUB_WORKSPACE
+```
+
 ## Sync a pipeline with the template
 
 Over time, the main nf-core pipeline template is updated. To keep all nf-core pipelines up to date,
@@ -627,6 +672,7 @@ $ nf-core sync my_pipeline/
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Pipeline directory: /path/to/my_pipeline
 
@@ -675,6 +721,7 @@ $ nf-core sync --all
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
+    nf-core/tools version 1.10
 
 INFO: Syncing nf-core/ampliseq
 

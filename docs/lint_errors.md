@@ -92,6 +92,10 @@ The following variables fail the test if missing:
   * The nextflow timeline, trace, report and DAG should be enabled by default (set to `true`)
 * `process.cpus`, `process.memory`, `process.time`
   * Default CPUs, memory and time limits for tasks
+* `params.input`
+  * Input parameter to specify input data, specify this to avoid a warning
+  * Typical usage:
+    * `params.input`: Input data that is not NGS sequencing data
 
 The following variables throw warnings if missing:
 
@@ -105,16 +109,7 @@ The following variables throw warnings if missing:
 * `process.container`
   * Docker Hub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
-  * If the pipeline version number contains the string `dev`, the Docker Hub tag must be `:dev`
-* `params.reads` or `params.input` or `params.design`
-  * Input parameter to specify input data - one or more of these can be used to avoid a warning
-  * Typical usage:
-    * `params.reads`: FastQ files (or pairs)
-    * `params.input`: Input data that is not NGS sequencing data
-    * `params.design`: A CSV/TSV design file specifying input files and metadata for the run
-* `params.single_end`
-  * Specify to work with single-end sequence data instead of paired-end by default
-  * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
+  * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -123,9 +118,9 @@ The following variables are depreciated and fail the test if they are still pres
 * `params.nf_required_version`
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
-  * The old method for specifying the Docker Hub container address. Replaced by `process.container`
-* `singleEnd` and `igenomesIgnore`
-  * Changed to `single_end` and `igenomes_ignore`
+  * The old method for specifying the dockerhub container address. Replaced by `process.container`
+* `igenomesIgnore`
+  * Changed to `igenomes_ignore`
   * The `snake_case` convention should now be used when defining pipeline parameters
 
 Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
@@ -135,29 +130,33 @@ Process-level configuration syntax is checked and fails if uses the old Nextflow
 
 nf-core pipelines must have CI testing with GitHub Actions.
 
-### GitHub Actions
+### GitHub Actions CI
 
-There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory. You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
+There are 4 main GitHub Actions CI test files: `ci.yml`, `linting.yml`, `branch.yml` and `awstests.yml`, and they can all be found in the `.github/workflows/` directory.
+You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
 
 This test will fail if the following requirements are not met in these files:
 
 1. `ci.yml`: Contains all the commands required to test the pipeline
-    * Must be turned on for `push` and `pull_request`:
+    * Must be triggered on the following events:
 
       ```yaml
-      on: [push, pull_request]
+      on:
+        push:
+          branches:
+            - dev
+        pull_request:
+        release:
+          types: [published]
       ```
 
-    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:
+    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in the test matrix:
 
       ```yaml
-      jobs:
-        test:
-          runs-on: ubuntu-18.04
-          strategy:
-            matrix:
-              # Nextflow versions: check pipeline minimum and current latest
-              nxf_ver: ['19.10.0', '']
+      strategy:
+        matrix:
+          # Nextflow versions: check pipeline minimum and current latest
+          nxf_ver: ['19.10.0', '']
       ```
 
     * The `Docker` container for the pipeline must be tagged appropriately for:
@@ -165,14 +164,15 @@ This test will fail if the following requirements are not met in these files:
         * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
 
           ```yaml
-          jobs:
-            test:
-              runs-on: ubuntu-18.04
-              steps:
-                - name: Pull image
-                    run: |
-                    docker pull nfcore/<pipeline_name>:dev
-                    docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
+          - name: Build new docker image
+            if: env.GIT_DIFF
+            run: docker build --no-cache . -t nfcore/<pipeline_name>:1.0.0
+
+          - name: Pull docker image
+            if: ${{ !env.GIT_DIFF }}
+            run: |
+              docker pull nfcore/<pipeline_name>:dev
+              docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
           ```
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
@@ -215,6 +215,23 @@ This test will fail if the following requirements are not met in these files:
           run: |
             { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
+
+4. `awstest.yml`: Triggers tests on AWS batch. As running tests on AWS incurs costs, they should be only triggered on `push` to `master` and `release`.
+    * Must be turned on for `push` to `master` and `release`.
+    * Must not be turned on for `pull_request` or other events.
+
+### GitHub Actions AWS full tests
+
+Additionally, we provide the possibility of testing the pipeline on full size datasets on AWS.
+This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
+The GitHub Actions workflow is: `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
+This workflow incurrs higher AWS costs, therefore it should only be triggered on `release`.
+For tests on full data prior to release, [https://tower.nf](Nextflow Tower's launch feature) can be employed.
+
+`awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
+
+* Must be only turned on for `release`.
+* Should run the profile `test_full`. If it runs the profile `test` a warning is given.
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 
@@ -287,7 +304,7 @@ LABEL authors="your@email.com" \
     description="Docker image containing all requirements for the nf-core mypipeline pipeline"
 
 COPY environment.yml /
-RUN conda env create -f /environment.yml && conda clean -a
+RUN conda env create --quiet -f /environment.yml && conda clean -a
 RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
 ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```

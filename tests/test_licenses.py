@@ -2,11 +2,11 @@
 """Some tests covering the pipeline creation sub command.
 """
 import pytest
-import nf_core.lint, nf_core.licences
+import nf_core.licences
 import unittest
 
 
-PL_WITH_LICENSES = 'nf-core/hlatyping'
+PL_WITH_LICENSES = "nf-core/hlatyping"
 
 
 class WorkflowLicensesTest(unittest.TestCase):
@@ -14,9 +14,7 @@ class WorkflowLicensesTest(unittest.TestCase):
     retrieval functionality of nf-core tools."""
 
     def setUp(self):
-        self.license_obj = nf_core.licences.WorkflowLicences(
-            pipeline=PL_WITH_LICENSES
-        )
+        self.license_obj = nf_core.licences.WorkflowLicences(pipeline=PL_WITH_LICENSES)
 
     def test_fetch_licenses_successful(self):
         self.license_obj.fetch_conda_licences()
@@ -24,6 +22,6 @@ class WorkflowLicensesTest(unittest.TestCase):
 
     @pytest.mark.xfail(raises=LookupError)
     def test_errorness_pipeline_name(self):
-        self.license_obj.pipeline = 'notpresent'
+        self.license_obj.pipeline = "notpresent"
         self.license_obj.fetch_conda_licences()
         self.license_obj.print_licences()
