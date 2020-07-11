@@ -7,6 +7,7 @@ import click
 import sys
 import os
 import re
+import rich
 
 import nf_core
 import nf_core.bump_version
@@ -20,6 +21,21 @@ import nf_core.schema
 import nf_core.sync
 
 import logging
+
+
+def run_nf_core():
+    # Print nf-core header to STDERR
+    stderr = rich.console.Console(file=sys.stderr)
+    stderr.print("\n[green]{},--.[black]/[green],-.".format(" " * 42))
+    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
+    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
+    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
+    stderr.print("[green]                                          `._,._,'\n")
+    stderr.print("[black]    nf-core/tools version {}\n\n".format(nf_core.__version__))
+
+    # Lanch the click cli
+    nf_core_cli()
+
 
 # Customise the order of subcommands for --help
 # https://stackoverflow.com/a/47984810/713980
@@ -41,48 +57,38 @@ class CustomHelpOrder(click.Group):
         """Behaves the same as `click.Group.command()` except capture
         a priority for listing command names in help.
         """
-        help_priority = kwargs.pop('help_priority', 1000)
+        help_priority = kwargs.pop("help_priority", 1000)
         help_priorities = self.help_priorities
+
         def decorator(f):
             cmd = super(CustomHelpOrder, self).command(*args, **kwargs)(f)
             help_priorities[cmd.name] = help_priority
             return cmd
+
         return decorator
+
 
 @click.group(cls=CustomHelpOrder)
 @click.version_option(nf_core.__version__)
-@click.option(
-    '-v', '--verbose',
-    is_flag = True,
-    default = False,
-    help = "Verbose output (print debug statements)."
-)
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
 def nf_core_cli(verbose):
     if verbose:
         logging.basicConfig(level=logging.DEBUG, format="\n%(levelname)s: %(message)s")
     else:
         logging.basicConfig(level=logging.INFO, format="\n%(levelname)s: %(message)s")
 
+
 # nf-core list
 @nf_core_cli.command(help_priority=1)
-@click.argument(
-    'keywords',
-    required = False,
-    nargs = -1,
-    metavar = "<filter keywords>"
-)
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option(
-    '-s', '--sort',
-    type = click.Choice(['release', 'pulled', 'name', 'stars']),
-    default = 'release',
-    help = "How to sort listed pipelines"
+    "-s",
+    "--sort",
+    type=click.Choice(["release", "pulled", "name", "stars"]),
+    default="release",
+    help="How to sort listed pipelines",
 )
-@click.option(
-    '--json',
-    is_flag = True,
-    default = False,
-    help = "Print full output as JSON"
-)
+@click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
 def list(keywords, sort, json):
     """
     List available nf-core pipelines with local info.
@@ -92,55 +98,33 @@ def list(keywords, sort, json):
     """
     nf_core.list.list_workflows(keywords, sort, json)
 
+
 # nf-core launch
 @nf_core_cli.command(help_priority=2)
-@click.argument(
-    'pipeline',
-    required = False,
-    metavar = "<pipeline name>"
+@click.argument("pipeline", required=False, metavar="<pipeline name>")
+@click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
+@click.option("-i", "--id", help="ID for web-gui launch parameter set")
+@click.option(
+    "-c", "--command-only", is_flag=True, default=False, help="Create Nextflow command with params (no params file)"
 )
 @click.option(
-    '-r', '--revision',
-    help = "Release/branch/SHA of the project to run (if remote)"
+    "-o",
+    "--params-out",
+    type=click.Path(),
+    default=os.path.join(os.getcwd(), "nf-params.json"),
+    help="Path to save run parameters file",
 )
 @click.option(
-    '-i', '--id',
-    help = "ID for web-gui launch parameter set"
+    "-p", "--params-in", type=click.Path(exists=True), help="Set of input run params to use from a previous run"
 )
 @click.option(
-    '-c', '--command-only',
-    is_flag = True,
-    default = False,
-    help = "Create Nextflow command with params (no params file)"
+    "-a", "--save-all", is_flag=True, default=False, help="Save all parameters, even if unchanged from default"
 )
 @click.option(
-    '-o', '--params-out',
-    type = click.Path(),
-    default = os.path.join(os.getcwd(), 'nf-params.json'),
-    help = "Path to save run parameters file"
+    "-h", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
 )
 @click.option(
-    '-p', '--params-in',
-    type = click.Path(exists=True),
-    help = "Set of input run params to use from a previous run"
-)
-@click.option(
-    '-a', '--save-all',
-    is_flag = True,
-    default = False,
-    help = "Save all parameters, even if unchanged from default"
-)
-@click.option(
-    '-h', '--show-hidden',
-    is_flag = True,
-    default = False,
-    help = "Show hidden params which don't normally need changing"
-)
-@click.option(
-    '--url',
-    type = str,
-    default = 'https://nf-co.re/launch',
-    help = 'Customise the builder URL (for development work)'
+    "--url", type=str, default="https://nf-co.re/launch", help="Customise the builder URL (for development work)"
 )
 def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
     """
@@ -156,38 +140,25 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     Run using a remote pipeline name (such as GitHub `user/repo` or a URL),
     a local pipeline directory or an ID from the nf-core web launch tool.
     """
-    launcher = nf_core.launch.Launch(pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id)
+    launcher = nf_core.launch.Launch(
+        pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id
+    )
     if launcher.launch_pipeline() == False:
         sys.exit(1)
 
+
 # nf-core download
 @nf_core_cli.command(help_priority=3)
-@click.argument(
-    'pipeline',
-    required = True,
-    metavar = "<pipeline name>"
-)
+@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.option("-r", "--release", type=str, help="Pipeline release")
+@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity containers")
+@click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
-    '-r', '--release',
-    type = str,
-    help = "Pipeline release"
-)
-@click.option(
-    '-s', '--singularity',
-    is_flag = True,
-    default = False,
-    help = "Download singularity containers"
-)
-@click.option(
-    '-o', '--outdir',
-    type = str,
-    help = "Output directory"
-)
-@click.option(
-    '-c', '--compress',
-    type = click.Choice(['tar.gz', 'tar.bz2', 'zip', 'none']),
-    default = 'tar.gz',
-    help = "Compression type"
+    "-c",
+    "--compress",
+    type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
+    default="tar.gz",
+    help="Compression type",
 )
 def download(pipeline, release, singularity, outdir, compress):
     """
@@ -199,19 +170,11 @@ def download(pipeline, release, singularity, outdir, compress):
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress)
     dl.download_workflow()
 
+
 # nf-core licences
 @nf_core_cli.command(help_priority=4)
-@click.argument(
-    'pipeline',
-    required = True,
-    metavar = "<pipeline name>"
-)
-@click.option(
-    '--json',
-    is_flag = True,
-    default = False,
-    help = "Print output in JSON"
-)
+@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.option("--json", is_flag=True, default=False, help="Print output in JSON")
 def licences(pipeline, json):
     """
     List software licences for a given workflow.
@@ -224,60 +187,33 @@ def licences(pipeline, json):
     lic.fetch_conda_licences()
     lic.print_licences(as_json=json)
 
+
 # nf-core create
 def validate_wf_name_prompt(ctx, opts, value):
     """ Force the workflow name to meet the nf-core requirements """
-    if not re.match(r'^[a-z]+$', value):
-        click.echo('Invalid workflow name: must be lowercase without punctuation.')
+    if not re.match(r"^[a-z]+$", value):
+        click.echo("Invalid workflow name: must be lowercase without punctuation.")
         value = click.prompt(opts.prompt)
         return validate_wf_name_prompt(ctx, opts, value)
     return value
+
+
 @nf_core_cli.command(help_priority=5)
 @click.option(
-    '-n', '--name',
-    prompt = 'Workflow Name',
-    required = True,
-    callback = validate_wf_name_prompt,
-    type = str,
-    help = 'The name of your new pipeline'
+    "-n",
+    "--name",
+    prompt="Workflow Name",
+    required=True,
+    callback=validate_wf_name_prompt,
+    type=str,
+    help="The name of your new pipeline",
 )
-@click.option(
-    '-d', '--description',
-    prompt = True,
-    required = True,
-    type = str,
-    help = 'A short description of your pipeline'
-)
-@click.option(
-    '-a', '--author',
-    prompt = True,
-    required = True,
-    type = str,
-    help = 'Name of the main author(s)'
-)
-@click.option(
-    '--new-version',
-    type = str,
-    default = '1.0dev',
-    help = 'The initial version number to use'
-)
-@click.option(
-    '--no-git',
-    is_flag = True,
-    default = False,
-    help = "Do not initialise pipeline as new git repository"
-)
-@click.option(
-    '-f', '--force',
-    is_flag = True,
-    default = False,
-    help = "Overwrite output directory if it already exists"
-)
-@click.option(
-    '-o', '--outdir',
-    type = str,
-    help = "Output directory for new pipeline (default: pipeline name)"
-)
+@click.option("-d", "--description", prompt=True, required=True, type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", prompt=True, required=True, type=str, help="Name of the main author(s)")
+@click.option("--new-version", type=str, default="1.0dev", help="The initial version number to use")
+@click.option("--no-git", is_flag=True, default=False, help="Do not initialise pipeline as new git repository")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
+@click.option("-o", "--outdir", type=str, help="Output directory for new pipeline (default: pipeline name)")
 def create(name, description, author, new_version, no_git, force, outdir):
     """
     Create a new pipeline using the nf-core template.
@@ -288,31 +224,19 @@ def create(name, description, author, new_version, no_git, force, outdir):
     create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
 
+
 @nf_core_cli.command(help_priority=6)
-@click.argument(
-    'pipeline_dir',
-    type = click.Path(exists=True),
-    required = True,
-    metavar = "<pipeline directory>"
-)
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.option(
-    '--release',
-    is_flag = True,
-    default = os.path.basename(os.path.dirname(os.environ.get('GITHUB_REF','').strip(' \'"'))) == 'master' and os.environ.get('GITHUB_REPOSITORY', '').startswith('nf-core/') and not os.environ.get('GITHUB_REPOSITORY', '') == 'nf-core/tools',
-    help = "Execute additional checks for release-ready workflows."
+    "--release",
+    is_flag=True,
+    default=os.path.basename(os.path.dirname(os.environ.get("GITHUB_REF", "").strip(" '\""))) == "master"
+    and os.environ.get("GITHUB_REPOSITORY", "").startswith("nf-core/")
+    and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
+    help="Execute additional checks for release-ready workflows.",
 )
-@click.option(
-    '--markdown',
-    type = str,
-    metavar = "<filename>",
-    help = "File to write linting results to (Markdown)"
-)
-@click.option(
-    '--json',
-    type = str,
-    metavar = "<filename>",
-    help = "File to write linting results to (JSON)"
-)
+@click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
+@click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
 def lint(pipeline_dir, release, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
@@ -340,18 +264,10 @@ def schema():
     """
     pass
 
+
 @schema.command(help_priority=1)
-@click.argument(
-    'pipeline',
-    required = True,
-    metavar = "<pipeline name>"
-)
-@click.option(
-    '--params',
-    type = click.Path(exists=True),
-    required = True,
-    help = 'JSON parameter file'
-)
+@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.option("--params", type=click.Path(exists=True), required=True, help="JSON parameter file")
 def validate(pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
@@ -376,28 +292,16 @@ def validate(pipeline, params):
     except AssertionError as e:
         sys.exit(1)
 
+
 @schema.command(help_priority=2)
-@click.argument(
-    'pipeline_dir',
-    type = click.Path(exists=True),
-    required = True,
-    metavar = "<pipeline directory>"
-)
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
+@click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
 @click.option(
-    '--no-prompts',
-    is_flag = True,
-    help = "Do not confirm changes, just update parameters and exit"
-)
-@click.option(
-    '--web-only',
-    is_flag = True,
-    help = "Skip building using Nextflow config, just launch the web tool"
-)
-@click.option(
-    '--url',
-    type = str,
-    default = 'https://nf-co.re/json_schema_build',
-    help = 'Customise the builder URL (for development work)'
+    "--url",
+    type=str,
+    default="https://nf-co.re/json_schema_build",
+    help="Customise the builder URL (for development work)",
 )
 def build(pipeline_dir, no_prompts, web_only, url):
     """
@@ -415,13 +319,9 @@ def build(pipeline_dir, no_prompts, web_only, url):
     if schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url) is False:
         sys.exit(1)
 
+
 @schema.command(help_priority=3)
-@click.argument(
-    'schema_path',
-    type = click.Path(exists=True),
-    required = True,
-    metavar = "<JSON Schema file>"
-)
+@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<JSON Schema file>")
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.
@@ -439,23 +339,12 @@ def lint(schema_path):
     except AssertionError as e:
         sys.exit(1)
 
-@nf_core_cli.command('bump-version', help_priority=7)
-@click.argument(
-    'pipeline_dir',
-    type = click.Path(exists=True),
-    required = True,
-    metavar = "<pipeline directory>"
-)
-@click.argument(
-    'new_version',
-    required = True,
-    metavar = "<new version>"
-)
+
+@nf_core_cli.command("bump-version", help_priority=7)
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.argument("new_version", required=True, metavar="<new version>")
 @click.option(
-    '-n', '--nextflow',
-    is_flag = True,
-    default = False,
-    help = "Bump required nextflow version instead of pipeline version"
+    "-n", "--nextflow", is_flag=True, default=False, help="Bump required nextflow version instead of pipeline version"
 )
 def bump_version(pipeline_dir, new_version, nextflow):
     """
@@ -485,51 +374,17 @@ def bump_version(pipeline_dir, new_version, nextflow):
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
 
-@nf_core_cli.command('sync', help_priority=8)
-@click.argument(
-    'pipeline_dir',
-    type = click.Path(exists=True),
-    nargs = -1,
-    metavar = "<pipeline directory>"
-)
+@nf_core_cli.command("sync", help_priority=8)
+@click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
 @click.option(
-    '-t', '--make-template-branch',
-    is_flag = True,
-    default = False,
-    help = "Create a TEMPLATE branch if none is found."
+    "-t", "--make-template-branch", is_flag=True, default=False, help="Create a TEMPLATE branch if none is found."
 )
-@click.option(
-    '-b', '--from-branch',
-    type = str,
-    help = 'The git branch to use to fetch workflow vars.'
-)
-@click.option(
-    '-p', '--pull-request',
-    is_flag = True,
-    default = False,
-    help = "Make a GitHub pull-request with the changes."
-)
-@click.option(
-    '-u', '--username',
-    type = str,
-    help = 'GitHub username for the PR.'
-)
-@click.option(
-    '-r', '--repository',
-    type = str,
-    help = 'GitHub repository name for the PR.'
-)
-@click.option(
-    '-a', '--auth-token',
-    type = str,
-    help = 'GitHub API personal access token.'
-)
-@click.option(
-    '--all',
-    is_flag = True,
-    default = False,
-    help = "Sync template for all nf-core pipelines."
-)
+@click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
+@click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
+@click.option("-u", "--username", type=str, help="GitHub username for the PR.")
+@click.option("-r", "--repository", type=str, help="GitHub repository name for the PR.")
+@click.option("-a", "--auth-token", type=str, help="GitHub API personal access token.")
+@click.option("--all", is_flag=True, default=False, help="Sync template for all nf-core pipelines.")
 def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username, repository, auth_token, all):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
@@ -564,11 +419,5 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
             sys.exit(1)
 
 
-if __name__ == '__main__':
-    click.echo(click.style("\n                                          ,--.", fg='green')+click.style("/",fg='black')+click.style(",-.", fg='green'), err=True)
-    click.echo(click.style("          ___     __   __   __   ___     ", fg='blue')+click.style("/,-._.--~\\", fg='green'), err=True)
-    click.echo(click.style("    |\ | |__  __ /  ` /  \ |__) |__      ", fg='blue')+click.style("   }  {", fg='yellow'), err=True)
-    click.echo(click.style("    | \| |       \__, \__/ |  \ |___     ", fg='blue')+click.style("\`-._,-`-,", fg='green'), err=True)
-    click.secho("                                          `._,._,'\n", fg='green', err=True)
-    click.secho("    nf-core/tools version {}\n".format(nf_core.__version__), fg='black', err=True)
-    nf_core_cli()
+if __name__ == "__main__":
+    run_nf_core()
