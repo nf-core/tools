@@ -34,6 +34,7 @@ def check_samplesheet(file_in,file_out):
     sample_run_dict = {}
     with open(file_in, 'r') as fin:
 
+        # TODO nf-core: update the header names for the input samplesheet
         ## Check header
         HEADER = ['sample', 'fastq_1', 'fastq_2']
         header = fin.readline().strip().split(',')
@@ -82,10 +83,7 @@ def check_samplesheet(file_in,file_out):
             if sample not in sample_run_dict:
                 sample_run_dict[sample] = [sample_info]
             else:
-                if sample_info in sample_run_dict[sample]:
-                    print_error("Samplesheet contains duplicate rows!",line)
-                else:
-                    sample_run_dict[sample].append(sample_info)
+                print_error("Samplesheet contains duplicate samples!",line)
 
     ## Write validated samplesheet with appropriate columns
     if len(sample_run_dict) > 0:
