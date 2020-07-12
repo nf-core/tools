@@ -29,8 +29,12 @@ def print_error(error,line):
     print("ERROR: Please check samplesheet -> {}\nLine: '{}'".format(error,line.strip()))
     sys.exit(1)
 
-
+# TODO nf-core: Update the check_samplesheet function
 def check_samplesheet(file_in,file_out):
+    """This check shampleseet function checks that the sample sheet follows the following structure:
+    sample, fastq_1, fastq_2
+    sample1, Sample1.fastq.gz, Sample2.fastq.gz
+    """
 
     sample_run_dict = {}
     with open(file_in, 'r') as fin:
