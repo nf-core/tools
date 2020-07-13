@@ -56,6 +56,7 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
 * Change `params.readPaths` -> `params.input_paths`
+* Adding TODOs and MultiQC process in DSL2 template
 
 ### Linting
 
