@@ -16,6 +16,7 @@ import subprocess
 import sys
 import time
 
+
 def fetch_wf_config(wf_path):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
@@ -33,40 +34,39 @@ def fetch_wf_config(wf_path):
     cache_path = None
 
     # Build a cache directory if we can
-    if os.path.isdir(os.path.join(os.getenv("HOME"), '.nextflow')):
-        cache_basedir = os.path.join(os.getenv("HOME"), '.nextflow', 'nf-core')
+    if os.path.isdir(os.path.join(os.getenv("HOME"), ".nextflow")):
+        cache_basedir = os.path.join(os.getenv("HOME"), ".nextflow", "nf-core")
         if not os.path.isdir(cache_basedir):
             os.mkdir(cache_basedir)
 
     # If we're given a workflow object with a commit, see if we have a cached copy
     cache_fn = None
     # Make a filename based on file contents
-    concat_hash = ''
-    for fn in ['nextflow.config', 'main.nf']:
+    concat_hash = ""
+    for fn in ["nextflow.config", "main.nf"]:
         try:
-            with open(os.path.join(wf_path, fn), 'rb') as fh:
+            with open(os.path.join(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
         except FileNotFoundError as e:
             pass
     # Hash the hash
     if len(concat_hash) > 0:
-        bighash = hashlib.sha256(concat_hash.encode('utf-8')).hexdigest()
-        cache_fn = 'wf-config-cache-{}.json'.format(bighash[:25])
+        bighash = hashlib.sha256(concat_hash.encode("utf-8")).hexdigest()
+        cache_fn = "wf-config-cache-{}.json".format(bighash[:25])
 
     if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
         if os.path.isfile(cache_path):
             logging.debug("Found a config cache, loading: {}".format(cache_path))
-            with open(cache_path, 'r') as fh:
+            with open(cache_path, "r") as fh:
                 config = json.load(fh)
             return config
     logging.debug("No config cache found")
 
-
     # Call `nextflow config` and pipe stderr to /dev/null
     try:
-        with open(os.devnull, 'w') as devnull:
-            nfconfig_raw = subprocess.check_output(['nextflow', 'config', '-flat', wf_path], stderr=devnull)
+        with open(os.devnull, "w") as devnull:
+            nfconfig_raw = subprocess.check_output(["nextflow", "config", "-flat", wf_path], stderr=devnull)
     except OSError as e:
         if e.errno == errno.ENOENT:
             raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
@@ -74,9 +74,9 @@ def fetch_wf_config(wf_path):
         raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
     else:
         for l in nfconfig_raw.splitlines():
-            ul = l.decode('utf-8')
+            ul = l.decode("utf-8")
             try:
-                k, v = ul.split(' = ', 1)
+                k, v = ul.split(" = ", 1)
                 config[k] = v
             except ValueError:
                 logging.debug("Couldn't find key=value config pair:\n  {}".format(ul))
@@ -84,19 +84,19 @@ def fetch_wf_config(wf_path):
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
     try:
-        main_nf = os.path.join(wf_path, 'main.nf')
-        with open(main_nf, 'r') as fh:
+        main_nf = os.path.join(wf_path, "main.nf")
+        with open(main_nf, "r") as fh:
             for l in fh:
-                match = re.match(r'^\s*(params\.[a-zA-Z0-9_]+)\s*=', l)
+                match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
                 if match:
-                    config[match.group(1)] = 'false'
+                    config[match.group(1)] = "false"
     except FileNotFoundError as e:
         logging.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
 
     # If we can, save a cached copy
     if cache_path:
         logging.debug("Saving config cache: {}".format(cache_path))
-        with open(cache_path, 'w') as fh:
+        with open(cache_path, "w") as fh:
             json.dump(config, fh, indent=4)
 
     return config
@@ -111,15 +111,14 @@ def setup_requests_cachedir():
     # Only import it if we need it
     import requests_cache
 
-    pyversion = '.'.join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(os.getenv("HOME"), os.path.join('.nfcore', 'cache_'+pyversion))
+    pyversion = ".".join(str(v) for v in sys.version_info[0:3])
+    cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
     if not os.path.exists(cachedir):
         os.makedirs(cachedir)
     requests_cache.install_cache(
-        os.path.join(cachedir, 'github_info'),
-        expire_after=datetime.timedelta(hours=1),
-        backend='sqlite',
+        os.path.join(cachedir, "github_info"), expire_after=datetime.timedelta(hours=1), backend="sqlite",
     )
+
 
 def wait_cli_function(poll_func, poll_every=20):
     """
@@ -137,10 +136,12 @@ def wait_cli_function(poll_func, poll_every=20):
     try:
         is_finished = False
         check_count = 0
+
         def spinning_cursor():
             while True:
-                for cursor in '⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏':
-                    yield '{} Use ctrl+c to stop waiting and force exit. '.format(cursor)
+                for cursor in "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏":
+                    yield "{} Use ctrl+c to stop waiting and force exit. ".format(cursor)
+
         spinner = spinning_cursor()
         while not is_finished:
             # Show the loading spinner every 0.1s
@@ -148,7 +149,7 @@ def wait_cli_function(poll_func, poll_every=20):
             loading_text = next(spinner)
             sys.stdout.write(loading_text)
             sys.stdout.flush()
-            sys.stdout.write('\b'*len(loading_text))
+            sys.stdout.write("\b" * len(loading_text))
             # Only check every 2 seconds, but update the spinner every 0.1s
             check_count += 1
             if check_count > poll_every:
@@ -156,6 +157,7 @@ def wait_cli_function(poll_func, poll_every=20):
                 check_count = 0
     except KeyboardInterrupt:
         raise AssertionError("Cancelled!")
+
 
 def poll_nfcore_web_api(api_url, post_data=None):
     """
@@ -169,7 +171,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
     requests_cache.clear()
     try:
         if post_data is None:
-            response = requests.get(api_url, headers={'Cache-Control': 'no-cache'})
+            response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
         else:
             response = requests.post(url=api_url, data=post_data)
     except (requests.exceptions.Timeout):
@@ -179,13 +181,19 @@ def poll_nfcore_web_api(api_url, post_data=None):
     else:
         if response.status_code != 200:
             logging.debug("Response content:\n{}".format(response.content))
-            raise AssertionError("Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code))
+            raise AssertionError(
+                "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
+            )
         else:
             try:
                 web_response = json.loads(response.content)
-                assert 'status' in web_response
+                assert "status" in web_response
             except (json.decoder.JSONDecodeError, AssertionError) as e:
                 logging.debug("Response content:\n{}".format(response.content))
-                raise AssertionError("nf-core website API results response not recognised: {}\n See verbose log for full response".format(api_url))
+                raise AssertionError(
+                    "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
+                        api_url
+                    )
+                )
             else:
                 return web_response
