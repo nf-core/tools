@@ -40,6 +40,13 @@ Whilst we appreciate that this new feature will add a little work for pipeline d
 the possibilities that it brings. If you have any feedback or suggestions, please let us know either here on
 GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com/channels/json-schema).
 
+### Python code formatting
+
+We have adopted the use of the [Black Python code formatter](https://black.readthedocs.io/en/stable/).
+This ensures a harmonised code formatting style throughout the package, from all contributors.
+If you are editing any Python code in nf-core/tools you must now pass the files through Black when
+making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) for details.
+
 ### Template
 
 * Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
@@ -52,6 +59,7 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
 * Add AWS CI tests and full tests GitHub Actions workflows
 * Update AWS CI tests and full tests secrets names
+* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 * Add information about config files used for workflow execution (`workflow.configFiles`) to summary
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
@@ -81,11 +89,11 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 ### Other
 
 * Describe alternative installation method via conda with `conda env create`
-* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
 * nf-core/tools version number now printed underneath header artwork
 * Bumped Conda version shipped with nfcore/base to 4.8.2
 * Added log message when creating new pipelines that people should talk to the community about their plans
 * Fixed 'on completion' emails sent using the `mail` command not containing body text.
+* Improved command-line help text for nf-core/tools
 
 ## v1.9
 
