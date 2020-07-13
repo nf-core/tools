@@ -6,8 +6,8 @@ import groovy.json.JsonSlurper
 
 class JSON {
     /*
-    * This method tries to read a JSON params file
-    */
+     * This method tries to read a JSON params file
+     */
     private static LinkedHashMap params_get(String path) {
         def usage = new LinkedHashMap()
         try {
@@ -47,18 +47,14 @@ class JSON {
         */
         def output_map = new LinkedHashMap()
 
-        //Lets go deeper
+        // Lets go deeper
         usage.each { key, val ->
-            //println "Group: $key\n" //Gets the Group names
-            def Map submap = usage."$key".properties //Gets the property object of the group
-            //println "Parameters:\n" //nested access to the Parameters
+            def Map submap = usage."$key".properties // Gets the property object of the group
             def sub_params = new LinkedHashMap()
             submap.each { innerkey, value ->
-                //println "$innerkey\t$value.description"
                 sub_params.put("$innerkey", "$value.description")
             }
             output_map.put("$key", sub_params)
-            //println "\n"
         }
         return output_map
     }
@@ -73,11 +69,11 @@ class JSON {
         String output = ""
         for (group in usage.keySet()) {
             output += group + "\n"
-            def params = usage.get(group) //This gets the parameters of that particular group
+            def params = usage.get(group)  // This gets the parameters of that particular group
             for (par in params.keySet()) {
                 output+= "    \u001B[1m" + par.padRight(27) + "\u001B[1m" + params.get(par) + "\n"
             }
-            output += "\n" //Extra newline after parameter block
+            output += "\n"
         }
         return output
     }
@@ -114,4 +110,3 @@ class JSON {
         return summary
     }
 }
-
