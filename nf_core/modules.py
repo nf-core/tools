@@ -91,7 +91,7 @@ class PipelineModules(object):
             dl_filename = os.path.join(self.pipeline_dir, "modules", filename)
             self.download_gh_file(dl_filename, api_url)
 
-    def update(self, module):
+    def update(self, module, force=False):
         logging.error("This command is not yet implemented")
         pass
 

@@ -324,9 +324,10 @@ def install(ctx, pipeline_dir, tool):
 
 @modules.command(help_priority=3)
 @click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.argument("tool", type=str, metavar="<tool name>")
-# --force - overwrite files even if no update found
-def update(ctx, tool):
+@click.option("-f", "--force", is_flag=True, default=False, help="Force overwrite of files")
+def update(ctx, tool, pipeline_dir, force):
     """
     Update one or all software wrapper modules.
 
@@ -338,18 +339,21 @@ def update(ctx, tool):
     """
     mods = nf_core.modules.PipelineModules()
     mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.update(tool)
+    mods.pipeline_dir = pipeline_dir
+    mods.update(tool, force=force)
 
 
 @modules.command(help_priority=4)
 @click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool name>")
-def remove(ctx, tool):
+def remove(ctx, pipeline_dir, tool):
     """
     Remove a software wrapper from a pipeline.
     """
     mods = nf_core.modules.PipelineModules()
     mods.modules_repo = ctx.obj["modules_repo_obj"]
+    mods.pipeline_dir = pipeline_dir
     mods.remove(tool)
 
 
