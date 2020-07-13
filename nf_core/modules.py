@@ -31,7 +31,7 @@ class PipelineModules(object):
         """
         Initialise the PipelineModules object
         """
-        self.modules_repo = None
+        self.modules_repo = ModulesRepo()
         self.pipeline_dir = None
         self.modules_file_tree = {}
         self.modules_current_hash = None
@@ -43,15 +43,17 @@ class PipelineModules(object):
         and print as list to stdout
         """
         self.get_modules_file_tree()
+        return_str = ""
 
         if len(self.modules_avail_module_names) > 0:
-            logging.info("Software available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
+            logging.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
             # Print results to stdout
-            print("\n".join(self.modules_avail_module_names))
+            return_str += "\n".join(self.modules_avail_module_names)
         else:
             logging.info(
-                "No available software found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
+                "No available modules found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
             )
+        return return_str
 
     def install(self, module):
 

@@ -302,7 +302,7 @@ def list(ctx):
     """
     mods = nf_core.modules.PipelineModules()
     mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.list_modules()
+    print(mods.list_modules())
 
 
 @modules.command(help_priority=2)
