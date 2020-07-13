@@ -14,9 +14,11 @@ nextflow.preview.dsl = 2
 /*
  * Print help message if required
  */
-include { print_help; check_genome; check_hostname; check_awsbatch; create_summary; send_email } from './modules/local/functions'
 if (params.help) {
-    print_help()
+    // TODO nf-core: Update typical command used to run pipeline
+    def command = "nextflow run {{ cookiecutter.name }} --input samplesheet.csv -profile docker"
+    log.info Headers.nf_core(workflow, params.monochrome_logs)
+    log.info Schema.params_help("$baseDir/nextflow_schema.json", command)
     exit 0
 }
 
@@ -37,21 +39,33 @@ if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { 
  * Reference genomes
  */
 // TODO nf-core: Add any reference files that are needed
-// NOTE - FOR SIMPLICITY THIS IS NOT USED IN THIS PIPELINE, EXAMPLE ONLY
-// If you want to use the channel below in a process, define the following:
-//   input:
-//   file fasta from ch_fasta
-//
+// NOTE - FOR SIMPLICITY THIS IS NOT USED IN THIS PIPELINE
+// EXAMPLE ONLY TO DEMONSTRATE USAGE OF AWS IGENOMES
+if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
+    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
+}
 params.fasta = params.genomes[params.genome]?.fasta
 if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
 /*
- * Check and print summary for parameters
+ * Check parameters
  */
-check_genome()                 // Check if genome exists in the config file
-check_hostname()               // Check the hostnames against configured profiles
-check_awsbatch()               // Check AWS batch settings
-summary = create_summary()     // Print parameter summary
+Checks.aws_batch(workflow, params)     // Check AWS batch settings
+Checks.hostname(workflow, params, log) // Check the hostnames against configured profiles
+
+/*
+ * Print parameter summary
+ */
+// Has the run name been specified by the user?
+// this has the bonus effect of catching both -name and --name
+run_name = params.name
+if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
+    run_name = workflow.runName
+}
+summary = Schema.params_summary(workflow, params, run_name)
+log.info Headers.nf_core(workflow, params.monochrome_logs)
+log.info summary.collect { k,v -> "${k.padRight(20)}: $v" }.join("\n")
+log.info "-\033[2m----------------------------------------------------\033[0m-"
 
 /*
  * Include local pipeline modules
@@ -96,5 +110,7 @@ workflow {
  * Send completion email
  */
 workflow.onComplete {
-    send_email(summary)
+    def multiqc_report = []
+    Completion.email(workflow, params, summary, run_name, baseDir, multiqc_report, log)
+    Completion.summary(workflow, params, log)
 }
