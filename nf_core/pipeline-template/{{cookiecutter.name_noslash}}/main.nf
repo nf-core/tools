@@ -18,7 +18,7 @@ if (params.help) {
     // TODO nf-core: Update typical command used to run pipeline
     def command = "nextflow run {{ cookiecutter.name }} --input samplesheet.csv -profile docker"
     log.info Headers.nf_core(workflow, params.monochrome_logs)
-    log.info JSON.params_help("$baseDir/nextflow_schema.json", command)
+    log.info Schema.params_help("$baseDir/nextflow_schema.json", command)
     exit 0
 }
 
@@ -62,7 +62,7 @@ run_name = params.name
 if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
     run_name = workflow.runName
 }
-summary = JSON.params_summary(workflow, params, run_name)
+summary = Schema.params_summary(workflow, params, run_name)
 log.info Headers.nf_core(workflow, params.monochrome_logs)
 log.info summary.collect { k,v -> "${k.padRight(20)}: $v" }.join("\n")
 log.info "-\033[2m----------------------------------------------------\033[0m-"
