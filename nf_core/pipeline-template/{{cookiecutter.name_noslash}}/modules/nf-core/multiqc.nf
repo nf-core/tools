@@ -5,22 +5,6 @@ if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
     custom_runName = workflow.runName
 }
 
-// Channel.from(summary.collect{ [it.key, it.value] })
-//     .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
-//     .reduce { a, b -> return [a, b].join("\n            ") }
-//     .map { x -> """
-//     id: '{{ cookiecutter.name_noslash }}-summary'
-//     description: " - this information is collected when the pipeline is started."
-//     section_name: '{{ cookiecutter.name }} Workflow Summary'
-//     section_href: 'https://github.com/{{ cookiecutter.name }}'
-//     plot_type: 'html'
-//     data: |
-//         <dl class=\"dl-horizontal\">
-//             $x
-//         </dl>
-//     """.stripIndent() }
-//     .set { ch_workflow_summary }
-
 /*
  * MultiQC
  */
