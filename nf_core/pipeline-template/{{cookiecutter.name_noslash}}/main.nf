@@ -50,8 +50,8 @@ if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 /*
  * Check parameters
  */
-Checks.aws_batch(workflow, params)          // Check AWS batch settings
-Checks.hostname(workflow, params, log)      // Check the hostnames against configured profiles
+Checks.aws_batch(workflow, params)     // Check AWS batch settings
+Checks.hostname(workflow, params, log) // Check the hostnames against configured profiles
 
 /*
  * Print parameter summary
@@ -64,7 +64,7 @@ if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
 }
 summary = JSON.params_summary(workflow, params, run_name)
 log.info Headers.nf_core(workflow, params.monochrome_logs)
-log.info summary.collect { k,v -> "${k.padRight(18)}: $v" }.join("\n")
+log.info summary.collect { k,v -> "${k.padRight(20)}: $v" }.join("\n")
 log.info "-\033[2m----------------------------------------------------\033[0m-"
 
 /*
@@ -100,7 +100,7 @@ workflow {
 
     // MULTIQC(
     //     summary,
-    //     fastqc.out,
+    //     FASTQC.out,
     //     ch_multiqc_config
     // )
 }
