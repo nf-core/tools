@@ -31,6 +31,7 @@ def print_error(error, line):
     print("ERROR: Please check samplesheet -> {}\nLine: '{}'".format(error, line.strip()))
     sys.exit(1)
 
+
 # TODO nf-core: Update the check_samplesheet function
 def check_samplesheet(file_in, file_out):
     """
