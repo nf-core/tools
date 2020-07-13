@@ -33,6 +33,7 @@ process MULTIQC {
     // TODO nf-core: Add in log files from your new processes for MultiQC to find!
     path (fastqc)
     path (software_versions)
+    val (workflow_summary)
 
     output:
     path "*multiqc_report.html"
@@ -45,6 +46,7 @@ process MULTIQC {
     custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
     // TODO nf-core: Specify which MultiQC modules to use with -m for a faster run time
     """
+    echo '$workflow_summary' > workflow_summary_mqc.yaml
     multiqc -f $rtitle $rfilename $custom_config_file -m fastqc -m custom_content .
     """
 }

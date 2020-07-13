@@ -67,6 +67,9 @@ log.info Headers.nf_core(workflow, params.monochrome_logs)
 log.info summary.collect { k,v -> "${k.padRight(20)}: $v" }.join("\n")
 log.info "-\033[2m----------------------------------------------------\033[0m-"
 
+workflow_summary = Schema.params_multiqc_summary(summary)
+ch_workflow_summary = Channel.value(workflow_summary)
+
 /*
  * Include local pipeline modules
  */
@@ -102,7 +105,8 @@ workflow {
         ch_multiqc_config.collect(),
         ch_multiqc_custom_config.collect().ifEmpty([]),
         FASTQC.out.collect(),
-        GET_SOFTWARE_VERSIONS.out.software_versions_yml.collect())
+        GET_SOFTWARE_VERSIONS.out.software_versions_yml.collect(),
+        ch_workflow_summary)
     )
 }
 
