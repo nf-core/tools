@@ -77,9 +77,9 @@ class Schema {
             output += group + "\n"
             def params = params_map.get(group)  // This gets the parameters of that particular group
             for (par in params.keySet()) {
-                def type = params.get(par)[0]
+                def type = "[" + params.get(par)[0] + "]"
                 def description = params.get(par)[1]
-                output+= "    \u001B[1m" +  par.padRight(max_chars) + "\u001B[1m" + type.padRight(9) + description + "\n"
+                output+= "    \u001B[1m" +  par.padRight(max_chars) + "\u001B[1m" + type.padRight(10) + description + "\n"
             }
             output += "\n"
         }
