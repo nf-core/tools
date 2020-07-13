@@ -16,7 +16,7 @@ nextflow.preview.dsl = 2
  */
 if (params.help) {
     // TODO nf-core: Update typical command used to run pipeline
-    def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv -profile docker"
+    def command = "nextflow run {{ cookiecutter.name }} --input samplesheet.csv -profile docker"
     log.info Headers.nf_core(workflow, params.monochrome_logs)
     log.info JSON.params_help("$baseDir/nextflow_schema.json", command)
     exit 0
@@ -113,4 +113,3 @@ workflow.onComplete {
     Completion.email(workflow, params, summary, run_name, baseDir, multiqc_report, log)
     Completion.summary(workflow, params, log)
 }
-
