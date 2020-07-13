@@ -269,8 +269,14 @@ def lint(pipeline_dir, release, markdown, json):
 
 ## nf-core module subcommands
 @nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
-@click.option("-r", "--repository", type=str, default="nf-core/modules", help="GitHub repository name.")
-@click.option("-b", "--branch", type=str, default="master", help="The git branch to use.")
+@click.option(
+    "-r",
+    "--repository",
+    type=str,
+    default="nf-core/modules",
+    help="GitHub repository hosting software wrapper modules.",
+)
+@click.option("-b", "--branch", type=str, default="master", help="Modules GitHub repo git branch to use.")
 @click.pass_context
 def modules(ctx, repository, branch):
     """
@@ -283,7 +289,7 @@ def modules(ctx, repository, branch):
     ctx.ensure_object(dict)
 
     # Make repository object to pass to subcommands
-    ctx.obj["repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
+    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
 
 
 @modules.command(help_priority=1)
@@ -294,7 +300,7 @@ def list(ctx):
 
     Lists all currently available software wrappers in the nf-core/modules repository.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
     mods.list_modules()
 
 
@@ -308,7 +314,7 @@ def install(ctx, tool):
     Given a software name, finds the relevant files in nf-core/modules
     and copies to the pipeline along with associated metadata.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
     mods.install(tool)
 
 
@@ -326,7 +332,7 @@ def update(ctx, tool):
     If no module name is specified, loops through all currently installed modules.
     If no version is specified, looks for the latest available version on nf-core/modules.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
     mods.update(tool)
 
 
@@ -337,7 +343,7 @@ def remove(ctx, tool):
     """
     Remove a software wrapper from a pipeline.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
     mods.remove(tool)
 
 
@@ -354,7 +360,7 @@ def check(ctx):
     Use by the lint tests and automated CI to check that centralised
     software wrapper code is only modified in the central repository.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["repo_obj"])
+    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
     mods.check_modules()
 
 

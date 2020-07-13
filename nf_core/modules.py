@@ -27,11 +27,11 @@ class ModulesRepo(object):
 
 
 class PipelineModules(object):
-    def __init__(self, repo_obj):
+    def __init__(self, modules_repo_obj):
         """
         Initialise the PipelineModules object
         """
-        self.repo = repo_obj
+        self.modules_repo = modules_repo_obj
         self.pipeline_dir = os.getcwd()
         self.modules_file_tree = {}
         self.modules_current_hash = None
@@ -45,20 +45,24 @@ class PipelineModules(object):
         self.get_modules_file_tree()
 
         if len(self.modules_avail_module_names) > 0:
-            logging.info("Software available from {} ({}):\n".format(self.repo.name, self.repo.branch))
+            logging.info("Software available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
             # Print results to stdout
             print("\n".join(self.modules_avail_module_names))
         else:
-            logging.info("No available software found in {} ({}):\n".format(self.repo.name, self.repo.branch))
+            logging.info(
+                "No available software found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
+            )
 
     def install(self, module):
+
+        # Get the available modules
         self.get_modules_file_tree()
 
         # Check that the supplied name is an available module
         if module not in self.modules_avail_module_names:
             logging.error("Module '{}' not found in list of available modules.".format(module))
             logging.info("Use the command 'nf-core modules list' to view available software")
-            return
+            return False
         logging.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
 
         # Check that we don't already have a folder for this module
@@ -66,7 +70,7 @@ class PipelineModules(object):
         if os.path.exists(module_dir):
             logging.error("Module directory already exists: {}".format(module_dir))
             logging.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
-            return
+            return False
 
         # Download module files
         files = self.get_module_file_urls(module)
@@ -95,16 +99,22 @@ class PipelineModules(object):
              self.modules_current_hash
              self.modules_avail_module_names
         """
-        api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.repo.name, self.repo.branch)
+        api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(
+            self.modules_repo.name, self.modules_repo.branch
+        )
         r = requests.get(api_url)
         if r.status_code == 404:
             logging.error(
-                "Repository / branch not found: {} ({})\n{}".format(self.repo.name, self.repo.branch, api_url)
+                "Repository / branch not found: {} ({})\n{}".format(
+                    self.modules_repo.name, self.modules_repo.branch, api_url
+                )
             )
             sys.exit(1)
         elif r.status_code != 200:
             raise SystemError(
-                "Could not fetch {} ({}) tree: {}\n{}".format(self.repo.name, self.repo.branch, r.status_code, api_url)
+                "Could not fetch {} ({}) tree: {}\n{}".format(
+                    self.modules_repo.name, self.modules_repo.branch, r.status_code, api_url
+                )
             )
 
         result = r.json()
@@ -163,7 +173,7 @@ class PipelineModules(object):
         # Call the GitHub API
         r = requests.get(api_url)
         if r.status_code != 200:
-            raise SystemError("Could not fetch {} file: {}\n {}".format(self.repo.name, r.status_code, api_url))
+            raise SystemError("Could not fetch {} file: {}\n {}".format(self.modules_repo.name, r.status_code, api_url))
         result = r.json()
         file_contents = base64.b64decode(result["content"])
 
