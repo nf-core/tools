@@ -32,8 +32,10 @@ def print_error(error, line):
     sys.exit(1)
 
 # TODO nf-core: Update the check_samplesheet function
-def check_samplesheet(file_in,file_out):
-    """This check shampleseet function checks that the sample sheet follows the following structure:
+def check_samplesheet(file_in, file_out):
+    """
+    This function checks that the sample sheet follows the following structure:
+    
     sample,fastq_1,fastq_2
     sample1,Sample1.fastq.gz,Sample2.fastq.gz
     """
