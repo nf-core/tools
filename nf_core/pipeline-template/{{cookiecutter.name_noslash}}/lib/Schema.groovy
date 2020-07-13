@@ -4,19 +4,19 @@
 
 import groovy.json.JsonSlurper
 
-class JSON {
+class Schema {
     /*
      * This method tries to read a JSON params file
      */
     private static LinkedHashMap params_get(String path) {
-        def usage = new LinkedHashMap()
+        def params_map = new LinkedHashMap()
         try {
-            usage = params_try(path)
+            params_map = params_try(path)
         } catch (Exception e) {
             println "Could not read parameters settings from JSON. $e"
-            usage = new LinkedHashMap()
+            params_map = new LinkedHashMap()
         }
-        return usage
+        return params_map
     }
 
     /*
@@ -31,7 +31,7 @@ class JSON {
     private static LinkedHashMap params_try(String path) throws Exception {
 
         def json = new File(path).text
-        def Map usage = (Map) new JsonSlurper().parseText(json).get('properties')
+        def Map json_params = (Map) new JsonSlurper().parseText(json).get('properties')
 
         /* Tree looks like this in nf-core schema
         *  properties <- this is what the first get('properties') gets us
@@ -45,37 +45,51 @@ class JSON {
                properties
                description
         */
-        def output_map = new LinkedHashMap()
-
-        // Lets go deeper
-        usage.each { key, val ->
-            def Map submap = usage."$key".properties // Gets the property object of the group
+        def params_map = new LinkedHashMap()
+        json_params.each { key, val ->
+            def Map group = json_params."$key".properties // Gets the property object of the group
             def sub_params = new LinkedHashMap()
-            submap.each { innerkey, value ->
-                sub_params.put("$innerkey", "$value.description")
+            group.each { innerkey, value ->
+                sub_params.put("$innerkey", [ "$value.type", "$value.description" ])
             }
-            output_map.put("$key", sub_params)
+            params_map.put("$key", sub_params)
         }
-        return output_map
+        return params_map
     }
 
-    static String params_help(path, command) {
-          String output = "Typical pipeline command:\n\n"
-          output += "    ${command}\n\n"
-          output += params_beautify(params_get(path))
-    }
-
-    static String params_beautify(usage) {
-        String output = ""
-        for (group in usage.keySet()) {
-            output += group + "\n"
-            def params = usage.get(group)  // This gets the parameters of that particular group
+    private static Integer params_max_chars(params_map) {
+        Integer max_chars = 0
+        for (group in params_map.keySet()) {
+            def params = params_map.get(group)  // This gets the parameters of that particular group
             for (par in params.keySet()) {
-                output+= "    \u001B[1m" + par.padRight(27) + "\u001B[1m" + params.get(par) + "\n"
+                if (par.size() > max_chars) {
+                    max_chars = par.size()
+                }
+            }
+        }
+        return max_chars
+    }
+
+    private static String params_beautify(params_map) {
+        String output = ""
+        def max_chars = params_max_chars(params_map) + 1
+        for (group in params_map.keySet()) {
+            output += group + "\n"
+            def params = params_map.get(group)  // This gets the parameters of that particular group
+            for (par in params.keySet()) {
+                def type = "[" + params.get(par)[0] + "]"
+                def description = params.get(par)[1]
+                output+= "    \u001B[1m" +  par.padRight(max_chars) + "\u001B[1m" + type.padRight(10) + description + "\n"
             }
             output += "\n"
         }
         return output
+    }
+
+    private static String params_help(path, command) {
+          String output = "Typical pipeline command:\n\n"
+          output += "    ${command}\n\n"
+          output += params_beautify(params_get(path))
     }
 
     private static LinkedHashMap params_summary(workflow, params, run_name) {
