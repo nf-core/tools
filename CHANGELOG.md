@@ -55,7 +55,8 @@ GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com
 * Add information about config files used for workflow execution (`workflow.configFiles`) to summary
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
-* Change `params.readPaths` -> `params.input_paths`
+* Move, modularise and import boilerplate code via Groovy `lib/` directory
+* Implement DSL 2 syntax for pipeline template
 
 ### Linting
 
