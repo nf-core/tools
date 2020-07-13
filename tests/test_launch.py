@@ -189,11 +189,11 @@ class TestLaunch(unittest.TestCase):
         """ Check that we can properly sanitise results from the web """
         self.launcher.get_pipeline_schema()
         self.launcher.nxf_flags["-name"] = ""
-        self.launcher.schema_obj.input_params["single_end"] = "true"
+        self.launcher.schema_obj.input_params["igenomes_ignore"] = "true"
         self.launcher.schema_obj.input_params["max_cpus"] = "12"
         self.launcher.sanitise_web_response()
         assert "-name" not in self.launcher.nxf_flags
-        assert self.launcher.schema_obj.input_params["single_end"] == True
+        assert self.launcher.schema_obj.input_params["igenomes_ignore"] == True
         assert self.launcher.schema_obj.input_params["max_cpus"] == 12
 
     def test_ob_to_pyinquirer_bool(self):

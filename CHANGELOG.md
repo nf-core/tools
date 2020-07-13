@@ -63,7 +63,8 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Add information about config files used for workflow execution (`workflow.configFiles`) to summary
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
-* Change `params.readPaths` -> `params.input_paths`
+* Move, modularise and import boilerplate code via Groovy `lib/` directory
+* Implement DSL 2 syntax for pipeline template
 
 ### Linting
 
