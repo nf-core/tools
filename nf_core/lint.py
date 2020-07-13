@@ -63,7 +63,7 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
     if md_fn is not None:
         logging.info("Writing lint results to {}".format(md_fn))
         markdown = lint_obj.get_results_md()
-        with open(md_fn, 'w') as fh:
+        with open(md_fn, "w") as fh:
             fh.write(markdown)
 
     # Save results to JSON file
@@ -76,8 +76,9 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
     # Exit code
     if len(lint_obj.failed) > 0:
         logging.error(
-            "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n"
-            .format("\n\tReminder: Lint tests were run in --release mode." if release_mode else '')
+            "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n".format(
+                "\n\tReminder: Lint tests were run in --release mode." if release_mode else ""
+            )
         )
 
     return lint_obj
@@ -138,6 +139,7 @@ class PipelineLint(object):
             params.clusterOptions = false
             ...
     """
+
     def __init__(self, path):
         """ Initialise linting object """
         self.release_mode = False
@@ -162,8 +164,8 @@ class PipelineLint(object):
             pass
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
-        if os.environ.get('GITHUB_PR_COMMIT', '') != '':
-            self.git_sha = os.environ['GITHUB_PR_COMMIT']
+        if os.environ.get("GITHUB_PR_COMMIT", "") != "":
+            self.git_sha = os.environ["GITHUB_PR_COMMIT"]
 
     def lint_pipeline(self, release_mode=False):
         """Main linting function.
@@ -194,30 +196,28 @@ class PipelineLint(object):
             If a critical problem is found, an ``AssertionError`` is raised.
         """
         check_functions = [
-            'check_files_exist',
-            'check_licence',
-            'check_docker',
-            'check_nextflow_config',
-            'check_actions_branch_protection',
-            'check_actions_ci',
-            'check_actions_lint',
-            'check_actions_awstest',
-            'check_actions_awsfulltest',
-            'check_readme',
-            'check_conda_env_yaml',
-            'check_conda_dockerfile',
-            'check_pipeline_todos',
-            'check_pipeline_name',
-            'check_cookiecutter_strings',
-            'check_schema_lint',
-            'check_schema_params'
+            "check_files_exist",
+            "check_licence",
+            "check_docker",
+            "check_nextflow_config",
+            "check_actions_branch_protection",
+            "check_actions_ci",
+            "check_actions_lint",
+            "check_actions_awstest",
+            "check_actions_awsfulltest",
+            "check_readme",
+            "check_conda_env_yaml",
+            "check_conda_dockerfile",
+            "check_pipeline_todos",
+            "check_pipeline_name",
+            "check_cookiecutter_strings",
+            "check_schema_lint",
+            "check_schema_params",
         ]
         if release_mode:
             self.release_mode = True
-            check_functions.extend([
-                'check_version_consistency'
-            ])
-        with click.progressbar(check_functions, label='Running pipeline tests', item_show_func=repr) as fun_names:
+            check_functions.extend(["check_version_consistency"])
+        with click.progressbar(check_functions, label="Running pipeline tests", item_show_func=repr) as fun_names:
             for fun_name in fun_names:
                 getattr(self, fun_name)()
                 if len(self.failed) > 0:
@@ -267,42 +267,37 @@ class PipelineLint(object):
         # NB: Should all be files, not directories
         # List of lists. Passes if any of the files in the sublist are found.
         files_fail = [
-            ['nextflow.config'],
-            ['nextflow_schema.json'],
-            ['Dockerfile'],
-            ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
-            ['README.md'],
-            ['CHANGELOG.md'],
-            [os.path.join('docs','README.md')],
-            [os.path.join('docs','output.md')],
-            [os.path.join('docs','usage.md')],
-            [os.path.join('.github', 'workflows', 'branch.yml')],
-            [os.path.join('.github', 'workflows','ci.yml')],
-            [os.path.join('.github', 'workflows', 'linting.yml')]
+            ["nextflow.config"],
+            ["nextflow_schema.json"],
+            ["Dockerfile"],
+            ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
+            ["README.md"],
+            ["CHANGELOG.md"],
+            [os.path.join("docs", "README.md")],
+            [os.path.join("docs", "output.md")],
+            [os.path.join("docs", "usage.md")],
+            [os.path.join(".github", "workflows", "branch.yml")],
+            [os.path.join(".github", "workflows", "ci.yml")],
+            [os.path.join(".github", "workflows", "linting.yml")],
         ]
         files_warn = [
-            ['main.nf'],
-            ['environment.yml'],
-            [os.path.join('conf','base.config')],
-            [os.path.join('.github', 'workflows','awstest.yml')],
-            [os.path.join('.github', 'workflows', 'awsfulltest.yml')]
+            ["main.nf"],
+            ["environment.yml"],
+            [os.path.join("conf", "base.config")],
+            [os.path.join(".github", "workflows", "awstest.yml")],
+            [os.path.join(".github", "workflows", "awsfulltest.yml")],
         ]
 
         # List of strings. Dails / warns if any of the strings exist.
-        files_fail_ifexists = [
-            'Singularity',
-            'parameters.settings.json'
-        ]
-        files_warn_ifexists = [
-            '.travis.yml'
-        ]
+        files_fail_ifexists = ["Singularity", "parameters.settings.json"]
+        files_warn_ifexists = [".travis.yml"]
 
         def pf(file_path):
             return os.path.join(self.path, file_path)
 
         # First - critical files. Check that this is actually a Nextflow pipeline
-        if not os.path.isfile(pf('nextflow.config')) and not os.path.isfile(pf('main.nf')):
-            raise AssertionError('Neither nextflow.config or main.nf found! Is this a Nextflow pipeline?')
+        if not os.path.isfile(pf("nextflow.config")) and not os.path.isfile(pf("main.nf")):
+            raise AssertionError("Neither nextflow.config or main.nf found! Is this a Nextflow pipeline?")
 
         # Files that cause an error if they don't exist
         for files in files_fail:
@@ -335,18 +330,19 @@ class PipelineLint(object):
                 self.passed.append((1, "File not found check: {}".format(self._bold_list_items(file))))
 
         # Load and parse files for later
-        if 'environment.yml' in self.files:
-            with open(os.path.join(self.path, 'environment.yml'), 'r') as fh:
+        if "environment.yml" in self.files:
+            with open(os.path.join(self.path, "environment.yml"), "r") as fh:
                 self.conda_config = yaml.safe_load(fh)
 
     def check_docker(self):
         """Checks that Dockerfile contains the string ``FROM``."""
         fn = os.path.join(self.path, "Dockerfile")
         content = ""
-        with open(fn, 'r') as fh: content = fh.read()
+        with open(fn, "r") as fh:
+            content = fh.read()
 
         # Implicitly also checks if empty.
-        if 'FROM ' in content:
+        if "FROM " in content:
             self.passed.append((2, "Dockerfile check passed"))
             self.dockerfile = [line.strip() for line in content.splitlines()]
             return
@@ -361,11 +357,12 @@ class PipelineLint(object):
             * licence contains the string *without restriction*
             * licence doesn't have any placeholder variables
         """
-        for l in ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md']:
+        for l in ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"]:
             fn = os.path.join(self.path, l)
             if os.path.isfile(fn):
                 content = ""
-                with open(fn, 'r') as fh: content = fh.read()
+                with open(fn, "r") as fh:
+                    content = fh.read()
 
                 # needs at least copyright, permission, notice and "as-is" lines
                 nl = content.count("\n")
@@ -377,7 +374,7 @@ class PipelineLint(object):
                 # license. Most variations actually don't contain the
                 # string MIT Searching for 'without restriction'
                 # instead (a crutch).
-                if not 'without restriction' in content:
+                if not "without restriction" in content:
                     self.failed.append((3, "Licence file did not look like MIT: {}".format(fn)))
                     return
 
@@ -385,7 +382,7 @@ class PipelineLint(object):
                 # - https://choosealicense.com/licenses/mit/
                 # - https://opensource.org/licenses/MIT
                 # - https://en.wikipedia.org/wiki/MIT_License
-                placeholders = {'[year]', '[fullname]', '<YEAR>', '<COPYRIGHT HOLDER>', '<year>', '<copyright holders>'}
+                placeholders = {"[year]", "[fullname]", "<YEAR>", "<COPYRIGHT HOLDER>", "<year>", "<copyright holders>"}
                 if any([ph in content for ph in placeholders]):
                     self.failed.append((3, "Licence file contains placeholders: {}".format(fn)))
                     return
@@ -408,37 +405,37 @@ class PipelineLint(object):
 
         # Fail tests if these are missing
         config_fail = [
-            ['manifest.name'],
-            ['manifest.nextflowVersion'],
-            ['manifest.description'],
-            ['manifest.version'],
-            ['manifest.homePage'],
-            ['timeline.enabled'],
-            ['trace.enabled'],
-            ['report.enabled'],
-            ['dag.enabled'],
-            ['process.cpus'],
-            ['process.memory'],
-            ['process.time'],
-            ['params.outdir'],
-            ['params.input']
+            ["manifest.name"],
+            ["manifest.nextflowVersion"],
+            ["manifest.description"],
+            ["manifest.version"],
+            ["manifest.homePage"],
+            ["timeline.enabled"],
+            ["trace.enabled"],
+            ["report.enabled"],
+            ["dag.enabled"],
+            ["process.cpus"],
+            ["process.memory"],
+            ["process.time"],
+            ["params.outdir"],
+            ["params.input"],
         ]
         # Throw a warning if these are missing
         config_warn = [
-            ['manifest.mainScript'],
-            ['timeline.file'],
-            ['trace.file'],
-            ['report.file'],
-            ['dag.file'],
-            ['process.container']
+            ["manifest.mainScript"],
+            ["timeline.file"],
+            ["trace.file"],
+            ["report.file"],
+            ["dag.file"],
+            ["process.container"],
         ]
         # Old depreciated vars - fail if present
         config_fail_ifdefined = [
-            'params.version',
-            'params.nf_required_version',
-            'params.container',
-            'params.singleEnd',
-            'params.igenomesIgnore'
+            "params.version",
+            "params.nf_required_version",
+            "params.container",
+            "params.singleEnd",
+            "params.igenomesIgnore",
         ]
 
         # Get the nextflow config for this pipeline
@@ -464,180 +461,295 @@ class PipelineLint(object):
                 self.failed.append((4, "Config variable (incorrectly) found: {}".format(self._bold_list_items(cf))))
 
         # Check and warn if the process configuration is done with deprecated syntax
-        process_with_deprecated_syntax = list(set([re.search('^(process\.\$.*?)\.+.*$', ck).group(1) for ck in self.config.keys() if re.match(r'^(process\.\$.*?)\.+.*$', ck)]))
+        process_with_deprecated_syntax = list(
+            set(
+                [
+                    re.search("^(process\.\$.*?)\.+.*$", ck).group(1)
+                    for ck in self.config.keys()
+                    if re.match(r"^(process\.\$.*?)\.+.*$", ck)
+                ]
+            )
+        )
         for pd in process_with_deprecated_syntax:
             self.warned.append((4, "Process configuration is done with deprecated_syntax: {}".format(pd)))
 
         # Check the variables that should be set to 'true'
-        for k in ['timeline.enabled', 'report.enabled', 'trace.enabled', 'dag.enabled']:
-            if self.config.get(k) == 'true':
+        for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
+            if self.config.get(k) == "true":
                 self.passed.append((4, "Config variable '{}' had correct value: {}".format(k, self.config.get(k))))
             else:
-                self.failed.append((4, "Config variable '{}' did not have correct value: {}".format(k, self.config.get(k))))
+                self.failed.append(
+                    (4, "Config variable '{}' did not have correct value: {}".format(k, self.config.get(k)))
+                )
 
         # Check that the pipeline name starts with nf-core
         try:
-            assert self.config.get('manifest.name', '').strip('\'"').startswith('nf-core/')
+            assert self.config.get("manifest.name", "").strip("'\"").startswith("nf-core/")
         except (AssertionError, IndexError):
-            self.failed.append((4, "Config variable 'manifest.name' did not begin with nf-core/:\n    {}".format(self.config.get('manifest.name', '').strip('\'"'))))
+            self.failed.append(
+                (
+                    4,
+                    "Config variable 'manifest.name' did not begin with nf-core/:\n    {}".format(
+                        self.config.get("manifest.name", "").strip("'\"")
+                    ),
+                )
+            )
         else:
             self.passed.append((4, "Config variable 'manifest.name' began with 'nf-core/'"))
-            self.pipeline_name = self.config.get('manifest.name', '').strip("'").replace('nf-core/', '')
+            self.pipeline_name = self.config.get("manifest.name", "").strip("'").replace("nf-core/", "")
 
         # Check that the homePage is set to the GitHub URL
         try:
-            assert self.config.get('manifest.homePage', '').strip('\'"').startswith('https://github.com/nf-core/')
+            assert self.config.get("manifest.homePage", "").strip("'\"").startswith("https://github.com/nf-core/")
         except (AssertionError, IndexError):
-            self.failed.append((4, "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(self.config.get('manifest.homePage', '').strip('\'"'))))
+            self.failed.append(
+                (
+                    4,
+                    "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(
+                        self.config.get("manifest.homePage", "").strip("'\"")
+                    ),
+                )
+            )
         else:
             self.passed.append((4, "Config variable 'manifest.homePage' began with 'https://github.com/nf-core/'"))
 
         # Check that the DAG filename ends in `.svg`
-        if 'dag.file' in self.config:
-            if self.config['dag.file'].strip('\'"').endswith('.svg'):
+        if "dag.file" in self.config:
+            if self.config["dag.file"].strip("'\"").endswith(".svg"):
                 self.passed.append((4, "Config variable 'dag.file' ended with .svg"))
             else:
                 self.failed.append((4, "Config variable 'dag.file' did not end with .svg"))
 
         # Check that the minimum nextflowVersion is set properly
-        if 'manifest.nextflowVersion' in self.config:
-            if self.config.get('manifest.nextflowVersion', '').strip('"\'').lstrip('!').startswith('>='):
+        if "manifest.nextflowVersion" in self.config:
+            if self.config.get("manifest.nextflowVersion", "").strip("\"'").lstrip("!").startswith(">="):
                 self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >= or !>="))
                 # Save self.minNextflowVersion for convenience
-                nextflowVersionMatch = re.search(r'[0-9\.]+(-edge)?', self.config.get('manifest.nextflowVersion', ''))
+                nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.config.get("manifest.nextflowVersion", ""))
                 if nextflowVersionMatch:
                     self.minNextflowVersion = nextflowVersionMatch.group(0)
                 else:
                     self.minNextflowVersion = None
             else:
-                self.failed.append((4, "Config variable 'manifest.nextflowVersion' did not start with '>=' or '!>=' : '{}'".format(self.config.get('manifest.nextflowVersion', '')).strip('"\'')))
+                self.failed.append(
+                    (
+                        4,
+                        "Config variable 'manifest.nextflowVersion' did not start with '>=' or '!>=' : '{}'".format(
+                            self.config.get("manifest.nextflowVersion", "")
+                        ).strip("\"'"),
+                    )
+                )
 
         # Check that the process.container name is pulling the version tag or :dev
-        if self.config.get('process.container'):
-            container_name = '{}:{}'.format(self.config.get('manifest.name').replace('nf-core','nfcore').strip("'"), self.config.get('manifest.version', '').strip("'"))
-            if 'dev' in self.config.get('manifest.version', '') or not self.config.get('manifest.version'):
-                container_name = '{}:dev'.format(self.config.get('manifest.name').replace('nf-core','nfcore').strip("'"))
+        if self.config.get("process.container"):
+            container_name = "{}:{}".format(
+                self.config.get("manifest.name").replace("nf-core", "nfcore").strip("'"),
+                self.config.get("manifest.version", "").strip("'"),
+            )
+            if "dev" in self.config.get("manifest.version", "") or not self.config.get("manifest.version"):
+                container_name = "{}:dev".format(
+                    self.config.get("manifest.name").replace("nf-core", "nfcore").strip("'")
+                )
             try:
-                assert self.config.get('process.container', '').strip("'") == container_name
+                assert self.config.get("process.container", "").strip("'") == container_name
             except AssertionError:
                 if self.release_mode:
-                    self.failed.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(container_name, self.config.get('process.container', '').strip("'"))))
+                    self.failed.append(
+                        (
+                            4,
+                            "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(
+                                container_name, self.config.get("process.container", "").strip("'")
+                            ),
+                        )
+                    )
                 else:
-                    self.warned.append((4, "Config variable process.container looks wrong. Should be '{}' but is '{}'. Fix this before you make a release of your pipeline!".format(container_name, self.config.get('process.container', '').strip("'"))))
+                    self.warned.append(
+                        (
+                            4,
+                            "Config variable process.container looks wrong. Should be '{}' but is '{}'. Fix this before you make a release of your pipeline!".format(
+                                container_name, self.config.get("process.container", "").strip("'")
+                            ),
+                        )
+                    )
             else:
                 self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
 
         # Check that the pipeline version contains `dev`
-        if not self.release_mode and 'manifest.version' in self.config:
-            if self.config['manifest.version'].strip(' \'"').endswith('dev'):
-                self.passed.append((4, "Config variable manifest.version ends in 'dev': '{}'".format(self.config['manifest.version'])))
+        if not self.release_mode and "manifest.version" in self.config:
+            if self.config["manifest.version"].strip(" '\"").endswith("dev"):
+                self.passed.append(
+                    (4, "Config variable manifest.version ends in 'dev': '{}'".format(self.config["manifest.version"]))
+                )
             else:
-                self.warned.append((4, "Config variable manifest.version should end in 'dev': '{}'".format(self.config['manifest.version'])))
-        elif 'manifest.version' in self.config:
-            if 'dev' in self.config['manifest.version']:
-                self.failed.append((4, "Config variable manifest.version should not contain 'dev' for a release: '{}'".format(self.config['manifest.version'])))
+                self.warned.append(
+                    (
+                        4,
+                        "Config variable manifest.version should end in 'dev': '{}'".format(
+                            self.config["manifest.version"]
+                        ),
+                    )
+                )
+        elif "manifest.version" in self.config:
+            if "dev" in self.config["manifest.version"]:
+                self.failed.append(
+                    (
+                        4,
+                        "Config variable manifest.version should not contain 'dev' for a release: '{}'".format(
+                            self.config["manifest.version"]
+                        ),
+                    )
+                )
             else:
-                self.passed.append((4, "Config variable manifest.version does not contain 'dev' for release: '{}'".format(self.config['manifest.version'])))
+                self.passed.append(
+                    (
+                        4,
+                        "Config variable manifest.version does not contain 'dev' for release: '{}'".format(
+                            self.config["manifest.version"]
+                        ),
+                    )
+                )
 
     def check_actions_branch_protection(self):
         """Checks that the GitHub Actions branch protection workflow is valid.
 
         Makes sure PRs can only come from nf-core dev or 'patch' of a fork.
         """
-        fn = os.path.join(self.path, '.github', 'workflows', 'branch.yml')
+        fn = os.path.join(self.path, ".github", "workflows", "branch.yml")
         if os.path.isfile(fn):
-            with open(fn, 'r') as fh:
+            with open(fn, "r") as fh:
                 branchwf = yaml.safe_load(fh)
 
             # Check that the action is turned on for PRs to master
             try:
                 # Yaml 'on' parses as True - super weird
-                assert('master' in branchwf[True]['pull_request']['branches'])
+                assert "master" in branchwf[True]["pull_request"]["branches"]
             except (AssertionError, KeyError):
-                self.failed.append((5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: '{}'".format(fn)))
+                self.failed.append(
+                    (5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: '{}'".format(fn))
+                )
             else:
-                self.passed.append((5, "GitHub Actions 'branch' workflow is triggered for PRs to master: '{}'".format(fn)))
+                self.passed.append(
+                    (5, "GitHub Actions 'branch' workflow is triggered for PRs to master: '{}'".format(fn))
+                )
 
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-            steps = branchwf.get('jobs', {}).get('test', {}).get('steps', [])
+            steps = branchwf.get("jobs", {}).get("test", {}).get("steps", [])
             for step in steps:
-                has_name = step.get('name', '').strip() == 'Check PRs'
-                has_if = step.get('if', '').strip() == "github.repository == 'nf-core/{}'".format(self.pipeline_name.lower())
+                has_name = step.get("name", "").strip() == "Check PRs"
+                has_if = step.get("if", "").strip() == "github.repository == 'nf-core/{}'".format(
+                    self.pipeline_name.lower()
+                )
                 # Don't use .format() as the squiggly brackets get ridiculous
-                has_run = step.get('run', '').strip() == '{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace('PIPELINENAME', self.pipeline_name.lower())
+                has_run = step.get(
+                    "run", ""
+                ).strip() == '{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace(
+                    "PIPELINENAME", self.pipeline_name.lower()
+                )
                 if has_name and has_if and has_run:
-                    self.passed.append((5, "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(fn)))
+                    self.passed.append(
+                        (
+                            5,
+                            "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(
+                                fn
+                            ),
+                        )
+                    )
                     break
             else:
-                self.failed.append((5, "Couldn't find GitHub Actions 'branch' workflow step to check that forks don't submit PRs to master: '{}'".format(fn)))
+                self.failed.append(
+                    (
+                        5,
+                        "Couldn't find GitHub Actions 'branch' workflow step to check that forks don't submit PRs to master: '{}'".format(
+                            fn
+                        ),
+                    )
+                )
 
     def check_actions_ci(self):
         """Checks that the GitHub Actions CI workflow is valid
 
         Makes sure tests run with the required nextflow version.
         """
-        fn = os.path.join(self.path, '.github', 'workflows', 'ci.yml')
+        fn = os.path.join(self.path, ".github", "workflows", "ci.yml")
         if os.path.isfile(fn):
-            with open(fn, 'r') as fh:
+            with open(fn, "r") as fh:
                 ciwf = yaml.safe_load(fh)
 
             # Check that the action is turned on for the correct events
             try:
-                expected = {
-                    'push': { 'branches': ['dev'] },
-                    'pull_request': None,
-                    'release': { 'types': ['published'] }
-                }
+                expected = {"push": {"branches": ["dev"]}, "pull_request": None, "release": {"types": ["published"]}}
                 # NB: YAML dict key 'on' is evaluated to a Python dict key True
-                assert(ciwf[True] == expected)
+                assert ciwf[True] == expected
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions CI workflow is not triggered on expected GitHub Actions events: '{}'".format(fn)))
+                self.failed.append(
+                    (
+                        5,
+                        "GitHub Actions CI workflow is not triggered on expected GitHub Actions events: '{}'".format(
+                            fn
+                        ),
+                    )
+                )
             else:
-                self.passed.append((5, "GitHub Actions CI workflow is triggered on expected GitHub Actions events: '{}'".format(fn)))
+                self.passed.append(
+                    (5, "GitHub Actions CI workflow is triggered on expected GitHub Actions events: '{}'".format(fn))
+                )
 
             # Check that we're pulling the right docker image and tagging it properly
-            if self.config.get('process.container', ''):
-                docker_notag = re.sub(r':(?:[\.\d]+|dev)$', '', self.config.get('process.container', '').strip('"\''))
-                docker_withtag = self.config.get('process.container', '').strip('"\'')
+            if self.config.get("process.container", ""):
+                docker_notag = re.sub(r":(?:[\.\d]+|dev)$", "", self.config.get("process.container", "").strip("\"'"))
+                docker_withtag = self.config.get("process.container", "").strip("\"'")
 
                 # docker build
-                docker_build_cmd = 'docker build --no-cache . -t {}'.format(docker_withtag)
+                docker_build_cmd = "docker build --no-cache . -t {}".format(docker_withtag)
                 try:
-                    steps = ciwf['jobs']['test']['steps']
-                    assert(any([docker_build_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                    steps = ciwf["jobs"]["test"]["steps"]
+                    assert any([docker_build_cmd in step["run"] for step in steps if "run" in step.keys()])
                 except (AssertionError, KeyError, TypeError):
-                    self.failed.append((5, "CI is not building the correct docker image. Should be:\n    '{}'".format(docker_build_cmd)))
+                    self.failed.append(
+                        (
+                            5,
+                            "CI is not building the correct docker image. Should be:\n    '{}'".format(
+                                docker_build_cmd
+                            ),
+                        )
+                    )
                 else:
                     self.passed.append((5, "CI is building the correct docker image: {}".format(docker_build_cmd)))
 
                 # docker pull
-                docker_pull_cmd = 'docker pull {}:dev'.format(docker_notag)
+                docker_pull_cmd = "docker pull {}:dev".format(docker_notag)
                 try:
-                    steps = ciwf['jobs']['test']['steps']
-                    assert(any([docker_pull_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                    steps = ciwf["jobs"]["test"]["steps"]
+                    assert any([docker_pull_cmd in step["run"] for step in steps if "run" in step.keys()])
                 except (AssertionError, KeyError, TypeError):
-                    self.failed.append((5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd)))
+                    self.failed.append(
+                        (5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd))
+                    )
                 else:
                     self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
 
                 # docker tag
-                docker_tag_cmd = 'docker tag {}:dev {}'.format(docker_notag, docker_withtag)
+                docker_tag_cmd = "docker tag {}:dev {}".format(docker_notag, docker_withtag)
                 try:
-                    steps = ciwf['jobs']['test']['steps']
-                    assert(any([docker_tag_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                    steps = ciwf["jobs"]["test"]["steps"]
+                    assert any([docker_tag_cmd in step["run"] for step in steps if "run" in step.keys()])
                 except (AssertionError, KeyError, TypeError):
-                    self.failed.append((5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd)))
+                    self.failed.append(
+                        (5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd))
+                    )
                 else:
                     self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
 
             # Check that we are testing the minimum nextflow version
             try:
-                matrix = ciwf['jobs']['test']['strategy']['matrix']['nxf_ver']
-                assert(any([self.minNextflowVersion in matrix]))
+                matrix = ciwf["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"]
+                assert any([self.minNextflowVersion in matrix])
             except (KeyError, TypeError):
                 self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
             except AssertionError:
-                self.failed.append((5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn)))
+                self.failed.append(
+                    (5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn))
+                )
             else:
                 self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
 
@@ -646,36 +758,37 @@ class PipelineLint(object):
 
         Makes sure ``nf-core lint`` and ``markdownlint`` runs.
         """
-        fn = os.path.join(self.path, '.github', 'workflows', 'linting.yml')
+        fn = os.path.join(self.path, ".github", "workflows", "linting.yml")
         if os.path.isfile(fn):
-            with open(fn, 'r') as fh:
+            with open(fn, "r") as fh:
                 lintwf = yaml.safe_load(fh)
 
             # Check that the action is turned on for push and pull requests
             try:
-                assert('push' in lintwf[True])
-                assert('pull_request' in lintwf[True])
+                assert "push" in lintwf[True]
+                assert "pull_request" in lintwf[True]
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions linting workflow must be triggered on PR and push: '{}'".format(fn)))
+                self.failed.append(
+                    (5, "GitHub Actions linting workflow must be triggered on PR and push: '{}'".format(fn))
+                )
             else:
                 self.passed.append((5, "GitHub Actions linting workflow is triggered on PR and push: '{}'".format(fn)))
 
             # Check that the Markdown linting runs
-            Markdownlint_cmd = 'markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml'
+            Markdownlint_cmd = "markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml"
             try:
-                steps = lintwf['jobs']['Markdown']['steps']
-                assert(any([Markdownlint_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                steps = lintwf["jobs"]["Markdown"]["steps"]
+                assert any([Markdownlint_cmd in step["run"] for step in steps if "run" in step.keys()])
             except (AssertionError, KeyError, TypeError):
                 self.failed.append((5, "Continuous integration must run Markdown lint Tests: '{}'".format(fn)))
             else:
                 self.passed.append((5, "Continuous integration runs Markdown lint Tests: '{}'".format(fn)))
 
-
             # Check that the nf-core linting runs
-            nfcore_lint_cmd = 'nf-core lint ${GITHUB_WORKSPACE}'
+            nfcore_lint_cmd = "nf-core lint ${GITHUB_WORKSPACE}"
             try:
-                steps = lintwf['jobs']['nf-core']['steps']
-                assert(any([ nfcore_lint_cmd in step['run'] for step in steps if 'run' in step.keys()]))
+                steps = lintwf["jobs"]["nf-core"]["steps"]
+                assert any([nfcore_lint_cmd in step["run"] for step in steps if "run" in step.keys()])
             except (AssertionError, KeyError, TypeError):
                 self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
             else:
@@ -686,26 +799,30 @@ class PipelineLint(object):
 
         Makes sure it is triggered only on ``push`` to ``master``.
         """
-        fn = os.path.join(self.path, '.github', 'workflows', 'awstest.yml')
+        fn = os.path.join(self.path, ".github", "workflows", "awstest.yml")
         if os.path.isfile(fn):
-            with open(fn, 'r') as fh:
+            with open(fn, "r") as fh:
                 wf = yaml.safe_load(fh)
 
             # Check that the action is only turned on for push
             try:
-                assert('push' in wf[True])
-                assert('pull_request' not in wf[True])
+                assert "push" in wf[True]
+                assert "pull_request" not in wf[True]
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions AWS test should be triggered on push and not PRs: '{}'".format(fn)))
+                self.failed.append(
+                    (5, "GitHub Actions AWS test should be triggered on push and not PRs: '{}'".format(fn))
+                )
             else:
                 self.passed.append((5, "GitHub Actions AWS test is triggered on push and not PRs: '{}'".format(fn)))
 
             # Check that the action is only turned on for push to master
             try:
-                assert('master' in wf[True]['push']['branches'])
-                assert('dev' not in wf[True]['push']['branches'])
+                assert "master" in wf[True]["push"]["branches"]
+                assert "dev" not in wf[True]["push"]["branches"]
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions AWS test should be triggered only on push to master: '{}'".format(fn)))
+                self.failed.append(
+                    (5, "GitHub Actions AWS test should be triggered only on push to master: '{}'".format(fn))
+                )
             else:
                 self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: '{}'".format(fn)))
 
@@ -714,28 +831,32 @@ class PipelineLint(object):
 
         Makes sure it is triggered only on ``release``.
         """
-        fn = os.path.join(self.path, '.github', 'workflows', 'awsfulltest.yml')
+        fn = os.path.join(self.path, ".github", "workflows", "awsfulltest.yml")
         if os.path.isfile(fn):
-            with open(fn, 'r') as fh:
+            with open(fn, "r") as fh:
                 wf = yaml.safe_load(fh)
 
-            aws_profile = '-profile test '
+            aws_profile = "-profile test "
 
             # Check that the action is only turned on for published releases
             try:
-                assert('release' in wf[True])
-                assert('published' in wf[True]['release']['types'])
-                assert('push' not in wf[True])
-                assert('pull_request' not in wf[True])
+                assert "release" in wf[True]
+                assert "published" in wf[True]["release"]["types"]
+                assert "push" not in wf[True]
+                assert "pull_request" not in wf[True]
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions AWS full test should be triggered only on published release: '{}'".format(fn)))
+                self.failed.append(
+                    (5, "GitHub Actions AWS full test should be triggered only on published release: '{}'".format(fn))
+                )
             else:
-                self.passed.append((5, "GitHub Actions AWS full test is triggered only on published release: '{}'".format(fn)))
+                self.passed.append(
+                    (5, "GitHub Actions AWS full test is triggered only on published release: '{}'".format(fn))
+                )
 
             # Warn if `-profile test` is still unchanged
             try:
-                steps = wf['jobs']['run-awstest']['steps']
-                assert(any([aws_profile in step['run'] for step in steps if 'run' in step.keys()]))
+                steps = wf["jobs"]["run-awstest"]["steps"]
+                assert any([aws_profile in step["run"] for step in steps if "run" in step.keys()])
             except (AssertionError, KeyError, TypeError):
                 self.passed.append((5, "GitHub Actions AWS full test should test full datasets: '{}'".format(fn)))
             else:
@@ -746,7 +867,7 @@ class PipelineLint(object):
 
         Currently just checks the badges at the top of the README.
         """
-        with open(os.path.join(self.path, 'README.md'), 'r') as fh:
+        with open(os.path.join(self.path, "README.md"), "r") as fh:
             content = fh.read()
 
         # Check that there is a readme badge showing the minimum required version of Nextflow
@@ -754,24 +875,37 @@ class PipelineLint(object):
         nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow-%E2%89%A5([\d\.]+)-brightgreen\.svg\)\]\(https://www\.nextflow\.io/\)"
         match = re.search(nf_badge_re, content)
         if match:
-            nf_badge_version = match.group(1).strip('\'"')
+            nf_badge_version = match.group(1).strip("'\"")
             try:
                 assert nf_badge_version == self.minNextflowVersion
             except (AssertionError, KeyError):
-                self.failed.append((6, "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(nf_badge_version, self.minNextflowVersion)))
+                self.failed.append(
+                    (
+                        6,
+                        "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(
+                            nf_badge_version, self.minNextflowVersion
+                        ),
+                    )
+                )
             else:
-                self.passed.append((6, "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(nf_badge_version, self.minNextflowVersion)))
+                self.passed.append(
+                    (
+                        6,
+                        "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(
+                            nf_badge_version, self.minNextflowVersion
+                        ),
+                    )
+                )
         else:
             self.warned.append((6, "README did not have a Nextflow minimum version badge."))
 
         # Check that we have a bioconda badge if we have a bioconda environment file
-        if 'environment.yml' in self.files:
-            bioconda_badge = '[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)'
+        if "environment.yml" in self.files:
+            bioconda_badge = "[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)"
             if bioconda_badge in content:
                 self.passed.append((6, "README had a bioconda badge"))
             else:
                 self.warned.append((6, "Found a bioconda environment.yml file but no badge in the README"))
-
 
     def check_version_consistency(self):
         """Checks container tags versions.
@@ -786,37 +920,47 @@ class PipelineLint(object):
         versions = {}
         # Get the version definitions
         # Get version from nextflow.config
-        versions['manifest.version'] = self.config.get('manifest.version', '').strip(' \'"')
+        versions["manifest.version"] = self.config.get("manifest.version", "").strip(" '\"")
 
         # Get version from the docker slug
-        if self.config.get('process.container', '') and \
-                not ':' in self.config.get('process.container', ''):
-            self.failed.append((7, "Docker slug seems not to have "
-                "a version tag: {}".format(self.config.get('process.container', ''))))
+        if self.config.get("process.container", "") and not ":" in self.config.get("process.container", ""):
+            self.failed.append(
+                (
+                    7,
+                    "Docker slug seems not to have "
+                    "a version tag: {}".format(self.config.get("process.container", "")),
+                )
+            )
             return
 
         # Get config container slugs, (if set; one container per workflow)
-        if self.config.get('process.container', ''):
-            versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
-        if self.config.get('process.container', ''):
-            versions['process.container'] = self.config.get('process.container', '').strip(' \'"').split(':')[-1]
+        if self.config.get("process.container", ""):
+            versions["process.container"] = self.config.get("process.container", "").strip(" '\"").split(":")[-1]
+        if self.config.get("process.container", ""):
+            versions["process.container"] = self.config.get("process.container", "").strip(" '\"").split(":")[-1]
 
         # Get version from the GITHUB_REF env var if this is a release
-        if os.environ.get('GITHUB_REF', '').startswith('refs/tags/') and os.environ.get('GITHUB_REPOSITORY', '') != 'nf-core/tools':
-            versions['GITHUB_REF'] = os.path.basename(os.environ['GITHUB_REF'].strip(' \'"'))
+        if (
+            os.environ.get("GITHUB_REF", "").startswith("refs/tags/")
+            and os.environ.get("GITHUB_REPOSITORY", "") != "nf-core/tools"
+        ):
+            versions["GITHUB_REF"] = os.path.basename(os.environ["GITHUB_REF"].strip(" '\""))
 
         # Check if they are all numeric
         for v_type, version in versions.items():
-            if not version.replace('.', '').isdigit():
+            if not version.replace(".", "").isdigit():
                 self.failed.append((7, "{} was not numeric: {}!".format(v_type, version)))
                 return
 
         # Check if they are consistent
         if len(set(versions.values())) != 1:
-            self.failed.append((7, "The versioning is not consistent between container, release tag "
-                "and config. Found {}".format(
-                    ", ".join(["{} = {}".format(k, v) for k,v in versions.items()])
-                )))
+            self.failed.append(
+                (
+                    7,
+                    "The versioning is not consistent between container, release tag "
+                    "and config. Found {}".format(", ".join(["{} = {}".format(k, v) for k, v in versions.items()])),
+                )
+            )
             return
 
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
@@ -829,68 +973,84 @@ class PipelineLint(object):
             * check that dependency versions are pinned
             * dependency versions are the latest available
         """
-        if 'environment.yml' not in self.files:
+        if "environment.yml" not in self.files:
             return
 
         # Check that the environment name matches the pipeline name
-        pipeline_version = self.config.get('manifest.version', '').strip(' \'"')
-        expected_env_name = 'nf-core-{}-{}'.format(self.pipeline_name.lower(), pipeline_version)
-        if self.conda_config['name'] != expected_env_name:
-            self.failed.append((8, "Conda environment name is incorrect ({}, should be {})".format(self.conda_config['name'], expected_env_name)))
+        pipeline_version = self.config.get("manifest.version", "").strip(" '\"")
+        expected_env_name = "nf-core-{}-{}".format(self.pipeline_name.lower(), pipeline_version)
+        if self.conda_config["name"] != expected_env_name:
+            self.failed.append(
+                (
+                    8,
+                    "Conda environment name is incorrect ({}, should be {})".format(
+                        self.conda_config["name"], expected_env_name
+                    ),
+                )
+            )
         else:
             self.passed.append((8, "Conda environment name was correct ({})".format(expected_env_name)))
 
         # Check conda dependency list
-        for dep in self.conda_config.get('dependencies', []):
+        for dep in self.conda_config.get("dependencies", []):
             if isinstance(dep, str):
                 # Check that each dependency has a version number
                 try:
-                    assert dep.count('=') in [1,2]
+                    assert dep.count("=") in [1, 2]
                 except AssertionError:
                     self.failed.append((8, "Conda dependency did not have pinned version number: {}".format(dep)))
                 else:
                     self.passed.append((8, "Conda dependency had pinned version number: {}".format(dep)))
 
                     try:
-                        depname, depver = dep.split('=')[:2]
+                        depname, depver = dep.split("=")[:2]
                         self.check_anaconda_package(dep)
                     except ValueError:
                         pass
                     else:
                         # Check that required version is available at all
-                        if depver not in self.conda_package_info[dep].get('versions'):
+                        if depver not in self.conda_package_info[dep].get("versions"):
                             self.failed.append((8, "Conda dependency had an unknown version: {}".format(dep)))
                             continue  # No need to test for latest version, continue linting
                         # Check version is latest available
-                        last_ver = self.conda_package_info[dep].get('latest_version')
+                        last_ver = self.conda_package_info[dep].get("latest_version")
                         if last_ver is not None and last_ver != depver:
-                            self.warned.append((8, "Conda package is not latest available: {}, {} available".format(dep, last_ver)))
+                            self.warned.append(
+                                (8, "Conda package is not latest available: {}, {} available".format(dep, last_ver))
+                            )
                         else:
                             self.passed.append((8, "Conda package is latest available: {}".format(dep)))
 
             elif isinstance(dep, dict):
-                for pip_dep in dep.get('pip', []):
+                for pip_dep in dep.get("pip", []):
                     # Check that each pip dependency has a version number
                     try:
-                        assert pip_dep.count('=') == 2
+                        assert pip_dep.count("=") == 2
                     except AssertionError:
                         self.failed.append((8, "Pip dependency did not have pinned version number: {}".format(pip_dep)))
                     else:
                         self.passed.append((8, "Pip dependency had pinned version number: {}".format(pip_dep)))
 
                         try:
-                            pip_depname, pip_depver = pip_dep.split('==', 1)
+                            pip_depname, pip_depver = pip_dep.split("==", 1)
                             self.check_pip_package(pip_dep)
                         except ValueError:
                             pass
                         else:
                             # Check, if PyPi package version is available at all
-                            if pip_depver not in self.conda_package_info[pip_dep].get('releases').keys():
+                            if pip_depver not in self.conda_package_info[pip_dep].get("releases").keys():
                                 self.failed.append((8, "PyPi package had an unknown version: {}".format(pip_depver)))
                                 continue  # No need to test latest version, if not available
-                            last_ver = self.conda_package_info[pip_dep].get('info').get('version')
+                            last_ver = self.conda_package_info[pip_dep].get("info").get("version")
                             if last_ver is not None and last_ver != pip_depver:
-                                self.warned.append((8, "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)))
+                                self.warned.append(
+                                    (
+                                        8,
+                                        "PyPi package is not latest available: {}, {} available".format(
+                                            pip_depver, last_ver
+                                        ),
+                                    )
+                                )
                             else:
                                 self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
 
@@ -906,24 +1066,17 @@ class PipelineLint(object):
             A ValueError, if the package name can not be resolved.
         """
         # Check if each dependency is the latest available version
-        depname, depver = dep.split('=', 1)
-        dep_channels = self.conda_config.get('channels', [])
+        depname, depver = dep.split("=", 1)
+        dep_channels = self.conda_config.get("channels", [])
         # 'defaults' isn't actually a channel name. See https://docs.anaconda.com/anaconda/user-guide/tasks/using-repositories/
-        if 'defaults' in dep_channels:
-            dep_channels.remove('defaults')
-            dep_channels.extend([
-                'main',
-                'anaconda',
-                'r',
-                'free',
-                'archive',
-                'anaconda-extras'
-            ])
-        if '::' in depname:
-            dep_channels = [depname.split('::')[0]]
-            depname = depname.split('::')[1]
+        if "defaults" in dep_channels:
+            dep_channels.remove("defaults")
+            dep_channels.extend(["main", "anaconda", "r", "free", "archive", "anaconda-extras"])
+        if "::" in depname:
+            dep_channels = [depname.split("::")[0]]
+            depname = depname.split("::")[1]
         for ch in dep_channels:
-            anaconda_api_url = 'https://api.anaconda.org/package/{}/{}'.format(ch, depname)
+            anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format(ch, depname)
             try:
                 response = requests.get(anaconda_api_url, timeout=10)
             except (requests.exceptions.Timeout):
@@ -938,7 +1091,14 @@ class PipelineLint(object):
                     self.conda_package_info[dep] = dep_json
                     return
                 elif response.status_code != 404:
-                    self.warned.append((8, "Anaconda API returned unexpected response code '{}' for: {}\n{}".format(response.status_code, anaconda_api_url, response)))
+                    self.warned.append(
+                        (
+                            8,
+                            "Anaconda API returned unexpected response code '{}' for: {}\n{}".format(
+                                response.status_code, anaconda_api_url, response
+                            ),
+                        )
+                    )
                     raise ValueError
                 elif response.status_code == 404:
                     logging.debug("Could not find {} in conda channel {}".format(dep, ch))
@@ -958,8 +1118,8 @@ class PipelineLint(object):
         Raises:
             A ValueError, if the package name can not be resolved or the connection timed out.
         """
-        pip_depname, pip_depver = dep.split('=', 1)
-        pip_api_url = 'https://pypi.python.org/pypi/{}/json'.format(pip_depname)
+        pip_depname, pip_depver = dep.split("=", 1)
+        pip_api_url = "https://pypi.python.org/pypi/{}/json".format(pip_depname)
         try:
             response = requests.get(pip_api_url, timeout=10)
         except (requests.exceptions.Timeout):
@@ -984,15 +1144,15 @@ class PipelineLint(object):
             * dependency versions are pinned
             * dependency versions are the latest available
         """
-        if 'environment.yml' not in self.files or len(self.dockerfile) == 0:
+        if "environment.yml" not in self.files or len(self.dockerfile) == 0:
             return
 
         expected_strings = [
-            "FROM nfcore/base:{}".format('dev' if 'dev' in nf_core.__version__ else nf_core.__version__),
-            'COPY environment.yml /',
-            'RUN conda env create --quiet -f /environment.yml && conda clean -a',
-            'RUN conda env export --name {} > {}.yml'.format(self.conda_config['name'], self.conda_config['name']),
-            'ENV PATH /opt/conda/envs/{}/bin:$PATH'.format(self.conda_config['name'])
+            "FROM nfcore/base:{}".format("dev" if "dev" in nf_core.__version__ else nf_core.__version__),
+            "COPY environment.yml /",
+            "RUN conda env create --quiet -f /environment.yml && conda clean -a",
+            "RUN conda env export --name {} > {}.yml".format(self.conda_config["name"], self.conda_config["name"]),
+            "ENV PATH /opt/conda/envs/{}/bin:$PATH".format(self.conda_config["name"]),
         ]
 
         difference = set(expected_strings) - set(self.dockerfile)
@@ -1004,11 +1164,11 @@ class PipelineLint(object):
 
     def check_pipeline_todos(self):
         """ Go through all template files looking for the string 'TODO nf-core:' """
-        ignore = ['.git']
-        if os.path.isfile(os.path.join(self.path, '.gitignore')):
-            with io.open(os.path.join(self.path, '.gitignore'), 'rt', encoding='latin1') as fh:
+        ignore = [".git"]
+        if os.path.isfile(os.path.join(self.path, ".gitignore")):
+            with io.open(os.path.join(self.path, ".gitignore"), "rt", encoding="latin1") as fh:
                 for l in fh:
-                    ignore.append(os.path.basename(l.strip().rstrip('/')))
+                    ignore.append(os.path.basename(l.strip().rstrip("/")))
         for root, dirs, files in os.walk(self.path):
             # Ignore files
             for i in ignore:
@@ -1017,13 +1177,20 @@ class PipelineLint(object):
                 if i in files:
                     files.remove(i)
             for fname in files:
-                with io.open(os.path.join(root, fname), 'rt', encoding='latin1') as fh:
+                with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
                     for l in fh:
-                        if 'TODO nf-core' in l:
-                            l = l.replace('<!--', '').replace('-->', '').replace('# TODO nf-core: ', '').replace('// TODO nf-core: ', '').replace('TODO nf-core: ', '').strip()
+                        if "TODO nf-core" in l:
+                            l = (
+                                l.replace("<!--", "")
+                                .replace("-->", "")
+                                .replace("# TODO nf-core: ", "")
+                                .replace("// TODO nf-core: ", "")
+                                .replace("TODO nf-core: ", "")
+                                .strip()
+                            )
                             if len(fname) + len(l) > 50:
-                                l = '{}..'.format(l[:50-len(fname)])
-                            self.warned.append((10, "TODO string found in '{}': {}".format(fname,l)))
+                                l = "{}..".format(l[: 50 - len(fname)])
+                            self.warned.append((10, "TODO string found in '{}': {}".format(fname, l)))
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
@@ -1033,7 +1200,9 @@ class PipelineLint(object):
         if not self.pipeline_name.islower():
             self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains uppercase letters"))
         if not self.pipeline_name.isalnum():
-            self.warned.append((12, "Naming does not adhere to nf-core conventions: Contains non alphanumeric characters"))
+            self.warned.append(
+                (12, "Naming does not adhere to nf-core conventions: Contains non alphanumeric characters")
+            )
 
     def check_cookiecutter_strings(self):
         """
@@ -1042,7 +1211,7 @@ class PipelineLint(object):
         """
         try:
             # First, try to get the list of files using git
-            git_ls_files = subprocess.check_output(['git','ls-files'], cwd=self.path).splitlines()
+            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.path).splitlines()
             list_of_files = [os.path.join(self.path, s.decode("utf-8")) for s in git_ls_files]
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
@@ -1057,18 +1226,19 @@ class PipelineLint(object):
         num_files = 0
         for fn in list_of_files:
             num_files += 1
-            with io.open(fn, 'r', encoding='latin1') as fh:
+            with io.open(fn, "r", encoding="latin1") as fh:
                 lnum = 0
                 for l in fh:
                     lnum += 1
                     cc_matches = re.findall(r"{{\s*cookiecutter[^}]*}}", l)
                     if len(cc_matches) > 0:
                         for cc_match in cc_matches:
-                            self.failed.append((13, "Found a cookiecutter template string in '{}' L{}: {}".format(fn, lnum, cc_match)))
+                            self.failed.append(
+                                (13, "Found a cookiecutter template string in '{}' L{}: {}".format(fn, lnum, cc_match))
+                            )
                             num_matches += 1
         if num_matches == 0:
             self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
-
 
     def check_schema_lint(self):
         """ Lint the pipeline JSON schema file """
@@ -1109,19 +1279,24 @@ class PipelineLint(object):
 
         if len(added_params) > 0:
             for param in added_params:
-                self.failed.append((15, "Param '{}' from `nextflow config` not found in nextflow_schema.json".format(param)))
+                self.failed.append(
+                    (15, "Param '{}' from `nextflow config` not found in nextflow_schema.json".format(param))
+                )
 
         if len(removed_params) == 0 and len(added_params) == 0:
             self.passed.append((15, "Schema matched params returned from nextflow config"))
 
-
     def print_results(self):
         # Print results
-        rl = "\n  Using --release mode linting tests" if self.release_mode else ''
-        logging.info("{}\n          LINTING RESULTS\n{}\n".format(click.style('='*29, dim=True), click.style('='*35, dim=True)) +
-            click.style("  [{}] {:>4} tests passed\n".format(u'\u2714', len(self.passed)), fg='green') +
-            click.style("  [!] {:>4} tests had warnings\n".format(len(self.warned)), fg='yellow') +
-            click.style("  [{}] {:>4} tests failed".format(u'\u2717', len(self.failed)), fg='red') + rl
+        rl = "\n  Using --release mode linting tests" if self.release_mode else ""
+        logging.info(
+            "{}\n          LINTING RESULTS\n{}\n".format(
+                click.style("=" * 29, dim=True), click.style("=" * 35, dim=True)
+            )
+            + click.style("  [{}] {:>4} tests passed\n".format("\u2714", len(self.passed)), fg="green")
+            + click.style("  [!] {:>4} tests had warnings\n".format(len(self.warned)), fg="yellow")
+            + click.style("  [{}] {:>4} tests failed".format("\u2717", len(self.failed)), fg="red")
+            + rl
         )
 
         # Helper function to format test links nicely
@@ -1132,48 +1307,64 @@ class PipelineLint(object):
             """
             print_results = []
             for eid, msg in test_results:
-                url = click.style("https://nf-co.re/errors#{}".format(eid), fg='blue')
-                print_results.append('{} : {}'.format(url, msg))
+                url = click.style("https://nf-co.re/errors#{}".format(eid), fg="blue")
+                print_results.append("{} : {}".format(url, msg))
             return "\n  ".join(print_results)
 
         if len(self.passed) > 0:
-            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg='green'), format_result(self.passed)))
+            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg="green"), format_result(self.passed)))
         if len(self.warned) > 0:
-            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg='yellow'), format_result(self.warned)))
+            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg="yellow"), format_result(self.warned)))
         if len(self.failed) > 0:
-            logging.error("{}\n  {}".format(click.style("Test Failures:", fg='red'), format_result(self.failed)))
+            logging.error("{}\n  {}".format(click.style("Test Failures:", fg="red"), format_result(self.failed)))
 
     def get_results_md(self):
         """
         Function to create a markdown file suitable for posting in a GitHub comment
         """
         # Overall header
-        overall_result = 'Passed :white_check_mark:'
+        overall_result = "Passed :white_check_mark:"
         if len(self.failed) > 0:
-            overall_result = 'Failed :x:'
+            overall_result = "Failed :x:"
 
         # List of tests for details
-        test_failures = ''
+        test_failures = ""
         if len(self.failed) > 0:
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
-                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.failed])
+                "\n".join(
+                    [
+                        "* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        for eid, msg in self.failed
+                    ]
+                )
             )
 
-        test_warnings = ''
+        test_warnings = ""
         if len(self.warned) > 0:
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
-                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.warned])
+                "\n".join(
+                    [
+                        "* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        for eid, msg in self.warned
+                    ]
+                )
             )
 
-        test_passes = ''
+        test_passes = ""
         if len(self.passed) > 0:
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
-                "\n".join(["* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, '`')) for eid, msg in self.passed])
+                "\n".join(
+                    [
+                        "* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        for eid, msg in self.passed
+                    ]
+                )
             )
 
         now = datetime.datetime.now()
 
-        markdown = textwrap.dedent("""
+        markdown = textwrap.dedent(
+            """
         #### `nf-core lint` overall result: {}
 
         {}
@@ -1192,9 +1383,10 @@ class PipelineLint(object):
         * Run at `{}`
 
         </details>
-        """).format(
+        """
+        ).format(
             overall_result,
-            'Posted for pipeline commit {}'.format(self.git_sha[:7]) if self.git_sha is not None else '',
+            "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
             len(self.passed),
             len(self.warned),
             len(self.failed),
@@ -1202,7 +1394,7 @@ class PipelineLint(object):
             test_warnings,
             test_passes,
             nf_core.__version__,
-            now.strftime("%Y-%m-%d %H:%M:%S")
+            now.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         return markdown
@@ -1215,46 +1407,45 @@ class PipelineLint(object):
         logging.info("Writing lint results to {}".format(json_fn))
         now = datetime.datetime.now()
         results = {
-            'nf_core_tools_version': nf_core.__version__,
-            'date_run': now.strftime("%Y-%m-%d %H:%M:%S"),
-            'tests_pass': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
-            'tests_warned': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
-            'tests_failed': [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
-            'num_tests_pass': len(self.passed),
-            'num_tests_warned': len(self.warned),
-            'num_tests_failed': len(self.failed),
-            'has_tests_pass': len(self.passed) > 0,
-            'has_tests_warned': len(self.warned) > 0,
-            'has_tests_failed': len(self.failed) > 0,
-            'markdown_result': self.get_results_md()
+            "nf_core_tools_version": nf_core.__version__,
+            "date_run": now.strftime("%Y-%m-%d %H:%M:%S"),
+            "tests_pass": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
+            "tests_warned": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
+            "tests_failed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
+            "num_tests_pass": len(self.passed),
+            "num_tests_warned": len(self.warned),
+            "num_tests_failed": len(self.failed),
+            "has_tests_pass": len(self.passed) > 0,
+            "has_tests_warned": len(self.warned) > 0,
+            "has_tests_failed": len(self.failed) > 0,
+            "markdown_result": self.get_results_md(),
         }
-        with open(json_fn, 'w') as fh:
+        with open(json_fn, "w") as fh:
             json.dump(results, fh, indent=4)
 
     def github_comment(self):
         """
         If we are running in a GitHub PR, try to post results as a comment
         """
-        if os.environ.get('GITHUB_TOKEN', '') != '' and os.environ.get('GITHUB_COMMENTS_URL', '') != '':
+        if os.environ.get("GITHUB_TOKEN", "") != "" and os.environ.get("GITHUB_COMMENTS_URL", "") != "":
             try:
-                headers = { 'Authorization': 'token {}'.format(os.environ['GITHUB_TOKEN']) }
+                headers = {"Authorization": "token {}".format(os.environ["GITHUB_TOKEN"])}
                 # Get existing comments - GET
-                get_r = requests.get(
-                    url = os.environ['GITHUB_COMMENTS_URL'],
-                    headers = headers
-                )
+                get_r = requests.get(url=os.environ["GITHUB_COMMENTS_URL"], headers=headers)
                 if get_r.status_code == 200:
 
                     # Look for an existing comment to update
                     update_url = False
                     for comment in get_r.json():
-                        if comment['user']['login'] == 'github-actions[bot]' and comment['body'].startswith("\n#### `nf-core lint` overall result"):
+                        if comment["user"]["login"] == "github-actions[bot]" and comment["body"].startswith(
+                            "\n#### `nf-core lint` overall result"
+                        ):
                             # Update existing comment - PATCH
                             logging.info("Updating GitHub comment")
                             update_r = requests.patch(
-                                url = comment['url'],
-                                data = json.dumps({ 'body': self.get_results_md().replace('Posted', '**Updated**') }),
-                                headers = headers
+                                url=comment["url"],
+                                data=json.dumps({"body": self.get_results_md().replace("Posted", "**Updated**")}),
+                                headers=headers,
                             )
                             return
 
@@ -1262,22 +1453,21 @@ class PipelineLint(object):
                     if len(self.warned) > 0 or len(self.failed) > 0:
                         logging.info("Posting GitHub comment")
                         post_r = requests.post(
-                            url = os.environ['GITHUB_COMMENTS_URL'],
-                            data = json.dumps({ 'body': self.get_results_md() }),
-                            headers = headers
+                            url=os.environ["GITHUB_COMMENTS_URL"],
+                            data=json.dumps({"body": self.get_results_md()}),
+                            headers=headers,
                         )
 
             except Exception as e:
-                logging.warning("Could not post GitHub comment: {}\n{}".format(os.environ['GITHUB_COMMENTS_URL'], e))
-
+                logging.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
 
     def _bold_list_items(self, files):
         if not isinstance(files, list):
             files = [files]
         bfiles = [click.style(f, bold=True) for f in files]
-        return ' or '.join(bfiles)
+        return " or ".join(bfiles)
 
-    def _strip_ansi_codes(self, string, replace_with=''):
+    def _strip_ansi_codes(self, string, replace_with=""):
         # https://stackoverflow.com/a/14693789/713980
-        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
         return ansi_escape.sub(replace_with, string)
