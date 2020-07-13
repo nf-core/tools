@@ -188,3 +188,32 @@ class TestLint(unittest.TestCase):
         expected_workflows = [rwf_ex2]
 
         assert filtered_workflows == expected_workflows
+
+    def test_show_archived_workflows(self):
+        """
+        Test that archived workflows can be shown optionally
+        """
+        workflows_obj = nf_core.list.Workflows(show_archived = True)
+        remote1 = {
+            "name": "myWF",
+            "full_name": "my Workflow",
+            "archived": True,
+            "releases": []
+        }
+        rwf_ex1 = nf_core.list.RemoteWorkflow(remote1)
+        remote2 = {
+            "name": "myWF",
+            "full_name": "my Workflow",
+            "archived": False,
+            "releases": []
+        }
+        rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
+
+        workflows_obj.remote_workflows.append(rwf_ex1)
+        workflows_obj.remote_workflows.append(rwf_ex2)
+
+
+        filtered_workflows = workflows_obj.filtered_workflows()
+        expected_workflows = [rwf_ex1, rwf_ex2]
+
+        assert filtered_workflows == expected_workflows
