@@ -28,12 +28,11 @@ process MULTIQC {
     publishDir "${params.outdir}/multiqc", mode: params.publish_dir_mode
 
     input:
-    path (multiqc_config) from ch_multiqc_config
-    path (mqc_custom_config) from ch_multiqc_custom_config.collect().ifEmpty([])
+    path (multiqc_config)
+    path (mqc_custom_config)
     // TODO nf-core: Add in log files from your new processes for MultiQC to find!
-    path ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
-    path ('software_versions/*') from ch_software_versions_yaml.collect()
-    path workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
+    path (fastqc)
+    path (software_versions)
 
     output:
     path "*multiqc_report.html"

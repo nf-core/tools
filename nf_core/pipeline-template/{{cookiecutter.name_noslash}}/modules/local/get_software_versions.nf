@@ -9,8 +9,8 @@ process GET_SOFTWARE_VERSIONS {
                 }
 
     output:
-    path 'software_versions_mqc.yaml'
-    path "software_versions.csv"
+    path 'software_versions_mqc.yaml', emit: software_versions_yml
+    path "software_versions.csv", emit: software_versions_csv
 
     script:
     // TODO nf-core: Get all tools to print their version number here
