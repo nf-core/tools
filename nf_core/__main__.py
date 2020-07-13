@@ -17,6 +17,7 @@ import nf_core.launch
 import nf_core.licences
 import nf_core.lint
 import nf_core.list
+import nf_core.modules
 import nf_core.schema
 import nf_core.sync
 
@@ -55,6 +56,20 @@ class CustomHelpOrder(click.Group):
 
     def command(self, *args, **kwargs):
         """Behaves the same as `click.Group.command()` except capture
+        a priority for listing command names in help.
+        """
+        help_priority = kwargs.pop("help_priority", 1000)
+        help_priorities = self.help_priorities
+
+        def decorator(f):
+            cmd = super(CustomHelpOrder, self).command(*args, **kwargs)(f)
+            help_priorities[cmd.name] = help_priority
+            return cmd
+
+        return decorator
+
+    def group(self, *args, **kwargs):
+        """Behaves the same as `click.Group.group()` except capture
         a priority for listing command names in help.
         """
         help_priority = kwargs.pop("help_priority", 1000)
@@ -252,8 +267,116 @@ def lint(pipeline_dir, release, markdown, json):
         sys.exit(1)
 
 
+## nf-core module subcommands
+@nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
+@click.option(
+    "-r",
+    "--repository",
+    type=str,
+    default="nf-core/modules",
+    help="GitHub repository hosting software wrapper modules.",
+)
+@click.option("-b", "--branch", type=str, default="master", help="Modules GitHub repo git branch to use.")
+@click.pass_context
+def modules(ctx, repository, branch):
+    """
+    Work with the nf-core/modules software wrappers.
+
+    Tools to manage DSL 2 nf-core/modules software wrapper imports.
+    """
+    # ensure that ctx.obj exists and is a dict (in case `cli()` is called
+    # by means other than the `if` block below)
+    ctx.ensure_object(dict)
+
+    # Make repository object to pass to subcommands
+    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
+
+
+@modules.command(help_priority=1)
+@click.pass_context
+def list(ctx):
+    """
+    List available software modules.
+
+    Lists all currently available software wrappers in the nf-core/modules repository.
+    """
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
+    print(mods.list_modules())
+
+
+@modules.command(help_priority=2)
+@click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.argument("tool", type=str, required=True, metavar="<tool name>")
+def install(ctx, pipeline_dir, tool):
+    """
+    Add a DSL2 software wrapper module to a pipeline.
+
+    Given a software name, finds the relevant files in nf-core/modules
+    and copies to the pipeline along with associated metadata.
+    """
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
+    mods.pipeline_dir = pipeline_dir
+    mods.install(tool)
+
+
+@modules.command(help_priority=3)
+@click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.argument("tool", type=str, metavar="<tool name>")
+@click.option("-f", "--force", is_flag=True, default=False, help="Force overwrite of files")
+def update(ctx, tool, pipeline_dir, force):
+    """
+    Update one or all software wrapper modules.
+
+    Compares a currently installed module against what is available in nf-core/modules.
+    Fetchs files and updates all relevant files for that software wrapper.
+
+    If no module name is specified, loops through all currently installed modules.
+    If no version is specified, looks for the latest available version on nf-core/modules.
+    """
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
+    mods.pipeline_dir = pipeline_dir
+    mods.update(tool, force=force)
+
+
+@modules.command(help_priority=4)
+@click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.argument("tool", type=str, required=True, metavar="<tool name>")
+def remove(ctx, pipeline_dir, tool):
+    """
+    Remove a software wrapper from a pipeline.
+    """
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
+    mods.pipeline_dir = pipeline_dir
+    mods.remove(tool)
+
+
+@modules.command(help_priority=5)
+@click.pass_context
+def check(ctx):
+    """
+    Check that imported module code has not been modified.
+
+    Compares a software module against the copy on nf-core/modules.
+    If any local modifications are found, the command logs an error
+    and exits with a non-zero exit code.
+
+    Use by the lint tests and automated CI to check that centralised
+    software wrapper code is only modified in the central repository.
+    """
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
+    mods.check_modules()
+
+
 ## nf-core schema subcommands
-@nf_core_cli.group(cls=CustomHelpOrder)
+@nf_core_cli.group(cls=CustomHelpOrder, help_priority=8)
 def schema():
     """
     Suite of tools for developers to manage pipeline schema.
@@ -340,7 +463,7 @@ def lint(schema_path):
         sys.exit(1)
 
 
-@nf_core_cli.command("bump-version", help_priority=7)
+@nf_core_cli.command("bump-version", help_priority=9)
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.argument("new_version", required=True, metavar="<new version>")
 @click.option(
@@ -374,7 +497,7 @@ def bump_version(pipeline_dir, new_version, nextflow):
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
 
-@nf_core_cli.command("sync", help_priority=8)
+@nf_core_cli.command("sync", help_priority=10)
 @click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
 @click.option(
     "-t", "--make-template-branch", is_flag=True, default=False, help="Create a TEMPLATE branch if none is found."
