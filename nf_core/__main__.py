@@ -300,21 +300,25 @@ def list(ctx):
 
     Lists all currently available software wrappers in the nf-core/modules repository.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
     mods.list_modules()
 
 
 @modules.command(help_priority=2)
 @click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool name>")
-def install(ctx, tool):
+def install(ctx, pipeline_dir, tool):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
     Given a software name, finds the relevant files in nf-core/modules
     and copies to the pipeline along with associated metadata.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
+    mods.pipeline_dir = pipeline_dir
     mods.install(tool)
 
 
@@ -332,7 +336,8 @@ def update(ctx, tool):
     If no module name is specified, loops through all currently installed modules.
     If no version is specified, looks for the latest available version on nf-core/modules.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
     mods.update(tool)
 
 
@@ -343,7 +348,8 @@ def remove(ctx, tool):
     """
     Remove a software wrapper from a pipeline.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
     mods.remove(tool)
 
 
@@ -360,7 +366,8 @@ def check(ctx):
     Use by the lint tests and automated CI to check that centralised
     software wrapper code is only modified in the central repository.
     """
-    mods = nf_core.modules.PipelineModules(ctx.obj["modules_repo_obj"])
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
     mods.check_modules()
 
 

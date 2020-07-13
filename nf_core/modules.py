@@ -27,12 +27,12 @@ class ModulesRepo(object):
 
 
 class PipelineModules(object):
-    def __init__(self, modules_repo_obj):
+    def __init__(self):
         """
         Initialise the PipelineModules object
         """
-        self.modules_repo = modules_repo_obj
-        self.pipeline_dir = os.getcwd()
+        self.modules_repo = None
+        self.pipeline_dir = None
         self.modules_file_tree = {}
         self.modules_current_hash = None
         self.modules_avail_module_names = []
@@ -54,6 +54,16 @@ class PipelineModules(object):
             )
 
     def install(self, module):
+
+        # Check that we were given a pipeline
+        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
+            logging.error("Could not find pipeline: {}".format(self.pipeline_dir))
+            return False
+        main_nf = os.path.join(self.pipeline_dir, "main.nf")
+        nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
+        if not os.path.exists(main_nf) and not os.path.exists(nf_config):
+            logging.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
+            return False
 
         # Get the available modules
         self.get_modules_file_tree()
@@ -132,7 +142,7 @@ class PipelineModules(object):
 
         Takes the name of a module and iterates over the GitHub repo file tree.
         Loops over items that are prefixed with the path 'software/<module_name>' and ignores
-        anything that's not a blob.
+        anything that's not a blob. Also ignores the test/ subfolder.
 
         Returns a dictionary with keys as filenames and values as GitHub API URIs.
         These can be used to then download file contents.
@@ -150,8 +160,13 @@ class PipelineModules(object):
         """
         results = {}
         for f in self.modules_file_tree:
-            if f["path"].startswith("software/{}".format(module)) and f["type"] == "blob":
-                results[f["path"]] = f["url"]
+            if not f["path"].startswith("software/{}".format(module)):
+                continue
+            if f["type"] != "blob":
+                continue
+            if "/test/" in f["path"]:
+                continue
+            results[f["path"]] = f["url"]
         return results
 
     def download_gh_file(self, dl_filename, api_url):
