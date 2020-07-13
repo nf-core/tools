@@ -56,7 +56,7 @@ class TestLint(unittest.TestCase):
             "name": "myWF",
             "full_name": "my Workflow",
             "description": "...",
-            "archived": [],
+            "archived": False,
             "stargazers_count": 42,
             "watchers_count": 6,
             "forks_count": 7,
@@ -129,7 +129,7 @@ class TestLint(unittest.TestCase):
             "name": "myWF",
             "full_name": "my Workflow",
             "description": "rna",
-            "archived": [],
+            "archived": False,
             "stargazers_count": 42,
             "watchers_count": 6,
             "forks_count": 7,
@@ -144,7 +144,7 @@ class TestLint(unittest.TestCase):
             "name": "myWF",
             "full_name": "my Workflow",
             "description": "dna",
-            "archived": [],
+            "archived": False,
             "stargazers_count": 42,
             "watchers_count": 6,
             "forks_count": 7,
@@ -159,3 +159,32 @@ class TestLint(unittest.TestCase):
         workflows_obj.remote_workflows.append(rwf_ex2)
 
         assert len(workflows_obj.filtered_workflows()) == 1
+
+    def test_filter_archived_workflows(self):
+        """
+        Test that archived workflows are not shown by default
+        """
+        workflows_obj = nf_core.list.Workflows()
+        remote1 = {
+            "name": "myWF",
+            "full_name": "my Workflow",
+            "archived": True,
+            "releases": []
+        }
+        rwf_ex1 = nf_core.list.RemoteWorkflow(remote1)
+        remote2 = {
+            "name": "myWF",
+            "full_name": "my Workflow",
+            "archived": False,
+            "releases": []
+        }
+        rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
+
+        workflows_obj.remote_workflows.append(rwf_ex1)
+        workflows_obj.remote_workflows.append(rwf_ex2)
+
+
+        filtered_workflows = workflows_obj.filtered_workflows()
+        expected_workflows = [rwf_ex2]
+
+        assert filtered_workflows == expected_workflows

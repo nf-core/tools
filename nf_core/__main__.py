@@ -104,14 +104,15 @@ def nf_core_cli(verbose):
     help="How to sort listed pipelines",
 )
 @click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
-def list(keywords, sort, json):
+@click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
+def list(keywords, sort, json, show_archived):
     """
     List available nf-core pipelines with local info.
 
     Checks the web for a list of nf-core pipelines with their latest releases.
     Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
-    nf_core.list.list_workflows(keywords, sort, json)
+    nf_core.list.list_workflows(keywords, sort, json, show_archived)
 
 
 # nf-core launch

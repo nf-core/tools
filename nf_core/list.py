@@ -24,7 +24,7 @@ import nf_core.utils
 nf_core.utils.setup_requests_cachedir()
 
 
-def list_workflows(filter_by=None, sort_by="release", as_json=False):
+def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived = False):
     """Prints out a list of all nf-core workflows.
 
     Args:
@@ -33,7 +33,7 @@ def list_workflows(filter_by=None, sort_by="release", as_json=False):
             `release` (default), `name`, `stars`.
         as_json (boolean): Set to true, if the lists should be printed in JSON.
     """
-    wfs = Workflows(filter_by, sort_by)
+    wfs = Workflows(filter_by, sort_by, show_archived)
     wfs.get_remote_workflows()
     wfs.get_local_nf_workflows()
     wfs.compare_remote_local()
@@ -96,12 +96,13 @@ class Workflows(object):
             `release` (default), `name`, `stars`.
     """
 
-    def __init__(self, filter_by=None, sort_by="release"):
+    def __init__(self, filter_by=None, sort_by="release", show_archived = False):
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
         self.keyword_filters = filter_by if filter_by is not None else []
         self.sort_workflows_by = sort_by
+        self.show_archived = show_archived
 
     def get_remote_workflows(self):
         """Retrieves remote workflows from `nf-co.re <https://nf-co.re>`_.
@@ -176,16 +177,17 @@ class Workflows(object):
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
-
     def filtered_workflows(self):
         """Filters remote workflows for keywords.
 
         Returns:
             list: Filtered remote workflows.
         """
+        filtered_workflows = []
         # If no keywords, don't filter
         if not self.keyword_filters:
-            return self.remote_workflows
+            for wf in self.remote_workflows:
+                filtered_workflows.append(wf)
 
         filtered_workflows = []
         for wf in self.remote_workflows:
@@ -198,6 +200,10 @@ class Workflows(object):
             else:
                 # We didn't hit a break, so all keywords were found
                 filtered_workflows.append(wf)
+
+        # remove archived worflows; show_archived is False by default
+        if not self.show_archived:
+            filtered_workflows = [ wf for wf in filtered_workflows if wf.archived == False ]
         return filtered_workflows
 
     def print_summary(self):
