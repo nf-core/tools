@@ -67,7 +67,7 @@ log.info Headers.nf_core(workflow, params.monochrome_logs)
 log.info summary.collect { k,v -> "${k.padRight(20)}: $v" }.join("\n")
 log.info "-\033[2m----------------------------------------------------\033[0m-"
 
-workflow_summary = Schema.params_multiqc_summary(summary)
+workflow_summary = Schema.params_mqc_summary(summary)
 ch_workflow_summary = Channel.value(workflow_summary)
 
 /*
