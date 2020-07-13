@@ -107,7 +107,6 @@ workflow {
         FASTQC.out.collect(),
         GET_SOFTWARE_VERSIONS.out.software_versions_yml.collect(),
         ch_workflow_summary)
-    )
 }
 
 /*
