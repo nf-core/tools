@@ -253,12 +253,21 @@ class PipelineSchema(object):
                     self.launch_web_builder()
                 except AssertionError as e:
                     logging.error(click.style(e.args[0], fg="red"))
-                    logging.info(
-                        "To save your work, open {}\n"
-                        "Click the blue 'Finished' button, copy the schema and paste into this file: {}".format(
-                            self.web_schema_build_web_url, self.schema_filename
+                    # Extra help for people running offline
+                    if "Could not connect" in e.args[0]:
+                        logging.info(
+                            "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/json_schema_build".format(
+                                self.schema_filename
+                            )
                         )
-                    )
+                        logging.info("When you're finished, you can paste the edited schema back into the same file")
+                    if self.web_schema_build_web_url:
+                        logging.info(
+                            "To save your work, open {}\n"
+                            "Click the blue 'Finished' button, copy the schema and paste into this file: {}".format(
+                                self.web_schema_build_web_url, self.schema_filename
+                            )
+                        )
                     return False
 
     def get_wf_params(self):
