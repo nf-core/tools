@@ -6,12 +6,17 @@ import click
 import git
 import json
 import logging
-import nf_core
 import os
 import re
 import requests
 import shutil
 import tempfile
+
+import nf_core
+import nf_core.create
+import nf_core.list
+import nf_core.sync
+import nf_core.utils
 
 
 class SyncException(Exception):
@@ -164,9 +169,7 @@ class PipelineSync(object):
                 raise AttributeError
         except AttributeError as e:
             logging.debug(
-                "Could not find repository URL for remote called 'origin' from remote: {}".format(
-                    self.repo.remotes.origin.url
-                )
+                "Could not find repository URL for remote called 'origin' from remote: {}".format(self.repo.remotes)
             )
         else:
             logging.debug(
