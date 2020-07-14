@@ -184,7 +184,9 @@ nf-core/atacseq                      37  1.2.0             6 days ago     1 week
 [..truncated..]
 ```
 
-Finally, to return machine-readable JSON output, use the `--json` flag.
+To return results as JSON output for downstream use, use the `--json` flag.
+
+Archived pipelines are not returned by default. To include them, use the `--show_archived` flag.
 
 ## Launch a pipeline
 
