@@ -4,6 +4,7 @@
 
 import nf_core.list
 
+import json
 import mock
 import os
 import pytest
@@ -16,29 +17,29 @@ from datetime import datetime
 class TestLint(unittest.TestCase):
     """Class for list tests"""
 
-    @mock.patch("json.dumps")
     @mock.patch("subprocess.check_output")
-    @mock.patch("nf_core.list.LocalWorkflow")
-    def test_working_listcall(self, mock_loc_wf, mock_subprocess, mock_json):
+    def test_working_listcall(self, mock_subprocess):
         """ Test that listing pipelines works """
         wf_table = nf_core.list.list_workflows()
         assert "rnaseq" in wf_table
         assert "exoseq" not in wf_table
 
-    @mock.patch("json.dumps")
     @mock.patch("subprocess.check_output")
-    @mock.patch("nf_core.list.LocalWorkflow")
-    def test_working_listcall(self, mock_loc_wf, mock_subprocess, mock_json):
+    def test_working_listcall_archived(self, mock_subprocess):
         """ Test that listing pipelines works, showing archived pipelines """
         wf_table = nf_core.list.list_workflows(show_archived=True)
         assert "exoseq" in wf_table
 
-    @mock.patch("json.dumps")
     @mock.patch("subprocess.check_output")
-    @mock.patch("nf_core.list.LocalWorkflow")
-    def test_working_listcall_json(self, mock_loc_wf, mock_subprocess, mock_json):
+    def test_working_listcall_json(self, mock_subprocess):
         """ Test that listing pipelines with JSON works """
-        nf_core.list.list_workflows(as_json=True)
+        wf_json_str = nf_core.list.list_workflows(as_json=True)
+        wf_json = json.loads(wf_json_str)
+        for wf in wf_json["remote_workflows"]:
+            if wf["name"] == "ampliseq":
+                break
+        else:
+            raise AssertionError("Could not find ampliseq in JSON")
 
     def test_pretty_datetime(self):
         """ Test that the pretty datetime function works """

@@ -355,6 +355,7 @@ class LocalWorkflow(object):
                 try:
                     with open(os.devnull, "w") as devnull:
                         nfinfo_raw = subprocess.check_output(["nextflow", "info", "-d", self.full_name], stderr=devnull)
+                        nfinfo_raw = str(nfinfo_raw)
                 except OSError as e:
                     if e.errno == errno.ENOENT:
                         raise AssertionError(
@@ -366,8 +367,6 @@ class LocalWorkflow(object):
                     )
                 else:
                     re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
-                    if isinstance(nfinfo_raw, bytes):
-                        nfinfo_raw = nfinfo_raw.decode()
                     for key, pattern in re_patterns.items():
                         m = re.search(pattern, nfinfo_raw)
                         if m:
@@ -394,7 +393,7 @@ class LocalWorkflow(object):
                 self.active_tag = None
                 for tag in repo.tags:
                     if str(tag.commit) == str(self.commit_sha):
-                        self.active_tag = tag
+                        self.active_tag = str(tag)
 
             # I'm not sure that we need this any more, it predated the self.branch catch above for detacted HEAD
             except TypeError as e:
