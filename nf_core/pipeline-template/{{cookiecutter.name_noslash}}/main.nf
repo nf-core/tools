@@ -105,7 +105,7 @@ workflow {
         ch_multiqc_config.collect(),
         ch_multiqc_custom_config.collect().ifEmpty([]),
         FASTQC.out.collect(),
-        GET_SOFTWARE_VERSIONS.out.software_versions_yml.collect(),
+        GET_SOFTWARE_VERSIONS.out.yml.collect(),
         ch_workflow_summary)
 }
 
