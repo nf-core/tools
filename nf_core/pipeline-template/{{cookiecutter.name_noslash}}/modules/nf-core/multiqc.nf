@@ -31,6 +31,6 @@ process MULTIQC {
     // TODO nf-core: Specify which MultiQC modules to use with -m for a faster run time
     """
     echo '$workflow_summary' > workflow_summary_mqc.yaml
-    multiqc -f $rtitle $rfilename $custom_config_file -m fastqc -m custom_content .
+    multiqc -f $rtitle $rfilename $custom_config_file .
     """
 }
