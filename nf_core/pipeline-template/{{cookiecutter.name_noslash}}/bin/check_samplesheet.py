@@ -38,7 +38,7 @@ def check_samplesheet(file_in, file_out):
     This function checks that the sample sheet follows the following structure:
     
     sample,fastq_1,fastq_2
-    sample1,Sample1.fastq.gz,Sample2.fastq.gz
+    SAMPLE1,SAMPLE1_1.fastq.gz,SAMPLE1_2.fastq.gz
     """
 
     sample_run_dict = {}
