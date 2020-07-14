@@ -102,22 +102,17 @@ class PipelineSync(object):
         self.commit_template_changes()
 
         # Push and make a pull request if we've been asked to
-        pr_exception = False
         if self.make_pr:
             try:
                 self.push_template_branch()
                 self.make_pull_request()
             except PullRequestException as e:
-                # Keep going - we want to clean up the target directory still
-                logging.error(e)
-                pr_exception = e
-
-        self.reset_target_dir()
+                # Clean up the target directory
+                self.reset_target_dir()
+                raise PullRequestException(pr_exception)
 
         if not self.make_pr:
             self.git_merge_help()
-        elif pr_exception:
-            raise PullRequestException(pr_exception)
 
     def inspect_sync_dir(self):
         """Takes a look at the target directory for syncing. Checks that it's a git repo
