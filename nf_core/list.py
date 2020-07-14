@@ -24,7 +24,7 @@ import nf_core.utils
 nf_core.utils.setup_requests_cachedir()
 
 
-def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived = False):
+def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived=False):
     """Prints out a list of all nf-core workflows.
 
     Args:
@@ -96,7 +96,7 @@ class Workflows(object):
             `release` (default), `name`, `stars`.
     """
 
-    def __init__(self, filter_by=None, sort_by="release", show_archived = False):
+    def __init__(self, filter_by=None, sort_by="release", show_archived=False):
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
@@ -177,6 +177,7 @@ class Workflows(object):
                             rwf.local_is_latest = True
                         else:
                             rwf.local_is_latest = False
+
     def filtered_workflows(self):
         """Filters remote workflows for keywords.
 
@@ -203,7 +204,7 @@ class Workflows(object):
 
         # remove archived worflows; show_archived is False by default
         if not self.show_archived:
-            filtered_workflows = [ wf for wf in filtered_workflows if wf.archived == False ]
+            filtered_workflows = [wf for wf in filtered_workflows if wf.archived == False]
         return filtered_workflows
 
     def print_summary(self):
