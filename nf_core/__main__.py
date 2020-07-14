@@ -20,6 +20,7 @@ import nf_core.list
 import nf_core.modules
 import nf_core.schema
 import nf_core.sync
+import nf_core.utils
 
 import logging
 
@@ -33,6 +34,11 @@ def run_nf_core():
     stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
     stderr.print("[green]                                          `._,._,'\n")
     stderr.print("[black]    nf-core/tools version {}\n\n".format(nf_core.__version__))
+
+    if not os.environ.get('NFCORE_NO_VERSION_CHECK', False):
+        is_outdated, current_version, remote_version = nf_core.utils.check_if_outdated()
+        if is_outdated:
+            stderr.print("Note: nf-core is out of date; latest version: {}, current version: {}\n\n".format(remote_version, current_version))
 
     # Lanch the click cli
     nf_core_cli()
