@@ -2,7 +2,7 @@
 """
 Common utility functions for the nf-core python package.
 """
-
+import nf_core
 import datetime
 import errno
 import json
@@ -15,7 +15,33 @@ import requests_cache
 import subprocess
 import sys
 import time
+from distutils import version
 
+try:
+    # Python 3 imports
+    from urllib.request import urlopen
+except ImportError:
+    # Python 2 imports
+    from urllib2 import urlopen
+
+def fetch_latest_version(source_url='https://nf-co.re/version'):
+    """
+    Get the latest version of nf-core
+    """
+    response = urlopen(source_url, timeout=1)
+    remote_version = response.read().decode('utf-8').strip()
+    return(remote_version)
+
+def check_if_outdated(current_version = None, remote_version = None):
+    """
+    Check if the current version of nf-core is outdated
+    """
+    if current_version == None:
+        current_version = nf_core.__version__
+    if remote_version == None:
+        remote_version = fetch_latest_version()
+    is_outdated = version.StrictVersion(re.sub('[^0-9\.]','', remote_version)) > version.StrictVersion(re.sub('[^0-9\.]','', current_version))
+    return(is_outdated, current_version, remote_version)
 
 def fetch_wf_config(wf_path):
     """Uses Nextflow to retrieve the the configuration variables
