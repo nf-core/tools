@@ -24,7 +24,7 @@ except ImportError:
     # Python 2 imports
     from urllib2 import urlopen
 
-def fetch_latest_version(source_url='https://nf-co.re/version'):
+def fetch_latest_version(source_url):
     """
     Get the latest version of nf-core
     """
@@ -32,14 +32,14 @@ def fetch_latest_version(source_url='https://nf-co.re/version'):
     remote_version = response.read().decode('utf-8').strip()
     return(remote_version)
 
-def check_if_outdated(current_version = None, remote_version = None):
+def check_if_outdated(current_version=None, remote_version=None, source_url='https://nf-co.re/tools_version'):
     """
     Check if the current version of nf-core is outdated
     """
     if current_version == None:
         current_version = nf_core.__version__
     if remote_version == None:
-        remote_version = fetch_latest_version()
+        remote_version = fetch_latest_version(source_url)
     is_outdated = version.StrictVersion(re.sub('[^0-9\.]','', remote_version)) > version.StrictVersion(re.sub('[^0-9\.]','', current_version))
     return(is_outdated, current_version, remote_version)
 
