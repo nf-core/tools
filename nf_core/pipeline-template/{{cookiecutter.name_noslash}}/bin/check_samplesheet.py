@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # TODO nf-core: Update the script to check the samplesheet
+# This script is based on the example at: https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/samplesheet/samplesheet_test_sispa.csv
 
 import os
 import sys
@@ -31,7 +32,14 @@ def print_error(error, line):
     sys.exit(1)
 
 
+# TODO nf-core: Update the check_samplesheet function
 def check_samplesheet(file_in, file_out):
+    """
+    This function checks that the sample sheet follows the following structure:
+    
+    sample,fastq_1,fastq_2
+    SAMPLE1,SAMPLE1_1.fastq.gz,SAMPLE1_2.fastq.gz
+    """
 
     sample_run_dict = {}
     with open(file_in, "r") as fin:

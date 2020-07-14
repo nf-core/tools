@@ -65,6 +65,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Change `params.reads` -> `params.input`
 * Move, modularise and import boilerplate code via Groovy `lib/` directory
 * Implement DSL 2 syntax for pipeline template
+* Adding TODOs and MultiQC process in DSL2 template
 
 ### Linting
 

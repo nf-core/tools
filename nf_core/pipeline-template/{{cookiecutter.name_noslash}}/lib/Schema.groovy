@@ -123,4 +123,20 @@ class Schema {
         }
         return summary
     }
+
+    static String params_mqc_summary(summary) {
+        String yaml_file_text  = """
+        id: '{{ cookiecutter.name_noslash }}-summary'
+        description: " - this information is collected when the pipeline is started."
+        section_name: '{{ cookiecutter.name }} Workflow Summary'
+        section_href: 'https://github.com/{{ cookiecutter.name }}'
+        plot_type: 'html'
+        data: |
+            <dl class=\"dl-horizontal\">
+            ${summary.collect { k,v -> "            <dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }.join("\n")}
+            </dl>
+        """.stripIndent()
+
+        return yaml_file_text
+    }
 }
