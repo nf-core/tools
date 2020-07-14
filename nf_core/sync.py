@@ -431,17 +431,20 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
             sync_obj.sync()
         except (SyncException, PullRequestException) as e:
             logging.getLogger().setLevel(orig_loglevel)  # Reset logging
-            logging.error(click.style("Sync failed for {}:\n{}".format(wf.full_name, e), fg="yellow"))
+            logging.error(click.style("Sync failed for {}:\n{}".format(wf.full_name, e), fg="red"))
             failed_syncs.append(wf.name)
         except Exception as e:
             logging.getLogger().setLevel(orig_loglevel)  # Reset logging
-            logging.error(click.style("Something went wrong when syncing {}:\n{}".format(wf.full_name, e), fg="yellow"))
+            logging.error(click.style("Something went wrong when syncing {}:\n{}".format(wf.full_name, e), fg="red"))
             failed_syncs.append(wf.name)
         else:
             logging.getLogger().setLevel(orig_loglevel)  # Reset logging
             logging.info(
-                "Sync successful for {}: {}".format(
-                    wf.full_name, click.style(sync_obj.gh_pr_returned_data.get("html_url"), fg="blue")
+                click.style(
+                    "Sync successful for {}: {}".format(
+                        wf.full_name, click.style(sync_obj.gh_pr_returned_data.get("html_url"), fg="blue")
+                    ),
+                    fg="green",
                 )
             )
             successful_syncs.append(wf.name)
