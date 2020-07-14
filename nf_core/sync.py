@@ -323,17 +323,27 @@ class PipelineSync(object):
             raise PullRequestException("No GitHub authentication token set - cannot make PR")
 
         logging.info("Submitting a pull request via the GitHub API")
+
+        pr_body_text = """
+            A new release of the main template in nf-core/tools has just been released.
+            This automated pull-request attempts to apply the relevant updates to this pipeline.
+
+            Please make sure to merge this pull-request as soon as possible.
+            Once complete, make a new minor release of your pipeline.
+
+            For instructions on how to merge this PR, please see
+            [https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).
+
+            For more information about this release of [nf-core/tools](https://github.com/nf-core/tools),
+            please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).
+            """.format(
+            tag=nf_core.__version__
+        )
+
         pr_content = {
             "title": "Important! Template update for nf-core/tools v{}".format(nf_core.__version__),
-            "body": "Some important changes have been made in the nf-core/tools pipeline template. "
-            "Please make sure to merge this pull-request as soon as possible. "
-            "Once complete, make a new minor release of your pipeline.\n\n"
-            "For instructions on how to merge this PR, please see "
-            "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).\n\n"
-            "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
-            "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).".format(
-                tag=nf_core.__version__
-            ),
+            "body": pr_body_text,
+            "maintainer_can_modify": True,
             "head": "TEMPLATE",
             "base": self.from_branch,
         }
