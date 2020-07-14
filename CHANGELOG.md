@@ -92,6 +92,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Added log message when creating new pipelines that people should talk to the community about their plans
 * Fixed 'on completion' emails sent using the `mail` command not containing body text.
 * Improved command-line help text for nf-core/tools
+* `nf-core list` now hides archived pipelines unless `--show_archived` flag is set
 
 ## v1.9
 

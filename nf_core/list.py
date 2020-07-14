@@ -24,7 +24,7 @@ import nf_core.utils
 nf_core.utils.setup_requests_cachedir()
 
 
-def list_workflows(filter_by=None, sort_by="release", as_json=False):
+def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archived=False):
     """Prints out a list of all nf-core workflows.
 
     Args:
@@ -33,14 +33,14 @@ def list_workflows(filter_by=None, sort_by="release", as_json=False):
             `release` (default), `name`, `stars`.
         as_json (boolean): Set to true, if the lists should be printed in JSON.
     """
-    wfs = Workflows(filter_by, sort_by)
+    wfs = Workflows(filter_by, sort_by, show_archived)
     wfs.get_remote_workflows()
     wfs.get_local_nf_workflows()
     wfs.compare_remote_local()
     if as_json:
-        wfs.print_json()
+        return wfs.print_json()
     else:
-        wfs.print_summary()
+        return wfs.print_summary()
 
 
 def get_local_wf(workflow, revision=None):
@@ -96,12 +96,13 @@ class Workflows(object):
             `release` (default), `name`, `stars`.
     """
 
-    def __init__(self, filter_by=None, sort_by="release"):
+    def __init__(self, filter_by=None, sort_by="release", show_archived=False):
         self.remote_workflows = list()
         self.local_workflows = list()
         self.local_unmatched = list()
         self.keyword_filters = filter_by if filter_by is not None else []
         self.sort_workflows_by = sort_by
+        self.show_archived = show_archived
 
     def get_remote_workflows(self):
         """Retrieves remote workflows from `nf-co.re <https://nf-co.re>`_.
@@ -183,12 +184,12 @@ class Workflows(object):
         Returns:
             list: Filtered remote workflows.
         """
-        # If no keywords, don't filter
-        if not self.keyword_filters:
-            return self.remote_workflows
-
         filtered_workflows = []
         for wf in self.remote_workflows:
+            # Skip archived pipelines
+            if not self.show_archived and wf.archived:
+                continue
+            # Search through any supplied keywords
             for k in self.keyword_filters:
                 in_name = k in wf.name if wf.name else False
                 in_desc = k in wf.description if wf.description else False
@@ -198,6 +199,7 @@ class Workflows(object):
             else:
                 # We didn't hit a break, so all keywords were found
                 filtered_workflows.append(wf)
+
         return filtered_workflows
 
     def print_summary(self):
@@ -205,11 +207,12 @@ class Workflows(object):
 
         filtered_workflows = self.filtered_workflows()
 
-        # Sort by released / dev, then alphabetical
+        # Sort by released / dev / archived, then alphabetical
         if not self.sort_workflows_by or self.sort_workflows_by == "release":
             filtered_workflows.sort(
                 key=lambda wf: (
                     (wf.releases[-1].get("published_at_timestamp", 0) if len(wf.releases) > 0 else 0) * -1,
+                    wf.archived,
                     wf.full_name.lower(),
                 )
             )
@@ -233,11 +236,10 @@ class Workflows(object):
         # Build summary list to print
         summary = list()
         for wf in filtered_workflows:
-            version = (
-                click.style(wf.releases[-1]["tag_name"], fg="blue")
-                if len(wf.releases) > 0
-                else click.style("dev", fg="yellow")
-            )
+            wf_name = wf.full_name
+            version = click.style("dev", fg="yellow")
+            if len(wf.releases) > 0:
+                version = click.style(wf.releases[-1]["tag_name"], fg="blue")
             published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "-"
             pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "-"
             if wf.local_wf is not None:
@@ -249,12 +251,20 @@ class Workflows(object):
                 else:
                     revision = wf.local_wf.commit_sha
                 if wf.local_is_latest:
-                    is_latest = click.style("Yes ({})".format(revision), fg="green")
+                    is_latest = click.style("Yes ({})".format(revision), fg=("black" if wf.archived else "green"))
                 else:
-                    is_latest = click.style("No ({})".format(revision), fg="red")
+                    is_latest = click.style("No ({})".format(revision), fg=("black" if wf.archived else "red"))
             else:
                 is_latest = "-"
-            rowdata = [wf.full_name, version, published, pulled, is_latest]
+            # Make everything dim if archived
+            if wf.archived:
+                wf_name = click.style(wf_name, fg="black")
+                version = click.style("archived", fg="black")
+                published = click.style(published, fg="black")
+                pulled = click.style(pulled, fg="black")
+                is_latest = click.style(is_latest, fg="black")
+
+            rowdata = [wf_name, version, published, pulled, is_latest]
             if self.sort_workflows_by == "stars":
                 rowdata.insert(1, wf.stargazers_count)
             summary.append(rowdata)
@@ -263,18 +273,14 @@ class Workflows(object):
             t_headers.insert(1, "Stargazers")
 
         # Print summary table
-        print("", file=sys.stderr)
-        print(tabulate.tabulate(summary, headers=t_headers))
-        print("", file=sys.stderr)
+        return "\n{}\n".format(tabulate.tabulate(summary, headers=t_headers))
 
     def print_json(self):
         """ Dump JSON of all parsed information """
-        print(
-            json.dumps(
-                {"local_workflows": self.local_workflows, "remote_workflows": self.remote_workflows},
-                default=lambda o: o.__dict__,
-                indent=4,
-            )
+        return json.dumps(
+            {"local_workflows": self.local_workflows, "remote_workflows": self.remote_workflows},
+            default=lambda o: o.__dict__,
+            indent=4,
         )
 
 
@@ -349,6 +355,7 @@ class LocalWorkflow(object):
                 try:
                     with open(os.devnull, "w") as devnull:
                         nfinfo_raw = subprocess.check_output(["nextflow", "info", "-d", self.full_name], stderr=devnull)
+                        nfinfo_raw = str(nfinfo_raw)
                 except OSError as e:
                     if e.errno == errno.ENOENT:
                         raise AssertionError(
@@ -360,8 +367,6 @@ class LocalWorkflow(object):
                     )
                 else:
                     re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
-                    if isinstance(nfinfo_raw, bytes):
-                        nfinfo_raw = nfinfo_raw.decode()
                     for key, pattern in re_patterns.items():
                         m = re.search(pattern, nfinfo_raw)
                         if m:
@@ -388,7 +393,7 @@ class LocalWorkflow(object):
                 self.active_tag = None
                 for tag in repo.tags:
                     if str(tag.commit) == str(self.commit_sha):
-                        self.active_tag = tag
+                        self.active_tag = str(tag)
 
             # I'm not sure that we need this any more, it predated the self.branch catch above for detacted HEAD
             except TypeError as e:
