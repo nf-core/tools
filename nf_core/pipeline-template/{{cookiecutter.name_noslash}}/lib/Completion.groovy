@@ -111,7 +111,7 @@ class Completion {
         if (workflow.success) {
             log.info "-${colors.purple}[$workflow.manifest.name]${colors.green} Pipeline completed successfully${colors.reset}-"
         } else {
-            Checks.hostname()
+            Checks.hostname(workflow, params, log)
             log.info "-${colors.purple}[$workflow.manifest.name]${colors.red} Pipeline completed with errors${colors.reset}-"
         }
     }

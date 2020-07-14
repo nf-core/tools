@@ -25,7 +25,7 @@ if (params.help) {
 /*
  * Stage config files
  */
-ch_multiqc_config = Channel.fromPath("$baseDir/assets/multiqc_config.yaml", checkIfExists: true)
+ch_multiqc_config = file("$baseDir/assets/multiqc_config.yaml", checkIfExists: true)
 ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
 ch_output_docs = file("$baseDir/docs/output.md", checkIfExists: true)
 ch_output_docs_images = file("$baseDir/docs/images/", checkIfExists: true)
@@ -102,7 +102,7 @@ workflow {
     GET_SOFTWARE_VERSIONS()
 
     MULTIQC(
-        ch_multiqc_config.collect(),
+        ch_multiqc_config,
         ch_multiqc_custom_config.collect().ifEmpty([]),
         FASTQC.out.collect(),
         GET_SOFTWARE_VERSIONS.out.yml.collect(),
