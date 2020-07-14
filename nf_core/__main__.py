@@ -35,12 +35,16 @@ def run_nf_core():
     stderr.print("[green]                                          `._,._,'\n")
     stderr.print("[black]    nf-core/tools version {}\n\n".format(nf_core.__version__))
 
-    if not os.environ.get('NFCORE_NO_VERSION_CHECK', False):
-        remote_url = os.environ.get('NFCORE_VERSION_URL', 'https://nf-co.re/tools_version')
+    if not os.environ.get("NFCORE_NO_VERSION_CHECK", False):
+        remote_url = os.environ.get("NFCORE_VERSION_URL", "https://nf-co.re/tools_version")
         try:
             is_outdated, current_version, remote_version = nf_core.utils.check_if_outdated(source_url=remote_url)
             if is_outdated:
-                stderr.print("Note: nf-core is out of date; latest version: {}, current version: {}\n\n".format(remote_version, current_version))
+                stderr.print(
+                    "Note: nf-core is out of date; latest version: {}, current version: {}\n\n".format(
+                        remote_version, current_version
+                    )
+                )
         except ValueError:
             pass
 

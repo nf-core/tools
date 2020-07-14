@@ -6,6 +6,7 @@ import nf_core.utils
 
 import unittest
 
+
 class TestUtils(unittest.TestCase):
     """Class for utils tests"""
 
