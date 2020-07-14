@@ -185,13 +185,11 @@ class Workflows(object):
             list: Filtered remote workflows.
         """
         filtered_workflows = []
-        # If no keywords, don't filter
-        if not self.keyword_filters:
-            for wf in self.remote_workflows:
-                filtered_workflows.append(wf)
-
-        filtered_workflows = []
         for wf in self.remote_workflows:
+            # Skip archived pipelines
+            if not self.show_archived and wf.archived:
+                continue
+            # Search through any supplied keywords
             for k in self.keyword_filters:
                 in_name = k in wf.name if wf.name else False
                 in_desc = k in wf.description if wf.description else False
@@ -202,9 +200,6 @@ class Workflows(object):
                 # We didn't hit a break, so all keywords were found
                 filtered_workflows.append(wf)
 
-        # remove archived worflows; show_archived is False by default
-        if not self.show_archived:
-            filtered_workflows = [wf for wf in filtered_workflows if wf.archived == False]
         return filtered_workflows
 
     def print_summary(self):
@@ -212,11 +207,12 @@ class Workflows(object):
 
         filtered_workflows = self.filtered_workflows()
 
-        # Sort by released / dev, then alphabetical
+        # Sort by released / dev / archived, then alphabetical
         if not self.sort_workflows_by or self.sort_workflows_by == "release":
             filtered_workflows.sort(
                 key=lambda wf: (
                     (wf.releases[-1].get("published_at_timestamp", 0) if len(wf.releases) > 0 else 0) * -1,
+                    wf.archived,
                     wf.full_name.lower(),
                 )
             )
@@ -240,11 +236,10 @@ class Workflows(object):
         # Build summary list to print
         summary = list()
         for wf in filtered_workflows:
-            version = (
-                click.style(wf.releases[-1]["tag_name"], fg="blue")
-                if len(wf.releases) > 0
-                else click.style("dev", fg="yellow")
-            )
+            wf_name = wf.full_name
+            version = click.style("dev", fg="yellow")
+            if len(wf.releases) > 0:
+                version = click.style(wf.releases[-1]["tag_name"], fg="blue")
             published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "-"
             pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "-"
             if wf.local_wf is not None:
@@ -256,12 +251,20 @@ class Workflows(object):
                 else:
                     revision = wf.local_wf.commit_sha
                 if wf.local_is_latest:
-                    is_latest = click.style("Yes ({})".format(revision), fg="green")
+                    is_latest = click.style("Yes ({})".format(revision), fg=("black" if wf.archived else "green"))
                 else:
-                    is_latest = click.style("No ({})".format(revision), fg="red")
+                    is_latest = click.style("No ({})".format(revision), fg=("black" if wf.archived else "red"))
             else:
                 is_latest = "-"
-            rowdata = [wf.full_name, version, published, pulled, is_latest]
+            # Make everything dim if archived
+            if wf.archived:
+                wf_name = click.style(wf_name, fg="black")
+                version = click.style("archived", fg="black")
+                published = click.style(published, fg="black")
+                pulled = click.style(pulled, fg="black")
+                is_latest = click.style(is_latest, fg="black")
+
+            rowdata = [wf_name, version, published, pulled, is_latest]
             if self.sort_workflows_by == "stars":
                 rowdata.insert(1, wf.stargazers_count)
             summary.append(rowdata)
