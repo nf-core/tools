@@ -112,7 +112,7 @@ def list(keywords, sort, json, show_archived):
     Checks the web for a list of nf-core pipelines with their latest releases.
     Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
-    nf_core.list.list_workflows(keywords, sort, json, show_archived)
+    print(nf_core.list.list_workflows(keywords, sort, json, show_archived))
 
 
 # nf-core launch

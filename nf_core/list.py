@@ -38,9 +38,9 @@ def list_workflows(filter_by=None, sort_by="release", as_json=False, show_archiv
     wfs.get_local_nf_workflows()
     wfs.compare_remote_local()
     if as_json:
-        wfs.print_json()
+        return wfs.print_json()
     else:
-        wfs.print_summary()
+        return wfs.print_summary()
 
 
 def get_local_wf(workflow, revision=None):
@@ -273,18 +273,14 @@ class Workflows(object):
             t_headers.insert(1, "Stargazers")
 
         # Print summary table
-        print("", file=sys.stderr)
-        print(tabulate.tabulate(summary, headers=t_headers))
-        print("", file=sys.stderr)
+        return "\n{}\n".format(tabulate.tabulate(summary, headers=t_headers))
 
     def print_json(self):
         """ Dump JSON of all parsed information """
-        print(
-            json.dumps(
-                {"local_workflows": self.local_workflows, "remote_workflows": self.remote_workflows},
-                default=lambda o: o.__dict__,
-                indent=4,
-            )
+        return json.dumps(
+            {"local_workflows": self.local_workflows, "remote_workflows": self.remote_workflows},
+            default=lambda o: o.__dict__,
+            indent=4,
         )
 
 

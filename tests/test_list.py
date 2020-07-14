@@ -21,14 +21,24 @@ class TestLint(unittest.TestCase):
     @mock.patch("nf_core.list.LocalWorkflow")
     def test_working_listcall(self, mock_loc_wf, mock_subprocess, mock_json):
         """ Test that listing pipelines works """
-        nf_core.list.list_workflows()
+        wf_table = nf_core.list.list_workflows()
+        assert "rnaseq" in wf_table
+        assert "exoseq" not in wf_table
+
+    @mock.patch("json.dumps")
+    @mock.patch("subprocess.check_output")
+    @mock.patch("nf_core.list.LocalWorkflow")
+    def test_working_listcall(self, mock_loc_wf, mock_subprocess, mock_json):
+        """ Test that listing pipelines works, showing archived pipelines """
+        wf_table = nf_core.list.list_workflows(show_archived=True)
+        assert "exoseq" in wf_table
 
     @mock.patch("json.dumps")
     @mock.patch("subprocess.check_output")
     @mock.patch("nf_core.list.LocalWorkflow")
     def test_working_listcall_json(self, mock_loc_wf, mock_subprocess, mock_json):
         """ Test that listing pipelines with JSON works """
-        nf_core.list.list_workflows([], as_json=True)
+        nf_core.list.list_workflows(as_json=True)
 
     def test_pretty_datetime(self):
         """ Test that the pretty datetime function works """
