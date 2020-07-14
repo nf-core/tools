@@ -17,20 +17,14 @@ import sys
 import time
 from distutils import version
 
-try:
-    # Python 3 imports
-    from urllib.request import urlopen
-except ImportError:
-    # Python 2 imports
-    from urllib2 import urlopen
-
 
 def fetch_latest_version(source_url):
     """
     Get the latest version of nf-core
+    TODO: use the poll_nfcore_web_api method
     """
-    response = urlopen(source_url, timeout=1)
-    remote_version = response.read().decode("utf-8").strip()
+    response = requests.get(source_url)
+    remote_version = response.text.strip()
     return remote_version
 
 
