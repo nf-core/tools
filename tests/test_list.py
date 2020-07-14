@@ -165,24 +165,13 @@ class TestLint(unittest.TestCase):
         Test that archived workflows are not shown by default
         """
         workflows_obj = nf_core.list.Workflows()
-        remote1 = {
-            "name": "myWF",
-            "full_name": "my Workflow",
-            "archived": True,
-            "releases": []
-        }
+        remote1 = {"name": "myWF", "full_name": "my Workflow", "archived": True, "releases": []}
         rwf_ex1 = nf_core.list.RemoteWorkflow(remote1)
-        remote2 = {
-            "name": "myWF",
-            "full_name": "my Workflow",
-            "archived": False,
-            "releases": []
-        }
+        remote2 = {"name": "myWF", "full_name": "my Workflow", "archived": False, "releases": []}
         rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
 
         workflows_obj.remote_workflows.append(rwf_ex1)
         workflows_obj.remote_workflows.append(rwf_ex2)
-
 
         filtered_workflows = workflows_obj.filtered_workflows()
         expected_workflows = [rwf_ex2]
@@ -193,25 +182,14 @@ class TestLint(unittest.TestCase):
         """
         Test that archived workflows can be shown optionally
         """
-        workflows_obj = nf_core.list.Workflows(show_archived = True)
-        remote1 = {
-            "name": "myWF",
-            "full_name": "my Workflow",
-            "archived": True,
-            "releases": []
-        }
+        workflows_obj = nf_core.list.Workflows(show_archived=True)
+        remote1 = {"name": "myWF", "full_name": "my Workflow", "archived": True, "releases": []}
         rwf_ex1 = nf_core.list.RemoteWorkflow(remote1)
-        remote2 = {
-            "name": "myWF",
-            "full_name": "my Workflow",
-            "archived": False,
-            "releases": []
-        }
+        remote2 = {"name": "myWF", "full_name": "my Workflow", "archived": False, "releases": []}
         rwf_ex2 = nf_core.list.RemoteWorkflow(remote2)
 
         workflows_obj.remote_workflows.append(rwf_ex1)
         workflows_obj.remote_workflows.append(rwf_ex2)
-
 
         filtered_workflows = workflows_obj.filtered_workflows()
         expected_workflows = [rwf_ex1, rwf_ex2]
