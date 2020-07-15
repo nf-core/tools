@@ -188,8 +188,10 @@ class PipelineSync(object):
                 raise SyncException("Workflow config variable `{}` not found!".format(rvar))
 
     def checkout_template_branch(self):
-        """Try to check out the TEMPLATE branch. If it fails, try origin/TEMPLATE.
-        If it still fails and --make-template-branch was given, create it as an orphan branch.
+        """
+        Try to check out the origin/TEMPLATE in a new TEMPLATE branch.
+        If this fails, try to check out an existing local TEMPLATE branch.
+        If it still fails and --make-template-branch was given, create TEMPLATE as an orphan branch.
         """
         # Try to check out the `TEMPLATE` branch
         try:
