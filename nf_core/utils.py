@@ -2,7 +2,7 @@
 """
 Common utility functions for the nf-core python package.
 """
-
+import nf_core
 import datetime
 import errno
 import json
@@ -15,6 +15,30 @@ import requests_cache
 import subprocess
 import sys
 import time
+from distutils import version
+
+
+def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
+    """
+    Check if the current version of nf-core is outdated
+    """
+    # Exit immediately if disabled via ENV var
+    if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
+        return True
+    # Set and clean up the current version string
+    if current_version == None:
+        current_version = nf_core.__version__
+    current_version = re.sub("[^0-9\.]", "", current_version)
+    # Build the URL to check against
+    source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
+    source_url = "{}?v={}".format(source_url, current_version)
+    # Fetch and clean up the remote version
+    if remote_version == None:
+        response = requests.get(source_url, timeout=3)
+        remote_version = re.sub("[^0-9\.]", "", response.text)
+    # Check if we have an available update
+    is_outdated = version.StrictVersion(remote_version) > version.StrictVersion(current_version)
+    return (is_outdated, current_version, remote_version)
 
 
 def fetch_wf_config(wf_path):

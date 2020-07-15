@@ -93,6 +93,8 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Fixed 'on completion' emails sent using the `mail` command not containing body text.
 * Improved command-line help text for nf-core/tools
 * `nf-core list` now hides archived pipelines unless `--show_archived` flag is set
+* Command line tools now checks if there is a new version of nf-core/tools available
+  * Disable this by setting the environment variable `NFCORE_NO_VERSION_CHECK`, eg. `export NFCORE_NO_VERSION_CHECK=1`
 
 ## v1.9
 

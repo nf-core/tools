@@ -20,19 +20,29 @@ import nf_core.list
 import nf_core.modules
 import nf_core.schema
 import nf_core.sync
+import nf_core.utils
 
 import logging
 
 
 def run_nf_core():
     # Print nf-core header to STDERR
-    stderr = rich.console.Console(file=sys.stderr)
-    stderr.print("\n[green]{},--.[black]/[green],-.".format(" " * 42))
+    stderr = rich.console.Console(file=sys.stderr, highlight=False)
+    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42))
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
     stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
     stderr.print("[green]                                          `._,._,'\n")
-    stderr.print("[black]    nf-core/tools version {}\n\n".format(nf_core.__version__))
+    stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__))
+    try:
+        is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
+        if is_outdated:
+            stderr.print(
+                "[bold bright_yellow]    There is a new version of nf-core/tools available! ({})".format(remote_vers)
+            )
+    except Exception as e:
+        logging.debug("Could not check latest version: {}".format(e))
+    stderr.print("\n\n")
 
     # Lanch the click cli
     nf_core_cli()
