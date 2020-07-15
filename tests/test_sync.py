@@ -86,3 +86,60 @@ class TestModules(unittest.TestCase):
             assert psync.wf_config["params.outdir"] == "'./results'"
             # Check that we raised because of the missing fake config var
             assert e.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
+
+    def test_checkout_template_branch(self):
+        """ Try checking out the TEMPLATE branch of the pipeline """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+
+    def test_delete_template_branch_files(self):
+        """ Confirm that we can delete all files in the TEMPLATE branch """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_template_branch_files()
+        assert os.listdir(self.pipeline_dir) == [".git"]
+
+    def test_create_template_pipeline(self):
+        """ Confirm that we can delete all files in the TEMPLATE branch """
+        # First, delete all the files
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        psync.delete_template_branch_files()
+        assert os.listdir(self.pipeline_dir) == [".git"]
+        # Now create the new template
+        psync.make_template_pipeline()
+        assert "main.nf" in os.listdir(self.pipeline_dir)
+        assert "nextflow.config" in os.listdir(self.pipeline_dir)
+
+    def test_commit_template_changes_nochanges(self):
+        """ Try to commit the TEMPLATE branch, but no changes were made """
+        # Check out the TEMPLATE branch but skip making the new template etc.
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        # Function returns False if no changes were made
+        assert psync.commit_template_changes() is False
+
+    def test_commit_template_changes_changes(self):
+        """ Try to commit the TEMPLATE branch, but no changes were made """
+        # Check out the TEMPLATE branch but skip making the new template etc.
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        # Add an empty file, uncommitted
+        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
+        open(test_fn, "a").close()
+        # Check that we have uncommitted changes
+        assert psync.repo.is_dirty(untracked_files=True) is True
+        # Function returns True if no changes were made
+        assert psync.commit_template_changes() is True
+        # Check that we don't have any uncommitted changes
+        assert psync.repo.is_dirty(untracked_files=True) is False

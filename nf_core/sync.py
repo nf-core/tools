@@ -47,7 +47,6 @@ class PipelineSync(object):
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
         from_branch (str): Repo branch to use when collecting workflow variables. Default: active branch.
-        orphan_branch (bool): Whether an orphan branch was made when creating TEMPLATE
         made_changes (bool): Whether making the new template pipeline introduced any changes
         make_pr (bool): Whether to try to automatically make a PR on GitHub.com
         required_config_vars (list): List of nextflow variables required to make template pipeline
@@ -63,7 +62,6 @@ class PipelineSync(object):
 
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
-        self.orphan_branch = False
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -85,27 +83,31 @@ class PipelineSync(object):
         logging.info(config_log_msg)
 
         self.inspect_sync_dir()
-
         self.get_wf_config()
-
         self.checkout_template_branch()
-
+        self.delete_template_branch_files()
         self.make_template_pipeline()
-
         self.commit_template_changes()
 
         # Push and make a pull request if we've been asked to
-        if self.make_pr:
+        if self.made_changes and self.make_pr:
             try:
                 self.push_template_branch()
                 self.make_pull_request()
             except PullRequestException as e:
-                # Clean up the target directory
                 self.reset_target_dir()
                 raise PullRequestException(pr_exception)
 
-        if not self.make_pr:
-            self.git_merge_help()
+        self.reset_target_dir()
+
+        if not self.made_changes:
+            logging.info("No changes made to TEMPLATE - sync complete")
+        elif not self.make_pr:
+            logging.info(
+                "Now try to merge the updates in to your pipeline:\n  cd {}\n  git merge TEMPLATE".format(
+                    self.pipeline_dir
+                )
+            )
 
     def inspect_sync_dir(self):
         """Takes a look at the target directory for syncing. Checks that it's a git repo
@@ -190,10 +192,10 @@ class PipelineSync(object):
             except git.exc.GitCommandError:
                 raise SyncException("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
 
-    def make_template_pipeline(self):
-        """Delete all files and make a fresh template using the workflow variables
+    def delete_template_branch_files(self):
         """
-
+        Delete all files in the TEMPLATE branch
+        """
         # Delete everything
         logging.info("Deleting all files in TEMPLATE branch")
         for the_file in os.listdir(self.pipeline_dir):
@@ -209,7 +211,10 @@ class PipelineSync(object):
             except Exception as e:
                 raise SyncException(e)
 
-        # Make a new pipeline using nf_core.create
+    def make_template_pipeline(self):
+        """
+        Delete all files and make a fresh template using the workflow variables
+        """
         logging.info("Making a new template pipeline using pipeline variables")
 
         # Suppress log messages from the pipeline creation method
@@ -233,31 +238,30 @@ class PipelineSync(object):
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit
         """
-        # Commit changes if we have any
+        # Check that we have something to commit
         if not self.repo.is_dirty(untracked_files=True):
             logging.info("Template contains no changes - no new commit created")
-        else:
-            try:
-                self.repo.git.add(A=True)
-                self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
-                self.made_changes = True
-                logging.info("Committed changes to TEMPLATE branch")
-            except Exception as e:
-                raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
+            return False
+        # Commit changes
+        try:
+            self.repo.git.add(A=True)
+            self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
+            self.made_changes = True
+            logging.info("Committed changes to TEMPLATE branch")
+        except Exception as e:
+            raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
+        return True
 
     def push_template_branch(self):
         """If we made any changes, push the TEMPLATE branch to the default remote
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        if self.made_changes:
-            logging.info("Pushing TEMPLATE branch to remote")
-            try:
-                self.repo.git.push()
-            except git.exc.GitCommandError as e:
-                raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
-        else:
-            logging.debug("No changes to TEMPLATE - skipping push to remote")
+        logging.info("Pushing TEMPLATE branch to remote")
+        try:
+            self.repo.git.push()
+        except git.exc.GitCommandError as e:
+            raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
 
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),
@@ -265,9 +269,6 @@ class PipelineSync(object):
 
         Returns: An instance of class requests.Response
         """
-        if not self.made_changes:
-            logging.debug("No changes to TEMPLATE - skipping PR creation")
-
         # Check that we know the github username and repo name
         try:
             assert self.gh_username is not None
@@ -332,30 +333,14 @@ class PipelineSync(object):
             logging.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
     def reset_target_dir(self):
-        """Reset the target pipeline directory. Check out the original branch.
         """
-
-        # Reset: Check out original branch again
+        Reset the target pipeline directory. Check out the original branch.
+        """
         logging.debug("Checking out original branch: '{}'".format(self.original_branch))
         try:
             self.repo.git.checkout(self.original_branch)
         except git.exc.GitCommandError as e:
             raise SyncException("Could not reset to original branch `{}`:\n{}".format(self.from_branch, e))
-
-    def git_merge_help(self):
-        """Print a command line help message with instructions on how to merge changes
-        """
-        if self.made_changes:
-            git_merge_cmd = "git merge TEMPLATE"
-            manual_sync_link = ""
-            if self.orphan_branch:
-                git_merge_cmd += " --allow-unrelated-histories"
-                manual_sync_link = "\n\nFor more information, please see:\nhttps://nf-co.re/developers/sync#merge-template-into-main-branches"
-            logging.info(
-                "Now try to merge the updates in to your pipeline:\n  cd {}\n  {}{}".format(
-                    self.pipeline_dir, git_merge_cmd, manual_sync_link
-                )
-            )
 
 
 def sync_all_pipelines(gh_username=None, gh_auth_token=None):
