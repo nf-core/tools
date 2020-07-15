@@ -13,10 +13,9 @@ import logging
 import os
 import re
 import requests
-import rich.highlighter
+import rich.markdown
 import rich.panel
 import rich.progress
-import rich.theme
 import subprocess
 import textwrap
 
@@ -222,7 +221,7 @@ class PipelineLint(object):
 
         progress = rich.progress.Progress(
             "[bold blue]{task.description}",
-            rich.progress.BarColumn(),
+            rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[func_name]}",
         )
         with progress:
@@ -1297,20 +1296,7 @@ class PipelineLint(object):
             self.passed.append((15, "Schema matched params returned from nextflow config"))
 
     def print_results(self):
-
-        # Custom highlighter for rich
-        # TODO - this doesn't work! See below for debugging
-        class NfCoreLintHighlighter(rich.highlighter.RegexHighlighter):
-            """Apply style to anything that looks like an email."""
-
-            base_style = "nfcore."
-            highlights = [r"(?P<backticks>`[^`]+`)", r"(?P<underscores>_[^_]+_)", r"(?P<test>\.md)"]
-
-        nfc_theme = rich.theme.Theme(
-            {"nfcore.backticks": "white on grey27", "nfcore.underscores": "italic", "nfcore.test": "bold magenta"}
-        )
-
-        console = rich.console.Console(highlighter=NfCoreLintHighlighter(), theme=nfc_theme)
+        console = rich.console.Console()
         console.print()
         console.rule("[bold green] LINT RESULTS")
         console.print(
@@ -1337,10 +1323,8 @@ class PipelineLint(object):
             """
             results = []
             for eid, msg in test_results:
-                results.append(
-                    " [blue bold][link=https://nf-co.re/errors#{0}]#{0:>3}[/link][reset]: {1}".format(eid, msg)
-                )
-            return "\n".join(results)
+                results.append("1. [Test #{0:>3}](https://nf-co.re/errors#{0}): {1}".format(eid, msg))
+            return rich.markdown.Markdown("\n".join(results))
 
         if len(self.passed) > 0 and logging.getLogger().getEffectiveLevel() == logging.DEBUG:
             console.print()
@@ -1358,14 +1342,6 @@ class PipelineLint(object):
             console.print()
             console.rule("[bold red][[\u2717]] Test Failures", style="red")
             console.print(rich.panel.Panel(format_result(self.failed), style="red"), no_wrap=True, overflow="ellipsis")
-
-        # DEBUG - this DOES NOT WORK
-        # it's just a string, why is it not highlighting??
-        # console.print(format_result(self.warned))
-
-        # DEBUG - this works
-        # console.print("Some stuff in `backticks`")
-        # console.print("Some markdown: foo.md")
 
     def get_results_md(self):
         """
