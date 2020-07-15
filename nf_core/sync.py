@@ -38,7 +38,6 @@ class PipelineSync(object):
 
     Args:
         pipeline_dir (str): The path to the Nextflow pipeline root directory
-        make_template_branch (bool): Set this to `True` to create a `TEMPLATE` branch if it is not found
         from_branch (str): The branch to use to fetch config vars. If not set, will use current active branch
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
         gh_username (str): GitHub username
@@ -48,7 +47,6 @@ class PipelineSync(object):
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
         from_branch (str): Repo branch to use when collecting workflow variables. Default: active branch.
-        make_template_branch (bool): Whether to try to create TEMPLATE branch if not found
         orphan_branch (bool): Whether an orphan branch was made when creating TEMPLATE
         made_changes (bool): Whether making the new template pipeline introduced any changes
         make_pr (bool): Whether to try to automatically make a PR on GitHub.com
@@ -59,20 +57,12 @@ class PipelineSync(object):
     """
 
     def __init__(
-        self,
-        pipeline_dir,
-        make_template_branch=False,
-        from_branch=None,
-        make_pr=False,
-        gh_username=None,
-        gh_repo=None,
-        gh_auth_token=None,
+        self, pipeline_dir, from_branch=None, make_pr=False, gh_username=None, gh_repo=None, gh_auth_token=None,
     ):
         """ Initialise syncing object """
 
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
-        self.make_template_branch = make_template_branch
         self.orphan_branch = False
         self.made_changes = False
         self.make_pr = make_pr
@@ -90,8 +80,6 @@ class PipelineSync(object):
         config_log_msg = "Pipeline directory: {}".format(self.pipeline_dir)
         if self.from_branch:
             config_log_msg += "\n  Using branch `{}` to fetch workflow variables".format(self.from_branch)
-        if self.make_template_branch:
-            config_log_msg += "\n  Will attempt to create `TEMPLATE` branch if not found"
         if self.make_pr:
             config_log_msg += "\n  Will attempt to automatically create a pull request on GitHub.com"
         logging.info(config_log_msg)
@@ -191,39 +179,16 @@ class PipelineSync(object):
         """
         Try to check out the origin/TEMPLATE in a new TEMPLATE branch.
         If this fails, try to check out an existing local TEMPLATE branch.
-        If it still fails and --make-template-branch was given, create TEMPLATE as an orphan branch.
         """
         # Try to check out the `TEMPLATE` branch
         try:
             self.repo.git.checkout("origin/TEMPLATE", b="TEMPLATE")
         except git.exc.GitCommandError:
-
             # Try to check out an existing local branch called TEMPLATE
             try:
                 self.repo.git.checkout("TEMPLATE")
             except git.exc.GitCommandError:
-
-                # Failed, if we're not making a new branch just die
-                if not self.make_template_branch:
-                    raise SyncException(
-                        "Could not check out branch 'origin/TEMPLATE'"
-                        "\nUse flag --make-template-branch to attempt to create this branch"
-                    )
-
-                # Branch and force is set, fire function to create `TEMPLATE` branch
-                else:
-                    logging.debug("Could not check out origin/TEMPLATE!")
-                    logging.info("Creating orphan TEMPLATE branch")
-                    try:
-                        self.repo.git.checkout("--orphan", "TEMPLATE")
-                        self.orphan_branch = True
-                        if self.make_pr:
-                            self.make_pr = False
-                            logging.warning(
-                                "Will not attempt to make a PR - orphan branch must be merged manually first"
-                            )
-                    except git.exc.GitCommandError as e:
-                        raise SyncException("Could not create 'TEMPLATE' branch:\n{}".format(e))
+                raise SyncException("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
 
     def make_template_pipeline(self):
         """Delete all files and make a fresh template using the workflow variables
@@ -290,13 +255,7 @@ class PipelineSync(object):
             try:
                 self.repo.git.push()
             except git.exc.GitCommandError as e:
-                if self.make_template_branch:
-                    try:
-                        self.repo.git.push("--set-upstream", "origin", "TEMPLATE")
-                    except git.exc.GitCommandError as e:
-                        raise PullRequestException("Could not push new TEMPLATE branch:\n  {}".format(e))
-                else:
-                    raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
+                raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
         else:
             logging.debug("No changes to TEMPLATE - skipping push to remote")
 

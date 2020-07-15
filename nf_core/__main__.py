@@ -499,16 +499,13 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
 @nf_core_cli.command("sync", help_priority=10)
 @click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
-@click.option(
-    "-t", "--make-template-branch", is_flag=True, default=False, help="Create a TEMPLATE branch if none is found."
-)
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
 @click.option("-u", "--username", type=str, help="GitHub username for the PR.")
 @click.option("-r", "--repository", type=str, help="GitHub repository name for the PR.")
 @click.option("-a", "--auth-token", type=str, help="GitHub API personal access token.")
 @click.option("--all", is_flag=True, default=False, help="Sync template for all nf-core pipelines.")
-def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username, repository, auth_token, all):
+def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_token, all):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
 
@@ -534,7 +531,7 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
             pipeline_dir = pipeline_dir[0]
 
         # Sync the given pipeline dir
-        sync_obj = nf_core.sync.PipelineSync(pipeline_dir, make_template_branch, from_branch, pull_request)
+        sync_obj = nf_core.sync.PipelineSync(pipeline_dir, from_branch, pull_request)
         try:
             sync_obj.sync()
         except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
