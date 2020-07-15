@@ -47,6 +47,7 @@ class PipelineSync(object):
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
         from_branch (str): Repo branch to use when collecting workflow variables. Default: active branch.
+        original_branch (str): Repo branch that was checked out before we started.
         made_changes (bool): Whether making the new template pipeline introduced any changes
         make_pr (bool): Whether to try to automatically make a PR on GitHub.com
         required_config_vars (list): List of nextflow variables required to make template pipeline
@@ -62,6 +63,7 @@ class PipelineSync(object):
 
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
+        self.original_branch = None
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -318,11 +320,11 @@ class PipelineSync(object):
             auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
         )
         try:
-            self.gh_pr_returned_data = json.loads(r.text)
+            self.gh_pr_returned_data = json.loads(r.content)
             returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
         except:
-            self.gh_pr_returned_data = r.text
-            returned_data_prettyprint = r.text
+            self.gh_pr_returned_data = r.content
+            returned_data_prettyprint = r.content
 
         if r.status_code != 201:
             raise PullRequestException(

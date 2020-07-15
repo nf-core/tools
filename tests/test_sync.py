@@ -5,6 +5,7 @@
 import nf_core.create
 import nf_core.sync
 
+import json
 import mock
 import os
 import shutil
@@ -143,3 +144,82 @@ class TestModules(unittest.TestCase):
         assert psync.commit_template_changes() is True
         # Check that we don't have any uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is False
+
+    def raise_git_exception(self):
+        """ Raise an exception from GitPython"""
+        raise git.exc.GitCommandError("Test")
+
+    def test_push_template_branch_error(self):
+        """ Try pushing the changes, but without a remote (should fail) """
+        # Check out the TEMPLATE branch but skip making the new template etc.
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.inspect_sync_dir()
+        psync.get_wf_config()
+        psync.checkout_template_branch()
+        # Add an empty file and commit it
+        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
+        open(test_fn, "a").close()
+        psync.commit_template_changes()
+        # Try to push changes
+        try:
+            psync.push_template_branch()
+        except nf_core.sync.PullRequestException as e:
+            assert e.args[0].startswith("Could not push TEMPLATE branch")
+
+    def test_make_pull_request_missing_username(self):
+        """ Try making a PR without a repo or username """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_username = None
+        psync.gh_repo = None
+        try:
+            psync.make_pull_request()
+        except nf_core.sync.PullRequestException as e:
+            assert e.args[0] == "Could not find GitHub username and repo name"
+
+    def test_make_pull_request_missing_auth(self):
+        """ Try making a PR without any auth """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_username = "foo"
+        psync.gh_repo = "bar"
+        psync.gh_auth_token = None
+        try:
+            psync.make_pull_request()
+        except nf_core.sync.PullRequestException as e:
+            assert e.args[0] == "No GitHub authentication token set - cannot make PR"
+
+    def mocked_requests_post(**kwargs):
+        """ Helper function to emulate POST requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.status_code = status_code
+                self.content = json.dumps(data)
+
+        if kwargs["url"] == "https://api.github.com/repos/bad/response/pulls":
+            return MockResponse({}, 404)
+
+        if kwargs["url"] == "https://api.github.com/repos/good/response/pulls":
+            response_data = {"html_url": "great_success"}
+            return MockResponse(response_data, 201)
+
+    @mock.patch("requests.post", side_effect=mocked_requests_post)
+    def test_make_pull_request_bad_response(self, mock_post):
+        """ Try making a PR without any auth """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_username = "bad"
+        psync.gh_repo = "response"
+        psync.gh_auth_token = "test"
+        try:
+            psync.make_pull_request()
+        except nf_core.sync.PullRequestException as e:
+            assert e.args[0].startswith("GitHub API returned code 404:")
+
+    @mock.patch("requests.post", side_effect=mocked_requests_post)
+    def test_make_pull_request_bad_response(self, mock_post):
+        """ Try making a PR without any auth """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_username = "good"
+        psync.gh_repo = "response"
+        psync.gh_auth_token = "test"
+        psync.make_pull_request()
+        assert psync.gh_pr_returned_data["html_url"] == "great_success"
