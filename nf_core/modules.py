@@ -78,7 +78,7 @@ class PipelineModules(object):
         logging.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
 
         # Check that we don't already have a folder for this module
-        module_dir = os.path.join(self.pipeline_dir, "modules", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
         if os.path.exists(module_dir):
             logging.error("Module directory already exists: {}".format(module_dir))
             logging.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
@@ -88,7 +88,7 @@ class PipelineModules(object):
         files = self.get_module_file_urls(module)
         logging.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
-            dl_filename = os.path.join(self.pipeline_dir, "modules", filename)
+            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
             self.download_gh_file(dl_filename, api_url)
 
     def update(self, module, force=False):
