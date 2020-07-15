@@ -720,11 +720,11 @@ INFO: Now try to merge the updates in to your pipeline:
   git merge TEMPLATE
 ```
 
-If your pipeline repository does not already have a `TEMPLATE` branch, you can instruct
-the command to try to create one by giving the `--make-template-branch` flag.
-If it has to, the sync tool will then create an orphan branch - see the
-[nf-core website sync documentation](https://nf-co.re/developers/sync) for details on
-how to handle this.
+The sync command tries to check out the `TEMPLATE` branch from the `origin` remote
+or an existing local branch called `TEMPLATE`. It will fail if it cannot do either
+of these things. The `nf-core create` command should make this template automatically
+when you first start your pipeline. Please see the
+[nf-core website sync documentation](https://nf-co.re/developers/sync) if you have difficulties.
 
 By default, the tool will collect workflow variables from the current branch in your
 pipeline directory. You can supply the `--from-branch` flag to specific a different branch.

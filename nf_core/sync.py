@@ -6,12 +6,17 @@ import click
 import git
 import json
 import logging
-import nf_core
 import os
 import re
 import requests
 import shutil
 import tempfile
+
+import nf_core
+import nf_core.create
+import nf_core.list
+import nf_core.sync
+import nf_core.utils
 
 
 class SyncException(Exception):
@@ -33,7 +38,6 @@ class PipelineSync(object):
 
     Args:
         pipeline_dir (str): The path to the Nextflow pipeline root directory
-        make_template_branch (bool): Set this to `True` to create a `TEMPLATE` branch if it is not found
         from_branch (str): The branch to use to fetch config vars. If not set, will use current active branch
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
         gh_username (str): GitHub username
@@ -43,8 +47,7 @@ class PipelineSync(object):
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
         from_branch (str): Repo branch to use when collecting workflow variables. Default: active branch.
-        make_template_branch (bool): Whether to try to create TEMPLATE branch if not found
-        orphan_branch (bool): Whether an orphan branch was made when creating TEMPLATE
+        original_branch (str): Repo branch that was checked out before we started.
         made_changes (bool): Whether making the new template pipeline introduced any changes
         make_pr (bool): Whether to try to automatically make a PR on GitHub.com
         required_config_vars (list): List of nextflow variables required to make template pipeline
@@ -54,21 +57,13 @@ class PipelineSync(object):
     """
 
     def __init__(
-        self,
-        pipeline_dir,
-        make_template_branch=False,
-        from_branch=None,
-        make_pr=False,
-        gh_username=None,
-        gh_repo=None,
-        gh_auth_token=None,
+        self, pipeline_dir, from_branch=None, make_pr=False, gh_username=None, gh_repo=None, gh_auth_token=None,
     ):
         """ Initialise syncing object """
 
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
-        self.make_template_branch = make_template_branch
-        self.orphan_branch = False
+        self.original_branch = None
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -85,39 +80,36 @@ class PipelineSync(object):
         config_log_msg = "Pipeline directory: {}".format(self.pipeline_dir)
         if self.from_branch:
             config_log_msg += "\n  Using branch `{}` to fetch workflow variables".format(self.from_branch)
-        if self.make_template_branch:
-            config_log_msg += "\n  Will attempt to create `TEMPLATE` branch if not found"
         if self.make_pr:
             config_log_msg += "\n  Will attempt to automatically create a pull request on GitHub.com"
         logging.info(config_log_msg)
 
         self.inspect_sync_dir()
-
         self.get_wf_config()
-
         self.checkout_template_branch()
-
+        self.delete_template_branch_files()
         self.make_template_pipeline()
-
         self.commit_template_changes()
 
         # Push and make a pull request if we've been asked to
-        pr_exception = False
-        if self.make_pr:
+        if self.made_changes and self.make_pr:
             try:
                 self.push_template_branch()
                 self.make_pull_request()
             except PullRequestException as e:
-                # Keep going - we want to clean up the target directory still
-                logging.error(e)
-                pr_exception = e
+                self.reset_target_dir()
+                raise PullRequestException(pr_exception)
 
         self.reset_target_dir()
 
-        if not self.make_pr:
-            self.git_merge_help()
-        elif pr_exception:
-            raise PullRequestException(pr_exception)
+        if not self.made_changes:
+            logging.info("No changes made to TEMPLATE - sync complete")
+        elif not self.make_pr:
+            logging.info(
+                "Now try to merge the updates in to your pipeline:\n  cd {}\n  git merge TEMPLATE".format(
+                    self.pipeline_dir
+                )
+            )
 
     def inspect_sync_dir(self):
         """Takes a look at the target directory for syncing. Checks that it's a git repo
@@ -169,9 +161,7 @@ class PipelineSync(object):
                 raise AttributeError
         except AttributeError as e:
             logging.debug(
-                "Could not find repository URL for remote called 'origin' from remote: {}".format(
-                    self.repo.remotes.origin.url
-                )
+                "Could not find repository URL for remote called 'origin' from remote: {}".format(self.repo.remotes)
             )
         else:
             logging.debug(
@@ -190,45 +180,24 @@ class PipelineSync(object):
                 raise SyncException("Workflow config variable `{}` not found!".format(rvar))
 
     def checkout_template_branch(self):
-        """Try to check out the TEMPLATE branch. If it fails, try origin/TEMPLATE.
-        If it still fails and --make-template-branch was given, create it as an orphan branch.
+        """
+        Try to check out the origin/TEMPLATE in a new TEMPLATE branch.
+        If this fails, try to check out an existing local TEMPLATE branch.
         """
         # Try to check out the `TEMPLATE` branch
         try:
             self.repo.git.checkout("origin/TEMPLATE", b="TEMPLATE")
         except git.exc.GitCommandError:
-
             # Try to check out an existing local branch called TEMPLATE
             try:
                 self.repo.git.checkout("TEMPLATE")
             except git.exc.GitCommandError:
+                raise SyncException("Could not check out branch 'origin/TEMPLATE' or 'TEMPLATE'")
 
-                # Failed, if we're not making a new branch just die
-                if not self.make_template_branch:
-                    raise SyncException(
-                        "Could not check out branch 'origin/TEMPLATE'"
-                        "\nUse flag --make-template-branch to attempt to create this branch"
-                    )
-
-                # Branch and force is set, fire function to create `TEMPLATE` branch
-                else:
-                    logging.debug("Could not check out origin/TEMPLATE!")
-                    logging.info("Creating orphan TEMPLATE branch")
-                    try:
-                        self.repo.git.checkout("--orphan", "TEMPLATE")
-                        self.orphan_branch = True
-                        if self.make_pr:
-                            self.make_pr = False
-                            logging.warning(
-                                "Will not attempt to make a PR - orphan branch must be merged manually first"
-                            )
-                    except git.exc.GitCommandError as e:
-                        raise SyncException("Could not create 'TEMPLATE' branch:\n{}".format(e))
-
-    def make_template_pipeline(self):
-        """Delete all files and make a fresh template using the workflow variables
+    def delete_template_branch_files(self):
         """
-
+        Delete all files in the TEMPLATE branch
+        """
         # Delete everything
         logging.info("Deleting all files in TEMPLATE branch")
         for the_file in os.listdir(self.pipeline_dir):
@@ -244,7 +213,10 @@ class PipelineSync(object):
             except Exception as e:
                 raise SyncException(e)
 
-        # Make a new pipeline using nf_core.create
+    def make_template_pipeline(self):
+        """
+        Delete all files and make a fresh template using the workflow variables
+        """
         logging.info("Making a new template pipeline using pipeline variables")
 
         # Suppress log messages from the pipeline creation method
@@ -268,37 +240,30 @@ class PipelineSync(object):
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit
         """
-        # Commit changes if we have any
+        # Check that we have something to commit
         if not self.repo.is_dirty(untracked_files=True):
             logging.info("Template contains no changes - no new commit created")
-        else:
-            try:
-                self.repo.git.add(A=True)
-                self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
-                self.made_changes = True
-                logging.info("Committed changes to TEMPLATE branch")
-            except Exception as e:
-                raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
+            return False
+        # Commit changes
+        try:
+            self.repo.git.add(A=True)
+            self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
+            self.made_changes = True
+            logging.info("Committed changes to TEMPLATE branch")
+        except Exception as e:
+            raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
+        return True
 
     def push_template_branch(self):
         """If we made any changes, push the TEMPLATE branch to the default remote
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        if self.made_changes:
-            logging.info("Pushing TEMPLATE branch to remote")
-            try:
-                self.repo.git.push()
-            except git.exc.GitCommandError as e:
-                if self.make_template_branch:
-                    try:
-                        self.repo.git.push("--set-upstream", "origin", "TEMPLATE")
-                    except git.exc.GitCommandError as e:
-                        raise PullRequestException("Could not push new TEMPLATE branch:\n  {}".format(e))
-                else:
-                    raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
-        else:
-            logging.debug("No changes to TEMPLATE - skipping push to remote")
+        logging.info("Pushing TEMPLATE branch to remote")
+        try:
+            self.repo.git.push()
+        except git.exc.GitCommandError as e:
+            raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
 
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),
@@ -306,9 +271,6 @@ class PipelineSync(object):
 
         Returns: An instance of class requests.Response
         """
-        if not self.made_changes:
-            logging.debug("No changes to TEMPLATE - skipping PR creation")
-
         # Check that we know the github username and repo name
         try:
             assert self.gh_username is not None
@@ -328,17 +290,27 @@ class PipelineSync(object):
             raise PullRequestException("No GitHub authentication token set - cannot make PR")
 
         logging.info("Submitting a pull request via the GitHub API")
+
+        pr_body_text = """
+            A new release of the main template in nf-core/tools has just been released.
+            This automated pull-request attempts to apply the relevant updates to this pipeline.
+
+            Please make sure to merge this pull-request as soon as possible.
+            Once complete, make a new minor release of your pipeline.
+
+            For instructions on how to merge this PR, please see
+            [https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).
+
+            For more information about this release of [nf-core/tools](https://github.com/nf-core/tools),
+            please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).
+            """.format(
+            tag=nf_core.__version__
+        )
+
         pr_content = {
             "title": "Important! Template update for nf-core/tools v{}".format(nf_core.__version__),
-            "body": "Some important changes have been made in the nf-core/tools pipeline template. "
-            "Please make sure to merge this pull-request as soon as possible. "
-            "Once complete, make a new minor release of your pipeline.\n\n"
-            "For instructions on how to merge this PR, please see "
-            "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).\n\n"
-            "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
-            "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).".format(
-                tag=nf_core.__version__
-            ),
+            "body": pr_body_text,
+            "maintainer_can_modify": True,
             "head": "TEMPLATE",
             "base": self.from_branch,
         }
@@ -348,11 +320,11 @@ class PipelineSync(object):
             auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
         )
         try:
-            self.gh_pr_returned_data = json.loads(r.text)
+            self.gh_pr_returned_data = json.loads(r.content)
             returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
         except:
-            self.gh_pr_returned_data = r.text
-            returned_data_prettyprint = r.text
+            self.gh_pr_returned_data = r.content
+            returned_data_prettyprint = r.content
 
         if r.status_code != 201:
             raise PullRequestException(
@@ -363,30 +335,14 @@ class PipelineSync(object):
             logging.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
     def reset_target_dir(self):
-        """Reset the target pipeline directory. Check out the original branch.
         """
-
-        # Reset: Check out original branch again
+        Reset the target pipeline directory. Check out the original branch.
+        """
         logging.debug("Checking out original branch: '{}'".format(self.original_branch))
         try:
             self.repo.git.checkout(self.original_branch)
         except git.exc.GitCommandError as e:
             raise SyncException("Could not reset to original branch `{}`:\n{}".format(self.from_branch, e))
-
-    def git_merge_help(self):
-        """Print a command line help message with instructions on how to merge changes
-        """
-        if self.made_changes:
-            git_merge_cmd = "git merge TEMPLATE"
-            manual_sync_link = ""
-            if self.orphan_branch:
-                git_merge_cmd += " --allow-unrelated-histories"
-                manual_sync_link = "\n\nFor more information, please see:\nhttps://nf-co.re/developers/sync#merge-template-into-main-branches"
-            logging.info(
-                "Now try to merge the updates in to your pipeline:\n  cd {}\n  {}{}".format(
-                    self.pipeline_dir, git_merge_cmd, manual_sync_link
-                )
-            )
 
 
 def sync_all_pipelines(gh_username=None, gh_auth_token=None):
@@ -436,17 +392,20 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
             sync_obj.sync()
         except (SyncException, PullRequestException) as e:
             logging.getLogger().setLevel(orig_loglevel)  # Reset logging
-            logging.error(click.style("Sync failed for {}:\n{}".format(wf.full_name, e), fg="yellow"))
+            logging.error(click.style("Sync failed for {}:\n{}".format(wf.full_name, e), fg="red"))
             failed_syncs.append(wf.name)
         except Exception as e:
             logging.getLogger().setLevel(orig_loglevel)  # Reset logging
-            logging.error(click.style("Something went wrong when syncing {}:\n{}".format(wf.full_name, e), fg="yellow"))
+            logging.error(click.style("Something went wrong when syncing {}:\n{}".format(wf.full_name, e), fg="red"))
             failed_syncs.append(wf.name)
         else:
             logging.getLogger().setLevel(orig_loglevel)  # Reset logging
             logging.info(
-                "Sync successful for {}: {}".format(
-                    wf.full_name, click.style(sync_obj.gh_pr_returned_data.get("html_url"), fg="blue")
+                click.style(
+                    "Sync successful for {}: {}".format(
+                        wf.full_name, click.style(sync_obj.gh_pr_returned_data.get("html_url"), fg="blue")
+                    ),
+                    fg="green",
                 )
             )
             successful_syncs.append(wf.name)
