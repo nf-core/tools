@@ -18,27 +18,26 @@ import time
 from distutils import version
 
 
-def fetch_latest_version(source_url):
-    """
-    Get the latest version of nf-core
-    TODO: use the poll_nfcore_web_api method
-    """
-    response = requests.get(source_url)
-    remote_version = response.text.strip()
-    return remote_version
-
-
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """
     Check if the current version of nf-core is outdated
     """
+    # Exit immediately if disabled via ENV var
+    if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
+        return True
+    # Set and clean up the current version string
     if current_version == None:
         current_version = nf_core.__version__
+    current_version = re.sub("[^0-9\.]", "", current_version)
+    # Build the URL to check against
+    source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
+    source_url = "{}?current_version={}".format(source_url, current_version)
+    # Fetch and clean up the remote version
     if remote_version == None:
-        remote_version = fetch_latest_version(source_url)
-    is_outdated = version.StrictVersion(re.sub("[^0-9\.]", "", remote_version)) > version.StrictVersion(
-        re.sub("[^0-9\.]", "", current_version)
-    )
+        response = requests.get(source_url)
+        remote_version = re.sub("[^0-9\.]", "", response.text)
+    # Check if we have an available update
+    is_outdated = version.StrictVersion(remote_version) > version.StrictVersion(current_version)
     return (is_outdated, current_version, remote_version)
 
 
