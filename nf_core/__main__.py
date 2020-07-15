@@ -28,12 +28,12 @@ import logging
 def run_nf_core():
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr, highlight=False)
-    stderr.print("\n[green]{},--.[black]/[green],-.".format(" " * 42))
+    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42))
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
     stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
     stderr.print("[green]                                          `._,._,'\n")
-    stderr.print("[black]    nf-core/tools version {}".format(nf_core.__version__))
+    stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__))
     try:
         is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
         if is_outdated:
