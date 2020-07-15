@@ -102,6 +102,15 @@ for wf in wfs.remote_workflows:
 
 Please see [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/) for the function documentation.
 
+### Automatic version check
+
+nf-core/tools automatically checks the web to see if there is a new version of nf-core/tools available.
+If you would prefer to skip this check, set the environment variable `NFCORE_NO_VERSION_CHECK`. For example:
+
+```bash
+export NFCORE_NO_VERSION_CHECK=1
+```
+
 ## Listing pipelines
 
 The command `nf-core list` shows all available nf-core pipelines along with their latest version,  when that was published and how recently the pipeline code was pulled to your local system (if at all).
