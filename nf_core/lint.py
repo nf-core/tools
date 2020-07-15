@@ -15,6 +15,7 @@ import re
 import requests
 import subprocess
 import textwrap
+import rich.progress
 
 import click
 import requests
@@ -217,8 +218,18 @@ class PipelineLint(object):
         if release_mode:
             self.release_mode = True
             check_functions.extend(["check_version_consistency"])
-        with click.progressbar(check_functions, label="Running pipeline tests", item_show_func=repr) as fun_names:
-            for fun_name in fun_names:
+
+        progress = rich.progress.Progress(
+            "[bold blue]{task.description}",
+            rich.progress.BarColumn(),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[func_name]}",
+        )
+        with progress:
+            lint_progress = progress.add_task(
+                "Running lint checks", total=len(check_functions), func_name=check_functions[0]
+            )
+            for fun_name in check_functions:
+                progress.update(lint_progress, advance=1, func_name=fun_name)
                 getattr(self, fun_name)()
                 if len(self.failed) > 0:
                     logging.error("Found test failures in '{}', halting lint run.".format(fun_name))

@@ -76,7 +76,8 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * New `--json` and `--markdown` options to print lint results to JSON / markdown files
 * Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
 * Added AWS GitHub Actions workflows linting
-* Fail if `params.input` isnt defined.
+* Fail if `params.input` isn't defined.
+* Beautiful new progress bar to look at whilst linting is running
 
 ### nf-core/tools Continuous Integration
 
