@@ -15,6 +15,7 @@ import re
 import requests
 import subprocess
 import textwrap
+import rich.progress
 
 import click
 import requests
@@ -217,12 +218,12 @@ class PipelineLint(object):
         if release_mode:
             self.release_mode = True
             check_functions.extend(["check_version_consistency"])
-        with click.progressbar(check_functions, label="Running pipeline tests", item_show_func=repr) as fun_names:
-            for fun_name in fun_names:
-                getattr(self, fun_name)()
-                if len(self.failed) > 0:
-                    logging.error("Found test failures in '{}', halting lint run.".format(fun_name))
-                    break
+
+        for fun_name in rich.progress.track(check_functions, description="Running pipeline tests"):
+            getattr(self, fun_name)()
+            if len(self.failed) > 0:
+                logging.error("Found test failures in '{}', halting lint run.".format(fun_name))
+                break
 
     def check_files_exist(self):
         """Checks a given pipeline directory for required files.

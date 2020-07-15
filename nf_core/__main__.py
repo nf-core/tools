@@ -7,7 +7,8 @@ import click
 import sys
 import os
 import re
-import rich
+import rich.console
+import rich.traceback
 
 import nf_core
 import nf_core.bump_version
@@ -26,6 +27,9 @@ import logging
 
 
 def run_nf_core():
+    # Set up the rich traceback
+    rich.traceback.install()
+
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr, highlight=False)
     stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42))
