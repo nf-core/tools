@@ -28,21 +28,22 @@ import logging
 
 def run_nf_core():
     # Set up the rich traceback
-    rich.traceback.install()
+    rich.traceback.install(width=200, word_wrap=True)
 
     # Print nf-core header to STDERR
-    stderr = rich.console.Console(file=sys.stderr, highlight=False)
+    stderr = rich.console.Console(file=sys.stderr)
     stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42))
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
     stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
     stderr.print("[green]                                          `._,._,'\n")
-    stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__))
+    stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__), highlight=False)
     try:
         is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
         if is_outdated:
             stderr.print(
-                "[bold bright_yellow]    There is a new version of nf-core/tools available! ({})".format(remote_vers)
+                "[bold bright_yellow]    There is a new version of nf-core/tools available! ({})".format(remote_vers),
+                highlight=False,
             )
     except Exception as e:
         logging.debug("Could not check latest version: {}".format(e))

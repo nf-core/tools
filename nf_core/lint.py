@@ -7,15 +7,18 @@ the nf-core community guidelines.
 
 import datetime
 import git
-import logging
 import io
 import json
+import logging
 import os
 import re
 import requests
+import rich.highlighter
+import rich.panel
+import rich.progress
+import rich.theme
 import subprocess
 import textwrap
-import rich.progress
 
 import click
 import requests
@@ -76,11 +79,9 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
 
     # Exit code
     if len(lint_obj.failed) > 0:
-        logging.error(
-            "Sorry, some tests failed - exiting with a non-zero error code...{}\n\n".format(
-                "\n\tReminder: Lint tests were run in --release mode." if release_mode else ""
-            )
-        )
+        logging.error("Sorry, some tests failed - exiting with a non-zero error code...")
+        if release_mode:
+            logging.info("Reminder: Lint tests were run in --release mode.")
 
     return lint_obj
 
@@ -232,7 +233,7 @@ class PipelineLint(object):
                 progress.update(lint_progress, advance=1, func_name=fun_name)
                 getattr(self, fun_name)()
                 if len(self.failed) > 0:
-                    logging.error("Found test failures in '{}', halting lint run.".format(fun_name))
+                    logging.error("Found test failures in `{}`, halting lint run.".format(fun_name))
                     break
 
     def check_files_exist(self):
@@ -313,32 +314,32 @@ class PipelineLint(object):
         # Files that cause an error if they don't exist
         for files in files_fail:
             if any([os.path.isfile(pf(f)) for f in files]):
-                self.passed.append((1, "File found: {}".format(self._bold_list_items(files))))
+                self.passed.append((1, "File found: {}".format(self._wrap_quotes(files))))
                 self.files.extend(files)
             else:
-                self.failed.append((1, "File not found: {}".format(self._bold_list_items(files))))
+                self.failed.append((1, "File not found: {}".format(self._wrap_quotes(files))))
 
         # Files that cause a warning if they don't exist
         for files in files_warn:
             if any([os.path.isfile(pf(f)) for f in files]):
-                self.passed.append((1, "File found: {}".format(self._bold_list_items(files))))
+                self.passed.append((1, "File found: {}".format(self._wrap_quotes(files))))
                 self.files.extend(files)
             else:
-                self.warned.append((1, "File not found: {}".format(self._bold_list_items(files))))
+                self.warned.append((1, "File not found: {}".format(self._wrap_quotes(files))))
 
         # Files that cause an error if they exist
         for file in files_fail_ifexists:
             if os.path.isfile(pf(file)):
-                self.failed.append((1, "File must be removed: {}".format(self._bold_list_items(file))))
+                self.failed.append((1, "File must be removed: {}".format(self._wrap_quotes(file))))
             else:
-                self.passed.append((1, "File not found check: {}".format(self._bold_list_items(file))))
+                self.passed.append((1, "File not found check: {}".format(self._wrap_quotes(file))))
 
         # Files that cause a warning if they exist
         for file in files_warn_ifexists:
             if os.path.isfile(pf(file)):
-                self.warned.append((1, "File should be removed: {}".format(self._bold_list_items(file))))
+                self.warned.append((1, "File should be removed: {}".format(self._wrap_quotes(file))))
             else:
-                self.passed.append((1, "File not found check: {}".format(self._bold_list_items(file))))
+                self.passed.append((1, "File not found check: {}".format(self._wrap_quotes(file))))
 
         # Load and parse files for later
         if "environment.yml" in self.files:
@@ -454,22 +455,22 @@ class PipelineLint(object):
         for cfs in config_fail:
             for cf in cfs:
                 if cf in self.config.keys():
-                    self.passed.append((4, "Config variable found: {}".format(self._bold_list_items(cf))))
+                    self.passed.append((4, "Config variable found: {}".format(self._wrap_quotes(cf))))
                     break
             else:
-                self.failed.append((4, "Config variable not found: {}".format(self._bold_list_items(cfs))))
+                self.failed.append((4, "Config variable not found: {}".format(self._wrap_quotes(cfs))))
         for cfs in config_warn:
             for cf in cfs:
                 if cf in self.config.keys():
-                    self.passed.append((4, "Config variable found: {}".format(self._bold_list_items(cf))))
+                    self.passed.append((4, "Config variable found: {}".format(self._wrap_quotes(cf))))
                     break
             else:
-                self.warned.append((4, "Config variable not found: {}".format(self._bold_list_items(cfs))))
+                self.warned.append((4, "Config variable not found: {}".format(self._wrap_quotes(cfs))))
         for cf in config_fail_ifdefined:
             if cf not in self.config.keys():
-                self.passed.append((4, "Config variable (correctly) not found: {}".format(self._bold_list_items(cf))))
+                self.passed.append((4, "Config variable (correctly) not found: {}".format(self._wrap_quotes(cf))))
             else:
-                self.failed.append((4, "Config variable (incorrectly) found: {}".format(self._bold_list_items(cf))))
+                self.failed.append((4, "Config variable (incorrectly) found: {}".format(self._wrap_quotes(cf))))
 
         # Check and warn if the process configuration is done with deprecated syntax
         process_with_deprecated_syntax = list(
@@ -487,10 +488,10 @@ class PipelineLint(object):
         # Check the variables that should be set to 'true'
         for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
             if self.config.get(k) == "true":
-                self.passed.append((4, "Config variable '{}' had correct value: {}".format(k, self.config.get(k))))
+                self.passed.append((4, "Config variable `{}` had correct value: {}".format(k, self.config.get(k))))
             else:
                 self.failed.append(
-                    (4, "Config variable '{}' did not have correct value: {}".format(k, self.config.get(k)))
+                    (4, "Config variable `{}` did not have correct value: {}".format(k, self.config.get(k)))
                 )
 
         # Check that the pipeline name starts with nf-core
@@ -500,13 +501,13 @@ class PipelineLint(object):
             self.failed.append(
                 (
                     4,
-                    "Config variable 'manifest.name' did not begin with nf-core/:\n    {}".format(
+                    "Config variable `manifest.name` did not begin with nf-core/:\n    {}".format(
                         self.config.get("manifest.name", "").strip("'\"")
                     ),
                 )
             )
         else:
-            self.passed.append((4, "Config variable 'manifest.name' began with 'nf-core/'"))
+            self.passed.append((4, "Config variable `manifest.name` began with 'nf-core/'"))
             self.pipeline_name = self.config.get("manifest.name", "").strip("'").replace("nf-core/", "")
 
         # Check that the homePage is set to the GitHub URL
@@ -516,25 +517,25 @@ class PipelineLint(object):
             self.failed.append(
                 (
                     4,
-                    "Config variable 'manifest.homePage' did not begin with https://github.com/nf-core/:\n    {}".format(
+                    "Config variable `manifest.homePage` did not begin with https://github.com/nf-core/:\n    {}".format(
                         self.config.get("manifest.homePage", "").strip("'\"")
                     ),
                 )
             )
         else:
-            self.passed.append((4, "Config variable 'manifest.homePage' began with 'https://github.com/nf-core/'"))
+            self.passed.append((4, "Config variable `manifest.homePage` began with 'https://github.com/nf-core/'"))
 
         # Check that the DAG filename ends in `.svg`
         if "dag.file" in self.config:
             if self.config["dag.file"].strip("'\"").endswith(".svg"):
-                self.passed.append((4, "Config variable 'dag.file' ended with .svg"))
+                self.passed.append((4, "Config variable `dag.file` ended with .svg"))
             else:
-                self.failed.append((4, "Config variable 'dag.file' did not end with .svg"))
+                self.failed.append((4, "Config variable `dag.file` did not end with .svg"))
 
         # Check that the minimum nextflowVersion is set properly
         if "manifest.nextflowVersion" in self.config:
             if self.config.get("manifest.nextflowVersion", "").strip("\"'").lstrip("!").startswith(">="):
-                self.passed.append((4, "Config variable 'manifest.nextflowVersion' started with >= or !>="))
+                self.passed.append((4, "Config variable `manifest.nextflowVersion` started with >= or !>="))
                 # Save self.minNextflowVersion for convenience
                 nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.config.get("manifest.nextflowVersion", ""))
                 if nextflowVersionMatch:
@@ -545,7 +546,7 @@ class PipelineLint(object):
                 self.failed.append(
                     (
                         4,
-                        "Config variable 'manifest.nextflowVersion' did not start with '>=' or '!>=' : '{}'".format(
+                        "Config variable `manifest.nextflowVersion` did not start with '>=' or '!>=' : `{}`".format(
                             self.config.get("manifest.nextflowVersion", "")
                         ).strip("\"'"),
                     )
@@ -568,7 +569,7 @@ class PipelineLint(object):
                     self.failed.append(
                         (
                             4,
-                            "Config variable process.container looks wrong. Should be '{}' but is '{}'".format(
+                            "Config variable process.container looks wrong. Should be `{}` but is `{}`".format(
                                 container_name, self.config.get("process.container", "").strip("'")
                             ),
                         )
@@ -577,25 +578,25 @@ class PipelineLint(object):
                     self.warned.append(
                         (
                             4,
-                            "Config variable process.container looks wrong. Should be '{}' but is '{}'. Fix this before you make a release of your pipeline!".format(
+                            "Config variable process.container looks wrong. Should be `{}` but is `{}`. Fix this before you make a release of your pipeline!".format(
                                 container_name, self.config.get("process.container", "").strip("'")
                             ),
                         )
                     )
             else:
-                self.passed.append((4, "Config variable process.container looks correct: '{}'".format(container_name)))
+                self.passed.append((4, "Config variable process.container looks correct: `{}`".format(container_name)))
 
         # Check that the pipeline version contains `dev`
         if not self.release_mode and "manifest.version" in self.config:
             if self.config["manifest.version"].strip(" '\"").endswith("dev"):
                 self.passed.append(
-                    (4, "Config variable manifest.version ends in 'dev': '{}'".format(self.config["manifest.version"]))
+                    (4, "Config variable manifest.version ends in `dev`: `{}`".format(self.config["manifest.version"]))
                 )
             else:
                 self.warned.append(
                     (
                         4,
-                        "Config variable manifest.version should end in 'dev': '{}'".format(
+                        "Config variable manifest.version should end in `dev`: `{}`".format(
                             self.config["manifest.version"]
                         ),
                     )
@@ -605,7 +606,7 @@ class PipelineLint(object):
                 self.failed.append(
                     (
                         4,
-                        "Config variable manifest.version should not contain 'dev' for a release: '{}'".format(
+                        "Config variable manifest.version should not contain `dev` for a release: `{}`".format(
                             self.config["manifest.version"]
                         ),
                     )
@@ -614,7 +615,7 @@ class PipelineLint(object):
                 self.passed.append(
                     (
                         4,
-                        "Config variable manifest.version does not contain 'dev' for release: '{}'".format(
+                        "Config variable manifest.version does not contain `dev` for release: `{}`".format(
                             self.config["manifest.version"]
                         ),
                     )
@@ -636,11 +637,11 @@ class PipelineLint(object):
                 assert "master" in branchwf[True]["pull_request"]["branches"]
             except (AssertionError, KeyError):
                 self.failed.append(
-                    (5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: '{}'".format(fn))
+                    (5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: `{}`".format(fn))
                 )
             else:
                 self.passed.append(
-                    (5, "GitHub Actions 'branch' workflow is triggered for PRs to master: '{}'".format(fn))
+                    (5, "GitHub Actions 'branch' workflow is triggered for PRs to master: `{}`".format(fn))
                 )
 
             # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
@@ -660,7 +661,7 @@ class PipelineLint(object):
                     self.passed.append(
                         (
                             5,
-                            "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: '{}'".format(
+                            "GitHub Actions 'branch' workflow checks that forks don't submit PRs to master: `{}`".format(
                                 fn
                             ),
                         )
@@ -670,7 +671,7 @@ class PipelineLint(object):
                 self.failed.append(
                     (
                         5,
-                        "Couldn't find GitHub Actions 'branch' workflow step to check that forks don't submit PRs to master: '{}'".format(
+                        "Couldn't find GitHub Actions 'branch' workflow step to check that forks don't submit PRs to master: `{}`".format(
                             fn
                         ),
                     )
@@ -695,14 +696,14 @@ class PipelineLint(object):
                 self.failed.append(
                     (
                         5,
-                        "GitHub Actions CI workflow is not triggered on expected GitHub Actions events: '{}'".format(
+                        "GitHub Actions CI workflow is not triggered on expected GitHub Actions events: `{}`".format(
                             fn
                         ),
                     )
                 )
             else:
                 self.passed.append(
-                    (5, "GitHub Actions CI workflow is triggered on expected GitHub Actions events: '{}'".format(fn))
+                    (5, "GitHub Actions CI workflow is triggered on expected GitHub Actions events: `{}`".format(fn))
                 )
 
             # Check that we're pulling the right docker image and tagging it properly
@@ -719,7 +720,7 @@ class PipelineLint(object):
                     self.failed.append(
                         (
                             5,
-                            "CI is not building the correct docker image. Should be:\n    '{}'".format(
+                            "CI is not building the correct docker image. Should be:\n    `{}`".format(
                                 docker_build_cmd
                             ),
                         )
@@ -734,7 +735,7 @@ class PipelineLint(object):
                     assert any([docker_pull_cmd in step["run"] for step in steps if "run" in step.keys()])
                 except (AssertionError, KeyError, TypeError):
                     self.failed.append(
-                        (5, "CI is not pulling the correct docker image. Should be:\n    '{}'".format(docker_pull_cmd))
+                        (5, "CI is not pulling the correct docker image. Should be:\n    `{}`".format(docker_pull_cmd))
                     )
                 else:
                     self.passed.append((5, "CI is pulling the correct docker image: {}".format(docker_pull_cmd)))
@@ -746,7 +747,7 @@ class PipelineLint(object):
                     assert any([docker_tag_cmd in step["run"] for step in steps if "run" in step.keys()])
                 except (AssertionError, KeyError, TypeError):
                     self.failed.append(
-                        (5, "CI is not tagging docker image correctly. Should be:\n    '{}'".format(docker_tag_cmd))
+                        (5, "CI is not tagging docker image correctly. Should be:\n    `{}`".format(docker_tag_cmd))
                     )
                 else:
                     self.passed.append((5, "CI is tagging docker image correctly: {}".format(docker_tag_cmd)))
@@ -756,13 +757,13 @@ class PipelineLint(object):
                 matrix = ciwf["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"]
                 assert any([self.minNextflowVersion in matrix])
             except (KeyError, TypeError):
-                self.failed.append((5, "Continuous integration does not check minimum NF version: '{}'".format(fn)))
+                self.failed.append((5, "Continuous integration does not check minimum NF version: `{}`".format(fn)))
             except AssertionError:
                 self.failed.append(
                     (5, "Minimum NF version differed from CI and what was set in the pipelines manifest: {}".format(fn))
                 )
             else:
-                self.passed.append((5, "Continuous integration checks minimum NF version: '{}'".format(fn)))
+                self.passed.append((5, "Continuous integration checks minimum NF version: `{}`".format(fn)))
 
     def check_actions_lint(self):
         """Checks that the GitHub Actions lint workflow is valid
@@ -780,10 +781,10 @@ class PipelineLint(object):
                 assert "pull_request" in lintwf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions linting workflow must be triggered on PR and push: '{}'".format(fn))
+                    (5, "GitHub Actions linting workflow must be triggered on PR and push: `{}`".format(fn))
                 )
             else:
-                self.passed.append((5, "GitHub Actions linting workflow is triggered on PR and push: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions linting workflow is triggered on PR and push: `{}`".format(fn)))
 
             # Check that the Markdown linting runs
             Markdownlint_cmd = "markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml"
@@ -791,9 +792,9 @@ class PipelineLint(object):
                 steps = lintwf["jobs"]["Markdown"]["steps"]
                 assert any([Markdownlint_cmd in step["run"] for step in steps if "run" in step.keys()])
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "Continuous integration must run Markdown lint Tests: '{}'".format(fn)))
+                self.failed.append((5, "Continuous integration must run Markdown lint Tests: `{}`".format(fn)))
             else:
-                self.passed.append((5, "Continuous integration runs Markdown lint Tests: '{}'".format(fn)))
+                self.passed.append((5, "Continuous integration runs Markdown lint Tests: `{}`".format(fn)))
 
             # Check that the nf-core linting runs
             nfcore_lint_cmd = "nf-core lint ${GITHUB_WORKSPACE}"
@@ -801,9 +802,9 @@ class PipelineLint(object):
                 steps = lintwf["jobs"]["nf-core"]["steps"]
                 assert any([nfcore_lint_cmd in step["run"] for step in steps if "run" in step.keys()])
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "Continuous integration must run nf-core lint Tests: '{}'".format(fn)))
+                self.failed.append((5, "Continuous integration must run nf-core lint Tests: `{}`".format(fn)))
             else:
-                self.passed.append((5, "Continuous integration runs nf-core lint Tests: '{}'".format(fn)))
+                self.passed.append((5, "Continuous integration runs nf-core lint Tests: `{}`".format(fn)))
 
     def check_actions_awstest(self):
         """Checks the GitHub Actions awstest is valid.
@@ -821,10 +822,10 @@ class PipelineLint(object):
                 assert "pull_request" not in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions AWS test should be triggered on push and not PRs: '{}'".format(fn))
+                    (5, "GitHub Actions AWS test should be triggered on push and not PRs: `{}`".format(fn))
                 )
             else:
-                self.passed.append((5, "GitHub Actions AWS test is triggered on push and not PRs: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions AWS test is triggered on push and not PRs: `{}`".format(fn)))
 
             # Check that the action is only turned on for push to master
             try:
@@ -832,10 +833,10 @@ class PipelineLint(object):
                 assert "dev" not in wf[True]["push"]["branches"]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions AWS test should be triggered only on push to master: '{}'".format(fn))
+                    (5, "GitHub Actions AWS test should be triggered only on push to master: `{}`".format(fn))
                 )
             else:
-                self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: `{}`".format(fn)))
 
     def check_actions_awsfulltest(self):
         """Checks the GitHub Actions awsfulltest is valid.
@@ -857,11 +858,11 @@ class PipelineLint(object):
                 assert "pull_request" not in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions AWS full test should be triggered only on published release: '{}'".format(fn))
+                    (5, "GitHub Actions AWS full test should be triggered only on published release: `{}`".format(fn))
                 )
             else:
                 self.passed.append(
-                    (5, "GitHub Actions AWS full test is triggered only on published release: '{}'".format(fn))
+                    (5, "GitHub Actions AWS full test is triggered only on published release: `{}`".format(fn))
                 )
 
             # Warn if `-profile test` is still unchanged
@@ -869,9 +870,9 @@ class PipelineLint(object):
                 steps = wf["jobs"]["run-awstest"]["steps"]
                 assert any([aws_profile in step["run"] for step in steps if "run" in step.keys()])
             except (AssertionError, KeyError, TypeError):
-                self.passed.append((5, "GitHub Actions AWS full test should test full datasets: '{}'".format(fn)))
+                self.passed.append((5, "GitHub Actions AWS full test should test full datasets: `{}`".format(fn)))
             else:
-                self.warned.append((5, "GitHub Actions AWS full test should test full datasets: '{}'".format(fn)))
+                self.warned.append((5, "GitHub Actions AWS full test should test full datasets: `{}`".format(fn)))
 
     def check_readme(self):
         """Checks the repository README file for errors.
@@ -893,7 +894,7 @@ class PipelineLint(object):
                 self.failed.append(
                     (
                         6,
-                        "README Nextflow minimum version badge does not match config. Badge: '{}', Config: '{}'".format(
+                        "README Nextflow minimum version badge does not match config. Badge: `{}`, Config: `{}`".format(
                             nf_badge_version, self.minNextflowVersion
                         ),
                     )
@@ -902,7 +903,7 @@ class PipelineLint(object):
                 self.passed.append(
                     (
                         6,
-                        "README Nextflow minimum version badge matched config. Badge: '{}', Config: '{}'".format(
+                        "README Nextflow minimum version badge matched config. Badge: `{}`, Config: `{}`".format(
                             nf_badge_version, self.minNextflowVersion
                         ),
                     )
@@ -1027,10 +1028,10 @@ class PipelineLint(object):
                         last_ver = self.conda_package_info[dep].get("latest_version")
                         if last_ver is not None and last_ver != depver:
                             self.warned.append(
-                                (8, "Conda package is not latest available: {}, {} available".format(dep, last_ver))
+                                (8, "Conda package is not latest available: `{}`, `{}` available".format(dep, last_ver))
                             )
                         else:
-                            self.passed.append((8, "Conda package is latest available: {}".format(dep)))
+                            self.passed.append((8, "Conda package is latest available: `{}`".format(dep)))
 
             elif isinstance(dep, dict):
                 for pip_dep in dep.get("pip", []):
@@ -1105,7 +1106,7 @@ class PipelineLint(object):
                     self.warned.append(
                         (
                             8,
-                            "Anaconda API returned unexpected response code '{}' for: {}\n{}".format(
+                            "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
                                 response.status_code, anaconda_api_url, response
                             ),
                         )
@@ -1199,9 +1200,7 @@ class PipelineLint(object):
                                 .replace("TODO nf-core: ", "")
                                 .strip()
                             )
-                            if len(fname) + len(l) > 50:
-                                l = "{}..".format(l[: 50 - len(fname)])
-                            self.warned.append((10, "TODO string found in '{}': {}".format(fname, l)))
+                            self.warned.append((10, "TODO string found in `{}`: _{}_".format(fname, l)))
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
@@ -1245,7 +1244,7 @@ class PipelineLint(object):
                     if len(cc_matches) > 0:
                         for cc_match in cc_matches:
                             self.failed.append(
-                                (13, "Found a cookiecutter template string in '{}' L{}: {}".format(fn, lnum, cc_match))
+                                (13, "Found a cookiecutter template string in `{}` L{}: {}".format(fn, lnum, cc_match))
                             )
                             num_matches += 1
         if num_matches == 0:
@@ -1286,29 +1285,49 @@ class PipelineLint(object):
 
         if len(removed_params) > 0:
             for param in removed_params:
-                self.warned.append((15, "Schema param '{}' not found from nextflow config".format(param)))
+                self.warned.append((15, "Schema param `{}` not found from nextflow config".format(param)))
 
         if len(added_params) > 0:
             for param in added_params:
                 self.failed.append(
-                    (15, "Param '{}' from `nextflow config` not found in nextflow_schema.json".format(param))
+                    (15, "Param `{}` from `nextflow config` not found in nextflow_schema.json".format(param))
                 )
 
         if len(removed_params) == 0 and len(added_params) == 0:
             self.passed.append((15, "Schema matched params returned from nextflow config"))
 
     def print_results(self):
-        # Print results
-        rl = "\n  Using --release mode linting tests" if self.release_mode else ""
-        logging.info(
-            "{}\n          LINTING RESULTS\n{}\n".format(
-                click.style("=" * 29, dim=True), click.style("=" * 35, dim=True)
-            )
-            + click.style("  [{}] {:>4} tests passed\n".format("\u2714", len(self.passed)), fg="green")
-            + click.style("  [!] {:>4} tests had warnings\n".format(len(self.warned)), fg="yellow")
-            + click.style("  [{}] {:>4} tests failed".format("\u2717", len(self.failed)), fg="red")
-            + rl
+
+        # Custom highlighter for rich
+        # TODO - this doesn't work! See below for debugging
+        class NfCoreLintHighlighter(rich.highlighter.RegexHighlighter):
+            """Apply style to anything that looks like an email."""
+
+            base_style = "nfcore."
+            highlights = [r"(?P<backticks>`[^`]+`)", r"(?P<underscores>_[^_]+_)", r"(?P<test>\.md)"]
+
+        nfc_theme = rich.theme.Theme(
+            {"nfcore.backticks": "white on grey27", "nfcore.underscores": "italic", "nfcore.test": "bold magenta"}
         )
+
+        console = rich.console.Console(highlighter=NfCoreLintHighlighter(), theme=nfc_theme)
+        console.print()
+        console.rule("[bold green] LINT RESULTS")
+        console.print(
+            textwrap.dedent(
+                """
+                 [green][[\u2714]] {:>4} tests passed
+                 [yellow][[!]] {:>4} tests had warnings
+                 [red][[\u2717]] {:>4} tests failed
+                """.format(
+                    len(self.passed), len(self.warned), len(self.failed)
+                )
+            ),
+            overflow="ellipsis",
+            highlight=False,
+        )
+        if self.release_mode:
+            console.print("\n  Using --release mode linting tests")
 
         # Helper function to format test links nicely
         def format_result(test_results):
@@ -1316,18 +1335,37 @@ class PipelineLint(object):
             Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
-            print_results = []
+            results = []
             for eid, msg in test_results:
-                url = click.style("https://nf-co.re/errors#{}".format(eid), fg="blue")
-                print_results.append("{} : {}".format(url, msg))
-            return "\n  ".join(print_results)
+                results.append(
+                    " [blue bold][link=https://nf-co.re/errors#{0}]#{0:>3}[/link][reset]: {1}".format(eid, msg)
+                )
+            return "\n".join(results)
 
-        if len(self.passed) > 0:
-            logging.debug("{}\n  {}".format(click.style("Test Passed:", fg="green"), format_result(self.passed)))
+        if len(self.passed) > 0 and logging.getLogger().getEffectiveLevel() == logging.DEBUG:
+            console.print()
+            console.rule("[bold green][[\u2714]] Tests Passed", style="green")
+            console.print(
+                rich.panel.Panel(format_result(self.passed), style="green"), no_wrap=True, overflow="ellipsis"
+            )
         if len(self.warned) > 0:
-            logging.warning("{}\n  {}".format(click.style("Test Warnings:", fg="yellow"), format_result(self.warned)))
+            console.print()
+            console.rule("[bold yellow][[!]] Test Warnings", style="yellow")
+            console.print(
+                rich.panel.Panel(format_result(self.warned), style="yellow"), no_wrap=True, overflow="ellipsis"
+            )
         if len(self.failed) > 0:
-            logging.error("{}\n  {}".format(click.style("Test Failures:", fg="red"), format_result(self.failed)))
+            console.print()
+            console.rule("[bold red][[\u2717]] Test Failures", style="red")
+            console.print(rich.panel.Panel(format_result(self.failed), style="red"), no_wrap=True, overflow="ellipsis")
+
+        # DEBUG - this DOES NOT WORK
+        # it's just a string, why is it not highlighting??
+        # console.print(format_result(self.warned))
+
+        # DEBUG - this works
+        # console.print("Some stuff in `backticks`")
+        # console.print("Some markdown: foo.md")
 
     def get_results_md(self):
         """
@@ -1472,10 +1510,10 @@ class PipelineLint(object):
             except Exception as e:
                 logging.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
 
-    def _bold_list_items(self, files):
+    def _wrap_quotes(self, files):
         if not isinstance(files, list):
             files = [files]
-        bfiles = [click.style(f, bold=True) for f in files]
+        bfiles = ["`{}`".format(f) for f in files]
         return " or ".join(bfiles)
 
     def _strip_ansi_codes(self, string, replace_with=""):
