@@ -10,6 +10,7 @@ import os
 import pytest
 import time
 import unittest
+from rich.console import Console
 
 from datetime import datetime
 
@@ -21,14 +22,20 @@ class TestLint(unittest.TestCase):
     def test_working_listcall(self, mock_subprocess):
         """ Test that listing pipelines works """
         wf_table = nf_core.list.list_workflows()
-        assert "rnaseq" in wf_table
-        assert "exoseq" not in wf_table
+        console = Console(record=True)
+        console.print(wf_table)
+        output = console.export_text()
+        assert "rnaseq" in output
+        assert "exoseq" not in output
 
     @mock.patch("subprocess.check_output")
     def test_working_listcall_archived(self, mock_subprocess):
         """ Test that listing pipelines works, showing archived pipelines """
         wf_table = nf_core.list.list_workflows(show_archived=True)
-        assert "exoseq" in wf_table
+        console = Console(record=True)
+        console.print(wf_table)
+        output = console.export_text()
+        assert "exoseq" in output
 
     @mock.patch("subprocess.check_output")
     def test_working_listcall_json(self, mock_subprocess):
