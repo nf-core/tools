@@ -13,6 +13,8 @@ import yaml
 
 import nf_core.lint
 
+log = logging.getLogger("nfcore")
+
 
 class WorkflowLicences(object):
     """A nf-core workflow licenses collection.
@@ -41,7 +43,7 @@ class WorkflowLicences(object):
 
         # Check that the pipeline exists
         if response.status_code == 404:
-            logging.error("Couldn't find pipeline nf-core/{}".format(self.pipeline))
+            log.error("Couldn't find pipeline nf-core/{}".format(self.pipeline))
             raise LookupError("Couldn't find pipeline nf-core/{}".format(self.pipeline))
 
         lint_obj = nf_core.lint.PipelineLint(self.pipeline)
@@ -54,7 +56,7 @@ class WorkflowLicences(object):
                 elif isinstance(dep, dict):
                     lint_obj.check_pip_package(dep)
             except ValueError:
-                logging.error("Couldn't get licence information for {}".format(dep))
+                log.error("Couldn't get licence information for {}".format(dep))
 
         for dep, data in lint_obj.conda_package_info.items():
             try:
@@ -102,7 +104,7 @@ class WorkflowLicences(object):
         Args:
             as_json (boolean): Prints the information in JSON. Defaults to False.
         """
-        logging.info(
+        log.info(
             """Warning: This tool only prints licence information for the software tools packaged using conda.
         The pipeline may use other software and dependencies not described here. """
         )

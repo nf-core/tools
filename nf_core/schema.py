@@ -19,6 +19,8 @@ import yaml
 
 import nf_core.list, nf_core.utils
 
+log = logging.getLogger("nfcore")
+
 
 class PipelineSchema(object):
     """ Class to generate a schema object with
@@ -48,7 +50,7 @@ class PipelineSchema(object):
         # Supplied path exists - assume a local pipeline directory or schema
         if os.path.exists(path):
             if revision is not None:
-                logging.warning("Local workflow supplied, ignoring revision '{}'".format(revision))
+                log.warning("Local workflow supplied, ignoring revision '{}'".format(revision))
             if os.path.isdir(path):
                 self.pipeline_dir = path
                 self.schema_filename = os.path.join(path, "nextflow_schema.json")
@@ -68,7 +70,7 @@ class PipelineSchema(object):
         # Check that the schema file exists
         if self.schema_filename is None or not os.path.exists(self.schema_filename):
             error = "Could not find pipeline schema for '{}': {}".format(path, self.schema_filename)
-            logging.error(error)
+            log.error(error)
             raise AssertionError(error)
 
     def load_lint_schema(self):
@@ -78,11 +80,11 @@ class PipelineSchema(object):
             self.validate_schema(self.schema)
         except json.decoder.JSONDecodeError as e:
             error_msg = "Could not parse JSON:\n {}".format(e)
-            logging.error(click.style(error_msg, fg="red"))
+            log.error(error_msg)
             raise AssertionError(error_msg)
         except AssertionError as e:
-            error_msg = "[✗] JSON Schema does not follow nf-core specs:\n {}".format(e)
-            logging.error(click.style(error_msg, fg="red"))
+            error_msg = "[red][[✗]] JSON Schema does not follow nf-core specs:\n {}".format(e)
+            log.error(error_msg, extra={"markup": True})
             raise AssertionError(error_msg)
         else:
             try:
@@ -90,17 +92,17 @@ class PipelineSchema(object):
                 self.get_schema_defaults()
                 self.validate_schema(self.flat_schema)
             except AssertionError as e:
-                error_msg = "[✗] Flattened JSON Schema does not follow nf-core specs:\n {}".format(e)
-                logging.error(click.style(error_msg, fg="red"))
+                error_msg = "[red][[✗]] Flattened JSON Schema does not follow nf-core specs:\n {}".format(e)
+                log.error(error_msg, extra={"markup": True})
                 raise AssertionError(error_msg)
             else:
-                logging.info(click.style("[✓] Pipeline schema looks valid", fg="green"))
+                log.info("[green][[✓]] Pipeline schema looks valid", extra={"markup": True})
 
     def load_schema(self):
         """ Load a JSON Schema from a file """
         with open(self.schema_filename, "r") as fh:
             self.schema = json.load(fh)
-        logging.debug("JSON file loaded: {}".format(self.schema_filename))
+        log.debug("JSON file loaded: {}".format(self.schema_filename))
 
     def flatten_schema(self):
         """ Go through a schema and flatten all objects so that we have a single hierarchy of params """
@@ -131,9 +133,7 @@ class PipelineSchema(object):
     def save_schema(self):
         """ Load a JSON Schema from a file """
         # Write results to a JSON file
-        logging.info(
-            "Writing JSON schema with {} params: {}".format(len(self.schema["properties"]), self.schema_filename)
-        )
+        log.info("Writing JSON schema with {} params: {}".format(len(self.schema["properties"]), self.schema_filename))
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
 
@@ -148,20 +148,20 @@ class PipelineSchema(object):
             with open(params_path, "r") as fh:
                 params = json.load(fh)
                 self.input_params.update(params)
-            logging.debug("Loaded JSON input params: {}".format(params_path))
+            log.debug("Loaded JSON input params: {}".format(params_path))
         except Exception as json_e:
-            logging.debug("Could not load input params as JSON: {}".format(json_e))
+            log.debug("Could not load input params as JSON: {}".format(json_e))
             # This failed, try to load as YAML
             try:
                 with open(params_path, "r") as fh:
                     params = yaml.safe_load(fh)
                     self.input_params.update(params)
-                    logging.debug("Loaded YAML input params: {}".format(params_path))
+                    log.debug("Loaded YAML input params: {}".format(params_path))
             except Exception as yaml_e:
                 error_msg = "Could not load params file as either JSON or YAML:\n JSON: {}\n YAML: {}".format(
                     json_e, yaml_e
                 )
-                logging.error(error_msg)
+                log.error(error_msg)
                 raise AssertionError(error_msg)
 
     def validate_params(self):
@@ -170,19 +170,19 @@ class PipelineSchema(object):
             assert self.flat_schema is not None
             jsonschema.validate(self.input_params, self.flat_schema)
         except AssertionError:
-            logging.error(click.style("[✗] Flattened JSON Schema not found", fg="red"))
+            log.error("[red][[✗]] Flattened JSON Schema not found", extra={"markup": True})
             return False
         except jsonschema.exceptions.ValidationError as e:
-            logging.error(click.style("[✗] Input parameters are invalid: {}".format(e.message), fg="red"))
+            log.error("[red][[✗]] Input parameters are invalid: {}".format(e.message), extra={"markup": True})
             return False
-        logging.info(click.style("[✓] Input parameters look valid", fg="green"))
+        log.info("[green][[✓]] Input parameters look valid", extra={"markup": True})
         return True
 
     def validate_schema(self, schema):
         """ Check that the Schema is valid """
         try:
             jsonschema.Draft7Validator.check_schema(schema)
-            logging.debug("JSON Schema Draft7 validated")
+            log.debug("JSON Schema Draft7 validated")
         except jsonschema.exceptions.SchemaError as e:
             raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
 
@@ -221,7 +221,7 @@ class PipelineSchema(object):
         try:
             self.get_schema_path(pipeline_dir, local_only=True)
         except AssertionError:
-            logging.info("No existing schema found - creating a new one from the nf-core template")
+            log.info("No existing schema found - creating a new one from the nf-core template")
             self.get_wf_params()
             self.make_skeleton_schema()
             self.remove_schema_notfound_configs()
@@ -232,12 +232,8 @@ class PipelineSchema(object):
         try:
             self.load_lint_schema()
         except AssertionError as e:
-            logging.error(
-                "Existing JSON Schema found, but it is invalid: {}".format(
-                    click.style(str(self.schema_filename), fg="red")
-                )
-            )
-            logging.info("Please fix or delete this file, then try again.")
+            log.error("Existing JSON Schema found, but it is invalid: {}".format(self.schema_filename))
+            log.info("Please fix or delete this file, then try again.")
             return False
 
         if not self.web_only:
@@ -252,17 +248,17 @@ class PipelineSchema(object):
                 try:
                     self.launch_web_builder()
                 except AssertionError as e:
-                    logging.error(click.style(e.args[0], fg="red"))
+                    log.error(e.args[0])
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
-                        logging.info(
+                        log.info(
                             "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/json_schema_build".format(
                                 self.schema_filename
                             )
                         )
-                        logging.info("When you're finished, you can paste the edited schema back into the same file")
+                        log.info("When you're finished, you can paste the edited schema back into the same file")
                     if self.web_schema_build_web_url:
-                        logging.info(
+                        log.info(
                             "To save your work, open {}\n"
                             "Click the blue 'Finished' button, copy the schema and paste into this file: {}".format(
                                 self.web_schema_build_web_url, self.schema_filename
@@ -277,10 +273,10 @@ class PipelineSchema(object):
         """
         # Check that we haven't already pulled these (eg. skeleton schema)
         if len(self.pipeline_params) > 0 and len(self.pipeline_manifest) > 0:
-            logging.debug("Skipping get_wf_params as we already have them")
+            log.debug("Skipping get_wf_params as we already have them")
             return
 
-        logging.debug("Collecting pipeline parameter defaults\n")
+        log.debug("Collecting pipeline parameter defaults\n")
         config = nf_core.utils.fetch_wf_config(os.path.dirname(self.schema_filename))
         skipped_params = []
         # Pull out just the params. values
@@ -295,7 +291,7 @@ class PipelineSchema(object):
                 self.pipeline_manifest[ckey[9:]] = cval
         # Log skipped params
         if len(skipped_params) > 0:
-            logging.debug(
+            log.debug(
                 "Skipped following pipeline params because they had nested parameter values:\n{}".format(
                     ", ".join(skipped_params)
                 )
@@ -322,8 +318,8 @@ class PipelineSchema(object):
                             and len(self.schema["properties"][p_key]["required"]) == 0
                         ):
                             del self.schema["properties"][p_key]["required"]
-                        logging.debug("Removing '{}' from JSON Schema".format(p_child_key))
-                        params_removed.append(click.style(p_child_key, fg="white", bold=True))
+                        log.debug("Removing '{}' from JSON Schema".format(p_child_key))
+                        params_removed.append(p_child_key)
 
             # Top-level params
             else:
@@ -335,11 +331,11 @@ class PipelineSchema(object):
                     # Remove required list if now empty
                     if "required" in self.schema and len(self.schema["required"]) == 0:
                         del self.schema["required"]
-                    logging.debug("Removing '{}' from JSON Schema".format(p_key))
-                    params_removed.append(click.style(p_key, fg="white", bold=True))
+                    log.debug("Removing '{}' from JSON Schema".format(p_key))
+                    params_removed.append(p_key)
 
         if len(params_removed) > 0:
-            logging.info(
+            log.info(
                 "Removed {} params from existing JSON Schema that were not found with `nextflow config`:\n {}\n".format(
                     len(params_removed), ", ".join(params_removed)
                 )
@@ -386,10 +382,10 @@ class PipelineSchema(object):
                         )
                     ):
                         self.schema["properties"][p_key] = self.build_schema_param(p_val)
-                        logging.debug("Adding '{}' to JSON Schema".format(p_key))
-                        params_added.append(click.style(p_key, fg="white", bold=True))
+                        log.debug("Adding '{}' to JSON Schema".format(p_key))
+                        params_added.append(p_key)
         if len(params_added) > 0:
-            logging.info(
+            log.info(
                 "Added {} params to JSON Schema that were found with `nextflow config`:\n {}".format(
                     len(params_added), ", ".join(params_added)
                 )
@@ -444,7 +440,7 @@ class PipelineSchema(object):
             assert "web_url" in web_response
             assert web_response["status"] == "recieved"
         except (AssertionError) as e:
-            logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
                 "JSON Schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(
                     self.web_schema_build_url
@@ -453,11 +449,9 @@ class PipelineSchema(object):
         else:
             self.web_schema_build_web_url = web_response["web_url"]
             self.web_schema_build_api_url = web_response["api_url"]
-            logging.info("Opening URL: {}".format(web_response["web_url"]))
+            log.info("Opening URL: {}".format(web_response["web_url"]))
             webbrowser.open(web_response["web_url"])
-            logging.info(
-                "Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n"
-            )
+            log.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n")
             nf_core.utils.wait_cli_function(self.get_web_builder_response)
 
     def get_web_builder_response(self):
@@ -471,7 +465,7 @@ class PipelineSchema(object):
         elif web_response["status"] == "waiting_for_user":
             return False
         elif web_response["status"] == "web_builder_edited":
-            logging.info("Found saved status from nf-core JSON Schema builder")
+            log.info("Found saved status from nf-core JSON Schema builder")
             try:
                 self.schema = web_response["schema"]
                 self.validate_schema(self.schema)
@@ -481,7 +475,7 @@ class PipelineSchema(object):
                 self.save_schema()
                 return True
         else:
-            logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
                 "JSON Schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(
                     web_response["status"], self.web_schema_build_api_url

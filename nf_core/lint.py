@@ -27,6 +27,8 @@ import yaml
 import nf_core.utils
 import nf_core.schema
 
+log = logging.getLogger("nfcore")
+
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
 
@@ -56,8 +58,8 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
     try:
         lint_obj.lint_pipeline(release_mode)
     except AssertionError as e:
-        logging.critical("Critical error: {}".format(e))
-        logging.info("Stopping tests...")
+        log.critical("Critical error: {}".format(e))
+        log.info("Stopping tests...")
         return lint_obj
 
     # Print the results
@@ -65,7 +67,7 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
 
     # Save results to Markdown file
     if md_fn is not None:
-        logging.info("Writing lint results to {}".format(md_fn))
+        log.info("Writing lint results to {}".format(md_fn))
         markdown = lint_obj.get_results_md()
         with open(md_fn, "w") as fh:
             fh.write(markdown)
@@ -79,9 +81,9 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
 
     # Exit code
     if len(lint_obj.failed) > 0:
-        logging.error("Sorry, some tests failed - exiting with a non-zero error code...")
+        log.error("Sorry, some tests failed - exiting with a non-zero error code...")
         if release_mode:
-            logging.info("Reminder: Lint tests were run in --release mode.")
+            log.info("Reminder: Lint tests were run in --release mode.")
 
     return lint_obj
 
@@ -233,7 +235,7 @@ class PipelineLint(object):
                 progress.update(lint_progress, advance=1, func_name=fun_name)
                 getattr(self, fun_name)()
                 if len(self.failed) > 0:
-                    logging.error("Found test failures in `{}`, halting lint run.".format(fun_name))
+                    log.error("Found test failures in `{}`, halting lint run.".format(fun_name))
                     break
 
     def check_files_exist(self):
@@ -1113,7 +1115,7 @@ class PipelineLint(object):
                     )
                     raise ValueError
                 elif response.status_code == 404:
-                    logging.debug("Could not find {} in conda channel {}".format(dep, ch))
+                    log.debug("Could not find {} in conda channel {}".format(dep, ch))
         else:
             # We have looped through each channel and had a 404 response code on everything
             self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
@@ -1225,7 +1227,7 @@ class PipelineLint(object):
             list_of_files = [os.path.join(self.path, s.decode("utf-8")) for s in git_ls_files]
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
-            logging.debug("Couldn't call 'git ls-files': {}".format(e))
+            log.debug("Couldn't call 'git ls-files': {}".format(e))
             list_of_files = []
             for subdir, dirs, files in os.walk(self.path):
                 for file in files:
@@ -1253,7 +1255,7 @@ class PipelineLint(object):
     def check_schema_lint(self):
         """ Lint the pipeline JSON schema file """
         # Suppress log messages
-        logger = logging.getLogger()
+        logger = log.getLogger()
         logger.disabled = True
 
         # Lint the schema
@@ -1322,7 +1324,7 @@ class PipelineLint(object):
                 results.append("1. [https://nf-co.re/errors#{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg))
             return rich.markdown.Markdown("\n".join(results))
 
-        if len(self.passed) > 0 and logging.getLogger().getEffectiveLevel() == logging.DEBUG:
+        if len(self.passed) > 0 and log.getLogger().getEffectiveLevel() == log.DEBUG:
             console.print()
             console.rule("[bold green][[\u2714]] Tests Passed", style="green")
             console.print(
@@ -1425,7 +1427,7 @@ class PipelineLint(object):
         Function to dump lint results to a JSON file for downstream use
         """
 
-        logging.info("Writing lint results to {}".format(json_fn))
+        log.info("Writing lint results to {}".format(json_fn))
         now = datetime.datetime.now()
         results = {
             "nf_core_tools_version": nf_core.__version__,
@@ -1462,7 +1464,7 @@ class PipelineLint(object):
                             "\n#### `nf-core lint` overall result"
                         ):
                             # Update existing comment - PATCH
-                            logging.info("Updating GitHub comment")
+                            log.info("Updating GitHub comment")
                             update_r = requests.patch(
                                 url=comment["url"],
                                 data=json.dumps({"body": self.get_results_md().replace("Posted", "**Updated**")}),
@@ -1472,7 +1474,7 @@ class PipelineLint(object):
 
                     # Create new comment - POST
                     if len(self.warned) > 0 or len(self.failed) > 0:
-                        logging.info("Posting GitHub comment")
+                        log.info("Posting GitHub comment")
                         post_r = requests.post(
                             url=os.environ["GITHUB_COMMENTS_URL"],
                             data=json.dumps({"body": self.get_results_md()}),
@@ -1480,7 +1482,7 @@ class PipelineLint(object):
                         )
 
             except Exception as e:
-                logging.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
+                log.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
 
     def _wrap_quotes(self, files):
         if not isinstance(files, list):

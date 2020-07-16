@@ -17,6 +17,8 @@ import sys
 import time
 from distutils import version
 
+log = logging.getLogger("nfcore")
+
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """
@@ -81,11 +83,11 @@ def fetch_wf_config(wf_path):
     if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
         if os.path.isfile(cache_path):
-            logging.debug("Found a config cache, loading: {}".format(cache_path))
+            log.debug("Found a config cache, loading: {}".format(cache_path))
             with open(cache_path, "r") as fh:
                 config = json.load(fh)
             return config
-    logging.debug("No config cache found")
+    log.debug("No config cache found")
 
     # Call `nextflow config` and pipe stderr to /dev/null
     try:
@@ -103,7 +105,7 @@ def fetch_wf_config(wf_path):
                 k, v = ul.split(" = ", 1)
                 config[k] = v
             except ValueError:
-                logging.debug("Couldn't find key=value config pair:\n  {}".format(ul))
+                log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -115,11 +117,11 @@ def fetch_wf_config(wf_path):
                 if match:
                     config[match.group(1)] = "false"
     except FileNotFoundError as e:
-        logging.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
+        log.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
 
     # If we can, save a cached copy
     if cache_path:
-        logging.debug("Saving config cache: {}".format(cache_path))
+        log.debug("Saving config cache: {}".format(cache_path))
         with open(cache_path, "w") as fh:
             json.dump(config, fh, indent=4)
 
@@ -204,7 +206,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
         raise AssertionError("Could not connect to URL: {}".format(api_url))
     else:
         if response.status_code != 200:
-            logging.debug("Response content:\n{}".format(response.content))
+            log.debug("Response content:\n{}".format(response.content))
             raise AssertionError(
                 "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
             )
@@ -213,7 +215,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 web_response = json.loads(response.content)
                 assert "status" in web_response
             except (json.decoder.JSONDecodeError, AssertionError) as e:
-                logging.debug("Response content:\n{}".format(response.content))
+                log.debug("Response content:\n{}".format(response.content))
                 raise AssertionError(
                     "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
                         api_url
