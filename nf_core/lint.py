@@ -226,6 +226,7 @@ class PipelineLint(object):
             "[bold blue]{task.description}",
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[func_name]}",
+            transient=True,
         )
         with progress:
             lint_progress = progress.add_task(
