@@ -1323,7 +1323,7 @@ class PipelineLint(object):
             """
             results = []
             for eid, msg in test_results:
-                results.append("1. [Test #{0:>3}](https://nf-co.re/errors#{0}): {1}".format(eid, msg))
+                results.append("1. [https://nf-co.re/errors#{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg))
             return rich.markdown.Markdown("\n".join(results))
 
         if len(self.passed) > 0 and logging.getLogger().getEffectiveLevel() == logging.DEBUG:
