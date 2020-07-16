@@ -34,3 +34,4 @@ jobs:
           nf-core sync nf-core-testpipeline/
           nf-core schema build nf-core-testpipeline/ --no-prompts
           nf-core bump-version nf-core-testpipeline/ 1.1
+          nf-core modules install nf-core-testpipeline/ fastqc
