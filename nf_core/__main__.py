@@ -218,8 +218,12 @@ def licences(pipeline, json):
     Package name, version and licence is printed to the command line.
     """
     lic = nf_core.licences.WorkflowLicences(pipeline)
-    lic.fetch_conda_licences()
-    lic.print_licences(as_json=json)
+    lic.as_json = json
+    try:
+        print(lic.run_licences())
+    except LookupError as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core create

@@ -17,7 +17,6 @@ import rich.console
 import rich.table
 import subprocess
 import sys
-import tabulate
 
 import nf_core.utils
 
