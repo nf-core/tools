@@ -59,6 +59,8 @@ class PipelineModules(object):
 
     def install(self, module):
 
+        log.info("Installing {}".format(module))
+
         # Check that we were given a pipeline
         if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
             log.error("Could not find pipeline: {}".format(self.pipeline_dir))
@@ -92,6 +94,7 @@ class PipelineModules(object):
         for filename, api_url in files.items():
             dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
             self.download_gh_file(dl_filename, api_url)
+        log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
     def update(self, module, force=False):
         log.error("This command is not yet implemented")
