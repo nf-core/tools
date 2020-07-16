@@ -11,6 +11,8 @@ import json
 import logging
 import os
 import re
+import rich.console
+import rich.table
 import subprocess
 import sys
 
@@ -234,14 +236,20 @@ class Workflows(object):
             filtered_workflows.sort(key=lambda wf: (wf.stargazers_count * -1, wf.full_name.lower()))
 
         # Build summary list to print
-        summary = list()
+        table = rich.table.Table()
+        table.add_column("Pipeline Name")
+        table.add_column("Stars", justify="right")
+        table.add_column("Latest Release", justify="right")
+        table.add_column("Released", justify="right")
+        table.add_column("Last Pulled", justify="right")
+        table.add_column("Have latest release?")
         for wf in filtered_workflows:
-            wf_name = wf.full_name
-            version = click.style("dev", fg="yellow")
+            wf_name = "[bold][link=https://nf-co.re/{0}]{0}[/link]".format(wf.name, wf.full_name)
+            version = "[yellow]dev"
             if len(wf.releases) > 0:
-                version = click.style(wf.releases[-1]["tag_name"], fg="blue")
-            published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "-"
-            pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "-"
+                version = "[blue]{}".format(wf.releases[-1]["tag_name"])
+            published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "[dim]-"
+            pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "[dim]-"
             if wf.local_wf is not None:
                 revision = ""
                 if wf.local_wf.active_tag is not None:
@@ -251,29 +259,25 @@ class Workflows(object):
                 else:
                     revision = wf.local_wf.commit_sha
                 if wf.local_is_latest:
-                    is_latest = click.style("Yes ({})".format(revision), fg=("black" if wf.archived else "green"))
+                    is_latest = "[green]Yes ({})".format(revision)
                 else:
-                    is_latest = click.style("No ({})".format(revision), fg=("black" if wf.archived else "red"))
+                    is_latest = "[red]No ({})".format(revision)
             else:
-                is_latest = "-"
-            # Make everything dim if archived
-            if wf.archived:
-                wf_name = click.style(wf_name, fg="black")
-                version = click.style("archived", fg="black")
-                published = click.style(published, fg="black")
-                pulled = click.style(pulled, fg="black")
-                is_latest = click.style(is_latest, fg="black")
+                is_latest = "[dim]-"
 
-            rowdata = [wf_name, version, published, pulled, is_latest]
-            if self.sort_workflows_by == "stars":
-                rowdata.insert(1, wf.stargazers_count)
-            summary.append(rowdata)
+            rowdata = [wf_name, str(wf.stargazers_count), version, published, pulled, is_latest]
+
+            # Handle archived pipelines
+            if wf.archived:
+                rowdata[1] = "archived"
+                rowdata = [re.sub("\[\w+\]", "", k) for k in rowdata]
+                table.add_row(*rowdata, style="dim")
+            else:
+                table.add_row(*rowdata)
         t_headers = ["Name", "Latest Release", "Released", "Last Pulled", "Have latest release?"]
-        if self.sort_workflows_by == "stars":
-            t_headers.insert(1, "Stargazers")
 
         # Print summary table
-        return "\n{}\n".format(tabulate.tabulate(summary, headers=t_headers))
+        return table
 
     def print_json(self):
         """ Dump JSON of all parsed information """

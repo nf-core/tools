@@ -7,6 +7,7 @@ import click
 import sys
 import os
 import re
+from rich import print
 import rich.console
 import rich.traceback
 

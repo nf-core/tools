@@ -13,6 +13,7 @@ import logging
 import os
 import re
 import requests
+import rich.console
 import rich.markdown
 import rich.panel
 import rich.progress
