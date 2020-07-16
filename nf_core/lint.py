@@ -1300,15 +1300,10 @@ class PipelineLint(object):
         console = rich.console.Console()
         console.print()
         console.rule("[bold green] LINT RESULTS")
+        console.print()
         console.print(
-            textwrap.dedent(
-                """
-                 [green][[\u2714]] {:>4} tests passed
-                 [yellow][[!]] {:>4} tests had warnings
-                 [red][[\u2717]] {:>4} tests failed
-                """.format(
-                    len(self.passed), len(self.warned), len(self.failed)
-                )
+            "  [green][[\u2714]] {:>4} tests passed\n  [yellow][[!]] {:>4} tests had warnings\n  [red][[\u2717]] {:>4} tests failed".format(
+                len(self.passed), len(self.warned), len(self.failed)
             ),
             overflow="ellipsis",
             highlight=False,
