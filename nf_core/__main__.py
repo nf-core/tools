@@ -103,11 +103,12 @@ class CustomHelpOrder(click.Group):
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
 def nf_core_cli(verbose):
+    stderr = rich.console.Console(file=sys.stderr)
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(message)s",
         datefmt=".",
-        handlers=[rich.logging.RichHandler()],
+        handlers=[rich.logging.RichHandler(console=stderr)],
     )
 
 
