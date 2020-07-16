@@ -1255,7 +1255,7 @@ class PipelineLint(object):
     def check_schema_lint(self):
         """ Lint the pipeline JSON schema file """
         # Suppress log messages
-        logger = log.getLogger()
+        logger = logging.getLogger("nfcore")
         logger.disabled = True
 
         # Lint the schema
@@ -1324,7 +1324,7 @@ class PipelineLint(object):
                 results.append("1. [https://nf-co.re/errors#{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg))
             return rich.markdown.Markdown("\n".join(results))
 
-        if len(self.passed) > 0 and log.getLogger().getEffectiveLevel() == log.DEBUG:
+        if len(self.passed) > 0 and logging.getLogger("nfcore").getEffectiveLevel() == logging.DEBUG:
             console.print()
             console.rule("[bold green][[\u2714]] Tests Passed", style="green")
             console.print(
