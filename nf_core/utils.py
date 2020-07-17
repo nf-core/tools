@@ -17,7 +17,7 @@ import sys
 import time
 from distutils import version
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):

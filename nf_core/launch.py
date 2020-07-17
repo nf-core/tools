@@ -18,7 +18,7 @@ import webbrowser
 
 import nf_core.schema, nf_core.utils
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 #
 # NOTE: WE ARE USING A PRE-RELEASE VERSION OF PYINQUIRER

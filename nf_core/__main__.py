@@ -24,7 +24,7 @@ import nf_core.schema
 import nf_core.sync
 import nf_core.utils
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 def run_nf_core():

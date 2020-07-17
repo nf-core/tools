@@ -20,7 +20,7 @@ import sys
 
 import nf_core.utils
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()

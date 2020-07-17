@@ -15,7 +15,7 @@ import textwrap
 
 import nf_core
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 class PipelineCreate(object):

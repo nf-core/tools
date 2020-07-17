@@ -18,7 +18,7 @@ from zipfile import ZipFile
 import nf_core.list
 import nf_core.utils
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 class DownloadWorkflow(object):

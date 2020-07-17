@@ -18,7 +18,7 @@ import nf_core.list
 import nf_core.sync
 import nf_core.utils
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 class SyncException(Exception):

@@ -16,7 +16,7 @@ import rich.table
 
 import nf_core.lint
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 class WorkflowLicences(object):

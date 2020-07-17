@@ -19,7 +19,7 @@ import yaml
 
 import nf_core.list, nf_core.utils
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 class PipelineSchema(object):

@@ -12,7 +12,7 @@ import requests
 import sys
 import tempfile
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 class ModulesRepo(object):

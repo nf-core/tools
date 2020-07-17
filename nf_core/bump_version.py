@@ -9,7 +9,7 @@ import os
 import re
 import sys
 
-log = logging.getLogger("nfcore")
+log = logging.getLogger(__name__)
 
 
 def bump_pipeline_version(lint_obj, new_version):
