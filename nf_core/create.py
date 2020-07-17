@@ -15,6 +15,8 @@ import textwrap
 
 import nf_core
 
+log = logging.getLogger(__name__)
+
 
 class PipelineCreate(object):
     """Creates a nf-core pipeline a la carte from the nf-core best-practise template.
@@ -57,33 +59,26 @@ class PipelineCreate(object):
         if not self.no_git:
             self.git_init_pipeline()
 
-        logging.info(
-            click.style(
-                textwrap.dedent(
-                    """            !!!!!! IMPORTANT !!!!!!
-
-            If you are interested in adding your pipeline to the nf-core community,
-            PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
-
-            Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
-            """
-                ),
-                fg="green",
-            )
+        log.info(
+            "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
+            + "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
+            + "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
+            + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]",
+            extra={"markup": True},
         )
 
     def run_cookiecutter(self):
         """Runs cookiecutter to create a new nf-core pipeline.
         """
-        logging.info("Creating new nf-core pipeline: {}".format(self.name))
+        log.info("Creating new nf-core pipeline: {}".format(self.name))
 
         # Check if the output directory exists
         if os.path.exists(self.outdir):
             if self.force:
-                logging.warning("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
+                log.warning("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
             else:
-                logging.error("Output directory '{}' exists!".format(self.outdir))
-                logging.info("Use -f / --force to overwrite existing files")
+                log.error("Output directory '{}' exists!".format(self.outdir))
+                log.info("Use -f / --force to overwrite existing files")
                 sys.exit(1)
         else:
             os.makedirs(self.outdir)
@@ -123,17 +118,17 @@ class PipelineCreate(object):
         """
 
         logo_url = "https://nf-co.re/logo/{}".format(self.short_name)
-        logging.debug("Fetching logo from {}".format(logo_url))
+        log.debug("Fetching logo from {}".format(logo_url))
 
         email_logo_path = "{}/{}/assets/{}_logo.png".format(self.tmpdir, self.name_noslash, self.name_noslash)
-        logging.debug("Writing logo to {}".format(email_logo_path))
+        log.debug("Writing logo to {}".format(email_logo_path))
         r = requests.get("{}?w=400".format(logo_url))
         with open(email_logo_path, "wb") as fh:
             fh.write(r.content)
 
         readme_logo_path = "{}/{}/docs/images/{}_logo.png".format(self.tmpdir, self.name_noslash, self.name_noslash)
 
-        logging.debug("Writing logo to {}".format(readme_logo_path))
+        log.debug("Writing logo to {}".format(readme_logo_path))
         if not os.path.exists(os.path.dirname(readme_logo_path)):
             os.makedirs(os.path.dirname(readme_logo_path))
         r = requests.get("{}?w=600".format(logo_url))
@@ -143,16 +138,18 @@ class PipelineCreate(object):
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.
         """
-        logging.info("Initialising pipeline git repository")
+        log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
         repo.index.commit("initial template build from nf-core/tools, version {}".format(nf_core.__version__))
         # Add TEMPLATE branch to git repository
         repo.git.branch("TEMPLATE")
         repo.git.branch("dev")
-        logging.info(
-            "Done. Remember to add a remote and push to GitHub:\n  cd {}\n  git remote add origin git@github.com:USERNAME/REPO_NAME.git\n  git push --all origin".format(
-                self.outdir
-            )
+        log.info(
+            "Done. Remember to add a remote and push to GitHub:\n"
+            + "[white on grey23] cd {} \n".format(self.outdir)
+            + " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
+            + " git push --all origin                                       ",
+            extra={"markup": True},
         )
-        logging.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")
+        log.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")

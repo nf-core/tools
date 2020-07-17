@@ -18,6 +18,8 @@ import nf_core.list
 import nf_core.sync
 import nf_core.utils
 
+log = logging.getLogger(__name__)
+
 
 class SyncException(Exception):
     """Exception raised when there was an error with TEMPLATE branch synchronisation
@@ -82,7 +84,7 @@ class PipelineSync(object):
             config_log_msg += "\n  Using branch `{}` to fetch workflow variables".format(self.from_branch)
         if self.make_pr:
             config_log_msg += "\n  Will attempt to automatically create a pull request on GitHub.com"
-        logging.info(config_log_msg)
+        log.info(config_log_msg)
 
         self.inspect_sync_dir()
         self.get_wf_config()
@@ -103,9 +105,9 @@ class PipelineSync(object):
         self.reset_target_dir()
 
         if not self.made_changes:
-            logging.info("No changes made to TEMPLATE - sync complete")
+            log.info("No changes made to TEMPLATE - sync complete")
         elif not self.make_pr:
-            logging.info(
+            log.info(
                 "Now try to merge the updates in to your pipeline:\n  cd {}\n  git merge TEMPLATE".format(
                     self.pipeline_dir
                 )
@@ -123,7 +125,7 @@ class PipelineSync(object):
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
-        logging.debug("Original pipeline repository branch is '{}'".format(self.original_branch))
+        log.debug("Original pipeline repository branch is '{}'".format(self.original_branch))
 
         # Check to see if there are uncommitted changes on current branch
         if self.repo.is_dirty(untracked_files=True):
@@ -138,7 +140,7 @@ class PipelineSync(object):
         # Try to check out target branch (eg. `origin/dev`)
         try:
             if self.from_branch and self.repo.active_branch.name != self.from_branch:
-                logging.info("Checking out workflow branch '{}'".format(self.from_branch))
+                log.info("Checking out workflow branch '{}'".format(self.from_branch))
                 self.repo.git.checkout(self.from_branch)
         except git.exc.GitCommandError:
             raise SyncException("Branch `{}` not found!".format(self.from_branch))
@@ -148,7 +150,7 @@ class PipelineSync(object):
             try:
                 self.from_branch = self.repo.active_branch.name
             except git.exc.GitCommandError as e:
-                logging.error("Could not find active repo branch: ".format(e))
+                log.error("Could not find active repo branch: ".format(e))
 
         # Figure out the GitHub username and repo name from the 'origin' remote if we can
         try:
@@ -160,18 +162,18 @@ class PipelineSync(object):
             else:
                 raise AttributeError
         except AttributeError as e:
-            logging.debug(
+            log.debug(
                 "Could not find repository URL for remote called 'origin' from remote: {}".format(self.repo.remotes)
             )
         else:
-            logging.debug(
+            log.debug(
                 "Found username and repo from remote: {}, {} - {}".format(
                     self.gh_username, self.gh_repo, self.repo.remotes.origin.url
                 )
             )
 
         # Fetch workflow variables
-        logging.info("Fetching workflow config variables")
+        log.info("Fetching workflow config variables")
         self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
 
         # Check that we have the required variables
@@ -199,12 +201,12 @@ class PipelineSync(object):
         Delete all files in the TEMPLATE branch
         """
         # Delete everything
-        logging.info("Deleting all files in TEMPLATE branch")
+        log.info("Deleting all files in TEMPLATE branch")
         for the_file in os.listdir(self.pipeline_dir):
             if the_file == ".git":
                 continue
             file_path = os.path.join(self.pipeline_dir, the_file)
-            logging.debug("Deleting {}".format(file_path))
+            log.debug("Deleting {}".format(file_path))
             try:
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
@@ -217,12 +219,11 @@ class PipelineSync(object):
         """
         Delete all files and make a fresh template using the workflow variables
         """
-        logging.info("Making a new template pipeline using pipeline variables")
+        log.info("Making a new template pipeline using pipeline variables")
 
-        # Suppress log messages from the pipeline creation method
-        orig_loglevel = logging.getLogger().getEffectiveLevel()
-        if orig_loglevel == getattr(logging, "INFO"):
-            logging.getLogger().setLevel(logging.ERROR)
+        # Only show error messages from pipeline creation
+        if log.getEffectiveLevel() == logging.INFO:
+            logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
         nf_core.create.PipelineCreate(
             name=self.wf_config["manifest.name"].strip('"').strip("'"),
@@ -234,22 +235,19 @@ class PipelineSync(object):
             author=self.wf_config["manifest.author"].strip('"').strip("'"),
         ).init_pipeline()
 
-        # Reset logging
-        logging.getLogger().setLevel(orig_loglevel)
-
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit
         """
         # Check that we have something to commit
         if not self.repo.is_dirty(untracked_files=True):
-            logging.info("Template contains no changes - no new commit created")
+            log.info("Template contains no changes - no new commit created")
             return False
         # Commit changes
         try:
             self.repo.git.add(A=True)
             self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
             self.made_changes = True
-            logging.info("Committed changes to TEMPLATE branch")
+            log.info("Committed changes to TEMPLATE branch")
         except Exception as e:
             raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
         return True
@@ -259,7 +257,7 @@ class PipelineSync(object):
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        logging.info("Pushing TEMPLATE branch to remote")
+        log.info("Pushing TEMPLATE branch to remote")
         try:
             self.repo.git.push()
         except git.exc.GitCommandError as e:
@@ -282,14 +280,14 @@ class PipelineSync(object):
         try:
             assert self.gh_auth_token is not None
         except AssertionError:
-            logging.info(
+            log.info(
                 "Make a PR at the following URL:\n  https://github.com/{}/{}/compare/{}...TEMPLATE".format(
                     self.gh_username, self.gh_repo, self.original_branch
                 )
             )
             raise PullRequestException("No GitHub authentication token set - cannot make PR")
 
-        logging.info("Submitting a pull request via the GitHub API")
+        log.info("Submitting a pull request via the GitHub API")
 
         pr_body_text = """
             A new release of the main template in nf-core/tools has just been released.
@@ -331,14 +329,14 @@ class PipelineSync(object):
                 "GitHub API returned code {}: \n{}".format(r.status_code, returned_data_prettyprint)
             )
         else:
-            logging.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
-            logging.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
+            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
+            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
     def reset_target_dir(self):
         """
         Reset the target pipeline directory. Check out the original branch.
         """
-        logging.debug("Checking out original branch: '{}'".format(self.original_branch))
+        log.debug("Checking out original branch: '{}'".format(self.original_branch))
         try:
             self.repo.git.checkout(self.original_branch)
         except git.exc.GitCommandError as e:
@@ -362,25 +360,24 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
     # Let's do some updating!
     for wf in wfs.remote_workflows:
 
-        logging.info("Syncing {}".format(wf.full_name))
+        log.info("Syncing {}".format(wf.full_name))
 
         # Make a local working directory
         wf_local_path = os.path.join(tmpdir, wf.name)
         os.mkdir(wf_local_path)
-        logging.debug("Sync working directory: {}".format(wf_local_path))
+        log.debug("Sync working directory: {}".format(wf_local_path))
 
         # Clone the repo
         wf_remote_url = "https://{}@github.com/nf-core/{}".format(gh_auth_token, wf.name)
         repo = git.Repo.clone_from(wf_remote_url, wf_local_path)
         assert repo
 
-        # Suppress log messages from the pipeline creation method
-        orig_loglevel = logging.getLogger().getEffectiveLevel()
-        if orig_loglevel == getattr(logging, "INFO"):
-            logging.getLogger().setLevel(logging.ERROR)
+        # Only show error messages from pipeline creation
+        if log.getEffectiveLevel() == logging.INFO:
+            logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
         # Sync the repo
-        logging.debug("Running template sync")
+        log.debug("Running template sync")
         sync_obj = nf_core.sync.PipelineSync(
             pipeline_dir=wf_local_path,
             from_branch="dev",
@@ -391,38 +388,33 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
         try:
             sync_obj.sync()
         except (SyncException, PullRequestException) as e:
-            logging.getLogger().setLevel(orig_loglevel)  # Reset logging
-            logging.error(click.style("Sync failed for {}:\n{}".format(wf.full_name, e), fg="red"))
+            log.error("Sync failed for {}:\n{}".format(wf.full_name, e))
             failed_syncs.append(wf.name)
         except Exception as e:
-            logging.getLogger().setLevel(orig_loglevel)  # Reset logging
-            logging.error(click.style("Something went wrong when syncing {}:\n{}".format(wf.full_name, e), fg="red"))
+            log.error("Something went wrong when syncing {}:\n{}".format(wf.full_name, e))
             failed_syncs.append(wf.name)
         else:
-            logging.getLogger().setLevel(orig_loglevel)  # Reset logging
-            logging.info(
-                click.style(
-                    "Sync successful for {}: {}".format(
-                        wf.full_name, click.style(sync_obj.gh_pr_returned_data.get("html_url"), fg="blue")
-                    ),
-                    fg="green",
-                )
+            log.info(
+                "[green]Sync successful for {}:[/] [blue][link={1}]{1}[/link]".format(
+                    wf.full_name, sync_obj.gh_pr_returned_data.get("html_url")
+                ),
+                extra={"markup": True},
             )
             successful_syncs.append(wf.name)
 
         # Clean up
-        logging.debug("Removing work directory: {}".format(wf_local_path))
+        log.debug("Removing work directory: {}".format(wf_local_path))
         shutil.rmtree(wf_local_path)
 
     if len(successful_syncs) > 0:
-        logging.info(
-            click.style("Finished. Successfully synchronised {} pipelines".format(len(successful_syncs)), fg="green")
+        log.info(
+            "[green]Finished. Successfully synchronised {} pipelines".format(len(successful_syncs)),
+            extra={"markup": True},
         )
 
     if len(failed_syncs) > 0:
         failed_list = "\n - ".join(failed_syncs)
-        logging.error(
-            click.style(
-                "Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list), fg="red"
-            )
+        log.error(
+            "[red]Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list),
+            extra={"markup": True},
         )

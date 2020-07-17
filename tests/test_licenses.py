@@ -1,12 +1,15 @@
 #!/usr/bin/env python
 """Some tests covering the pipeline creation sub command.
 """
+import json
+import os
 import pytest
-import nf_core.licences
+import tempfile
 import unittest
+from rich.console import Console
 
-
-PL_WITH_LICENSES = "nf-core/hlatyping"
+import nf_core.create
+import nf_core.licences
 
 
 class WorkflowLicensesTest(unittest.TestCase):
@@ -14,14 +17,41 @@ class WorkflowLicensesTest(unittest.TestCase):
     retrieval functionality of nf-core tools."""
 
     def setUp(self):
-        self.license_obj = nf_core.licences.WorkflowLicences(pipeline=PL_WITH_LICENSES)
+        """ Create a new pipeline, then make a Licence object """
+        # Set up the schema
+        self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "test_pipeline")
+        self.create_obj = nf_core.create.PipelineCreate("testing", "test pipeline", "tester", outdir=self.pipeline_dir)
+        self.create_obj.init_pipeline()
+        self.license_obj = nf_core.licences.WorkflowLicences(self.pipeline_dir)
 
-    def test_fetch_licenses_successful(self):
-        self.license_obj.fetch_conda_licences()
-        self.license_obj.print_licences()
+    def test_run_licences_successful(self):
+        console = Console(record=True)
+        console.print(self.license_obj.run_licences())
+        output = console.export_text()
+        assert "GPLv3" in output
+
+    def test_run_licences_successful_json(self):
+        self.license_obj.as_json = True
+        console = Console(record=True)
+        console.print(self.license_obj.run_licences())
+        output = json.loads(console.export_text())
+        for package in output:
+            if "multiqc" in package:
+                assert output[package][0] == "GPLv3"
+                break
+        else:
+            raise LookupError("Could not find MultiQC")
+
+    def test_get_environment_file_local(self):
+        self.license_obj.get_environment_file()
+        assert any(["multiqc" in k for k in self.license_obj.conda_config["dependencies"]])
+
+    def test_get_environment_file_remote(self):
+        self.license_obj = nf_core.licences.WorkflowLicences("rnaseq")
+        self.license_obj.get_environment_file()
+        assert any(["multiqc" in k for k in self.license_obj.conda_config["dependencies"]])
 
     @pytest.mark.xfail(raises=LookupError)
-    def test_errorness_pipeline_name(self):
-        self.license_obj.pipeline = "notpresent"
-        self.license_obj.fetch_conda_licences()
-        self.license_obj.print_licences()
+    def test_get_environment_file_nonexistent(self):
+        self.license_obj = nf_core.licences.WorkflowLicences("fubarnotreal")
+        self.license_obj.get_environment_file()

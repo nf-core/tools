@@ -1,15 +1,15 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
-from __future__ import print_function
-
+from rich import print
 import click
-import sys
+import logging
 import os
 import re
-from rich import print
 import rich.console
+import rich.logging
 import rich.traceback
+import sys
 
 import nf_core
 import nf_core.bump_version
@@ -24,7 +24,7 @@ import nf_core.schema
 import nf_core.sync
 import nf_core.utils
 
-import logging
+log = logging.getLogger(__name__)
 
 
 def run_nf_core():
@@ -47,7 +47,7 @@ def run_nf_core():
                 highlight=False,
             )
     except Exception as e:
-        logging.debug("Could not check latest version: {}".format(e))
+        log.debug("Could not check latest version: {}".format(e))
     stderr.print("\n\n")
 
     # Lanch the click cli
@@ -103,10 +103,13 @@ class CustomHelpOrder(click.Group):
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
 def nf_core_cli(verbose):
-    if verbose:
-        logging.basicConfig(level=logging.DEBUG, format="\n%(levelname)s: %(message)s")
-    else:
-        logging.basicConfig(level=logging.INFO, format="\n%(levelname)s: %(message)s")
+    stderr = rich.console.Console(file=sys.stderr)
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(message)s",
+        datefmt=".",
+        handlers=[rich.logging.RichHandler(console=stderr)],
+    )
 
 
 # nf-core list
@@ -216,8 +219,12 @@ def licences(pipeline, json):
     Package name, version and licence is printed to the command line.
     """
     lic = nf_core.licences.WorkflowLicences(pipeline)
-    lic.fetch_conda_licences()
-    lic.print_licences(as_json=json)
+    lic.as_json = json
+    try:
+        print(lic.run_licences())
+    except LookupError as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core create
@@ -424,7 +431,7 @@ def validate(pipeline, params):
         # Load and check schema
         schema_obj.load_lint_schema()
     except AssertionError as e:
-        logging.error(e)
+        log.error(e)
         sys.exit(1)
     schema_obj.load_input_params(params)
     try:
@@ -501,10 +508,10 @@ def bump_version(pipeline_dir, new_version, nextflow):
     """
 
     # First, lint the pipeline to check everything is in order
-    logging.info("Running nf-core lint tests")
+    log.info("Running nf-core lint tests")
     lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
     if len(lint_obj.failed) > 0:
-        logging.error("Please fix lint errors before bumping versions")
+        log.error("Please fix lint errors before bumping versions")
         return
 
     # Bump the pipeline version number
@@ -542,7 +549,7 @@ def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_tok
     else:
         # Manually check for the required parameter
         if not pipeline_dir or len(pipeline_dir) != 1:
-            logging.error("Either use --all or specify one <pipeline directory>")
+            log.error("Either use --all or specify one <pipeline directory>")
             sys.exit(1)
         else:
             pipeline_dir = pipeline_dir[0]
@@ -552,7 +559,7 @@ def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_tok
         try:
             sync_obj.sync()
         except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
-            logging.error(e)
+            log.error(e)
             sys.exit(1)
 
 

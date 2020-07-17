@@ -18,6 +18,8 @@ from zipfile import ZipFile
 import nf_core.list
 import nf_core.utils
 
+log = logging.getLogger(__name__)
+
 
 class DownloadWorkflow(object):
     """Downloads a nf-core workflow from GitHub to the local file system.
@@ -64,15 +66,15 @@ class DownloadWorkflow(object):
 
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
-            logging.error("Output directory '{}' already exists".format(self.outdir))
+            log.error("Output directory '{}' already exists".format(self.outdir))
             sys.exit(1)
 
         # Check that compressed output file doesn't already exist
         if self.output_filename and os.path.exists(self.output_filename):
-            logging.error("Output file '{}' already exists".format(self.output_filename))
+            log.error("Output file '{}' already exists".format(self.output_filename))
             sys.exit(1)
 
-        logging.info(
+        log.info(
             "Saving {}".format(self.pipeline)
             + "\n Pipeline release: {}".format(self.release)
             + "\n Pull singularity containers: {}".format("Yes" if self.singularity else "No")
@@ -80,23 +82,23 @@ class DownloadWorkflow(object):
         )
 
         # Download the pipeline files
-        logging.info("Downloading workflow files from GitHub")
+        log.info("Downloading workflow files from GitHub")
         self.download_wf_files()
 
         # Download the centralised configs
-        logging.info("Downloading centralised configs from GitHub")
+        log.info("Downloading centralised configs from GitHub")
         self.download_configs()
         self.wf_use_local_configs()
 
         # Download the singularity images
         if self.singularity:
-            logging.debug("Fetching container names for workflow")
+            log.debug("Fetching container names for workflow")
             self.find_container_images()
             if len(self.containers) == 0:
-                logging.info("No container names found in workflow")
+                log.info("No container names found in workflow")
             else:
                 os.mkdir(os.path.join(self.outdir, "singularity-images"))
-                logging.info(
+                log.info(
                     "Downloading {} singularity container{}".format(
                         len(self.containers), "s" if len(self.containers) > 1 else ""
                     )
@@ -107,12 +109,12 @@ class DownloadWorkflow(object):
                         self.pull_singularity_image(container)
                     except RuntimeWarning as r:
                         # Raise exception if this is not possible
-                        logging.error("Not able to pull image. Service might be down or internet connection is dead.")
+                        log.error("Not able to pull image. Service might be down or internet connection is dead.")
                         raise r
 
         # Compress into an archive
         if self.compress_type is not None:
-            logging.info("Compressing download..")
+            log.info("Compressing download..")
             self.compress_download()
 
     def fetch_workflow_details(self, wfs):
@@ -139,7 +141,7 @@ class DownloadWorkflow(object):
                     wf.releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
                     self.release = wf.releases[0]["tag_name"]
                     self.wf_sha = wf.releases[0]["tag_sha"]
-                    logging.debug("No release specified. Using latest release: {}".format(self.release))
+                    log.debug("No release specified. Using latest release: {}".format(self.release))
                 # Find specified release hash
                 elif self.release is not None:
                     for r in wf.releases:
@@ -147,8 +149,8 @@ class DownloadWorkflow(object):
                             self.wf_sha = r["tag_sha"]
                             break
                     else:
-                        logging.error("Not able to find release '{}' for {}".format(self.release, wf.full_name))
-                        logging.info(
+                        log.error("Not able to find release '{}' for {}".format(self.release, wf.full_name))
+                        log.info(
                             "Available {} releases: {}".format(
                                 wf.full_name, ", ".join([r["tag_name"] for r in wf.releases])
                             )
@@ -159,7 +161,7 @@ class DownloadWorkflow(object):
                 elif not self.release:
                     self.release = "dev"
                     self.wf_sha = "master"  # Cheating a little, but GitHub download link works
-                    logging.warning(
+                    log.warning(
                         "Pipeline is in development - downloading current code on master branch.\n"
                         + "This is likely to change soon should not be considered fully reproducible."
                     )
@@ -177,8 +179,8 @@ class DownloadWorkflow(object):
         # If we got this far, must not be a nf-core pipeline
         if self.pipeline.count("/") == 1:
             # Looks like a GitHub address - try working with this repo
-            logging.warning("Pipeline name doesn't match any nf-core workflows")
-            logging.info("Pipeline name looks like a GitHub address - attempting to download anyway")
+            log.warning("Pipeline name doesn't match any nf-core workflows")
+            log.info("Pipeline name looks like a GitHub address - attempting to download anyway")
             self.wf_name = self.pipeline
             if not self.release:
                 self.release = "master"
@@ -190,14 +192,14 @@ class DownloadWorkflow(object):
             # Set the download URL and return
             self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.release)
         else:
-            logging.error("Not able to find pipeline '{}'".format(self.pipeline))
-            logging.info("Available pipelines: {}".format(", ".join([w.name for w in wfs.remote_workflows])))
+            log.error("Not able to find pipeline '{}'".format(self.pipeline))
+            log.info("Available pipelines: {}".format(", ".join([w.name for w in wfs.remote_workflows])))
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`.
         """
-        logging.debug("Downloading {}".format(self.wf_download_url))
+        log.debug("Downloading {}".format(self.wf_download_url))
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
@@ -218,7 +220,7 @@ class DownloadWorkflow(object):
         """
         configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
         configs_local_dir = "configs-master"
-        logging.debug("Downloading {}".format(configs_zip_url))
+        log.debug("Downloading {}".format(configs_zip_url))
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
@@ -239,7 +241,7 @@ class DownloadWorkflow(object):
         nfconfig_fn = os.path.join(self.outdir, "workflow", "nextflow.config")
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "../configs/"
-        logging.debug("Editing params.custom_config_base in {}".format(nfconfig_fn))
+        log.debug("Editing params.custom_config_base in {}".format(nfconfig_fn))
 
         # Load the nextflow.config file into memory
         with open(nfconfig_fn, "r") as nfconfig_fh:
@@ -277,8 +279,8 @@ class DownloadWorkflow(object):
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
         address = "docker://{}".format(container.replace("docker://", ""))
         singularity_command = ["singularity", "pull", "--name", out_path, address]
-        logging.info("Building singularity image from Docker Hub: {}".format(address))
-        logging.debug("Singularity command: {}".format(" ".join(singularity_command)))
+        log.info("Building singularity image from Docker Hub: {}".format(address))
+        log.debug("Singularity command: {}".format(" ".join(singularity_command)))
 
         # Try to use singularity to pull image
         try:
@@ -286,7 +288,7 @@ class DownloadWorkflow(object):
         except OSError as e:
             if e.errno == errno.ENOENT:
                 # Singularity is not installed
-                logging.error("Singularity is not installed!")
+                log.error("Singularity is not installed!")
             else:
                 # Something else went wrong with singularity command
                 raise e
@@ -294,7 +296,7 @@ class DownloadWorkflow(object):
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive.
         """
-        logging.debug("Creating archive: {}".format(self.output_filename))
+        log.debug("Creating archive: {}".format(self.output_filename))
 
         # .tar.gz and .tar.bz2 files
         if self.compress_type == "tar.gz" or self.compress_type == "tar.bz2":
@@ -302,7 +304,7 @@ class DownloadWorkflow(object):
             with tarfile.open(self.output_filename, "w:{}".format(ctype)) as tar:
                 tar.add(self.outdir, arcname=os.path.basename(self.outdir))
             tar_flags = "xzf" if ctype == "gz" else "xjf"
-            logging.info("Command to extract files: tar -{} {}".format(tar_flags, self.output_filename))
+            log.info("Command to extract files: tar -{} {}".format(tar_flags, self.output_filename))
 
         # .zip files
         if self.compress_type == "zip":
@@ -314,10 +316,10 @@ class DownloadWorkflow(object):
                         filePath = os.path.join(folderName, filename)
                         # Add file to zip
                         zipObj.write(filePath)
-            logging.info("Command to extract files: unzip {}".format(self.output_filename))
+            log.info("Command to extract files: unzip {}".format(self.output_filename))
 
         # Delete original files
-        logging.debug("Deleting uncompressed files: {}".format(self.outdir))
+        log.debug("Deleting uncompressed files: {}".format(self.outdir))
         shutil.rmtree(self.outdir)
 
         # Caclualte md5sum for output file
@@ -333,7 +335,7 @@ class DownloadWorkflow(object):
         Raises:
             IOError, if the md5sum does not match the remote sum.
         """
-        logging.debug("Validating image hash: {}".format(fname))
+        log.debug("Validating image hash: {}".format(fname))
 
         # Calculate the md5 for the file on disk
         hash_md5 = hashlib.md5()
@@ -343,9 +345,9 @@ class DownloadWorkflow(object):
         file_hash = hash_md5.hexdigest()
 
         if expected is None:
-            logging.info("MD5 checksum for {}: {}".format(fname, file_hash))
+            log.info("MD5 checksum for {}: {}".format(fname, file_hash))
         else:
             if file_hash == expected:
-                logging.debug("md5 sum of image matches expected: {}".format(expected))
+                log.debug("md5 sum of image matches expected: {}".format(expected))
             else:
                 raise IOError("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))

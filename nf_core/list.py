@@ -7,20 +7,20 @@ from collections import OrderedDict
 import click
 import datetime
 import errno
+import git
 import json
 import logging
 import os
 import re
+import requests
 import rich.console
 import rich.table
 import subprocess
 import sys
 
-import git
-import requests
-import tabulate
-
 import nf_core.utils
+
+log = logging.getLogger(__name__)
 
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
@@ -64,11 +64,11 @@ def get_local_wf(workflow, revision=None):
                     print_revision = "{} - {}".format(wf.branch, wf.commit_sha[:7])
                 else:
                     print_revision = wf.commit_sha
-                logging.info("Using local workflow: {} ({})".format(workflow, print_revision))
+                log.info("Using local workflow: {} ({})".format(workflow, print_revision))
                 return wf.local_path
 
     # Wasn't local, fetch it
-    logging.info("Downloading workflow: {} ({})".format(workflow, revision))
+    log.info("Downloading workflow: {} ({})".format(workflow, revision))
     try:
         with open(os.devnull, "w") as devnull:
             cmd = ["nextflow", "pull", workflow]
@@ -112,7 +112,7 @@ class Workflows(object):
         Remote workflows are stored in :attr:`self.remote_workflows` list.
         """
         # List all repositories at nf-core
-        logging.debug("Fetching list of nf-core workflows")
+        log.debug("Fetching list of nf-core workflows")
         nfcore_url = "https://nf-co.re/pipelines.json"
         response = requests.get(nfcore_url, timeout=10)
         if response.status_code == 200:
@@ -131,14 +131,14 @@ class Workflows(object):
         else:
             nextflow_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets")
         if os.path.isdir(nextflow_wfdir):
-            logging.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
+            log.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
             for org_name in os.listdir(nextflow_wfdir):
                 for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
                     self.local_workflows.append(LocalWorkflow("{}/{}".format(org_name, wf_name)))
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:
-            logging.debug("Getting list of local nextflow workflows")
+            log.debug("Getting list of local nextflow workflows")
             try:
                 with open(os.devnull, "w") as devnull:
                     nflist_raw = subprocess.check_output(["nextflow", "list"], stderr=devnull)
@@ -157,7 +157,7 @@ class Workflows(object):
                         self.local_workflows.append(LocalWorkflow(wf_name))
 
         # Find additional information about each workflow by checking its git history
-        logging.debug("Fetching extra info about {} local workflows".format(len(self.local_workflows)))
+        log.debug("Fetching extra info about {} local workflows".format(len(self.local_workflows)))
         for wf in self.local_workflows:
             wf.get_local_nf_workflow_details()
 
@@ -351,7 +351,7 @@ class LocalWorkflow(object):
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):
-                logging.debug("Guessed nextflow assets workflow directory: {}".format(nf_wfdir))
+                log.debug("Guessed nextflow assets workflow directory: {}".format(nf_wfdir))
                 self.local_path = nf_wfdir
 
             # Use `nextflow info` to get more details about the workflow
@@ -378,7 +378,7 @@ class LocalWorkflow(object):
 
         # Pull information from the local git repository
         if self.local_path is not None:
-            logging.debug("Pulling git info from {}".format(self.local_path))
+            log.debug("Pulling git info from {}".format(self.local_path))
             try:
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)
@@ -401,7 +401,7 @@ class LocalWorkflow(object):
 
             # I'm not sure that we need this any more, it predated the self.branch catch above for detacted HEAD
             except TypeError as e:
-                logging.error(
+                log.error(
                     "Could not fetch status of local Nextflow copy of {}:".format(self.full_name)
                     + "\n   {}".format(str(e))
                     + "\n\nIt's probably a good idea to delete this local copy and pull again:".format(self.local_path)
