@@ -199,6 +199,9 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an ``AssertionError`` is raised.
         """
+        log.info("Testing pipeline: [magenta]{}".format(self.path), extra={"markup": True})
+        if self.release_mode:
+            log.info("Including --release mode tests")
         check_functions = [
             "check_files_exist",
             "check_licence",
@@ -1223,7 +1226,7 @@ class PipelineLint(object):
 
         # Only show error messages from schema
         if log.getEffectiveLevel() == logging.INFO:
-            logging.getLogger("nfcore.schema").setLevel(logging.ERROR)
+            logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
 
         # Lint the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
