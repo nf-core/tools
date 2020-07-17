@@ -221,10 +221,9 @@ class PipelineSync(object):
         """
         log.info("Making a new template pipeline using pipeline variables")
 
-        # Suppress log messages from the pipeline creation method
-        orig_loglevel = logging.getLogger("nfcore").getEffectiveLevel()
-        if orig_loglevel == getattr(logging, "INFO"):
-            logging.getLogger("nfcore").setLevel(logging.ERROR)
+        # Only show error messages from pipeline creation
+        if log.getEffectiveLevel() == logging.INFO:
+            logging.getLogger("nfcore.create").setLevel(logging.ERROR)
 
         nf_core.create.PipelineCreate(
             name=self.wf_config["manifest.name"].strip('"').strip("'"),
@@ -235,9 +234,6 @@ class PipelineSync(object):
             outdir=self.pipeline_dir,
             author=self.wf_config["manifest.author"].strip('"').strip("'"),
         ).init_pipeline()
-
-        # Reset logging
-        logging.getLogger("nfcore").setLevel(orig_loglevel)
 
     def commit_template_changes(self):
         """If we have any changes with the new template files, make a git commit
@@ -376,10 +372,9 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
         repo = git.Repo.clone_from(wf_remote_url, wf_local_path)
         assert repo
 
-        # Suppress log messages from the pipeline creation method
-        orig_loglevel = logging.getLogger("nfcore").getEffectiveLevel()
-        if orig_loglevel == getattr(logging, "INFO"):
-            logging.getLogger("nfcore").setLevel(logging.ERROR)
+        # Only show error messages from pipeline creation
+        if log.getEffectiveLevel() == logging.INFO:
+            logging.getLogger("nfcore.create").setLevel(logging.ERROR)
 
         # Sync the repo
         log.debug("Running template sync")
@@ -393,15 +388,12 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
         try:
             sync_obj.sync()
         except (SyncException, PullRequestException) as e:
-            logging.getLogger("nfcore").setLevel(orig_loglevel)  # Reset logging
             log.error("Sync failed for {}:\n{}".format(wf.full_name, e))
             failed_syncs.append(wf.name)
         except Exception as e:
-            logging.getLogger("nfcore").setLevel(orig_loglevel)  # Reset logging
             log.error("Something went wrong when syncing {}:\n{}".format(wf.full_name, e))
             failed_syncs.append(wf.name)
         else:
-            logging.getLogger("nfcore").setLevel(orig_loglevel)  # Reset logging
             log.info(
                 "[green]Sync successful for {}:[/] [blue][link={1}]{1}[/link]".format(
                     wf.full_name, sync_obj.gh_pr_returned_data.get("html_url")

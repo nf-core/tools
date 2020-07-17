@@ -1255,9 +1255,10 @@ class PipelineLint(object):
 
     def check_schema_lint(self):
         """ Lint the pipeline JSON schema file """
-        # Suppress log messages
-        logger = logging.getLogger("nfcore")
-        logger.disabled = True
+
+        # Only show error messages from schema
+        if log.getEffectiveLevel() == logging.INFO:
+            logging.getLogger("nfcore.schema").setLevel(logging.ERROR)
 
         # Lint the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
@@ -1267,9 +1268,6 @@ class PipelineLint(object):
             self.passed.append((14, "Schema lint passed"))
         except AssertionError as e:
             self.failed.append((14, "Schema lint failed: {}".format(e)))
-
-        # Reset logger
-        logger.disabled = False
 
     def check_schema_params(self):
         """ Check that the schema describes all flat params in the pipeline """
@@ -1325,7 +1323,7 @@ class PipelineLint(object):
                 results.append("1. [https://nf-co.re/errors#{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg))
             return rich.markdown.Markdown("\n".join(results))
 
-        if len(self.passed) > 0 and logging.getLogger("nfcore").getEffectiveLevel() == logging.DEBUG:
+        if len(self.passed) > 0 and log.getEffectiveLevel() == logging.DEBUG:
             console.print()
             console.rule("[bold green][[\u2714]] Tests Passed", style="green")
             console.print(
