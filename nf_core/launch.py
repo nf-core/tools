@@ -21,16 +21,14 @@ import nf_core.schema, nf_core.utils
 log = logging.getLogger(__name__)
 
 #
-# NOTE: WE ARE USING A PRE-RELEASE VERSION OF PYINQUIRER
-#
-# This is so that we can capture keyboard interruptions in a nicer way
-# with the raise_keyboard_interrupt=True argument in the prompt.prompt() calls
+# NOTE: When PyInquirer 1.0.3 is released we can capture keyboard interruptions
+# in a nicer way # with the raise_keyboard_interrupt=True argument in the prompt() calls
 # It also allows list selections to have a default set.
 #
-# Waiting for a release of version of >1.0.3 of PyInquirer.
-# See https://github.com/CITGuru/PyInquirer/issues/90
+# Until then we have workarounds:
+# * Default list item is moved to the top of the list
+# * We manually raise a KeyboardInterrupt if we get None back from a question
 #
-# When available, update setup.py to use regular pip version
 
 
 class Launch(object):
@@ -260,7 +258,10 @@ class Launch(object):
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
         }
-        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+        answer = prompt([question])
+        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        if answer == {}:
+            raise KeyboardInterrupt
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
@@ -399,12 +400,18 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+        answer = prompt([question])
+        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        if answer == {}:
+            raise KeyboardInterrupt
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
             click.secho("Error - this property is required.", fg="red", err=True)
-            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+            answer = prompt([question])
+            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            if answer == {}:
+                raise KeyboardInterrupt
 
         # Don't return empty answers
         if answer[param_id] == "":
@@ -445,7 +452,10 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(param_id, param_obj)
-            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+            answer = prompt([question])
+            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            if answer == {}:
+                raise KeyboardInterrupt
             if answer[param_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
@@ -619,6 +629,14 @@ class Launch(object):
                 return "Must match pattern: {}".format(param_obj["pattern"])
 
             question["validate"] = validate_pattern
+
+        # WORKAROUND - PyInquirer <1.0.3 cannot have a default position in a list
+        # For now, move the default option to the top.
+        # TODO: Delete this code when PyInquirer <1.0.3 is released.
+        if question["type"] == "list" and "default" in question:
+            question["choices"].remove(question["default"])
+            question["choices"].insert(0, question["default"])
+        ### End of workaround code
 
         return question
 

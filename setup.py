@@ -36,9 +36,7 @@ setup(
         "GitPython",
         "jinja2",
         "jsonschema",
-        # 'PyInquirer>1.0.3',
-        # Need the new release of PyInquirer, see nf_core/launch.py for details
-        "PyInquirer @ https://github.com/CITGuru/PyInquirer/archive/master.zip",
+        "PyInquirer",
         "pyyaml",
         "requests",
         "requests_cache",
