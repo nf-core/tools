@@ -80,6 +80,7 @@ class Launch(object):
                     "-name": {
                         "type": "string",
                         "description": "Unique name for this nextflow run",
+                        "help_text": "If not specified, Nextflow will automatically generate a random mnemonic.",
                         "pattern": "^[a-zA-Z0-9-_]+$",
                     },
                     "-profile": {"type": "string", "description": "Configuration profile"},
