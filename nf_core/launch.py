@@ -460,7 +460,7 @@ class Launch(object):
                         req_default = self.schema_obj.input_params.get(p_required, "")
                         req_answer = answers.get(p_required, "")
                         if req_default == "" and req_answer == "":
-                            log.error("Error - [bold]'{}'[/] is required.".format(p_required), extra={"markup": True})
+                            log.error("'{}' is required.".format(p_required))
                             while_break = False
             else:
                 child_param = answer[param_id]
