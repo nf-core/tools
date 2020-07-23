@@ -29,8 +29,8 @@ class TestLaunch(unittest.TestCase):
         """ Test the main launch function """
         self.launcher.launch_pipeline()
 
-    @mock.patch("click.confirm", side_effect=[False])
-    def test_launch_file_exists(self, mock_click_confirm):
+    @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
+    def test_launch_file_exists(self, mock_confirm):
         """ Test that we detect an existing params file and return """
         # Make an empty params file to be overwritten
         open(self.nf_params_fn, "a").close()
