@@ -4,13 +4,13 @@
 from __future__ import print_function
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.prompt import Confirm
 
-import click
 import copy
 import json
 import logging
 import os
-from PyInquirer import prompt, Separator
+import PyInquirer
 import re
 import subprocess
 import textwrap
@@ -21,16 +21,14 @@ import nf_core.schema, nf_core.utils
 log = logging.getLogger(__name__)
 
 #
-# NOTE: WE ARE USING A PRE-RELEASE VERSION OF PYINQUIRER
-#
-# This is so that we can capture keyboard interruptions in a nicer way
-# with the raise_keyboard_interrupt=True argument in the prompt.prompt() calls
+# NOTE: When PyInquirer 1.0.3 is released we can capture keyboard interruptions
+# in a nicer way # with the raise_keyboard_interrupt=True argument in the PyInquirer.prompt() calls
 # It also allows list selections to have a default set.
 #
-# Waiting for a release of version of >1.0.3 of PyInquirer.
-# See https://github.com/CITGuru/PyInquirer/issues/90
+# Until then we have workarounds:
+# * Default list item is moved to the top of the list
+# * We manually raise a KeyboardInterrupt if we get None back from a question
 #
-# When available, update setup.py to use regular pip version
 
 
 class Launch(object):
@@ -114,11 +112,7 @@ class Launch(object):
         # Check if the output file exists already
         if os.path.exists(self.params_out):
             log.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
-            if click.confirm(
-                click.style("Do you want to overwrite this file? ", fg="yellow") + click.style("[y/N]", fg="red"),
-                default=False,
-                show_default=False,
-            ):
+            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
                 os.remove(self.params_out)
                 log.info("Deleted {}\n".format(self.params_out))
             else:
@@ -250,9 +244,9 @@ class Launch(object):
 
     def prompt_web_gui(self):
         """ Ask whether to use the web-based or cli wizard to collect params """
-        click.secho(
-            "\nWould you like to enter pipeline parameters using a web-based interface or a command-line wizard?\n",
-            fg="magenta",
+        log.info(
+            "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?",
+            extra={"markup": True},
         )
         question = {
             "type": "list",
@@ -260,7 +254,10 @@ class Launch(object):
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
         }
-        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+        answer = PyInquirer.prompt([question])
+        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        if answer == {}:
+            raise KeyboardInterrupt
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
@@ -399,12 +396,18 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+        answer = PyInquirer.prompt([question])
+        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        if answer == {}:
+            raise KeyboardInterrupt
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
-            click.secho("Error - this property is required.", fg="red", err=True)
-            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+            log.error("This property is required.")
+            answer = PyInquirer.prompt([question])
+            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            if answer == {}:
+                raise KeyboardInterrupt
 
         # Don't return empty answers
         if answer[param_id] == "":
@@ -426,7 +429,7 @@ class Launch(object):
             "type": "list",
             "name": param_id,
             "message": param_id,
-            "choices": ["Continue >>", Separator()],
+            "choices": ["Continue >>", PyInquirer.Separator()],
         }
 
         for child_param, child_param_obj in param_obj["properties"].items():
@@ -445,7 +448,10 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(param_id, param_obj)
-            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+            answer = PyInquirer.prompt([question])
+            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            if answer == {}:
+                raise KeyboardInterrupt
             if answer[param_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
@@ -454,7 +460,7 @@ class Launch(object):
                         req_default = self.schema_obj.input_params.get(p_required, "")
                         req_answer = answers.get(p_required, "")
                         if req_default == "" and req_answer == "":
-                            click.secho("Error - '{}' is required.".format(p_required), fg="red", err=True)
+                            log.error("'{}' is required.".format(p_required))
                             while_break = False
             else:
                 child_param = answer[param_id]
@@ -620,6 +626,21 @@ class Launch(object):
 
             question["validate"] = validate_pattern
 
+        # WORKAROUND - PyInquirer <1.0.3 cannot have a default position in a list
+        # For now, move the default option to the top.
+        # TODO: Delete this code when PyInquirer >=1.0.3 is released.
+        if question["type"] == "list" and "default" in question:
+            try:
+                question["choices"].remove(question["default"])
+                question["choices"].insert(0, question["default"])
+            except ValueError:
+                log.warning(
+                    "Default value `{}` not found in list of choices: {}".format(
+                        question["default"], ", ".join(question["choices"])
+                    )
+                )
+        ### End of workaround code
+
         return question
 
     def print_param_header(self, param_id, param_obj):
@@ -683,14 +704,9 @@ class Launch(object):
     def launch_workflow(self):
         """ Launch nextflow if required  """
         log.info(
-            "[bold underline]Nextflow command:{}[/]\n  [magenta]{}\n\n".format(self.nextflow_cmd),
-            extra={"markup": True},
+            "[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd), extra={"markup": True},
         )
 
-        if click.confirm(
-            "Do you want to run this command now? " + click.style("[y/N]", fg="green"),
-            default=False,
-            show_default=False,
-        ):
-            log.info("Launching workflow!")
+        if Confirm.ask("Do you want to run this command now? "):
+            log.info("Launching workflow! :rocket:", extra={"markup": True})
             subprocess.call(self.nextflow_cmd, shell=True)

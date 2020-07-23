@@ -2,8 +2,8 @@
 """ Code to deal with pipeline JSON Schema """
 
 from __future__ import print_function
+from rich.prompt import Confirm
 
-import click
 import copy
 import jinja2
 import json
@@ -244,7 +244,7 @@ class PipelineSchema(object):
 
         # If running interactively, send to the web for customisation
         if not self.no_prompts:
-            if click.confirm(click.style("\nLaunch web builder for customisation and editing?", fg="magenta"), True):
+            if Confirm.ask(":rocket: Launch web builder for customisation and editing?"):
                 try:
                     self.launch_web_builder()
                 except AssertionError as e:
@@ -334,13 +334,6 @@ class PipelineSchema(object):
                     log.debug("Removing '{}' from JSON Schema".format(p_key))
                     params_removed.append(p_key)
 
-        if len(params_removed) > 0:
-            log.info(
-                "Removed {} params from existing JSON Schema that were not found with `nextflow config`:\n {}\n".format(
-                    len(params_removed), ", ".join(params_removed)
-                )
-            )
-
         return params_removed
 
     def prompt_remove_schema_notfound_config(self, p_key):
@@ -350,13 +343,11 @@ class PipelineSchema(object):
         Returns True if it should be removed, False if not.
         """
         if p_key not in self.pipeline_params.keys():
-            p_key_nice = click.style("params.{}".format(p_key), fg="white", bold=True)
-            remove_it_nice = click.style("Remove it?", fg="yellow")
-            if (
-                self.no_prompts
-                or self.schema_from_scratch
-                or click.confirm(
-                    "Unrecognised '{}' found in schema but not pipeline. {}".format(p_key_nice, remove_it_nice), True
+            if self.no_prompts or self.schema_from_scratch:
+                return True
+            if Confirm.ask(
+                ":question: Unrecognised [white bold]'params.{}'[/] found in schema but not pipeline! [yellow]Remove it?".format(
+                    p_key
                 )
             ):
                 return True
@@ -372,24 +363,18 @@ class PipelineSchema(object):
             if not p_key in self.schema["properties"].keys():
                 # Check if key is in group-level params
                 if not any([p_key in param.get("properties", {}) for k, param in self.schema["properties"].items()]):
-                    p_key_nice = click.style("params.{}".format(p_key), fg="white", bold=True)
-                    add_it_nice = click.style("Add to JSON Schema?", fg="cyan")
                     if (
                         self.no_prompts
                         or self.schema_from_scratch
-                        or click.confirm(
-                            "Found '{}' in pipeline but not in schema. {}".format(p_key_nice, add_it_nice), True
+                        or Confirm.ask(
+                            ":sparkles: Found [white bold]'params.{}'[/] in pipeline but not in schema! [blue]Add to JSON Schema?".format(
+                                p_key
+                            )
                         )
                     ):
                         self.schema["properties"][p_key] = self.build_schema_param(p_val)
                         log.debug("Adding '{}' to JSON Schema".format(p_key))
                         params_added.append(p_key)
-        if len(params_added) > 0:
-            log.info(
-                "Added {} params to JSON Schema that were found with `nextflow config`:\n {}".format(
-                    len(params_added), ", ".join(params_added)
-                )
-            )
 
         return params_added
 

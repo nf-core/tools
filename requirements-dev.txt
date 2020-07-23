@@ -1,0 +1,5 @@
+pytest
+pytest-datafiles
+pytest-cov
+mock
+black
