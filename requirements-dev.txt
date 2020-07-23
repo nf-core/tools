@@ -1,5 +1,5 @@
 pytest
-pytest-cov
 pytest-datafiles
+pytest-cov
 mock
 black
