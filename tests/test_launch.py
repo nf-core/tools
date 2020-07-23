@@ -104,12 +104,12 @@ class TestLaunch(unittest.TestCase):
         result = self.launcher.single_param_to_pyinquirer("input", sc_obj)
         assert result == {"type": "input", "name": "input", "message": "input", "default": "data/*{1,2}.fastq.gz"}
 
-    @mock.patch("PyInquirer.prompt.prompt", side_effect=[{"use_web_gui": "Web based"}])
+    @mock.patch("PyInquirer.prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
         """ Check the prompt to launch the web schema or use the cli """
         assert self.launcher.prompt_web_gui() == True
 
-    @mock.patch("PyInquirer.prompt.prompt", side_effect=[{"use_web_gui": "Command line"}])
+    @mock.patch("PyInquirer.prompt", side_effect=[{"use_web_gui": "Command line"}])
     def test_prompt_web_gui_false(self, mock_prompt):
         """ Check the prompt to launch the web schema or use the cli """
         assert self.launcher.prompt_web_gui() == False

@@ -10,7 +10,7 @@ import copy
 import json
 import logging
 import os
-from PyInquirer import prompt, Separator
+import PyInquirer
 import re
 import subprocess
 import textwrap
@@ -22,7 +22,7 @@ log = logging.getLogger(__name__)
 
 #
 # NOTE: When PyInquirer 1.0.3 is released we can capture keyboard interruptions
-# in a nicer way # with the raise_keyboard_interrupt=True argument in the prompt() calls
+# in a nicer way # with the raise_keyboard_interrupt=True argument in the PyInquirer.prompt() calls
 # It also allows list selections to have a default set.
 #
 # Until then we have workarounds:
@@ -258,7 +258,7 @@ class Launch(object):
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
         }
-        answer = prompt([question])
+        answer = PyInquirer.prompt([question])
         # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
         if answer == {}:
             raise KeyboardInterrupt
@@ -400,7 +400,7 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = prompt([question])
+        answer = PyInquirer.prompt([question])
         # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
         if answer == {}:
             raise KeyboardInterrupt
@@ -408,7 +408,7 @@ class Launch(object):
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
             click.secho("Error - this property is required.", fg="red", err=True)
-            answer = prompt([question])
+            answer = PyInquirer.prompt([question])
             # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
             if answer == {}:
                 raise KeyboardInterrupt
@@ -433,7 +433,7 @@ class Launch(object):
             "type": "list",
             "name": param_id,
             "message": param_id,
-            "choices": ["Continue >>", Separator()],
+            "choices": ["Continue >>", PyInquirer.Separator()],
         }
 
         for child_param, child_param_obj in param_obj["properties"].items():
@@ -452,7 +452,7 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(param_id, param_obj)
-            answer = prompt([question])
+            answer = PyInquirer.prompt([question])
             # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
             if answer == {}:
                 raise KeyboardInterrupt
@@ -634,8 +634,15 @@ class Launch(object):
         # For now, move the default option to the top.
         # TODO: Delete this code when PyInquirer <1.0.3 is released.
         if question["type"] == "list" and "default" in question:
-            question["choices"].remove(question["default"])
-            question["choices"].insert(0, question["default"])
+            try:
+                question["choices"].remove(question["default"])
+                question["choices"].insert(0, question["default"])
+            except ValueError:
+                log.warning(
+                    "Default value `{}` not found in list of choices: {}".format(
+                        question["default"], ", ".join(question["choices"])
+                    )
+                )
         ### End of workaround code
 
         return question
