@@ -628,7 +628,7 @@ class Launch(object):
 
         # WORKAROUND - PyInquirer <1.0.3 cannot have a default position in a list
         # For now, move the default option to the top.
-        # TODO: Delete this code when PyInquirer <1.0.3 is released.
+        # TODO: Delete this code when PyInquirer >=1.0.3 is released.
         if question["type"] == "list" and "default" in question:
             try:
                 question["choices"].remove(question["default"])
