@@ -61,7 +61,8 @@ New features should also come with new tests, to keep the test-coverage high (we
 You can try running the tests locally before pushing code using the following command:
 
 ```bash
-pip install --upgrade pip pytest pytest-datafiles pytest-cov mock
+pip install -r requirements-dev.txt
+pip install -e .
 pytest --color=yes tests/
 ```
 
