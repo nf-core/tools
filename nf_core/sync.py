@@ -397,8 +397,7 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
             log.info(
                 "[green]Sync successful for {}:[/] [blue][link={1}]{1}[/link]".format(
                     wf.full_name, sync_obj.gh_pr_returned_data.get("html_url")
-                ),
-                extra={"markup": True},
+                )
             )
             successful_syncs.append(wf.name)
 
@@ -407,14 +406,8 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
         shutil.rmtree(wf_local_path)
 
     if len(successful_syncs) > 0:
-        log.info(
-            "[green]Finished. Successfully synchronised {} pipelines".format(len(successful_syncs)),
-            extra={"markup": True},
-        )
+        log.info("[green]Finished. Successfully synchronised {} pipelines".format(len(successful_syncs)))
 
     if len(failed_syncs) > 0:
         failed_list = "\n - ".join(failed_syncs)
-        log.error(
-            "[red]Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list),
-            extra={"markup": True},
-        )
+        log.error("[red]Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list))

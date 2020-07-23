@@ -108,7 +108,7 @@ def nf_core_cli(verbose):
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(message)s",
         datefmt=".",
-        handlers=[rich.logging.RichHandler(console=stderr)],
+        handlers=[rich.logging.RichHandler(console=stderr, markup=True)],
     )
 
 

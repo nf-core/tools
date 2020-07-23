@@ -199,7 +199,7 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an ``AssertionError`` is raised.
         """
-        log.info("Testing pipeline: [magenta]{}".format(self.path), extra={"markup": True})
+        log.info("Testing pipeline: [magenta]{}".format(self.path))
         if self.release_mode:
             log.info("Including --release mode tests")
         check_functions = [
