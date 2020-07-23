@@ -39,8 +39,8 @@ class TestLaunch(unittest.TestCase):
 
     @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
-    @mock.patch("click.confirm", side_effect=[True])
-    def test_launch_file_exists_overwrite(self, mock_webbrowser, mock_lauch_web_gui, mock_click_confirm):
+    @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
+    def test_launch_file_exists_overwrite(self, mock_webbrowser, mock_lauch_web_gui, mock_confirm):
         """ Test that we detect an existing params file and we overwrite it """
         # Make an empty params file to be overwritten
         open(self.nf_params_fn, "a").close()
