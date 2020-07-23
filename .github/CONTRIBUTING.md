@@ -18,15 +18,29 @@ is as follows:
 
 If you're not used to this workflow with git, you can start with some [basic docs from GitHub](https://help.github.com/articles/fork-a-repo/).
 
+## Installing dev requirements
+
+If you want to work with developing the nf-core/tools code, you'll need a couple of extra Python packages.
+These are listed in `requirements-dev.txt` and can be installed as follows:
+
+```bash
+pip install --upgrade -r requirements-dev.txt
+```
+
+Then install your local fork of nf-core/tools:
+
+```bash
+pip install -e .
+```
+
 ## Code formatting with Black
 
 All Python code in nf-core/tools must be passed through the [Black Python code formatter](https://black.readthedocs.io/en/stable/).
 This ensures a harmonised code formatting style throughout the package, from all contributors.
 
-You can run Black on the command line - first install using `pip` and then run recursively on the whole repository:
+You can run Black on the command line (it's included in `requirements-dev.txt`) - eg. to run recursively on the whole repository:
 
 ```bash
-pip install black
 black .
 ```
 
@@ -61,8 +75,6 @@ New features should also come with new tests, to keep the test-coverage high (we
 You can try running the tests locally before pushing code using the following command:
 
 ```bash
-pip install -r requirements-dev.txt
-pip install -e .
 pytest --color=yes tests/
 ```
 

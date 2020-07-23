@@ -67,10 +67,10 @@ pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
 ```
 
 If you intend to make edits to the code, first make a fork of the repository and then clone it locally.
-Go to the cloned directory and either install with pip:
+Go to the cloned directory and install with pip (also installs development requirements):
 
 ```bash
-pip install -e .
+pip install --upgrade -r requirements-dev.txt -e .
 ```
 
 ### Using a specific Python interpreter
