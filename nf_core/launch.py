@@ -4,8 +4,8 @@
 from __future__ import print_function
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.prompt import Confirm
 
-import click
 import copy
 import json
 import logging
@@ -112,11 +112,7 @@ class Launch(object):
         # Check if the output file exists already
         if os.path.exists(self.params_out):
             log.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
-            if click.confirm(
-                click.style("Do you want to overwrite this file? ", fg="yellow") + click.style("[y/N]", fg="red"),
-                default=False,
-                show_default=False,
-            ):
+            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
                 os.remove(self.params_out)
                 log.info("Deleted {}\n".format(self.params_out))
             else:
@@ -248,9 +244,9 @@ class Launch(object):
 
     def prompt_web_gui(self):
         """ Ask whether to use the web-based or cli wizard to collect params """
-        click.secho(
-            "\nWould you like to enter pipeline parameters using a web-based interface or a command-line wizard?\n",
-            fg="magenta",
+        log.info(
+            "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?",
+            extra={"markup": True},
         )
         question = {
             "type": "list",
@@ -407,7 +403,7 @@ class Launch(object):
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
-            click.secho("Error - this property is required.", fg="red", err=True)
+            log.error("This property is required.")
             answer = PyInquirer.prompt([question])
             # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
             if answer == {}:
@@ -464,7 +460,7 @@ class Launch(object):
                         req_default = self.schema_obj.input_params.get(p_required, "")
                         req_answer = answers.get(p_required, "")
                         if req_default == "" and req_answer == "":
-                            click.secho("Error - '{}' is required.".format(p_required), fg="red", err=True)
+                            log.error("Error - [bold]'{}'[/] is required.".format(p_required), extra={"markup": True})
                             while_break = False
             else:
                 child_param = answer[param_id]
@@ -708,14 +704,9 @@ class Launch(object):
     def launch_workflow(self):
         """ Launch nextflow if required  """
         log.info(
-            "[bold underline]Nextflow command:{}[/]\n  [magenta]{}\n\n".format(self.nextflow_cmd),
-            extra={"markup": True},
+            "[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd), extra={"markup": True},
         )
 
-        if click.confirm(
-            "Do you want to run this command now? " + click.style("[y/N]", fg="green"),
-            default=False,
-            show_default=False,
-        ):
-            log.info("Launching workflow!")
+        if Confirm.ask("Do you want to run this command now? "):
+            log.info("Launching workflow! :rocket:", extra={"markup": True})
             subprocess.call(self.nextflow_cmd, shell=True)
