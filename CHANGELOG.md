@@ -78,7 +78,9 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * New `--json` and `--markdown` options to print lint results to JSON / markdown files
 * Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
 * Added AWS GitHub Actions workflows linting
-* Fail if `params.input` isnt defined.
+* Fail if `params.input` isn't defined.
+* Beautiful new progress bar to look at whilst linting is running and awesome new formatted output on the command line :heart_eyes:
+  * All made using the excellent [`rich` python library](https://github.com/willmcgugan/rich) - check it out!
 
 ### nf-core/tools Continuous Integration
 
@@ -94,6 +96,10 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Added log message when creating new pipelines that people should talk to the community about their plans
 * Fixed 'on completion' emails sent using the `mail` command not containing body text.
 * Improved command-line help text for nf-core/tools
+* `nf-core list` now hides archived pipelines unless `--show_archived` flag is set
+* Command line tools now checks if there is a new version of nf-core/tools available
+  * Disable this by setting the environment variable `NFCORE_NO_VERSION_CHECK`, eg. `export NFCORE_NO_VERSION_CHECK=1`
+* Better command-line output formatting of nearly all `nf-core` commands using [`rich`](https://github.com/willmcgugan/rich)
 
 ## v1.9
 

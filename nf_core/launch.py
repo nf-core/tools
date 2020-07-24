@@ -4,13 +4,13 @@
 from __future__ import print_function
 from rich.console import Console
 from rich.markdown import Markdown
+from rich.prompt import Confirm
 
-import click
 import copy
 import json
 import logging
 import os
-from PyInquirer import prompt, Separator
+import PyInquirer
 import re
 import subprocess
 import textwrap
@@ -18,17 +18,17 @@ import webbrowser
 
 import nf_core.schema, nf_core.utils
 
+log = logging.getLogger(__name__)
+
 #
-# NOTE: WE ARE USING A PRE-RELEASE VERSION OF PYINQUIRER
-#
-# This is so that we can capture keyboard interruptions in a nicer way
-# with the raise_keyboard_interrupt=True argument in the prompt.prompt() calls
+# NOTE: When PyInquirer 1.0.3 is released we can capture keyboard interruptions
+# in a nicer way # with the raise_keyboard_interrupt=True argument in the PyInquirer.prompt() calls
 # It also allows list selections to have a default set.
 #
-# Waiting for a release of version of >1.0.3 of PyInquirer.
-# See https://github.com/CITGuru/PyInquirer/issues/90
+# Until then we have workarounds:
+# * Default list item is moved to the top of the list
+# * We manually raise a KeyboardInterrupt if we get None back from a question
 #
-# When available, update setup.py to use regular pip version
 
 
 class Launch(object):
@@ -104,41 +104,35 @@ class Launch(object):
 
         # Check that we have everything we need
         if self.pipeline is None and self.web_id is None:
-            logging.error(
+            log.error(
                 "Either a pipeline name or web cache ID is required. Please see nf-core launch --help for more information."
             )
             return False
 
         # Check if the output file exists already
         if os.path.exists(self.params_out):
-            logging.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
-            if click.confirm(
-                click.style("Do you want to overwrite this file? ", fg="yellow") + click.style("[y/N]", fg="red"),
-                default=False,
-                show_default=False,
-            ):
+            log.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
+            if Confirm.ask("[yellow]Do you want to overwrite this file?"):
                 os.remove(self.params_out)
-                logging.info("Deleted {}\n".format(self.params_out))
+                log.info("Deleted {}\n".format(self.params_out))
             else:
-                logging.info("Exiting. Use --params-out to specify a custom filename.")
+                log.info("Exiting. Use --params-out to specify a custom filename.")
                 return False
 
-        logging.info(
-            "This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n"
-        )
+        log.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
 
         # Check if we have a web ID
         if self.web_id is not None:
             self.schema_obj = nf_core.schema.PipelineSchema()
             try:
                 if not self.get_web_launch_response():
-                    logging.info(
+                    log.info(
                         "Waiting for form to be completed in the browser. Remember to click Finished when you're done."
                     )
-                    logging.info("URL: {}".format(self.web_schema_launch_web_url))
+                    log.info("URL: {}".format(self.web_schema_launch_web_url))
                     nf_core.utils.wait_cli_function(self.get_web_launch_response)
             except AssertionError as e:
-                logging.error(click.style(e.args[0], fg="red"))
+                log.error(e.args[0])
                 return False
 
             # Make a flat version of the schema
@@ -161,7 +155,7 @@ class Launch(object):
                 try:
                     self.launch_web_gui()
                 except AssertionError as e:
-                    logging.error(click.style(e.args[0], fg="red"))
+                    log.error(e.args[0])
                     return False
             else:
                 # Kick off the interactive wizard to collect user inputs
@@ -205,16 +199,16 @@ class Launch(object):
             # No schema found
             # Check that this was actually a pipeline
             if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
-                logging.error("Could not find pipeline: {} ({})".format(self.pipeline, self.schema_obj.pipeline_dir))
+                log.error("Could not find pipeline: {} ({})".format(self.pipeline, self.schema_obj.pipeline_dir))
                 return False
             if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
                 os.path.join(self.schema_obj.pipeline_dir, "main.nf")
             ):
-                logging.error("Could not find a main.nf or nextfow.config file, are you sure this is a pipeline?")
+                log.error("Could not find a main.nf or nextfow.config file, are you sure this is a pipeline?")
                 return False
 
             # Build a schema for this pipeline
-            logging.info("No pipeline schema found - creating one from the config")
+            log.info("No pipeline schema found - creating one from the config")
             try:
                 self.schema_obj.get_wf_params()
                 self.schema_obj.make_skeleton_schema()
@@ -223,7 +217,7 @@ class Launch(object):
                 self.schema_obj.flatten_schema()
                 self.schema_obj.get_schema_defaults()
             except AssertionError as e:
-                logging.error("Could not build pipeline schema: {}".format(e))
+                log.error("Could not build pipeline schema: {}".format(e))
                 return False
 
     def set_schema_inputs(self):
@@ -237,7 +231,7 @@ class Launch(object):
 
         # If we have a params_file, load and validate it against the schema
         if self.params_in:
-            logging.info("Loading {}".format(self.params_in))
+            log.info("Loading {}".format(self.params_in))
             self.schema_obj.load_input_params(self.params_in)
             self.schema_obj.validate_params()
 
@@ -250,9 +244,9 @@ class Launch(object):
 
     def prompt_web_gui(self):
         """ Ask whether to use the web-based or cli wizard to collect params """
-        click.secho(
-            "\nWould you like to enter pipeline parameters using a web-based interface or a command-line wizard?\n",
-            fg="magenta",
+        log.info(
+            "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?",
+            extra={"markup": True},
         )
         question = {
             "type": "list",
@@ -260,7 +254,10 @@ class Launch(object):
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
         }
-        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+        answer = PyInquirer.prompt([question])
+        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        if answer == {}:
+            raise KeyboardInterrupt
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
@@ -285,7 +282,7 @@ class Launch(object):
             assert "web_url" in web_response
             assert web_response["status"] == "recieved"
         except AssertionError:
-            logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
                 "Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(
                     self.web_schema_launch_url
@@ -296,9 +293,9 @@ class Launch(object):
             self.web_schema_launch_api_url = web_response["api_url"]
 
         # Launch the web GUI
-        logging.info("Opening URL: {}".format(self.web_schema_launch_web_url))
+        log.info("Opening URL: {}".format(self.web_schema_launch_web_url))
         webbrowser.open(self.web_schema_launch_web_url)
-        logging.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n")
+        log.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n")
         nf_core.utils.wait_cli_function(self.get_web_launch_response)
 
     def get_web_launch_response(self):
@@ -311,7 +308,7 @@ class Launch(object):
         elif web_response["status"] == "waiting_for_user":
             return False
         elif web_response["status"] == "launch_params_complete":
-            logging.info("Found completed parameters from nf-core launch GUI")
+            log.info("Found completed parameters from nf-core launch GUI")
             try:
                 # Set everything that we can with the cache results
                 # NB: If using web builder, may have only run with --id and nothing else
@@ -329,13 +326,13 @@ class Launch(object):
             except KeyError as e:
                 raise AssertionError("Missing return key from web API: {}".format(e))
             except Exception as e:
-                logging.debug(web_response)
+                log.debug(web_response)
                 raise AssertionError(
                     "Unknown exception ({}) - see verbose log for details. {}".format(type(e).__name__, e)
                 )
             return True
         else:
-            logging.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
                 "Web launch GUI returned unexpected status ({}): {}\n See verbose log for full response".format(
                     web_response["status"], self.web_schema_launch_api_url
@@ -399,12 +396,18 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+        answer = PyInquirer.prompt([question])
+        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        if answer == {}:
+            raise KeyboardInterrupt
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
-            click.secho("Error - this property is required.", fg="red", err=True)
-            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+            log.error("This property is required.")
+            answer = PyInquirer.prompt([question])
+            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            if answer == {}:
+                raise KeyboardInterrupt
 
         # Don't return empty answers
         if answer[param_id] == "":
@@ -426,12 +429,12 @@ class Launch(object):
             "type": "list",
             "name": param_id,
             "message": param_id,
-            "choices": ["Continue >>", Separator()],
+            "choices": ["Continue >>", PyInquirer.Separator()],
         }
 
         for child_param, child_param_obj in param_obj["properties"].items():
             if child_param_obj["type"] == "object":
-                logging.error("nf-core only supports groups 1-level deep")
+                log.error("nf-core only supports groups 1-level deep")
                 return {}
             else:
                 if not child_param_obj.get("hidden", False) or self.show_hidden:
@@ -445,7 +448,10 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(param_id, param_obj)
-            answer = prompt.prompt([question], raise_keyboard_interrupt=True)
+            answer = PyInquirer.prompt([question])
+            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            if answer == {}:
+                raise KeyboardInterrupt
             if answer[param_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
@@ -454,7 +460,7 @@ class Launch(object):
                         req_default = self.schema_obj.input_params.get(p_required, "")
                         req_answer = answers.get(p_required, "")
                         if req_default == "" and req_answer == "":
-                            click.secho("Error - '{}' is required.".format(p_required), fg="red", err=True)
+                            log.error("'{}' is required.".format(p_required))
                             while_break = False
             else:
                 child_param = answer[param_id]
@@ -620,6 +626,21 @@ class Launch(object):
 
             question["validate"] = validate_pattern
 
+        # WORKAROUND - PyInquirer <1.0.3 cannot have a default position in a list
+        # For now, move the default option to the top.
+        # TODO: Delete this code when PyInquirer >=1.0.3 is released.
+        if question["type"] == "list" and "default" in question:
+            try:
+                question["choices"].remove(question["default"])
+                question["choices"].insert(0, question["default"])
+            except ValueError:
+                log.warning(
+                    "Default value `{}` not found in list of choices: {}".format(
+                        question["default"], ", ".join(question["choices"])
+                    )
+                )
+        ### End of workaround code
+
         return question
 
     def print_param_header(self, param_id, param_obj):
@@ -682,14 +703,10 @@ class Launch(object):
 
     def launch_workflow(self):
         """ Launch nextflow if required  """
-        intro = click.style("Nextflow command:", bold=True, underline=True)
-        cmd = click.style(self.nextflow_cmd, fg="magenta")
-        logging.info("{}\n  {}\n\n".format(intro, cmd))
+        log.info(
+            "[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd), extra={"markup": True},
+        )
 
-        if click.confirm(
-            "Do you want to run this command now? " + click.style("[y/N]", fg="green"),
-            default=False,
-            show_default=False,
-        ):
-            logging.info("Launching workflow!")
+        if Confirm.ask("Do you want to run this command now? "):
+            log.info("Launching workflow! :rocket:", extra={"markup": True})
             subprocess.call(self.nextflow_cmd, shell=True)

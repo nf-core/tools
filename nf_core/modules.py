@@ -12,6 +12,8 @@ import requests
 import sys
 import tempfile
 
+log = logging.getLogger(__name__)
+
 
 class ModulesRepo(object):
     """
@@ -46,25 +48,27 @@ class PipelineModules(object):
         return_str = ""
 
         if len(self.modules_avail_module_names) > 0:
-            logging.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
+            log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
             # Print results to stdout
             return_str += "\n".join(self.modules_avail_module_names)
         else:
-            logging.info(
+            log.info(
                 "No available modules found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
             )
         return return_str
 
     def install(self, module):
 
+        log.info("Installing {}".format(module))
+
         # Check that we were given a pipeline
         if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
-            logging.error("Could not find pipeline: {}".format(self.pipeline_dir))
+            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
             return False
         main_nf = os.path.join(self.pipeline_dir, "main.nf")
         nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            logging.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
+            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
             return False
 
         # Get the available modules
@@ -72,35 +76,36 @@ class PipelineModules(object):
 
         # Check that the supplied name is an available module
         if module not in self.modules_avail_module_names:
-            logging.error("Module '{}' not found in list of available modules.".format(module))
-            logging.info("Use the command 'nf-core modules list' to view available software")
+            log.error("Module '{}' not found in list of available modules.".format(module))
+            log.info("Use the command 'nf-core modules list' to view available software")
             return False
-        logging.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
+        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
 
         # Check that we don't already have a folder for this module
-        module_dir = os.path.join(self.pipeline_dir, "modules", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
         if os.path.exists(module_dir):
-            logging.error("Module directory already exists: {}".format(module_dir))
-            logging.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
+            log.error("Module directory already exists: {}".format(module_dir))
+            log.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
             return False
 
         # Download module files
         files = self.get_module_file_urls(module)
-        logging.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
+        log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
-            dl_filename = os.path.join(self.pipeline_dir, "modules", filename)
+            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
             self.download_gh_file(dl_filename, api_url)
+        log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
     def update(self, module, force=False):
-        logging.error("This command is not yet implemented")
+        log.error("This command is not yet implemented")
         pass
 
     def remove(self, module):
-        logging.error("This command is not yet implemented")
+        log.error("This command is not yet implemented")
         pass
 
     def check_modules(self):
-        logging.error("This command is not yet implemented")
+        log.error("This command is not yet implemented")
         pass
 
     def get_modules_file_tree(self):
@@ -116,7 +121,7 @@ class PipelineModules(object):
         )
         r = requests.get(api_url)
         if r.status_code == 404:
-            logging.error(
+            log.error(
                 "Repository / branch not found: {} ({})\n{}".format(
                     self.modules_repo.name, self.modules_repo.branch, api_url
                 )

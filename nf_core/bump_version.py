@@ -3,12 +3,13 @@
 a nf-core pipeline.
 """
 
+import click
 import logging
 import os
 import re
 import sys
 
-import click
+log = logging.getLogger(__name__)
 
 
 def bump_pipeline_version(lint_obj, new_version):
@@ -22,12 +23,12 @@ def bump_pipeline_version(lint_obj, new_version):
     # Collect the old and new version numbers
     current_version = lint_obj.config.get("manifest.version", "").strip(" '\"")
     if new_version.startswith("v"):
-        logging.warning("Stripping leading 'v' from new version number")
+        log.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
     if not current_version:
-        logging.error("Could not find config variable manifest.version")
+        log.error("Could not find config variable manifest.version")
         sys.exit(1)
-    logging.info(
+    log.info(
         "Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(
             current_version, new_version
         )
@@ -43,7 +44,7 @@ def bump_pipeline_version(lint_obj, new_version):
     if new_version.replace(".", "").isdigit():
         docker_tag = new_version
     else:
-        logging.info("New version contains letters. Setting docker tag to 'dev'")
+        log.info("New version contains letters. Setting docker tag to 'dev'")
     nfconfig_pattern = r"container\s*=\s*[\'\"]nfcore/{}:(?:{}|dev)[\'\"]".format(
         lint_obj.pipeline_name.lower(), current_version.replace(".", r"\.")
     )
@@ -99,9 +100,9 @@ def bump_nextflow_version(lint_obj, new_version):
     current_version = re.sub(r"[^0-9\.]", "", current_version)
     new_version = re.sub(r"[^0-9\.]", "", new_version)
     if not current_version:
-        logging.error("Could not find config variable manifest.nextflowVersion")
+        log.error("Could not find config variable manifest.nextflowVersion")
         sys.exit(1)
-    logging.info(
+    log.info(
         "Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(
             current_version, new_version
         )
@@ -156,10 +157,11 @@ def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=Fals
     new_content = re.sub(pattern, newstr, content)
     matches_newstr = re.findall("^.*{}.*$".format(newstr), new_content, re.MULTILINE)
 
-    logging.info(
+    log.info(
         "Updating version in {}\n".format(filename)
-        + click.style(" - {}\n".format("\n - ".join(matches_pattern).strip()), fg="red")
-        + click.style(" + {}\n".format("\n + ".join(matches_newstr).strip()), fg="green")
+        + "[red] - {}\n".format("\n - ".join(matches_pattern).strip())
+        + "[green] + {}\n".format("\n + ".join(matches_newstr).strip()),
+        extra={"markup": True},
     )
 
     with open(fn, "w") as fh:

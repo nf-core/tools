@@ -1,13 +1,15 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
-from __future__ import print_function
-
+from rich import print
 import click
-import sys
+import logging
 import os
 import re
-import rich
+import rich.console
+import rich.logging
+import rich.traceback
+import sys
 
 import nf_core
 import nf_core.bump_version
@@ -20,19 +22,33 @@ import nf_core.list
 import nf_core.modules
 import nf_core.schema
 import nf_core.sync
+import nf_core.utils
 
-import logging
+log = logging.getLogger(__name__)
 
 
 def run_nf_core():
+    # Set up the rich traceback
+    rich.traceback.install(width=200, word_wrap=True)
+
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr)
-    stderr.print("\n[green]{},--.[black]/[green],-.".format(" " * 42))
+    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42))
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
     stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
     stderr.print("[green]                                          `._,._,'\n")
-    stderr.print("[black]    nf-core/tools version {}\n\n".format(nf_core.__version__))
+    stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__), highlight=False)
+    try:
+        is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
+        if is_outdated:
+            stderr.print(
+                "[bold bright_yellow]    There is a new version of nf-core/tools available! ({})".format(remote_vers),
+                highlight=False,
+            )
+    except Exception as e:
+        log.debug("Could not check latest version: {}".format(e))
+    stderr.print("\n\n")
 
     # Lanch the click cli
     nf_core_cli()
@@ -87,10 +103,13 @@ class CustomHelpOrder(click.Group):
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
 def nf_core_cli(verbose):
-    if verbose:
-        logging.basicConfig(level=logging.DEBUG, format="\n%(levelname)s: %(message)s")
-    else:
-        logging.basicConfig(level=logging.INFO, format="\n%(levelname)s: %(message)s")
+    stderr = rich.console.Console(file=sys.stderr)
+    logging.basicConfig(
+        level=logging.DEBUG if verbose else logging.INFO,
+        format="%(message)s",
+        datefmt=".",
+        handlers=[rich.logging.RichHandler(console=stderr)],
+    )
 
 
 # nf-core list
@@ -104,14 +123,15 @@ def nf_core_cli(verbose):
     help="How to sort listed pipelines",
 )
 @click.option("--json", is_flag=True, default=False, help="Print full output as JSON")
-def list(keywords, sort, json):
+@click.option("--show-archived", is_flag=True, default=False, help="Print archived workflows")
+def list(keywords, sort, json, show_archived):
     """
     List available nf-core pipelines with local info.
 
     Checks the web for a list of nf-core pipelines with their latest releases.
     Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
-    nf_core.list.list_workflows(keywords, sort, json)
+    print(nf_core.list.list_workflows(keywords, sort, json, show_archived))
 
 
 # nf-core launch
@@ -199,8 +219,12 @@ def licences(pipeline, json):
     Package name, version and licence is printed to the command line.
     """
     lic = nf_core.licences.WorkflowLicences(pipeline)
-    lic.fetch_conda_licences()
-    lic.print_licences(as_json=json)
+    lic.as_json = json
+    try:
+        print(lic.run_licences())
+    except LookupError as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core create
@@ -407,7 +431,7 @@ def validate(pipeline, params):
         # Load and check schema
         schema_obj.load_lint_schema()
     except AssertionError as e:
-        logging.error(e)
+        log.error(e)
         sys.exit(1)
     schema_obj.load_input_params(params)
     try:
@@ -484,10 +508,10 @@ def bump_version(pipeline_dir, new_version, nextflow):
     """
 
     # First, lint the pipeline to check everything is in order
-    logging.info("Running nf-core lint tests")
+    log.info("Running nf-core lint tests")
     lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
     if len(lint_obj.failed) > 0:
-        logging.error("Please fix lint errors before bumping versions")
+        log.error("Please fix lint errors before bumping versions")
         return
 
     # Bump the pipeline version number
@@ -499,16 +523,13 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
 @nf_core_cli.command("sync", help_priority=10)
 @click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
-@click.option(
-    "-t", "--make-template-branch", is_flag=True, default=False, help="Create a TEMPLATE branch if none is found."
-)
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
 @click.option("-u", "--username", type=str, help="GitHub username for the PR.")
 @click.option("-r", "--repository", type=str, help="GitHub repository name for the PR.")
 @click.option("-a", "--auth-token", type=str, help="GitHub API personal access token.")
 @click.option("--all", is_flag=True, default=False, help="Sync template for all nf-core pipelines.")
-def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username, repository, auth_token, all):
+def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_token, all):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
 
@@ -528,17 +549,17 @@ def sync(pipeline_dir, make_template_branch, from_branch, pull_request, username
     else:
         # Manually check for the required parameter
         if not pipeline_dir or len(pipeline_dir) != 1:
-            logging.error("Either use --all or specify one <pipeline directory>")
+            log.error("Either use --all or specify one <pipeline directory>")
             sys.exit(1)
         else:
             pipeline_dir = pipeline_dir[0]
 
         # Sync the given pipeline dir
-        sync_obj = nf_core.sync.PipelineSync(pipeline_dir, make_template_branch, from_branch, pull_request)
+        sync_obj = nf_core.sync.PipelineSync(pipeline_dir, from_branch, pull_request)
         try:
             sync_obj.sync()
         except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
-            logging.error(e)
+            log.error(e)
             sys.exit(1)
 
 

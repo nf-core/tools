@@ -67,10 +67,10 @@ pip install --upgrade --force-reinstall git+https://github.com/nf-core/tools.git
 ```
 
 If you intend to make edits to the code, first make a fork of the repository and then clone it locally.
-Go to the cloned directory and either install with pip:
+Go to the cloned directory and install with pip (also installs development requirements):
 
 ```bash
-pip install -e .
+pip install --upgrade -r requirements-dev.txt -e .
 ```
 
 ### Using a specific Python interpreter
@@ -101,6 +101,15 @@ for wf in wfs.remote_workflows:
 ```
 
 Please see [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/) for the function documentation.
+
+### Automatic version check
+
+nf-core/tools automatically checks the web to see if there is a new version of nf-core/tools available.
+If you would prefer to skip this check, set the environment variable `NFCORE_NO_VERSION_CHECK`. For example:
+
+```bash
+export NFCORE_NO_VERSION_CHECK=1
+```
 
 ## Listing pipelines
 
@@ -184,7 +193,9 @@ nf-core/atacseq                      37  1.2.0             6 days ago     1 week
 [..truncated..]
 ```
 
-Finally, to return machine-readable JSON output, use the `--json` flag.
+To return results as JSON output for downstream use, use the `--json` flag.
+
+Archived pipelines are not returned by default. To include them, use the `--show_archived` flag.
 
 ## Launch a pipeline
 
@@ -718,11 +729,11 @@ INFO: Now try to merge the updates in to your pipeline:
   git merge TEMPLATE
 ```
 
-If your pipeline repository does not already have a `TEMPLATE` branch, you can instruct
-the command to try to create one by giving the `--make-template-branch` flag.
-If it has to, the sync tool will then create an orphan branch - see the
-[nf-core website sync documentation](https://nf-co.re/developers/sync) for details on
-how to handle this.
+The sync command tries to check out the `TEMPLATE` branch from the `origin` remote
+or an existing local branch called `TEMPLATE`. It will fail if it cannot do either
+of these things. The `nf-core create` command should make this template automatically
+when you first start your pipeline. Please see the
+[nf-core website sync documentation](https://nf-co.re/developers/sync) if you have difficulties.
 
 By default, the tool will collect workflow variables from the current branch in your
 pipeline directory. You can supply the `--from-branch` flag to specific a different branch.

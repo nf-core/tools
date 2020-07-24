@@ -196,7 +196,7 @@ class TestSchema(unittest.TestCase):
         params_removed = self.schema_obj.remove_schema_notfound_configs()
         assert len(self.schema_obj.schema["properties"]) == 0
         assert len(params_removed) == 1
-        assert click.style("foo", fg="white", bold=True) in params_removed
+        assert "foo" in params_removed
 
     def test_remove_schema_notfound_configs_childobj(self):
         """
@@ -211,7 +211,7 @@ class TestSchema(unittest.TestCase):
         params_removed = self.schema_obj.remove_schema_notfound_configs()
         assert len(self.schema_obj.schema["properties"]["parent"]["properties"]) == 0
         assert len(params_removed) == 1
-        assert click.style("foo", fg="white", bold=True) in params_removed
+        assert "foo" in params_removed
 
     def test_add_schema_found_configs(self):
         """ Try adding a new parameter to the schema from the config """
@@ -221,7 +221,7 @@ class TestSchema(unittest.TestCase):
         params_added = self.schema_obj.add_schema_found_configs()
         assert len(self.schema_obj.schema["properties"]) == 1
         assert len(params_added) == 1
-        assert click.style("foo", fg="white", bold=True) in params_added
+        assert "foo" in params_added
 
     def test_build_schema_param_str(self):
         """ Build a new schema param from a config value (string) """

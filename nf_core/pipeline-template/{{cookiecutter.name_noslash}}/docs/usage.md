@@ -154,7 +154,7 @@ The pipeline config files come bundled with paths to the illumina iGenomes refer
 
 There are 31 different species supported in the iGenomes references. To run the pipeline, you must specify which to use with the `--genome` flag.
 
-You can find the keys to specify the genomes in the [iGenomes config file](../conf/igenomes.config). Common genomes that are supported are:
+You can find the keys to specify the genomes in the [iGenomes config file](https://github.com/{{ cookiecutter.name }}/blob/master/conf/igenomes.config). Common genomes that are supported are:
 
 * Human
   * `--genome GRCh37`
