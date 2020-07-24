@@ -64,6 +64,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
 * Change `params.readPaths` -> `params.input_paths`
+* [#522](https://github.com/nf-core/tools/issues/522) - Unify iGenomes index usage
 
 ### Linting
 
