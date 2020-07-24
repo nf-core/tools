@@ -125,7 +125,6 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.flatten_schema()
         self.schema_obj.input_params = {"input": "fubar"}
         assert self.schema_obj.validate_params()
 
@@ -134,7 +133,6 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.flatten_schema()
         self.schema_obj.input_params = {"fubar": "input"}
         assert not self.schema_obj.validate_params()
 
@@ -143,7 +141,6 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.flatten_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
     @pytest.mark.xfail(raises=AssertionError)

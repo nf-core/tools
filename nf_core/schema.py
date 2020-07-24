@@ -30,7 +30,6 @@ class PipelineSchema(object):
         """ Initialise the object """
 
         self.schema = None
-        self.flat_schema = None
         self.pipeline_dir = None
         self.schema_filename = None
         self.schema_defaults = {}
@@ -88,9 +87,8 @@ class PipelineSchema(object):
             raise AssertionError(error_msg)
         else:
             try:
-                self.flatten_schema()
                 self.get_schema_defaults()
-                self.validate_schema(self.flat_schema)
+                self.validate_schema(self.schema)
             except AssertionError as e:
                 error_msg = "[red][[✗]] Flattened JSON Schema does not follow nf-core specs:\n {}".format(e)
                 log.error(error_msg)
@@ -104,31 +102,11 @@ class PipelineSchema(object):
             self.schema = json.load(fh)
         log.debug("JSON file loaded: {}".format(self.schema_filename))
 
-    def flatten_schema(self):
-        """ Go through a schema and flatten all objects so that we have a single hierarchy of params """
-        self.flat_schema = copy.deepcopy(self.schema)
-        for p_key in self.schema["properties"]:
-            if self.schema["properties"][p_key]["type"] == "object":
-                # Add child properties to top-level object
-                for p_child_key in self.schema["properties"][p_key].get("properties", {}):
-                    if p_child_key in self.flat_schema["properties"]:
-                        raise AssertionError("Duplicate parameter `{}` found".format(p_child_key))
-                    self.flat_schema["properties"][p_child_key] = self.schema["properties"][p_key]["properties"][
-                        p_child_key
-                    ]
-                # Move required param keys to top level object
-                for p_child_required in self.schema["properties"][p_key].get("required", []):
-                    if "required" not in self.flat_schema:
-                        self.flat_schema["required"] = []
-                    self.flat_schema["required"].append(p_child_required)
-                # Delete this object
-                del self.flat_schema["properties"][p_key]
-
     def get_schema_defaults(self):
         """ Generate set of input parameters from flattened schema """
-        for p_key in self.flat_schema["properties"]:
-            if "default" in self.flat_schema["properties"][p_key]:
-                self.schema_defaults[p_key] = self.flat_schema["properties"][p_key]["default"]
+        for p_key in self.schema["properties"]:
+            if "default" in self.schema["properties"][p_key]:
+                self.schema_defaults[p_key] = self.schema["properties"][p_key]["default"]
 
     def save_schema(self):
         """ Load a JSON Schema from a file """
@@ -167,8 +145,8 @@ class PipelineSchema(object):
     def validate_params(self):
         """ Check given parameters against a schema and validate """
         try:
-            assert self.flat_schema is not None
-            jsonschema.validate(self.input_params, self.flat_schema)
+            assert self.schema is not None
+            jsonschema.validate(self.input_params, self.schema)
         except AssertionError:
             log.error("[red][[✗]] Flattened JSON Schema not found")
             return False

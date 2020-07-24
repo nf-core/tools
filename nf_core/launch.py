@@ -135,8 +135,6 @@ class Launch(object):
                 log.error(e.args[0])
                 return False
 
-            # Make a flat version of the schema
-            self.schema_obj.flatten_schema()
             # Load local params if supplied
             self.set_schema_inputs()
             # Load schema defaults
@@ -214,7 +212,6 @@ class Launch(object):
                 self.schema_obj.make_skeleton_schema()
                 self.schema_obj.remove_schema_notfound_configs()
                 self.schema_obj.add_schema_found_configs()
-                self.schema_obj.flatten_schema()
                 self.schema_obj.get_schema_defaults()
             except AssertionError as e:
                 log.error("Could not build pipeline schema: {}".format(e))
