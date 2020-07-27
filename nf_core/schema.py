@@ -104,9 +104,16 @@ class PipelineSchema(object):
 
     def get_schema_defaults(self):
         """ Generate set of input parameters from flattened schema """
-        for p_key in self.schema["properties"]:
-            if "default" in self.schema["properties"][p_key]:
-                self.schema_defaults[p_key] = self.schema["properties"][p_key]["default"]
+        # Top level schema-properties (ungrouped)
+        for p_key, param in self.schema.get("properties", {}).items():
+            if "default" in param:
+                self.schema_defaults[p_key] = param["default"]
+
+        # TODO: Grouped schema properties in subschema definitions
+        for d_key, definition in self.schema.get("definitions", {}).items():
+            for p_key, param in definition.get("properties", {}).items():
+                if "default" in param:
+                    self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self):
         """ Load a JSON Schema from a file """
@@ -163,9 +170,6 @@ class PipelineSchema(object):
             log.debug("JSON Schema Draft7 validated")
         except jsonschema.exceptions.SchemaError as e:
             raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
-
-        # Check for nf-core schema keys
-        assert "properties" in self.schema, "Schema should have 'properties' section"
 
     def make_skeleton_schema(self):
         """ Make a new JSON Schema from the template """
