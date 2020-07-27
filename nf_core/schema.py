@@ -80,7 +80,7 @@ class PipelineSchema(object):
             self.get_schema_defaults()
             log.info("[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
         except json.decoder.JSONDecodeError as e:
-            error_msg = "Could not parse JSON:\n {}".format(e)
+            error_msg = "[bold red]Could not parse schema JSON:[/] {}".format(e)
             log.error(error_msg)
             raise AssertionError(error_msg)
         except AssertionError as e:
@@ -103,12 +103,14 @@ class PipelineSchema(object):
         """
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
-            self.schema_defaults[p_key] = param.get("default")
+            if "default" in param:
+                self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
         for d_key, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
-                self.schema_defaults[p_key] = param.get("default")
+                if "default" in param:
+                    self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self):
         """ Save a pipeline schema to a file """
