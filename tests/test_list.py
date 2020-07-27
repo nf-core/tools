@@ -55,7 +55,7 @@ class TestLint(unittest.TestCase):
         now_ts = time.mktime(now.timetuple())
         nf_core.list.pretty_date(now_ts)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_local_workflows_and_fail(self):
         """ Test the local workflow class and try to get local
         Nextflow workflow information """

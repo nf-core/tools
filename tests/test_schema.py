@@ -34,21 +34,23 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.get_schema_path(self.template_dir)
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_nofile(self):
         """ Check that linting raises properly if a non-existant file is given """
         self.schema_obj.get_schema_path("fake_file")
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_notjson(self):
         """ Check that linting raises properly if a non-JSON file is given """
         self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError)
-    def test_load_lint_schema_invalidjson(self):
-        """ Check that linting raises properly if a JSON file is given with an invalid schema """
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_load_lint_schema_noparams(self):
+        """
+        Check that linting raises properly if a JSON file is given without any params
+        """
         # Make a temporary file to write schema to
         tmp_file = tempfile.NamedTemporaryFile()
         with open(tmp_file.name, "w") as fh:
@@ -64,18 +66,16 @@ class TestSchema(unittest.TestCase):
         """ Get schema file from a path """
         self.schema_obj.get_schema_path(self.template_schema)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_path_notexist(self):
         """ Get schema file from a path """
         self.schema_obj.get_schema_path("fubar", local_only=True)
 
-    # TODO - Update when we do have a released pipeline with a valid schema
-    @pytest.mark.xfail(raises=AssertionError)
     def test_get_schema_path_name(self):
         """ Get schema file from the name of a remote pipeline """
         self.schema_obj.get_schema_path("atacseq")
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_name_notexist(self):
         """
         Get schema file from the name of a remote pipeline
@@ -115,7 +115,7 @@ class TestSchema(unittest.TestCase):
             yaml.dump({"input": "fubar"}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_input_params_invalid(self):
         """ Check failure when a non-existent file params file is loaded """
         self.schema_obj.load_input_params("fubar")
@@ -143,21 +143,20 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
-    @pytest.mark.xfail(raises=AssertionError)
-    def test_validate_schema_fail_notjsonschema(self):
-        """ Check that the schema validation fails when not JSONSchema """
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_validate_schema_fail_noparams(self):
+        """ Check that the schema validation fails when no params described """
         self.schema_obj.schema = {"type": "invalidthing"}
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
-    @pytest.mark.xfail(raises=AssertionError)
-    def test_validate_schema_fail_nfcore(self):
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_validate_schema_fail_duplicate_ids(self):
         """
-        Check that the schema validation fails nf-core addons
-
-        An empty object {} is valid JSON Schema, but we want to have
-        at least a 'properties' key, so this should fail with nf-core specific error.
+        Check that the schema validation fails when we have duplicate IDs in definition subschema
         """
-        self.schema_obj.schema = {}
+        self.schema_obj.schema = {
+            "definitions": {"groupOne": {"properites": {"foo": "bar"}}, "groupTwo": {"properites": {"foo": "bar"}}}
+        }
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
     def test_make_skeleton_schema(self):
@@ -271,7 +270,7 @@ class TestSchema(unittest.TestCase):
 
         param = self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_timeout(self, mock_post):
         """ Mock launching the web builder, but timeout on the request """
@@ -279,7 +278,7 @@ class TestSchema(unittest.TestCase):
         mock_post.side_effect = requests.exceptions.Timeout()
         self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_connection_error(self, mock_post):
         """ Mock launching the web builder, but get a connection error """
@@ -287,7 +286,7 @@ class TestSchema(unittest.TestCase):
         mock_post.side_effect = requests.exceptions.ConnectionError()
         self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_timeout(self, mock_post):
         """ Mock checking for a web builder response, but timeout on the request """
@@ -295,7 +294,7 @@ class TestSchema(unittest.TestCase):
         mock_post.side_effect = requests.exceptions.Timeout()
         self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_connection_error(self, mock_post):
         """ Mock checking for a web builder response, but get a connection error """

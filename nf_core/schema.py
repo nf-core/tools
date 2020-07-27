@@ -170,9 +170,17 @@ class PipelineSchema(object):
         except jsonschema.exceptions.SchemaError as e:
             raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
 
+        param_keys = list(self.schema.get("properties", {}).keys())
+        num_params = len(param_keys)
+        for k, d in self.schema.get("definitions", {}).items():
+            for d_key in d.get("properties", {}):
+                # Check that we don't have any duplicate parameter IDs in different definitions
+                if d_key in param_keys:
+                    raise AssertionError("Duplicate parameter found in schema definitions: '{}'".format(d_key))
+                param_keys.append(d_key)
+                num_params += 1
+
         # Check that the schema describes at least one parameter
-        num_params = len(self.schema.get("properties", {}))
-        num_params += sum([len(d.get("properties", {})) for k, d in self.schema.get("definitions", {}).items()])
         if num_params == 0:
             raise AssertionError("No parameters found in schema")
 
