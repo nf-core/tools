@@ -76,7 +76,9 @@ class PipelineSchema(object):
         """ Load and lint a given schema to see if it looks valid """
         try:
             self.load_schema()
-            self.validate_schema(self.schema)
+            num_params = self.validate_schema(self.schema)
+            self.get_schema_defaults()
+            log.info("[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
         except json.decoder.JSONDecodeError as e:
             error_msg = "Could not parse JSON:\n {}".format(e)
             log.error(error_msg)
@@ -85,22 +87,6 @@ class PipelineSchema(object):
             error_msg = "[red][[✗]] Pipeline schema does not follow nf-core specs:\n {}".format(e)
             log.error(error_msg)
             raise AssertionError(error_msg)
-        else:
-            try:
-                self.get_schema_defaults()
-                self.validate_schema(self.schema)
-                if len(self.schema_defaults) == 0:
-                    raise AssertionError("No parameters found in schema")
-            except AssertionError as e:
-                error_msg = "[red][[✗]] Pipeline schema does not follow nf-core specs:\n {}".format(e)
-                log.error(error_msg)
-                raise AssertionError(error_msg)
-            else:
-                log.info(
-                    "[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(
-                        len(self.schema_defaults)
-                    )
-                )
 
     def load_schema(self):
         """ Load a pipeline schema from a file """
@@ -173,12 +159,24 @@ class PipelineSchema(object):
         return True
 
     def validate_schema(self, schema):
-        """ Check that the Schema is valid """
+        """
+        Check that the Schema is valid
+
+        Returns: Number of parameters found
+        """
         try:
             jsonschema.Draft7Validator.check_schema(schema)
             log.debug("JSON Schema Draft7 validated")
         except jsonschema.exceptions.SchemaError as e:
             raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
+
+        # Check that the schema describes at least one parameter
+        num_params = len(self.schema.get("properties", {}))
+        num_params += sum([len(d.get("properties", {})) for k, d in self.schema.get("definitions", {}).items()])
+        if num_params == 0:
+            raise AssertionError("No parameters found in schema")
+
+        return num_params
 
     def make_skeleton_schema(self):
         """ Make a new pipeline schema from the template """
@@ -321,7 +319,7 @@ class PipelineSchema(object):
                 if p_key in schema.get("required", []):
                     schema["required"].remove(p_key)
                 # Remove required list if now empty
-                if "required" in self.schema and len(schema["required"]) == 0:
+                if "required" in schema and len(schema["required"]) == 0:
                     del schema["required"]
                 log.debug("Removing '{}' from pipeline schema".format(p_key))
                 params_removed.append(p_key)
@@ -438,16 +436,16 @@ class PipelineSchema(object):
         """
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_api_url)
         if web_response["status"] == "error":
-            raise AssertionError("Got error from pipeline schema builder ( {} )".format(web_response.get("message")))
+            raise AssertionError("Got error from schema builder: '{}'".format(web_response.get("message")))
         elif web_response["status"] == "waiting_for_user":
             return False
         elif web_response["status"] == "web_builder_edited":
-            log.info("Found saved status from nf-core pipeline schema builder")
+            log.info("Found saved status from nf-core schema builder")
             try:
                 self.schema = web_response["schema"]
                 self.validate_schema(self.schema)
             except AssertionError as e:
-                raise AssertionError("Response from pipeline schema builder did not pass validation:\n {}".format(e))
+                raise AssertionError("Response from schema builder did not pass validation:\n {}".format(e))
             else:
                 self.save_schema()
                 return True

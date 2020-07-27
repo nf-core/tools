@@ -406,8 +406,7 @@ def schema():
     Suite of tools for developers to manage pipeline schema.
 
     All nf-core pipelines should have a nextflow_schema.json file in their
-    root directory. This is a JSON Schema that describes the different
-    pipeline parameters.
+    root directory that describes the different pipeline parameters.
     """
     pass
 
@@ -468,7 +467,7 @@ def build(pipeline_dir, no_prompts, web_only, url):
 
 
 @schema.command(help_priority=3)
-@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<JSON Schema file>")
+@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.

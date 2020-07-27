@@ -1222,7 +1222,7 @@ class PipelineLint(object):
             self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
 
     def check_schema_lint(self):
-        """ Lint the pipeline JSON schema file """
+        """ Lint the pipeline schema """
 
         # Only show error messages from schema
         if log.getEffectiveLevel() == logging.INFO:
