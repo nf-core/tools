@@ -30,7 +30,7 @@ def test_dev_bump_pipeline_version(datafiles):
 
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
-@pytest.mark.xfail(raises=AssertionError, strict=True)
+@pytest.mark.xfail(raises=SyntaxError, strict=True)
 def test_pattern_not_found(datafiles):
     """ Test that making a release raises and error if a pattern isn't found """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
@@ -41,7 +41,7 @@ def test_pattern_not_found(datafiles):
 
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
-@pytest.mark.xfail(raises=AssertionError, strict=True)
+@pytest.mark.xfail(raises=SyntaxError, strict=True)
 def test_multiple_patterns_found(datafiles):
     """ Test that making a release raises if a version number is found twice """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
