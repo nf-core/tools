@@ -96,8 +96,7 @@ class PipelineSchema(object):
                 log.error(error_msg)
                 raise AssertionError(error_msg)
             else:
-                log.info("[green][[✓]] Pipeline schema looks valid")
-                log.info("Found {} parameters".format(num_params))
+                log.info("[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
 
     def load_schema(self):
         """ Load a JSON Schema from a file """

@@ -414,13 +414,13 @@ def schema():
 
 @schema.command(help_priority=1)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
-@click.option("--params", type=click.Path(exists=True), required=True, help="JSON parameter file")
+@click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
 def validate(pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
 
     Nextflow can be run using the -params-file flag, which loads
-    script parameters from a JSON/YAML file.
+    script parameters from a JSON file.
 
     This command takes such a file and validates it against the pipeline
     schema, checking whether all schema rules are satisfied.
