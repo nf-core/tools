@@ -577,7 +577,7 @@ INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.j
 
 Launch web builder for customisation and editing? [Y/n]:
 
-INFO: Opening URL: http://localhost:8888/json_schema_build?id=1234567890_abc123def456
+INFO: Opening URL: http://localhost:8888/pipeline_schema_builder?id=1234567890_abc123def456
 
 INFO: Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.
 ..........

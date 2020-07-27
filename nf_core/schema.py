@@ -39,7 +39,7 @@ class PipelineSchema(object):
         self.schema_from_scratch = False
         self.no_prompts = False
         self.web_only = False
-        self.web_schema_build_url = "https://nf-co.re/json_schema_build"
+        self.web_schema_build_url = "https://nf-co.re/pipeline_schema_builder"
         self.web_schema_build_web_url = None
         self.web_schema_build_api_url = None
 
@@ -267,7 +267,7 @@ class PipelineSchema(object):
                     # Extra help for people running offline
                     if "Could not connect" in e.args[0]:
                         log.info(
-                            "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/json_schema_build".format(
+                            "If you're working offline, now copy your schema ({}) and paste at https://nf-co.re/pipeline_schema_builder".format(
                                 self.schema_filename
                             )
                         )
