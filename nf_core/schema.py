@@ -87,14 +87,17 @@ class PipelineSchema(object):
             raise AssertionError(error_msg)
         else:
             try:
-                self.get_schema_defaults()
+                num_params = self.get_schema_defaults()
                 self.validate_schema(self.schema)
+                if num_params == 0:
+                    raise AssertionError("No parameters found in schema")
             except AssertionError as e:
-                error_msg = "[red][[✗]] Flattened JSON Schema does not follow nf-core specs:\n {}".format(e)
+                error_msg = "[red][[✗]] Pipeline schema does not follow nf-core specs:\n {}".format(e)
                 log.error(error_msg)
                 raise AssertionError(error_msg)
             else:
                 log.info("[green][[✓]] Pipeline schema looks valid")
+                log.info("Found {} parameters".format(num_params))
 
     def load_schema(self):
         """ Load a JSON Schema from a file """
@@ -103,17 +106,27 @@ class PipelineSchema(object):
         log.debug("JSON file loaded: {}".format(self.schema_filename))
 
     def get_schema_defaults(self):
-        """ Generate set of input parameters from flattened schema """
+        """
+        Generate set of default input parameters from schema.
+
+        Saves defaults to self.schema_defaults
+        Returns count of how many parameters were found (with or without a default value)
+        """
+        num_params = 0
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
+            num_params += 1
             if "default" in param:
                 self.schema_defaults[p_key] = param["default"]
 
         # TODO: Grouped schema properties in subschema definitions
         for d_key, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
+                num_params += 1
                 if "default" in param:
                     self.schema_defaults[p_key] = param["default"]
+
+        return num_params
 
     def save_schema(self):
         """ Load a JSON Schema from a file """
@@ -155,7 +168,7 @@ class PipelineSchema(object):
             assert self.schema is not None
             jsonschema.validate(self.input_params, self.schema)
         except AssertionError:
-            log.error("[red][[✗]] Flattened JSON Schema not found")
+            log.error("[red][[✗]] Pipeline schema not found")
             return False
         except jsonschema.exceptions.ValidationError as e:
             log.error("[red][[✗]] Input parameters are invalid: {}".format(e.message))
