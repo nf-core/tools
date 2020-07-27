@@ -160,8 +160,7 @@ def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=Fals
     log.info(
         "Updating version in {}\n".format(filename)
         + "[red] - {}\n".format("\n - ".join(matches_pattern).strip())
-        + "[green] + {}\n".format("\n + ".join(matches_newstr).strip()),
-        extra={"markup": True},
+        + "[green] + {}\n".format("\n + ".join(matches_newstr).strip())
     )
 
     with open(fn, "w") as fh:

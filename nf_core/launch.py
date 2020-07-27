@@ -245,8 +245,7 @@ class Launch(object):
     def prompt_web_gui(self):
         """ Ask whether to use the web-based or cli wizard to collect params """
         log.info(
-            "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?",
-            extra={"markup": True},
+            "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?"
         )
         question = {
             "type": "list",
@@ -703,10 +702,8 @@ class Launch(object):
 
     def launch_workflow(self):
         """ Launch nextflow if required  """
-        log.info(
-            "[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd), extra={"markup": True},
-        )
+        log.info("[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd))
 
         if Confirm.ask("Do you want to run this command now? "):
-            log.info("Launching workflow! :rocket:", extra={"markup": True})
+            log.info("Launching workflow! :rocket:")
             subprocess.call(self.nextflow_cmd, shell=True)

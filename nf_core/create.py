@@ -63,8 +63,7 @@ class PipelineCreate(object):
             "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
             + "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
             + "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
-            + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]",
-            extra={"markup": True},
+            + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
         )
 
     def run_cookiecutter(self):
@@ -149,7 +148,6 @@ class PipelineCreate(object):
             "Done. Remember to add a remote and push to GitHub:\n"
             + "[white on grey23] cd {} \n".format(self.outdir)
             + " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
-            + " git push --all origin                                       ",
-            extra={"markup": True},
+            + " git push --all origin                                       "
         )
         log.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")

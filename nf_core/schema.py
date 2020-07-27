@@ -84,7 +84,7 @@ class PipelineSchema(object):
             raise AssertionError(error_msg)
         except AssertionError as e:
             error_msg = "[red][[✗]] JSON Schema does not follow nf-core specs:\n {}".format(e)
-            log.error(error_msg, extra={"markup": True})
+            log.error(error_msg)
             raise AssertionError(error_msg)
         else:
             try:
@@ -93,10 +93,10 @@ class PipelineSchema(object):
                 self.validate_schema(self.flat_schema)
             except AssertionError as e:
                 error_msg = "[red][[✗]] Flattened JSON Schema does not follow nf-core specs:\n {}".format(e)
-                log.error(error_msg, extra={"markup": True})
+                log.error(error_msg)
                 raise AssertionError(error_msg)
             else:
-                log.info("[green][[✓]] Pipeline schema looks valid", extra={"markup": True})
+                log.info("[green][[✓]] Pipeline schema looks valid")
 
     def load_schema(self):
         """ Load a JSON Schema from a file """
@@ -170,12 +170,12 @@ class PipelineSchema(object):
             assert self.flat_schema is not None
             jsonschema.validate(self.input_params, self.flat_schema)
         except AssertionError:
-            log.error("[red][[✗]] Flattened JSON Schema not found", extra={"markup": True})
+            log.error("[red][[✗]] Flattened JSON Schema not found")
             return False
         except jsonschema.exceptions.ValidationError as e:
-            log.error("[red][[✗]] Input parameters are invalid: {}".format(e.message), extra={"markup": True})
+            log.error("[red][[✗]] Input parameters are invalid: {}".format(e.message))
             return False
-        log.info("[green][[✓]] Input parameters look valid", extra={"markup": True})
+        log.info("[green][[✓]] Input parameters look valid")
         return True
 
     def validate_schema(self, schema):
