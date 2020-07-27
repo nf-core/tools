@@ -315,6 +315,7 @@ class PipelineLint(object):
 
         # First - critical files. Check that this is actually a Nextflow pipeline
         if not os.path.isfile(pf("nextflow.config")) and not os.path.isfile(pf("main.nf")):
+            self.failed.append((1, "File not found: nextflow.config or main.nf"))
             raise AssertionError("Neither nextflow.config or main.nf found! Is this a Nextflow pipeline?")
 
         # Files that cause an error if they don't exist
@@ -482,7 +483,7 @@ class PipelineLint(object):
         process_with_deprecated_syntax = list(
             set(
                 [
-                    re.search("^(process\.\$.*?)\.+.*$", ck).group(1)
+                    re.search(r"^(process\.\$.*?)\.+.*$", ck).group(1)
                     for ck in self.config.keys()
                     if re.match(r"^(process\.\$.*?)\.+.*$", ck)
                 ]

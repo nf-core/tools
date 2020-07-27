@@ -169,7 +169,9 @@ class DownloadTest(unittest.TestCase):
     #
     # Tests for 'pull_singularity_image'
     #
-    @pytest.mark.xfail(raises=OSError, strict=True)
+    # If Singularity is not installed, will log an error and exit
+    # If Singularity is installed, should raise an OSError due to non-existant image
+    @pytest.mark.xfail(raises=OSError)
     def test_pull_singularity_image(self):
         tmp_dir = tempfile.mkdtemp()
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)

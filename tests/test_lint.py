@@ -100,10 +100,10 @@ class TestLint(unittest.TestCase):
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
         lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
+        assert len(lint_obj.failed) == 1
 
     def test_failing_missingfiles_example(self):
         """Tests for missing files like Dockerfile or LICENSE"""
