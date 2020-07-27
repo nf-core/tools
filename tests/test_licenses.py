@@ -51,7 +51,7 @@ class WorkflowLicensesTest(unittest.TestCase):
         self.license_obj.get_environment_file()
         assert any(["multiqc" in k for k in self.license_obj.conda_config["dependencies"]])
 
-    @pytest.mark.xfail(raises=LookupError)
+    @pytest.mark.xfail(raises=LookupError, strict=True)
     def test_get_environment_file_nonexistent(self):
         self.license_obj = nf_core.licences.WorkflowLicences("fubarnotreal")
         self.license_obj.get_environment_file()

@@ -79,7 +79,7 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 0, "warned": 5, "passed": MAX_PASS_CHECKS - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_call_lint_pipeline_fail(self):
         """Test the main execution function of PipelineLint (fail)
         This should fail after the first test and halt execution """
@@ -100,7 +100,7 @@ class TestLint(unittest.TestCase):
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
         lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
@@ -140,7 +140,7 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 19, "warned": 6, "passed": 10}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_config_variable_error(self):
         """Tests that config variable existence test falls over nicely with nextflow can't run"""
         bad_lint_obj = nf_core.lint.PipelineLint("/non/existant/path")
@@ -364,7 +364,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     @mock.patch("requests.get")
-    @pytest.mark.xfail(raises=ValueError)
+    @pytest.mark.xfail(raises=ValueError, strict=True)
     def test_conda_env_timeout(self, mock_get):
         """ Tests the conda environment handles API timeouts """
         # Define the behaviour of the request get mock

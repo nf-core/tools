@@ -70,14 +70,14 @@ class TestLaunch(unittest.TestCase):
         }
 
     def test_get_pipeline_defaults(self):
-        """ Test fetching default inputs from the JSON schema """
+        """ Test fetching default inputs from the pipeline schema """
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
         assert self.launcher.schema_obj.input_params["outdir"] == "./results"
 
     def test_get_pipeline_defaults_input_params(self):
-        """ Test fetching default inputs from the JSON schema with an input params file supplied """
+        """ Test fetching default inputs from the pipeline schema with an input params file supplied """
         tmp_filehandle, tmp_filename = tempfile.mkstemp()
         with os.fdopen(tmp_filehandle, "w") as fh:
             json.dump({"outdir": "fubar"}, fh)
@@ -88,7 +88,7 @@ class TestLaunch(unittest.TestCase):
         assert self.launcher.schema_obj.input_params["outdir"] == "fubar"
 
     def test_nf_merge_schema(self):
-        """ Checking merging the nextflow JSON schema with the pipeline schema """
+        """ Checking merging the nextflow schema with the pipeline schema """
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         self.launcher.merge_nxf_flag_schema()
@@ -121,6 +121,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.merge_nxf_flag_schema()
         try:
             self.launcher.launch_web_gui()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0].startswith("Web launch response not recognised:")
 
@@ -140,6 +141,7 @@ class TestLaunch(unittest.TestCase):
         """ Test polling the website for a launch response - status error """
         try:
             self.launcher.get_web_launch_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0] == "Got error from launch API (foo)"
 
@@ -148,6 +150,7 @@ class TestLaunch(unittest.TestCase):
         """ Test polling the website for a launch response - status error """
         try:
             self.launcher.get_web_launch_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0].startswith("Web launch GUI returned unexpected status (foo): ")
 
@@ -161,6 +164,7 @@ class TestLaunch(unittest.TestCase):
         """ Test polling the website for a launch response - complete, but missing keys """
         try:
             self.launcher.get_web_launch_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0] == "Missing return key from web API: 'nxf_flags'"
 

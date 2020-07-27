@@ -187,26 +187,36 @@ class TestSchema(unittest.TestCase):
 
     def test_remove_schema_notfound_configs(self):
         """ Remove unrecognised params from the schema """
-        self.schema_obj.schema = {"properties": {"foo": {"type": "string"}}, "required": ["foo"]}
+        self.schema_obj.schema = {
+            "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+            "required": ["foo"],
+        }
         self.schema_obj.pipeline_params = {"bar": True}
         self.schema_obj.no_prompts = True
         params_removed = self.schema_obj.remove_schema_notfound_configs()
-        assert len(self.schema_obj.schema["properties"]) == 0
+        assert len(self.schema_obj.schema["properties"]) == 1
+        assert "required" not in self.schema_obj.schema
         assert len(params_removed) == 1
         assert "foo" in params_removed
 
-    def test_remove_schema_notfound_configs_childobj(self):
+    def test_remove_schema_notfound_configs_childschema(self):
         """
         Remove unrecognised params from the schema,
         even when they're in a group
         """
         self.schema_obj.schema = {
-            "properties": {"parent": {"type": "object", "properties": {"foo": {"type": "string"}}, "required": ["foo"]}}
+            "definitions": {
+                "subSchemaId": {
+                    "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+                    "required": ["foo"],
+                }
+            }
         }
         self.schema_obj.pipeline_params = {"bar": True}
         self.schema_obj.no_prompts = True
         params_removed = self.schema_obj.remove_schema_notfound_configs()
-        assert len(self.schema_obj.schema["properties"]["parent"]["properties"]) == 0
+        assert len(self.schema_obj.schema["definitions"]["subSchemaId"]["properties"]) == 1
+        assert "required" not in self.schema_obj.schema["definitions"]["subSchemaId"]
         assert len(params_removed) == 1
         assert "foo" in params_removed
 
@@ -318,6 +328,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_url = "invalid_url"
         try:
             self.schema_obj.launch_web_builder()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
 
@@ -328,7 +339,7 @@ class TestSchema(unittest.TestCase):
         try:
             self.schema_obj.launch_web_builder()
         except AssertionError as e:
-            assert e.args[0].startswith("JSON Schema builder response not recognised")
+            assert e.args[0].startswith("Pipeline schema builder response not recognised")
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     @mock.patch("requests.get")
@@ -338,6 +349,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_url = "valid_url_success"
         try:
             self.schema_obj.launch_web_builder()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             # Assertion error comes from get_web_builder_response() function
             assert e.args[0].startswith("Could not access remote API results: https://nf-co.re")
@@ -354,15 +366,15 @@ class TestSchema(unittest.TestCase):
             return MockResponse({}, 404)
 
         if args[0] == "valid_url_error":
-            response_data = {"status": "error", "message": "testing"}
+            response_data = {"status": "error", "message": "testing URL failure"}
             return MockResponse(response_data, 200)
 
         if args[0] == "valid_url_waiting":
-            response_data = {"status": "waiting_for_user", "message": "testing"}
+            response_data = {"status": "waiting_for_user", "message": "testing URL waiting"}
             return MockResponse(response_data, 200)
 
         if args[0] == "valid_url_saved":
-            response_data = {"status": "web_builder_edited", "message": "testing", "schema": {"foo": "bar"}}
+            response_data = {"status": "web_builder_edited", "message": "testing saved", "schema": {"foo": "bar"}}
             return MockResponse(response_data, 200)
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
@@ -371,6 +383,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_api_url = "invalid_url"
         try:
             self.schema_obj.get_web_builder_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
 
@@ -380,8 +393,9 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_api_url = "valid_url_error"
         try:
             self.schema_obj.get_web_builder_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
-            assert e.args[0].startswith("Got error from JSON Schema builder")
+            assert e.args[0] == "Got error from schema builder: 'testing URL failure'"
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_waiting(self, mock_post):
@@ -395,7 +409,8 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_api_url = "valid_url_saved"
         try:
             self.schema_obj.get_web_builder_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
-            # Check that this is the expected AssertionError, as there are seveal
-            assert e.args[0].startswith("Response from JSON Builder did not pass validation")
+            # Check that this is the expected AssertionError, as there are several
+            assert e.args[0].startswith("Response from schema builder did not pass validation")
         assert self.schema_obj.schema == {"foo": "bar"}
