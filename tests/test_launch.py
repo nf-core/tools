@@ -50,8 +50,7 @@ class TestLaunch(unittest.TestCase):
     def test_get_pipeline_schema(self):
         """ Test loading the params schema from a pipeline """
         self.launcher.get_pipeline_schema()
-        assert "properties" in self.launcher.schema_obj.schema
-        assert len(self.launcher.schema_obj.schema["properties"]) > 2
+        assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
 
     def test_make_pipeline_schema(self):
         """ Make a copy of the template workflow, but delete the schema file, then try to load it """
@@ -60,9 +59,8 @@ class TestLaunch(unittest.TestCase):
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
         self.launcher = nf_core.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()
-        assert "properties" in self.launcher.schema_obj.schema
-        assert len(self.launcher.schema_obj.schema["properties"]) > 2
-        assert self.launcher.schema_obj.schema["properties"]["Input/output options"]["properties"]["outdir"] == {
+        assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
+        assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
             "description": "The output directory where the results will be saved.",
             "default": "./results",
@@ -92,8 +90,8 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         self.launcher.merge_nxf_flag_schema()
-        assert list(self.launcher.schema_obj.schema["properties"].keys())[0] == "Nextflow command-line flags"
-        assert "-resume" in self.launcher.schema_obj.schema["properties"]["Nextflow command-line flags"]["properties"]
+        assert self.launcher.schema_obj.schema["allOf"][0] == {"$ref": "#/definitions/coreNextflow"}
+        assert "-resume" in self.launcher.schema_obj.schema["definitions"]["coreNextflow"]["properties"]
 
     def test_ob_to_pyinquirer_string(self):
         """ Check converting a python dict to a pyenquirer format - simple strings """
