@@ -420,7 +420,7 @@ class Launch(object):
 
         Args:
           group_id: Paramater ID (string)
-          group_obj: JSON Schema keys - no objects (dict)
+          group_obj: JSON Schema keys (dict)
 
         Returns:
           Dict of param_id:val answers
@@ -469,7 +469,7 @@ class Launch(object):
 
         Args:
           param_id: Parameter ID (string)
-          param_obj: JSON Schema keys - no objects (dict)
+          param_obj: JSON Schema keys (dict)
           answers: Optional preexisting answers (dict)
           print_help: If description and help_text should be printed (bool)
 

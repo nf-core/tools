@@ -347,8 +347,34 @@ Finding a placeholder like this means that something was probably copied and pas
 
 Pipelines should have a `nextflow_schema.json` file that describes the different pipeline parameters (eg. `params.something`, `--something`).
 
-Schema should be valid JSON files and adhere to [JSONSchema](https://json-schema.org/), Draft 7.
-The top-level schema should be an `object`, where each of the `properties` corresponds to a pipeline parameter.
+* Schema should be valid JSON files
+* Schema should adhere to [JSONSchema](https://json-schema.org/), Draft 7.
+* Parameters can be described in two places:
+  * As `properties` in the top-level schema object
+  * As `properties` within subschemas listed in a top-level `definitions` objects
+* The schema must describe at least one parameter
+* There must be no duplicate parameter IDs across the schema and definition subschema
+* All subschema in `definitions` must be referenced in the top-level `allOf` key
+* The top-level `allOf` key must not describe any non-existent definitions
+
+For example, an _extremely_ minimal schema could look like this:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "properties": {
+    "first_param": { "type": "string" }
+  },
+  "definitions": {
+    "my_first_group": {
+      "properties": {
+        "second_param": { "type": "string" }
+      }
+    }
+  },
+  "allOf": [{"$ref": "#/definitions/my_first_group"}]
+}
+```
 
 ## Error #15 - Schema config check ## {#15}
 
