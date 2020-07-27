@@ -179,7 +179,7 @@ class PipelineSchema(object):
         num_params = len(param_keys)
         for d_key, d_schema in schema.get("definitions", {}).items():
             # Check that this definition is mentioned in allOf
-            assert "allOf" in schema
+            assert "allOf" in schema, "Schema has definitions, but no allOf key"
             in_allOf = False
             for allOf in schema["allOf"]:
                 if allOf["$ref"] == "#/definitions/{}".format(d_key):
@@ -196,7 +196,7 @@ class PipelineSchema(object):
 
         # Check that everything in allOf exists
         for allOf in schema.get("allOf", []):
-            assert "definitions" in schema
+            assert "definitions" in schema, "Schema has allOf, but no definitions"
             def_key = allOf["$ref"][14:]
             if def_key not in schema["definitions"]:
                 raise AssertionError("Subschema '{}' found in 'allOf' but not 'definitions'".format(def_key))
