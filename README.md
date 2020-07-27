@@ -530,9 +530,8 @@ $ nf-core schema validate my_pipeline --params my_inputs.json
 
     nf-core/tools version 1.10
 
-INFO: [✓] Pipeline schema looks valid
-
-ERROR: [✗] Input parameters are invalid: 'input' is a required property
+  INFO     [✓] Pipeline schema looks valid (found 26 params)
+  ERROR    [✗] Input parameters are invalid: 'input' is a required property
 ```
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).

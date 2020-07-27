@@ -33,6 +33,7 @@ class PipelineSchema(object):
         self.pipeline_dir = None
         self.schema_filename = None
         self.schema_defaults = {}
+        self.schema_params = []
         self.input_params = {}
         self.pipeline_params = {}
         self.pipeline_manifest = {}
@@ -103,19 +104,21 @@ class PipelineSchema(object):
         """
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
+            self.schema_params.append(p_key)
             if "default" in param:
                 self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
         for d_key, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
+                self.schema_params.append(p_key)
                 if "default" in param:
                     self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self):
         """ Save a pipeline schema to a file """
         # Write results to a JSON file
-        log.info("Writing schema with {} params: '{}'".format(len(self.schema_defaults), self.schema_filename))
+        log.info("Writing schema with {} params: '{}'".format(len(self.schema_params), self.schema_filename))
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
 
@@ -375,13 +378,13 @@ class PipelineSchema(object):
         """
         params_added = []
         for p_key, p_val in self.pipeline_params.items():
-            # Check if key is in schema defaults (should be all discovered params)
-            if not p_key in self.schema_defaults.keys():
+            # Check if key is in schema parameters
+            if not p_key in self.schema_params:
                 if (
                     self.no_prompts
                     or self.schema_from_scratch
                     or Confirm.ask(
-                        ":sparkles: Found [white bold]'params.{}'[/] in pipeline but not in schema! [blue]Add to pipeline schema?".format(
+                        ":sparkles: Found [white bold]'params.{}'[/] in pipeline but not in schema. [blue]Add to pipeline schema?".format(
                             p_key
                         )
                     )
