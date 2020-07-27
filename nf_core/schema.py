@@ -82,24 +82,28 @@ class PipelineSchema(object):
             log.error(error_msg)
             raise AssertionError(error_msg)
         except AssertionError as e:
-            error_msg = "[red][[✗]] JSON Schema does not follow nf-core specs:\n {}".format(e)
+            error_msg = "[red][[✗]] Pipeline schema does not follow nf-core specs:\n {}".format(e)
             log.error(error_msg)
             raise AssertionError(error_msg)
         else:
             try:
-                num_params = self.get_schema_defaults()
+                self.get_schema_defaults()
                 self.validate_schema(self.schema)
-                if num_params == 0:
+                if len(self.schema_defaults) == 0:
                     raise AssertionError("No parameters found in schema")
             except AssertionError as e:
                 error_msg = "[red][[✗]] Pipeline schema does not follow nf-core specs:\n {}".format(e)
                 log.error(error_msg)
                 raise AssertionError(error_msg)
             else:
-                log.info("[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
+                log.info(
+                    "[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(
+                        len(self.schema_defaults)
+                    )
+                )
 
     def load_schema(self):
-        """ Load a JSON Schema from a file """
+        """ Load a pipeline schema from a file """
         with open(self.schema_filename, "r") as fh:
             self.schema = json.load(fh)
         log.debug("JSON file loaded: {}".format(self.schema_filename))
@@ -111,26 +115,19 @@ class PipelineSchema(object):
         Saves defaults to self.schema_defaults
         Returns count of how many parameters were found (with or without a default value)
         """
-        num_params = 0
         # Top level schema-properties (ungrouped)
         for p_key, param in self.schema.get("properties", {}).items():
-            num_params += 1
-            if "default" in param:
-                self.schema_defaults[p_key] = param["default"]
+            self.schema_defaults[p_key] = param.get("default")
 
-        # TODO: Grouped schema properties in subschema definitions
+        # Grouped schema properties in subschema definitions
         for d_key, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
-                num_params += 1
-                if "default" in param:
-                    self.schema_defaults[p_key] = param["default"]
-
-        return num_params
+                self.schema_defaults[p_key] = param.get("default")
 
     def save_schema(self):
-        """ Load a JSON Schema from a file """
+        """ Save a pipeline schema to a file """
         # Write results to a JSON file
-        log.info("Writing JSON schema with {} params: {}".format(len(self.schema["properties"]), self.schema_filename))
+        log.info("Writing schema with {} params: '{}'".format(len(self.schema_defaults), self.schema_filename))
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
 
@@ -184,7 +181,7 @@ class PipelineSchema(object):
             raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
 
     def make_skeleton_schema(self):
-        """ Make a new JSON Schema from the template """
+        """ Make a new pipeline schema from the template """
         self.schema_from_scratch = True
         # Use Jinja to render the template schema file to a variable
         # Bit confusing sorry, but cookiecutter only works with directories etc so this saves a bunch of code
@@ -202,7 +199,7 @@ class PipelineSchema(object):
         self.schema = json.loads(schema_template.render(cookiecutter=cookiecutter_vars))
 
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
-        """ Interactively build a new JSON Schema for a pipeline """
+        """ Interactively build a new pipeline schema for a pipeline """
 
         if no_prompts:
             self.no_prompts = True
@@ -211,7 +208,7 @@ class PipelineSchema(object):
         if url:
             self.web_schema_build_url = url
 
-        # Get JSON Schema filename
+        # Get pipeline schema filename
         try:
             self.get_schema_path(pipeline_dir, local_only=True)
         except AssertionError:
@@ -226,7 +223,7 @@ class PipelineSchema(object):
         try:
             self.load_lint_schema()
         except AssertionError as e:
-            log.error("Existing JSON Schema found, but it is invalid: {}".format(self.schema_filename))
+            log.error("Existing pipeline schema found, but it is invalid: {}".format(self.schema_filename))
             log.info("Please fix or delete this file, then try again.")
             return False
 
@@ -293,42 +290,43 @@ class PipelineSchema(object):
 
     def remove_schema_notfound_configs(self):
         """
-        Strip out anything from the existing JSON Schema that's not in the nextflow params
+        Go through top-level schema and all definitions sub-schemas to remove
+        anything that's not in the nextflow config.
         """
+        # Top-level properties
+        self.schema, params_removed = self.remove_schema_notfound_configs_single_schema(self.schema)
+        # Sub-schemas in definitions
+        for d_key, definition in self.schema.get("definitions", {}).items():
+            cleaned_schema, p_removed = self.remove_schema_notfound_configs_single_schema(definition)
+            self.schema["definitions"][d_key] = cleaned_schema
+            params_removed.extend(p_removed)
+        return params_removed
+
+    def remove_schema_notfound_configs_single_schema(self, schema):
+        """
+        Go through a single schema / set of properties and strip out
+        anything that's not in the nextflow config.
+
+        Takes: Schema or sub-schema with properties key
+        Returns: Cleaned schema / sub-schema
+        """
+        # Make a deep copy so as not to edit in place
+        schema = copy.deepcopy(schema)
         params_removed = []
         # Use iterator so that we can delete the key whilst iterating
-        for p_key in [k for k in self.schema["properties"].keys()]:
-            # Groups - we assume only one-deep
-            if self.schema["properties"][p_key]["type"] == "object":
-                for p_child_key in [k for k in self.schema["properties"][p_key].get("properties", {}).keys()]:
-                    if self.prompt_remove_schema_notfound_config(p_child_key):
-                        del self.schema["properties"][p_key]["properties"][p_child_key]
-                        # Remove required flag if set
-                        if p_child_key in self.schema["properties"][p_key].get("required", []):
-                            self.schema["properties"][p_key]["required"].remove(p_child_key)
-                        # Remove required list if now empty
-                        if (
-                            "required" in self.schema["properties"][p_key]
-                            and len(self.schema["properties"][p_key]["required"]) == 0
-                        ):
-                            del self.schema["properties"][p_key]["required"]
-                        log.debug("Removing '{}' from JSON Schema".format(p_child_key))
-                        params_removed.append(p_child_key)
+        for p_key in [k for k in schema.get("properties", {}).keys()]:
+            if self.prompt_remove_schema_notfound_config(p_key):
+                del schema["properties"][p_key]
+                # Remove required flag if set
+                if p_key in schema.get("required", []):
+                    schema["required"].remove(p_key)
+                # Remove required list if now empty
+                if "required" in self.schema and len(schema["required"]) == 0:
+                    del schema["required"]
+                log.debug("Removing '{}' from pipeline schema".format(p_key))
+                params_removed.append(p_key)
 
-            # Top-level params
-            else:
-                if self.prompt_remove_schema_notfound_config(p_key):
-                    del self.schema["properties"][p_key]
-                    # Remove required flag if set
-                    if p_key in self.schema.get("required", []):
-                        self.schema["required"].remove(p_key)
-                    # Remove required list if now empty
-                    if "required" in self.schema and len(self.schema["required"]) == 0:
-                        del self.schema["required"]
-                    log.debug("Removing '{}' from JSON Schema".format(p_key))
-                    params_removed.append(p_key)
-
-        return params_removed
+        return schema, params_removed
 
     def prompt_remove_schema_notfound_config(self, p_key):
         """
@@ -349,32 +347,32 @@ class PipelineSchema(object):
 
     def add_schema_found_configs(self):
         """
-        Add anything that's found in the Nextflow params that's missing in the JSON Schema
+        Add anything that's found in the Nextflow params that's missing in the pipeline schema
         """
         params_added = []
         for p_key, p_val in self.pipeline_params.items():
-            # Check if key is in top-level params
-            if not p_key in self.schema["properties"].keys():
-                # Check if key is in group-level params
-                if not any([p_key in param.get("properties", {}) for k, param in self.schema["properties"].items()]):
-                    if (
-                        self.no_prompts
-                        or self.schema_from_scratch
-                        or Confirm.ask(
-                            ":sparkles: Found [white bold]'params.{}'[/] in pipeline but not in schema! [blue]Add to JSON Schema?".format(
-                                p_key
-                            )
+            # Check if key is in schema defaults (should be all discovered params)
+            if not p_key in self.schema_defaults.keys():
+                if (
+                    self.no_prompts
+                    or self.schema_from_scratch
+                    or Confirm.ask(
+                        ":sparkles: Found [white bold]'params.{}'[/] in pipeline but not in schema! [blue]Add to pipeline schema?".format(
+                            p_key
                         )
-                    ):
-                        self.schema["properties"][p_key] = self.build_schema_param(p_val)
-                        log.debug("Adding '{}' to JSON Schema".format(p_key))
-                        params_added.append(p_key)
+                    )
+                ):
+                    if "properties" not in self.schema:
+                        self.schema["properties"] = {}
+                    self.schema["properties"][p_key] = self.build_schema_param(p_val)
+                    log.debug("Adding '{}' to pipeline schema".format(p_key))
+                    params_added.append(p_key)
 
         return params_added
 
     def build_schema_param(self, p_val):
         """
-        Build a JSON Schema dictionary for an param interactively
+        Build a pipeline schema dictionary for an param interactively
         """
         p_val = p_val.strip("\"'")
         # p_val is always a string as it is parsed from nextflow config this way
@@ -404,7 +402,7 @@ class PipelineSchema(object):
 
     def launch_web_builder(self):
         """
-        Send JSON Schema to web builder and wait for response
+        Send pipeline schema to web builder and wait for response
         """
         content = {
             "post_content": "json_schema",
@@ -421,7 +419,7 @@ class PipelineSchema(object):
         except (AssertionError) as e:
             log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
-                "JSON Schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(
+                "Pipeline schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(
                     self.web_schema_build_url
                 )
             )
@@ -440,23 +438,23 @@ class PipelineSchema(object):
         """
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_api_url)
         if web_response["status"] == "error":
-            raise AssertionError("Got error from JSON Schema builder ( {} )".format(web_response.get("message")))
+            raise AssertionError("Got error from pipeline schema builder ( {} )".format(web_response.get("message")))
         elif web_response["status"] == "waiting_for_user":
             return False
         elif web_response["status"] == "web_builder_edited":
-            log.info("Found saved status from nf-core JSON Schema builder")
+            log.info("Found saved status from nf-core pipeline schema builder")
             try:
                 self.schema = web_response["schema"]
                 self.validate_schema(self.schema)
             except AssertionError as e:
-                raise AssertionError("Response from JSON Builder did not pass validation:\n {}".format(e))
+                raise AssertionError("Response from pipeline schema builder did not pass validation:\n {}".format(e))
             else:
                 self.save_schema()
                 return True
         else:
             log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
-                "JSON Schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(
+                "Pipeline schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(
                     web_response["status"], self.web_schema_build_api_url
                 )
             )
