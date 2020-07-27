@@ -170,15 +170,31 @@ class PipelineSchema(object):
         except jsonschema.exceptions.SchemaError as e:
             raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
 
-        param_keys = list(self.schema.get("properties", {}).keys())
+        param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
-        for k, d in self.schema.get("definitions", {}).items():
-            for d_key in d.get("properties", {}):
+        for d_key, d_schema in schema.get("definitions", {}).items():
+            # Check that this definition is mentioned in allOf
+            assert "allOf" in schema
+            in_allOf = False
+            for allOf in schema["allOf"]:
+                if allOf["$ref"] == "#/definitions/{}".format(d_key):
+                    in_allOf = True
+            if not in_allOf:
+                raise AssertionError("Definition subschema '{}' not included in schema 'allOf'".format(d_key))
+
+            for d_param_id in d_schema.get("properties", {}):
                 # Check that we don't have any duplicate parameter IDs in different definitions
-                if d_key in param_keys:
-                    raise AssertionError("Duplicate parameter found in schema definitions: '{}'".format(d_key))
-                param_keys.append(d_key)
+                if d_param_id in param_keys:
+                    raise AssertionError("Duplicate parameter found in schema 'definitions': '{}'".format(d_param_id))
+                param_keys.append(d_param_id)
                 num_params += 1
+
+        # Check that everything in allOf exists
+        for allOf in schema.get("allOf", []):
+            assert "definitions" in schema
+            def_key = allOf["$ref"][14:]
+            if def_key not in schema["definitions"]:
+                raise AssertionError("Subschema '{}' found in 'allOf' but not 'definitions'".format(def_key))
 
         # Check that the schema describes at least one parameter
         if num_params == 0:

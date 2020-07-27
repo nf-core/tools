@@ -149,15 +149,51 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema = {"type": "invalidthing"}
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_validate_schema_fail_duplicate_ids(self):
         """
         Check that the schema validation fails when we have duplicate IDs in definition subschema
         """
         self.schema_obj.schema = {
-            "definitions": {"groupOne": {"properites": {"foo": "bar"}}, "groupTwo": {"properites": {"foo": "bar"}}}
+            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"foo": {}}}},
+            "allOf": [{"$ref": "#/definitions/groupOne"}, {"$ref": "#/definitions/groupTwo"}],
         }
-        self.schema_obj.validate_schema(self.schema_obj.schema)
+        try:
+            self.schema_obj.validate_schema(self.schema_obj.schema)
+            raise UserWarning("Expected AssertionError")
+        except AssertionError as e:
+            assert e.args[0] == "Duplicate parameter found in schema 'definitions': 'foo'"
+
+    def test_validate_schema_fail_missing_def(self):
+        """
+        Check that the schema validation fails when we a definition in allOf is not in definitions
+        """
+        self.schema_obj.schema = {
+            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
+            "allOf": [{"$ref": "#/definitions/groupOne"}],
+        }
+        try:
+            self.schema_obj.validate_schema(self.schema_obj.schema)
+            raise UserWarning("Expected AssertionError")
+        except AssertionError as e:
+            assert e.args[0] == "Definition subschema 'groupTwo' not included in schema 'allOf'"
+
+    def test_validate_schema_fail_unexpected_allof(self):
+        """
+        Check that the schema validation fails when we an unrecognised definition is in allOf
+        """
+        self.schema_obj.schema = {
+            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
+            "allOf": [
+                {"$ref": "#/definitions/groupOne"},
+                {"$ref": "#/definitions/groupTwo"},
+                {"$ref": "#/definitions/groupThree"},
+            ],
+        }
+        try:
+            self.schema_obj.validate_schema(self.schema_obj.schema)
+            raise UserWarning("Expected AssertionError")
+        except AssertionError as e:
+            assert e.args[0] == "Subschema 'groupThree' found in 'allOf' but not 'definitions'"
 
     def test_make_skeleton_schema(self):
         """ Test making a new schema skeleton """
