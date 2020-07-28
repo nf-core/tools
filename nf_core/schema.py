@@ -184,13 +184,13 @@ class PipelineSchema(object):
             for allOf in schema["allOf"]:
                 if allOf["$ref"] == "#/definitions/{}".format(d_key):
                     in_allOf = True
-            if not in_allOf:
-                raise AssertionError("Definition subschema '{}' not included in schema 'allOf'".format(d_key))
+            assert in_allOf, "Definition subschema '{}' not included in schema 'allOf'".format(d_key)
 
             for d_param_id in d_schema.get("properties", {}):
                 # Check that we don't have any duplicate parameter IDs in different definitions
-                if d_param_id in param_keys:
-                    raise AssertionError("Duplicate parameter found in schema 'definitions': '{}'".format(d_param_id))
+                assert d_param_id not in param_keys, "Duplicate parameter found in schema 'definitions': '{}'".format(
+                    d_param_id
+                )
                 param_keys.append(d_param_id)
                 num_params += 1
 
@@ -198,14 +198,64 @@ class PipelineSchema(object):
         for allOf in schema.get("allOf", []):
             assert "definitions" in schema, "Schema has allOf, but no definitions"
             def_key = allOf["$ref"][14:]
-            if def_key not in schema["definitions"]:
-                raise AssertionError("Subschema '{}' found in 'allOf' but not 'definitions'".format(def_key))
+            assert def_key in schema["definitions"], "Subschema '{}' found in 'allOf' but not 'definitions'".format(
+                def_key
+            )
 
         # Check that the schema describes at least one parameter
-        if num_params == 0:
-            raise AssertionError("No parameters found in schema")
+        assert num_params > 0, "No parameters found in schema"
+
+        # Validate title and description
+        self.validate_schema_title_description(schema)
 
         return num_params
+
+    def validate_schema_title_description(self, schema=None):
+        """
+        Extra validation command for linting.
+        Checks that the schema "$id", "title" and "description" attributes match the piipeline config.
+        """
+        if schema is None:
+            schema = self.schema
+        if schema is None:
+            log.debug("Pipeline schema not set - skipping validation of top-level attributes")
+            return None
+
+        assert "$schema" in self.schema, "Schema missing top-level '$schema' attribute"
+        schema_attr = "https://json-schema.org/draft-07/schema"
+        assert self.schema["$schema"] == schema_attr, "Schema '$schema' should be '{}'\n Found '{}'".format(
+            schema_attr, self.schema["$schema"]
+        )
+
+        if self.pipeline_manifest == {}:
+            self.get_wf_params()
+
+        if "name" not in self.pipeline_manifest:
+            log.debug("Pipeline manifest 'name' not known - skipping validation of schema id and title")
+        else:
+            assert "$id" in self.schema, "Schema missing top-level '$id' attribute"
+            assert "title" in self.schema, "Schema missing top-level 'title' attribute"
+            # Validate that id, title and description match the pipeline manifest
+            id_attr = "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(
+                self.pipeline_manifest["name"].strip("\"'")
+            )
+            assert self.schema["$id"] == id_attr, "Schema '$id' should be '{}'\n Found '{}'".format(
+                id_attr, self.schema["$id"]
+            )
+
+            title_attr = "{} pipeline parameters".format(self.pipeline_manifest["name"].strip("\"'"))
+            assert self.schema["title"] == title_attr, "Schema 'title' should be '{}'\n Found: '{}'".format(
+                title_attr, self.schema["title"]
+            )
+
+        if "description" not in self.pipeline_manifest:
+            log.debug("Pipeline manifest 'description' not known - skipping validation of schema description")
+        else:
+            assert "description" in self.schema, "Schema missing top-level 'description' attribute"
+            desc_attr = self.pipeline_manifest["description"].strip("\"'")
+            assert self.schema["description"] == desc_attr, "Schema 'description' should be '{}'\n Found: '{}'".format(
+                desc_attr, self.schema["description"]
+            )
 
     def make_skeleton_schema(self):
         """ Make a new pipeline schema from the template """

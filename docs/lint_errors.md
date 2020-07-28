@@ -356,12 +356,20 @@ Pipelines should have a `nextflow_schema.json` file that describes the different
 * There must be no duplicate parameter IDs across the schema and definition subschema
 * All subschema in `definitions` must be referenced in the top-level `allOf` key
 * The top-level `allOf` key must not describe any non-existent definitions
+* Core top-level schema attributes should exist and be set as follows:
+  * `$schema`: `https://json-schema.org/draft-07/schema`
+  * `$id`: URL to the raw schema file, eg. `https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json`
+  * `title`: `YOURPIPELINE pipeline parameters`
+  * `description`: The piepline config `manifest.description`
 
 For example, an _extremely_ minimal schema could look like this:
 
 ```json
 {
   "$schema": "https://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json",
+  "title": "YOURPIPELINE pipeline parameters",
+  "description": "This pipeline is for testing",
   "properties": {
     "first_param": { "type": "string" }
   },
