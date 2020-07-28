@@ -1,4 +1,4 @@
-name: nf-core CI
+name: nf-core Docker push
 # This builds the docker image and pushes it to DockerHub
 # Runs on nf-core repo releases and push event to 'dev' branch (PR merges)
 on:
