@@ -29,4 +29,4 @@ def test_cli_bad_subcommand():
     result = runner.invoke(nf_core.__main__.nf_core_cli, ["-v", "foo"])
     assert result.exit_code == 2
     # Checks that -v was considered valid
-    assert "No such command 'foo'." in result.output
+    assert "No such command" in result.output

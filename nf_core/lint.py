@@ -5,7 +5,11 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.table import Table
 import datetime
+import fnmatch
 import git
 import io
 import json
@@ -14,10 +18,7 @@ import os
 import re
 import requests
 import rich
-from rich.console import Console
-from rich.markdown import Markdown
 import rich.progress
-from rich.table import Table
 import subprocess
 import textwrap
 
@@ -199,7 +200,7 @@ class PipelineLint(object):
         Raises:
             If a critical problem is found, an ``AssertionError`` is raised.
         """
-        log.info("Testing pipeline: [magenta]{}".format(self.path), extra={"markup": True})
+        log.info("Testing pipeline: [magenta]{}".format(self.path))
         if self.release_mode:
             log.info("Including --release mode tests")
         check_functions = [
@@ -315,6 +316,7 @@ class PipelineLint(object):
 
         # First - critical files. Check that this is actually a Nextflow pipeline
         if not os.path.isfile(pf("nextflow.config")) and not os.path.isfile(pf("main.nf")):
+            self.failed.append((1, "File not found: nextflow.config or main.nf"))
             raise AssertionError("Neither nextflow.config or main.nf found! Is this a Nextflow pipeline?")
 
         # Files that cause an error if they don't exist
@@ -482,7 +484,7 @@ class PipelineLint(object):
         process_with_deprecated_syntax = list(
             set(
                 [
-                    re.search("^(process\.\$.*?)\.+.*$", ck).group(1)
+                    re.search(r"^(process\.\$.*?)\.+.*$", ck).group(1)
                     for ck in self.config.keys()
                     if re.match(r"^(process\.\$.*?)\.+.*$", ck)
                 ]
@@ -1155,10 +1157,8 @@ class PipelineLint(object):
         for root, dirs, files in os.walk(self.path):
             # Ignore files
             for i in ignore:
-                if i in dirs:
-                    dirs.remove(i)
-                if i in files:
-                    files.remove(i)
+                dirs = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
+                files = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
             for fname in files:
                 with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
                     for l in fh:
@@ -1222,7 +1222,7 @@ class PipelineLint(object):
             self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
 
     def check_schema_lint(self):
-        """ Lint the pipeline JSON schema file """
+        """ Lint the pipeline schema """
 
         # Only show error messages from schema
         if log.getEffectiveLevel() == logging.INFO:

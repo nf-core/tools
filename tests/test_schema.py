@@ -34,21 +34,23 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.get_schema_path(self.template_dir)
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_nofile(self):
         """ Check that linting raises properly if a non-existant file is given """
         self.schema_obj.get_schema_path("fake_file")
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_notjson(self):
         """ Check that linting raises properly if a non-JSON file is given """
         self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError)
-    def test_load_lint_schema_invalidjson(self):
-        """ Check that linting raises properly if a JSON file is given with an invalid schema """
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_load_lint_schema_noparams(self):
+        """
+        Check that linting raises properly if a JSON file is given without any params
+        """
         # Make a temporary file to write schema to
         tmp_file = tempfile.NamedTemporaryFile()
         with open(tmp_file.name, "w") as fh:
@@ -64,18 +66,16 @@ class TestSchema(unittest.TestCase):
         """ Get schema file from a path """
         self.schema_obj.get_schema_path(self.template_schema)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_path_notexist(self):
         """ Get schema file from a path """
         self.schema_obj.get_schema_path("fubar", local_only=True)
 
-    # TODO - Update when we do have a released pipeline with a valid schema
-    @pytest.mark.xfail(raises=AssertionError)
     def test_get_schema_path_name(self):
         """ Get schema file from the name of a remote pipeline """
         self.schema_obj.get_schema_path("atacseq")
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_name_notexist(self):
         """
         Get schema file from the name of a remote pipeline
@@ -115,7 +115,7 @@ class TestSchema(unittest.TestCase):
             yaml.dump({"input": "fubar"}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_input_params_invalid(self):
         """ Check failure when a non-existent file params file is loaded """
         self.schema_obj.load_input_params("fubar")
@@ -125,7 +125,6 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.flatten_schema()
         self.schema_obj.input_params = {"input": "fubar"}
         assert self.schema_obj.validate_params()
 
@@ -134,7 +133,6 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.flatten_schema()
         self.schema_obj.input_params = {"fubar": "input"}
         assert not self.schema_obj.validate_params()
 
@@ -143,25 +141,59 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.flatten_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
-    @pytest.mark.xfail(raises=AssertionError)
-    def test_validate_schema_fail_notjsonschema(self):
-        """ Check that the schema validation fails when not JSONSchema """
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_validate_schema_fail_noparams(self):
+        """ Check that the schema validation fails when no params described """
         self.schema_obj.schema = {"type": "invalidthing"}
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
-    @pytest.mark.xfail(raises=AssertionError)
-    def test_validate_schema_fail_nfcore(self):
+    def test_validate_schema_fail_duplicate_ids(self):
         """
-        Check that the schema validation fails nf-core addons
+        Check that the schema validation fails when we have duplicate IDs in definition subschema
+        """
+        self.schema_obj.schema = {
+            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"foo": {}}}},
+            "allOf": [{"$ref": "#/definitions/groupOne"}, {"$ref": "#/definitions/groupTwo"}],
+        }
+        try:
+            self.schema_obj.validate_schema(self.schema_obj.schema)
+            raise UserWarning("Expected AssertionError")
+        except AssertionError as e:
+            assert e.args[0] == "Duplicate parameter found in schema 'definitions': 'foo'"
 
-        An empty object {} is valid JSON Schema, but we want to have
-        at least a 'properties' key, so this should fail with nf-core specific error.
+    def test_validate_schema_fail_missing_def(self):
         """
-        self.schema_obj.schema = {}
-        self.schema_obj.validate_schema(self.schema_obj.schema)
+        Check that the schema validation fails when we a definition in allOf is not in definitions
+        """
+        self.schema_obj.schema = {
+            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
+            "allOf": [{"$ref": "#/definitions/groupOne"}],
+        }
+        try:
+            self.schema_obj.validate_schema(self.schema_obj.schema)
+            raise UserWarning("Expected AssertionError")
+        except AssertionError as e:
+            assert e.args[0] == "Definition subschema 'groupTwo' not included in schema 'allOf'"
+
+    def test_validate_schema_fail_unexpected_allof(self):
+        """
+        Check that the schema validation fails when we an unrecognised definition is in allOf
+        """
+        self.schema_obj.schema = {
+            "definitions": {"groupOne": {"properties": {"foo": {}}}, "groupTwo": {"properties": {"bar": {}}}},
+            "allOf": [
+                {"$ref": "#/definitions/groupOne"},
+                {"$ref": "#/definitions/groupTwo"},
+                {"$ref": "#/definitions/groupThree"},
+            ],
+        }
+        try:
+            self.schema_obj.validate_schema(self.schema_obj.schema)
+            raise UserWarning("Expected AssertionError")
+        except AssertionError as e:
+            assert e.args[0] == "Subschema 'groupThree' found in 'allOf' but not 'definitions'"
 
     def test_make_skeleton_schema(self):
         """ Test making a new schema skeleton """
@@ -190,26 +222,36 @@ class TestSchema(unittest.TestCase):
 
     def test_remove_schema_notfound_configs(self):
         """ Remove unrecognised params from the schema """
-        self.schema_obj.schema = {"properties": {"foo": {"type": "string"}}, "required": ["foo"]}
+        self.schema_obj.schema = {
+            "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+            "required": ["foo"],
+        }
         self.schema_obj.pipeline_params = {"bar": True}
         self.schema_obj.no_prompts = True
         params_removed = self.schema_obj.remove_schema_notfound_configs()
-        assert len(self.schema_obj.schema["properties"]) == 0
+        assert len(self.schema_obj.schema["properties"]) == 1
+        assert "required" not in self.schema_obj.schema
         assert len(params_removed) == 1
         assert "foo" in params_removed
 
-    def test_remove_schema_notfound_configs_childobj(self):
+    def test_remove_schema_notfound_configs_childschema(self):
         """
         Remove unrecognised params from the schema,
         even when they're in a group
         """
         self.schema_obj.schema = {
-            "properties": {"parent": {"type": "object", "properties": {"foo": {"type": "string"}}, "required": ["foo"]}}
+            "definitions": {
+                "subSchemaId": {
+                    "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
+                    "required": ["foo"],
+                }
+            }
         }
         self.schema_obj.pipeline_params = {"bar": True}
         self.schema_obj.no_prompts = True
         params_removed = self.schema_obj.remove_schema_notfound_configs()
-        assert len(self.schema_obj.schema["properties"]["parent"]["properties"]) == 0
+        assert len(self.schema_obj.schema["definitions"]["subSchemaId"]["properties"]) == 1
+        assert "required" not in self.schema_obj.schema["definitions"]["subSchemaId"]
         assert len(params_removed) == 1
         assert "foo" in params_removed
 
@@ -264,7 +306,7 @@ class TestSchema(unittest.TestCase):
 
         param = self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_timeout(self, mock_post):
         """ Mock launching the web builder, but timeout on the request """
@@ -272,7 +314,7 @@ class TestSchema(unittest.TestCase):
         mock_post.side_effect = requests.exceptions.Timeout()
         self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_connection_error(self, mock_post):
         """ Mock launching the web builder, but get a connection error """
@@ -280,7 +322,7 @@ class TestSchema(unittest.TestCase):
         mock_post.side_effect = requests.exceptions.ConnectionError()
         self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_timeout(self, mock_post):
         """ Mock checking for a web builder response, but timeout on the request """
@@ -288,7 +330,7 @@ class TestSchema(unittest.TestCase):
         mock_post.side_effect = requests.exceptions.Timeout()
         self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_connection_error(self, mock_post):
         """ Mock checking for a web builder response, but get a connection error """
@@ -321,6 +363,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_url = "invalid_url"
         try:
             self.schema_obj.launch_web_builder()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
 
@@ -331,7 +374,7 @@ class TestSchema(unittest.TestCase):
         try:
             self.schema_obj.launch_web_builder()
         except AssertionError as e:
-            assert e.args[0].startswith("JSON Schema builder response not recognised")
+            assert e.args[0].startswith("Pipeline schema builder response not recognised")
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     @mock.patch("requests.get")
@@ -341,6 +384,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_url = "valid_url_success"
         try:
             self.schema_obj.launch_web_builder()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             # Assertion error comes from get_web_builder_response() function
             assert e.args[0].startswith("Could not access remote API results: https://nf-co.re")
@@ -357,15 +401,15 @@ class TestSchema(unittest.TestCase):
             return MockResponse({}, 404)
 
         if args[0] == "valid_url_error":
-            response_data = {"status": "error", "message": "testing"}
+            response_data = {"status": "error", "message": "testing URL failure"}
             return MockResponse(response_data, 200)
 
         if args[0] == "valid_url_waiting":
-            response_data = {"status": "waiting_for_user", "message": "testing"}
+            response_data = {"status": "waiting_for_user", "message": "testing URL waiting"}
             return MockResponse(response_data, 200)
 
         if args[0] == "valid_url_saved":
-            response_data = {"status": "web_builder_edited", "message": "testing", "schema": {"foo": "bar"}}
+            response_data = {"status": "web_builder_edited", "message": "testing saved", "schema": {"foo": "bar"}}
             return MockResponse(response_data, 200)
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
@@ -374,6 +418,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_api_url = "invalid_url"
         try:
             self.schema_obj.get_web_builder_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
             assert e.args[0] == "Could not access remote API results: invalid_url (HTML 404 Error)"
 
@@ -383,8 +428,9 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_api_url = "valid_url_error"
         try:
             self.schema_obj.get_web_builder_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
-            assert e.args[0].startswith("Got error from JSON Schema builder")
+            assert e.args[0] == "Got error from schema builder: 'testing URL failure'"
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_waiting(self, mock_post):
@@ -398,7 +444,8 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.web_schema_build_api_url = "valid_url_saved"
         try:
             self.schema_obj.get_web_builder_response()
+            raise UserWarning("Should have hit an AssertionError")
         except AssertionError as e:
-            # Check that this is the expected AssertionError, as there are seveal
-            assert e.args[0].startswith("Response from JSON Builder did not pass validation")
+            # Check that this is the expected AssertionError, as there are several
+            assert e.args[0].startswith("Response from schema builder did not pass validation")
         assert self.schema_obj.schema == {"foo": "bar"}

@@ -170,12 +170,15 @@ def wait_cli_function(poll_func, poll_every=20):
 
         spinner = spinning_cursor()
         while not is_finished:
-            # Show the loading spinner every 0.1s
-            time.sleep(0.1)
+            # Write a new loading text
             loading_text = next(spinner)
             sys.stdout.write(loading_text)
             sys.stdout.flush()
+            # Show the loading spinner every 0.1s
+            time.sleep(0.1)
+            # Wipe the previous loading text
             sys.stdout.write("\b" * len(loading_text))
+            sys.stdout.flush()
             # Only check every 2 seconds, but update the spinner every 0.1s
             check_count += 1
             if check_count > poll_every:
