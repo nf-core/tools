@@ -79,6 +79,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Fail if `params.input` isn't defined.
 * Beautiful new progress bar to look at whilst linting is running and awesome new formatted output on the command line :heart_eyes:
   * All made using the excellent [`rich` python library](https://github.com/willmcgugan/rich) - check it out!
+* Tests looking for `TODO` strings should now ignore editor backup files. [#477](https://github.com/nf-core/tools/issues/477)
 
 ### nf-core/tools Continuous Integration
 
