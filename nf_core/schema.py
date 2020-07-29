@@ -77,7 +77,7 @@ class PipelineSchema(object):
         """ Load and lint a given schema to see if it looks valid """
         try:
             self.load_schema()
-            num_params = self.validate_schema(self.schema)
+            num_params = self.validate_schema()
             self.get_schema_defaults()
             log.info("[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
         except json.decoder.JSONDecodeError as e:
@@ -93,6 +93,8 @@ class PipelineSchema(object):
         """ Load a pipeline schema from a file """
         with open(self.schema_filename, "r") as fh:
             self.schema = json.load(fh)
+        self.schema_defaults = {}
+        self.schema_params = []
         log.debug("JSON file loaded: {}".format(self.schema_filename))
 
     def get_schema_defaults(self):
@@ -118,7 +120,9 @@ class PipelineSchema(object):
     def save_schema(self):
         """ Save a pipeline schema to a file """
         # Write results to a JSON file
-        log.info("Writing schema with {} params: '{}'".format(len(self.schema_params), self.schema_filename))
+        num_params = len(self.schema.get("properties", {}))
+        num_params += sum([len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values()])
+        log.info("Writing schema with {} params: '{}'".format(num_params, self.schema_filename))
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
 
@@ -163,12 +167,14 @@ class PipelineSchema(object):
         log.info("[green][[✓]] Input parameters look valid")
         return True
 
-    def validate_schema(self, schema):
+    def validate_schema(self, schema=None):
         """
         Check that the Schema is valid
 
         Returns: Number of parameters found
         """
+        if schema is None:
+            schema = self.schema
         try:
             jsonschema.Draft7Validator.check_schema(schema)
             log.debug("JSON Schema Draft7 validated")
@@ -274,6 +280,7 @@ class PipelineSchema(object):
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
         self.schema = json.loads(schema_template.render(cookiecutter=cookiecutter_vars))
+        self.get_schema_defaults()
 
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
         """ Interactively build a new pipeline schema for a pipeline """
@@ -294,15 +301,20 @@ class PipelineSchema(object):
             self.make_skeleton_schema()
             self.remove_schema_notfound_configs()
             self.add_schema_found_configs()
-            self.save_schema()
-
-        # Load and validate Schema
-        try:
-            self.load_lint_schema()
-        except AssertionError as e:
-            log.error("Existing pipeline schema found, but it is invalid: {}".format(self.schema_filename))
-            log.info("Please fix or delete this file, then try again.")
-            return False
+            try:
+                self.validate_schema()
+            except AssertionError as e:
+                log.error("[red]Something went wrong when building a new schema:[/] {}".format(e))
+                log.info("Please ask for help on the nf-core Slack")
+                return False
+        else:
+            # Schema found - load and validate
+            try:
+                self.load_lint_schema()
+            except AssertionError as e:
+                log.error("Existing pipeline schema found, but it is invalid: {}".format(self.schema_filename))
+                log.info("Please fix or delete this file, then try again.")
+                return False
 
         if not self.web_only:
             self.get_wf_params()
@@ -312,7 +324,7 @@ class PipelineSchema(object):
 
         # If running interactively, send to the web for customisation
         if not self.no_prompts:
-            if Confirm.ask(":rocket: Launch web builder for customisation and editing?"):
+            if Confirm.ask("           :rocket:  Launch web builder for customisation and editing?"):
                 try:
                     self.launch_web_builder()
                 except AssertionError as e:
@@ -522,7 +534,7 @@ class PipelineSchema(object):
             log.info("Found saved status from nf-core schema builder")
             try:
                 self.schema = web_response["schema"]
-                self.validate_schema(self.schema)
+                self.validate_schema()
             except AssertionError as e:
                 raise AssertionError("Response from schema builder did not pass validation:\n {}".format(e))
             else:
