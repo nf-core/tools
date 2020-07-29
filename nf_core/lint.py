@@ -1237,6 +1237,14 @@ class PipelineLint(object):
         except AssertionError as e:
             self.failed.append((14, "Schema lint failed: {}".format(e)))
 
+        # Check the title and description - gives warnings instead of fail
+        if self.schema_obj.schema is not None:
+            try:
+                self.schema_obj.validate_schema_title_description()
+                self.passed.append((14, "Schema title + description lint passed"))
+            except AssertionError as e:
+                self.warned.append((14, e))
+
     def check_schema_params(self):
         """ Check that the schema describes all flat params in the pipeline """
 

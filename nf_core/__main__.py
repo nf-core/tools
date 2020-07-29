@@ -482,6 +482,11 @@ def lint(schema_path):
     try:
         schema_obj.get_schema_path(schema_path)
         schema_obj.load_lint_schema()
+        # Validate title and description - just warnings as schema should still work fine
+        try:
+            schema_obj.validate_schema_title_description()
+        except AssertionError as e:
+            log.warn(e)
     except AssertionError as e:
         sys.exit(1)
 
