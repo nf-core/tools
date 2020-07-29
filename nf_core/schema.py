@@ -77,7 +77,7 @@ class PipelineSchema(object):
         """ Load and lint a given schema to see if it looks valid """
         try:
             self.load_schema()
-            num_params = self.validate_schema(self.schema)
+            num_params = self.validate_schema()
             self.get_schema_defaults()
             log.info("[green][[✓]] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
         except json.decoder.JSONDecodeError as e:
@@ -167,12 +167,14 @@ class PipelineSchema(object):
         log.info("[green][[✓]] Input parameters look valid")
         return True
 
-    def validate_schema(self, schema):
+    def validate_schema(self, schema=None):
         """
         Check that the Schema is valid
 
         Returns: Number of parameters found
         """
+        if schema is None:
+            schema = self.schema
         try:
             jsonschema.Draft7Validator.check_schema(schema)
             log.debug("JSON Schema Draft7 validated")
@@ -298,6 +300,12 @@ class PipelineSchema(object):
             self.make_skeleton_schema()
             self.remove_schema_notfound_configs()
             self.add_schema_found_configs()
+            try:
+                self.validate_schema()
+            except AssertionError as e:
+                log.error("[red]Something went wrong when building a new schema:[/] {}".format(e))
+                log.info("Please ask for help on the nf-core Slack")
+                return False
         else:
             # Schema found - load and validate
             try:
@@ -525,7 +533,7 @@ class PipelineSchema(object):
             log.info("Found saved status from nf-core schema builder")
             try:
                 self.schema = web_response["schema"]
-                self.validate_schema(self.schema)
+                self.validate_schema()
             except AssertionError as e:
                 raise AssertionError("Response from schema builder did not pass validation:\n {}".format(e))
             else:
