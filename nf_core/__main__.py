@@ -107,7 +107,7 @@ def nf_core_cli(verbose):
     logging.basicConfig(
         level=logging.DEBUG if verbose else logging.INFO,
         format="%(message)s",
-        datefmt=".",
+        datefmt=" ",
         handlers=[rich.logging.RichHandler(console=stderr, markup=True)],
     )
 
@@ -406,21 +406,20 @@ def schema():
     Suite of tools for developers to manage pipeline schema.
 
     All nf-core pipelines should have a nextflow_schema.json file in their
-    root directory. This is a JSON Schema that describes the different
-    pipeline parameters.
+    root directory that describes the different pipeline parameters.
     """
     pass
 
 
 @schema.command(help_priority=1)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
-@click.option("--params", type=click.Path(exists=True), required=True, help="JSON parameter file")
+@click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
 def validate(pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
 
     Nextflow can be run using the -params-file flag, which loads
-    script parameters from a JSON/YAML file.
+    script parameters from a JSON file.
 
     This command takes such a file and validates it against the pipeline
     schema, checking whether all schema rules are satisfied.
@@ -447,7 +446,7 @@ def validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/json_schema_build",
+    default="https://nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
 def build(pipeline_dir, no_prompts, web_only, url):
@@ -468,7 +467,7 @@ def build(pipeline_dir, no_prompts, web_only, url):
 
 
 @schema.command(help_priority=3)
-@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<JSON Schema file>")
+@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.
@@ -509,7 +508,14 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
     # First, lint the pipeline to check everything is in order
     log.info("Running nf-core lint tests")
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
+
+    # Run the lint tests
+    try:
+        lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
+        lint_obj.lint_pipeline()
+    except AssertionError as e:
+        log.error("Please fix lint errors before bumping versions")
+        return
     if len(lint_obj.failed) > 0:
         log.error("Please fix lint errors before bumping versions")
         return

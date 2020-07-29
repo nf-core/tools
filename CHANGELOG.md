@@ -24,7 +24,7 @@ To support these new schema files, nf-core/tools now comes with a new set of com
 * Pipeline schema can be generated or updated using `nf-core schema build` - this takes the parameters from
   the pipeline config file and prompts the developer for any mismatch between schema and pipeline.
   * Once a skeleton Schema file has been built, the command makes use of a new nf-core website tool to provide
-    a user friendly graphical interface for developers to add content to their schema: [https://nf-co.re/json_schema_build](https://nf-co.re/json_schema_build)
+    a user friendly graphical interface for developers to add content to their schema: [https://nf-co.re/pipeline_schema_builder](https://nf-co.re/pipeline_schema_builder)
 * Pipelines will be automatically tested for valid schema that describe all pipeline parameters using the
   `nf-core schema lint` command (also included as part of the main `nf-core lint` command).
 * Users can validate their set of pipeline inputs using the `nf-core schema validate` command.

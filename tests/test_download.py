@@ -54,7 +54,7 @@ class DownloadTest(unittest.TestCase):
 
     @mock.patch("nf_core.list.RemoteWorkflow")
     @mock.patch("nf_core.list.Workflows")
-    @pytest.mark.xfail(raises=LookupError)
+    @pytest.mark.xfail(raises=LookupError, strict=True)
     def test_fetch_workflow_details_for_unknown_release(self, mock_workflows, mock_workflow):
         download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0")
         mock_workflow.name = "dummy"
@@ -79,7 +79,7 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.release == "master"
 
     @mock.patch("nf_core.list.Workflows")
-    @pytest.mark.xfail(raises=LookupError)
+    @pytest.mark.xfail(raises=LookupError, strict=True)
     def test_fetch_workflow_details_no_search_result(self, mock_workflows):
         download_obj = DownloadWorkflow(pipeline="http://my-server.org/dummy", release="1.2.0")
         mock_workflows.remote_workflows = []
@@ -150,7 +150,7 @@ class DownloadTest(unittest.TestCase):
         # Clean up
         os.remove(tmpfile[1])
 
-    @pytest.mark.xfail(raises=IOError)
+    @pytest.mark.xfail(raises=IOError, strict=True)
     def test_mismatching_md5sums(self):
         download_obj = DownloadWorkflow(pipeline="dummy")
         test_hash = hashlib.md5()
@@ -169,6 +169,8 @@ class DownloadTest(unittest.TestCase):
     #
     # Tests for 'pull_singularity_image'
     #
+    # If Singularity is not installed, will log an error and exit
+    # If Singularity is installed, should raise an OSError due to non-existant image
     @pytest.mark.xfail(raises=OSError)
     def test_pull_singularity_image(self):
         tmp_dir = tempfile.mkdtemp()

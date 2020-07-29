@@ -55,7 +55,7 @@ class TestLint(unittest.TestCase):
         now_ts = time.mktime(now.timetuple())
         nf_core.list.pretty_date(now_ts)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_local_workflows_and_fail(self):
         """ Test the local workflow class and try to get local
         Nextflow workflow information """
@@ -100,14 +100,12 @@ class TestLint(unittest.TestCase):
 
         rwf_ex.releases = None
 
+    @mock.patch.dict(os.environ, {"NXF_ASSETS": "/tmp/nxf"})
     @mock.patch("nf_core.list.LocalWorkflow")
     def test_parse_local_workflow_and_succeed(self, mock_local_wf):
         test_path = "/tmp/nxf/nf-core"
         if not os.path.isdir(test_path):
             os.makedirs(test_path)
-
-        if not os.environ.get("NXF_ASSETS"):
-            os.environ["NXF_ASSETS"] = "/tmp/nxf"
         assert os.environ["NXF_ASSETS"] == "/tmp/nxf"
         with open("/tmp/nxf/nf-core/dummy-wf", "w") as f:
             f.write("dummy")
@@ -115,16 +113,13 @@ class TestLint(unittest.TestCase):
         workflows_obj.get_local_nf_workflows()
         assert len(workflows_obj.local_workflows) == 1
 
-    @mock.patch("os.environ.get")
+    @mock.patch.dict(os.environ, {"NXF_ASSETS": "/tmp/nxf"})
     @mock.patch("nf_core.list.LocalWorkflow")
     @mock.patch("subprocess.check_output")
-    def test_parse_local_workflow_home(self, mock_subprocess, mock_local_wf, mock_env):
+    def test_parse_local_workflow_home(self, mock_local_wf, mock_subprocess):
         test_path = "/tmp/nxf/nf-core"
         if not os.path.isdir(test_path):
             os.makedirs(test_path)
-
-        mock_env.side_effect = "/tmp/nxf"
-
         assert os.environ["NXF_ASSETS"] == "/tmp/nxf"
         with open("/tmp/nxf/nf-core/dummy-wf", "w") as f:
             f.write("dummy")
