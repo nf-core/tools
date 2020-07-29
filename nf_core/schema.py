@@ -93,6 +93,8 @@ class PipelineSchema(object):
         """ Load a pipeline schema from a file """
         with open(self.schema_filename, "r") as fh:
             self.schema = json.load(fh)
+        self.schema_defaults = {}
+        self.schema_params = []
         log.debug("JSON file loaded: {}".format(self.schema_filename))
 
     def get_schema_defaults(self):
@@ -118,7 +120,9 @@ class PipelineSchema(object):
     def save_schema(self):
         """ Save a pipeline schema to a file """
         # Write results to a JSON file
-        log.info("Writing schema with {} params: '{}'".format(len(self.schema_params), self.schema_filename))
+        num_params = len(self.schema.get("properties", {}))
+        num_params += sum([len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values()])
+        log.info("Writing schema with {} params: '{}'".format(num_params, self.schema_filename))
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
 
@@ -294,15 +298,14 @@ class PipelineSchema(object):
             self.make_skeleton_schema()
             self.remove_schema_notfound_configs()
             self.add_schema_found_configs()
-            self.save_schema()
-
-        # Load and validate Schema
-        try:
-            self.load_lint_schema()
-        except AssertionError as e:
-            log.error("Existing pipeline schema found, but it is invalid: {}".format(self.schema_filename))
-            log.info("Please fix or delete this file, then try again.")
-            return False
+        else:
+            # Schema found - load and validate
+            try:
+                self.load_lint_schema()
+            except AssertionError as e:
+                log.error("Existing pipeline schema found, but it is invalid: {}".format(self.schema_filename))
+                log.info("Please fix or delete this file, then try again.")
+                return False
 
         if not self.web_only:
             self.get_wf_params()
