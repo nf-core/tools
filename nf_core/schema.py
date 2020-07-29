@@ -280,6 +280,7 @@ class PipelineSchema(object):
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
         self.schema = json.loads(schema_template.render(cookiecutter=cookiecutter_vars))
+        self.get_schema_defaults()
 
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
         """ Interactively build a new pipeline schema for a pipeline """
