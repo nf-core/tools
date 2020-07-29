@@ -324,7 +324,7 @@ class PipelineSchema(object):
 
         # If running interactively, send to the web for customisation
         if not self.no_prompts:
-            if Confirm.ask(":rocket: Launch web builder for customisation and editing?"):
+            if Confirm.ask("           :rocket:  Launch web builder for customisation and editing?"):
                 try:
                     self.launch_web_builder()
                 except AssertionError as e:
