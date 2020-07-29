@@ -161,7 +161,7 @@ class TestSchema(unittest.TestCase):
             self.schema_obj.validate_schema(self.schema_obj.schema)
             raise UserWarning("Expected AssertionError")
         except AssertionError as e:
-            assert e.args[0] == "Duplicate parameter found in schema 'definitions': 'foo'"
+            assert e.args[0] == "Duplicate parameter found in schema `definitions`: `foo`"
 
     def test_validate_schema_fail_missing_def(self):
         """
@@ -175,7 +175,7 @@ class TestSchema(unittest.TestCase):
             self.schema_obj.validate_schema(self.schema_obj.schema)
             raise UserWarning("Expected AssertionError")
         except AssertionError as e:
-            assert e.args[0] == "Definition subschema 'groupTwo' not included in schema 'allOf'"
+            assert e.args[0] == "Definition subschema `groupTwo` not included in schema `allOf`"
 
     def test_validate_schema_fail_unexpected_allof(self):
         """
@@ -193,7 +193,7 @@ class TestSchema(unittest.TestCase):
             self.schema_obj.validate_schema(self.schema_obj.schema)
             raise UserWarning("Expected AssertionError")
         except AssertionError as e:
-            assert e.args[0] == "Subschema 'groupThree' found in 'allOf' but not 'definitions'"
+            assert e.args[0] == "Subschema `groupThree` found in `allOf` but not `definitions`"
 
     def test_make_skeleton_schema(self):
         """ Test making a new schema skeleton """
