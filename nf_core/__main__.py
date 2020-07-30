@@ -24,7 +24,9 @@ import nf_core.schema
 import nf_core.sync
 import nf_core.utils
 
-log = logging.getLogger(__name__)
+# Set up logging as the root logger
+# Submodules should all traverse back to this
+log = logging.getLogger()
 
 
 def run_nf_core():
@@ -101,15 +103,29 @@ class CustomHelpOrder(click.Group):
 
 @click.group(cls=CustomHelpOrder)
 @click.version_option(nf_core.__version__)
-@click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
-def nf_core_cli(verbose):
-    stderr = rich.console.Console(file=sys.stderr)
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        format="%(message)s",
-        datefmt=" ",
-        handlers=[rich.logging.RichHandler(console=stderr, markup=True)],
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
+@click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
+def nf_core_cli(verbose, log_file):
+
+    # Set the base logger to output DEBUG
+    log.setLevel(logging.DEBUG)
+
+    # Set up logs to the console
+    log.addHandler(
+        rich.logging.RichHandler(
+            level=logging.DEBUG if verbose else logging.INFO,
+            console=rich.console.Console(file=sys.stderr),
+            show_time=False,
+            markup=True,
+        )
     )
+
+    # Set up logs to a file if we asked for one
+    if log_file:
+        log_fh = logging.FileHandler(log_file, encoding="utf-8")
+        log_fh.setLevel(logging.DEBUG)
+        log_fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"))
+        log.addHandler(log_fh)
 
 
 # nf-core list
@@ -274,9 +290,10 @@ def create(name, description, author, new_version, no_git, force, outdir):
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
 )
+@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line.")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(pipeline_dir, release, markdown, json):
+def lint(pipeline_dir, release, show_passed, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -286,7 +303,7 @@ def lint(pipeline_dir, release, markdown, json):
     """
 
     # Run the lint tests!
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, markdown, json)
+    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, show_passed, markdown, json)
     if len(lint_obj.failed) > 0:
         sys.exit(1)
 
