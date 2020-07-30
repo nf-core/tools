@@ -1,5 +1,7 @@
 # nf-core/tools: Changelog
 
+* Change `params.readPaths` -> `params.input_paths` in `test_full.config`
+
 ## [v1.10.1](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
 
 Patch release to fix the automatic template synchronisation, which failed in the v1.10 release.
