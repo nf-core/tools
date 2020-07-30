@@ -4,13 +4,34 @@ on:
     types: [published]
 
 jobs:
-  sync-all:
-    name: Sync all pipelines
+  get-pipelines:
     runs-on: ubuntu-latest
-
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
+      - id: set-matrix
+        run: |
+          curl -O https://nf-co.re/pipeline_names.json
+          echo "::set-output name=matrix::$(cat pipeline_names.json)"
+
+  sync:
+    needs: get-pipelines
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
+      fail-fast: false
+    steps:
+
       - uses: actions/checkout@v2
-        name: Check out source-code repository
+        name: Check out nf-core/tools
+
+      - uses: actions/checkout@v2
+        name: Check out nf-core/${{ matrix.pipeline }}
+        with:
+          repository: nf-core/${{ matrix.pipeline }}
+          ref: dev
+          token: ${{ secrets.nf_core_bot_auth_token }}
+          path: nf-core/${{ matrix.pipeline }}
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
@@ -36,10 +57,17 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log.txt sync --all --username nf-core-bot --auth-token $AUTH_TOKEN
+          nf-core --log-file sync_log.txt sync nf-core/${{ matrix.pipeline }} \
+            --from-branch dev \
+            --pull-request \
+            --username nf-core-bot \
+            --repository nf-core/${{ matrix.pipeline }} \
+            --auth-token ${{ secrets.nf_core_bot_auth_token }}
+
 
       - name: Upload sync log file artifact
+        if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
-          name: sync-log-file
-          path: sync_log.txt
+          name: sync_log_${{ matrix.pipeline }}
+          path: sync_log_${{ matrix.pipeline }}.txt
