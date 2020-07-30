@@ -1,3 +1,5 @@
+# {{ cookiecutter.name }}: Usage
+
 ## Introduction
 
 <!-- TODO nf-core: Document required command line parameters to run the pipeline-->
@@ -100,7 +102,7 @@ If you are likely to be running `nf-core` pipelines regularly it may be a good i
 
 If you have any questions or issues please send us a message on [Slack](https://nf-co.re/join/slack) on the [`#configs` channel](https://nfcore.slack.com/channels/configs).
 
-### `-bg`
+### Running in the background
 
 Nextflow handles job submissions and supervises the running jobs. The Nextflow process must run until the pipeline is finished.
 
