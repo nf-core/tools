@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.10dev
+## [v1.10 - Copper Camel](https://github.com/nf-core/tools/releases/tag/1.10) - [2020-07-30]
 
 ### Pipeline schema
 
@@ -101,7 +101,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   * Disable this by setting the environment variable `NFCORE_NO_VERSION_CHECK`, eg. `export NFCORE_NO_VERSION_CHECK=1`
 * Better command-line output formatting of nearly all `nf-core` commands using [`rich`](https://github.com/willmcgugan/rich)
 
-## v1.9
+## [v1.9 - Platinum Pigeon](https://github.com/nf-core/tools/releases/tag/1.9) - [2020-02-20]
 
 ### Continuous integration
 
@@ -144,7 +144,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Add social preview image
 * Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
 
-## v1.8
+## [v1.8 - Black Sheep](https://github.com/nf-core/tools/releases/tag/1.8) - [2020-01-27]
 
 ### Continuous integration
 
@@ -216,7 +216,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
 * Improved core documentation (`-profile`)
 
-## v1.7
+## [v1.7 - Titanium Kangaroo](https://github.com/nf-core/tools/releases/tag/1.7) - [2019-10-07]
 
 ### Tools helper code
 
@@ -279,7 +279,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Added a Code of Conduct to nf-core/tools, as only the template had this before
 * TravisCI tests will now also start for PRs from `patch` branches, [to allow fixing critical issues](https://github.com/nf-core/tools/pull/392) without making a new major release
 
-## v1.6
+## [v1.6 - Brass Walrus](https://github.com/nf-core/tools/releases/tag/1.6) - [2020-04-09]
 
 ### Syncing
 
@@ -317,7 +317,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   * As a solution for [#103](https://github.com/nf-core/tools/issues/103))
 * Add Bowtie2 and BWA in iGenome config file template
 
-## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
+## [v1.5 - Iron Shark](https://github.com/nf-core/tools/releases/tag/1.5) - [2019-03-13]
 
 ### Template pipeline
 
@@ -362,7 +362,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 
 * Bump `conda` to 4.6.7 in base nf-core Dockerfile
 
-## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
+## [v1.4 - Tantalum Butterfly](https://github.com/nf-core/tools/releases/tag/1.4) - [2018-12-12]
 
 ### Template pipeline
 
@@ -387,7 +387,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Handle exception if nextflow isn't installed
 * Linting: Update for Travis: Pull the `dev` tagged docker image for testing
 
-## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
+## [v1.3 - Citreous Swordfish](https://github.com/nf-core/tools/releases/tag/1.3) - [2018-11-21]
 
 * `nf-core create` command line interface updated
   * Interactive prompts for required arguments if not given
@@ -401,7 +401,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   * Ordering alphabetically for profiles now
 * Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
 
-## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
+## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - [2018-10-01]
 
 * Updated the `nf-core release` command
   * Now called `nf-core bump-versions` instead
@@ -422,7 +422,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Updated PyPI deployment to  correctly parse the markdown readme (hopefully!)
 * New GitHub contributing instructions and pull request template
 
-## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
+## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - [2018-08-14]
 
 Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.
 
@@ -442,11 +442,11 @@ Very large release containing lots of work from the first nf-core hackathon, hel
 * New sync tool to automate pipeline updates
   * Once initial merges are complete, a nf-core bot account will create PRs for future template updates
 
-## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - 2018-07-18
+## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - [2018-07-18]
 
 The version 1.0 of nf-core tools cannot be installed from PyPi. This patch fixes it, by getting rid of the requirements.txt plus declaring the dependent modules in the setup.py directly.
 
-## [v1.0](https://github.com/nf-core/tools/releases/tag/1.0) - 2018-06-12
+## [v1.0](https://github.com/nf-core/tools/releases/tag/1.0) - [2018-06-12]
 
 Initial release of the nf-core helper tools package. Currently includes four subcommands:
 
