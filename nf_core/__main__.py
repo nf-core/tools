@@ -24,7 +24,9 @@ import nf_core.schema
 import nf_core.sync
 import nf_core.utils
 
-log = logging.getLogger(__name__)
+# Set up logging as the root logger
+# Submodules should all traverse back to this
+log = logging.getLogger()
 
 
 def run_nf_core():
