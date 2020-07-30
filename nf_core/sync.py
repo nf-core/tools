@@ -222,8 +222,7 @@ class PipelineSync(object):
         log.debug("Making a new template pipeline using pipeline variables")
 
         # Only show error messages from pipeline creation
-        if log.getEffectiveLevel() == logging.INFO:
-            logging.getLogger("nf_core.create").setLevel(logging.ERROR)
+        logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
         nf_core.create.PipelineCreate(
             name=self.wf_config["manifest.name"].strip('"').strip("'"),
@@ -369,8 +368,7 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
         assert repo
 
         # Only show error messages from pipeline creation
-        if log.getEffectiveLevel() == logging.INFO:
-            logging.getLogger("nf_core.create").setLevel(logging.ERROR)
+        logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
         # Sync the repo
         log.debug("Running template sync")

@@ -238,6 +238,7 @@ class PipelineLint(object):
             )
             for fun_name in check_functions:
                 progress.update(lint_progress, advance=1, func_name=fun_name)
+                log.debug("Running lint test: {}".format(fun_name))
                 getattr(self, fun_name)()
                 if len(self.failed) > 0:
                     log.error("Found test failures in `{}`, halting lint run.".format(fun_name))
@@ -1225,8 +1226,7 @@ class PipelineLint(object):
         """ Lint the pipeline schema """
 
         # Only show error messages from schema
-        if log.getEffectiveLevel() == logging.INFO:
-            logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
+        logging.getLogger("nf_core.schema").setLevel(logging.ERROR)
 
         # Lint the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
