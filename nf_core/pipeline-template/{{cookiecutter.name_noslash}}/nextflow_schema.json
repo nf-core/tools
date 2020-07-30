@@ -237,37 +237,6 @@
                     "fa_icon": "fas fa-users-cog"
                 }
             }
-        },
-        "aws_batch_specific_parameters": {
-            "title": "AWS Batch specific parameters",
-            "type": "object",
-            "description": "",
-            "default": "",
-            "properties": {
-                "awsqueue": {
-                    "type": "string",
-                    "description": "The JobQueue that you intend to use on AWS Batch.",
-                    "fa_icon": "fab fa-aws",
-                    "hidden": true
-                },
-                "awsregion": {
-                    "type": "string",
-                    "description": "The AWS region in which to run your job.",
-                    "fa_icon": "fab fa-aws",
-                    "hidden": true,
-                    "default": "eu-west-1"
-                },
-                "awscli": {
-                    "type": "string",
-                    "help_text": "Please make sure to also set the `-w/--work-dir` and `--outdir` parameters to a S3 storage bucket of your choice - you'll get an error message notifying you if you didn't.\n\nRead more: [AWS CLI docs](https://www.nextflow.io/docs/latest/awscloud.html#aws-cli-installation).",
-                    "description": "The AWS CLI path in your custom AMI.",
-                    "fa_icon": "fab fa-aws",
-                    "hidden": true,
-                    "default": "/home/ec2-user/miniconda/bin/aws"
-                }
-            },
-            "fa_icon": "fab fa-aws",
-            "help_text": "Running the pipeline on AWS Batch requires a couple of specific parameters to be set according to your AWS Batch configuration. Please use [`-profile awsbatch`](https://github.com/nf-core/configs/blob/master/conf/awsbatch.config) and then specify all of the following parameters."
         }
     },
     "allOf": [
@@ -285,9 +254,6 @@
         },
         {
             "$ref": "#/definitions/institutional_config_options"
-        },
-        {
-            "$ref": "#/definitions/aws_batch_specific_parameters"
         }
     ]
 }
