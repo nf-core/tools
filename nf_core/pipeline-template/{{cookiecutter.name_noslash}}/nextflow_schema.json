@@ -202,7 +202,7 @@
                     "default": "master",
                     "hidden": true,
                     "fa_icon": "fas fa-users-cog",
-                    "help_text": "Provide git commit id for custom Institutional configs hosted at `nf-core/configs`. This was implemented for reproducibility purposes. Default: `master`.\n\n```bash\n## Download and use config file with following git commid id\n--custom_config_version d52db660777c4bf36546ddb188ec530c3ada1b96\n```"
+                    "help_text": "Provide git commit id for custom Institutional configs hosted at `nf-core/configs`. This was implemented for reproducibility purposes. Default: `master`.\n\n```bash\n## Download and use config file with following git commit id\n--custom_config_version d52db660777c4bf36546ddb188ec530c3ada1b96\n```"
                 },
                 "custom_config_base": {
                     "type": "string",
