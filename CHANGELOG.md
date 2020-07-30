@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v1.11dev
+
+### Template
+
+### Linting
+
+### Other
+
 ## [v1.10 - Copper Camel](https://github.com/nf-core/tools/releases/tag/1.10) - [2020-07-30]
 
 ### Pipeline schema
