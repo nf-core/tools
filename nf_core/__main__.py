@@ -102,14 +102,28 @@ class CustomHelpOrder(click.Group):
 @click.group(cls=CustomHelpOrder)
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
-def nf_core_cli(verbose):
-    stderr = rich.console.Console(file=sys.stderr)
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        format="%(message)s",
-        datefmt=" ",
-        handlers=[rich.logging.RichHandler(console=stderr, markup=True)],
+@click.option("-l", "--log-file", help="Filename to save a verbose log output to.")
+def nf_core_cli(verbose, log_file):
+
+    # Set the base logger to output DEBUG
+    log.setLevel(logging.DEBUG)
+
+    # Set up logs to the console
+    log.addHandler(
+        rich.logging.RichHandler(
+            level=logging.DEBUG if verbose else logging.INFO,
+            console=rich.console.Console(file=sys.stderr),
+            show_time=False,
+            markup=True,
+        )
     )
+
+    # Set up logs to a file if we asked for one
+    if log_file:
+        log_fh = logging.FileHandler(log_file, encoding="utf-8")
+        log_fh.setLevel(logging.DEBUG)
+        log_fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"))
+        log.addHandler(log_fh)
 
 
 # nf-core list
