@@ -40,6 +40,7 @@ setup(
         "pyyaml",
         "requests",
         "requests_cache",
+        "rocrate",
         "rich>=4.0.0",
         "tabulate",
     ],

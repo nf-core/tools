@@ -3,10 +3,14 @@
 Common utility functions for the nf-core python package.
 """
 import nf_core
+
+from distutils import version
 import datetime
 import errno
-import json
+import fnmatch
 import hashlib
+import io
+import json
 import logging
 import os
 import re
@@ -15,7 +19,6 @@ import requests_cache
 import subprocess
 import sys
 import time
-from distutils import version
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +44,28 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     # Check if we have an available update
     is_outdated = version.StrictVersion(remote_version) > version.StrictVersion(current_version)
     return (is_outdated, current_version, remote_version)
+
+
+def get_wf_files(wf_path):
+    """ Return a list of all files in a directory (ignores .gitigore files) """
+
+    wf_files = []
+
+    # Ignore anything listed in .gitignore
+    ignore = [".git"]
+    if os.path.isfile(os.path.join(wf_path, ".gitignore")):
+        with io.open(os.path.join(wf_path, ".gitignore"), "rt", encoding="latin1") as fh:
+            for l in fh:
+                ignore.append(os.path.basename(l.strip().rstrip("/")))
+
+    for root, dirs, files in os.walk(wf_path):
+        # Ignore files
+        dirs[:] = [d for d in dirs if not any([fnmatch.fnmatch(d, i) for i in ignore])]
+        files[:] = [f for f in files if not any([fnmatch.fnmatch(f, i) for i in ignore])]
+        for fname in files:
+            wf_files.append(os.path.join(root, fname))
+
+    return wf_files
 
 
 def fetch_wf_config(wf_path):

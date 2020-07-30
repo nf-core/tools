@@ -20,6 +20,7 @@ import nf_core.licences
 import nf_core.lint
 import nf_core.list
 import nf_core.modules
+import nf_core.ro_crate
 import nf_core.schema
 import nf_core.sync
 import nf_core.utils
@@ -532,7 +533,23 @@ def bump_version(pipeline_dir, new_version, nextflow):
         nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
 
 
-@nf_core_cli.command("sync", help_priority=10)
+@nf_core_cli.command("rocrate", help_priority=10)
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.option("-j", "--json", type=str, help="Path to save RO Crate metadata json")
+@click.option("-z", "--zip", type=str, help="Path to save RO Crate zip")
+def rocrate(pipeline_dir, json, zip):
+    """
+    Make an Research Object Crate
+    """
+    if json is None and zip is None:
+        log.error("Either --json or --zip must be specified")
+        sys.exit(1)
+
+    rocrate_obj = nf_core.ro_crate.RoCrate()
+    rocrate_obj.create_ro_crate(pipeline_dir, metadata_fn=json, zip_fn=zip)
+
+
+@nf_core_cli.command("sync", help_priority=11)
 @click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
