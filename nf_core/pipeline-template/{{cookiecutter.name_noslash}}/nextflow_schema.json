@@ -18,14 +18,13 @@
                     "type": "string",
                     "fa_icon": "fas fa-dna",
                     "description": "Input FastQ files.",
-                    "help_text": "A glob pattern for input FastQ files. Should include at least one asterisk (*). For paired-end data, should contain curly brackets with two patterns differentiating the paired reads e.g. `*_R{1,2}.fastq.gz`"
+                    "help_text": "Use this to specify the location of your input FastQ files. For example:\n\n```bash\n--input 'path/to/data/sample_*_{1,2}.fastq'\n```\n\nPlease note the following requirements:\n\n1. The path must be enclosed in quotes\n2. The path must have at least one `*` wildcard character\n3. When using the pipeline with paired end data, the path must use `{1,2}` notation to specify read pairs.\n\nIf left unspecified, a default pattern is used: `data/*{1,2}.fastq.gz`"
                 },
                 "single_end": {
                     "type": "boolean",
                     "description": "Specifies that the input is single-end reads.",
                     "fa_icon": "fas fa-align-center",
-                    "default": false,
-                    "help_text": "By default, the pipeline expects paired-end data. If you have single-end data, specify this parameter on the command line when you launch the pipeline. It is not possible to run a mixture of single-end and paired-end files in one run."
+                    "help_text": "By default, the pipeline expects paired-end data. If you have single-end data, you need to specify `--single_end` on the command line when you launch the pipeline. A normal glob pattern, enclosed in quotation marks, can then be used for `--input`. For example:\n\n```bash\n--single_end --input '*.fastq'\n```\n\nIt is not possible to run a mixture of single-end and paired-end files in one run."
                 },
                 "outdir": {
                     "type": "string",
@@ -37,7 +36,7 @@
                     "type": "string",
                     "description": "Email address for completion summary.",
                     "fa_icon": "fas fa-envelope",
-                    "help_text": "An email address to send a summary email to when the pipeline is completed.",
+                    "help_text": "Set this parameter to your e-mail address to get a summary e-mail with details of the run sent to you when the workflow exits. If set in your user config file (`~/.nextflow/config`) then you don't need to specify this on the command line for every run.",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"
                 }
             }
@@ -52,7 +51,7 @@
                     "type": "string",
                     "description": "Name of iGenomes reference.",
                     "fa_icon": "fas fa-book",
-                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`."
+                    "help_text": "If using a reference genome configured in the pipeline using iGenomes, use this parameter to give the ID for the reference. This is then used to build the full paths for all required reference genome files e.g. `--genome GRCh38`.\n\nSee the [nf-core website docs](https://nf-co.re/usage/reference_genomes) for more details."
                 },
                 "fasta": {
                     "type": "string",
@@ -65,15 +64,13 @@
                     "description": "Directory / URL base for iGenomes references.",
                     "default": "s3://ngi-igenomes/igenomes/",
                     "fa_icon": "fas fa-cloud-download-alt",
-                    "hidden": true,
-                    "help_text": ""
+                    "hidden": true
                 },
                 "igenomes_ignore": {
                     "type": "boolean",
                     "description": "Do not load the iGenomes reference config.",
                     "fa_icon": "fas fa-ban",
                     "hidden": true,
-                    "default": false,
                     "help_text": "Do not load `igenomes.config` when running the pipeline. You may choose this option if you observe clashes between custom parameters and those supplied in `igenomes.config`."
                 }
             }
@@ -89,8 +86,7 @@
                     "type": "boolean",
                     "description": "Display help text.",
                     "hidden": true,
-                    "fa_icon": "fas fa-question-circle",
-                    "default": false
+                    "fa_icon": "fas fa-question-circle"
                 },
                 "publish_dir_mode": {
                     "type": "string",
@@ -121,15 +117,14 @@
                     "fa_icon": "fas fa-exclamation-triangle",
                     "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$",
                     "hidden": true,
-                    "help_text": "An email address to send a summary email to when the pipeline is completed - ONLY sent if the pipeline does not exit successfully."
+                    "help_text": "This works exactly as with `--email`, except emails are only sent if the workflow is not successful."
                 },
                 "plaintext_email": {
                     "type": "boolean",
                     "description": "Send plain-text email instead of HTML.",
                     "fa_icon": "fas fa-remove-format",
                     "hidden": true,
-                    "default": false,
-                    "help_text": ""
+                    "help_text": "Set to receive plain-text e-mails instead of HTML formatted."
                 },
                 "max_multiqc_email_size": {
                     "type": "string",
@@ -137,30 +132,27 @@
                     "default": "25.MB",
                     "fa_icon": "fas fa-file-upload",
                     "hidden": true,
-                    "help_text": ""
+                    "help_text": "If file generated by pipeline exceeds the threshold, it will not be attached."
                 },
                 "monochrome_logs": {
                     "type": "boolean",
                     "description": "Do not use coloured log outputs.",
                     "fa_icon": "fas fa-palette",
                     "hidden": true,
-                    "default": false,
-                    "help_text": ""
+                    "help_text": "Set to disable colourful command line output and live life in monochrome."
                 },
                 "multiqc_config": {
                     "type": "string",
                     "description": "Custom config file to supply to MultiQC.",
                     "fa_icon": "fas fa-cog",
-                    "hidden": true,
-                    "help_text": ""
+                    "hidden": true
                 },
                 "tracedir": {
                     "type": "string",
                     "description": "Directory to keep pipeline Nextflow logs and reports.",
                     "default": "${params.outdir}/pipeline_info",
                     "fa_icon": "fas fa-cogs",
-                    "hidden": true,
-                    "help_text": ""
+                    "hidden": true
                 }
             }
         },
@@ -210,43 +202,39 @@
                     "default": "master",
                     "hidden": true,
                     "fa_icon": "fas fa-users-cog",
-                    "help_text": ""
+                    "help_text": "Provide git commit id for custom Institutional configs hosted at `nf-core/configs`. This was implemented for reproducibility purposes. Default: `master`.\n\n```bash\n## Download and use config file with following git commit id\n--custom_config_version d52db660777c4bf36546ddb188ec530c3ada1b96\n```"
                 },
                 "custom_config_base": {
                     "type": "string",
                     "description": "Base directory for Institutional configs.",
                     "default": "https://raw.githubusercontent.com/nf-core/configs/master",
                     "hidden": true,
-                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell Nextflow where to find them with this parameter.",
+                    "help_text": "If you're running offline, nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell nextflow where to find them with the `custom_config_base` option. For example:\n\n```bash\n## Download and unzip the config files\ncd /path/to/my/configs\nwget https://github.com/nf-core/configs/archive/master.zip\nunzip master.zip\n\n## Run the pipeline\ncd /path/to/my/data\nnextflow run /path/to/pipeline/ --custom_config_base /path/to/my/configs/configs-master/\n```\n\n> Note that the nf-core/tools helper package has a `download` command to download all required pipeline files + singularity containers + institutional configs in one go for you, to make this process easier.",
                     "fa_icon": "fas fa-users-cog"
                 },
                 "hostnames": {
                     "type": "string",
                     "description": "Institutional configs hostname.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog",
-                    "help_text": ""
+                    "fa_icon": "fas fa-users-cog"
                 },
                 "config_profile_description": {
                     "type": "string",
                     "description": "Institutional config description.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog",
-                    "help_text": ""
+                    "fa_icon": "fas fa-users-cog"
                 },
                 "config_profile_contact": {
                     "type": "string",
                     "description": "Institutional config contact information.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog",
-                    "help_text": ""
+                    "fa_icon": "fas fa-users-cog"
                 },
                 "config_profile_url": {
                     "type": "string",
                     "description": "Institutional config URL link.",
                     "hidden": true,
-                    "fa_icon": "fas fa-users-cog",
-                    "help_text": ""
+                    "fa_icon": "fas fa-users-cog"
                 }
             }
         }
