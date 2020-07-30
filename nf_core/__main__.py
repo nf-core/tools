@@ -101,8 +101,8 @@ class CustomHelpOrder(click.Group):
 
 @click.group(cls=CustomHelpOrder)
 @click.version_option(nf_core.__version__)
-@click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
-@click.option("-l", "--log-file", help="Filename to save a verbose log output to.")
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
+@click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 def nf_core_cli(verbose, log_file):
 
     # Set the base logger to output DEBUG

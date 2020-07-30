@@ -1,12 +1,13 @@
 # nf-core/tools: Changelog
 
-## v1.11dev
+## [v1.10.1](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
 
-### Template
+Patch release to fix the automatic template synchronisation, which failed in the v1.10 release.
 
-### Linting
-
-### Other
+* Improved logging: `nf-core --log-file log.txt` now saves a verbose log to disk.
+* GitHub actions sync now uploads verbose log as an artifact.
+* Sync - fixed several minor bugs, improved logging.
+* Python Rich library updated to `>=4.2.1`
 
 ## [v1.10 - Copper Camel](https://github.com/nf-core/tools/releases/tag/1.10) - [2020-07-30]
 
