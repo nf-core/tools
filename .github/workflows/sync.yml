@@ -12,10 +12,10 @@ jobs:
       - uses: actions/checkout@v2
         name: Check out source-code repository
 
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.8
 
       - name: Install python dependencies
         run: |
@@ -28,6 +28,11 @@ jobs:
           cd /tmp/nextflow
           wget -qO- get.nextflow.io | bash
           sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+
+      - name: Configure git
+        run: |
+          git config user.email "core@nf-co.re"
+          git config user.name "nf-core-bot"
 
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'

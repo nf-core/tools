@@ -1,6 +1,107 @@
 # nf-core/tools: Changelog
 
-## v1.9
+## [v1.10 - Copper Camel](https://github.com/nf-core/tools/releases/tag/1.10) - [2020-07-30]
+
+### Pipeline schema
+
+This release of nf-core/tools introduces a major change / new feature: pipeline schema.
+These are [JSON Schema](https://json-schema.org/) files that describe all of the parameters for a given
+pipeline with their ID, a description, a longer help text, an optional default value, a variable _type_
+(eg. `string` or `boolean`) and more.
+
+The files will be used in a number of places:
+
+* Automatic validation of supplied parameters when running pipelines
+  * Pipeline execution can be immediately stopped if a required `param` is missing,
+    or does not conform to the patterns / allowed values in the schema.
+* Generation of pipeline command-line help
+  * Running `nextflow run <pipeline> --help` will use the schema to generate a help text automatically
+* Building online documentation on the [nf-core website](https://nf-co.re)
+* Integration with 3rd party graphical user interfaces
+
+To support these new schema files, nf-core/tools now comes with a new set of commands: `nf-core schema`.
+
+* Pipeline schema can be generated or updated using `nf-core schema build` - this takes the parameters from
+  the pipeline config file and prompts the developer for any mismatch between schema and pipeline.
+  * Once a skeleton Schema file has been built, the command makes use of a new nf-core website tool to provide
+    a user friendly graphical interface for developers to add content to their schema: [https://nf-co.re/pipeline_schema_builder](https://nf-co.re/pipeline_schema_builder)
+* Pipelines will be automatically tested for valid schema that describe all pipeline parameters using the
+  `nf-core schema lint` command (also included as part of the main `nf-core lint` command).
+* Users can validate their set of pipeline inputs using the `nf-core schema validate` command.
+
+In addition to the new schema commands, the `nf-core launch` command has been completely rewritten from
+scratch to make use of the new pipeline schema. This command can use either an interactive command-line
+prompt or a rich web interface to help users set parameters for a pipeline run.
+
+The parameter descriptions and help text are fully used and embedded into the launch interfaces to make
+this process as user-friendly as possible. We hope that it's particularly well suited to those new to nf-core.
+
+Whilst we appreciate that this new feature will add a little work for pipeline developers, we're excited at
+the possibilities that it brings. If you have any feedback or suggestions, please let us know either here on
+GitHub or on the nf-core [`#json-schema` Slack channel](https://nfcore.slack.com/channels/json-schema).
+
+### Python code formatting
+
+We have adopted the use of the [Black Python code formatter](https://black.readthedocs.io/en/stable/).
+This ensures a harmonised code formatting style throughout the package, from all contributors.
+If you are editing any Python code in nf-core/tools you must now pass the files through Black when
+making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) for details.
+
+### Template
+
+* Add `--publish_dir_mode` parameter [#585](https://github.com/nf-core/tools/issues/585)
+* Isolate R library paths to those in container [#541](https://github.com/nf-core/tools/issues/541)
+* Added new style of pipeline parameters JSON schema to pipeline template
+* Add ability to attach MultiQC reports to completion emails when using `mail`
+* Update `output.md` and add in 'Pipeline information' section describing standard NF and pipeline reporting.
+* Build Docker image using GitHub Actions, then push to Docker Hub (instead of building on Docker Hub)
+* Add Slack channel badge in pipeline README
+* Allow multiple container tags in `ci.yml` if performing multiple tests in parallel
+* Add AWS CI tests and full tests GitHub Actions workflows
+* Update AWS CI tests and full tests secrets names
+* Added `macs_gsize` for danRer10, based on [this post](https://biostar.galaxyproject.org/p/18272/)
+* Add information about config files used for workflow execution (`workflow.configFiles`) to summary
+* Fix `markdown_to_html.py` to work with Python 2 and 3.
+* Change `params.reads` -> `params.input`
+* Change `params.readPaths` -> `params.input_paths`
+* Added a `.github/.dockstore.yml` config file for automatic workflow registration with [dockstore.org](https://dockstore.org/)
+
+### Linting
+
+* Refactored PR branch tests to be a little clearer.
+* Linting error docs explain how to add an additional branch protecton rule to the `branch.yml` GitHub Actions workflow.
+* Adapted linting docs to the new PR branch tests.
+* Failure for missing the readme bioconda badge is now a warn, in case this badge is not relevant
+* Added test for template `{{ cookiecutter.var }}` placeholders
+* Fix failure when providing version along with build id for Conda packages
+* New `--json` and `--markdown` options to print lint results to JSON / markdown files
+* Linting code now automatically posts warning / failing results to GitHub PRs as a comment if it can
+* Added AWS GitHub Actions workflows linting
+* Fail if `params.input` isn't defined.
+* Beautiful new progress bar to look at whilst linting is running and awesome new formatted output on the command line :heart_eyes:
+  * All made using the excellent [`rich` python library](https://github.com/willmcgugan/rich) - check it out!
+* Tests looking for `TODO` strings should now ignore editor backup files. [#477](https://github.com/nf-core/tools/issues/477)
+
+### nf-core/tools Continuous Integration
+
+* Added CI test to check for PRs against `master` in tools repo
+* CI PR branch tests fixed & now automatically add a comment on the PR if failing, explaining what is wrong
+* Move some of the issue and PR templates into HTML `<!-- comments -->` so that they don't show in issues / PRs
+
+### Other
+
+* Describe alternative installation method via conda with `conda env create`
+* nf-core/tools version number now printed underneath header artwork
+* Bumped Conda version shipped with nfcore/base to 4.8.2
+* Added log message when creating new pipelines that people should talk to the community about their plans
+* Fixed 'on completion' emails sent using the `mail` command not containing body text.
+* Improved command-line help text for nf-core/tools
+* `nf-core list` now hides archived pipelines unless `--show_archived` flag is set
+* Command line tools now checks if there is a new version of nf-core/tools available
+  * Disable this by setting the environment variable `NFCORE_NO_VERSION_CHECK`, eg. `export NFCORE_NO_VERSION_CHECK=1`
+* Better command-line output formatting of nearly all `nf-core` commands using [`rich`](https://github.com/willmcgugan/rich)
+
+## [v1.9 - Platinum Pigeon](https://github.com/nf-core/tools/releases/tag/1.9) - [2020-02-20]
 
 ### Continuous integration
 
@@ -13,6 +114,7 @@
 ### Template
 
 * Rewrote the documentation markdown > HTML conversion in Python instead of R
+* Fixed rendering of images in output documentation [#391](https://github.com/nf-core/tools/issues/391)
 * Removed the requirement for R in the conda environment
 * Make `params.multiqc_config` give an _additional_ MultiQC config file instead of replacing the one that ships with the pipeline
 * Ignore only `tests/` and `testing/` directories in `.gitignore` to avoid ignoring `test.config` configuration file
@@ -42,7 +144,7 @@
 * Add social preview image
 * Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
 
-## v1.8
+## [v1.8 - Black Sheep](https://github.com/nf-core/tools/releases/tag/1.8) - [2020-01-27]
 
 ### Continuous integration
 
@@ -114,7 +216,7 @@
 * Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
 * Improved core documentation (`-profile`)
 
-## v1.7
+## [v1.7 - Titanium Kangaroo](https://github.com/nf-core/tools/releases/tag/1.7) - [2019-10-07]
 
 ### Tools helper code
 
@@ -177,7 +279,7 @@
 * Added a Code of Conduct to nf-core/tools, as only the template had this before
 * TravisCI tests will now also start for PRs from `patch` branches, [to allow fixing critical issues](https://github.com/nf-core/tools/pull/392) without making a new major release
 
-## v1.6
+## [v1.6 - Brass Walrus](https://github.com/nf-core/tools/releases/tag/1.6) - [2020-04-09]
 
 ### Syncing
 
@@ -215,7 +317,7 @@
   * As a solution for [#103](https://github.com/nf-core/tools/issues/103))
 * Add Bowtie2 and BWA in iGenome config file template
 
-## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
+## [v1.5 - Iron Shark](https://github.com/nf-core/tools/releases/tag/1.5) - [2019-03-13]
 
 ### Template pipeline
 
@@ -260,7 +362,7 @@
 
 * Bump `conda` to 4.6.7 in base nf-core Dockerfile
 
-## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
+## [v1.4 - Tantalum Butterfly](https://github.com/nf-core/tools/releases/tag/1.4) - [2018-12-12]
 
 ### Template pipeline
 
@@ -285,7 +387,7 @@
 * Handle exception if nextflow isn't installed
 * Linting: Update for Travis: Pull the `dev` tagged docker image for testing
 
-## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
+## [v1.3 - Citreous Swordfish](https://github.com/nf-core/tools/releases/tag/1.3) - [2018-11-21]
 
 * `nf-core create` command line interface updated
   * Interactive prompts for required arguments if not given
@@ -299,7 +401,7 @@
   * Ordering alphabetically for profiles now
 * Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
 
-## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
+## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - [2018-10-01]
 
 * Updated the `nf-core release` command
   * Now called `nf-core bump-versions` instead
@@ -320,7 +422,7 @@
 * Updated PyPI deployment to  correctly parse the markdown readme (hopefully!)
 * New GitHub contributing instructions and pull request template
 
-## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
+## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - [2018-08-14]
 
 Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.
 
@@ -340,11 +442,11 @@ Very large release containing lots of work from the first nf-core hackathon, hel
 * New sync tool to automate pipeline updates
   * Once initial merges are complete, a nf-core bot account will create PRs for future template updates
 
-## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - 2018-07-18
+## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - [2018-07-18]
 
 The version 1.0 of nf-core tools cannot be installed from PyPi. This patch fixes it, by getting rid of the requirements.txt plus declaring the dependent modules in the setup.py directly.
 
-## [v1.0](https://github.com/nf-core/tools/releases/tag/1.0) - 2018-06-12
+## [v1.0](https://github.com/nf-core/tools/releases/tag/1.0) - [2018-06-12]
 
 Initial release of the nf-core helper tools package. Currently includes four subcommands:
 
