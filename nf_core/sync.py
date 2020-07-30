@@ -79,12 +79,11 @@ class PipelineSync(object):
         """ Find workflow attributes, create a new template pipeline on TEMPLATE
         """
 
-        config_log_msg = "Pipeline directory: {}".format(self.pipeline_dir)
+        log.debug("Pipeline directory: {}".format(self.pipeline_dir))
         if self.from_branch:
-            config_log_msg += "\n  Using branch `{}` to fetch workflow variables".format(self.from_branch)
+            log.debug("Using branch `{}` to fetch workflow variables".format(self.from_branch))
         if self.make_pr:
-            config_log_msg += "\n  Will attempt to automatically create a pull request on GitHub.com"
-        log.info(config_log_msg)
+            log.debug("Will attempt to automatically create a pull request")
 
         self.inspect_sync_dir()
         self.get_wf_config()
@@ -388,11 +387,7 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
             log.error("Something went wrong when syncing {}:\n{}".format(wf.full_name, e))
             failed_syncs.append(wf.name)
         else:
-            log.info(
-                "[green]Sync successful for {0}:[/] [blue][link={1}]{1}[/link]".format(
-                    wf.full_name, sync_obj.gh_pr_returned_data.get("html_url")
-                )
-            )
+            log.info("[green]Sync successful for {}".format(wf.full_name))
             successful_syncs.append(wf.name)
 
         # Clean up
