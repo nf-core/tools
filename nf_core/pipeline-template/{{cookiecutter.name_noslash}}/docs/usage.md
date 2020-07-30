@@ -2,7 +2,7 @@
 
 ## Introduction
 
-<!-- TODO nf-core: Document required command line parameters to run the pipeline-->
+<!-- TODO nf-core: Add documentation about anything specific to running your pipeline. For general topics, please point to (and add to) the main nf-core website. -->
 
 ## Running the pipeline
 
