@@ -14,9 +14,12 @@ Apologies for the inconvenience.
 Patch release to fix the automatic template synchronisation, which failed in the v1.10 release.
 
 * Improved logging: `nf-core --log-file log.txt` now saves a verbose log to disk.
-* GitHub actions sync now uploads verbose log as an artifact.
-* Sync - fixed several minor bugs, improved logging.
+* nf-core/tools GitHub Actions pipeline sync now uploads verbose log as an artifact.
+* Sync - fixed several minor bugs, made logging less verbose.
 * Python Rich library updated to `>=4.2.1`
+* Hopefully fix git config for pipeline sync so that commit comes from @nf-core-bot
+* Fix sync auto-PR text indentation so that it doesn't all show as code
+* Added explicit flag `--show-passed` for `nf-core lint` instead of taking logging verbosity
 
 ## [v1.10 - Copper Camel](https://github.com/nf-core/tools/releases/tag/1.10) - [2020-07-30]
 
