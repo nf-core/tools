@@ -39,7 +39,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 
-def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
+def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -65,7 +65,7 @@ def run_linting(pipeline_dir, release_mode=False, md_fn=None, json_fn=None):
         return lint_obj
 
     # Print the results
-    lint_obj.print_results()
+    lint_obj.print_results(show_passed)
 
     # Save results to Markdown file
     if md_fn is not None:
@@ -1273,7 +1273,9 @@ class PipelineLint(object):
         if len(removed_params) == 0 and len(added_params) == 0:
             self.passed.append((15, "Schema matched params returned from nextflow config"))
 
-    def print_results(self):
+    def print_results(self, show_passed=False):
+
+        log.debug("Printing final results")
         console = Console()
 
         # Helper function to format test links nicely
@@ -1294,7 +1296,7 @@ class PipelineLint(object):
             return ""
 
         # Table of passed tests
-        if len(self.passed) > 0 and log.getEffectiveLevel() == logging.DEBUG:
+        if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column(
                 "[[\u2714]] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True,
