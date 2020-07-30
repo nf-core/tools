@@ -395,7 +395,7 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
             failed_syncs.append(wf.name)
         else:
             log.info(
-                "[green]Sync successful for {}:[/] [blue][link={1}]{1}[/link]".format(
+                "[green]Sync successful for {0}:[/] [blue][link={1}]{1}[/link]".format(
                     wf.full_name, sync_obj.gh_pr_returned_data.get("html_url")
                 )
             )
