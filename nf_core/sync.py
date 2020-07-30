@@ -100,7 +100,7 @@ class PipelineSync(object):
                 self.make_pull_request()
             except PullRequestException as e:
                 self.reset_target_dir()
-                raise PullRequestException(pr_exception)
+                raise PullRequestException(e)
 
         self.reset_target_dir()
 
