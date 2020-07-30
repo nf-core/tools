@@ -140,7 +140,7 @@ class PipelineSync(object):
         # Try to check out target branch (eg. `origin/dev`)
         try:
             if self.from_branch and self.repo.active_branch.name != self.from_branch:
-                log.info("Checking out workflow branch '{}'".format(self.from_branch))
+                log.debug("Checking out workflow branch '{}'".format(self.from_branch))
                 self.repo.git.checkout(self.from_branch)
         except git.exc.GitCommandError:
             raise SyncException("Branch `{}` not found!".format(self.from_branch))
@@ -173,7 +173,7 @@ class PipelineSync(object):
             )
 
         # Fetch workflow variables
-        log.info("Fetching workflow config variables")
+        log.debug("Fetching workflow config variables")
         self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
 
         # Check that we have the required variables
@@ -201,7 +201,7 @@ class PipelineSync(object):
         Delete all files in the TEMPLATE branch
         """
         # Delete everything
-        log.info("Deleting all files in TEMPLATE branch")
+        log.debug("Deleting all files in TEMPLATE branch")
         for the_file in os.listdir(self.pipeline_dir):
             if the_file == ".git":
                 continue
@@ -219,7 +219,7 @@ class PipelineSync(object):
         """
         Delete all files and make a fresh template using the workflow variables
         """
-        log.info("Making a new template pipeline using pipeline variables")
+        log.debug("Making a new template pipeline using pipeline variables")
 
         # Only show error messages from pipeline creation
         if log.getEffectiveLevel() == logging.INFO:
@@ -247,7 +247,7 @@ class PipelineSync(object):
             self.repo.git.add(A=True)
             self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
             self.made_changes = True
-            log.info("Committed changes to TEMPLATE branch")
+            log.debug("Committed changes to TEMPLATE branch")
         except Exception as e:
             raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
         return True
@@ -257,7 +257,7 @@ class PipelineSync(object):
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        log.info("Pushing TEMPLATE branch to remote")
+        log.debug("Pushing TEMPLATE branch to remote: '{}'".format(os.path.basename(self.pipeline_dir)))
         try:
             self.repo.git.push()
         except git.exc.GitCommandError as e:
@@ -287,7 +287,7 @@ class PipelineSync(object):
             )
             raise PullRequestException("No GitHub authentication token set - cannot make PR")
 
-        log.info("Submitting a pull request via the GitHub API")
+        log.debug("Submitting a pull request via the GitHub API")
 
         pr_body_text = (
             "A new release of the main template in nf-core/tools has just been released. "
@@ -355,6 +355,7 @@ def sync_all_pipelines(gh_username=None, gh_auth_token=None):
     # Let's do some updating!
     for wf in wfs.remote_workflows:
 
+        log.info("-" * 30)
         log.info("Syncing {}".format(wf.full_name))
 
         # Make a local working directory
