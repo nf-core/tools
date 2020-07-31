@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v1.10.2 - Copper Camel _(bought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
+## [v1.10.2 - Copper Camel _(brought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
 
 Second patch release to address some small errors discovered in the pipeline template.
 Apologies for the inconvenience.
