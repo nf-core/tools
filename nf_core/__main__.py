@@ -550,14 +550,13 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
 
 @nf_core_cli.command("sync", help_priority=10)
-@click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
+@click.argument("pipeline_dir", required=True, type=click.Path(exists=True), metavar="<pipeline directory>")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
-@click.option("-u", "--username", type=str, help="GitHub username for the PR.")
-@click.option("-r", "--repository", type=str, help="GitHub repository name for the PR.")
-@click.option("-a", "--auth-token", type=str, help="GitHub API personal access token.")
-@click.option("--all", is_flag=True, default=False, help="Sync template for all nf-core pipelines.")
-def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_token, all):
+@click.option("-r", "--repository", type=str, help="GitHub PR: target repository.")
+@click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
+@click.option("-a", "--auth-token", type=str, help="GitHub PR: API personal access token.")
+def sync(pipeline_dir, from_branch, pull_request, repository, username, auth_token):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
 
@@ -571,24 +570,13 @@ def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_tok
     new release of nf-core/tools (and the included template) is made.
     """
 
-    # Pull and sync all nf-core pipelines
-    if all:
-        nf_core.sync.sync_all_pipelines(username, auth_token)
-    else:
-        # Manually check for the required parameter
-        if not pipeline_dir or len(pipeline_dir) != 1:
-            log.error("Either use --all or specify one <pipeline directory>")
-            sys.exit(1)
-        else:
-            pipeline_dir = pipeline_dir[0]
-
-        # Sync the given pipeline dir
-        sync_obj = nf_core.sync.PipelineSync(pipeline_dir, from_branch, pull_request)
-        try:
-            sync_obj.sync()
-        except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
-            log.error(e)
-            sys.exit(1)
+    # Sync the given pipeline dir
+    sync_obj = nf_core.sync.PipelineSync(pipeline_dir, from_branch, pull_request, repository, username, auth_token)
+    try:
+        sync_obj.sync()
+    except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
+        log.error(e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

@@ -59,7 +59,7 @@ class PipelineSync(object):
     """
 
     def __init__(
-        self, pipeline_dir, from_branch=None, make_pr=False, gh_username=None, gh_repo=None, gh_auth_token=None,
+        self, pipeline_dir, from_branch=None, make_pr=False, gh_repo=None, gh_username=None, gh_auth_token=None,
     ):
         """ Initialise syncing object """
 
@@ -334,69 +334,3 @@ class PipelineSync(object):
             self.repo.git.checkout(self.original_branch)
         except git.exc.GitCommandError as e:
             raise SyncException("Could not reset to original branch `{}`:\n{}".format(self.from_branch, e))
-
-
-def sync_all_pipelines(gh_username=None, gh_auth_token=None):
-    """Sync all nf-core pipelines
-    """
-
-    # Get remote workflows
-    wfs = nf_core.list.Workflows()
-    wfs.get_remote_workflows()
-
-    successful_syncs = []
-    failed_syncs = []
-
-    # Set up a working directory
-    tmpdir = tempfile.mkdtemp()
-
-    # Let's do some updating!
-    for wf in wfs.remote_workflows:
-
-        log.info("-" * 30)
-        log.info("Syncing {}".format(wf.full_name))
-
-        # Make a local working directory
-        wf_local_path = os.path.join(tmpdir, wf.name)
-        os.mkdir(wf_local_path)
-        log.debug("Sync working directory: {}".format(wf_local_path))
-
-        # Clone the repo
-        wf_remote_url = "https://{}@github.com/nf-core/{}".format(gh_auth_token, wf.name)
-        repo = git.Repo.clone_from(wf_remote_url, wf_local_path)
-        assert repo
-
-        # Only show error messages from pipeline creation
-        logging.getLogger("nf_core.create").setLevel(logging.ERROR)
-
-        # Sync the repo
-        log.debug("Running template sync")
-        sync_obj = nf_core.sync.PipelineSync(
-            pipeline_dir=wf_local_path,
-            from_branch="dev",
-            make_pr=True,
-            gh_username=gh_username,
-            gh_auth_token=gh_auth_token,
-        )
-        try:
-            sync_obj.sync()
-        except (SyncException, PullRequestException) as e:
-            log.error("Sync failed for {}:\n{}".format(wf.full_name, e))
-            failed_syncs.append(wf.name)
-        except Exception as e:
-            log.error("Something went wrong when syncing {}:\n{}".format(wf.full_name, e))
-            failed_syncs.append(wf.name)
-        else:
-            log.info("[green]Sync successful for {}".format(wf.full_name))
-            successful_syncs.append(wf.name)
-
-        # Clean up
-        log.debug("Removing work directory: {}".format(wf_local_path))
-        shutil.rmtree(wf_local_path)
-
-    if len(successful_syncs) > 0:
-        log.info("[green]Finished. Successfully synchronised {} pipelines".format(len(successful_syncs)))
-
-    if len(failed_syncs) > 0:
-        failed_list = "\n - ".join(failed_syncs)
-        log.error("[red]Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list))
