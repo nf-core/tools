@@ -148,26 +148,6 @@ class PipelineSync(object):
             except git.exc.GitCommandError as e:
                 log.error("Could not find active repo branch: ".format(e))
 
-        # Figure out the GitHub username and repo name from the 'origin' remote if we can
-        try:
-            origin_url = self.repo.remotes.origin.url.rstrip(".git")
-            gh_origin_match = re.search(r"github\.com[:\/]([^\/]+)/([^\/]+)$", origin_url)
-            if gh_origin_match:
-                self.gh_username = gh_origin_match.group(1)
-                self.gh_repo = gh_origin_match.group(2)
-            else:
-                raise AttributeError
-        except AttributeError as e:
-            log.debug(
-                "Could not find repository URL for remote called 'origin' from remote: {}".format(self.repo.remotes)
-            )
-        else:
-            log.debug(
-                "Found username and repo from remote: {}, {} - {}".format(
-                    self.gh_username, self.gh_repo, self.repo.remotes.origin.url
-                )
-            )
-
         # Fetch workflow variables
         log.debug("Fetching workflow config variables")
         self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
