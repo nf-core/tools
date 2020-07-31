@@ -44,7 +44,6 @@ class PipelineSync(object):
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
-        gh_auth_token (str): Authorisation token used to make PR with GitHub API
 
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
@@ -55,11 +54,10 @@ class PipelineSync(object):
         required_config_vars (list): List of nextflow variables required to make template pipeline
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
-        gh_auth_token (str): Authorisation token used to make PR with GitHub API
     """
 
     def __init__(
-        self, pipeline_dir, from_branch=None, make_pr=False, gh_repo=None, gh_username=None, gh_auth_token=None,
+        self, pipeline_dir, from_branch=None, make_pr=False, gh_repo=None, gh_username=None,
     ):
         """ Initialise syncing object """
 
@@ -73,7 +71,6 @@ class PipelineSync(object):
 
         self.gh_username = gh_username
         self.gh_repo = gh_repo
-        self.gh_auth_token = gh_auth_token
 
     def sync(self):
         """ Find workflow attributes, create a new template pipeline on TEMPLATE
@@ -276,14 +273,14 @@ class PipelineSync(object):
 
         # If we've been asked to make a PR, check that we have the credentials
         try:
-            assert self.gh_auth_token is not None
+            assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         except AssertionError:
             log.info(
                 "Make a PR at the following URL:\n  https://github.com/{}/{}/compare/{}...TEMPLATE".format(
                     self.gh_username, self.gh_repo, self.original_branch
                 )
             )
-            raise PullRequestException("No GitHub authentication token set - cannot make PR")
+            raise PullRequestException("Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR")
 
         log.debug("Submitting a pull request via the GitHub API")
 
@@ -311,12 +308,14 @@ class PipelineSync(object):
         If one is found, attempt to update it with a new title and body text
         If none are found, return False
         """
-
+        assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         # Look for existing pull-requests
         list_prs_url = "https://api.github.com/repos/{}/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
             self.gh_username, self.gh_repo, self.from_branch
         )
-        r = requests.get(url=list_prs_url, auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),)
+        r = requests.get(
+            url=list_prs_url, auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+        )
         try:
             r_json = json.loads(r.content)
             r_pp = json.dumps(r_json, indent=4)
@@ -340,7 +339,7 @@ class PipelineSync(object):
             r = requests.patch(
                 url=pr_update_api_url,
                 data=json.dumps(pr_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
             )
             try:
                 r_json = json.loads(r.content)
@@ -368,6 +367,7 @@ class PipelineSync(object):
         """
         Create a new pull-request on GitHub
         """
+        assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         pr_content = {
             "title": pr_title,
             "body": pr_body_text,
@@ -379,7 +379,7 @@ class PipelineSync(object):
         r = requests.post(
             url="https://api.github.com/repos/{}/{}/pulls".format(self.gh_username, self.gh_repo),
             data=json.dumps(pr_content),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
         )
         try:
             self.gh_pr_returned_data = json.loads(r.content)

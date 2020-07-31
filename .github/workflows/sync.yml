@@ -53,7 +53,7 @@ jobs:
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
         env:
-          AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+          GITHUB_AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
@@ -61,8 +61,7 @@ jobs:
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
-            --repository nf-core/${{ matrix.pipeline }} \
-            --auth-token ${{ secrets.nf_core_bot_auth_token }}
+            --repository nf-core/${{ matrix.pipeline }}
 
 
       - name: Upload sync log file artifact
