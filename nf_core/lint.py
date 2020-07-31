@@ -771,7 +771,7 @@ class PipelineLint(object):
                 self.passed.append((5, "Continuous integration runs Markdown lint Tests: `{}`".format(fn)))
 
             # Check that the nf-core linting runs
-            nfcore_lint_cmd = "nf-core lint ${GITHUB_WORKSPACE}"
+            nfcore_lint_cmd = "nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}"
             try:
                 steps = lintwf["jobs"]["nf-core"]["steps"]
                 assert any([nfcore_lint_cmd in step["run"] for step in steps if "run" in step.keys()])
