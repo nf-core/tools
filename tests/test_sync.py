@@ -171,7 +171,7 @@ class TestModules(unittest.TestCase):
         """ Try making a PR without any auth """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "foo"
-        psync.gh_repo = "bar"
+        psync.gh_repo = "foo/bar"
         if "GITHUB_AUTH_TOKEN" in os.environ:
             del os.environ["GITHUB_AUTH_TOKEN"]
         try:
@@ -236,7 +236,7 @@ class TestModules(unittest.TestCase):
         """ Try making a PR - successful response """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "no_existing_pr"
-        psync.gh_repo = "response"
+        psync.gh_repo = "no_existing_pr/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
         psync.make_pull_request()
         assert psync.gh_pr_returned_data["html_url"] == "great_success"
@@ -247,7 +247,7 @@ class TestModules(unittest.TestCase):
         """ Try making a PR and getting a 404 error """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "bad_url"
-        psync.gh_repo = "response"
+        psync.gh_repo = "bad_url/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
         try:
             psync.make_pull_request()
@@ -261,6 +261,6 @@ class TestModules(unittest.TestCase):
         """ Try discovering a PR and updating it """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "existing_pr"
-        psync.gh_repo = "response"
+        psync.gh_repo = "existing_pr/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
         assert psync.update_existing_pull_request("title", "body") is True
