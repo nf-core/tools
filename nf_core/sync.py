@@ -317,13 +317,20 @@ class PipelineSync(object):
             self.gh_pr_returned_data = r.content
             returned_data_prettyprint = r.content
 
-        if r.status_code != 201:
+        # PR worked
+        if r.status_code == 201:
+            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
+            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
+
+        # We already had a PR open
+        elif r.status_code == 422:
+            log.warn("GitHub PR is already open!")
+
+        # Something went wrong
+        else:
             raise PullRequestException(
                 "GitHub API returned code {}: \n{}".format(r.status_code, returned_data_prettyprint)
             )
-        else:
-            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
-            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
     def reset_target_dir(self):
         """
