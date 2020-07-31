@@ -2,10 +2,11 @@
 
 ## [v1.10.2 - Copper Camel _(bought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
 
-Second patch release to address minor syntax error discovered in the pipeline template.
+Second patch release to address some small errors discovered in the pipeline template.
 Apologies for the inconvenience.
 
 * Fix syntax error in `/push_dockerhub.yml` GitHub Action workflow
+* Change `params.readPaths` -> `params.input_paths` in `test_full.config`
 * Check results when posting the lint results as a GitHub comment
 
 ## [v1.10.1 - Copper Camel _(patch)_](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
