@@ -187,12 +187,16 @@ class TestModules(unittest.TestCase):
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "foo"
         psync.gh_repo = "bar"
-        psync.gh_auth_token = None
+        if "GITHUB_AUTH_TOKEN" in os.environ:
+            del os.environ["GITHUB_AUTH_TOKEN"]
         try:
             psync.make_pull_request()
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
-            assert e.args[0] == "No GitHub authentication token set - cannot make PR"
+            assert e.args[0] == (
+                "Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR\n"
+                "Make a PR at the following URL:\n  https://github.com/foo/bar/compare/None...TEMPLATE"
+            )
 
     def mocked_requests_get(**kwargs):
         """ Helper function to emulate POST requests responses from the web """
@@ -248,7 +252,7 @@ class TestModules(unittest.TestCase):
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "no_existing_pr"
         psync.gh_repo = "response"
-        psync.gh_auth_token = "test"
+        os.environ["GITHUB_AUTH_TOKEN"] = "test"
         psync.make_pull_request()
         assert psync.gh_pr_returned_data["html_url"] == "great_success"
 
@@ -259,7 +263,7 @@ class TestModules(unittest.TestCase):
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "bad_url"
         psync.gh_repo = "response"
-        psync.gh_auth_token = "test"
+        os.environ["GITHUB_AUTH_TOKEN"] = "test"
         try:
             psync.make_pull_request()
             raise UserWarning("Should have hit an exception")
@@ -273,5 +277,5 @@ class TestModules(unittest.TestCase):
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "existing_pr"
         psync.gh_repo = "response"
-        psync.gh_auth_token = "test"
+        os.environ["GITHUB_AUTH_TOKEN"] = "test"
         assert psync.update_existing_pull_request("title", "body") is True
