@@ -313,12 +313,10 @@ class PipelineSync(object):
         """
 
         # Look for existing pull-requests
-        r = requests.get(
-            url="https://api.github.com/repos/{}/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
-                self.gh_username, self.gh_repo, self.from_branch
-            ),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
+        list_prs_url = "https://api.github.com/repos/{}/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
+            self.gh_username, self.gh_repo, self.from_branch
         )
+        r = requests.get(url=list_prs_url, auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),)
         try:
             r_json = json.loads(r.content)
             r_pp = json.dumps(r_json, indent=4)
@@ -358,12 +356,12 @@ class PipelineSync(object):
                 return True
             # Something went wrong
             else:
-                log.warn("Could not update PR {}: \n{}".format(r.status_code, r_pp))
+                log.warn("Could not update PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
                 return False
 
         # Something went wrong
         else:
-            log.warn("Could not list open PRs: \n{}".format(r.status_code, r_pp))
+            log.warn("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
             return False
 
     def submit_pull_request(self, pr_title, pr_body_text):

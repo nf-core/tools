@@ -194,6 +194,39 @@ class TestModules(unittest.TestCase):
         except nf_core.sync.PullRequestException as e:
             assert e.args[0] == "No GitHub authentication token set - cannot make PR"
 
+    def mocked_requests_get(**kwargs):
+        """ Helper function to emulate POST requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.status_code = status_code
+                self.content = json.dumps(data)
+
+        url_template = "https://api.github.com/repos/{}/response/pulls?head=nf-core:TEMPLATE&base=None"
+        if kwargs["url"] == url_template.format("no_existing_pr"):
+            response_data = []
+            return MockResponse(response_data, 200)
+
+        if kwargs["url"] == url_template.format("existing_pr"):
+            response_data = [{"url": "url_to_update_pr"}]
+            return MockResponse(response_data, 200)
+
+        return MockResponse({"get_url": kwargs["url"]}, 404)
+
+    def mocked_requests_patch(**kwargs):
+        """ Helper function to emulate POST requests responses from the web """
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.status_code = status_code
+                self.content = json.dumps(data)
+
+        if kwargs["url"] == "url_to_update_pr":
+            response_data = {"html_url": "great_success"}
+            return MockResponse(response_data, 200)
+
+        return MockResponse({"patch_url": kwargs["url"]}, 404)
+
     def mocked_requests_post(**kwargs):
         """ Helper function to emulate POST requests responses from the web """
 
@@ -202,28 +235,29 @@ class TestModules(unittest.TestCase):
                 self.status_code = status_code
                 self.content = json.dumps(data)
 
-        if kwargs["url"] == "https://api.github.com/repos/bad/response/pulls":
-            return MockResponse({}, 404)
-
-        if kwargs["url"] == "https://api.github.com/repos/good/response/pulls":
+        if kwargs["url"] == "https://api.github.com/repos/no_existing_pr/response/pulls":
             response_data = {"html_url": "great_success"}
             return MockResponse(response_data, 201)
 
+        return MockResponse({"post_url": kwargs["url"]}, 404)
+
+    @mock.patch("requests.get", side_effect=mocked_requests_get)
     @mock.patch("requests.post", side_effect=mocked_requests_post)
-    def test_make_pull_request_bad_response(self, mock_post):
+    def test_make_pull_request_success(self, mock_get, mock_post):
         """ Try making a PR - successful response """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
-        psync.gh_username = "good"
+        psync.gh_username = "no_existing_pr"
         psync.gh_repo = "response"
         psync.gh_auth_token = "test"
         psync.make_pull_request()
         assert psync.gh_pr_returned_data["html_url"] == "great_success"
 
+    @mock.patch("requests.get", side_effect=mocked_requests_get)
     @mock.patch("requests.post", side_effect=mocked_requests_post)
-    def test_make_pull_request_bad_response(self, mock_post):
+    def test_make_pull_request_bad_response(self, mock_get, mock_post):
         """ Try making a PR and getting a 404 error """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
-        psync.gh_username = "bad"
+        psync.gh_username = "bad_url"
         psync.gh_repo = "response"
         psync.gh_auth_token = "test"
         try:
@@ -231,3 +265,13 @@ class TestModules(unittest.TestCase):
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("GitHub API returned code 404:")
+
+    @mock.patch("requests.get", side_effect=mocked_requests_get)
+    @mock.patch("requests.patch", side_effect=mocked_requests_patch)
+    def test_update_existing_pull_request(self, mock_get, mock_patch):
+        """ Try discovering a PR and updating it """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_username = "existing_pr"
+        psync.gh_repo = "response"
+        psync.gh_auth_token = "test"
+        assert psync.update_existing_pull_request("title", "body") is True
