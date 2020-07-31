@@ -57,7 +57,7 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log.txt sync nf-core/${{ matrix.pipeline }} \
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt sync nf-core/${{ matrix.pipeline }} \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
