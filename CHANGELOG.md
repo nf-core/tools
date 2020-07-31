@@ -6,6 +6,7 @@ Second patch release to address minor syntax error discovered in the pipeline te
 Apologies for the inconvenience.
 
 * Fix syntax error in `/push_dockerhub.yml` GitHub Action workflow
+* Check results when posting the lint results as a GitHub comment
 
 ## [v1.10.1 - Copper Camel _(patch)_](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
 
