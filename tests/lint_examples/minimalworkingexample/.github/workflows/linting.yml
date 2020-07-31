@@ -41,5 +41,4 @@ jobs:
         run: |
           pip install nf-core
       - name: Run nf-core lint
-        run: |
-          nf-core lint ${GITHUB_WORKSPACE}
+        run: nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}

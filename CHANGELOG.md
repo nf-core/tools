@@ -1,13 +1,32 @@
 # nf-core/tools: Changelog
 
-## [v1.10.1](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
+## [v1.10.2 - Copper Camel _(brought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
+
+Second patch release to address some small errors discovered in the pipeline template.
+Apologies for the inconvenience.
+
+* Fix syntax error in `/push_dockerhub.yml` GitHub Action workflow
+* Change `params.readPaths` -> `params.input_paths` in `test_full.config`
+* Check results when posting the lint results as a GitHub comment
+  * This feature is unfortunately not possible when making PRs from forks outside of the nf-core organisation for now.
+* More major refactoring of the automated pipeline sync
+  * New GitHub Actions matrix parallelisation of sync jobs across pipelines [[#673](https://github.com/nf-core/tools/issues/673)]
+  * Removed the `--all` behaviour from `nf-core sync` as we no longer need it
+  * Sync now uses a new list of pipelines on the website which does not include archived pipelines [[#712](https://github.com/nf-core/tools/issues/712)]
+  * When making a PR it checks if a PR already exists - if so it updates it [[#710](https://github.com/nf-core/tools/issues/710)]
+  * More tests and code refactoring for more stable code. Hopefully fixes 404 error [[#711](https://github.com/nf-core/tools/issues/711)]
+
+## [v1.10.1 - Copper Camel _(patch)_](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
 
 Patch release to fix the automatic template synchronisation, which failed in the v1.10 release.
 
 * Improved logging: `nf-core --log-file log.txt` now saves a verbose log to disk.
-* GitHub actions sync now uploads verbose log as an artifact.
-* Sync - fixed several minor bugs, improved logging.
+* nf-core/tools GitHub Actions pipeline sync now uploads verbose log as an artifact.
+* Sync - fixed several minor bugs, made logging less verbose.
 * Python Rich library updated to `>=4.2.1`
+* Hopefully fix git config for pipeline sync so that commit comes from @nf-core-bot
+* Fix sync auto-PR text indentation so that it doesn't all show as code
+* Added explicit flag `--show-passed` for `nf-core lint` instead of taking logging verbosity
 
 ## [v1.10 - Copper Camel](https://github.com/nf-core/tools/releases/tag/1.10) - [2020-07-30]
 
