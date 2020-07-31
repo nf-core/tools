@@ -257,8 +257,8 @@ class PipelineSync(object):
         except AssertionError:
             raise PullRequestException(
                 "Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR\n"
-                "Make a PR at the following URL:\n  https://github.com/{}/{}/compare/{}...TEMPLATE".format(
-                    self.gh_username, self.gh_repo, self.original_branch
+                "Make a PR at the following URL:\n  https://github.com/{}/compare/{}...TEMPLATE".format(
+                    self.gh_repo, self.original_branch
                 )
             )
 
@@ -290,8 +290,8 @@ class PipelineSync(object):
         """
         assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         # Look for existing pull-requests
-        list_prs_url = "https://api.github.com/repos/{}/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
-            self.gh_username, self.gh_repo, self.from_branch
+        list_prs_url = "https://api.github.com/repos/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
+            self.gh_repo, self.from_branch
         )
         r = requests.get(
             url=list_prs_url, auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
@@ -357,7 +357,7 @@ class PipelineSync(object):
         }
 
         r = requests.post(
-            url="https://api.github.com/repos/{}/{}/pulls".format(self.gh_username, self.gh_repo),
+            url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
             data=json.dumps(pr_content),
             auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
         )
