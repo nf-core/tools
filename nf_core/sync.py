@@ -287,6 +287,7 @@ class PipelineSync(object):
 
         log.debug("Submitting a pull request via the GitHub API")
 
+        pr_title = "Important! Template update for nf-core/tools v{}".format(nf_core.__version__)
         pr_body_text = (
             "A new release of the main template in nf-core/tools has just been released. "
             "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
@@ -298,13 +299,85 @@ class PipelineSync(object):
             "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag})."
         ).format(tag=nf_core.__version__)
 
+        # Try to update an existing pull-request
+        if self.update_existing_pull_request(pr_title, pr_body_text) is False:
+            # None found - make a new pull-request
+            self.submit_pull_request(pr_title, pr_body_text)
+
+    def update_existing_pull_request(self, pr_title, pr_body_text):
+        """
+        List existing pull-requests between TEMPLATE and self.from_branch
+
+        If one is found, attempt to update it with a new title and body text
+        If none are found, return False
+        """
+
+        # Look for existing pull-requests
+        r = requests.get(
+            url="https://api.github.com/repos/{}/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
+                self.gh_username, self.gh_repo, self.from_branch
+            ),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
+        )
+        try:
+            r_json = json.loads(r.content)
+            r_pp = json.dumps(r_json, indent=4)
+        except:
+            r_json = r.content
+            r_pp = r.content
+
+        # PR worked
+        if r.status_code == 200:
+            log.debug("GitHub API listing existing PRs:\n{}".format(r_pp))
+
+            # No open PRs
+            if len(r_json) == 0:
+                log.debug("No open PRs found between TEMPLATE and {}".format(self.from_branch))
+                return False
+
+            # Update existing PR
+            pr_update_api_url = r_json[0]["url"]
+            pr_content = {"title": pr_title, "body": pr_body_text}
+
+            r = requests.patch(
+                url=pr_update_api_url,
+                data=json.dumps(pr_content),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
+            )
+            try:
+                r_json = json.loads(r.content)
+                r_pp = json.dumps(r_json, indent=4)
+            except:
+                r_json = r.content
+                r_pp = r.content
+
+            # PR update worked
+            if r.status_code == 200:
+                log.debug("GitHub API PR-update worked:\n{}".format(r_pp))
+                log.info("Updated GitHub PR: {}".format(r_json["html_url"]))
+                return True
+            # Something went wrong
+            else:
+                log.warn("Could not update PR {}: \n{}".format(r.status_code, r_pp))
+                return False
+
+        # Something went wrong
+        else:
+            log.warn("Could not list open PRs: \n{}".format(r.status_code, r_pp))
+            return False
+
+    def submit_pull_request(self, pr_title, pr_body_text):
+        """
+        Create a new pull-request on GitHub
+        """
         pr_content = {
-            "title": "Important! Template update for nf-core/tools v{}".format(nf_core.__version__),
+            "title": pr_title,
             "body": pr_body_text,
             "maintainer_can_modify": True,
             "head": "TEMPLATE",
             "base": self.from_branch,
         }
+
         r = requests.post(
             url="https://api.github.com/repos/{}/{}/pulls".format(self.gh_username, self.gh_repo),
             data=json.dumps(pr_content),
