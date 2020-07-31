@@ -76,11 +76,11 @@ class PipelineSync(object):
         """ Find workflow attributes, create a new template pipeline on TEMPLATE
         """
 
-        log.debug("Pipeline directory: {}".format(self.pipeline_dir))
+        log.info("Pipeline directory: {}".format(self.pipeline_dir))
         if self.from_branch:
-            log.debug("Using branch `{}` to fetch workflow variables".format(self.from_branch))
+            log.info("Using branch `{}` to fetch workflow variables".format(self.from_branch))
         if self.make_pr:
-            log.debug("Will attempt to automatically create a pull request")
+            log.info("Will attempt to automatically create a pull request")
 
         self.inspect_sync_dir()
         self.get_wf_config()
@@ -121,7 +121,7 @@ class PipelineSync(object):
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
-        log.debug("Original pipeline repository branch is '{}'".format(self.original_branch))
+        log.info("Original pipeline repository branch is '{}'".format(self.original_branch))
 
         # Check to see if there are uncommitted changes on current branch
         if self.repo.is_dirty(untracked_files=True):
@@ -136,7 +136,7 @@ class PipelineSync(object):
         # Try to check out target branch (eg. `origin/dev`)
         try:
             if self.from_branch and self.repo.active_branch.name != self.from_branch:
-                log.debug("Checking out workflow branch '{}'".format(self.from_branch))
+                log.info("Checking out workflow branch '{}'".format(self.from_branch))
                 self.repo.git.checkout(self.from_branch)
         except git.exc.GitCommandError:
             raise SyncException("Branch `{}` not found!".format(self.from_branch))
@@ -197,7 +197,7 @@ class PipelineSync(object):
         Delete all files in the TEMPLATE branch
         """
         # Delete everything
-        log.debug("Deleting all files in TEMPLATE branch")
+        log.info("Deleting all files in TEMPLATE branch")
         for the_file in os.listdir(self.pipeline_dir):
             if the_file == ".git":
                 continue
@@ -215,7 +215,7 @@ class PipelineSync(object):
         """
         Delete all files and make a fresh template using the workflow variables
         """
-        log.debug("Making a new template pipeline using pipeline variables")
+        log.info("Making a new template pipeline using pipeline variables")
 
         # Only show error messages from pipeline creation
         logging.getLogger("nf_core.create").setLevel(logging.ERROR)
@@ -242,7 +242,7 @@ class PipelineSync(object):
             self.repo.git.add(A=True)
             self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
             self.made_changes = True
-            log.debug("Committed changes to TEMPLATE branch")
+            log.info("Committed changes to TEMPLATE branch")
         except Exception as e:
             raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
         return True
@@ -252,7 +252,7 @@ class PipelineSync(object):
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        log.debug("Pushing TEMPLATE branch to remote: '{}'".format(os.path.basename(self.pipeline_dir)))
+        log.info("Pushing TEMPLATE branch to remote: '{}'".format(os.path.basename(self.pipeline_dir)))
         try:
             self.repo.git.push()
         except git.exc.GitCommandError as e:
@@ -275,14 +275,14 @@ class PipelineSync(object):
         try:
             assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         except AssertionError:
-            log.info(
+            raise PullRequestException(
+                "Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR\n"
                 "Make a PR at the following URL:\n  https://github.com/{}/{}/compare/{}...TEMPLATE".format(
                     self.gh_username, self.gh_repo, self.original_branch
                 )
             )
-            raise PullRequestException("Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR")
 
-        log.debug("Submitting a pull request via the GitHub API")
+        log.info("Submitting a pull request via the GitHub API")
 
         pr_title = "Important! Template update for nf-core/tools v{}".format(nf_core.__version__)
         pr_body_text = (
@@ -329,7 +329,7 @@ class PipelineSync(object):
 
             # No open PRs
             if len(r_json) == 0:
-                log.debug("No open PRs found between TEMPLATE and {}".format(self.from_branch))
+                log.info("No open PRs found between TEMPLATE and {}".format(self.from_branch))
                 return False
 
             # Update existing PR
@@ -403,7 +403,7 @@ class PipelineSync(object):
         """
         Reset the target pipeline directory. Check out the original branch.
         """
-        log.debug("Checking out original branch: '{}'".format(self.original_branch))
+        log.info("Checking out original branch: '{}'".format(self.original_branch))
         try:
             self.repo.git.checkout(self.original_branch)
         except git.exc.GitCommandError as e:

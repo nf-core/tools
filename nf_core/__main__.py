@@ -555,7 +555,7 @@ def bump_version(pipeline_dir, new_version, nextflow):
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
 @click.option("-r", "--repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-def sync(pipeline_dir, from_branch, pull_request, repository, username, auth_token):
+def sync(pipeline_dir, from_branch, pull_request, repository, username):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
 
