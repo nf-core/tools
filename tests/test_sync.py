@@ -30,6 +30,7 @@ class TestModules(unittest.TestCase):
         psync = nf_core.sync.PipelineSync(tempfile.mkdtemp())
         try:
             psync.inspect_sync_dir()
+            raise UserWarning("Should have hit an exception")
         except nf_core.sync.SyncException as e:
             assert "does not appear to be a git repository" in e.args[0]
 
@@ -42,6 +43,7 @@ class TestModules(unittest.TestCase):
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         try:
             psync.inspect_sync_dir()
+            raise UserWarning("Should have hit an exception")
         except nf_core.sync.SyncException as e:
             os.remove(test_fn)
             assert e.args[0].startswith("Uncommitted changes found in pipeline directory!")
@@ -56,6 +58,7 @@ class TestModules(unittest.TestCase):
         try:
             psync.inspect_sync_dir()
             psync.get_wf_config()
+            raise UserWarning("Should have hit an exception")
         except nf_core.sync.SyncException as e:
             assert e.args[0] == "Branch `foo` not found!"
 
@@ -82,6 +85,7 @@ class TestModules(unittest.TestCase):
         try:
             psync.inspect_sync_dir()
             psync.get_wf_config()
+            raise UserWarning("Should have hit an exception")
         except nf_core.sync.SyncException as e:
             # Check that we did actually get some config back
             assert psync.wf_config["params.outdir"] == "'./results'"
@@ -163,6 +167,7 @@ class TestModules(unittest.TestCase):
         # Try to push changes
         try:
             psync.push_template_branch()
+            raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("Could not push TEMPLATE branch")
 
@@ -173,6 +178,7 @@ class TestModules(unittest.TestCase):
         psync.gh_repo = None
         try:
             psync.make_pull_request()
+            raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
             assert e.args[0] == "Could not find GitHub username and repo name"
 
@@ -184,6 +190,7 @@ class TestModules(unittest.TestCase):
         psync.gh_auth_token = None
         try:
             psync.make_pull_request()
+            raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
             assert e.args[0] == "No GitHub authentication token set - cannot make PR"
 
@@ -204,22 +211,23 @@ class TestModules(unittest.TestCase):
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     def test_make_pull_request_bad_response(self, mock_post):
-        """ Try making a PR without any auth """
-        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
-        psync.gh_username = "bad"
-        psync.gh_repo = "response"
-        psync.gh_auth_token = "test"
-        try:
-            psync.make_pull_request()
-        except nf_core.sync.PullRequestException as e:
-            assert e.args[0].startswith("GitHub API returned code 404:")
-
-    @mock.patch("requests.post", side_effect=mocked_requests_post)
-    def test_make_pull_request_bad_response(self, mock_post):
-        """ Try making a PR without any auth """
+        """ Try making a PR - successful response """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "good"
         psync.gh_repo = "response"
         psync.gh_auth_token = "test"
         psync.make_pull_request()
         assert psync.gh_pr_returned_data["html_url"] == "great_success"
+
+    @mock.patch("requests.post", side_effect=mocked_requests_post)
+    def test_make_pull_request_bad_response(self, mock_post):
+        """ Try making a PR and getting a 404 error """
+        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_username = "bad"
+        psync.gh_repo = "response"
+        psync.gh_auth_token = "test"
+        try:
+            psync.make_pull_request()
+            raise UserWarning("Should have hit an exception")
+        except nf_core.sync.PullRequestException as e:
+            assert e.args[0].startswith("GitHub API returned code 404:")
