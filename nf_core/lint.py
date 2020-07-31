@@ -771,7 +771,7 @@ class PipelineLint(object):
                 self.passed.append((5, "Continuous integration runs Markdown lint Tests: `{}`".format(fn)))
 
             # Check that the nf-core linting runs
-            nfcore_lint_cmd = "nf-core lint ${GITHUB_WORKSPACE}"
+            nfcore_lint_cmd = "nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}"
             try:
                 steps = lintwf["jobs"]["nf-core"]["steps"]
                 assert any([nfcore_lint_cmd in step["run"] for step in steps if "run" in step.keys()])
@@ -1440,39 +1440,55 @@ class PipelineLint(object):
         """
         If we are running in a GitHub PR, try to post results as a comment
         """
-        if os.environ.get("GITHUB_TOKEN", "") != "" and os.environ.get("GITHUB_COMMENTS_URL", "") != "":
-            try:
-                headers = {"Authorization": "token {}".format(os.environ["GITHUB_TOKEN"])}
-                # Get existing comments - GET
-                get_r = requests.get(url=os.environ["GITHUB_COMMENTS_URL"], headers=headers)
-                if get_r.status_code == 200:
+        if os.environ.get("GITHUB_TOKEN", "") == "":
+            log.debug("Environment variable GITHUB_TOKEN not found")
+            return
+        if os.environ.get("GITHUB_COMMENTS_URL", "") == "":
+            log.debug("Environment variable GITHUB_COMMENTS_URL not found")
+            return
+        try:
+            headers = {"Authorization": "token {}".format(os.environ["GITHUB_TOKEN"])}
+            # Get existing comments - GET
+            get_r = requests.get(url=os.environ["GITHUB_COMMENTS_URL"], headers=headers)
+            if get_r.status_code == 200:
 
-                    # Look for an existing comment to update
-                    update_url = False
-                    for comment in get_r.json():
-                        if comment["user"]["login"] == "github-actions[bot]" and comment["body"].startswith(
-                            "\n#### `nf-core lint` overall result"
-                        ):
-                            # Update existing comment - PATCH
-                            log.info("Updating GitHub comment")
-                            update_r = requests.patch(
-                                url=comment["url"],
-                                data=json.dumps({"body": self.get_results_md().replace("Posted", "**Updated**")}),
-                                headers=headers,
-                            )
-                            return
-
-                    # Create new comment - POST
-                    if len(self.warned) > 0 or len(self.failed) > 0:
-                        log.info("Posting GitHub comment")
-                        post_r = requests.post(
-                            url=os.environ["GITHUB_COMMENTS_URL"],
-                            data=json.dumps({"body": self.get_results_md()}),
+                # Look for an existing comment to update
+                update_url = False
+                for comment in get_r.json():
+                    if comment["user"]["login"] == "github-actions[bot]" and comment["body"].startswith(
+                        "\n#### `nf-core lint` overall result"
+                    ):
+                        # Update existing comment - PATCH
+                        log.info("Updating GitHub comment")
+                        update_r = requests.patch(
+                            url=comment["url"],
+                            data=json.dumps({"body": self.get_results_md().replace("Posted", "**Updated**")}),
                             headers=headers,
                         )
+                        return
 
-            except Exception as e:
-                log.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
+                # Create new comment - POST
+                if len(self.warned) > 0 or len(self.failed) > 0:
+                    r = requests.post(
+                        url=os.environ["GITHUB_COMMENTS_URL"],
+                        data=json.dumps({"body": self.get_results_md()}),
+                        headers=headers,
+                    )
+                    try:
+                        r_json = json.loads(r.content)
+                        response_pp = json.dumps(r_json, indent=4)
+                    except:
+                        r_json = r.content
+                        response_pp = r.content
+
+                    if r.status_code == 201:
+                        log.info("Posted GitHub comment: {}".format(r_json["html_url"]))
+                        log.debug(response_pp)
+                    else:
+                        log.warn("Could not post GitHub comment: '{}'\n{}".format(r.status_code, response_pp))
+
+        except Exception as e:
+            log.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
 
     def _wrap_quotes(self, files):
         if not isinstance(files, list):

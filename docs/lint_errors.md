@@ -177,7 +177,7 @@ This test will fail if the following requirements are not met in these files:
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
     * Must be turned on for `push` and `pull_request`.
-    * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.
+    * Must have the command `nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}`.
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
 
 3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch when a PR is opened against the _nf-core_ repository.
