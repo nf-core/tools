@@ -395,10 +395,6 @@ class PipelineSync(object):
             log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
             log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
-        # We already had a PR open
-        elif r.status_code == 422:
-            log.warn("GitHub PR is already open!")
-
         # Something went wrong
         else:
             raise PullRequestException(
