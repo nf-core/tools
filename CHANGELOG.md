@@ -8,6 +8,13 @@ Apologies for the inconvenience.
 * Fix syntax error in `/push_dockerhub.yml` GitHub Action workflow
 * Change `params.readPaths` -> `params.input_paths` in `test_full.config`
 * Check results when posting the lint results as a GitHub comment
+  * This feature is unfortunately not possible when making PRs from forks outside of the nf-core organisation for now.
+* More major refactoring of the automated pipeline sync
+  * New GitHub Actions matrix parallelisation of sync jobs across pipelines [[#673](https://github.com/nf-core/tools/issues/673)]
+  * Removed the `--all` behaviour from `nf-core sync` as we no longer need it
+  * Sync now uses a new list of pipelines on the website which does not include archived pipelines [[#712](https://github.com/nf-core/tools/issues/712)]
+  * When making a PR it checks if a PR already exists - if so it updates it [[#710](https://github.com/nf-core/tools/issues/710)]
+  * More tests and code refactoring for more stable code. Hopefully fixes 404 error [[#711](https://github.com/nf-core/tools/issues/711)]
 
 ## [v1.10.1 - Copper Camel _(patch)_](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
 
