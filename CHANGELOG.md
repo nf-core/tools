@@ -1,5 +1,15 @@
 # nf-core/tools: Changelog
 
+## v1.11dev
+
+### Template
+
+### Linting
+
+### Other
+
+* Pipeline sync - fetch full repo when checking out before sync
+
 ## [v1.10.2 - Copper Camel _(brought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
 
 Second patch release to address some small errors discovered in the pipeline template.
