@@ -4,6 +4,8 @@
 
 ### Template
 
+* Fix command error in `awstest.yml` GitHub Action workflow
+
 ### Linting
 
 ### Other
