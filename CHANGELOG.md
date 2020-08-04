@@ -4,7 +4,8 @@
 
 ### Template
 
-* Fix command error in `awstest.yml` GitHub Action workflow
+* Fix command error in `awstest.yml` GitHub Action workflow.
+* Allow manual triggering of AWS test GitHub Action workflows.
 
 ### Linting
 
