@@ -40,7 +40,7 @@ See [usage docs](docs/usage.md) for all of the available options when running th
 
 ## Documentation
 
-The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline which you can read at [https://nf-core/{{ cookiecutter.short_name }}/docs](https://nf-core/{{ cookiecutter.short_name }}/docs) or find in the [`docs/` directory](docs).
+The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline which you can read at [https://nf-co.re/{{ cookiecutter.short_name }}/usage](https://nf-co.re/{{ cookiecutter.short_name }}/usage) or find in the [`docs/` directory](docs).
 
 <!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
 
