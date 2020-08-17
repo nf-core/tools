@@ -36,11 +36,11 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
     nextflow run {{ cookiecutter.name }} -profile <docker/singularity/conda/institute> --input '*_R{1,2}.fastq.gz' --genome GRCh37
     ```
 
-See [usage docs](docs/usage.md) for all of the available options when running the pipeline.
+See [usage docs](https://nf-co.re/{{ cookiecutter.short_name }}/usage) for all of the available options when running the pipeline.
 
 ## Documentation
 
-The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline which you can read at [https://nf-co.re/{{ cookiecutter.short_name }}/usage](https://nf-co.re/{{ cookiecutter.short_name }}/usage) or find in the [`docs/` directory](docs).
+The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline which you can read at [https://nf-co.re/{{ cookiecutter.short_name }}/usage](https://nf-co.re/{{ cookiecutter.short_name }}/usage) and [https://nf-co.re/{{ cookiecutter.short_name }}/output](https://nf-co.re/{{ cookiecutter.short_name }}/output) or find in the [`docs/` directory](docs) in the repository.
 
 <!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
 
