@@ -6,6 +6,7 @@
 
 * Fix command error in `awstest.yml` GitHub Action workflow.
 * Allow manual triggering of AWS test GitHub Action workflows.
+* Remove TODO item, which was proposing the usage of additional files beside `usage.md` and `output.md` for documentation.
 
 ### Linting
 
