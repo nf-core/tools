@@ -527,7 +527,16 @@ class PipelineSchema(object):
             raise AssertionError("Got error from schema builder: '{}'".format(web_response.get("message")))
         elif web_response["status"] == "waiting_for_user":
             return False
-        elif web_response["status"] == "web_builder_edited":
+        elif web_response["status"] == "web_builder_autosave":
+            try:
+                self.schema = web_response["schema"]
+                self.validate_schema()
+            except AssertionError as e:
+                raise AssertionError("Response from schema builder did not pass validation:\n {}".format(e))
+            else:
+                self.save_schema()
+                return False
+        elif web_response["status"] == "web_builder_finished":
             log.info("Found saved status from nf-core schema builder")
             try:
                 self.schema = web_response["schema"]
