@@ -66,6 +66,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Move, modularise and import boilerplate code via Groovy `lib/` directory
 * Implement DSL 2 syntax for pipeline template
 * Adding TODOs and MultiQC process in DSL2 template
+* [#522](https://github.com/nf-core/tools/issues/522) - Unify iGenomes index usage
 
 ### Linting
 
