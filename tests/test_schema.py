@@ -409,7 +409,11 @@ class TestSchema(unittest.TestCase):
             return MockResponse(response_data, 200)
 
         if args[0] == "valid_url_saved":
-            response_data = {"status": "web_builder_edited", "message": "testing saved", "schema": {"foo": "bar"}}
+            response_data = {"status": "web_builder_autosave", "message": "testing autosave", "schema": {"foo": "bar"}}
+            return MockResponse(response_data, 200)
+
+        if args[0] == "valid_url_saved":
+            response_data = {"status": "web_builder_finished", "message": "testing saved", "schema": {"foo": "bar"}}
             return MockResponse(response_data, 200)
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
