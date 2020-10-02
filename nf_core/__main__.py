@@ -35,11 +35,11 @@ def run_nf_core():
 
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr)
-    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42))
-    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
-    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
-    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
-    stderr.print("[green]                                          `._,._,'\n")
+    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
+    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
+    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
+    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
+    stderr.print("[green]                                          `._,._,'\n", highlight=False)
     stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__), highlight=False)
     try:
         is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
