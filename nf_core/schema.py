@@ -23,8 +23,8 @@ log = logging.getLogger(__name__)
 
 
 class PipelineSchema(object):
-    """ Class to generate a schema object with
-    functions to handle pipeline JSON Schema """
+    """Class to generate a schema object with
+    functions to handle pipeline JSON Schema"""
 
     def __init__(self):
         """ Initialise the object """
@@ -127,7 +127,7 @@ class PipelineSchema(object):
             json.dump(self.schema, fh, indent=4)
 
     def load_input_params(self, params_path):
-        """ Load a given a path to a parameters file (JSON/YAML)
+        """Load a given a path to a parameters file (JSON/YAML)
 
         These should be input parameters used to run a pipeline with
         the Nextflow -params-file option.

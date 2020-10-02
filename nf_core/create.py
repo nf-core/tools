@@ -67,8 +67,7 @@ class PipelineCreate(object):
         )
 
     def run_cookiecutter(self):
-        """Runs cookiecutter to create a new nf-core pipeline.
-        """
+        """Runs cookiecutter to create a new nf-core pipeline."""
         log.info("Creating new nf-core pipeline: {}".format(self.name))
 
         # Check if the output directory exists
@@ -113,8 +112,7 @@ class PipelineCreate(object):
         shutil.rmtree(self.tmpdir)
 
     def make_pipeline_logo(self):
-        """Fetch a logo for the new pipeline from the nf-core website
-        """
+        """Fetch a logo for the new pipeline from the nf-core website"""
 
         logo_url = "https://nf-co.re/logo/{}".format(self.short_name)
         log.debug("Fetching logo from {}".format(logo_url))
@@ -135,8 +133,7 @@ class PipelineCreate(object):
             fh.write(r.content)
 
     def git_init_pipeline(self):
-        """Initialises the new pipeline as a Git repository and submits first commit.
-        """
+        """Initialises the new pipeline as a Git repository and submits first commit."""
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)

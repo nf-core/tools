@@ -142,7 +142,9 @@ def setup_requests_cachedir():
     if not os.path.exists(cachedir):
         os.makedirs(cachedir)
     requests_cache.install_cache(
-        os.path.join(cachedir, "github_info"), expire_after=datetime.timedelta(hours=1), backend="sqlite",
+        os.path.join(cachedir, "github_info"),
+        expire_after=datetime.timedelta(hours=1),
+        backend="sqlite",
     )
 
 
