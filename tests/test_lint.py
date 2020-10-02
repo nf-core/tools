@@ -82,7 +82,7 @@ class TestLint(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_call_lint_pipeline_fail(self):
         """Test the main execution function of PipelineLint (fail)
-        This should fail after the first test and halt execution """
+        This should fail after the first test and halt execution"""
         lint_obj = nf_core.lint.run_linting(PATH_FAILING_EXAMPLE, False)
         expectations = {"failed": 4, "warned": 2, "passed": 7}
         self.assess_lint_status(lint_obj, **expectations)
@@ -433,8 +433,8 @@ class TestLint(unittest.TestCase):
 
     @mock.patch("requests.get")
     def test_pypi_timeout_warn(self, mock_get):
-        """ Tests the PyPi connection and simulates a request timeout, which should
-        return in an addiional warning in the linting """
+        """Tests the PyPi connection and simulates a request timeout, which should
+        return in an addiional warning in the linting"""
         # Define the behaviour of the request get mock
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
@@ -449,8 +449,8 @@ class TestLint(unittest.TestCase):
 
     @mock.patch("requests.get")
     def test_pypi_connection_error_warn(self, mock_get):
-        """ Tests the PyPi connection and simulates a connection error, which should
-        result in an additional warning, as we cannot test if dependent module is latest """
+        """Tests the PyPi connection and simulates a connection error, which should
+        result in an additional warning, as we cannot test if dependent module is latest"""
         # Define the behaviour of the request get mock
         mock_get.side_effect = requests.exceptions.ConnectionError()
         # Now do the test
@@ -475,7 +475,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_dependency_fails(self):
-        """ Tests that linting fails, if conda dependency
+        """Tests that linting fails, if conda dependency
         package version is not available on Anaconda.
         """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -488,7 +488,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_pip_dependency_fails(self):
-        """ Tests that linting fails, if conda dependency
+        """Tests that linting fails, if conda dependency
         package version is not available on Anaconda.
         """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)

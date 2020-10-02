@@ -13,7 +13,7 @@ import nf_core.licences
 
 
 class WorkflowLicensesTest(unittest.TestCase):
-    """ A class that performs tests on the workflow license
+    """A class that performs tests on the workflow license
     retrieval functionality of nf-core tools."""
 
     def setUp(self):
