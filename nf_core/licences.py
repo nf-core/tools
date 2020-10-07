@@ -50,8 +50,7 @@ class WorkflowLicences(object):
         return self.print_licences()
 
     def get_environment_file(self):
-        """Get the conda environment file for the pipeline
-        """
+        """Get the conda environment file for the pipeline"""
         if os.path.exists(self.pipeline):
             env_filename = os.path.join(self.pipeline, "environment.yml")
             if not os.path.exists(self.pipeline):
@@ -68,8 +67,7 @@ class WorkflowLicences(object):
             self.conda_config = yaml.safe_load(response.text)
 
     def fetch_conda_licences(self):
-        """Fetch package licences from Anaconda and PyPi.
-        """
+        """Fetch package licences from Anaconda and PyPi."""
 
         lint_obj = nf_core.lint.PipelineLint(self.pipeline)
         lint_obj.conda_config = self.conda_config

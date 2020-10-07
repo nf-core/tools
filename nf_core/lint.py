@@ -601,7 +601,10 @@ class PipelineLint(object):
                 )
             else:
                 self.warned.append(
-                    (4, "Config `manifest.version` should end in `dev`: `{}`".format(self.config["manifest.version"]),)
+                    (
+                        4,
+                        "Config `manifest.version` should end in `dev`: `{}`".format(self.config["manifest.version"]),
+                    )
                 )
         elif "manifest.version" in self.config:
             if "dev" in self.config["manifest.version"]:
@@ -660,11 +663,19 @@ class PipelineLint(object):
                     "PIPELINENAME", self.pipeline_name.lower()
                 )
                 if has_name and has_if and has_run:
-                    self.passed.append((5, "GitHub Actions 'branch' workflow looks good: `{}`".format(fn),))
+                    self.passed.append(
+                        (
+                            5,
+                            "GitHub Actions 'branch' workflow looks good: `{}`".format(fn),
+                        )
+                    )
                     break
             else:
                 self.failed.append(
-                    (5, "Couldn't find GitHub Actions 'branch' check for PRs to master: `{}`".format(fn),)
+                    (
+                        5,
+                        "Couldn't find GitHub Actions 'branch' check for PRs to master: `{}`".format(fn),
+                    )
                 )
 
     def check_actions_ci(self):
@@ -683,7 +694,12 @@ class PipelineLint(object):
                 # NB: YAML dict key 'on' is evaluated to a Python dict key True
                 assert ciwf[True] == expected
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions CI is not triggered on expected events: `{}`".format(fn),))
+                self.failed.append(
+                    (
+                        5,
+                        "GitHub Actions CI is not triggered on expected events: `{}`".format(fn),
+                    )
+                )
             else:
                 self.passed.append((5, "GitHub Actions CI is triggered on expected events: `{}`".format(fn)))
 
@@ -699,7 +715,10 @@ class PipelineLint(object):
                     assert any([docker_build_cmd in step["run"] for step in steps if "run" in step.keys()])
                 except (AssertionError, KeyError, TypeError):
                     self.failed.append(
-                        (5, "CI is not building the correct docker image. Should be: `{}`".format(docker_build_cmd),)
+                        (
+                            5,
+                            "CI is not building the correct docker image. Should be: `{}`".format(docker_build_cmd),
+                        )
                     )
                 else:
                     self.passed.append((5, "CI is building the correct docker image: `{}`".format(docker_build_cmd)))
@@ -1299,7 +1318,8 @@ class PipelineLint(object):
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column(
-                "[[\u2714]] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True,
+                "[[\u2714]] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
+                no_wrap=True,
             )
             table = format_result(self.passed, table)
             console.print(table)
@@ -1315,7 +1335,8 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column(
-                "[[\u2717]] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True,
+                "[[\u2717]] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
+                no_wrap=True,
             )
             table = format_result(self.failed, table)
             console.print(table)
@@ -1325,7 +1346,8 @@ class PipelineLint(object):
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
         table.add_row(
-            "[[\u2714]] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)), style="green",
+            "[[\u2714]] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            style="green",
         )
         table.add_row("[[!]] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row("[[\u2717]] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")

@@ -57,14 +57,14 @@ class TestLint(unittest.TestCase):
 
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_local_workflows_and_fail(self):
-        """ Test the local workflow class and try to get local
-        Nextflow workflow information """
+        """Test the local workflow class and try to get local
+        Nextflow workflow information"""
         loc_wf = nf_core.list.LocalWorkflow("myWF")
         loc_wf.get_local_nf_workflow_details()
 
     def test_local_workflows_compare_and_fail_silently(self):
-        """ Test the workflow class and try to compare local
-        and remote workflows """
+        """Test the workflow class and try to compare local
+        and remote workflows"""
         wfs = nf_core.list.Workflows()
         lwf_ex = nf_core.list.LocalWorkflow("myWF")
         lwf_ex.full_name = "my Workflow"

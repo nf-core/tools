@@ -22,15 +22,13 @@ log = logging.getLogger(__name__)
 
 
 class SyncException(Exception):
-    """Exception raised when there was an error with TEMPLATE branch synchronisation
-    """
+    """Exception raised when there was an error with TEMPLATE branch synchronisation"""
 
     pass
 
 
 class PullRequestException(Exception):
-    """Exception raised when there was an error creating a Pull-Request on GitHub.com
-    """
+    """Exception raised when there was an error creating a Pull-Request on GitHub.com"""
 
     pass
 
@@ -57,7 +55,12 @@ class PipelineSync(object):
     """
 
     def __init__(
-        self, pipeline_dir, from_branch=None, make_pr=False, gh_repo=None, gh_username=None,
+        self,
+        pipeline_dir,
+        from_branch=None,
+        make_pr=False,
+        gh_repo=None,
+        gh_username=None,
     ):
         """ Initialise syncing object """
 
@@ -73,8 +76,7 @@ class PipelineSync(object):
         self.gh_repo = gh_repo
 
     def sync(self):
-        """ Find workflow attributes, create a new template pipeline on TEMPLATE
-        """
+        """Find workflow attributes, create a new template pipeline on TEMPLATE"""
 
         log.info("Pipeline directory: {}".format(self.pipeline_dir))
         if self.from_branch:
@@ -211,8 +213,7 @@ class PipelineSync(object):
         ).init_pipeline()
 
     def commit_template_changes(self):
-        """If we have any changes with the new template files, make a git commit
-        """
+        """If we have any changes with the new template files, make a git commit"""
         # Check that we have something to commit
         if not self.repo.is_dirty(untracked_files=True):
             log.info("Template contains no changes - no new commit created")
@@ -294,7 +295,8 @@ class PipelineSync(object):
             self.gh_repo, self.from_branch
         )
         r = requests.get(
-            url=list_prs_url, auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+            url=list_prs_url,
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
         )
         try:
             r_json = json.loads(r.content)
