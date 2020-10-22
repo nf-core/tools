@@ -226,7 +226,7 @@ Additionally, we provide the possibility of testing the pipeline on full size da
 This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
 The GitHub Actions workflow is: `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
 This workflow incurrs higher AWS costs, therefore it should only be triggered on `release`.
-For tests on full data prior to release, [https://tower.nf](Nextflow Tower's launch feature) can be employed.
+For tests on full data prior to release, [Nextflow Tower](https://tower.nf) launch feature can be employed.
 
 `awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
 
