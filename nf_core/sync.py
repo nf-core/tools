@@ -337,12 +337,12 @@ class PipelineSync(object):
                 return True
             # Something went wrong
             else:
-                log.warn("Could not update PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
+                log.warning("Could not update PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
                 return False
 
         # Something went wrong
         else:
-            log.warn("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
+            log.warning("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
             return False
 
     def submit_pull_request(self, pr_title, pr_body_text):
