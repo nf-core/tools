@@ -35,12 +35,12 @@ def run_nf_core():
 
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr)
-    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
-    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
-    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
-    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
-    stderr.print("[green]                                          `._,._,'\n", highlight=False)
-    stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__), highlight=False)
+    stderr.print(r"\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
+    stderr.print(r"[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
+    stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
+    stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
+    stderr.print(r"[green]                                          `._,._,'\n", highlight=False)
+    stderr.print(r"[grey39]    nf-core/tools version {}".format(nf_core.__version__), highlight=False)
     try:
         is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
         if is_outdated:
@@ -503,7 +503,7 @@ def lint(schema_path):
         try:
             schema_obj.validate_schema_title_description()
         except AssertionError as e:
-            log.warn(e)
+            log.warning(e)
     except AssertionError as e:
         sys.exit(1)
 
