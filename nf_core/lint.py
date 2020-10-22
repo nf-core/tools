@@ -148,6 +148,7 @@ class PipelineLint(object):
     def __init__(self, path):
         """ Initialise linting object """
         self.release_mode = False
+        self.version = nf_core.__version__
         self.path = path
         self.git_sha = None
         self.files = []
@@ -1153,7 +1154,7 @@ class PipelineLint(object):
             return
 
         expected_strings = [
-            "FROM nfcore/base:{}".format("dev" if "dev" in nf_core.__version__ else nf_core.__version__),
+            "FROM nfcore/base:{}".format("dev" if "dev" in self.version else self.version),
             "COPY environment.yml /",
             "RUN conda env create --quiet -f /environment.yml && conda clean -a",
             "RUN conda env export --name {} > {}.yml".format(self.conda_config["name"], self.conda_config["name"]),
