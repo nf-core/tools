@@ -1318,7 +1318,7 @@ class PipelineLint(object):
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column(
-                "[[\u2714]] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
+                "\[\u2714] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
                 no_wrap=True,
             )
             table = format_result(self.passed, table)
@@ -1327,7 +1327,7 @@ class PipelineLint(object):
         # Table of warning tests
         if len(self.warned) > 0:
             table = Table(style="yellow", box=rich.box.ROUNDED)
-            table.add_column("[[!]] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            table.add_column("\[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
             table = format_result(self.warned, table)
             console.print(table)
 
@@ -1335,7 +1335,7 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column(
-                "[[\u2717]] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
+                "\[\u2717] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
                 no_wrap=True,
             )
             table = format_result(self.failed, table)
@@ -1346,11 +1346,11 @@ class PipelineLint(object):
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
         table.add_row(
-            "[[\u2714]] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            "\[\u2714] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
             style="green",
         )
-        table.add_row("[[!]] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row("[[\u2717]] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        table.add_row("\[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
+        table.add_row("\[\u2717] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
 
     def get_results_md(self):

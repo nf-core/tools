@@ -10,6 +10,8 @@
 
 ### Linting
 
+* Update `rich` package dependency and use new markup escaping to change `[[!]]` back to `[!]` again
+
 ### Other
 
 * Pipeline sync - fetch full repo when checking out before sync
