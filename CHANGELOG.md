@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.11dev
+## v1.11.0
 
 ### Template
 
