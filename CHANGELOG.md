@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.11dev
+## v1.11.0
 
 ### Template
 
@@ -9,6 +9,10 @@
 * Remove TODO item, which was proposing the usage of additional files beside `usage.md` and `output.md` for documentation.
 
 ### Linting
+
+* Made a base-level `Dockerfile` a warning instead of failure
+* Added a lint failure if the old `bin/markdown_to_html.r` script is found
+* Update `rich` package dependency and use new markup escaping to change `[[!]]` back to `[!]` again
 
 ### Other
 

@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 import sys
 
-version = "1.11dev"
+version = "1.11.0"
 
 with open("README.md") as f:
     readme = f.read()
@@ -40,7 +40,7 @@ setup(
         "pyyaml",
         "requests",
         "requests_cache",
-        "rich>=4.2.1",
+        "rich>=9",
         "tabulate",
     ],
     setup_requires=["twine>=1.11.0", "setuptools>=38.6."],

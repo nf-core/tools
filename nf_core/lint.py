@@ -148,6 +148,7 @@ class PipelineLint(object):
     def __init__(self, path):
         """ Initialise linting object """
         self.release_mode = False
+        self.version = nf_core.__version__
         self.path = path
         self.git_sha = None
         self.files = []
@@ -253,7 +254,6 @@ class PipelineLint(object):
 
             'nextflow.config',
             'nextflow_schema.json',
-            'Dockerfile',
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
@@ -268,13 +268,16 @@ class PipelineLint(object):
 
             'main.nf',
             'environment.yml',
+            'Dockerfile',
             'conf/base.config',
             '.github/workflows/awstest.yml',
             '.github/workflows/awsfulltest.yml'
 
         Files that *must not* be present::
 
-            'Singularity'
+            'Singularity',
+            'parameters.settings.json',
+            'bin/markdown_to_html.r'
 
         Files that *should not* be present::
 
@@ -289,7 +292,6 @@ class PipelineLint(object):
         files_fail = [
             ["nextflow.config"],
             ["nextflow_schema.json"],
-            ["Dockerfile"],
             ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
             ["README.md"],
             ["CHANGELOG.md"],
@@ -303,13 +305,14 @@ class PipelineLint(object):
         files_warn = [
             ["main.nf"],
             ["environment.yml"],
+            ["Dockerfile"],
             [os.path.join("conf", "base.config")],
             [os.path.join(".github", "workflows", "awstest.yml")],
             [os.path.join(".github", "workflows", "awsfulltest.yml")],
         ]
 
         # List of strings. Dails / warns if any of the strings exist.
-        files_fail_ifexists = ["Singularity", "parameters.settings.json"]
+        files_fail_ifexists = ["Singularity", "parameters.settings.json", os.path.join("bin", "markdown_to_html.r")]
         files_warn_ifexists = [".travis.yml"]
 
         def pf(file_path):
@@ -357,6 +360,9 @@ class PipelineLint(object):
 
     def check_docker(self):
         """Checks that Dockerfile contains the string ``FROM``."""
+        if "Dockerfile" not in self.files:
+            return
+
         fn = os.path.join(self.path, "Dockerfile")
         content = ""
         with open(fn, "r") as fh:
@@ -601,7 +607,10 @@ class PipelineLint(object):
                 )
             else:
                 self.warned.append(
-                    (4, "Config `manifest.version` should end in `dev`: `{}`".format(self.config["manifest.version"]),)
+                    (
+                        4,
+                        "Config `manifest.version` should end in `dev`: `{}`".format(self.config["manifest.version"]),
+                    )
                 )
         elif "manifest.version" in self.config:
             if "dev" in self.config["manifest.version"]:
@@ -660,11 +669,19 @@ class PipelineLint(object):
                     "PIPELINENAME", self.pipeline_name.lower()
                 )
                 if has_name and has_if and has_run:
-                    self.passed.append((5, "GitHub Actions 'branch' workflow looks good: `{}`".format(fn),))
+                    self.passed.append(
+                        (
+                            5,
+                            "GitHub Actions 'branch' workflow looks good: `{}`".format(fn),
+                        )
+                    )
                     break
             else:
                 self.failed.append(
-                    (5, "Couldn't find GitHub Actions 'branch' check for PRs to master: `{}`".format(fn),)
+                    (
+                        5,
+                        "Couldn't find GitHub Actions 'branch' check for PRs to master: `{}`".format(fn),
+                    )
                 )
 
     def check_actions_ci(self):
@@ -683,7 +700,12 @@ class PipelineLint(object):
                 # NB: YAML dict key 'on' is evaluated to a Python dict key True
                 assert ciwf[True] == expected
             except (AssertionError, KeyError, TypeError):
-                self.failed.append((5, "GitHub Actions CI is not triggered on expected events: `{}`".format(fn),))
+                self.failed.append(
+                    (
+                        5,
+                        "GitHub Actions CI is not triggered on expected events: `{}`".format(fn),
+                    )
+                )
             else:
                 self.passed.append((5, "GitHub Actions CI is triggered on expected events: `{}`".format(fn)))
 
@@ -699,7 +721,10 @@ class PipelineLint(object):
                     assert any([docker_build_cmd in step["run"] for step in steps if "run" in step.keys()])
                 except (AssertionError, KeyError, TypeError):
                     self.failed.append(
-                        (5, "CI is not building the correct docker image. Should be: `{}`".format(docker_build_cmd),)
+                        (
+                            5,
+                            "CI is not building the correct docker image. Should be: `{}`".format(docker_build_cmd),
+                        )
                     )
                 else:
                     self.passed.append((5, "CI is building the correct docker image: `{}`".format(docker_build_cmd)))
@@ -1130,11 +1155,11 @@ class PipelineLint(object):
             * dependency versions are pinned
             * dependency versions are the latest available
         """
-        if "environment.yml" not in self.files or len(self.dockerfile) == 0:
+        if "environment.yml" not in self.files or "Dockerfile" not in self.files or len(self.dockerfile) == 0:
             return
 
         expected_strings = [
-            "FROM nfcore/base:{}".format("dev" if "dev" in nf_core.__version__ else nf_core.__version__),
+            "FROM nfcore/base:{}".format("dev" if "dev" in self.version else self.version),
             "COPY environment.yml /",
             "RUN conda env create --quiet -f /environment.yml && conda clean -a",
             "RUN conda env export --name {} > {}.yml".format(self.conda_config["name"], self.conda_config["name"]),
@@ -1299,7 +1324,8 @@ class PipelineLint(object):
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column(
-                "[[\u2714]] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True,
+                r"\[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
+                no_wrap=True,
             )
             table = format_result(self.passed, table)
             console.print(table)
@@ -1307,7 +1333,7 @@ class PipelineLint(object):
         # Table of warning tests
         if len(self.warned) > 0:
             table = Table(style="yellow", box=rich.box.ROUNDED)
-            table.add_column("[[!]] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            table.add_column(r"\[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
             table = format_result(self.warned, table)
             console.print(table)
 
@@ -1315,7 +1341,8 @@ class PipelineLint(object):
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column(
-                "[[\u2717]] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True,
+                r"\[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
+                no_wrap=True,
             )
             table = format_result(self.failed, table)
             console.print(table)
@@ -1325,10 +1352,11 @@ class PipelineLint(object):
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
         table.add_row(
-            "[[\u2714]] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)), style="green",
+            r"\[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            style="green",
         )
-        table.add_row("[[!]] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row("[[\u2717]] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        table.add_row(r"\[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
+        table.add_row(r"\[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
 
     def get_results_md(self):
@@ -1485,7 +1513,7 @@ class PipelineLint(object):
                         log.info("Posted GitHub comment: {}".format(r_json["html_url"]))
                         log.debug(response_pp)
                     else:
-                        log.warn("Could not post GitHub comment: '{}'\n{}".format(r.status_code, response_pp))
+                        log.warning("Could not post GitHub comment: '{}'\n{}".format(r.status_code, response_pp))
 
         except Exception as e:
             log.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
