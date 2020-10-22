@@ -254,7 +254,6 @@ class PipelineLint(object):
 
             'nextflow.config',
             'nextflow_schema.json',
-            'Dockerfile',
             ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
             'README.md',
             'CHANGELOG.md',
@@ -269,13 +268,16 @@ class PipelineLint(object):
 
             'main.nf',
             'environment.yml',
+            'Dockerfile',
             'conf/base.config',
             '.github/workflows/awstest.yml',
             '.github/workflows/awsfulltest.yml'
 
         Files that *must not* be present::
 
-            'Singularity'
+            'Singularity',
+            'parameters.settings.json',
+            'bin/markdown_to_html.r'
 
         Files that *should not* be present::
 
@@ -290,7 +292,6 @@ class PipelineLint(object):
         files_fail = [
             ["nextflow.config"],
             ["nextflow_schema.json"],
-            ["Dockerfile"],
             ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
             ["README.md"],
             ["CHANGELOG.md"],
@@ -304,13 +305,14 @@ class PipelineLint(object):
         files_warn = [
             ["main.nf"],
             ["environment.yml"],
+            ["Dockerfile"],
             [os.path.join("conf", "base.config")],
             [os.path.join(".github", "workflows", "awstest.yml")],
             [os.path.join(".github", "workflows", "awsfulltest.yml")],
         ]
 
         # List of strings. Dails / warns if any of the strings exist.
-        files_fail_ifexists = ["Singularity", "parameters.settings.json"]
+        files_fail_ifexists = ["Singularity", "parameters.settings.json", os.path.join("bin", "markdown_to_html.r")]
         files_warn_ifexists = [".travis.yml"]
 
         def pf(file_path):
@@ -358,6 +360,9 @@ class PipelineLint(object):
 
     def check_docker(self):
         """Checks that Dockerfile contains the string ``FROM``."""
+        if "Dockerfile" not in self.files:
+            return
+
         fn = os.path.join(self.path, "Dockerfile")
         content = ""
         with open(fn, "r") as fh:
@@ -1150,7 +1155,7 @@ class PipelineLint(object):
             * dependency versions are pinned
             * dependency versions are the latest available
         """
-        if "environment.yml" not in self.files or len(self.dockerfile) == 0:
+        if "environment.yml" not in self.files or "Dockerfile" not in self.files or len(self.dockerfile) == 0:
             return
 
         expected_strings = [
