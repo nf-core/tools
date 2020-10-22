@@ -40,7 +40,7 @@ See [usage docs](https://nf-co.re/{{ cookiecutter.short_name }}/usage) for all o
 
 ## Documentation
 
-The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline: [docs/usage](docs/usage.md) and [docs/output](docs/output.md).
+The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline: [usage](https://nf-co.re/{{ cookiecutter.short_name }}/usage) and [output](https://nf-co.re/{{ cookiecutter.short_name }}/output).
 
 <!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
 
