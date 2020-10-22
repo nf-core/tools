@@ -10,6 +10,8 @@
 
 ### Linting
 
+* Made a base-level `Dockerfile` a warning instead of failure
+* Added a lint failure if the old `bin/markdown_to_html.r` script is found
 * Update `rich` package dependency and use new markup escaping to change `[[!]]` back to `[!]` again
 
 ### Other
