@@ -45,7 +45,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [
 ]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 84
+MAX_PASS_CHECKS = 85
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -75,7 +75,10 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint (pass)
         This should not result in any exception for the minimal
         working example"""
+        old_nfcore_version = nf_core.__version__
+        nf_core.__version__ = "1.11.0"
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
+        nf_core.__version__ = old_nfcore_version
         expectations = {"failed": 0, "warned": 5, "passed": MAX_PASS_CHECKS - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
@@ -90,6 +93,7 @@ class TestLint(unittest.TestCase):
     def test_call_lint_pipeline_release(self):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.version = "1.11.0"
         lint_obj.lint_pipeline(release_mode=True)
         expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
@@ -97,6 +101,7 @@ class TestLint(unittest.TestCase):
     def test_failing_dockerfile_example(self):
         """Tests for empty Dockerfile"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.files = ["Dockerfile"]
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
 
@@ -109,7 +114,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 6, "warned": 2, "passed": 12}
+        expectations = {"failed": 6, "warned": 2, "passed": 13}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -277,6 +282,7 @@ class TestLint(unittest.TestCase):
     def test_dockerfile_pass(self):
         """Tests if a valid Dockerfile passes the lint checks"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ["Dockerfile"]
         lint_obj.check_docker()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -384,7 +390,8 @@ class TestLint(unittest.TestCase):
     def test_conda_dockerfile_pass(self):
         """ Tests the conda Dockerfile test works with a working example """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.files = ["environment.yml"]
+        lint_obj.version = "1.11.0"
+        lint_obj.files = ["environment.yml", "Dockerfile"]
         with open(os.path.join(PATH_WORKING_EXAMPLE, "Dockerfile"), "r") as fh:
             lint_obj.dockerfile = fh.read().splitlines()
         lint_obj.conda_config["name"] = "nf-core-tools-0.4"
@@ -395,7 +402,8 @@ class TestLint(unittest.TestCase):
     def test_conda_dockerfile_fail(self):
         """ Tests the conda Dockerfile test fails with a bad example """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.files = ["environment.yml"]
+        lint_obj.version = "1.11.0"
+        lint_obj.files = ["environment.yml", "Dockerfile"]
         lint_obj.conda_config["name"] = "nf-core-tools-0.4"
         lint_obj.dockerfile = ["fubar"]
         lint_obj.check_conda_dockerfile()

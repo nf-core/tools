@@ -503,7 +503,7 @@ def lint(schema_path):
         try:
             schema_obj.validate_schema_title_description()
         except AssertionError as e:
-            log.warn(e)
+            log.warning(e)
     except AssertionError as e:
         sys.exit(1)
 
