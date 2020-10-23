@@ -860,9 +860,9 @@ class PipelineLint(object):
                 steps = wf["jobs"]["run-awstest"]["steps"]
                 assert any([aws_profile in step["run"] for step in steps if "run" in step.keys()])
             except (AssertionError, KeyError, TypeError):
-                self.warned.append((5, "GitHub Actions AWS full test should test full datasets: `{}`".format(fn)))
-            else:
                 self.passed.append((5, "GitHub Actions AWS full test should test full datasets: `{}`".format(fn)))
+            else:
+                self.warned.append((5, "GitHub Actions AWS full test should test full datasets: `{}`".format(fn)))
 
     def check_readme(self):
         """Checks the repository README file for errors.

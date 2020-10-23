@@ -215,14 +215,14 @@ class TestLint(unittest.TestCase):
         """Tests that linting for GitHub Actions AWS test wf works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.check_actions_awstest()
-        expectations = {"failed": 0, "warned": 0, "passed": 2}
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_awstest_fail(self):
         """Tests that linting for GitHub Actions AWS test wf fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_actions_awstest()
-        expectations = {"failed": 2, "warned": 0, "passed": 0}
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_awsfulltest_pass(self):
