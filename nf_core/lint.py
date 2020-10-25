@@ -822,7 +822,12 @@ class PipelineLint(object):
                 assert "workflow_dispatch" in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions AWS test should be triggered on workflow_dispatch and not on push or PRs: `{}`".format(fn))
+                    (
+                        5,
+                        "GitHub Actions AWS test should be triggered on workflow_dispatch and not on push or PRs: `{}`".format(
+                            fn
+                        ),
+                    )
                 )
             else:
                 self.passed.append((5, "GitHub Actions AWS test is triggered on workflow_dispatch: `{}`".format(fn)))
@@ -848,11 +853,21 @@ class PipelineLint(object):
                 assert "workflow_dispatch" in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions AWS full test should be triggered only on published release and workflow_dispatch: `{}`".format(fn))
+                    (
+                        5,
+                        "GitHub Actions AWS full test should be triggered only on published release and workflow_dispatch: `{}`".format(
+                            fn
+                        ),
+                    )
                 )
             else:
                 self.passed.append(
-                    (5, "GitHub Actions AWS full test is triggered only on published release and workflow_dispatch: `{}`".format(fn))
+                    (
+                        5,
+                        "GitHub Actions AWS full test is triggered only on published release and workflow_dispatch: `{}`".format(
+                            fn
+                        ),
+                    )
                 )
 
             # Warn if `-profile test` is still unchanged
