@@ -109,3 +109,6 @@ ENV/
 # backup files
 *~
 *\?
+
+# Jetbrains IDEs
+.idea
