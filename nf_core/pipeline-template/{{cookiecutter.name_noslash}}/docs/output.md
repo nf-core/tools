@@ -1,6 +1,6 @@
 # {{ cookiecutter.name }}: Output
 
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/{{ cookiecutter.short_name }}](https://nf-co.re/{{ cookiecutter.short_name }})
+## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/{{ cookiecutter.short_name }}/output](https://nf-co.re/{{ cookiecutter.short_name }}/output)
 
 > _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
 
