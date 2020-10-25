@@ -18,6 +18,7 @@
 ### Other
 
 * Pipeline sync - fetch full repo when checking out before sync
+* Sync - Add GitHub actions manual trigger option
 
 ## [v1.10.2 - Copper Camel _(brought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
 

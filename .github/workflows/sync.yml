@@ -2,6 +2,7 @@ name: Sync template
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   get-pipelines:
@@ -21,7 +22,6 @@ jobs:
       matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
       fail-fast: false
     steps:
-
       - uses: actions/checkout@v2
         name: Check out nf-core/tools
 
@@ -32,7 +32,7 @@ jobs:
           ref: dev
           token: ${{ secrets.nf_core_bot_auth_token }}
           path: nf-core/${{ matrix.pipeline }}
-          fetch-depth: '0'
+          fetch-depth: "0"
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
@@ -63,7 +63,6 @@ jobs:
             --pull-request \
             --username nf-core-bot \
             --repository nf-core/${{ matrix.pipeline }}
-
 
       - name: Upload sync log file artifact
         if: ${{ always() }}
