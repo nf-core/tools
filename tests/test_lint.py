@@ -45,7 +45,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [
 ]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 85
+MAX_PASS_CHECKS = 84
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
