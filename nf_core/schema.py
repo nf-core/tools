@@ -225,7 +225,7 @@ class PipelineSchema(object):
             return None
 
         assert "$schema" in self.schema, "Schema missing top-level `$schema` attribute"
-        schema_attr = "https://json-schema.org/draft-07/schema"
+        schema_attr = "http://json-schema.org/draft-07/schema"
         assert self.schema["$schema"] == schema_attr, "Schema `$schema` should be `{}`\n Found `{}`".format(
             schema_attr, self.schema["$schema"]
         )
