@@ -848,9 +848,9 @@ class PipelineLint(object):
             try:
                 assert "release" in wf[True]
                 assert "published" in wf[True]["release"]["types"]
+                assert "workflow_dispatch" in wf[True]
                 assert "push" not in wf[True]
                 assert "pull_request" not in wf[True]
-                assert "workflow_dispatch" in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
                     (
