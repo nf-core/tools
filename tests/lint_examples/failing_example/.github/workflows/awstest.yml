@@ -8,8 +8,6 @@ on:
       - master
       - dev
   pull_request:
-  release:
-    types: [published]
 
 jobs:
   run-awstest:

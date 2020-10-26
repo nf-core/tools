@@ -815,32 +815,27 @@ class PipelineLint(object):
             with open(fn, "r") as fh:
                 wf = yaml.safe_load(fh)
 
-            # Check that the action is only turned on for push
+            # Check that the action is only turned on for workflow_dispatch
             try:
-                assert "push" in wf[True]
+                assert "push" not in wf[True]
                 assert "pull_request" not in wf[True]
+                assert "workflow_dispatch" in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions AWS test should be triggered on push and not PRs: `{}`".format(fn))
+                    (
+                        5,
+                        "GitHub Actions AWS test should be triggered on workflow_dispatch and not on push or PRs: `{}`".format(
+                            fn
+                        ),
+                    )
                 )
             else:
-                self.passed.append((5, "GitHub Actions AWS test is triggered on push and not PRs: `{}`".format(fn)))
-
-            # Check that the action is only turned on for push to master
-            try:
-                assert "master" in wf[True]["push"]["branches"]
-                assert "dev" not in wf[True]["push"]["branches"]
-            except (AssertionError, KeyError, TypeError):
-                self.failed.append(
-                    (5, "GitHub Actions AWS test should be triggered only on push to master: `{}`".format(fn))
-                )
-            else:
-                self.passed.append((5, "GitHub Actions AWS test is triggered only on push to master: `{}`".format(fn)))
+                self.passed.append((5, "GitHub Actions AWS test is triggered on workflow_dispatch: `{}`".format(fn)))
 
     def check_actions_awsfulltest(self):
         """Checks the GitHub Actions awsfulltest is valid.
 
-        Makes sure it is triggered only on ``release``.
+        Makes sure it is triggered only on ``release`` and workflow_dispatch.
         """
         fn = os.path.join(self.path, ".github", "workflows", "awsfulltest.yml")
         if os.path.isfile(fn):
@@ -853,15 +848,26 @@ class PipelineLint(object):
             try:
                 assert "release" in wf[True]
                 assert "published" in wf[True]["release"]["types"]
+                assert "workflow_dispatch" in wf[True]
                 assert "push" not in wf[True]
                 assert "pull_request" not in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
-                    (5, "GitHub Actions AWS full test should be triggered only on published release: `{}`".format(fn))
+                    (
+                        5,
+                        "GitHub Actions AWS full test should be triggered only on published release and workflow_dispatch: `{}`".format(
+                            fn
+                        ),
+                    )
                 )
             else:
                 self.passed.append(
-                    (5, "GitHub Actions AWS full test is triggered only on published release: `{}`".format(fn))
+                    (
+                        5,
+                        "GitHub Actions AWS full test is triggered only on published release and workflow_dispatch: `{}`".format(
+                            fn
+                        ),
+                    )
                 )
 
             # Warn if `-profile test` is still unchanged
