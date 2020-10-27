@@ -817,9 +817,9 @@ class PipelineLint(object):
 
             # Check that the action is only turned on for workflow_dispatch
             try:
+                assert "workflow_dispatch" in wf[True]
                 assert "push" not in wf[True]
                 assert "pull_request" not in wf[True]
-                assert "workflow_dispatch" in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
                     (
