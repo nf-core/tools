@@ -76,7 +76,7 @@ class TestLint(unittest.TestCase):
         This should not result in any exception for the minimal
         working example"""
         old_nfcore_version = nf_core.__version__
-        nf_core.__version__ = "1.11.0"
+        nf_core.__version__ = "1.11"
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
         nf_core.__version__ = old_nfcore_version
         expectations = {"failed": 0, "warned": 5, "passed": MAX_PASS_CHECKS - 1}
@@ -93,7 +93,7 @@ class TestLint(unittest.TestCase):
     def test_call_lint_pipeline_release(self):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.version = "1.11.0"
+        lint_obj.version = "1.11"
         lint_obj.lint_pipeline(release_mode=True)
         expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
@@ -390,7 +390,7 @@ class TestLint(unittest.TestCase):
     def test_conda_dockerfile_pass(self):
         """ Tests the conda Dockerfile test works with a working example """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.version = "1.11.0"
+        lint_obj.version = "1.11"
         lint_obj.files = ["environment.yml", "Dockerfile"]
         with open(os.path.join(PATH_WORKING_EXAMPLE, "Dockerfile"), "r") as fh:
             lint_obj.dockerfile = fh.read().splitlines()
@@ -402,7 +402,7 @@ class TestLint(unittest.TestCase):
     def test_conda_dockerfile_fail(self):
         """ Tests the conda Dockerfile test fails with a bad example """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.version = "1.11.0"
+        lint_obj.version = "1.11"
         lint_obj.files = ["environment.yml", "Dockerfile"]
         lint_obj.conda_config["name"] = "nf-core-tools-0.4"
         lint_obj.dockerfile = ["fubar"]
