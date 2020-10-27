@@ -1,5 +1,26 @@
 # nf-core/tools: Changelog
 
+## [v1.11 - Iron Tiger](https://github.com/nf-core/tools/releases/tag/1.11) - [2020-10-27]
+
+### Template
+
+* Fix command error in `awstest.yml` GitHub Action workflow.
+* Allow manual triggering of AWS test GitHub Action workflows.
+* Remove TODO item, which was proposing the usage of additional files beside `usage.md` and `output.md` for documentation.
+* Added a Podman profile, which enables Podman as container.
+* Updated linting for GitHub actions AWS tests workflows.
+
+### Linting
+
+* Made a base-level `Dockerfile` a warning instead of failure
+* Added a lint failure if the old `bin/markdown_to_html.r` script is found
+* Update `rich` package dependency and use new markup escaping to change `[[!]]` back to `[!]` again
+
+### Other
+
+* Pipeline sync - fetch full repo when checking out before sync
+* Sync - Add GitHub actions manual trigger option
+
 ## [v1.10.2 - Copper Camel _(brought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
 
 Second patch release to address some small errors discovered in the pipeline template.

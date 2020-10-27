@@ -10,8 +10,8 @@ The lint test looks for the following required files:
 
 * `nextflow.config`
   * The main nextflow config file
-* `Dockerfile`
-  * A docker build script to generate a docker image with the required software
+* `nextflow_schema.json`
+  * A JSON schema describing pipeline parameters, generated using `nf-core schema build`
 * Continuous integration tests with [GitHub Actions](https://github.com/features/actions)
   * GitHub Actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practice linting (`.github/workflows/linting.yml`)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
@@ -27,8 +27,14 @@ The following files are suggested but not a hard requirement. If they are missin
 
 * `main.nf`
   * It's recommended that the main workflow script is called `main.nf`
+* `environment.yml`
+  * A conda environment file describing the required software
+* `Dockerfile`
+  * A docker build script to generate a docker image with the required software
 * `conf/base.config`
   * A `conf` directory with at least one config called `base.config`
+* `.github/workflows/awstest.yml` and `.github/workflows/awsfulltest.yml`
+  * GitHub workflow scripts used for automated tests on AWS
 
 The following files will cause a failure if the _are_ present (to fix, delete them):
 
@@ -39,12 +45,17 @@ The following files will cause a failure if the _are_ present (to fix, delete th
 * `parameters.settings.json`
   * The syntax for pipeline schema has changed - old `parameters.settings.json` should be
     deleted and new `nextflow_schema.json` files created instead.
+* `bin/markdown_to_html.r`
+  * The old markdown to HTML conversion script, now replaced by `markdown_to_html.py`
 
 ## Error #2 - Docker file check failed ## {#2}
 
-Pipelines should have a files called `Dockerfile` in their root directory.
+DSL1 pipelines should have a file called `Dockerfile` in their root directory.
 The file is used for automated docker image builds. This test checks that the file
 exists and contains at least the string `FROM` (`Dockerfile`).
+
+Some pipelines, especially DSL2, may not have a `Dockerfile`. In this case a warning
+will be generated which can be safely ignored.
 
 ## Error #3 - Licence check failed ## {#3}
 
@@ -216,22 +227,25 @@ This test will fail if the following requirements are not met in these files:
             { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
-4. `awstest.yml`: Triggers tests on AWS batch. As running tests on AWS incurs costs, they should be only triggered on `push` to `master` and `release`.
-    * Must be turned on for `push` to `master` and `release`.
-    * Must not be turned on for `pull_request` or other events.
+4. `awstest.yml`: Triggers tests on AWS batch. As running tests on AWS incurs costs, they should be only triggered on `workflow_dispatch`.
+This allows for manual triggering of the workflow when testing on AWS is desired.
+You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the `nf-core AWS test` workflow on the left.
+    * Must not be turned on for `push` or `pull_request`.
+    * Must be turned on for `workflow_dispatch`.
 
 ### GitHub Actions AWS full tests
 
 Additionally, we provide the possibility of testing the pipeline on full size datasets on AWS.
 This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
-The GitHub Actions workflow is: `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
-This workflow incurrs higher AWS costs, therefore it should only be triggered on `release`.
-For tests on full data prior to release, [https://tower.nf](Nextflow Tower's launch feature) can be employed.
+The GitHub Actions workflow is `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
+This workflow incurrs higher AWS costs, therefore it should only be triggered on `release` and `workflow_dispatch`.
+You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the `nf-core AWS full size tests` workflow on the left.
+For tests on full data prior to release, [Nextflow Tower](https://tower.nf) launch feature can be employed.
 
 `awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
 
-* Must be only turned on for `release`.
-* Should run the profile `test_full`. If it runs the profile `test` a warning is given.
+* Must be only turned on for `release` and `workflow_dispatch`.
+* Should run the profile `test_full` that should be edited to provide the links to full-size datasets. If it runs the profile `test` a warning is given.
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 
@@ -298,7 +312,7 @@ If a workflow has a conda `environment.yml` file (see above), the `Dockerfile` s
 to create the container. Such `Dockerfile`s can usually be very short, eg:
 
 ```Dockerfile
-FROM nfcore/base:1.7
+FROM nfcore/base:1.11
 MAINTAINER Rocky Balboa <your@email.com>
 LABEL authors="your@email.com" \
     description="Docker image containing all requirements for the nf-core mypipeline pipeline"
