@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.11.0
+## [v1.11 - Iron Tiger](https://github.com/nf-core/tools/releases/tag/1.11) - [2020-10-27]
 
 ### Template
 
