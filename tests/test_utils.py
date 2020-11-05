@@ -4,6 +4,7 @@
 
 import nf_core.utils
 
+import os
 import unittest
 
 
@@ -39,3 +40,15 @@ class TestUtils(unittest.TestCase):
         remote_version = "1.11"
         is_outdated, current, remote = nf_core.utils.check_if_outdated(current_version, remote_version)
         assert is_outdated
+
+    def test_rich_force_colours_false(self):
+        os.environ.pop("GITHUB_ACTIONS", None)
+        os.environ.pop("FORCE_COLOR", None)
+        os.environ.pop("PY_COLORS", None)
+        assert nf_core.utils.rich_force_colors() is None
+
+    def test_rich_force_colours_true(self):
+        os.environ["GITHUB_ACTIONS"] = True
+        os.environ.pop("FORCE_COLOR", None)
+        os.environ.pop("PY_COLORS", None)
+        assert nf_core.utils.rich_force_colors() is True
