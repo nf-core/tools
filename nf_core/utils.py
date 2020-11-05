@@ -43,6 +43,15 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     return (is_outdated, current_version, remote_version)
 
 
+def rich_force_colors():
+    """
+    Check if any environment variables are set to force Rich to use coloured output
+    """
+    if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
+        return True
+    return None
+
+
 def fetch_wf_config(wf_path):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.

@@ -1307,7 +1307,7 @@ class PipelineLint(object):
     def print_results(self, show_passed=False):
 
         log.debug("Printing final results")
-        console = Console()
+        console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
         # Helper function to format test links nicely
         def format_result(test_results, table):
