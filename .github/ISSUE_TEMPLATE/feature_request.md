@@ -5,11 +5,11 @@ labels: enhancement
 ---
 
 <!--
-# {{ cookiecutter.name }} feature request
+# nf-core/tools feature request
 
 Hi there!
 
-Thanks for suggesting a new feature for the pipeline!
+Thanks for suggesting a new feature for the nf-core/tools package!
 Please delete this text and anything that's not relevant from the template below:
 -->
 
