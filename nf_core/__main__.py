@@ -34,7 +34,7 @@ def run_nf_core():
     rich.traceback.install(width=200, word_wrap=True)
 
     # Print nf-core header to STDERR
-    stderr = rich.console.Console(file=sys.stderr)
+    stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
     stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
@@ -114,7 +114,7 @@ def nf_core_cli(verbose, log_file):
     log.addHandler(
         rich.logging.RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(file=sys.stderr),
+            console=rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors()),
             show_time=False,
             markup=True,
         )
