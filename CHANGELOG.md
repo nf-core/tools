@@ -9,6 +9,7 @@
 ### Linting
 
 * Updated code to display colours in GitHub Actions log output
+* Allow tests to pass with dev version of nf-core/tools (previous failure due to base image version)
 
 ### Other
 
