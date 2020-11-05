@@ -48,7 +48,7 @@ class TestUtils(unittest.TestCase):
         assert nf_core.utils.rich_force_colors() is None
 
     def test_rich_force_colours_true(self):
-        os.environ["GITHUB_ACTIONS"] = True
+        os.environ["GITHUB_ACTIONS"] = "1"
         os.environ.pop("FORCE_COLOR", None)
         os.environ.pop("PY_COLORS", None)
         assert nf_core.utils.rich_force_colors() is True
