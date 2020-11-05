@@ -640,7 +640,7 @@ class Launch(object):
     def print_param_header(self, param_id, param_obj):
         if "description" not in param_obj and "help_text" not in param_obj:
             return
-        console = Console(nf_core.utils.rich_force_colors())
+        console = Console(force_terminal=nf_core.utils.rich_force_colors())
         console.print("\n")
         console.print(param_obj.get("title", param_id), style="bold")
         if "description" in param_obj:
