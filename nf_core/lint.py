@@ -1015,9 +1015,9 @@ class PipelineLint(object):
                 try:
                     assert dep.count("=") in [1, 2]
                 except AssertionError:
-                    self.failed.append((8, "Conda dependency did not have pinned version number: `{}`".format(dep)))
+                    self.failed.append((8, "Conda dep did not have pinned version number: `{}`".format(dep)))
                 else:
-                    self.passed.append((8, "Conda dependency had pinned version number: `{}`".format(dep)))
+                    self.passed.append((8, "Conda dep had pinned version number: `{}`".format(dep)))
 
                     try:
                         depname, depver = dep.split("=")[:2]
@@ -1027,16 +1027,14 @@ class PipelineLint(object):
                     else:
                         # Check that required version is available at all
                         if depver not in self.conda_package_info[dep].get("versions"):
-                            self.failed.append((8, "Conda dependency had an unknown version: {}".format(dep)))
+                            self.failed.append((8, "Conda dep had unknown version: {}".format(dep)))
                             continue  # No need to test for latest version, continue linting
                         # Check version is latest available
                         last_ver = self.conda_package_info[dep].get("latest_version")
                         if last_ver is not None and last_ver != depver:
-                            self.warned.append(
-                                (8, "Conda package is not latest available: `{}`, `{}` available".format(dep, last_ver))
-                            )
+                            self.warned.append((8, "Conda dep outdated: `{}`, `{}` available".format(dep, last_ver)))
                         else:
-                            self.passed.append((8, "Conda package is latest available: `{}`".format(dep)))
+                            self.passed.append((8, "Conda package is the latest available: `{}`".format(dep)))
 
             elif isinstance(dep, dict):
                 for pip_dep in dep.get("pip", []):
@@ -1203,7 +1201,7 @@ class PipelineLint(object):
                                 .replace("TODO nf-core: ", "")
                                 .strip()
                             )
-                            self.warned.append((10, "TODO string found in `{}`: _{}_".format(fname, l)))
+                            self.warned.append((10, "TODO string in `{}`: _{}_".format(fname, l)))
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
