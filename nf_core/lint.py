@@ -1163,12 +1163,14 @@ class PipelineLint(object):
             return
 
         expected_strings = [
-            "FROM nfcore/base:{}".format("dev" if "dev" in self.version else self.version),
             "COPY environment.yml /",
             "RUN conda env create --quiet -f /environment.yml && conda clean -a",
             "RUN conda env export --name {} > {}.yml".format(self.conda_config["name"], self.conda_config["name"]),
             "ENV PATH /opt/conda/envs/{}/bin:$PATH".format(self.conda_config["name"]),
         ]
+
+        if "dev" not in self.version:
+            expected_strings.append("FROM nfcore/base:{}".format(self.version))
 
         difference = set(expected_strings) - set(self.dockerfile)
         if not difference:
