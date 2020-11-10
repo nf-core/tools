@@ -2,7 +2,7 @@ name: nf-core branch protection
 # This workflow is triggered on PRs to master branch on the repository
 # It fails when someone tries to make a PR against the nf-core `master` branch instead of `dev`
 on:
-  pull_request:
+  pull_request_target:
     branches: [master]
 
 jobs:
@@ -13,7 +13,7 @@ jobs:
       - name: Check PRs
         if: github.repository == '{{cookiecutter.name}}'
         run: |
-          { [[ {% raw %}${{github.event.pull_request.head.repo.full_name}}{% endraw %} == {{cookiecutter.name}} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+          { [[ {% raw %}${{github.event.pull_request_target.head.repo.full_name}}{% endraw %} == {{cookiecutter.name}} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
 
 {% raw %}
       # If the above check failed, post a comment on the PR explaining the failure
@@ -23,11 +23,11 @@ jobs:
         uses: mshick/add-pr-comment@v1
         with:
           message: |
-            Hi @${{ github.event.pull_request.user.login }},
+            Hi @${{ github.event.pull_request_target.user.login }},
 
-            It looks like this pull-request is has been made against the ${{github.event.pull_request.head.repo.full_name}} `master` branch.
+            It looks like this pull-request is has been made against the ${{github.event.pull_request_target.head.repo.full_name}} `master` branch.
             The `master` branch on nf-core repositories should always contain code from the latest release.
-            Because of this, PRs to `master` are only allowed if they come from the ${{github.event.pull_request.head.repo.full_name}} `dev` branch.
+            Because of this, PRs to `master` are only allowed if they come from the ${{github.event.pull_request_target.head.repo.full_name}} `dev` branch.
 
             You do not need to close this PR, you can change the target branch to `dev` by clicking the _"Edit"_ button at the top of this page.
 

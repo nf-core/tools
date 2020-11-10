@@ -645,7 +645,7 @@ class PipelineLint(object):
             # Check that the action is turned on for PRs to master
             try:
                 # Yaml 'on' parses as True - super weird
-                assert "master" in branchwf[True]["pull_request"]["branches"]
+                assert "master" in branchwf[True]["pull_request_target"]["branches"]
             except (AssertionError, KeyError):
                 self.failed.append(
                     (5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: `{}`".format(fn))
@@ -665,7 +665,7 @@ class PipelineLint(object):
                 # Don't use .format() as the squiggly brackets get ridiculous
                 has_run = step.get(
                     "run", ""
-                ).strip() == '{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace(
+                ).strip() == '{ [[ ${{github.event.pull_request_target.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace(
                     "PIPELINENAME", self.pipeline_name.lower()
                 )
                 if has_name and has_if and has_run:

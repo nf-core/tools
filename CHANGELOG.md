@@ -6,6 +6,7 @@
 
 ### Template
 
+* Make branch-protection CI comments work with PRs from forks [[#765](https://github.com/nf-core/tools/issues/765)]
 * Updated GitHub issue templates, which had stopped working
 
 ### Linting
