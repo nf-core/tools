@@ -6,6 +6,8 @@
 
 ### Template
 
+* Updated GitHub issue templates, which had stopped working
+
 ### Linting
 
 * Updated code to display colours in GitHub Actions log output

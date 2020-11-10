@@ -5,11 +5,11 @@ labels: bug
 ---
 
 <!--
-# {{ cookiecutter.name }} bug report
+# nf-core/tools bug report
 
 Hi there!
 
-Thanks for telling us about a problem with the pipeline.
+Thanks for telling us about a problem with the nf-core/tools package.
 Please delete this text and anything that's not relevant from the template below:
 -->
 
@@ -21,7 +21,7 @@ Please delete this text and anything that's not relevant from the template below
 
 Steps to reproduce the behaviour:
 
-1. Command line: <!-- [e.g. `nextflow run ...`] -->
+1. Command line: <!-- [e.g. `nf-core lint ...`] -->
 2. See error: <!-- [Please provide your error message] -->
 
 ## Expected behaviour
@@ -38,12 +38,6 @@ Steps to reproduce the behaviour:
 ## Nextflow Installation
 
 - Version: <!-- [e.g. 19.10.0] -->
-
-## Container engine
-
-- Engine: <!-- [e.g. Conda, Docker, Singularity or Podman] -->
-- version: <!-- [e.g. 1.0.0] -->
-- Image tag: <!-- [e.g. {{ cookiecutter.name_docker }}:1.0.0] -->
 
 ## Additional context
 
