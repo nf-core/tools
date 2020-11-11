@@ -1372,8 +1372,10 @@ class PipelineLint(object):
             overall_result = "Failed :x:"
 
         # List of tests for details
+        test_failure_count = ""
         test_failures = ""
         if len(self.failed) > 0:
+            test_failure_count = "\n-| ❌ {:3d} tests failed       |-".format(len(self.failed))
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -1383,8 +1385,10 @@ class PipelineLint(object):
                 )
             )
 
+        test_warning_count = ""
         test_warnings = ""
         if len(self.warned) > 0:
+            test_warning_count = "\n!| ❗ {:3d} tests had warnings |!".format(len(self.warned))
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -1394,8 +1398,10 @@ class PipelineLint(object):
                 )
             )
 
+        test_passe_count = ""
         test_passes = ""
         if len(self.passed) > 0:
+            test_passed_count = "\n+| ✅ {:3d} tests passed       |+".format(len(self.passed))
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -1413,10 +1419,7 @@ class PipelineLint(object):
 
         {}
 
-        ```diff
-        +| ✅ {:2d} tests passed       |+
-        !| ❗ {:2d} tests had warnings |!
-        -| ❌ {:2d} tests failed       |-
+        ```diff{}{}{}
         ```
 
         <details>
@@ -1431,9 +1434,9 @@ class PipelineLint(object):
         ).format(
             overall_result,
             "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
-            len(self.passed),
-            len(self.warned),
-            len(self.failed),
+            test_passed_count,
+            test_warning_count,
+            test_failure_count,
             test_failures,
             test_warnings,
             test_passes,
