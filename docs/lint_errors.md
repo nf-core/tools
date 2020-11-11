@@ -238,13 +238,14 @@ You can trigger the tests by going to the `Actions` tab on the pipeline GitHub r
 Additionally, we provide the possibility of testing the pipeline on full size datasets on AWS.
 This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
 The GitHub Actions workflow is `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
-This workflow incurrs higher AWS costs, therefore it should only be triggered on `release` and `workflow_dispatch`.
+This workflow incurrs higher AWS costs, therefore it should only be triggered for releases (`workflow_run` - after the docker hub release workflow) and `workflow_dispatch`.
 You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the `nf-core AWS full size tests` workflow on the left.
 For tests on full data prior to release, [Nextflow Tower](https://tower.nf) launch feature can be employed.
 
 `awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
 
-* Must be only turned on for `release` and `workflow_dispatch`.
+* Must be turned on `workflow_dispatch`.
+* Must be turned on for `workflow_run` with `workflows: ["nf-core Docker push (release)"]` and `types: [completed]`
 * Should run the profile `test_full` that should be edited to provide the links to full-size datasets. If it runs the profile `test` a warning is given.
 
 ## Error #6 - Repository `README.md` tests ## {#6}

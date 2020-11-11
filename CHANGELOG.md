@@ -9,6 +9,7 @@
 * Make CI comments work with PRs from forks [[#765](https://github.com/nf-core/tools/issues/765)]
   * Branch protection and linting results should now show on all PRs
 * Updated GitHub issue templates, which had stopped working
+* Refactored GitHub Actions so that the AWS full-scale tests are triggered after docker build is finished
 
 ### Linting
 

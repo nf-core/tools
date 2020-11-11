@@ -843,11 +843,10 @@ class PipelineLint(object):
 
             # Check that the action is only turned on for published releases
             try:
-                assert "release" in wf[True]
-                assert "published" in wf[True]["release"]["types"]
+                assert "workflow_run" in wf[True]
+                assert wf[True]["workflow_run"]["workflows"] == ["nf-core Docker push (release)"]
+                assert wf[True]["workflow_run"]["types"] == ["completed"]
                 assert "workflow_dispatch" in wf[True]
-                assert "push" not in wf[True]
-                assert "pull_request" not in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
                     (
