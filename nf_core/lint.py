@@ -274,7 +274,8 @@ class PipelineLint(object):
 
             'Singularity',
             'parameters.settings.json',
-            'bin/markdown_to_html.r'
+            'bin/markdown_to_html.r'.
+            '.github/workflows/push_dockerhub.yml'
 
         Files that *should not* be present::
 
@@ -309,7 +310,12 @@ class PipelineLint(object):
         ]
 
         # List of strings. Dails / warns if any of the strings exist.
-        files_fail_ifexists = ["Singularity", "parameters.settings.json", os.path.join("bin", "markdown_to_html.r")]
+        files_fail_ifexists = [
+            "Singularity",
+            "parameters.settings.json",
+            os.path.join("bin", "markdown_to_html.r"),
+            os.path.join(".github", "workflows", "push_dockerhub.yml"),
+        ]
         files_warn_ifexists = [".travis.yml"]
 
         def pf(file_path):
