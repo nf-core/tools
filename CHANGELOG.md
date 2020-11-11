@@ -6,13 +6,15 @@
 
 ### Template
 
-* Make branch-protection CI comments work with PRs from forks [[#765](https://github.com/nf-core/tools/issues/765)]
+* Make CI comments work with PRs from forks [[#765](https://github.com/nf-core/tools/issues/765)]
+  * Branch protection and linting results should now show on all PRs
 * Updated GitHub issue templates, which had stopped working
 
 ### Linting
 
 * Updated code to display colours in GitHub Actions log output
 * Allow tests to pass with dev version of nf-core/tools (previous failure due to base image version)
+* Lint code no longer tries to post GitHub PR comments. This is now done in a GitHub Action only.
 
 ### Other
 
