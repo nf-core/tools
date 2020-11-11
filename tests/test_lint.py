@@ -587,34 +587,3 @@ class TestLint(unittest.TestCase):
                     return []
 
         return MockResponse(kwargs["url"])
-
-    @mock.patch("requests.get", side_effect=mock_gh_get_comments)
-    @mock.patch("requests.post")
-    def test_gh_comment_post(self, mock_get, mock_post):
-        """
-        Test updating a Github comment with the lint results
-        """
-        os.environ["GITHUB_COMMENTS_URL"] = "https://github.com"
-        os.environ["GITHUB_TOKEN"] = "testing"
-        os.environ["GITHUB_PR_COMMIT"] = "abcdefg"
-        # Don't run testing, just fake some testing results
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.failed.append((1, "This test failed"))
-        lint_obj.passed.append((2, "This test also passed"))
-        lint_obj.warned.append((2, "This test gave a warning"))
-        lint_obj.github_comment()
-
-    @mock.patch("requests.get", side_effect=mock_gh_get_comments)
-    @mock.patch("requests.post")
-    def test_gh_comment_update(self, mock_get, mock_post):
-        """
-        Test updating a Github comment with the lint results
-        """
-        os.environ["GITHUB_COMMENTS_URL"] = "existing_comment"
-        os.environ["GITHUB_TOKEN"] = "testing"
-        # Don't run testing, just fake some testing results
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.failed.append((1, "This test failed"))
-        lint_obj.passed.append((2, "This test also passed"))
-        lint_obj.warned.append((2, "This test gave a warning"))
-        lint_obj.github_comment()
