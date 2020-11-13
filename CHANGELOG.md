@@ -10,6 +10,7 @@
   * Branch protection and linting results should now show on all PRs
 * Updated GitHub issue templates, which had stopped working
 * Refactored GitHub Actions so that the AWS full-scale tests are triggered after docker build is finished
+* Added import for test_full in nextflow.config
 
 ### Linting
 
