@@ -13,6 +13,7 @@
 * Updated actions to no longer use `set-env` which is now depreciating [[#739](https://github.com/nf-core/tools/issues/739)]
 * Added config import for `test_full` in `nextflow.config`
 * Switched depreciated `$baseDir` to `$projectDir`
+* Updated minimum Nextflow version to `20.04.10`
 
 ### Linting
 
