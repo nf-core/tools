@@ -10,7 +10,9 @@
   * Branch protection and linting results should now show on all PRs
 * Updated GitHub issue templates, which had stopped working
 * Refactored GitHub Actions so that the AWS full-scale tests are triggered after docker build is finished
-* Added import for test_full in nextflow.config
+* Updated actions to no longer use `set-env` which is now depreciating [[#739](https://github.com/nf-core/tools/issues/739)]
+* Added config import for `test_full` in `nextflow.config`
+* Switched depreciated `$baseDir` to `$projectDir`
 
 ### Linting
 
