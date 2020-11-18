@@ -11,6 +11,7 @@
 * Updated GitHub issue templates, which had stopped working
 * Refactored GitHub Actions so that the AWS full-scale tests are triggered after docker build is finished
   * DockerHub push workflow split into two - one for dev, one for releases
+* Added import for test_full in nextflow.config
 
 ### Linting
 
