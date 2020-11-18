@@ -4,6 +4,8 @@
 
 ### Tools helper code
 
+* Updated `nf_core` documentation generator for building [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/)
+
 ### Template
 
 * Make CI comments work with PRs from forks [[#765](https://github.com/nf-core/tools/issues/765)]
