@@ -274,7 +274,7 @@ class PipelineLint(object):
 
             'Singularity',
             'parameters.settings.json',
-            'bin/markdown_to_html.r'.
+            'bin/markdown_to_html.r',
             '.github/workflows/push_dockerhub.yml'
 
         Files that *should not* be present::
