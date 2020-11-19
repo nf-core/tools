@@ -26,6 +26,8 @@ jobs:
     steps:
       - uses: actions/checkout@v1
       - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/

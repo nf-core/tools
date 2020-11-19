@@ -4,6 +4,8 @@
 
 ### Tools helper code
 
+* Updated `nf_core` documentation generator for building [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/)
+
 ### Template
 
 * Make CI comments work with PRs from forks [[#765](https://github.com/nf-core/tools/issues/765)]
@@ -11,7 +13,11 @@
 * Updated GitHub issue templates, which had stopped working
 * Refactored GitHub Actions so that the AWS full-scale tests are triggered after docker build is finished
   * DockerHub push workflow split into two - one for dev, one for releases
-* Added import for test_full in nextflow.config
+* Updated actions to no longer use `set-env` which is now depreciating [[#739](https://github.com/nf-core/tools/issues/739)]
+* Added config import for `test_full` in `nextflow.config`
+* Switched depreciated `$baseDir` to `$projectDir`
+* Updated minimum Nextflow version to `20.04.10`
+* Make Nextflow installation less verbose in GitHub Actions [[#780](https://github.com/nf-core/tools/pull/780)]
 
 ### Linting
 

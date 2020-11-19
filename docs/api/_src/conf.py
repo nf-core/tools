@@ -14,6 +14,7 @@
 #
 import os
 import sys
+import nf_core
 
 sys.path.insert(0, os.path.abspath("../../../nf_core"))
 
@@ -24,9 +25,9 @@ copyright = "2019, Phil Ewels, Sven Fillinger"
 author = "Phil Ewels, Sven Fillinger"
 
 # The short X.Y version
-version = "1.4"
+version = nf_core.__version__
 # The full version, including alpha/beta/rc tags
-release = "1.4"
+release = nf_core.__version__
 
 
 # -- General configuration ---------------------------------------------------

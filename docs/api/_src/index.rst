@@ -13,11 +13,14 @@ Welcome to nf-core tools API documentation!
    bump_version
    create
    download
+   launch
    licences
    lint
    list
+   modules
+   schema
+   sync
    utils
-   workflow
 
 
 Indices and tables

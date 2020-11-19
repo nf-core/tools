@@ -47,7 +47,7 @@ class WorkflowLicensesTest(unittest.TestCase):
         assert any(["multiqc" in k for k in self.license_obj.conda_config["dependencies"]])
 
     def test_get_environment_file_remote(self):
-        self.license_obj = nf_core.licences.WorkflowLicences("rnaseq")
+        self.license_obj = nf_core.licences.WorkflowLicences("methylseq")
         self.license_obj.get_environment_file()
         assert any(["multiqc" in k for k in self.license_obj.conda_config["dependencies"]])
 
