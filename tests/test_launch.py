@@ -280,7 +280,7 @@ class TestLaunch(unittest.TestCase):
         assert result["validate"]("") is True
         assert (
             result["validate"]("not_an_email")
-            == "Must match pattern: ^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$"
+            == r"Must match pattern: ^([a-zA-Z0-9_\-\.]+)@([a-zA-Z0-9_\-\.]+)\.([a-zA-Z]{2,5})$"
         )
 
     def test_strip_default_params(self):
