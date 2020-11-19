@@ -6,4 +6,3 @@ nf_core.licences
     :undoc-members:
     :show-inheritance:
     :private-members:
-    :special-members:

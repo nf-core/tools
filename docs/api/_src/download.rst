@@ -6,4 +6,3 @@ nf_core.download
     :undoc-members:
     :show-inheritance:
     :private-members:
-    :special-members:

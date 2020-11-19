@@ -6,4 +6,3 @@ nf_core.bump_version
     :undoc-members:
     :show-inheritance:
     :private-members:
-    :special-members:

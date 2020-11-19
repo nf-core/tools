@@ -9,6 +9,7 @@ Welcome to nf-core tools API documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   :glob:
 
    *
 
