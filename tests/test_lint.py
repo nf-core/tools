@@ -45,7 +45,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [
 ]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 84
+MAX_PASS_CHECKS = 85
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -114,7 +114,7 @@ class TestLint(unittest.TestCase):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 6, "warned": 2, "passed": 13}
+        expectations = {"failed": 6, "warned": 2, "passed": 14}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -170,7 +170,7 @@ class TestLint(unittest.TestCase):
     def test_actions_wf_ci_pass(self):
         """Tests that linting for GitHub Actions CI workflow works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.pipeline_name = "tools"
         lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
@@ -180,7 +180,7 @@ class TestLint(unittest.TestCase):
     def test_actions_wf_ci_fail(self):
         """Tests that linting for GitHub Actions CI workflow fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.pipeline_name = "tools"
         lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
@@ -257,7 +257,7 @@ class TestLint(unittest.TestCase):
     def test_readme_pass(self):
         """Tests that the pipeline README file checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.files = ["environment.yml"]
         lint_obj.check_readme()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
@@ -587,34 +587,3 @@ class TestLint(unittest.TestCase):
                     return []
 
         return MockResponse(kwargs["url"])
-
-    @mock.patch("requests.get", side_effect=mock_gh_get_comments)
-    @mock.patch("requests.post")
-    def test_gh_comment_post(self, mock_get, mock_post):
-        """
-        Test updating a Github comment with the lint results
-        """
-        os.environ["GITHUB_COMMENTS_URL"] = "https://github.com"
-        os.environ["GITHUB_TOKEN"] = "testing"
-        os.environ["GITHUB_PR_COMMIT"] = "abcdefg"
-        # Don't run testing, just fake some testing results
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.failed.append((1, "This test failed"))
-        lint_obj.passed.append((2, "This test also passed"))
-        lint_obj.warned.append((2, "This test gave a warning"))
-        lint_obj.github_comment()
-
-    @mock.patch("requests.get", side_effect=mock_gh_get_comments)
-    @mock.patch("requests.post")
-    def test_gh_comment_update(self, mock_get, mock_post):
-        """
-        Test updating a Github comment with the lint results
-        """
-        os.environ["GITHUB_COMMENTS_URL"] = "existing_comment"
-        os.environ["GITHUB_TOKEN"] = "testing"
-        # Don't run testing, just fake some testing results
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.failed.append((1, "This test failed"))
-        lint_obj.passed.append((2, "This test also passed"))
-        lint_obj.warned.append((2, "This test gave a warning"))
-        lint_obj.github_comment()

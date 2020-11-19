@@ -478,8 +478,8 @@ $ nf-core lint .
 │ [!] 3 Test Warnings                                                                                      │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
 │ https://nf-co.re/errors#5: GitHub Actions AWS full test should test full datasets: nf-core-testpipeline… │
-│ https://nf-co.re/errors#8: Conda package is not latest available: bioconda::fastqc=0.11.8, 0.11.9 avail… │
-│ https://nf-co.re/errors#8: Conda package is not latest available: bioconda::multiqc=1.7, 1.9 available   │
+│ https://nf-co.re/errors#8: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                 │
+│ https://nf-co.re/errors#8: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                      │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭───────────────────────╮
 │ LINT RESULTS SUMMARY  │

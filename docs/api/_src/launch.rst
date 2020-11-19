@@ -1,7 +1,7 @@
-nf_core.create
-==============
+nf_core.launch
+============
 
-.. automodule:: nf_core.create
+.. automodule:: nf_core.launch
     :members:
     :undoc-members:
     :show-inheritance:

@@ -78,9 +78,6 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
     if json_fn is not None:
         lint_obj.save_json_results(json_fn)
 
-    # Try to post comment to a GitHub PR
-    lint_obj.github_comment()
-
     # Exit code
     if len(lint_obj.failed) > 0:
         if release_mode:
@@ -277,7 +274,8 @@ class PipelineLint(object):
 
             'Singularity',
             'parameters.settings.json',
-            'bin/markdown_to_html.r'
+            'bin/markdown_to_html.r',
+            '.github/workflows/push_dockerhub.yml'
 
         Files that *should not* be present::
 
@@ -312,7 +310,12 @@ class PipelineLint(object):
         ]
 
         # List of strings. Dails / warns if any of the strings exist.
-        files_fail_ifexists = ["Singularity", "parameters.settings.json", os.path.join("bin", "markdown_to_html.r")]
+        files_fail_ifexists = [
+            "Singularity",
+            "parameters.settings.json",
+            os.path.join("bin", "markdown_to_html.r"),
+            os.path.join(".github", "workflows", "push_dockerhub.yml"),
+        ]
         files_warn_ifexists = [".travis.yml"]
 
         def pf(file_path):
@@ -645,7 +648,7 @@ class PipelineLint(object):
             # Check that the action is turned on for PRs to master
             try:
                 # Yaml 'on' parses as True - super weird
-                assert "master" in branchwf[True]["pull_request"]["branches"]
+                assert "master" in branchwf[True]["pull_request_target"]["branches"]
             except (AssertionError, KeyError):
                 self.failed.append(
                     (5, "GitHub Actions 'branch' workflow should be triggered for PRs to master: `{}`".format(fn))
@@ -846,11 +849,10 @@ class PipelineLint(object):
 
             # Check that the action is only turned on for published releases
             try:
-                assert "release" in wf[True]
-                assert "published" in wf[True]["release"]["types"]
+                assert "workflow_run" in wf[True]
+                assert wf[True]["workflow_run"]["workflows"] == ["nf-core Docker push (release)"]
+                assert wf[True]["workflow_run"]["types"] == ["completed"]
                 assert "workflow_dispatch" in wf[True]
-                assert "push" not in wf[True]
-                assert "pull_request" not in wf[True]
             except (AssertionError, KeyError, TypeError):
                 self.failed.append(
                     (
@@ -1015,9 +1017,9 @@ class PipelineLint(object):
                 try:
                     assert dep.count("=") in [1, 2]
                 except AssertionError:
-                    self.failed.append((8, "Conda dependency did not have pinned version number: `{}`".format(dep)))
+                    self.failed.append((8, "Conda dep did not have pinned version number: `{}`".format(dep)))
                 else:
-                    self.passed.append((8, "Conda dependency had pinned version number: `{}`".format(dep)))
+                    self.passed.append((8, "Conda dep had pinned version number: `{}`".format(dep)))
 
                     try:
                         depname, depver = dep.split("=")[:2]
@@ -1027,16 +1029,14 @@ class PipelineLint(object):
                     else:
                         # Check that required version is available at all
                         if depver not in self.conda_package_info[dep].get("versions"):
-                            self.failed.append((8, "Conda dependency had an unknown version: {}".format(dep)))
+                            self.failed.append((8, "Conda dep had unknown version: {}".format(dep)))
                             continue  # No need to test for latest version, continue linting
                         # Check version is latest available
                         last_ver = self.conda_package_info[dep].get("latest_version")
                         if last_ver is not None and last_ver != depver:
-                            self.warned.append(
-                                (8, "Conda package is not latest available: `{}`, `{}` available".format(dep, last_ver))
-                            )
+                            self.warned.append((8, "Conda dep outdated: `{}`, `{}` available".format(dep, last_ver)))
                         else:
-                            self.passed.append((8, "Conda package is latest available: `{}`".format(dep)))
+                            self.passed.append((8, "Conda package is the latest available: `{}`".format(dep)))
 
             elif isinstance(dep, dict):
                 for pip_dep in dep.get("pip", []):
@@ -1165,12 +1165,14 @@ class PipelineLint(object):
             return
 
         expected_strings = [
-            "FROM nfcore/base:{}".format("dev" if "dev" in self.version else self.version),
             "COPY environment.yml /",
             "RUN conda env create --quiet -f /environment.yml && conda clean -a",
             "RUN conda env export --name {} > {}.yml".format(self.conda_config["name"], self.conda_config["name"]),
             "ENV PATH /opt/conda/envs/{}/bin:$PATH".format(self.conda_config["name"]),
         ]
+
+        if "dev" not in self.version:
+            expected_strings.append("FROM nfcore/base:{}".format(self.version))
 
         difference = set(expected_strings) - set(self.dockerfile)
         if not difference:
@@ -1203,7 +1205,7 @@ class PipelineLint(object):
                                 .replace("TODO nf-core: ", "")
                                 .strip()
                             )
-                            self.warned.append((10, "TODO string found in `{}`: _{}_".format(fname, l)))
+                            self.warned.append((10, "TODO string in `{}`: _{}_".format(fname, l)))
 
     def check_pipeline_name(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
@@ -1307,7 +1309,7 @@ class PipelineLint(object):
     def print_results(self, show_passed=False):
 
         log.debug("Printing final results")
-        console = Console()
+        console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
         # Helper function to format test links nicely
         def format_result(test_results, table):
@@ -1375,8 +1377,10 @@ class PipelineLint(object):
             overall_result = "Failed :x:"
 
         # List of tests for details
+        test_failure_count = ""
         test_failures = ""
         if len(self.failed) > 0:
+            test_failure_count = "\n-| ❌ {:3d} tests failed       |-".format(len(self.failed))
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -1386,8 +1390,10 @@ class PipelineLint(object):
                 )
             )
 
+        test_warning_count = ""
         test_warnings = ""
         if len(self.warned) > 0:
+            test_warning_count = "\n!| ❗ {:3d} tests had warnings |!".format(len(self.warned))
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -1397,8 +1403,10 @@ class PipelineLint(object):
                 )
             )
 
+        test_passe_count = ""
         test_passes = ""
         if len(self.passed) > 0:
+            test_passed_count = "\n+| ✅ {:3d} tests passed       |+".format(len(self.passed))
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -1416,10 +1424,7 @@ class PipelineLint(object):
 
         {}
 
-        ```diff
-        +| ✅ {:2d} tests passed       |+
-        !| ❗ {:2d} tests had warnings |!
-        -| ❌ {:2d} tests failed       |-
+        ```diff{}{}{}
         ```
 
         <details>
@@ -1434,9 +1439,9 @@ class PipelineLint(object):
         ).format(
             overall_result,
             "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
-            len(self.passed),
-            len(self.warned),
-            len(self.failed),
+            test_passed_count,
+            test_warning_count,
+            test_failure_count,
             test_failures,
             test_warnings,
             test_passes,
@@ -1469,60 +1474,6 @@ class PipelineLint(object):
         }
         with open(json_fn, "w") as fh:
             json.dump(results, fh, indent=4)
-
-    def github_comment(self):
-        """
-        If we are running in a GitHub PR, try to post results as a comment
-        """
-        if os.environ.get("GITHUB_TOKEN", "") == "":
-            log.debug("Environment variable GITHUB_TOKEN not found")
-            return
-        if os.environ.get("GITHUB_COMMENTS_URL", "") == "":
-            log.debug("Environment variable GITHUB_COMMENTS_URL not found")
-            return
-        try:
-            headers = {"Authorization": "token {}".format(os.environ["GITHUB_TOKEN"])}
-            # Get existing comments - GET
-            get_r = requests.get(url=os.environ["GITHUB_COMMENTS_URL"], headers=headers)
-            if get_r.status_code == 200:
-
-                # Look for an existing comment to update
-                update_url = False
-                for comment in get_r.json():
-                    if comment["user"]["login"] == "github-actions[bot]" and comment["body"].startswith(
-                        "\n#### `nf-core lint` overall result"
-                    ):
-                        # Update existing comment - PATCH
-                        log.info("Updating GitHub comment")
-                        update_r = requests.patch(
-                            url=comment["url"],
-                            data=json.dumps({"body": self.get_results_md().replace("Posted", "**Updated**")}),
-                            headers=headers,
-                        )
-                        return
-
-                # Create new comment - POST
-                if len(self.warned) > 0 or len(self.failed) > 0:
-                    r = requests.post(
-                        url=os.environ["GITHUB_COMMENTS_URL"],
-                        data=json.dumps({"body": self.get_results_md()}),
-                        headers=headers,
-                    )
-                    try:
-                        r_json = json.loads(r.content)
-                        response_pp = json.dumps(r_json, indent=4)
-                    except:
-                        r_json = r.content
-                        response_pp = r.content
-
-                    if r.status_code == 201:
-                        log.info("Posted GitHub comment: {}".format(r_json["html_url"]))
-                        log.debug(response_pp)
-                    else:
-                        log.warning("Could not post GitHub comment: '{}'\n{}".format(r.status_code, response_pp))
-
-        except Exception as e:
-            log.warning("Could not post GitHub comment: {}\n{}".format(os.environ["GITHUB_COMMENTS_URL"], e))
 
     def _wrap_quotes(self, files):
         if not isinstance(files, list):
