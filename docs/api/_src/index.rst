@@ -10,17 +10,7 @@ Welcome to nf-core tools API documentation!
    :maxdepth: 2
    :caption: Contents:
 
-   bump_version
-   create
-   download
-   launch
-   licences
-   lint
-   list
-   modules
-   schema
-   sync
-   utils
+   *
 
 
 Indices and tables
