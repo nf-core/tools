@@ -47,6 +47,8 @@ The following files will cause a failure if the _are_ present (to fix, delete th
     deleted and new `nextflow_schema.json` files created instead.
 * `bin/markdown_to_html.r`
   * The old markdown to HTML conversion script, now replaced by `markdown_to_html.py`
+* `.github/workflows/push_dockerhub.yml`
+  * The old dockerhub build script, now split into `.github/workflows/push_dockerhub_dev.yml` and `.github/workflows/push_dockerhub_release.yml`
 
 ## Error #2 - Docker file check failed ## {#2}
 
