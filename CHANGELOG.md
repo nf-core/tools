@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.12dev
+## [v1.12 - Mercury Weasel](https://github.com/nf-core/tools/releases/tag/1.12) - [2020-11-19]
 
 ### Tools helper code
 
@@ -22,10 +22,8 @@
 ### Linting
 
 * Updated code to display colours in GitHub Actions log output
-* Allow tests to pass with dev version of nf-core/tools (previous failure due to base image version)
+* Allow tests to pass with `dev` version of nf-core/tools (previous failure due to base image version)
 * Lint code no longer tries to post GitHub PR comments. This is now done in a GitHub Action only.
-
-### Other
 
 ## [v1.11 - Iron Tiger](https://github.com/nf-core/tools/releases/tag/1.11) - [2020-10-27]
 
