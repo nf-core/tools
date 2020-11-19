@@ -1,5 +1,15 @@
 # nf-core/tools: Changelog
 
+## v1.13dev
+
+### Tools helper code
+
+### Template
+
+### Linting
+
+### Other
+
 ## [v1.12 - Mercury Weasel](https://github.com/nf-core/tools/releases/tag/1.12) - [2020-11-19]
 
 ### Tools helper code
