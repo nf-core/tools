@@ -6,4 +6,3 @@ nf_core.launch
     :undoc-members:
     :show-inheritance:
     :private-members:
-    :special-members:

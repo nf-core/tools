@@ -6,4 +6,3 @@ nf_core.list
     :undoc-members:
     :show-inheritance:
     :private-members:
-    :special-members:
