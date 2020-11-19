@@ -44,6 +44,8 @@ jobs:
           docker tag nfcore/tools:dev nfcore/tools:0.4
 
       - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
