@@ -33,7 +33,8 @@ Steps to reproduce the behaviour:
 - Hardware: <!-- [e.g. HPC, Desktop, Cloud...] -->
 - Executor: <!-- [e.g. slurm, local, awsbatch...] -->
 - OS: <!-- [e.g. CentOS Linux, macOS, Linux Mint...] -->
-- Version <!-- [e.g. 7, 10.13.6, 18.3...] -->
+- Version of nf-core/tools: <!-- [e.g. 1.1, 1.5, 1.8.2...] -->
+- Python version: <!-- [e.g. 3.7, 3.8...] -->
 
 ## Nextflow Installation
 
