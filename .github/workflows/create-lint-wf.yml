@@ -19,6 +19,8 @@ jobs:
           pip install .
 
       - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
         run: |
           mkdir /tmp/nextflow
           cd /tmp/nextflow

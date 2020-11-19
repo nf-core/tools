@@ -16,6 +16,7 @@
 * Added config import for `test_full` in `nextflow.config`
 * Switched depreciated `$baseDir` to `$projectDir`
 * Updated minimum Nextflow version to `20.04.10`
+* Make Nextflow installation less verbose in GitHub Actions [[#780](https://github.com/nf-core/tools/pull/780)]
 
 ### Linting
 

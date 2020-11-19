@@ -43,6 +43,8 @@ jobs:
           docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
 
       - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
