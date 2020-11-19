@@ -170,7 +170,7 @@ class TestLint(unittest.TestCase):
     def test_actions_wf_ci_pass(self):
         """Tests that linting for GitHub Actions CI workflow works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.pipeline_name = "tools"
         lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
@@ -180,7 +180,7 @@ class TestLint(unittest.TestCase):
     def test_actions_wf_ci_fail(self):
         """Tests that linting for GitHub Actions CI workflow fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.pipeline_name = "tools"
         lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
@@ -257,7 +257,7 @@ class TestLint(unittest.TestCase):
     def test_readme_pass(self):
         """Tests that the pipeline README file checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.files = ["environment.yml"]
         lint_obj.check_readme()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
