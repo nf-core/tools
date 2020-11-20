@@ -13,6 +13,16 @@ Thanks for telling us about a problem with the pipeline.
 Please delete this text and anything that's not relevant from the template below:
 -->
 
+## Check Documentation
+
+Have you checked in the following places for your error?:
+
+- [ ] [nf-co.re troubleshooting(https://nf-co.re/usage/troubleshooting)
+- [ ] [{{ cookiecutter.name }}-specific documentation](https://nf-co.re/{{ cookiecutter.name }}/usage)
+
+Please also check the the corresponding version's documentation, if not
+testing the latest release.
+
 ## Description of the bug
 
 <!-- A clear and concise description of what the bug is. -->
@@ -27,6 +37,14 @@ Steps to reproduce the behaviour:
 ## Expected behaviour
 
 <!-- A clear and concise description of what you expected to happen. -->
+
+## Log files
+
+Have you provided the following extra information/files:
+
+- [] The command used to run the pipeline
+- [] The `.nextflow.log` file (which is a hidden file in whichever place you _ran_
+   the pipeline from - not necessarily in the output directory!)
 
 ## System
 
