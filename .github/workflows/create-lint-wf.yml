@@ -19,13 +19,27 @@ jobs:
           pip install .
 
       - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
         run: |
           mkdir /tmp/nextflow
           cd /tmp/nextflow
           wget -qO- get.nextflow.io | bash
           sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
 
-      - name: Run nf-core tools
+      - name: Run nf-core/tools
         run: |
-          nf-core create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
-          nf-core lint nf-core-testpipeline
+          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          nf-core --log-file log.txt lint nf-core-testpipeline
+          nf-core --log-file log.txt list
+          nf-core --log-file log.txt licences nf-core-testpipeline
+          nf-core --log-file log.txt sync nf-core-testpipeline/
+          nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
+          nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
+          nf-core --log-file log.txt modules install nf-core-testpipeline/ fastqc
+
+      - name: Upload log file artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: nf-core-log-file
+          path: log.txt

@@ -2,7 +2,7 @@ name: nf-core branch protection
 # This workflow is triggered on PRs to master branch on the repository
 # It fails when someone tries to make a PR against the nf-core `master` branch instead of `dev`
 on:
-  pull_request:
+  pull_request_target:
     branches: [master]
 
 jobs:
@@ -17,6 +17,7 @@ jobs:
 
 {% raw %}
       # If the above check failed, post a comment on the PR explaining the failure
+      # NOTE - this doesn't currently work if the PR is coming from a fork, due to limitations in GitHub actions secrets
       - name: Post PR comment
         if: failure()
         uses: mshick/add-pr-comment@v1
@@ -26,7 +27,7 @@ jobs:
 
             It looks like this pull-request is has been made against the ${{github.event.pull_request.head.repo.full_name}} `master` branch.
             The `master` branch on nf-core repositories should always contain code from the latest release.
-            Beacuse of this, PRs to `master` are only allowed if they come from the ${{github.event.pull_request.head.repo.full_name}} `dev` branch.
+            Because of this, PRs to `master` are only allowed if they come from the ${{github.event.pull_request.head.repo.full_name}} `dev` branch.
 
             You do not need to close this PR, you can change the target branch to `dev` by clicking the _"Edit"_ button at the top of this page.
 

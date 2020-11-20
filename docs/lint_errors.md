@@ -10,8 +10,8 @@ The lint test looks for the following required files:
 
 * `nextflow.config`
   * The main nextflow config file
-* `Dockerfile`
-  * A docker build script to generate a docker image with the required software
+* `nextflow_schema.json`
+  * A JSON schema describing pipeline parameters, generated using `nf-core schema build`
 * Continuous integration tests with [GitHub Actions](https://github.com/features/actions)
   * GitHub Actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practice linting (`.github/workflows/linting.yml`)
 * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
@@ -27,8 +27,14 @@ The following files are suggested but not a hard requirement. If they are missin
 
 * `main.nf`
   * It's recommended that the main workflow script is called `main.nf`
+* `environment.yml`
+  * A conda environment file describing the required software
+* `Dockerfile`
+  * A docker build script to generate a docker image with the required software
 * `conf/base.config`
   * A `conf` directory with at least one config called `base.config`
+* `.github/workflows/awstest.yml` and `.github/workflows/awsfulltest.yml`
+  * GitHub workflow scripts used for automated tests on AWS
 
 The following files will cause a failure if the _are_ present (to fix, delete them):
 
@@ -39,12 +45,19 @@ The following files will cause a failure if the _are_ present (to fix, delete th
 * `parameters.settings.json`
   * The syntax for pipeline schema has changed - old `parameters.settings.json` should be
     deleted and new `nextflow_schema.json` files created instead.
+* `bin/markdown_to_html.r`
+  * The old markdown to HTML conversion script, now replaced by `markdown_to_html.py`
+* `.github/workflows/push_dockerhub.yml`
+  * The old dockerhub build script, now split into `.github/workflows/push_dockerhub_dev.yml` and `.github/workflows/push_dockerhub_release.yml`
 
 ## Error #2 - Docker file check failed ## {#2}
 
-Pipelines should have a files called `Dockerfile` in their root directory.
+DSL1 pipelines should have a file called `Dockerfile` in their root directory.
 The file is used for automated docker image builds. This test checks that the file
 exists and contains at least the string `FROM` (`Dockerfile`).
+
+Some pipelines, especially DSL2, may not have a `Dockerfile`. In this case a warning
+will be generated which can be safely ignored.
 
 ## Error #3 - Licence check failed ## {#3}
 
@@ -92,6 +105,10 @@ The following variables fail the test if missing:
   * The nextflow timeline, trace, report and DAG should be enabled by default (set to `true`)
 * `process.cpus`, `process.memory`, `process.time`
   * Default CPUs, memory and time limits for tasks
+* `params.input`
+  * Input parameter to specify input data, specify this to avoid a warning
+  * Typical usage:
+    * `params.input`: Input data that is not NGS sequencing data
 
 The following variables throw warnings if missing:
 
@@ -105,16 +122,7 @@ The following variables throw warnings if missing:
 * `process.container`
   * Docker Hub handle for a single default container for use by all processes.
   * Must specify a tag that matches the pipeline version number if set.
-  * If the pipeline version number contains the string `dev`, the Docker Hub tag must be `:dev`
-* `params.reads` or `params.input` or `params.design`
-  * Input parameter to specify input data - one or more of these can be used to avoid a warning
-  * Typical usage:
-    * `params.reads`: FastQ files (or pairs)
-    * `params.input`: Input data that is not NGS sequencing data
-    * `params.design`: A CSV/TSV design file specifying input files and metadata for the run
-* `params.single_end`
-  * Specify to work with single-end sequence data instead of paired-end by default
-  * Nextflow implementation: `.fromFilePairs( params.reads, size: params.single_end ? 1 : 2 )`
+  * If the pipeline version number contains the string `dev`, the DockerHub tag must be `:dev`
 
 The following variables are depreciated and fail the test if they are still present:
 
@@ -123,9 +131,9 @@ The following variables are depreciated and fail the test if they are still pres
 * `params.nf_required_version`
   * The old method for specifying the minimum Nextflow version. Replaced by `manifest.nextflowVersion`
 * `params.container`
-  * The old method for specifying the Docker Hub container address. Replaced by `process.container`
-* `singleEnd` and `igenomesIgnore`
-  * Changed to `single_end` and `igenomes_ignore`
+  * The old method for specifying the dockerhub container address. Replaced by `process.container`
+* `igenomesIgnore`
+  * Changed to `igenomes_ignore`
   * The `snake_case` convention should now be used when defining pipeline parameters
 
 Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
@@ -135,29 +143,33 @@ Process-level configuration syntax is checked and fails if uses the old Nextflow
 
 nf-core pipelines must have CI testing with GitHub Actions.
 
-### GitHub Actions
+### GitHub Actions CI
 
-There are 3 main GitHub Actions CI test files: `ci.yml`, `linting.yml` and `branch.yml` and they can all be found in the `.github/workflows/` directory. You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
+There are 4 main GitHub Actions CI test files: `ci.yml`, `linting.yml`, `branch.yml` and `awstests.yml`, and they can all be found in the `.github/workflows/` directory.
+You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
 
 This test will fail if the following requirements are not met in these files:
 
 1. `ci.yml`: Contains all the commands required to test the pipeline
-    * Must be turned on for `push` and `pull_request`:
+    * Must be triggered on the following events:
 
       ```yaml
-      on: [push, pull_request]
+      on:
+        push:
+          branches:
+            - dev
+        pull_request:
+        release:
+          types: [published]
       ```
 
-    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in this file:
+    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in the test matrix:
 
       ```yaml
-      jobs:
-        test:
-          runs-on: ubuntu-18.04
-          strategy:
-            matrix:
-              # Nextflow versions: check pipeline minimum and current latest
-              nxf_ver: ['19.10.0', '']
+      strategy:
+        matrix:
+          # Nextflow versions: check pipeline minimum and current latest
+          nxf_ver: ['19.10.0', '']
       ```
 
     * The `Docker` container for the pipeline must be tagged appropriately for:
@@ -165,19 +177,20 @@ This test will fail if the following requirements are not met in these files:
         * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
 
           ```yaml
-          jobs:
-            test:
-              runs-on: ubuntu-18.04
-              steps:
-                - name: Pull image
-                    run: |
-                    docker pull nfcore/<pipeline_name>:dev
-                    docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
+          - name: Build new docker image
+            if: env.GIT_DIFF
+            run: docker build --no-cache . -t nfcore/<pipeline_name>:1.0.0
+
+          - name: Pull docker image
+            if: ${{ !env.GIT_DIFF }}
+            run: |
+              docker pull nfcore/<pipeline_name>:dev
+              docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
           ```
 
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
     * Must be turned on for `push` and `pull_request`.
-    * Must have the command `nf-core lint ${GITHUB_WORKSPACE}`.
+    * Must have the command `nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}`.
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
 
 3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch when a PR is opened against the _nf-core_ repository.
@@ -216,6 +229,27 @@ This test will fail if the following requirements are not met in these files:
             { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
       ```
 
+4. `awstest.yml`: Triggers tests on AWS batch. As running tests on AWS incurs costs, they should be only triggered on `workflow_dispatch`.
+This allows for manual triggering of the workflow when testing on AWS is desired.
+You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the `nf-core AWS test` workflow on the left.
+    * Must not be turned on for `push` or `pull_request`.
+    * Must be turned on for `workflow_dispatch`.
+
+### GitHub Actions AWS full tests
+
+Additionally, we provide the possibility of testing the pipeline on full size datasets on AWS.
+This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
+The GitHub Actions workflow is `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
+This workflow incurrs higher AWS costs, therefore it should only be triggered for releases (`workflow_run` - after the docker hub release workflow) and `workflow_dispatch`.
+You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the `nf-core AWS full size tests` workflow on the left.
+For tests on full data prior to release, [Nextflow Tower](https://tower.nf) launch feature can be employed.
+
+`awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
+
+* Must be turned on `workflow_dispatch`.
+* Must be turned on for `workflow_run` with `workflows: ["nf-core Docker push (release)"]` and `types: [completed]`
+* Should run the profile `test_full` that should be edited to provide the links to full-size datasets. If it runs the profile `test` a warning is given.
+
 ## Error #6 - Repository `README.md` tests ## {#6}
 
 The `README.md` files for a project are very important and must meet some requirements:
@@ -234,7 +268,7 @@ The `README.md` files for a project are very important and must meet some requir
   * Required badge code:
 
     ```markdown
-    [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](http://bioconda.github.io/)
+    [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
     ```
 
 ## Error #7 - Pipeline and container version numbers ## {#7}
@@ -281,13 +315,13 @@ If a workflow has a conda `environment.yml` file (see above), the `Dockerfile` s
 to create the container. Such `Dockerfile`s can usually be very short, eg:
 
 ```Dockerfile
-FROM nfcore/base:1.7
+FROM nfcore/base:1.11
 MAINTAINER Rocky Balboa <your@email.com>
 LABEL authors="your@email.com" \
     description="Docker image containing all requirements for the nf-core mypipeline pipeline"
 
 COPY environment.yml /
-RUN conda env create -f /environment.yml && conda clean -a
+RUN conda env create --quiet -f /environment.yml && conda clean -a
 RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
 ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
 ```
@@ -330,8 +364,42 @@ Finding a placeholder like this means that something was probably copied and pas
 
 Pipelines should have a `nextflow_schema.json` file that describes the different pipeline parameters (eg. `params.something`, `--something`).
 
-Schema should be valid JSON files and adhere to [JSONSchema](https://json-schema.org/), Draft 7.
-The top-level schema should be an `object`, where each of the `properties` corresponds to a pipeline parameter.
+* Schema should be valid JSON files
+* Schema should adhere to [JSONSchema](https://json-schema.org/), Draft 7.
+* Parameters can be described in two places:
+  * As `properties` in the top-level schema object
+  * As `properties` within subschemas listed in a top-level `definitions` objects
+* The schema must describe at least one parameter
+* There must be no duplicate parameter IDs across the schema and definition subschema
+* All subschema in `definitions` must be referenced in the top-level `allOf` key
+* The top-level `allOf` key must not describe any non-existent definitions
+* Core top-level schema attributes should exist and be set as follows:
+  * `$schema`: `https://json-schema.org/draft-07/schema`
+  * `$id`: URL to the raw schema file, eg. `https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json`
+  * `title`: `YOURPIPELINE pipeline parameters`
+  * `description`: The piepline config `manifest.description`
+
+For example, an _extremely_ minimal schema could look like this:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft-07/schema",
+  "$id": "https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json",
+  "title": "YOURPIPELINE pipeline parameters",
+  "description": "This pipeline is for testing",
+  "properties": {
+    "first_param": { "type": "string" }
+  },
+  "definitions": {
+    "my_first_group": {
+      "properties": {
+        "second_param": { "type": "string" }
+      }
+    }
+  },
+  "allOf": [{"$ref": "#/definitions/my_first_group"}]
+}
+```
 
 ## Error #15 - Schema config check ## {#15}
 

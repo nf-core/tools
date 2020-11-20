@@ -2,29 +2,29 @@
 """Some tests covering the pipeline creation sub command.
 """
 import os
-import pytest
-import nf_core.lint, nf_core.create
+import nf_core.create
 import tempfile
 import unittest
 
 WD = os.path.dirname(__file__)
-PIPELINE_NAME = 'nf-core/test'
-PIPELINE_DESCRIPTION = 'just for 4w3s0m3 tests'
-PIPELINE_AUTHOR = 'Chuck Norris'
-PIPELINE_VERSION = '1.0.0'
+PIPELINE_NAME = "nf-core/test"
+PIPELINE_DESCRIPTION = "just for 4w3s0m3 tests"
+PIPELINE_AUTHOR = "Chuck Norris"
+PIPELINE_VERSION = "1.0.0"
+
 
 class NfcoreCreateTest(unittest.TestCase):
-
     def setUp(self):
         self.tmppath = tempfile.mkdtemp()
-        self.pipeline = nf_core.create.PipelineCreate(name=PIPELINE_NAME,
-                                      description=PIPELINE_DESCRIPTION,
-                                      author=PIPELINE_AUTHOR,
-                                      new_version=PIPELINE_VERSION,
-                                      no_git=False,
-                                      force=True,
-                                      outdir=self.tmppath)
-
+        self.pipeline = nf_core.create.PipelineCreate(
+            name=PIPELINE_NAME,
+            description=PIPELINE_DESCRIPTION,
+            author=PIPELINE_AUTHOR,
+            new_version=PIPELINE_VERSION,
+            no_git=False,
+            force=True,
+            outdir=self.tmppath,
+        )
 
     def test_pipeline_creation(self):
         assert self.pipeline.name == PIPELINE_NAME
@@ -34,4 +34,4 @@ class NfcoreCreateTest(unittest.TestCase):
 
     def test_pipeline_creation_initiation(self):
         self.pipeline.init_pipeline()
-        assert (os.path.isdir(os.path.join(self.pipeline.outdir, '.git')))
+        assert os.path.isdir(os.path.join(self.pipeline.outdir, ".git"))

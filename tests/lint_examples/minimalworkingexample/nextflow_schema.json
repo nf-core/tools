@@ -1,15 +1,15 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/'nf-core/tools'/master/nextflow_schema.json",
-    "title": "'nf-core/tools' pipeline parameters",
-    "description": "'Minimal working example pipeline'",
+    "$id": "https://raw.githubusercontent.com/nf-core/tools/master/nextflow_schema.json",
+    "title": "nf-core/tools pipeline parameters",
+    "description": "Minimal working example pipeline",
     "type": "object",
     "properties": {
         "outdir": {
             "type": "string",
             "default": "'./results'"
         },
-        "reads": {
+        "input": {
             "type": "string",
             "default": "'data/*.fastq'"
         },
