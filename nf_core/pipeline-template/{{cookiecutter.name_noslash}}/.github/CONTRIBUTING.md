@@ -18,8 +18,9 @@ If you'd like to write some code for {{ cookiecutter.name }}, the standard workf
 1. Check that there isn't already an issue about your idea in the [{{ cookiecutter.name }} issues](https://github.com/{{ cookiecutter.name }}/issues) to avoid duplicating work
     * If there isn't one already, please create one so that others know you're working on this
 2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ cookiecutter.name }} repository](https://github.com/{{ cookiecutter.name }}) to your GitHub account
-3. Make the necessary changes / additions within your forked repository
-4. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
+3. Make the necessary changes / additions within your forked repository following [Pipeline conventions](#pipeline-contribution-conventions)
+4. Use `nf-core schema build .` and add any new parameters to the pipeline JSON schema (requires [nf-core tools](https://github.com/nf-core/tools) >= 1.10).
+5. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
 
 If you're not used to this workflow with git, you can start with some [docs from GitHub](https://help.github.com/en/github/collaborating-with-issues-and-pull-requests) or even their [excellent `git` resources](https://try.github.io/).
 
@@ -52,6 +53,76 @@ These tests are run both with the latest available version of `Nextflow` and als
 * Fix the bug, and bump version (X.Y.Z+1).
 * A PR should be made on `master` from patch to directly this particular bug.
 
-## Getting help
+## Getting Help
 
 For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://nf-co.re/{{ cookiecutter.short_name }}/usage) and don't hesitate to get in touch on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+
+## Pipeline Contribution Conventions
+
+To make the {{ cookiecutter.short_name }} code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
+
+### Adding a New Module
+
+If you wish to contribute a new module, please use the following coding standards:
+
+1. Define the corresponding input channel into your new process from the expected previous process channel
+2. Write the process block (see below).
+3. Define the output channel if needed (see below).
+4. Add any new flags/options to `nextflow.config` with a default (see below).
+5. Add any new flags/options to `nextflow_schema.json` with help text (with `nf-core schema build .`)
+6. Add any new flags/options to the help message (for integer/text parameters, print to help the corresponding `nextflow.config` parameter).
+7. Add sanity checks for all relevant parameters.
+8. Add any new software to the `scrape_software_versions.py` script in `bin/` and the version command to the `scrape_software_versions` process in `main.nf`.
+9. Do local tests that the new code works properly and as expected.
+10. Add a new test command in `.github/workflow/ci.yaml`.
+11. If applicable add a [MultiQC](https://https://multiqc.info/) module.
+12. Update MultiQC config `assets/multiqc_config.yaml` so relevant suffixes, name clean up, General Statistics Table column order, and module figures are in the right order.
+13. Optional: Add any descriptions of MultiQC report sections and output files to `docs/output.md`.
+
+More details are as follow
+
+### Default Values
+
+Default values should go in `nextflow.config` under the `params` scope, and `nextflow_schema.json` (latter with `nf-core schema build .`)
+
+### Default Processes Resource Requirements
+
+Defining recommended 'minimum' resource requirements (CPUs/Memory) for a process should be defined in `conf/base.config`. This can be utilised within the process using `${task.cpu}` or `${task.memory}` variables in the `script:` block.
+
+### Naming Schemes
+
+Please use the following naming schemes, to make it easy to understand what is going where.
+
+* initial process channel: `ch_output_from_<process>`
+* intermediate and terminal channels: `ch_<previousprocess>_for_<nextprocess>`
+
+### Nextflow Version Bumping
+
+If you have agreement from reviewers, you may bump the 'default' minimum version of nextflow (e.g. for testing), with `nf-core bump-version`.
+
+### Software Version Reporting
+
+If you add a new tool to the pipeline, please ensure you add the information of the tool to the `get_software_version` process.
+
+Add to the script block of the process, something like the following:
+
+```bash
+<YOUR_TOOL> --version &> v_<YOUR_TOOL>.txt 2>&1 || true
+```
+
+or
+
+```bash
+<YOUR_TOOL> --help | head -n 1 &> v_<YOUR_TOOL>.txt 2>&1 || true
+```
+
+You then need to edit the script `bin/scrape_software_versions.py` to
+
+1. add a (python) regex for your tools --version output (as in stored in the `v_<YOUR_TOOL>.txt` file), to ensure the version is reported as a `v` and the version number e.g. `v2.1.1`
+2. add a HTML block entry to the `OrderedDict` for formatting in MultiQC.
+
+> If a tool does not unfortunately offer any printing of version data, you may add this 'manually' e.g. with `echo "v1.1" > v_<YOUR_TOOL>.txt`
+
+### Images and Figures
+
+For overview images and other documents we follow the nf-core [style guidelines and examples](https://nf-co.re/developers/design_guidelines).
