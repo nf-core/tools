@@ -42,8 +42,8 @@ Steps to reproduce the behaviour:
 
 Have you provided the following extra information/files:
 
-- [] The command used to run the pipeline
-- [] The `.nextflow.log` file (which is a hidden file in whichever place you _ran_
+- [ ] The command used to run the pipeline
+- [ ] The `.nextflow.log` file (which is a hidden file in whichever place you _ran_
    the pipeline from - not necessarily in the output directory!)
 
 ## System
