@@ -10,9 +10,7 @@ import argparse
 
 
 def parse_args(args=None):
-    Description = (
-        "Reformat {{ cookiecutter.name }} samplesheet file and check its contents."
-    )
+    Description = "Reformat {{ cookiecutter.name }} samplesheet file and check its contents."
     Epilog = "Example usage: python check_samplesheet.py <FILE_IN> <FILE_OUT>"
 
     parser = argparse.ArgumentParser(description=Description, epilog=Epilog)
@@ -61,11 +59,7 @@ def check_samplesheet(file_in, file_out):
         HEADER = ["group", "replicate", "fastq_1", "fastq_2"]
         header = [x.strip('"') for x in fin.readline().strip().split(",")]
         if header[: len(HEADER)] != HEADER:
-            print(
-                "ERROR: Please check samplesheet header -> {} != {}".format(
-                    ",".join(header), ",".join(HEADER)
-                )
-            )
+            print("ERROR: Please check samplesheet header -> {} != {}".format(",".join(header), ",".join(HEADER)))
             sys.exit(1)
         ## Check sample entries
         for line in fin:
@@ -81,9 +75,7 @@ def check_samplesheet(file_in, file_out):
             num_cols = len([x for x in lspl if x])
             if num_cols < MIN_COLS:
                 print_error(
-                    "Invalid number of populated columns (minimum = {})!".format(
-                        MIN_COLS
-                    ),
+                    "Invalid number of populated columns (minimum = {})!".format(MIN_COLS),
                     "Line",
                     line,
                 )
@@ -149,8 +141,7 @@ def check_samplesheet(file_in, file_out):
 
                     ## Check that multiple runs of the same sample are of the same datatype
                     if not all(
-                        x[0] == sample_run_dict[sample][replicate][0][0]
-                        for x in sample_run_dict[sample][replicate]
+                        x[0] == sample_run_dict[sample][replicate][0][0] for x in sample_run_dict[sample][replicate]
                     ):
                         print_error(
                             "Multiple runs of a sample must be of the same datatype!",
@@ -158,9 +149,7 @@ def check_samplesheet(file_in, file_out):
                             sample,
                         )
                     ## Write to file
-                    for idx, sample_info in enumerate(
-                        sample_run_dict[sample][replicate]
-                    ):
+                    for idx, sample_info in enumerate(sample_run_dict[sample][replicate]):
                         sample_id = "{}_R{}_T{}".format(sample, replicate, idx + 1)
                         fout.write(",".join([sample_id] + sample_info) + "\n")
 
