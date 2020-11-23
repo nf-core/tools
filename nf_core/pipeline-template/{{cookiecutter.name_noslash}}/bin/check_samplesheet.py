@@ -61,6 +61,7 @@ def check_samplesheet(file_in, file_out):
         if header[: len(HEADER)] != HEADER:
             print("ERROR: Please check samplesheet header -> {} != {}".format(",".join(header), ",".join(HEADER)))
             sys.exit(1)
+
         ## Check sample entries
         for line in fin:
             lspl = [x.strip().strip('"') for x in line.strip().split(",")]
@@ -79,6 +80,7 @@ def check_samplesheet(file_in, file_out):
                     "Line",
                     line,
                 )
+
             ## Check sample name entries
             sample, replicate, fastq_1, fastq_2 = lspl[: len(HEADER)]
             if sample:
@@ -86,6 +88,7 @@ def check_samplesheet(file_in, file_out):
                     print_error("Group entry contains spaces!", "Line", line)
             else:
                 print_error("Group entry has not been specified!", "Line", line)
+
             ## Check replicate entry is integer
             if not replicate.isdigit():
                 print_error("Replicate id not an integer!", "Line", line)
@@ -102,6 +105,7 @@ def check_samplesheet(file_in, file_out):
                             "Line",
                             line,
                         )
+
             ## Auto-detect paired-end/single-end
             sample_info = []  ## [single_end, fastq_1, fastq_2]
             if sample and fastq_1 and fastq_2:  ## Paired-end short reads
@@ -120,6 +124,7 @@ def check_samplesheet(file_in, file_out):
                     print_error("Samplesheet contains duplicate rows!", "Line", line)
                 else:
                     sample_run_dict[sample][replicate].append(sample_info)
+
     ## Write validated samplesheet with appropriate columns
     if len(sample_run_dict) > 0:
         out_dir = os.path.dirname(file_out)
