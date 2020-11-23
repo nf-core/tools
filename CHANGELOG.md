@@ -155,7 +155,6 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Adding TODOs and MultiQC process in DSL2 template
 * Change `params.readPaths` -> `params.input_paths`
 * Added a `.github/.dockstore.yml` config file for automatic workflow registration with [dockstore.org](https://dockstore.org/)
->>>>>>> 9817bce2698c0cde70d159434259686a1519fec2
 
 ### Linting
 
