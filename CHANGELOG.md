@@ -1,6 +1,95 @@
 # nf-core/tools: Changelog
 
-## v1.10dev
+## v1.13dev
+
+### Tools helper code
+
+### Template
+
+* Move, modularise and import boilerplate code via Groovy `lib/` directory
+* Implement DSL2 syntax for pipeline template
+* Adding TODOs and MultiQC process in DSL2 template
+* [#522](https://github.com/nf-core/tools/issues/522) - Unify iGenomes index usage
+
+### Linting
+
+### Other
+
+## [v1.12 - Mercury Weasel](https://github.com/nf-core/tools/releases/tag/1.12) - [2020-11-19]
+
+### Tools helper code
+
+* Updated `nf_core` documentation generator for building [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/)
+
+### Template
+
+* Make CI comments work with PRs from forks [[#765](https://github.com/nf-core/tools/issues/765)]
+  * Branch protection and linting results should now show on all PRs
+* Updated GitHub issue templates, which had stopped working
+* Refactored GitHub Actions so that the AWS full-scale tests are triggered after docker build is finished
+  * DockerHub push workflow split into two - one for dev, one for releases
+* Updated actions to no longer use `set-env` which is now depreciating [[#739](https://github.com/nf-core/tools/issues/739)]
+* Added config import for `test_full` in `nextflow.config`
+* Switched depreciated `$baseDir` to `$projectDir`
+* Updated minimum Nextflow version to `20.04.10`
+* Make Nextflow installation less verbose in GitHub Actions [[#780](https://github.com/nf-core/tools/pull/780)]
+
+### Linting
+
+* Updated code to display colours in GitHub Actions log output
+* Allow tests to pass with `dev` version of nf-core/tools (previous failure due to base image version)
+* Lint code no longer tries to post GitHub PR comments. This is now done in a GitHub Action only.
+
+## [v1.11 - Iron Tiger](https://github.com/nf-core/tools/releases/tag/1.11) - [2020-10-27]
+
+### Template
+
+* Fix command error in `awstest.yml` GitHub Action workflow.
+* Allow manual triggering of AWS test GitHub Action workflows.
+* Remove TODO item, which was proposing the usage of additional files beside `usage.md` and `output.md` for documentation.
+* Added a Podman profile, which enables Podman as container.
+* Updated linting for GitHub actions AWS tests workflows.
+
+### Linting
+
+* Made a base-level `Dockerfile` a warning instead of failure
+* Added a lint failure if the old `bin/markdown_to_html.r` script is found
+* Update `rich` package dependency and use new markup escaping to change `[[!]]` back to `[!]` again
+
+### Other
+
+* Pipeline sync - fetch full repo when checking out before sync
+* Sync - Add GitHub actions manual trigger option
+
+## [v1.10.2 - Copper Camel _(brought back from the dead)_](https://github.com/nf-core/tools/releases/tag/1.10.2) - [2020-07-31]
+
+Second patch release to address some small errors discovered in the pipeline template.
+Apologies for the inconvenience.
+
+* Fix syntax error in `/push_dockerhub.yml` GitHub Action workflow
+* Change `params.readPaths` -> `params.input_paths` in `test_full.config`
+* Check results when posting the lint results as a GitHub comment
+  * This feature is unfortunately not possible when making PRs from forks outside of the nf-core organisation for now.
+* More major refactoring of the automated pipeline sync
+  * New GitHub Actions matrix parallelisation of sync jobs across pipelines [[#673](https://github.com/nf-core/tools/issues/673)]
+  * Removed the `--all` behaviour from `nf-core sync` as we no longer need it
+  * Sync now uses a new list of pipelines on the website which does not include archived pipelines [[#712](https://github.com/nf-core/tools/issues/712)]
+  * When making a PR it checks if a PR already exists - if so it updates it [[#710](https://github.com/nf-core/tools/issues/710)]
+  * More tests and code refactoring for more stable code. Hopefully fixes 404 error [[#711](https://github.com/nf-core/tools/issues/711)]
+
+## [v1.10.1 - Copper Camel _(patch)_](https://github.com/nf-core/tools/releases/tag/1.10.1) - [2020-07-30]
+
+Patch release to fix the automatic template synchronisation, which failed in the v1.10 release.
+
+* Improved logging: `nf-core --log-file log.txt` now saves a verbose log to disk.
+* nf-core/tools GitHub Actions pipeline sync now uploads verbose log as an artifact.
+* Sync - fixed several minor bugs, made logging less verbose.
+* Python Rich library updated to `>=4.2.1`
+* Hopefully fix git config for pipeline sync so that commit comes from @nf-core-bot
+* Fix sync auto-PR text indentation so that it doesn't all show as code
+* Added explicit flag `--show-passed` for `nf-core lint` instead of taking logging verbosity
+
+## [v1.10 - Copper Camel](https://github.com/nf-core/tools/releases/tag/1.10) - [2020-07-30]
 
 ### Pipeline schema
 
@@ -24,7 +113,7 @@ To support these new schema files, nf-core/tools now comes with a new set of com
 * Pipeline schema can be generated or updated using `nf-core schema build` - this takes the parameters from
   the pipeline config file and prompts the developer for any mismatch between schema and pipeline.
   * Once a skeleton Schema file has been built, the command makes use of a new nf-core website tool to provide
-    a user friendly graphical interface for developers to add content to their schema: [https://nf-co.re/json_schema_build](https://nf-co.re/json_schema_build)
+    a user friendly graphical interface for developers to add content to their schema: [https://nf-co.re/pipeline_schema_builder](https://nf-co.re/pipeline_schema_builder)
 * Pipelines will be automatically tested for valid schema that describe all pipeline parameters using the
   `nf-core schema lint` command (also included as part of the main `nf-core lint` command).
 * Users can validate their set of pipeline inputs using the `nf-core schema validate` command.
@@ -63,10 +152,10 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Add information about config files used for workflow execution (`workflow.configFiles`) to summary
 * Fix `markdown_to_html.py` to work with Python 2 and 3.
 * Change `params.reads` -> `params.input`
-* Move, modularise and import boilerplate code via Groovy `lib/` directory
-* Implement DSL 2 syntax for pipeline template
 * Adding TODOs and MultiQC process in DSL2 template
-* [#522](https://github.com/nf-core/tools/issues/522) - Unify iGenomes index usage
+* Change `params.readPaths` -> `params.input_paths`
+* Added a `.github/.dockstore.yml` config file for automatic workflow registration with [dockstore.org](https://dockstore.org/)
+>>>>>>> 9817bce2698c0cde70d159434259686a1519fec2
 
 ### Linting
 
@@ -82,6 +171,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Fail if `params.input` isn't defined.
 * Beautiful new progress bar to look at whilst linting is running and awesome new formatted output on the command line :heart_eyes:
   * All made using the excellent [`rich` python library](https://github.com/willmcgugan/rich) - check it out!
+* Tests looking for `TODO` strings should now ignore editor backup files. [#477](https://github.com/nf-core/tools/issues/477)
 
 ### nf-core/tools Continuous Integration
 
@@ -102,7 +192,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   * Disable this by setting the environment variable `NFCORE_NO_VERSION_CHECK`, eg. `export NFCORE_NO_VERSION_CHECK=1`
 * Better command-line output formatting of nearly all `nf-core` commands using [`rich`](https://github.com/willmcgugan/rich)
 
-## v1.9
+## [v1.9 - Platinum Pigeon](https://github.com/nf-core/tools/releases/tag/1.9) - [2020-02-20]
 
 ### Continuous integration
 
@@ -145,7 +235,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Add social preview image
 * Added a [release checklist](.github/RELEASE_CHECKLIST.md) for the tools repo
 
-## v1.8
+## [v1.8 - Black Sheep](https://github.com/nf-core/tools/releases/tag/1.8) - [2020-01-27]
 
 ### Continuous integration
 
@@ -217,7 +307,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Entirely switched from Travis-Ci.org to Travis-Ci.com for template and tools
 * Improved core documentation (`-profile`)
 
-## v1.7
+## [v1.7 - Titanium Kangaroo](https://github.com/nf-core/tools/releases/tag/1.7) - [2019-10-07]
 
 ### Tools helper code
 
@@ -280,7 +370,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Added a Code of Conduct to nf-core/tools, as only the template had this before
 * TravisCI tests will now also start for PRs from `patch` branches, [to allow fixing critical issues](https://github.com/nf-core/tools/pull/392) without making a new major release
 
-## v1.6
+## [v1.6 - Brass Walrus](https://github.com/nf-core/tools/releases/tag/1.6) - [2020-04-09]
 
 ### Syncing
 
@@ -318,7 +408,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   * As a solution for [#103](https://github.com/nf-core/tools/issues/103))
 * Add Bowtie2 and BWA in iGenome config file template
 
-## [v1.5](https://github.com/nf-core/tools/releases/tag/1.5) - 2019-03-13 Iron Shark
+## [v1.5 - Iron Shark](https://github.com/nf-core/tools/releases/tag/1.5) - [2019-03-13]
 
 ### Template pipeline
 
@@ -363,7 +453,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 
 * Bump `conda` to 4.6.7 in base nf-core Dockerfile
 
-## [v1.4](https://github.com/nf-core/tools/releases/tag/1.4) - 2018-12-12 Tantalum Butterfly
+## [v1.4 - Tantalum Butterfly](https://github.com/nf-core/tools/releases/tag/1.4) - [2018-12-12]
 
 ### Template pipeline
 
@@ -388,7 +478,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Handle exception if nextflow isn't installed
 * Linting: Update for Travis: Pull the `dev` tagged docker image for testing
 
-## [v1.3](https://github.com/nf-core/tools/releases/tag/1.3) - 2018-11-21
+## [v1.3 - Citreous Swordfish](https://github.com/nf-core/tools/releases/tag/1.3) - [2018-11-21]
 
 * `nf-core create` command line interface updated
   * Interactive prompts for required arguments if not given
@@ -402,7 +492,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
   * Ordering alphabetically for profiles now
 * Added `pip install --upgrade pip` to `.travis.yml` to update pip in the Travis CI environment
 
-## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - 2018-10-01
+## [v1.2](https://github.com/nf-core/tools/releases/tag/1.2) - [2018-10-01]
 
 * Updated the `nf-core release` command
   * Now called `nf-core bump-versions` instead
@@ -423,7 +513,7 @@ making a pull-request. See [`.github/CONTRIBUTING.md`](.github/CONTRIBUTING.md) 
 * Updated PyPI deployment to  correctly parse the markdown readme (hopefully!)
 * New GitHub contributing instructions and pull request template
 
-## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - 2018-08-14
+## [v1.1](https://github.com/nf-core/tools/releases/tag/1.1) - [2018-08-14]
 
 Very large release containing lots of work from the first nf-core hackathon, held in SciLifeLab Stockholm.
 
@@ -443,11 +533,11 @@ Very large release containing lots of work from the first nf-core hackathon, hel
 * New sync tool to automate pipeline updates
   * Once initial merges are complete, a nf-core bot account will create PRs for future template updates
 
-## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - 2018-07-18
+## [v1.0.1](https://github.com/nf-core/tools/releases/tag/1.0.1) - [2018-07-18]
 
 The version 1.0 of nf-core tools cannot be installed from PyPi. This patch fixes it, by getting rid of the requirements.txt plus declaring the dependent modules in the setup.py directly.
 
-## [v1.0](https://github.com/nf-core/tools/releases/tag/1.0) - 2018-06-12
+## [v1.0](https://github.com/nf-core/tools/releases/tag/1.0) - [2018-06-12]
 
 Initial release of the nf-core helper tools package. Currently includes four subcommands:
 

@@ -45,7 +45,7 @@ PATHS_WRONG_LICENSE_EXAMPLE = [
 ]
 
 # The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 83
+MAX_PASS_CHECKS = 85
 # The additional tests passed for releases
 ADD_PASS_RELEASE = 1
 
@@ -75,14 +75,17 @@ class TestLint(unittest.TestCase):
         """Test the main execution function of PipelineLint (pass)
         This should not result in any exception for the minimal
         working example"""
+        old_nfcore_version = nf_core.__version__
+        nf_core.__version__ = "1.11"
         lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
+        nf_core.__version__ = old_nfcore_version
         expectations = {"failed": 0, "warned": 5, "passed": MAX_PASS_CHECKS - 1}
         self.assess_lint_status(lint_obj, **expectations)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_call_lint_pipeline_fail(self):
         """Test the main execution function of PipelineLint (fail)
-        This should fail after the first test and halt execution """
+        This should fail after the first test and halt execution"""
         lint_obj = nf_core.lint.run_linting(PATH_FAILING_EXAMPLE, False)
         expectations = {"failed": 4, "warned": 2, "passed": 7}
         self.assess_lint_status(lint_obj, **expectations)
@@ -90,6 +93,7 @@ class TestLint(unittest.TestCase):
     def test_call_lint_pipeline_release(self):
         """Test the main execution function of PipelineLint when running with --release"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.version = "1.11"
         lint_obj.lint_pipeline(release_mode=True)
         expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
         self.assess_lint_status(lint_obj, **expectations)
@@ -97,19 +101,20 @@ class TestLint(unittest.TestCase):
     def test_failing_dockerfile_example(self):
         """Tests for empty Dockerfile"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        lint_obj.files = ["Dockerfile"]
         lint_obj.check_docker()
         self.assess_lint_status(lint_obj, failed=1)
 
-    @pytest.mark.xfail(raises=AssertionError)
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
         lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
+        assert len(lint_obj.failed) == 1
 
     def test_failing_missingfiles_example(self):
         """Tests for missing files like Dockerfile or LICENSE"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_files_exist()
-        expectations = {"failed": 6, "warned": 2, "passed": 12}
+        expectations = {"failed": 6, "warned": 2, "passed": 14}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_mit_licence_example_pass(self):
@@ -140,7 +145,7 @@ class TestLint(unittest.TestCase):
         expectations = {"failed": 19, "warned": 6, "passed": 10}
         self.assess_lint_status(bad_lint_obj, **expectations)
 
-    @pytest.mark.xfail(raises=AssertionError)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_config_variable_error(self):
         """Tests that config variable existence test falls over nicely with nextflow can't run"""
         bad_lint_obj = nf_core.lint.PipelineLint("/non/existant/path")
@@ -165,7 +170,7 @@ class TestLint(unittest.TestCase):
     def test_actions_wf_ci_pass(self):
         """Tests that linting for GitHub Actions CI workflow works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.pipeline_name = "tools"
         lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
@@ -175,7 +180,7 @@ class TestLint(unittest.TestCase):
     def test_actions_wf_ci_fail(self):
         """Tests that linting for GitHub Actions CI workflow fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.pipeline_name = "tools"
         lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
         lint_obj.check_actions_ci()
@@ -210,14 +215,14 @@ class TestLint(unittest.TestCase):
         """Tests that linting for GitHub Actions AWS test wf works for a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
         lint_obj.check_actions_awstest()
-        expectations = {"failed": 0, "warned": 0, "passed": 2}
+        expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_awstest_fail(self):
         """Tests that linting for GitHub Actions AWS test wf fails for a bad example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
         lint_obj.check_actions_awstest()
-        expectations = {"failed": 2, "warned": 0, "passed": 0}
+        expectations = {"failed": 1, "warned": 0, "passed": 0}
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_actions_wf_awsfulltest_pass(self):
@@ -252,7 +257,7 @@ class TestLint(unittest.TestCase):
     def test_readme_pass(self):
         """Tests that the pipeline README file checks work with a good example"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.minNextflowVersion = "19.10.0"
+        lint_obj.minNextflowVersion = "20.04.0"
         lint_obj.files = ["environment.yml"]
         lint_obj.check_readme()
         expectations = {"failed": 0, "warned": 0, "passed": 2}
@@ -277,6 +282,7 @@ class TestLint(unittest.TestCase):
     def test_dockerfile_pass(self):
         """Tests if a valid Dockerfile passes the lint checks"""
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+        lint_obj.files = ["Dockerfile"]
         lint_obj.check_docker()
         expectations = {"failed": 0, "warned": 0, "passed": 1}
         self.assess_lint_status(lint_obj, **expectations)
@@ -364,7 +370,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     @mock.patch("requests.get")
-    @pytest.mark.xfail(raises=ValueError)
+    @pytest.mark.xfail(raises=ValueError, strict=True)
     def test_conda_env_timeout(self, mock_get):
         """ Tests the conda environment handles API timeouts """
         # Define the behaviour of the request get mock
@@ -384,7 +390,8 @@ class TestLint(unittest.TestCase):
     def test_conda_dockerfile_pass(self):
         """ Tests the conda Dockerfile test works with a working example """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.files = ["environment.yml"]
+        lint_obj.version = "1.11"
+        lint_obj.files = ["environment.yml", "Dockerfile"]
         with open(os.path.join(PATH_WORKING_EXAMPLE, "Dockerfile"), "r") as fh:
             lint_obj.dockerfile = fh.read().splitlines()
         lint_obj.conda_config["name"] = "nf-core-tools-0.4"
@@ -395,7 +402,8 @@ class TestLint(unittest.TestCase):
     def test_conda_dockerfile_fail(self):
         """ Tests the conda Dockerfile test fails with a bad example """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.files = ["environment.yml"]
+        lint_obj.version = "1.11"
+        lint_obj.files = ["environment.yml", "Dockerfile"]
         lint_obj.conda_config["name"] = "nf-core-tools-0.4"
         lint_obj.dockerfile = ["fubar"]
         lint_obj.check_conda_dockerfile()
@@ -433,8 +441,8 @@ class TestLint(unittest.TestCase):
 
     @mock.patch("requests.get")
     def test_pypi_timeout_warn(self, mock_get):
-        """ Tests the PyPi connection and simulates a request timeout, which should
-        return in an addiional warning in the linting """
+        """Tests the PyPi connection and simulates a request timeout, which should
+        return in an addiional warning in the linting"""
         # Define the behaviour of the request get mock
         mock_get.side_effect = requests.exceptions.Timeout()
         # Now do the test
@@ -449,8 +457,8 @@ class TestLint(unittest.TestCase):
 
     @mock.patch("requests.get")
     def test_pypi_connection_error_warn(self, mock_get):
-        """ Tests the PyPi connection and simulates a connection error, which should
-        result in an additional warning, as we cannot test if dependent module is latest """
+        """Tests the PyPi connection and simulates a connection error, which should
+        result in an additional warning, as we cannot test if dependent module is latest"""
         # Define the behaviour of the request get mock
         mock_get.side_effect = requests.exceptions.ConnectionError()
         # Now do the test
@@ -475,7 +483,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_conda_dependency_fails(self):
-        """ Tests that linting fails, if conda dependency
+        """Tests that linting fails, if conda dependency
         package version is not available on Anaconda.
         """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -488,7 +496,7 @@ class TestLint(unittest.TestCase):
         self.assess_lint_status(lint_obj, **expectations)
 
     def test_pip_dependency_fails(self):
-        """ Tests that linting fails, if conda dependency
+        """Tests that linting fails, if conda dependency
         package version is not available on Anaconda.
         """
         lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -579,34 +587,3 @@ class TestLint(unittest.TestCase):
                     return []
 
         return MockResponse(kwargs["url"])
-
-    @mock.patch("requests.get", side_effect=mock_gh_get_comments)
-    @mock.patch("requests.post")
-    def test_gh_comment_post(self, mock_get, mock_post):
-        """
-        Test updating a Github comment with the lint results
-        """
-        os.environ["GITHUB_COMMENTS_URL"] = "https://github.com"
-        os.environ["GITHUB_TOKEN"] = "testing"
-        os.environ["GITHUB_PR_COMMIT"] = "abcdefg"
-        # Don't run testing, just fake some testing results
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.failed.append((1, "This test failed"))
-        lint_obj.passed.append((2, "This test also passed"))
-        lint_obj.warned.append((2, "This test gave a warning"))
-        lint_obj.github_comment()
-
-    @mock.patch("requests.get", side_effect=mock_gh_get_comments)
-    @mock.patch("requests.post")
-    def test_gh_comment_update(self, mock_get, mock_post):
-        """
-        Test updating a Github comment with the lint results
-        """
-        os.environ["GITHUB_COMMENTS_URL"] = "existing_comment"
-        os.environ["GITHUB_TOKEN"] = "testing"
-        # Don't run testing, just fake some testing results
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.failed.append((1, "This test failed"))
-        lint_obj.passed.append((2, "This test also passed"))
-        lint_obj.warned.append((2, "This test gave a warning"))
-        lint_obj.github_comment()

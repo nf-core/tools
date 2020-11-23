@@ -71,7 +71,8 @@ class Launch(object):
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
         self.nxf_flag_schema = {
-            "Nextflow command-line flags": {
+            "coreNextflow": {
+                "title": "Nextflow command-line flags",
                 "type": "object",
                 "description": "General Nextflow flags to control how the pipeline runs.",
                 "help_text": "These are not specific to the pipeline and will not be saved in any parameter file. They are just used when building the `nextflow run` launch command.",
@@ -79,6 +80,7 @@ class Launch(object):
                     "-name": {
                         "type": "string",
                         "description": "Unique name for this nextflow run",
+                        "help_text": "If not specified, Nextflow will automatically generate a random mnemonic.",
                         "pattern": "^[a-zA-Z0-9-_]+$",
                     },
                     "-profile": {"type": "string", "description": "Configuration profile"},
@@ -135,8 +137,6 @@ class Launch(object):
                 log.error(e.args[0])
                 return False
 
-            # Make a flat version of the schema
-            self.schema_obj.flatten_schema()
             # Load local params if supplied
             self.set_schema_inputs()
             # Load schema defaults
@@ -214,7 +214,6 @@ class Launch(object):
                 self.schema_obj.make_skeleton_schema()
                 self.schema_obj.remove_schema_notfound_configs()
                 self.schema_obj.add_schema_found_configs()
-                self.schema_obj.flatten_schema()
                 self.schema_obj.get_schema_defaults()
             except AssertionError as e:
                 log.error("Could not build pipeline schema: {}".format(e))
@@ -237,16 +236,20 @@ class Launch(object):
 
     def merge_nxf_flag_schema(self):
         """ Take the Nextflow flag schema and merge it with the pipeline schema """
-        # Do it like this so that the Nextflow params come first
-        schema_params = self.nxf_flag_schema
-        schema_params.update(self.schema_obj.schema["properties"])
-        self.schema_obj.schema["properties"] = schema_params
+        # Add the coreNextflow subschema to the schema definitions
+        if "definitions" not in self.schema_obj.schema:
+            self.schema_obj.schema["definitions"] = {}
+        self.schema_obj.schema["definitions"].update(self.nxf_flag_schema)
+        # Add the new defintion to the allOf key so that it's included in validation
+        # Put it at the start of the list so that it comes first
+        if "allOf" not in self.schema_obj.schema:
+            self.schema_obj.schema["allOf"] = []
+        self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/definitions/coreNextflow"})
 
     def prompt_web_gui(self):
         """ Ask whether to use the web-based or cli wizard to collect params """
         log.info(
-            "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?",
-            extra={"markup": True},
+            "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?"
         )
         question = {
             "type": "list",
@@ -346,13 +349,11 @@ class Launch(object):
         """
         # Collect pyinquirer objects for each defined input_param
         pyinquirer_objects = {}
-        for param_id, param_obj in self.schema_obj.schema["properties"].items():
-            if param_obj["type"] == "object":
-                for child_param_id, child_param_obj in param_obj["properties"].items():
-                    pyinquirer_objects[child_param_id] = self.single_param_to_pyinquirer(
-                        child_param_id, child_param_obj, print_help=False
-                    )
-            else:
+        for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
+            pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
+
+        for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
+            for param_id, param_obj in definition.get("properties", {}).items():
                 pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
 
         # Go through input params and sanitise
@@ -370,20 +371,20 @@ class Launch(object):
     def prompt_schema(self):
         """ Go through the pipeline schema and prompt user to change defaults """
         answers = {}
-        for param_id, param_obj in self.schema_obj.schema["properties"].items():
-            if param_obj["type"] == "object":
-                if not param_obj.get("hidden", False) or self.show_hidden:
-                    answers.update(self.prompt_group(param_id, param_obj))
-            else:
-                if not param_obj.get("hidden", False) or self.show_hidden:
-                    is_required = param_id in self.schema_obj.schema.get("required", [])
-                    answers.update(self.prompt_param(param_id, param_obj, is_required, answers))
+        # Start with the subschema in the definitions - use order of allOf
+        for allOf in self.schema_obj.schema.get("allOf", []):
+            d_key = allOf["$ref"][14:]
+            answers.update(self.prompt_group(d_key, self.schema_obj.schema["definitions"][d_key]))
+
+        # Top level schema params
+        for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
+            if not param_obj.get("hidden", False) or self.show_hidden:
+                is_required = param_id in self.schema_obj.schema.get("required", [])
+                answers.update(self.prompt_param(param_id, param_obj, is_required, answers))
 
         # Split answers into core nextflow options and params
         for key, answer in answers.items():
-            if key == "Nextflow command-line flags":
-                continue
-            elif key in self.nxf_flag_schema["Nextflow command-line flags"]["properties"]:
+            if key in self.nxf_flag_schema["coreNextflow"]["properties"]:
                 self.nxf_flags[key] = answer
             else:
                 self.params_user[key] = answer
@@ -403,7 +404,7 @@ class Launch(object):
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
-            log.error("This property is required.")
+            log.error("'–-{}' is required".format(param_id))
             answer = PyInquirer.prompt([question])
             # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
             if answer == {}:
@@ -414,31 +415,27 @@ class Launch(object):
             return {}
         return answer
 
-    def prompt_group(self, param_id, param_obj):
-        """Prompt for edits to a group of parameters
-        Only works for single-level groups (no nested!)
+    def prompt_group(self, group_id, group_obj):
+        """
+        Prompt for edits to a group of parameters (subschema in 'definitions')
 
         Args:
-          param_id: Paramater ID (string)
-          param_obj: JSON Schema keys - no objects (dict)
+          group_id: Paramater ID (string)
+          group_obj: JSON Schema keys (dict)
 
         Returns:
           Dict of param_id:val answers
         """
         question = {
             "type": "list",
-            "name": param_id,
-            "message": param_id,
+            "name": group_id,
+            "message": group_obj.get("title", group_id),
             "choices": ["Continue >>", PyInquirer.Separator()],
         }
 
-        for child_param, child_param_obj in param_obj["properties"].items():
-            if child_param_obj["type"] == "object":
-                log.error("nf-core only supports groups 1-level deep")
-                return {}
-            else:
-                if not child_param_obj.get("hidden", False) or self.show_hidden:
-                    question["choices"].append(child_param)
+        for param_id, param in group_obj["properties"].items():
+            if not param.get("hidden", False) or self.show_hidden:
+                question["choices"].append(param_id)
 
         # Skip if all questions hidden
         if len(question["choices"]) == 2:
@@ -447,27 +444,24 @@ class Launch(object):
         while_break = False
         answers = {}
         while not while_break:
-            self.print_param_header(param_id, param_obj)
+            self.print_param_header(group_id, group_obj)
             answer = PyInquirer.prompt([question])
             # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
             if answer == {}:
                 raise KeyboardInterrupt
-            if answer[param_id] == "Continue >>":
+            if answer[group_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
-                if self.schema_obj is not None and param_id in self.schema_obj.schema["properties"]:
-                    for p_required in self.schema_obj.schema["properties"][param_id].get("required", []):
-                        req_default = self.schema_obj.input_params.get(p_required, "")
-                        req_answer = answers.get(p_required, "")
-                        if req_default == "" and req_answer == "":
-                            log.error("'{}' is required.".format(p_required))
-                            while_break = False
+                for p_required in group_obj.get("required", []):
+                    req_default = self.schema_obj.input_params.get(p_required, "")
+                    req_answer = answers.get(p_required, "")
+                    if req_default == "" and req_answer == "":
+                        log.error("'{}' is required.".format(p_required))
+                        while_break = False
             else:
-                child_param = answer[param_id]
-                is_required = child_param in param_obj.get("required", [])
-                answers.update(
-                    self.prompt_param(child_param, param_obj["properties"][child_param], is_required, answers)
-                )
+                param_id = answer[group_id]
+                is_required = param_id in group_obj.get("required", [])
+                answers.update(self.prompt_param(param_id, group_obj["properties"][param_id], is_required, answers))
 
         return answers
 
@@ -476,7 +470,7 @@ class Launch(object):
 
         Args:
           param_id: Parameter ID (string)
-          param_obj: JSON Schema keys - no objects (dict)
+          param_obj: JSON Schema keys (dict)
           answers: Optional preexisting answers (dict)
           print_help: If description and help_text should be printed (bool)
 
@@ -646,9 +640,9 @@ class Launch(object):
     def print_param_header(self, param_id, param_obj):
         if "description" not in param_obj and "help_text" not in param_obj:
             return
-        console = Console()
+        console = Console(force_terminal=nf_core.utils.rich_force_colors())
         console.print("\n")
-        console.print(param_id, style="bold")
+        console.print(param_obj.get("title", param_id), style="bold")
         if "description" in param_obj:
             md = Markdown(param_obj["description"])
             console.print(md)
@@ -666,7 +660,7 @@ class Launch(object):
                 del self.schema_obj.input_params[param_id]
 
         # Nextflow flag defaults
-        for param_id, val in self.nxf_flag_schema["Nextflow command-line flags"]["properties"].items():
+        for param_id, val in self.nxf_flag_schema["coreNextflow"]["properties"].items():
             if param_id in self.nxf_flags and self.nxf_flags[param_id] == val.get("default"):
                 del self.nxf_flags[param_id]
 
@@ -703,10 +697,8 @@ class Launch(object):
 
     def launch_workflow(self):
         """ Launch nextflow if required  """
-        log.info(
-            "[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd), extra={"markup": True},
-        )
+        log.info("[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd))
 
         if Confirm.ask("Do you want to run this command now? "):
-            log.info("Launching workflow! :rocket:", extra={"markup": True})
+            log.info("Launching workflow! :rocket:")
             subprocess.call(self.nextflow_cmd, shell=True)

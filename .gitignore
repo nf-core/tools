@@ -40,6 +40,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+testing*
 htmlcov/
 .tox/
 .coverage
@@ -106,3 +107,7 @@ ENV/
 
 # backup files
 *~
+*\?
+
+# Jetbrains IDEs
+.idea
