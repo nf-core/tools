@@ -36,7 +36,7 @@ setup(
         "GitPython",
         "jinja2",
         "jsonschema",
-        "PyInquirer==1.0.2",
+        "questionary",
         "pyyaml",
         "requests",
         "requests_cache",

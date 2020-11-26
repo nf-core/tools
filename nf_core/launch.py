@@ -10,7 +10,7 @@ import copy
 import json
 import logging
 import os
-import PyInquirer
+import questionary
 import re
 import subprocess
 import textwrap
@@ -19,16 +19,6 @@ import webbrowser
 import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
-
-#
-# NOTE: When PyInquirer 1.0.3 is released we can capture keyboard interruptions
-# in a nicer way # with the raise_keyboard_interrupt=True argument in the PyInquirer.prompt() calls
-# It also allows list selections to have a default set.
-#
-# Until then we have workarounds:
-# * Default list item is moved to the top of the list
-# * We manually raise a KeyboardInterrupt if we get None back from a question
-#
 
 
 class Launch(object):
@@ -257,8 +247,8 @@ class Launch(object):
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
         }
-        answer = PyInquirer.prompt([question])
-        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        answer = questionary.prompt([question])
+        # Raise keyboard interrupt
         if answer == {}:
             raise KeyboardInterrupt
         return answer["use_web_gui"] == "Web based"
@@ -347,14 +337,14 @@ class Launch(object):
         The web builder returns everything as strings.
         Use the functions defined in the cli wizard to convert to the correct types.
         """
-        # Collect pyinquirer objects for each defined input_param
-        pyinquirer_objects = {}
+        # Collect questionary objects for each defined input_param
+        questionare_objects = {}
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
-            pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
+            questionare_objects[param_id] = self.single_param_to_questionare(param_id, param_obj, print_help=False)
 
         for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
             for param_id, param_obj in definition.get("properties", {}).items():
-                pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
+                questionare_objects[param_id] = self.single_param_to_questionare(param_id, param_obj, print_help=False)
 
         # Go through input params and sanitise
         for params in [self.nxf_flags, self.schema_obj.input_params]:
@@ -364,7 +354,7 @@ class Launch(object):
                     del params[param_id]
                     continue
                 # Run filter function on value
-                filter_func = pyinquirer_objects.get(param_id, {}).get("filter")
+                filter_func = questionare_objects.get(param_id, {}).get("filter")
                 if filter_func is not None:
                     params[param_id] = filter_func(params[param_id])
 
@@ -396,17 +386,17 @@ class Launch(object):
         """Prompt for a single parameter"""
 
         # Print the question
-        question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = PyInquirer.prompt([question])
-        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+        question = self.single_param_to_questionare(param_id, param_obj, answers)
+        answer = questionary.prompt([question])
+        # Raise keyboard interrupg
         if answer == {}:
             raise KeyboardInterrupt
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
             log.error("'–-{}' is required".format(param_id))
-            answer = PyInquirer.prompt([question])
-            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            answer = questionary.prompt([question])
+            # Raise keyboard interrupt
             if answer == {}:
                 raise KeyboardInterrupt
 
@@ -430,7 +420,7 @@ class Launch(object):
             "type": "list",
             "name": group_id,
             "message": group_obj.get("title", group_id),
-            "choices": ["Continue >>", PyInquirer.Separator()],
+            "choices": ["Continue >>", questionary.Separator()],
         }
 
         for param_id, param in group_obj["properties"].items():
@@ -445,8 +435,8 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(group_id, group_obj)
-            answer = PyInquirer.prompt([question])
-            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
+            answer = questionary.prompt([question])
+            # Raise keyboard interrupg
             if answer == {}:
                 raise KeyboardInterrupt
             if answer[group_id] == "Continue >>":
@@ -465,8 +455,8 @@ class Launch(object):
 
         return answers
 
-    def single_param_to_pyinquirer(self, param_id, param_obj, answers=None, print_help=True):
-        """Convert a JSONSchema param to a PyInquirer question
+    def single_param_to_questionare(self, param_id, param_obj, answers=None, print_help=True):
+        """Convert a JSONSchema param to a Questionary question
 
         Args:
           param_id: Parameter ID (string)
@@ -475,7 +465,7 @@ class Launch(object):
           print_help: If description and help_text should be printed (bool)
 
         Returns:
-          Single PyInquirer dict, to be appended to questions list
+          Single Questionary dict, to be appended to questions list
         """
         if answers is None:
             answers = {}
@@ -620,9 +610,8 @@ class Launch(object):
 
             question["validate"] = validate_pattern
 
-        # WORKAROUND - PyInquirer <1.0.3 cannot have a default position in a list
+        # WORKAROUND - Questionary cannot have a default position in a list
         # For now, move the default option to the top.
-        # TODO: Delete this code when PyInquirer >=1.0.3 is released.
         if question["type"] == "list" and "default" in question:
             try:
                 question["choices"].remove(question["default"])
