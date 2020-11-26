@@ -340,11 +340,11 @@ class Launch(object):
         # Collect questionary objects for each defined input_param
         questionare_objects = {}
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
-            questionare_objects[param_id] = self.single_param_to_questionare(param_id, param_obj, print_help=False)
+            questionare_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
             for param_id, param_obj in definition.get("properties", {}).items():
-                questionare_objects[param_id] = self.single_param_to_questionare(param_id, param_obj, print_help=False)
+                questionare_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         # Go through input params and sanitise
         for params in [self.nxf_flags, self.schema_obj.input_params]:
@@ -386,7 +386,7 @@ class Launch(object):
         """Prompt for a single parameter"""
 
         # Print the question
-        question = self.single_param_to_questionare(param_id, param_obj, answers)
+        question = self.single_param_to_questionary(param_id, param_obj, answers)
         answer = questionary.prompt([question])
         # Raise keyboard interrupg
         if answer == {}:
@@ -455,7 +455,7 @@ class Launch(object):
 
         return answers
 
-    def single_param_to_questionare(self, param_id, param_obj, answers=None, print_help=True):
+    def single_param_to_questionary(self, param_id, param_obj, answers=None, print_help=True):
         """Convert a JSONSchema param to a Questionary question
 
         Args:
