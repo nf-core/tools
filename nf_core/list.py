@@ -128,6 +128,8 @@ class Workflows(object):
         # Try to guess the local cache directory (much faster than calling nextflow)
         if len(os.environ.get("NXF_ASSETS", "")) > 0:
             nextflow_wfdir = os.environ.get("NXF_ASSETS")
+        else if len(os.environ.get("NXF_HOME", "")) > 0:
+            nextflow_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets")
         else:
             nextflow_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets")
         if os.path.isdir(nextflow_wfdir):
@@ -348,6 +350,8 @@ class LocalWorkflow(object):
             # Try to guess the local cache directory
             if len(os.environ.get("NXF_ASSETS", "")) > 0:
                 nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)
+            else if len(os.environ.get("NXF_HOME", "")) > 0:
+                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets")
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):
