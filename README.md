@@ -128,17 +128,15 @@ $ nf-core list
 
     nf-core/tools version 1.10
 
-
-Name                       Latest Release    Released       Last Pulled    Have latest release?
--------------------------  ----------------  -------------  -------------  ----------------------
-nf-core/chipseq            1.2.0             6 days ago     1 weeks ago    No (dev - bfe7eb3)
-nf-core/atacseq            1.2.0             6 days ago     1 weeks ago    No (dev - 12b8d0b)
-nf-core/viralrecon         1.1.0             2 weeks ago    2 weeks ago    Yes (v1.1.0)
-nf-core/sarek              2.6.1             2 weeks ago    -              -
-nf-core/imcyto             1.0.0             1 months ago   -              -
-nf-core/slamseq            1.0.0             2 months ago   -              -
-nf-core/coproid            1.1               2 months ago   -              -
-nf-core/mhcquant           1.5.1             2 months ago   -              -
+┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
+┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ rnafusion         │    45 │          1.2.0 │   2 weeks ago │            - │ -                     │
+│ hic               │    17 │          1.2.1 │   3 weeks ago │ 4 months ago │ No (v1.1.0)           │
+│ chipseq           │    56 │          1.2.0 │   4 weeks ago │  4 weeks ago │ No (dev - bfe7eb3)    │
+│ atacseq           │    40 │          1.2.0 │   4 weeks ago │  6 hours ago │ No (master - 79bc7c2) │
+│ viralrecon        │    20 │          1.1.0 │  1 months ago │ 1 months ago │ Yes (v1.1.0)          │
+│ sarek             │    59 │          2.6.1 │  1 months ago │            - │ -                     │
 [..truncated..]
 ```
 
@@ -155,13 +153,14 @@ $ nf-core list rna rna-seq
 
     nf-core/tools version 1.10
 
-
-Name               Latest Release    Released       Last Pulled    Have latest release?
------------------  ----------------  -------------  -------------  ----------------------
-nf-core/rnafusion  1.1.0             5 months ago   -              -
-nf-core/rnaseq     1.4.2             9 months ago   2 weeks ago    No (v1.2)
-nf-core/smrnaseq   1.0.0             10 months ago  -              -
-nf-core/lncpipe    dev               -              -              -
+┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Pipeline Name ┃ Stars ┃ Latest Release ┃      Released ┃ Last Pulled ┃ Have latest release? ┃
+┡━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
+│ rnafusion     │    45 │          1.2.0 │   2 weeks ago │           - │ -                    │
+│ rnaseq        │   207 │          1.4.2 │  9 months ago │  5 days ago │ Yes (v1.4.2)         │
+│ smrnaseq      │    12 │          1.0.0 │ 10 months ago │           - │ -                    │
+│ lncpipe       │    18 │            dev │             - │           - │ -                    │
+└───────────────┴───────┴────────────────┴───────────────┴─────────────┴──────────────────────┘
 ```
 
 You can sort the results by latest release (`-s release`, default),
@@ -180,16 +179,16 @@ $ nf-core list -s stars
 
     nf-core/tools version 1.10
 
-
-Name                         Stargazers  Latest Release    Released       Last Pulled    Have latest release?
--------------------------  ------------  ----------------  -------------  -------------  ----------------------
-nf-core/rnaseq                      201  1.4.2             9 months ago   2 weeks ago    No (v1.2)
-nf-core/chipseq                      56  1.2.0             6 days ago     1 weeks ago    No (dev - bfe7eb3)
-nf-core/sarek                        52  2.6.1             2 weeks ago    -              -
-nf-core/methylseq                    45  1.5               3 months ago   -              -
-nf-core/rnafusion                    45  1.1.0             5 months ago   -              -
-nf-core/ampliseq                     40  1.1.2             7 months ago   -              -
-nf-core/atacseq                      37  1.2.0             6 days ago     1 weeks ago    No (dev - 12b8d0b)
+┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
+┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
+│ rnaseq            │   207 │          1.4.2 │  9 months ago │   5 days ago │ Yes (v1.4.2)          │
+│ sarek             │    59 │          2.6.1 │  1 months ago │            - │ -                     │
+│ chipseq           │    56 │          1.2.0 │   4 weeks ago │  4 weeks ago │ No (dev - bfe7eb3)    │
+│ methylseq         │    47 │            1.5 │  4 months ago │            - │ -                     │
+│ rnafusion         │    45 │          1.2.0 │   2 weeks ago │            - │ -                     │
+│ ampliseq          │    41 │          1.1.2 │  7 months ago │            - │ -                     │
+│ atacseq           │    40 │          1.2.0 │   4 weeks ago │  6 hours ago │ No (master - 79bc7c2) │
 [..truncated..]
 ```
 
@@ -297,30 +296,15 @@ $ nf-core download methylseq -r 1.4 --singularity
 
     nf-core/tools version 1.10
 
-INFO: Saving methylseq
- Pipeline release: 1.4
- Pull singularity containers: Yes
- Output file: nf-core-methylseq-1.4.tar.gz
-
-INFO: Downloading workflow files from GitHub
-
-INFO: Downloading centralised configs from GitHub
-
-INFO: Downloading 1 singularity container
-
-INFO: Building singularity image from Docker Hub: docker://nfcore/methylseq:1.4
-INFO:    Converting OCI blobs to SIF format
-INFO:    Starting build...
-Getting image source signatures
-....
-INFO:    Creating SIF file...
-INFO:    Build complete: /my-pipelines/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg
-
-INFO: Compressing download..
-
-INFO: Command to extract files: tar -xzf nf-core-methylseq-1.4.tar.gz
-
-INFO: MD5 checksum for nf-core-methylseq-1.4.tar.gz: f5c2b035619967bb227230bc3ec986c5
+  INFO     Saving methylseq
+            Pipeline release: 1.4
+            Pull singularity containers: No
+            Output file: nf-core-methylseq-1.4.tar.gz
+  INFO     Downloading workflow files from GitHub
+  INFO     Downloading centralised configs from GitHub
+  INFO     Compressing download..
+  INFO     Command to extract files: tar -xzf nf-core-methylseq-1.4.tar.gz
+  INFO     MD5 checksum for nf-core-methylseq-1.4.tar.gz: 4d173b1cb97903dbb73f2fd24a2d2ac1
 ```
 
 The tool automatically compresses all of the resulting file in to a `.tar.gz` archive.
@@ -392,28 +376,38 @@ $ nf-core licences rnaseq
 
     nf-core/tools version 1.10
 
-INFO: Warning: This tool only prints licence information for the software tools packaged using conda.
-        The pipeline may use other software and dependencies not described here.
-
-Package Name           Version    Licence
----------------------  ---------  --------------------
-stringtie              1.3.3      Artistic License 2.0
-preseq                 2.0.3      GPL
-trim-galore            0.4.5      GPL
-bioconductor-edger     3.20.7     GPL >=2
-fastqc                 0.11.7     GPL >=3
-openjdk                8.0.144    GPLv2
-r-gplots               3.0.1      GPLv2
-r-markdown             0.8        GPLv2
-rseqc                  2.6.4      GPLv2
-bioconductor-dupradar  1.8.0      GPLv3
-hisat2                 2.1.0      GPLv3
-multiqc                1.5        GPLv3
-r-data.table           1.10.4     GPLv3
-star                   2.5.4a     GPLv3
-subread                1.6.1      GPLv3
-picard                 2.18.2     MIT
-samtools               1.8        MIT
+  INFO     Fetching licence information for 25 tools
+  INFO     Warning: This tool only prints licence information for the software tools packaged using conda.
+  INFO     The pipeline may use other software and dependencies not described here.
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Package Name                      ┃ Version ┃ Licence              ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
+│ stringtie                         │ 2.0     │ Artistic License 2.0 │
+│ bioconductor-summarizedexperiment │ 1.14.0  │ Artistic-2.0         │
+│ preseq                            │ 2.0.3   │ GPL                  │
+│ trim-galore                       │ 0.6.4   │ GPL                  │
+│ bioconductor-edger                │ 3.26.5  │ GPL >=2              │
+│ fastqc                            │ 0.11.8  │ GPL >=3              │
+│ bioconductor-tximeta              │ 1.2.2   │ GPLv2                │
+│ qualimap                          │ 2.2.2c  │ GPLv2                │
+│ r-gplots                          │ 3.0.1.1 │ GPLv2                │
+│ r-markdown                        │ 1.1     │ GPLv2                │
+│ rseqc                             │ 3.0.1   │ GPLv2                │
+│ bioconductor-dupradar             │ 1.14.0  │ GPLv3                │
+│ deeptools                         │ 3.3.1   │ GPLv3                │
+│ hisat2                            │ 2.1.0   │ GPLv3                │
+│ multiqc                           │ 1.7     │ GPLv3                │
+│ salmon                            │ 0.14.2  │ GPLv3                │
+│ star                              │ 2.6.1d  │ GPLv3                │
+│ subread                           │ 1.6.4   │ GPLv3                │
+│ r-base                            │ 3.6.1   │ GPLv3.0              │
+│ sortmerna                         │ 2.1b    │ LGPL                 │
+│ gffread                           │ 0.11.4  │ MIT                  │
+│ picard                            │ 2.21.1  │ MIT                  │
+│ samtools                          │ 1.9     │ MIT                  │
+│ r-data.table                      │ 1.12.4  │ MPL-2.0              │
+│ matplotlib                        │ 3.0.3   │ PSF-based            │
+└───────────────────────────────────┴─────────┴──────────────────────┘
 ```
 
 ## Creating a new workflow
@@ -438,24 +432,19 @@ $ nf-core create
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
 Author: Big Steve
+  INFO     Creating new nf-core pipeline: nf-core/nextbigthing
+  INFO     Initialising pipeline git repository
+  INFO     Done. Remember to add a remote and push to GitHub:
+            cd /Users/philewels/GitHub/nf-core/tools/test-create/nf-core-nextbigthing
+            git remote add origin git@github.com:USERNAME/REPO_NAME.git
+            git push --all origin
+  INFO     This will also push your newly created dev branch and the TEMPLATE branch for syncing.
+  INFO     !!!!!! IMPORTANT !!!!!!
 
-INFO: Creating new nf-core pipeline: nf-core/nextbigthing
+           If you are interested in adding your pipeline to the nf-core community,
+           PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
 
-INFO: Initialising pipeline git repository
-
-INFO: Done. Remember to add a remote and push to GitHub:
-  cd /path/to/nf-core-nextbigthing
-  git remote add origin git@github.com:USERNAME/REPO_NAME.git
-  git push --all origin
-
-INFO: This will also push your newly created dev branch and the TEMPLATE branch for syncing.
-
-INFO: !!!!!! IMPORTANT !!!!!!
-
-If you are interested in adding your pipeline to the nf-core community,
-PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
-
-Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
+           Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
 ```
 
 Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet) and push the commits from your computer using the example commands in the above log.
@@ -481,21 +470,24 @@ $ nf-core lint .
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
+    nf-core/tools version 1.10.dev0
 
-    nf-core/tools version 1.10
 
-Running pipeline tests  [####################################]  100%  None
-
-INFO: =============================
-          LINTING RESULTS
-===================================
-  [✔]  118 tests passed
-  [!]    2 tests had warnings
-  [✗]    0 tests failed
-
-WARNING: Test Warnings:
-  https://nf-co.re/errors#8: Conda package is not latest available: picard=2.18.2, 2.18.6 available
-  https://nf-co.re/errors#8: Conda package is not latest available: bwameth=0.2.0, 0.2.1 available
+  INFO     Testing pipeline: nf-core-testpipeline/
+╭──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 3 Test Warnings                                                                                      │
+├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ https://nf-co.re/errors#5: GitHub Actions AWS full test should test full datasets: nf-core-testpipeline… │
+│ https://nf-co.re/errors#8: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                 │
+│ https://nf-co.re/errors#8: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                      │
+╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────────╮
+│ LINT RESULTS SUMMARY  │
+├───────────────────────┤
+│ [✔] 117 Tests Passed  │
+│ [!]   3 Test Warnings │
+│ [✗]   0 Test Failed   │
+╰───────────────────────╯
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
@@ -530,9 +522,8 @@ $ nf-core schema validate my_pipeline --params my_inputs.json
 
     nf-core/tools version 1.10
 
-INFO: [✓] Pipeline schema looks valid
-
-ERROR: [✗] Input parameters are invalid: 'input' is a required property
+  INFO     [✓] Pipeline schema looks valid (found 26 params)
+  ERROR    [✗] Input parameters are invalid: 'input' is a required property
 ```
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
@@ -559,31 +550,17 @@ $ nf-core schema build nf-core-testpipeline
 
     nf-core/tools version 1.10
 
-INFO: Loaded existing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
-
-Unrecognised 'params.old_param' found in schema but not in Nextflow config. Remove it? [Y/n]:
-Unrecognised 'params.we_removed_this_too' found in schema but not in Nextflow config. Remove it? [Y/n]:
-
-INFO: Removed 2 params from existing JSON Schema that were not found with `nextflow config`:
- old_param, we_removed_this_too
-
-Found 'params.input' in Nextflow config. Add to JSON Schema? [Y/n]:
-Found 'params.outdir' in Nextflow config. Add to JSON Schema? [Y/n]:
-
-INFO: Added 2 params to JSON Schema that were found with `nextflow config`:
- input, outdir
-
-INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
-
-Launch web builder for customisation and editing? [Y/n]:
-
-INFO: Opening URL: http://localhost:8888/json_schema_build?id=1234567890_abc123def456
-
-INFO: Waiting for form to be completed in the browser. Use ctrl+c to stop waiting and force exit.
-..........
-INFO: Found saved status from nf-core JSON Schema builder
-
-INFO: Writing JSON schema with 18 params: nf-core-testpipeline/nextflow_schema.json
+  INFO     [✓] Pipeline schema looks valid (found 25 params)                                                                                                      schema.py:82
+❓ Unrecognised 'params.old_param' found in schema but not pipeline! Remove it? [y/n]: y
+❓ Unrecognised 'params.we_removed_this_too' found in schema but not pipeline! Remove it? [y/n]: y
+✨ Found 'params.input' in pipeline but not in schema. Add to pipeline schema? [y/n]: y
+✨ Found 'params.outdir' in pipeline but not in schema. Add to pipeline schema? [y/n]: y
+  INFO     Writing schema with 25 params: 'nf-core-testpipeline/nextflow_schema.json'                                                                            schema.py:121
+🚀 Launch web builder for customisation and editing? [y/n]: y
+  INFO: Opening URL: https://nf-co.re/pipeline_schema_builder?id=1234567890_abc123def456
+  INFO: Waiting for form to be completed in the browser. Remember to click Finished when you're done.
+  INFO: Found saved status from nf-core JSON Schema builder
+  INFO: Writing JSON schema with 25 params: nf-core-testpipeline/nextflow_schema.json
 ```
 
 There are three flags that you can use with this command:
@@ -610,8 +587,8 @@ $ nf-core schema lint nextflow_schema.json
 
     nf-core/tools version 1.10
 
-ERROR: [✗] JSON Schema does not follow nf-core specs:
- Schema should have 'properties' section
+  ERROR    [✗] Pipeline schema does not follow nf-core specs:
+            Definition subschema 'input_output_options' not included in schema 'allOf'
 ```
 
 ## Bumping a pipeline version number
@@ -634,41 +611,31 @@ $ nf-core bump-version . 1.0
 
     nf-core/tools version 1.10
 
-INFO: Running nf-core lint tests
-Running pipeline tests  [####################################]  100%  None
-
-INFO: =============================
-          LINTING RESULTS
-===================================
-  [✔]  120 tests passed
-  [!]    0 tests had warnings
-  [✗]    0 tests failed
-
-INFO: Changing version number:
-  Current version number is '1.0dev'
-  New version number will be '1.0'
-
-INFO: Updating version in nextflow.config
- - version = '1.0dev'
- + version = '1.0'
-
-INFO: Updating version in nextflow.config
- - process.container = 'nfcore/mypipeline:dev'
- + process.container = 'nfcore/mypipeline:1.0'
-
-INFO: Updating version in .github/workflows/ci.yml
- - docker tag nfcore/mypipeline:dev nfcore/mypipeline:dev
- + docker tag nfcore/mypipeline:dev nfcore/mypipeline:1.0
-
-INFO: Updating version in environment.yml
- - name: nf-core-mypipeline-1.0dev
- + name: nf-core-mypipeline-1.0
-
-INFO: Updating version in Dockerfile
- - ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0dev/bin:$PATH
- - RUN conda env export --name nf-core-mypipeline-1.0dev > nf-core-mypipeline-1.0dev.yml
- + ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
- + RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
+INFO     Running nf-core lint tests
+INFO     Testing pipeline: nf-core-testpipeline/
+INFO     Changing version number:
+           Current version number is '1.4'
+           New version number will be '1.5'
+INFO     Updating version in nextflow.config
+          - version = '1.4'
+          + version = '1.5'
+INFO     Updating version in nextflow.config
+          - process.container = 'nfcore/testpipeline:1.4'
+          + process.container = 'nfcore/testpipeline:1.5'
+INFO     Updating version in .github/workflows/ci.yml
+          - run: docker build --no-cache . -t nfcore/testpipeline:1.4
+          + run: docker build --no-cache . -t nfcore/testpipeline:1.5
+INFO     Updating version in .github/workflows/ci.yml
+          - docker tag nfcore/testpipeline:dev nfcore/testpipeline:1.4
+          + docker tag nfcore/testpipeline:dev nfcore/testpipeline:1.5
+INFO     Updating version in environment.yml
+          - name: nf-core-testpipeline-1.4
+          + name: nf-core-testpipeline-1.5
+INFO     Updating version in Dockerfile
+          - ENV PATH /opt/conda/envs/nf-core-testpipeline-1.4/bin:$PATH
+          - RUN conda env export --name nf-core-testpipeline-1.4 > nf-core-testpipeline-1.4.yml
+          + ENV PATH /opt/conda/envs/nf-core-testpipeline-1.5/bin:$PATH
+          + RUN conda env export --name nf-core-testpipeline-1.5 > nf-core-testpipeline-1.5.yml
 ```
 
 To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
@@ -714,19 +681,14 @@ $ nf-core sync my_pipeline/
 
     nf-core/tools version 1.10
 
-INFO: Pipeline directory: /path/to/my_pipeline
-
-INFO: Fetching workflow config variables
-
-INFO: Deleting all files in TEMPLATE branch
-
-INFO: Making a new template pipeline using pipeline variables
-
-INFO: Committed changes to TEMPLATE branch
-
-INFO: Now try to merge the updates in to your pipeline:
-  cd /path/to/my_pipeline
-  git merge TEMPLATE
+INFO     Pipeline directory: /path/to/my_pipeline
+INFO     Fetching workflow config variables
+INFO     Deleting all files in TEMPLATE branch
+INFO     Making a new template pipeline using pipeline variables
+INFO     Committed changes to TEMPLATE branch
+INFO     Now try to merge the updates in to your pipeline:
+           cd /path/to/my_pipeline
+           git merge TEMPLATE
 ```
 
 The sync command tries to check out the `TEMPLATE` branch from the `origin` remote
@@ -763,11 +725,9 @@ $ nf-core sync --all
 
     nf-core/tools version 1.10
 
-INFO: Syncing nf-core/ampliseq
-
+INFO     Syncing nf-core/ampliseq
 [...]
-
-INFO: Successfully synchronised [n] pipelines
+INFO     Successfully synchronised [n] pipelines
 ```
 
 ## Citation

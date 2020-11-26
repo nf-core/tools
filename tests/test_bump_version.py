@@ -30,7 +30,7 @@ def test_dev_bump_pipeline_version(datafiles):
 
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
-@pytest.mark.xfail(raises=SyntaxError)
+@pytest.mark.xfail(raises=SyntaxError, strict=True)
 def test_pattern_not_found(datafiles):
     """ Test that making a release raises and error if a pattern isn't found """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
@@ -41,7 +41,7 @@ def test_pattern_not_found(datafiles):
 
 
 @pytest.mark.datafiles(PATH_WORKING_EXAMPLE)
-@pytest.mark.xfail(raises=SyntaxError)
+@pytest.mark.xfail(raises=SyntaxError, strict=True)
 def test_multiple_patterns_found(datafiles):
     """ Test that making a release raises if a version number is found twice """
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
@@ -57,7 +57,7 @@ def test_multiple_patterns_found(datafiles):
 def test_successfull_nextflow_version_bump(datafiles):
     lint_obj = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj.pipeline_name = "tools"
-    lint_obj.config["manifest.nextflowVersion"] = "19.10.0"
+    lint_obj.config["manifest.nextflowVersion"] = "20.04.0"
     nf_core.bump_version.bump_nextflow_version(lint_obj, "0.40")
     lint_obj_new = nf_core.lint.PipelineLint(str(datafiles))
     lint_obj_new.check_nextflow_config()

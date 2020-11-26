@@ -7,12 +7,6 @@ channels:
   - defaults
 dependencies:
   # TODO nf-core: Add required software dependencies here
-  ## conda-forge packages
-  - conda-forge::python=3.8.3
-  - conda-forge::markdown=3.2.2
-  - conda-forge::pymdown-extensions=7.1
-  - conda-forge::pygments=2.6.1
-
-  ## bioconda packages
   - bioconda::fastqc=0.11.9
+  - bioconda::trim-galore=0.6.5
   - bioconda::multiqc=1.9

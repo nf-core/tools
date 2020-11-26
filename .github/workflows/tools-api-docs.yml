@@ -4,8 +4,8 @@ on:
     branches: [master, dev]
 
 jobs:
-  build-n-publish:
-    name: Build and publish nf-core to PyPI
+  api-docs:
+    name: Build & push Sphinx API docs
     runs-on: ubuntu-18.04
 
     steps:

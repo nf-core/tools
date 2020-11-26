@@ -2,15 +2,37 @@ name: Sync template
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
-  sync-all:
-    name: Sync all pipelines
+  get-pipelines:
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: |
+          curl -O https://nf-co.re/pipeline_names.json
+          echo "::set-output name=matrix::$(cat pipeline_names.json)"
 
+  sync:
+    needs: get-pipelines
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{fromJson(needs.get-pipelines.outputs.matrix)}}
+      fail-fast: false
     steps:
       - uses: actions/checkout@v2
-        name: Check out source-code repository
+        name: Check out nf-core/tools
+
+      - uses: actions/checkout@v2
+        name: Check out nf-core/${{ matrix.pipeline }}
+        with:
+          repository: nf-core/${{ matrix.pipeline }}
+          ref: dev
+          token: ${{ secrets.nf_core_bot_auth_token }}
+          path: nf-core/${{ matrix.pipeline }}
+          fetch-depth: "0"
 
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
@@ -23,19 +45,30 @@ jobs:
           pip install .
 
       - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
         run: |
           mkdir /tmp/nextflow
           cd /tmp/nextflow
           wget -qO- get.nextflow.io | bash
           sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
 
-      - name: Configure git
-        run: |
-          git config user.email "core@nf-co.re"
-          git config user.name "nf-core-bot"
-
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'
         env:
-          AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
-        run: nf-core sync --all --username nf-core-bot --auth-token $AUTH_TOKEN
+          GITHUB_AUTH_TOKEN: ${{ secrets.nf_core_bot_auth_token }}
+        run: |
+          git config --global user.email "core@nf-co.re"
+          git config --global user.name "nf-core-bot"
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt sync nf-core/${{ matrix.pipeline }} \
+            --from-branch dev \
+            --pull-request \
+            --username nf-core-bot \
+            --repository nf-core/${{ matrix.pipeline }}
+
+      - name: Upload sync log file artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: sync_log_${{ matrix.pipeline }}
+          path: sync_log_${{ matrix.pipeline }}.txt

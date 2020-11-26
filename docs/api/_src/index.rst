@@ -9,15 +9,9 @@ Welcome to nf-core tools API documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   :glob:
 
-   bump_version
-   create
-   download
-   licences
-   lint
-   list
-   utils
-   workflow
+   *
 
 
 Indices and tables

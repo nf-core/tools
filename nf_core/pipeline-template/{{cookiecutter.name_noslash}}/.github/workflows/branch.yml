@@ -2,7 +2,7 @@ name: nf-core branch protection
 # This workflow is triggered on PRs to master branch on the repository
 # It fails when someone tries to make a PR against the nf-core `master` branch instead of `dev`
 on:
-  pull_request:
+  pull_request_target:
     branches: [master]
 
 jobs:
@@ -17,6 +17,7 @@ jobs:
 
 {% raw %}
       # If the above check failed, post a comment on the PR explaining the failure
+      # NOTE - this doesn't currently work if the PR is coming from a fork, due to limitations in GitHub actions secrets
       - name: Post PR comment
         if: failure()
         uses: mshick/add-pr-comment@v1

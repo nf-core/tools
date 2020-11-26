@@ -1,10 +1,15 @@
+---
+name: Bug report
+about: Report something that is broken or incorrect
+labels: bug
+---
+
 <!--
 # {{ cookiecutter.name }} bug report
 
 Hi there!
 
 Thanks for telling us about a problem with the pipeline.
-
 Please delete this text and anything that's not relevant from the template below:
 -->
 
@@ -36,7 +41,7 @@ Steps to reproduce the behaviour:
 
 ## Container engine
 
-- Engine: <!-- [e.g. Conda, Docker or Singularity] -->
+- Engine: <!-- [e.g. Conda, Docker, Singularity or Podman] -->
 - version: <!-- [e.g. 1.0.0] -->
 - Image tag: <!-- [e.g. {{ cookiecutter.name_docker }}:1.0.0] -->
 

@@ -24,7 +24,9 @@ import nf_core.schema
 import nf_core.sync
 import nf_core.utils
 
-log = logging.getLogger(__name__)
+# Set up logging as the root logger
+# Submodules should all traverse back to this
+log = logging.getLogger()
 
 
 def run_nf_core():
@@ -32,12 +34,12 @@ def run_nf_core():
     rich.traceback.install(width=200, word_wrap=True)
 
     # Print nf-core header to STDERR
-    stderr = rich.console.Console(file=sys.stderr)
-    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42))
-    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\")
-    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {")
-    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,")
-    stderr.print("[green]                                          `._,._,'\n")
+    stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
+    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
+    stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
+    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
+    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
+    stderr.print("[green]                                          `._,._,'\n", highlight=False)
     stderr.print("[grey39]    nf-core/tools version {}".format(nf_core.__version__), highlight=False)
     try:
         is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
@@ -101,15 +103,29 @@ class CustomHelpOrder(click.Group):
 
 @click.group(cls=CustomHelpOrder)
 @click.version_option(nf_core.__version__)
-@click.option("-v", "--verbose", is_flag=True, default=False, help="Verbose output (print debug statements).")
-def nf_core_cli(verbose):
-    stderr = rich.console.Console(file=sys.stderr)
-    logging.basicConfig(
-        level=logging.DEBUG if verbose else logging.INFO,
-        format="%(message)s",
-        datefmt=".",
-        handlers=[rich.logging.RichHandler(console=stderr)],
+@click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
+@click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
+def nf_core_cli(verbose, log_file):
+
+    # Set the base logger to output DEBUG
+    log.setLevel(logging.DEBUG)
+
+    # Set up logs to the console
+    log.addHandler(
+        rich.logging.RichHandler(
+            level=logging.DEBUG if verbose else logging.INFO,
+            console=rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors()),
+            show_time=False,
+            markup=True,
+        )
     )
+
+    # Set up logs to a file if we asked for one
+    if log_file:
+        log_fh = logging.FileHandler(log_file, encoding="utf-8")
+        log_fh.setLevel(logging.DEBUG)
+        log_fh.setFormatter(logging.Formatter("[%(asctime)s] %(name)-20s [%(levelname)-7s]  %(message)s"))
+        log.addHandler(log_fh)
 
 
 # nf-core list
@@ -274,9 +290,10 @@ def create(name, description, author, new_version, no_git, force, outdir):
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
 )
+@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line.")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(pipeline_dir, release, markdown, json):
+def lint(pipeline_dir, release, show_passed, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -286,7 +303,7 @@ def lint(pipeline_dir, release, markdown, json):
     """
 
     # Run the lint tests!
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, markdown, json)
+    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, show_passed, markdown, json)
     if len(lint_obj.failed) > 0:
         sys.exit(1)
 
@@ -406,21 +423,20 @@ def schema():
     Suite of tools for developers to manage pipeline schema.
 
     All nf-core pipelines should have a nextflow_schema.json file in their
-    root directory. This is a JSON Schema that describes the different
-    pipeline parameters.
+    root directory that describes the different pipeline parameters.
     """
     pass
 
 
 @schema.command(help_priority=1)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
-@click.option("--params", type=click.Path(exists=True), required=True, help="JSON parameter file")
+@click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
 def validate(pipeline, params):
     """
     Validate a set of parameters against a pipeline schema.
 
     Nextflow can be run using the -params-file flag, which loads
-    script parameters from a JSON/YAML file.
+    script parameters from a JSON file.
 
     This command takes such a file and validates it against the pipeline
     schema, checking whether all schema rules are satisfied.
@@ -447,7 +463,7 @@ def validate(pipeline, params):
 @click.option(
     "--url",
     type=str,
-    default="https://nf-co.re/json_schema_build",
+    default="https://nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
 def build(pipeline_dir, no_prompts, web_only, url):
@@ -468,7 +484,7 @@ def build(pipeline_dir, no_prompts, web_only, url):
 
 
 @schema.command(help_priority=3)
-@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<JSON Schema file>")
+@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
 def lint(schema_path):
     """
     Check that a given pipeline schema is valid.
@@ -483,6 +499,11 @@ def lint(schema_path):
     try:
         schema_obj.get_schema_path(schema_path)
         schema_obj.load_lint_schema()
+        # Validate title and description - just warnings as schema should still work fine
+        try:
+            schema_obj.validate_schema_title_description()
+        except AssertionError as e:
+            log.warning(e)
     except AssertionError as e:
         sys.exit(1)
 
@@ -509,7 +530,14 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
     # First, lint the pipeline to check everything is in order
     log.info("Running nf-core lint tests")
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, False)
+
+    # Run the lint tests
+    try:
+        lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
+        lint_obj.lint_pipeline()
+    except AssertionError as e:
+        log.error("Please fix lint errors before bumping versions")
+        return
     if len(lint_obj.failed) > 0:
         log.error("Please fix lint errors before bumping versions")
         return
@@ -522,14 +550,12 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
 
 @nf_core_cli.command("sync", help_priority=10)
-@click.argument("pipeline_dir", type=click.Path(exists=True), nargs=-1, metavar="<pipeline directory>")
+@click.argument("pipeline_dir", required=True, type=click.Path(exists=True), metavar="<pipeline directory>")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
-@click.option("-u", "--username", type=str, help="GitHub username for the PR.")
-@click.option("-r", "--repository", type=str, help="GitHub repository name for the PR.")
-@click.option("-a", "--auth-token", type=str, help="GitHub API personal access token.")
-@click.option("--all", is_flag=True, default=False, help="Sync template for all nf-core pipelines.")
-def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_token, all):
+@click.option("-r", "--repository", type=str, help="GitHub PR: target repository.")
+@click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
+def sync(pipeline_dir, from_branch, pull_request, repository, username):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
 
@@ -543,24 +569,13 @@ def sync(pipeline_dir, from_branch, pull_request, username, repository, auth_tok
     new release of nf-core/tools (and the included template) is made.
     """
 
-    # Pull and sync all nf-core pipelines
-    if all:
-        nf_core.sync.sync_all_pipelines(username, auth_token)
-    else:
-        # Manually check for the required parameter
-        if not pipeline_dir or len(pipeline_dir) != 1:
-            log.error("Either use --all or specify one <pipeline directory>")
-            sys.exit(1)
-        else:
-            pipeline_dir = pipeline_dir[0]
-
-        # Sync the given pipeline dir
-        sync_obj = nf_core.sync.PipelineSync(pipeline_dir, from_branch, pull_request)
-        try:
-            sync_obj.sync()
-        except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
-            log.error(e)
-            sys.exit(1)
+    # Sync the given pipeline dir
+    sync_obj = nf_core.sync.PipelineSync(pipeline_dir, from_branch, pull_request, repository, username)
+    try:
+        sync_obj.sync()
+    except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
+        log.error(e)
+        sys.exit(1)
 
 
 if __name__ == "__main__":

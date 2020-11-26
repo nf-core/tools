@@ -197,8 +197,7 @@ class DownloadWorkflow(object):
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
-        """Downloads workflow files from GitHub to the :attr:`self.outdir`.
-        """
+        """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
         log.debug("Downloading {}".format(self.wf_download_url))
 
         # Download GitHub zip file into memory and extract
@@ -216,8 +215,7 @@ class DownloadWorkflow(object):
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
     def download_configs(self):
-        """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`.
-        """
+        """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`."""
         configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
         configs_local_dir = "configs-master"
         log.debug("Downloading {}".format(configs_zip_url))
@@ -236,8 +234,7 @@ class DownloadWorkflow(object):
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
     def wf_use_local_configs(self):
-        """Edit the downloaded nextflow.config file to use the local config files
-        """
+        """Edit the downloaded nextflow.config file to use the local config files"""
         nfconfig_fn = os.path.join(self.outdir, "workflow", "nextflow.config")
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "../configs/"
@@ -294,8 +291,7 @@ class DownloadWorkflow(object):
                 raise e
 
     def compress_download(self):
-        """Take the downloaded files and make a compressed .tar.gz archive.
-        """
+        """Take the downloaded files and make a compressed .tar.gz archive."""
         log.debug("Creating archive: {}".format(self.output_filename))
 
         # .tar.gz and .tar.bz2 files

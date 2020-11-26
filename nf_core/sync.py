@@ -22,15 +22,13 @@ log = logging.getLogger(__name__)
 
 
 class SyncException(Exception):
-    """Exception raised when there was an error with TEMPLATE branch synchronisation
-    """
+    """Exception raised when there was an error with TEMPLATE branch synchronisation"""
 
     pass
 
 
 class PullRequestException(Exception):
-    """Exception raised when there was an error creating a Pull-Request on GitHub.com
-    """
+    """Exception raised when there was an error creating a Pull-Request on GitHub.com"""
 
     pass
 
@@ -44,7 +42,6 @@ class PipelineSync(object):
         make_pr (bool): Set this to `True` to create a GitHub pull-request with the changes
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
-        gh_auth_token (str): Authorisation token used to make PR with GitHub API
 
     Attributes:
         pipeline_dir (str): Path to target pipeline directory
@@ -55,11 +52,15 @@ class PipelineSync(object):
         required_config_vars (list): List of nextflow variables required to make template pipeline
         gh_username (str): GitHub username
         gh_repo (str): GitHub repository name
-        gh_auth_token (str): Authorisation token used to make PR with GitHub API
     """
 
     def __init__(
-        self, pipeline_dir, from_branch=None, make_pr=False, gh_username=None, gh_repo=None, gh_auth_token=None,
+        self,
+        pipeline_dir,
+        from_branch=None,
+        make_pr=False,
+        gh_repo=None,
+        gh_username=None,
     ):
         """ Initialise syncing object """
 
@@ -73,18 +74,15 @@ class PipelineSync(object):
 
         self.gh_username = gh_username
         self.gh_repo = gh_repo
-        self.gh_auth_token = gh_auth_token
 
     def sync(self):
-        """ Find workflow attributes, create a new template pipeline on TEMPLATE
-        """
+        """Find workflow attributes, create a new template pipeline on TEMPLATE"""
 
-        config_log_msg = "Pipeline directory: {}".format(self.pipeline_dir)
+        log.info("Pipeline directory: {}".format(self.pipeline_dir))
         if self.from_branch:
-            config_log_msg += "\n  Using branch `{}` to fetch workflow variables".format(self.from_branch)
+            log.info("Using branch `{}` to fetch workflow variables".format(self.from_branch))
         if self.make_pr:
-            config_log_msg += "\n  Will attempt to automatically create a pull request on GitHub.com"
-        log.info(config_log_msg)
+            log.info("Will attempt to automatically create a pull request")
 
         self.inspect_sync_dir()
         self.get_wf_config()
@@ -100,7 +98,7 @@ class PipelineSync(object):
                 self.make_pull_request()
             except PullRequestException as e:
                 self.reset_target_dir()
-                raise PullRequestException(pr_exception)
+                raise PullRequestException(e)
 
         self.reset_target_dir()
 
@@ -125,7 +123,7 @@ class PipelineSync(object):
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
-        log.debug("Original pipeline repository branch is '{}'".format(self.original_branch))
+        log.info("Original pipeline repository branch is '{}'".format(self.original_branch))
 
         # Check to see if there are uncommitted changes on current branch
         if self.repo.is_dirty(untracked_files=True):
@@ -152,28 +150,8 @@ class PipelineSync(object):
             except git.exc.GitCommandError as e:
                 log.error("Could not find active repo branch: ".format(e))
 
-        # Figure out the GitHub username and repo name from the 'origin' remote if we can
-        try:
-            origin_url = self.repo.remotes.origin.url.rstrip(".git")
-            gh_origin_match = re.search(r"github\.com[:\/]([^\/]+)/([^\/]+)$", origin_url)
-            if gh_origin_match:
-                self.gh_username = gh_origin_match.group(1)
-                self.gh_repo = gh_origin_match.group(2)
-            else:
-                raise AttributeError
-        except AttributeError as e:
-            log.debug(
-                "Could not find repository URL for remote called 'origin' from remote: {}".format(self.repo.remotes)
-            )
-        else:
-            log.debug(
-                "Found username and repo from remote: {}, {} - {}".format(
-                    self.gh_username, self.gh_repo, self.repo.remotes.origin.url
-                )
-            )
-
         # Fetch workflow variables
-        log.info("Fetching workflow config variables")
+        log.debug("Fetching workflow config variables")
         self.wf_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
 
         # Check that we have the required variables
@@ -222,8 +200,7 @@ class PipelineSync(object):
         log.info("Making a new template pipeline using pipeline variables")
 
         # Only show error messages from pipeline creation
-        if log.getEffectiveLevel() == logging.INFO:
-            logging.getLogger("nf_core.create").setLevel(logging.ERROR)
+        logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
         nf_core.create.PipelineCreate(
             name=self.wf_config["manifest.name"].strip('"').strip("'"),
@@ -236,8 +213,7 @@ class PipelineSync(object):
         ).init_pipeline()
 
     def commit_template_changes(self):
-        """If we have any changes with the new template files, make a git commit
-        """
+        """If we have any changes with the new template files, make a git commit"""
         # Check that we have something to commit
         if not self.repo.is_dirty(untracked_files=True):
             log.info("Template contains no changes - no new commit created")
@@ -257,7 +233,7 @@ class PipelineSync(object):
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        log.info("Pushing TEMPLATE branch to remote")
+        log.info("Pushing TEMPLATE branch to remote: '{}'".format(os.path.basename(self.pipeline_dir)))
         try:
             self.repo.git.push()
         except git.exc.GitCommandError as e:
@@ -278,44 +254,114 @@ class PipelineSync(object):
 
         # If we've been asked to make a PR, check that we have the credentials
         try:
-            assert self.gh_auth_token is not None
+            assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         except AssertionError:
-            log.info(
-                "Make a PR at the following URL:\n  https://github.com/{}/{}/compare/{}...TEMPLATE".format(
-                    self.gh_username, self.gh_repo, self.original_branch
+            raise PullRequestException(
+                "Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR\n"
+                "Make a PR at the following URL:\n  https://github.com/{}/compare/{}...TEMPLATE".format(
+                    self.gh_repo, self.original_branch
                 )
             )
-            raise PullRequestException("No GitHub authentication token set - cannot make PR")
 
         log.info("Submitting a pull request via the GitHub API")
 
-        pr_body_text = """
-            A new release of the main template in nf-core/tools has just been released.
-            This automated pull-request attempts to apply the relevant updates to this pipeline.
+        pr_title = "Important! Template update for nf-core/tools v{}".format(nf_core.__version__)
+        pr_body_text = (
+            "A new release of the main template in nf-core/tools has just been released. "
+            "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
+            "Please make sure to merge this pull-request as soon as possible. "
+            "Once complete, make a new minor release of your pipeline. "
+            "For instructions on how to merge this PR, please see "
+            "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).\n\n"
+            "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
+            "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag})."
+        ).format(tag=nf_core.__version__)
 
-            Please make sure to merge this pull-request as soon as possible.
-            Once complete, make a new minor release of your pipeline.
+        # Try to update an existing pull-request
+        if self.update_existing_pull_request(pr_title, pr_body_text) is False:
+            # None found - make a new pull-request
+            self.submit_pull_request(pr_title, pr_body_text)
 
-            For instructions on how to merge this PR, please see
-            [https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).
+    def update_existing_pull_request(self, pr_title, pr_body_text):
+        """
+        List existing pull-requests between TEMPLATE and self.from_branch
 
-            For more information about this release of [nf-core/tools](https://github.com/nf-core/tools),
-            please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag}).
-            """.format(
-            tag=nf_core.__version__
+        If one is found, attempt to update it with a new title and body text
+        If none are found, return False
+        """
+        assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
+        # Look for existing pull-requests
+        list_prs_url = "https://api.github.com/repos/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
+            self.gh_repo, self.from_branch
         )
+        r = requests.get(
+            url=list_prs_url,
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+        )
+        try:
+            r_json = json.loads(r.content)
+            r_pp = json.dumps(r_json, indent=4)
+        except:
+            r_json = r.content
+            r_pp = r.content
 
+        # PR worked
+        if r.status_code == 200:
+            log.debug("GitHub API listing existing PRs:\n{}".format(r_pp))
+
+            # No open PRs
+            if len(r_json) == 0:
+                log.info("No open PRs found between TEMPLATE and {}".format(self.from_branch))
+                return False
+
+            # Update existing PR
+            pr_update_api_url = r_json[0]["url"]
+            pr_content = {"title": pr_title, "body": pr_body_text}
+
+            r = requests.patch(
+                url=pr_update_api_url,
+                data=json.dumps(pr_content),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+            )
+            try:
+                r_json = json.loads(r.content)
+                r_pp = json.dumps(r_json, indent=4)
+            except:
+                r_json = r.content
+                r_pp = r.content
+
+            # PR update worked
+            if r.status_code == 200:
+                log.debug("GitHub API PR-update worked:\n{}".format(r_pp))
+                log.info("Updated GitHub PR: {}".format(r_json["html_url"]))
+                return True
+            # Something went wrong
+            else:
+                log.warning("Could not update PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
+                return False
+
+        # Something went wrong
+        else:
+            log.warning("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
+            return False
+
+    def submit_pull_request(self, pr_title, pr_body_text):
+        """
+        Create a new pull-request on GitHub
+        """
+        assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         pr_content = {
-            "title": "Important! Template update for nf-core/tools v{}".format(nf_core.__version__),
+            "title": pr_title,
             "body": pr_body_text,
             "maintainer_can_modify": True,
             "head": "TEMPLATE",
             "base": self.from_branch,
         }
+
         r = requests.post(
-            url="https://api.github.com/repos/{}/{}/pulls".format(self.gh_username, self.gh_repo),
+            url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
             data=json.dumps(pr_content),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, self.gh_auth_token),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
         )
         try:
             self.gh_pr_returned_data = json.loads(r.content)
@@ -324,97 +370,23 @@ class PipelineSync(object):
             self.gh_pr_returned_data = r.content
             returned_data_prettyprint = r.content
 
-        if r.status_code != 201:
+        # PR worked
+        if r.status_code == 201:
+            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
+            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
+
+        # Something went wrong
+        else:
             raise PullRequestException(
                 "GitHub API returned code {}: \n{}".format(r.status_code, returned_data_prettyprint)
             )
-        else:
-            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
-            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
     def reset_target_dir(self):
         """
         Reset the target pipeline directory. Check out the original branch.
         """
-        log.debug("Checking out original branch: '{}'".format(self.original_branch))
+        log.info("Checking out original branch: '{}'".format(self.original_branch))
         try:
             self.repo.git.checkout(self.original_branch)
         except git.exc.GitCommandError as e:
             raise SyncException("Could not reset to original branch `{}`:\n{}".format(self.from_branch, e))
-
-
-def sync_all_pipelines(gh_username=None, gh_auth_token=None):
-    """Sync all nf-core pipelines
-    """
-
-    # Get remote workflows
-    wfs = nf_core.list.Workflows()
-    wfs.get_remote_workflows()
-
-    successful_syncs = []
-    failed_syncs = []
-
-    # Set up a working directory
-    tmpdir = tempfile.mkdtemp()
-
-    # Let's do some updating!
-    for wf in wfs.remote_workflows:
-
-        log.info("Syncing {}".format(wf.full_name))
-
-        # Make a local working directory
-        wf_local_path = os.path.join(tmpdir, wf.name)
-        os.mkdir(wf_local_path)
-        log.debug("Sync working directory: {}".format(wf_local_path))
-
-        # Clone the repo
-        wf_remote_url = "https://{}@github.com/nf-core/{}".format(gh_auth_token, wf.name)
-        repo = git.Repo.clone_from(wf_remote_url, wf_local_path)
-        assert repo
-
-        # Only show error messages from pipeline creation
-        if log.getEffectiveLevel() == logging.INFO:
-            logging.getLogger("nf_core.create").setLevel(logging.ERROR)
-
-        # Sync the repo
-        log.debug("Running template sync")
-        sync_obj = nf_core.sync.PipelineSync(
-            pipeline_dir=wf_local_path,
-            from_branch="dev",
-            make_pr=True,
-            gh_username=gh_username,
-            gh_auth_token=gh_auth_token,
-        )
-        try:
-            sync_obj.sync()
-        except (SyncException, PullRequestException) as e:
-            log.error("Sync failed for {}:\n{}".format(wf.full_name, e))
-            failed_syncs.append(wf.name)
-        except Exception as e:
-            log.error("Something went wrong when syncing {}:\n{}".format(wf.full_name, e))
-            failed_syncs.append(wf.name)
-        else:
-            log.info(
-                "[green]Sync successful for {}:[/] [blue][link={1}]{1}[/link]".format(
-                    wf.full_name, sync_obj.gh_pr_returned_data.get("html_url")
-                ),
-                extra={"markup": True},
-            )
-            successful_syncs.append(wf.name)
-
-        # Clean up
-        log.debug("Removing work directory: {}".format(wf_local_path))
-        shutil.rmtree(wf_local_path)
-
-    if len(successful_syncs) > 0:
-        log.info(
-            "[green]Finished. Successfully synchronised {} pipelines".format(len(successful_syncs)),
-            extra={"markup": True},
-        )
-
-    if len(failed_syncs) > 0:
-        failed_list = "\n - ".join(failed_syncs)
-        log.error(
-            "[red]Errors whilst synchronising {} pipelines:\n - {}".format(len(failed_syncs), failed_list),
-            extra={"markup": True},
-        )
