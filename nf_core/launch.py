@@ -338,7 +338,7 @@ class Launch(object):
         Use the functions defined in the cli wizard to convert to the correct types.
         """
         # Collect questionary objects for each defined input_param
-        questionare_objects = {}
+        questionary_objects = {}
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
             questionare_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
@@ -388,7 +388,7 @@ class Launch(object):
         # Print the question
         question = self.single_param_to_questionary(param_id, param_obj, answers)
         answer = questionary.prompt([question])
-        # Raise keyboard interrupg
+        # Raise KeyboardInterrupt exception
         if answer == {}:
             raise KeyboardInterrupt
 
@@ -436,7 +436,7 @@ class Launch(object):
         while not while_break:
             self.print_param_header(group_id, group_obj)
             answer = questionary.prompt([question])
-            # Raise keyboard interrupg
+            # Raise KeyboardInterrupt exception
             if answer == {}:
                 raise KeyboardInterrupt
             if answer[group_id] == "Continue >>":
