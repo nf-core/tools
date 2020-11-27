@@ -31,14 +31,14 @@ Typically, pull-requests are only fully reviewed when these tests are passing, t
 
 There are typically two types of tests that run:
 
-### Lint Tests
+### Lint tests
 
 `nf-core` has a [set of guidelines](https://nf-co.re/developers/guidelines) which all pipelines must adhere to.
 To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
 
 If any failures or warnings are encountered, please follow the listed URL for more documentation.
 
-### Pipeline Tests
+### Pipeline tests
 
 Each `nf-core` pipeline should be set up with a minimal set of test-data.
 `GitHub Actions` then runs the pipeline on this data to ensure that it exits successfully.
@@ -53,17 +53,17 @@ These tests are run both with the latest available version of `Nextflow` and als
 * Fix the bug, and bump version (X.Y.Z+1).
 * A PR should be made on `master` from patch to directly this particular bug.
 
-## Getting Help
+## Getting help
 
 For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://nf-co.re/{{ cookiecutter.short_name }}/usage) and don't hesitate to get in touch on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
-## Pipeline Contribution Conventions
+## Pipeline contribution conventions
 
 To make the {{ cookiecutter.short_name }} code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
 
-### Adding a New Module
+### Adding a new step
 
-If you wish to contribute a new module, please use the following coding standards:
+If you wish to contribute a new step, please use the following coding standards:
 
 1. Define the corresponding input channel into your new process from the expected previous process channel
 2. Write the process block (see below).
@@ -79,29 +79,30 @@ If you wish to contribute a new module, please use the following coding standard
 12. Update MultiQC config `assets/multiqc_config.yaml` so relevant suffixes, name clean up, General Statistics Table column order, and module figures are in the right order.
 13. Optional: Add any descriptions of MultiQC report sections and output files to `docs/output.md`.
 
-More details are as follow
+### Default values
 
-### Default Values
+Parameters should be initialised / defined with default values in `nextflow.config` under the `params` scope.
 
-Parameters should be initialised / defined with default values in `nextflow.config` under the `params` scope. 
 Once there, use `nf-core schema build .` to add to `nextflow_schema.json`.
 
-### Default Processes Resource Requirements
+### Default processes resource requirements
 
-Defining sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. This can be utilised within the process using `${task.cpu}` or `${task.memory}` variables in the `script:` block.
+Defining sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A popular example that is used in many nf-core pipelines is that of [nf-core/rnaseq](https://github.com/nf-core/rnaseq/). Process specific requirements (i.e. outside of generic labels), can be specified with the `withName:` selector (such as in [nf-core/eager](https://github.com/nf-core/eager/)).
 
-### Naming Schemes
+These can be utilised within the process itself using `${task.cpu}` or `${task.memory}` variables in the `script:` block.
+
+### Naming schemes
 
 Please use the following naming schemes, to make it easy to understand what is going where.
 
 * initial process channel: `ch_output_from_<process>`
 * intermediate and terminal channels: `ch_<previousprocess>_for_<nextprocess>`
 
-### Nextflow Version Bumping
+### Nextflow version bumping
 
 If you have agreement from reviewers, you may bump the 'default' minimum version of nextflow (e.g. for testing), with: `nf-core bump-version --nextflow . [min-nf-version]`
 
-### Software Version Reporting
+### Software version reporting
 
 If you add a new tool to the pipeline, please ensure you add the information of the tool to the `get_software_version` process.
 
@@ -122,8 +123,6 @@ You then need to edit the script `bin/scrape_software_versions.py` to
 1. add a (python) regex for your tools --version output (as in stored in the `v_<YOUR_TOOL>.txt` file), to ensure the version is reported as a `v` and the version number e.g. `v2.1.1`
 2. add a HTML block entry to the `OrderedDict` for formatting in MultiQC.
 
-> If a tool does not unfortunately offer any printing of version data, you may add this 'manually' e.g. with `echo "v1.1" > v_<YOUR_TOOL>.txt`
-
-### Images and Figures
+### Images and figures
 
 For overview images and other documents we follow the nf-core [style guidelines and examples](https://nf-co.re/developers/design_guidelines).
