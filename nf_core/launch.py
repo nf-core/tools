@@ -340,11 +340,11 @@ class Launch(object):
         # Collect questionary objects for each defined input_param
         questionary_objects = {}
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
-            questionare_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
+            questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
             for param_id, param_obj in definition.get("properties", {}).items():
-                questionare_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
+                questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         # Go through input params and sanitise
         for params in [self.nxf_flags, self.schema_obj.input_params]:
@@ -354,7 +354,7 @@ class Launch(object):
                     del params[param_id]
                     continue
                 # Run filter function on value
-                filter_func = questionare_objects.get(param_id, {}).get("filter")
+                filter_func = questionary_objects.get(param_id, {}).get("filter")
                 if filter_func is not None:
                     params[param_id] = filter_func(params[param_id])
 
