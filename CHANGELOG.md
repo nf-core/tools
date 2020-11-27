@@ -4,6 +4,8 @@
 
 ### Tools helper code
 
+* Respect `$NXF_HOME` when looking for pipelines with `nf-core list` [[#798](https://github.com/nf-core/tools/issues/798)]
+
 ### Template
 
 ### Linting
