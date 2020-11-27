@@ -99,7 +99,7 @@ Please use the following naming schemes, to make it easy to understand what is g
 
 ### Nextflow Version Bumping
 
-If you have agreement from reviewers, you may bump the 'default' minimum version of nextflow (e.g. for testing), with `nf-core bump-version`.
+If you have agreement from reviewers, you may bump the 'default' minimum version of nextflow (e.g. for testing), with: `nf-core bump-version --nextflow . [min-nf-version]`
 
 ### Software Version Reporting
 
