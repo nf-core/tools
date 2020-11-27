@@ -15,13 +15,10 @@ Please delete this text and anything that's not relevant from the template below
 
 ## Check Documentation
 
-Have you checked in the following places for your error?:
+I have checked the following places for your error:
 
-- [ ] [nf-co.re troubleshooting(https://nf-co.re/usage/troubleshooting)
-- [ ] [{{ cookiecutter.name }}-specific documentation](https://nf-co.re/{{ cookiecutter.name }}/usage)
-
-Please also check the the corresponding version's documentation, if not
-testing the latest release.
+- [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
+- [ ] [{{ cookiecutter.name }} pipeline documentation](https://nf-co.re/{{ cookiecutter.name }}/usage)
 
 ## Description of the bug
 
@@ -43,8 +40,7 @@ Steps to reproduce the behaviour:
 Have you provided the following extra information/files:
 
 - [ ] The command used to run the pipeline
-- [ ] The `.nextflow.log` file (which is a hidden file in whichever place you _ran_
-   the pipeline from - not necessarily in the output directory!)
+- [ ] The `.nextflow.log` file <!-- this is a hidden file in the directory where you launched the pipeline -->
 
 ## System
 

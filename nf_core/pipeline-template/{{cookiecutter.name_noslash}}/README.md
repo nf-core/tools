@@ -12,7 +12,8 @@
 
 ## Introduction
 
-**{{ cookiecutter.name }}** is a bioinformatics best-practise analysis pipeline for <!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
+<!-- TODO nf-core: Write a 1-2 sentence summary of what data the pipeline is for and what it does -->
+**{{ cookiecutter.name }}** is a bioinformatics best-practise analysis pipeline for 
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
@@ -44,7 +45,7 @@ See [usage docs](https://nf-co.re/{{ cookiecutter.short_name }}/usage) for all o
 
 By default, the pipeline currently performs the following:
 
-<!-- TODO nf-core: Fill in short bullet-pointed list of default steps of pipeline-->
+<!-- TODO nf-core: Fill in short bullet-pointed list of default steps of pipeline -->
 
 * Sequencing quality control (`FastQC`)
 * Overall pipeline run summaries (`MultiQC`)
@@ -62,7 +63,7 @@ The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline
 We thank the following people for their extensive assistance in the development
 of this pipeline:
 
-<!-- TODO nf-core: If applicable, make list of people who have indirectly contributed (e.g. extensive bug reports) -->
+<!-- TODO nf-core: If applicable, make list of people who have also contributed -->
 
 ## Contributions and Support
 
