@@ -83,7 +83,8 @@ More details are as follow
 
 ### Default Values
 
-Default values should go in `nextflow.config` under the `params` scope, and `nextflow_schema.json` (latter with `nf-core schema build .`)
+Parameters should be initialised / defined with default values in `nextflow.config` under the `params` scope. 
+Once there, use `nf-core schema build .` to add to `nextflow_schema.json`.
 
 ### Default Processes Resource Requirements
 
