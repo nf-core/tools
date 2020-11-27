@@ -102,12 +102,12 @@ class TestLaunch(unittest.TestCase):
         result = self.launcher.single_param_to_questionary("input", sc_obj)
         assert result == {"type": "input", "name": "input", "message": "input", "default": "data/*{1,2}.fastq.gz"}
 
-    @mock.patch("questionary.prompt", side_effect=[{"use_web_gui": "Web based"}])
+    @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
         """ Check the prompt to launch the web schema or use the cli """
         assert self.launcher.prompt_web_gui() == True
 
-    @mock.patch("questionary.prompt", side_effect=[{"use_web_gui": "Command line"}])
+    @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Command line"}])
     def test_prompt_web_gui_false(self, mock_prompt):
         """ Check the prompt to launch the web schema or use the cli """
         assert self.launcher.prompt_web_gui() == False
@@ -261,7 +261,7 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_enum(self):
-        """ Check converting a python dict to a pyenquirer format - with enum """
+        """ Check converting a python dict to a questionary format - with enum """
         sc_obj = {"type": "string", "default": "copy", "enum": ["symlink", "rellink"]}
         result = self.launcher.single_param_to_questionary("publish_dir_mode", sc_obj)
         assert result["type"] == "list"
@@ -272,7 +272,7 @@ class TestLaunch(unittest.TestCase):
         # assert result["validate"]("not_allowed") == "Must be one of: symlink, rellink"
 
     def test_ob_to_questionary_pattern(self):
-        """ Check converting a python dict to a pyenquirer format - with pattern """
+        """ Check converting a python dict to a questionary format - with pattern """
         sc_obj = {"type": "string", "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"}
         result = self.launcher.single_param_to_questionary("email", sc_obj)
         assert result["type"] == "input"

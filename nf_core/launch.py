@@ -21,19 +21,21 @@ import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
 
-# Custom style for questionary 
-nfcore_question_style = Style([
-    ('qmark', 'fg:#673ab7 bold'),       # token in front of the question
-    ('question', 'bold'),               # question text
-    ('answer', 'fg:#f44336 bold'),      # submitted answer text behind the question
-    ('pointer', 'fg:#eff53b bold'),     # pointer used in select and checkbox prompts
-    ('highlighted', 'fg:#673ab7 bold'), # pointed-at choice in select and checkbox prompts
-    ('selected', 'fg:#cc5454'),         # style for a selected item of a checkbox
-    ('separator', 'fg:#cc5454'),        # separator in lists
-    ('instruction', ''),                # user instructions for select, rawselect, checkbox
-    ('text', ''),                       # plain text
-    ('disabled', 'fg:#858585 italic')   # disabled choices for select and checkbox prompts
-])
+# Custom style for questionary
+nfcore_question_style = Style(
+    [
+        ("qmark", "fg:#673ab7 bold"),  # token in front of the question
+        ("question", "bold"),  # question text
+        ("answer", "fg:#f44336 bold"),  # submitted answer text behind the question
+        ("pointer", "fg:#eff53b bold"),  # pointer used in select and checkbox prompts
+        ("highlighted", "fg:#673ab7 bold"),  # pointed-at choice in select and checkbox prompts
+        ("selected", "fg:#cc5454"),  # style for a selected item of a checkbox
+        ("separator", "fg:#cc5454"),  # separator in lists
+        ("instruction", ""),  # user instructions for select, rawselect, checkbox
+        ("text", ""),  # plain text
+        ("disabled", "fg:#858585 italic"),  # disabled choices for select and checkbox prompts
+    ]
+)
 
 
 class Launch(object):
@@ -261,7 +263,7 @@ class Launch(object):
             "name": "use_web_gui",
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
-            "default": "Web based"
+            "default": "Web based",
         }
         answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
         return answer["use_web_gui"] == "Web based"
@@ -600,7 +602,7 @@ class Launch(object):
             #         return True
             #     return "Must be one of: {}".format(", ".join(param_obj["enum"]))
 
-            #question["validate"] = validate_enum
+            # question["validate"] = validate_enum
 
         # Validate pattern from schema
         if "pattern" in param_obj:
@@ -681,5 +683,3 @@ class Launch(object):
         if Confirm.ask("Do you want to run this command now? "):
             log.info("Launching workflow! :rocket:")
             subprocess.call(self.nextflow_cmd, shell=True)
-
-
