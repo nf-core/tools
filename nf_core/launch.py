@@ -38,6 +38,7 @@ nfcore_question_style = Style(
     ]
 )
 
+
 class Launch(object):
     """ Class to hold config option to launch a pipeline """
 
@@ -593,7 +594,6 @@ class Launch(object):
             # Use a selection list instead of free text input
             question["type"] = "list"
             question["choices"] = param_obj["enum"]
-
 
         # Validate pattern from schema
         if "pattern" in param_obj:
