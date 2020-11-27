@@ -88,7 +88,7 @@ Once there, use `nf-core schema build .` to add to `nextflow_schema.json`.
 
 ### Default Processes Resource Requirements
 
-Defining recommended 'minimum' resource requirements (CPUs/Memory) for a process should be defined in `conf/base.config`. This can be utilised within the process using `${task.cpu}` or `${task.memory}` variables in the `script:` block.
+Defining sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. This can be utilised within the process using `${task.cpu}` or `${task.memory}` variables in the `script:` block.
 
 ### Naming Schemes
 
