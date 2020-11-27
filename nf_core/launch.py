@@ -15,10 +15,25 @@ import re
 import subprocess
 import textwrap
 import webbrowser
+from prompt_toolkit.styles import Style
 
 import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
+
+# Custom style for questionary 
+nfcore_question_style = Style([
+    ('qmark', 'fg:#673ab7 bold'),       # token in front of the question
+    ('question', 'bold'),               # question text
+    ('answer', 'fg:#f44336 bold'),      # submitted answer text behind the question
+    ('pointer', 'fg:#eff53b bold'),     # pointer used in select and checkbox prompts
+    ('highlighted', 'fg:#673ab7 bold'), # pointed-at choice in select and checkbox prompts
+    ('selected', 'fg:#cc5454'),         # style for a selected item of a checkbox
+    ('separator', 'fg:#cc5454'),        # separator in lists
+    ('instruction', ''),                # user instructions for select, rawselect, checkbox
+    ('text', ''),                       # plain text
+    ('disabled', 'fg:#858585 italic')   # disabled choices for select and checkbox prompts
+])
 
 
 class Launch(object):
@@ -246,11 +261,9 @@ class Launch(object):
             "name": "use_web_gui",
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
+            "default": "Web based"
         }
-        answer = questionary.prompt([question])
-        # Raise keyboard interrupt
-        if answer == {}:
-            raise KeyboardInterrupt
+        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
@@ -387,18 +400,12 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_questionary(param_id, param_obj, answers)
-        answer = questionary.prompt([question])
-        # Raise KeyboardInterrupt exception
-        if answer == {}:
-            raise KeyboardInterrupt
+        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
             log.error("'–-{}' is required".format(param_id))
-            answer = questionary.prompt([question])
-            # Raise keyboard interrupt
-            if answer == {}:
-                raise KeyboardInterrupt
+            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
 
         # Don't return empty answers
         if answer[param_id] == "":
@@ -435,10 +442,7 @@ class Launch(object):
         answers = {}
         while not while_break:
             self.print_param_header(group_id, group_obj)
-            answer = questionary.prompt([question])
-            # Raise KeyboardInterrupt exception
-            if answer == {}:
-                raise KeyboardInterrupt
+            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
             if answer[group_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
@@ -588,15 +592,15 @@ class Launch(object):
             question["type"] = "list"
             question["choices"] = param_obj["enum"]
 
-            # Validate enum from schema
-            def validate_enum(val):
-                if val == "":
-                    return True
-                if val in param_obj["enum"]:
-                    return True
-                return "Must be one of: {}".format(", ".join(param_obj["enum"]))
+            # # Validate enum from schema
+            # def validate_enum(val):
+            #     if val == "":
+            #         return True
+            #     if val in param_obj["enum"]:
+            #         return True
+            #     return "Must be one of: {}".format(", ".join(param_obj["enum"]))
 
-            question["validate"] = validate_enum
+            #question["validate"] = validate_enum
 
         # Validate pattern from schema
         if "pattern" in param_obj:
@@ -609,20 +613,6 @@ class Launch(object):
                 return "Must match pattern: {}".format(param_obj["pattern"])
 
             question["validate"] = validate_pattern
-
-        # WORKAROUND - Questionary cannot have a default position in a list
-        # For now, move the default option to the top.
-        if question["type"] == "list" and "default" in question:
-            try:
-                question["choices"].remove(question["default"])
-                question["choices"].insert(0, question["default"])
-            except ValueError:
-                log.warning(
-                    "Default value `{}` not found in list of choices: {}".format(
-                        question["default"], ", ".join(question["choices"])
-                    )
-                )
-        ### End of workaround code
 
         return question
 
@@ -691,3 +681,5 @@ class Launch(object):
         if Confirm.ask("Do you want to run this command now? "):
             log.info("Launching workflow! :rocket:")
             subprocess.call(self.nextflow_cmd, shell=True)
+
+
