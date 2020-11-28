@@ -1,5 +1,17 @@
 # nf-core/tools: Changelog
 
+## v1.13dev
+
+### Tools helper code
+
+* Respect `$NXF_HOME` when looking for pipelines with `nf-core list` [[#798](https://github.com/nf-core/tools/issues/798)]
+
+### Template
+
+### Linting
+
+### Other
+
 ## [v1.12 - Mercury Weasel](https://github.com/nf-core/tools/releases/tag/1.12) - [2020-11-19]
 
 ### Tools helper code
