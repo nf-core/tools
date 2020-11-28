@@ -568,7 +568,6 @@ class Launch(object):
 
             question["filter"] = filter_integer
 
-        if param_obj.get("type") == "range":
             # Validate range type
             def validate_range(val):
                 try:
@@ -584,14 +583,6 @@ class Launch(object):
                     return "Must be a number"
 
             question["validate"] = validate_range
-
-            # Filter returned value
-            def filter_range(val):
-                if val.strip() == "":
-                    return ""
-                return float(val)
-
-            question["filter"] = filter_range
 
         if "enum" in param_obj:
             # Use a selection list instead of free text input
