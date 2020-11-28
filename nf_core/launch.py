@@ -538,6 +538,22 @@ class Launch(object):
 
             question["validate"] = validate_number
 
+            # Validate range type
+            def validate_range(val):
+                try:
+                    if val.strip() == "":
+                        return True
+                    fval = float(val)
+                    if "minimum" in param_obj and fval < float(param_obj["minimum"]):
+                        return "Must be greater than or equal to {}".format(param_obj["minimum"])
+                    if "maximum" in param_obj and fval > float(param_obj["maximum"]):
+                        return "Must be less than or equal to {}".format(param_obj["maximum"])
+                    return True
+                except ValueError:
+                    return "Must be a number"
+
+            question["validate"] = validate_range
+
             # Filter returned value
             def filter_number(val):
                 if val.strip() == "":
@@ -567,22 +583,6 @@ class Launch(object):
                 return int(val)
 
             question["filter"] = filter_integer
-
-            # Validate range type
-            def validate_range(val):
-                try:
-                    if val.strip() == "":
-                        return True
-                    fval = float(val)
-                    if "minimum" in param_obj and fval < float(param_obj["minimum"]):
-                        return "Must be greater than or equal to {}".format(param_obj["minimum"])
-                    if "maximum" in param_obj and fval > float(param_obj["maximum"]):
-                        return "Must be less than or equal to {}".format(param_obj["maximum"])
-                    return True
-                except ValueError:
-                    return "Must be a number"
-
-            question["validate"] = validate_range
 
         if "enum" in param_obj:
             # Use a selection list instead of free text input
