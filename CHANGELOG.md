@@ -4,6 +4,7 @@
 
 ### Tools helper code
 
+* json-schema: make paramters of type `range` to `number`.[[#738](https://github.com/nf-core/tools/issues/738)]
 * Respect `$NXF_HOME` when looking for pipelines with `nf-core list` [[#798](https://github.com/nf-core/tools/issues/798)]
 
 ### Template
