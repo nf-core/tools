@@ -112,8 +112,5 @@ ENV/
 
 # Jetbrains IDEs
 .idea
-pip-wheel-metadata/nf_core.dist-info/top_level.txt
-pip-wheel-metadata/nf_core.dist-info/METADATA
-pip-wheel-metadata/nf_core.dist-info/LICENSE
-pip-wheel-metadata/nf_core.dist-info/entry_points.txt
+pip-wheel-metadata
 .vscode
