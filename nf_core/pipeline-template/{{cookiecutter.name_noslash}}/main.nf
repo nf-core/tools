@@ -107,13 +107,6 @@ workflow {
     INPUT_CHECK ( 
         ch_input
     )
-    // .map {
-    //     meta, fastq ->
-    //         meta.id = meta.id.split('_')[0..-2].join('_')
-    //         [ meta, bam ] }
-    // .groupTuple(by: [0])
-    // .map { it ->  [ it[0], it[1].flatten() ] }
-    // .set { ch_reads }
 
     /*
      * MODULE: Run FastQC
@@ -121,7 +114,7 @@ workflow {
     FASTQC (
         INPUT_CHECK.out.reads
     )
-    ch_software_versions = ch_software_versions.mix(FASTQC_UMITOOLS_TRIMGALORE.out.fastqc_version.first().ifEmpty(null))
+    ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
     
 
         /*
@@ -134,8 +127,8 @@ workflow {
     /*
      * MultiQC
      */
-    workflow_summary     = Schema.params_summary_multiqc(workflow, summary_params)
-    ch_workflow_summary  = Channel.value(workflow_summary)
+    workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
+    ch_workflow_summary = Channel.value(workflow_summary)
 
     MULTIQC (
         ch_multiqc_config,
