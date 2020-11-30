@@ -20,6 +20,16 @@
 
 The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool to run tasks across multiple compute infrastructures in a very portable manner. It comes with docker containers making installation trivial and results highly reproducible.
 
+<!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable -->
+On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources. The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/{{ cookiecutter.short_name }}/results).
+
+## Pipeline summary
+
+<!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
+
+1. Read QC ([`FastQC`](https://www.bioinformatics.babraham.ac.uk/projects/fastqc/))
+2. Present QC for raw reads ([`MultiQC`](http://multiqc.info/))
+
 ## Quick Start
 
 1. Install [`nextflow`](https://nf-co.re/usage/installation)
@@ -33,6 +43,7 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
     ```
 
     > Please check [nf-core/configs](https://github.com/nf-core/configs#documentation) to see if a custom config file to run nf-core pipelines already exists for your Institute. If so, you can simply use `-profile <institute>` in your command. This will enable either `docker` or `singularity` and set the appropriate execution settings for your local compute environment.
+    > * If you are using `singularity`, it is highly recommended to use the [`NXF_SINGULARITY_CACHEDIR` or `singularity.cacheDir`](https://www.nextflow.io/docs/latest/singularity.html?#singularity-docker-hub) settings to store the images in a central location for future pipeline runs.
 
 4. Start running your own analysis!
 
@@ -48,8 +59,6 @@ See [usage docs](https://nf-co.re/{{ cookiecutter.short_name }}/usage) for all o
 
 The {{ cookiecutter.name }} pipeline comes with documentation about the pipeline: [usage](https://nf-co.re/{{ cookiecutter.short_name }}/usage) and [output](https://nf-co.re/{{ cookiecutter.short_name }}/output).
 
-<!-- TODO nf-core: Add a brief overview of what the pipeline does and how it works -->
-
 ## Credits
 
 {{ cookiecutter.name }} was originally written by {{ cookiecutter.author }}.
@@ -62,7 +71,7 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 ## Citation
 
-<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below and update Zenodo doi. -->
+<!-- TODO nf-core: Add citation for pipeline after first release. Uncomment lines below, update Zenodo doi and badge at the top of this file. -->
 <!-- If you use  {{ cookiecutter.name }} for your analysis, please cite it using the following doi: [10.5281/zenodo.XXXXXX](https://doi.org/10.5281/zenodo.XXXXXX) -->
 
 You can cite the `nf-core` publication as follows:
