@@ -25,23 +25,6 @@ jobs:
       - name: Check out pipeline code
         uses: actions/checkout@v2
 
-      - name: Check if Dockerfile or Conda environment changed
-        uses: technote-space/get-diff-action@v4
-        with:
-          FILES: |
-            Dockerfile
-            environment.yml
-
-      - name: Build new docker image
-        if: env.MATCHED_FILES
-        run: docker build --no-cache . -t {{ cookiecutter.name_docker }}:dev
-
-      - name: Pull docker image
-        if: {% raw %}${{ !env.MATCHED_FILES }}{% endraw %}
-        run: |
-          docker pull {{ cookiecutter.name_docker }}:dev
-          docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
-
       - name: Install Nextflow
         env:
           CAPSULE_LOG: none
