@@ -7,3 +7,6 @@ no-duplicate-header:
 no-bare-urls: false
 # tools only - suppresses error messages for usage of $ in main README
 commands-show-output: false
+# Enable usage of nice HTML tags in output docs for pipeline template
+MD033:
+    allowed_elements: [details, summary]
