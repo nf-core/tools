@@ -530,7 +530,7 @@ class Launch(object):
                 try:
                     if val.strip() == "":
                         return True
-                    float(val)
+                    fval = float(val)
                     if "minimum" in param_obj and fval < float(param_obj["minimum"]):
                         return "Must be greater than or equal to {}".format(param_obj["minimum"])
                     if "maximum" in param_obj and fval > float(param_obj["maximum"]):
