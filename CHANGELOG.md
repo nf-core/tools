@@ -2,7 +2,8 @@
 
 ## v1.13dev
 
-* Swapped PyInquirer with questionary for command line questions in `launch.py`
+* Swapped PyInquirer with questionary for command line questions in `launch.py` [[#726
+]](https://github.com/nf-core/tools/issues/726)
 
 ### Tools helper code
 
