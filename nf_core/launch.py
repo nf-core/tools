@@ -2,7 +2,6 @@
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
-from questionary import constants
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm
