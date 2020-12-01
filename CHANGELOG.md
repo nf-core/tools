@@ -2,7 +2,7 @@
 
 ## v1.13dev
 
-* swapped PyInquirer with questionary for command line questions in launch.py
+* Swapped PyInquirer with questionary for command line questions in `launch.py`
 
 ### Tools helper code
 
