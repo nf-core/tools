@@ -10,30 +10,30 @@ import copy
 import json
 import logging
 import os
+import prompt_toolkit
 import questionary
 import re
 import subprocess
 import textwrap
 import webbrowser
-from prompt_toolkit.styles import Style
 
 import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
 
 # Custom style for questionary
-nfcore_question_style = Style(
+nfcore_question_style = prompt_toolkit.styles.Style(
     [
-        ("qmark", "fg:#673ab7 bold"),  # token in front of the question
+        ("qmark", "fg:ansiblue bold"),  # token in front of the question
         ("question", "bold"),  # question text
-        ("answer", "fg:#f44336 bold"),  # submitted answer text behind the question
-        ("pointer", "fg:#f5d142 bold"),  # pointer used in select and checkbox prompts
-        ("highlighted", "fg:#673ab7 bold"),  # pointed-at choice in select and checkbox prompts
-        ("selected", "fg:#f5d142"),  # style for a selected item of a checkbox
-        ("separator", "fg:#cc5454"),  # separator in lists
+        ("answer", "fg:ansigreen nobold"),  # submitted answer text behind the question
+        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
+        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
+        ("selected", "fg:ansigreen noreverse"),  # style for a selected item of a checkbox
+        ("separator", "fg:ansiblack"),  # separator in lists
         ("instruction", ""),  # user instructions for select, rawselect, checkbox
         ("text", ""),  # plain text
-        ("disabled", "fg:#858585 italic"),  # disabled choices for select and checkbox prompts
+        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
     ]
 )
 
@@ -425,24 +425,29 @@ class Launch(object):
         Returns:
           Dict of param_id:val answers
         """
-        question = {
-            "type": "list",
-            "name": group_id,
-            "message": group_obj.get("title", group_id),
-            "choices": ["Continue >>", questionary.Separator()],
-        }
-
-        for param_id, param in group_obj["properties"].items():
-            if not param.get("hidden", False) or self.show_hidden:
-                question["choices"].append(param_id)
-
-        # Skip if all questions hidden
-        if len(question["choices"]) == 2:
-            return {}
-
         while_break = False
         answers = {}
         while not while_break:
+            question = {
+                "type": "list",
+                "name": group_id,
+                "message": group_obj.get("title", group_id),
+                "choices": ["Continue >>", questionary.Separator()],
+            }
+
+            for param_id, param in group_obj["properties"].items():
+                if not param.get("hidden", False) or self.show_hidden:
+                    q_title = param_id
+                    if param_id in answers:
+                        q_title += "  [{}]".format(answers[param_id])
+                    elif "default" in param:
+                        q_title += "  [{}]".format(param["default"])
+                    question["choices"].append(questionary.Choice(title=q_title, value=param_id))
+
+            # Skip if all questions hidden
+            if len(question["choices"]) == 2:
+                return {}
+
             self.print_param_header(group_id, group_obj)
             answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
             if answer[group_id] == "Continue >>":
@@ -452,7 +457,7 @@ class Launch(object):
                     req_default = self.schema_obj.input_params.get(p_required, "")
                     req_answer = answers.get(p_required, "")
                     if req_default == "" and req_answer == "":
-                        log.error("'{}' is required.".format(p_required))
+                        log.error("'--{}' is required.".format(p_required))
                         while_break = False
             else:
                 param_id = answer[group_id]
