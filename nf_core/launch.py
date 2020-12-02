@@ -10,7 +10,8 @@ import copy
 import json
 import logging
 import os
-import PyInquirer
+import prompt_toolkit
+import questionary
 import re
 import subprocess
 import textwrap
@@ -20,15 +21,21 @@ import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
 
-#
-# NOTE: When PyInquirer 1.0.3 is released we can capture keyboard interruptions
-# in a nicer way # with the raise_keyboard_interrupt=True argument in the PyInquirer.prompt() calls
-# It also allows list selections to have a default set.
-#
-# Until then we have workarounds:
-# * Default list item is moved to the top of the list
-# * We manually raise a KeyboardInterrupt if we get None back from a question
-#
+# Custom style for questionary
+nfcore_question_style = prompt_toolkit.styles.Style(
+    [
+        ("qmark", "fg:ansiblue bold"),  # token in front of the question
+        ("question", "bold"),  # question text
+        ("answer", "fg:ansigreen nobold"),  # submitted answer text behind the question
+        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
+        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
+        ("selected", "fg:ansigreen noreverse"),  # style for a selected item of a checkbox
+        ("separator", "fg:ansiblack"),  # separator in lists
+        ("instruction", ""),  # user instructions for select, rawselect, checkbox
+        ("text", ""),  # plain text
+        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
+    ]
+)
 
 
 class Launch(object):
@@ -256,11 +263,9 @@ class Launch(object):
             "name": "use_web_gui",
             "message": "Choose launch method",
             "choices": ["Web based", "Command line"],
+            "default": "Web based",
         }
-        answer = PyInquirer.prompt([question])
-        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
-        if answer == {}:
-            raise KeyboardInterrupt
+        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
@@ -347,14 +352,14 @@ class Launch(object):
         The web builder returns everything as strings.
         Use the functions defined in the cli wizard to convert to the correct types.
         """
-        # Collect pyinquirer objects for each defined input_param
-        pyinquirer_objects = {}
+        # Collect questionary objects for each defined input_param
+        questionary_objects = {}
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
-            pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
+            questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
             for param_id, param_obj in definition.get("properties", {}).items():
-                pyinquirer_objects[param_id] = self.single_param_to_pyinquirer(param_id, param_obj, print_help=False)
+                questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
         # Go through input params and sanitise
         for params in [self.nxf_flags, self.schema_obj.input_params]:
@@ -364,7 +369,7 @@ class Launch(object):
                     del params[param_id]
                     continue
                 # Run filter function on value
-                filter_func = pyinquirer_objects.get(param_id, {}).get("filter")
+                filter_func = questionary_objects.get(param_id, {}).get("filter")
                 if filter_func is not None:
                     params[param_id] = filter_func(params[param_id])
 
@@ -396,19 +401,13 @@ class Launch(object):
         """Prompt for a single parameter"""
 
         # Print the question
-        question = self.single_param_to_pyinquirer(param_id, param_obj, answers)
-        answer = PyInquirer.prompt([question])
-        # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
-        if answer == {}:
-            raise KeyboardInterrupt
+        question = self.single_param_to_questionary(param_id, param_obj, answers)
+        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
             log.error("'–-{}' is required".format(param_id))
-            answer = PyInquirer.prompt([question])
-            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
-            if answer == {}:
-                raise KeyboardInterrupt
+            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
 
         # Don't return empty answers
         if answer[param_id] == "":
@@ -426,29 +425,31 @@ class Launch(object):
         Returns:
           Dict of param_id:val answers
         """
-        question = {
-            "type": "list",
-            "name": group_id,
-            "message": group_obj.get("title", group_id),
-            "choices": ["Continue >>", PyInquirer.Separator()],
-        }
-
-        for param_id, param in group_obj["properties"].items():
-            if not param.get("hidden", False) or self.show_hidden:
-                question["choices"].append(param_id)
-
-        # Skip if all questions hidden
-        if len(question["choices"]) == 2:
-            return {}
-
         while_break = False
         answers = {}
         while not while_break:
+            question = {
+                "type": "list",
+                "name": group_id,
+                "message": group_obj.get("title", group_id),
+                "choices": ["Continue >>", questionary.Separator()],
+            }
+
+            for param_id, param in group_obj["properties"].items():
+                if not param.get("hidden", False) or self.show_hidden:
+                    q_title = param_id
+                    if param_id in answers:
+                        q_title += "  [{}]".format(answers[param_id])
+                    elif "default" in param:
+                        q_title += "  [{}]".format(param["default"])
+                    question["choices"].append(questionary.Choice(title=q_title, value=param_id))
+
+            # Skip if all questions hidden
+            if len(question["choices"]) == 2:
+                return {}
+
             self.print_param_header(group_id, group_obj)
-            answer = PyInquirer.prompt([question])
-            # TODO: use raise_keyboard_interrupt=True when PyInquirer 1.0.3 is released
-            if answer == {}:
-                raise KeyboardInterrupt
+            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
             if answer[group_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
@@ -456,7 +457,7 @@ class Launch(object):
                     req_default = self.schema_obj.input_params.get(p_required, "")
                     req_answer = answers.get(p_required, "")
                     if req_default == "" and req_answer == "":
-                        log.error("'{}' is required.".format(p_required))
+                        log.error("'--{}' is required.".format(p_required))
                         while_break = False
             else:
                 param_id = answer[group_id]
@@ -465,8 +466,8 @@ class Launch(object):
 
         return answers
 
-    def single_param_to_pyinquirer(self, param_id, param_obj, answers=None, print_help=True):
-        """Convert a JSONSchema param to a PyInquirer question
+    def single_param_to_questionary(self, param_id, param_obj, answers=None, print_help=True):
+        """Convert a JSONSchema param to a Questionary question
 
         Args:
           param_id: Parameter ID (string)
@@ -475,7 +476,7 @@ class Launch(object):
           print_help: If description and help_text should be printed (bool)
 
         Returns:
-          Single PyInquirer dict, to be appended to questions list
+          Single Questionary dict, to be appended to questions list
         """
         if answers is None:
             answers = {}
@@ -577,16 +578,6 @@ class Launch(object):
             question["type"] = "list"
             question["choices"] = param_obj["enum"]
 
-            # Validate enum from schema
-            def validate_enum(val):
-                if val == "":
-                    return True
-                if val in param_obj["enum"]:
-                    return True
-                return "Must be one of: {}".format(", ".join(param_obj["enum"]))
-
-            question["validate"] = validate_enum
-
         # Validate pattern from schema
         if "pattern" in param_obj:
 
@@ -598,21 +589,6 @@ class Launch(object):
                 return "Must match pattern: {}".format(param_obj["pattern"])
 
             question["validate"] = validate_pattern
-
-        # WORKAROUND - PyInquirer <1.0.3 cannot have a default position in a list
-        # For now, move the default option to the top.
-        # TODO: Delete this code when PyInquirer >=1.0.3 is released.
-        if question["type"] == "list" and "default" in question:
-            try:
-                question["choices"].remove(question["default"])
-                question["choices"].insert(0, question["default"])
-            except ValueError:
-                log.warning(
-                    "Default value `{}` not found in list of choices: {}".format(
-                        question["default"], ", ".join(question["choices"])
-                    )
-                )
-        ### End of workaround code
 
         return question
 

@@ -2,6 +2,10 @@
 
 ## v1.13dev
 
+* Swapped PyInquirer with questionary for command line questions in `launch.py` [[#726](https://github.com/nf-core/tools/issues/726)]
+  * This should fix conda installation issues that some people had been hitting
+  * The change also allows other improvements to the UI
+
 ### Tools helper code
 
 * Pipeline schema: make parameters of type `range` to `number`. [[#738](https://github.com/nf-core/tools/issues/738)]
