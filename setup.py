@@ -37,7 +37,7 @@ setup(
         "jinja2",
         "jsonschema",
         "questionary>=1.8.0",
-        "prompt_toolkit",
+        "prompt_toolkit>=3.0.3",
         "pyyaml",
         "requests",
         "requests_cache",
