@@ -248,7 +248,7 @@ class TestLaunch(unittest.TestCase):
 
     def test_ob_to_questionary_range(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
-        sc_obj = {"type": "range", "minimum": "10", "maximum": "20", "default": 15}
+        sc_obj = {"type": "number", "minimum": "10", "maximum": "20", "default": 15}
         result = self.launcher.single_param_to_questionary("broad_cutoff", sc_obj)
         assert result["type"] == "input"
         assert result["default"] == "15"
