@@ -59,7 +59,7 @@ For further information/help, please consult the [{{ cookiecutter.name }} docume
 
 ## Pipeline contribution conventions
 
-To make the {{ cookiecutter.short_name }} code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
+To make the {{ cookiecutter.name }} code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
 
 ### Adding a new step
 
@@ -87,9 +87,9 @@ Once there, use `nf-core schema build .` to add to `nextflow_schema.json`.
 
 ### Default processes resource requirements
 
-Sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A nf-core standard set of labels that should be followed where possible can be seen in [nf-core/rnaseq](https://github.com/nf-core/rnaseq/blob/master/conf/base.config), which has the default process as a single core-process, and then different levels of multi-core configurations for increasingly large memory requirements defined with standardised labels.
+Sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A nf-core standard set of labels that should be followed where possible can be seen in the [nf-core pipeline template](https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/%7B%7Bcookiecutter.name_noslash%7D%7D/conf/base.config), which has the default process as a single core-process, and then different levels of multi-core configurations for increasingly large memory requirements defined with standardised labels.
 
-These can be utilised within the process itself using `${task.cpu}` or `${task.memory}` variables in the `script:` block.
+The process resources can be passed on to the tool dynamically within the process with the `${task.cpu}` and `${task.memory}` variables in the `script:` block.
 
 ### Naming schemes
 
@@ -100,7 +100,7 @@ Please use the following naming schemes, to make it easy to understand what is g
 
 ### Nextflow version bumping
 
-If you have agreement from reviewers, you may bump the 'default' minimum version of nextflow (e.g. for testing), with: `nf-core bump-version --nextflow . [min-nf-version]`
+If you are using a new feature from core Nextflow, you may bump the minimum required version of nextflow in the pipeline with: `nf-core bump-version --nextflow . [min-nf-version]`
 
 ### Software version reporting
 
@@ -118,10 +118,10 @@ or
 <YOUR_TOOL> --help | head -n 1 &> v_<YOUR_TOOL>.txt 2>&1 || true
 ```
 
-You then need to edit the script `bin/scrape_software_versions.py` to
+You then need to edit the script `bin/scrape_software_versions.py` to:
 
-1. add a (python) regex for your tools --version output (as in stored in the `v_<YOUR_TOOL>.txt` file), to ensure the version is reported as a `v` and the version number e.g. `v2.1.1`
-2. add a HTML block entry to the `OrderedDict` for formatting in MultiQC.
+1. Add a Python regex for your tool's `--version` output (as in stored in the `v_<YOUR_TOOL>.txt` file), to ensure the version is reported as a `v` and the version number e.g. `v2.1.1`
+2. Add a HTML entry to the `OrderedDict` for formatting in MultiQC.
 
 ### Images and figures
 
