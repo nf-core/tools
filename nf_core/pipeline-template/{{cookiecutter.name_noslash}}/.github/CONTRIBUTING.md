@@ -87,8 +87,7 @@ Once there, use `nf-core schema build .` to add to `nextflow_schema.json`.
 
 ### Default processes resource requirements
 
-Sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A nf-core standard set of labels that should be followed where possible can be seen in [nf-core/rnaseq](https://github.com/nf-core/rnaseq/), where the base config has the process default as a single core-process, and then different levels of multi-core jobs for increasingly large memory requirements defined with standard labels.
-Process specific requirements (i.e. outside of generic labels), can be specified with the `withName:` selector (such as in [nf-core/eager](https://github.com/nf-core/eager/)).
+Sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A nf-core standard set of labels that should be followed where possible can be seen in [nf-core/rnaseq](https://github.com/nf-core/rnaseq/blob/master/conf/base.config), which has the default process as a single core-process, and then different levels of multi-core configurations for increasingly large memory requirements defined with standardised labels.
 
 These can be utilised within the process itself using `${task.cpu}` or `${task.memory}` variables in the `script:` block.
 
