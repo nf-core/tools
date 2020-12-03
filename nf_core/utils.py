@@ -68,9 +68,12 @@ def fetch_wf_config(wf_path):
     cache_basedir = None
     cache_path = None
 
+    # Nextflow home directory - use env var if set, or default to ~/.nextflow
+    nxf_home = os.environ.get("NXF_HOME", os.path.join(os.getenv("HOME"), ".nextflow"))
+
     # Build a cache directory if we can
-    if os.path.isdir(os.path.join(os.getenv("HOME"), ".nextflow")):
-        cache_basedir = os.path.join(os.getenv("HOME"), ".nextflow", "nf-core")
+    if os.path.isdir(nxf_home):
+        cache_basedir = os.path.join(nxf_home, "nf-core")
         if not os.path.isdir(cache_basedir):
             os.mkdir(cache_basedir)
 

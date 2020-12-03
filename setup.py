@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 import sys
 
-version = "1.12"
+version = "1.12.1"
 
 with open("README.md") as f:
     readme = f.read()
@@ -36,7 +36,8 @@ setup(
         "GitPython",
         "jinja2",
         "jsonschema",
-        "PyInquirer==1.0.2",
+        "questionary>=1.8.0",
+        "prompt_toolkit>=3.0.3",
         "pyyaml",
         "requests",
         "requests_cache",
