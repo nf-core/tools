@@ -6,6 +6,8 @@
 
 * Finished switch from `$baseDir` to `$projectDir` in `iGenomes.conf` and `main.nf`
   * Main fix is for `smail_fields` which was a bug introduced in the previous release. Sorry about that!
+* Ported a number of small content tweaks from nf-core/eager to the template [[#786](https://github.com/nf-core/tools/issues/786)]
+  * Better contributing documentation, more placeholders in documentation files, more relaxed markdownlint exceptions for certain HTML tags, more content for the PR and issue templates.
 
 ### Tools helper code
 
