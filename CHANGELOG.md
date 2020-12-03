@@ -1,23 +1,20 @@
 # nf-core/tools: Changelog
 
-## v1.13dev
+## [v1.12.1 - Silver Dolphin](https://github.com/nf-core/tools/releases/tag/1.12.1) - [2020-12-03]
 
-* Swapped PyInquirer with questionary for command line questions in `launch.py` [[#726](https://github.com/nf-core/tools/issues/726)]
-  * This should fix conda installation issues that some people had been hitting
-  * The change also allows other improvements to the UI
+### Template
+
+* Finished switch from `$baseDir` to `$projectDir` in `iGenomes.conf` and `main.nf`
+  * Main fix is for `smail_fields` which was a bug introduced in the previous release. Sorry about that!
 
 ### Tools helper code
 
 * Pipeline schema: make parameters of type `range` to `number`. [[#738](https://github.com/nf-core/tools/issues/738)]
 * Respect `$NXF_HOME` when looking for pipelines with `nf-core list` [[#798](https://github.com/nf-core/tools/issues/798)]
-
-### Template
-
-### Linting
-
+* Swapped PyInquirer with questionary for command line questions in `launch.py` [[#726](https://github.com/nf-core/tools/issues/726)]
+  * This should fix conda installation issues that some people had been hitting
+  * The change also allows other improvements to the UI
 * Fix linting crash when a file deleted but not yet staged in git [[#796](https://github.com/nf-core/tools/issues/796)]
-
-### Other
 
 ## [v1.12 - Mercury Weasel](https://github.com/nf-core/tools/releases/tag/1.12) - [2020-11-19]
 
