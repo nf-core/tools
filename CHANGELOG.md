@@ -15,6 +15,8 @@
 
 ### Linting
 
+* Fix linting crash when a file deleted but not yet staged in git [[#796](https://github.com/nf-core/tools/issues/796)]
+
 ### Other
 
 ## [v1.12 - Mercury Weasel](https://github.com/nf-core/tools/releases/tag/1.12) - [2020-11-19]

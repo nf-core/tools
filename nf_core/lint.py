@@ -239,7 +239,7 @@ class PipelineLint(object):
                 log.debug("Running lint test: {}".format(fun_name))
                 getattr(self, fun_name)()
                 if len(self.failed) > 0:
-                    log.error("Found test failures in `{}`, halting lint run.".format(fun_name))
+                    log.critical("Found test failures in `{}`, halting lint run.".format(fun_name))
                     break
 
     def check_files_exist(self):
@@ -1241,17 +1241,25 @@ class PipelineLint(object):
         num_files = 0
         for fn in list_of_files:
             num_files += 1
-            with io.open(fn, "r", encoding="latin1") as fh:
-                lnum = 0
-                for l in fh:
-                    lnum += 1
-                    cc_matches = re.findall(r"{{\s*cookiecutter[^}]*}}", l)
-                    if len(cc_matches) > 0:
-                        for cc_match in cc_matches:
-                            self.failed.append(
-                                (13, "Found a cookiecutter template string in `{}` L{}: {}".format(fn, lnum, cc_match))
-                            )
-                            num_matches += 1
+            try:
+                with io.open(fn, "r", encoding="latin1") as fh:
+                    lnum = 0
+                    for l in fh:
+                        lnum += 1
+                        cc_matches = re.findall(r"{{\s*cookiecutter[^}]*}}", l)
+                        if len(cc_matches) > 0:
+                            for cc_match in cc_matches:
+                                self.failed.append(
+                                    (
+                                        13,
+                                        "Found a cookiecutter template string in `{}` L{}: {}".format(
+                                            fn, lnum, cc_match
+                                        ),
+                                    )
+                                )
+                                num_matches += 1
+            except FileNotFoundError as e:
+                log.warn("`git ls-files` returned '{}' but could not open it!".format(fn))
         if num_matches == 0:
             self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
 
