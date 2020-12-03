@@ -1,5 +1,9 @@
 # nf-core/tools: Changelog
 
+## v1.13dev
+
+_..nothing yet.._
+
 ## [v1.12.1 - Silver Dolphin](https://github.com/nf-core/tools/releases/tag/1.12.1) - [2020-12-03]
 
 ### Template
