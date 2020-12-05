@@ -25,7 +25,6 @@ def version_consistency(self):
         failed.append(
             "Docker slug seems not to have a version tag: {}".format(self.config.get("process.container", ""))
         )
-        return
 
     # Get config container slugs, (if set; one container per workflow)
     if self.config.get("process.container", ""):
@@ -44,7 +43,6 @@ def version_consistency(self):
     for v_type, version in versions.items():
         if not version.replace(".", "").isdigit():
             failed.append("{} was not numeric: {}!".format(v_type, version))
-            return
 
     # Check if they are consistent
     if len(set(versions.values())) != 1:
@@ -52,7 +50,6 @@ def version_consistency(self):
             "The versioning is not consistent between container, release tag "
             "and config. Found {}".format(", ".join(["{} = {}".format(k, v) for k, v in versions.items()]))
         )
-        return
 
     passed.append("Version tags are numeric and consistent between container, release tag and config.")
 

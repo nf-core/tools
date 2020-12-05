@@ -16,6 +16,7 @@ import os
 import re
 import rich
 import rich.progress
+import subprocess
 import textwrap
 import yaml
 
@@ -41,11 +42,11 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
     # Create the lint object
     lint_obj = PipelineLint(pipeline_dir, release_mode)
 
-    # Load the pipeline lint config, if there is one
-    lint_obj._parse_lint_config()
-
-    # Parse the pipeline Nextflow config
-    lint_obj._get_pipeline_config()
+    # Load the various pipeline configs
+    lint_obj._load_lint_config()
+    lint_obj._load_pipeline_config()
+    lint_obj._load_conda_environment()
+    lint_obj._list_files()
 
     # Run the linting tests
     try:
@@ -89,7 +90,6 @@ class PipelineLint(object):
         conda_config (dict): The parsed conda configuration file content (`environment.yml`).
         conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
         config (dict): The Nextflow pipeline configuration file content.
-        dockerfile (list): A list of lines (str) from the parsed Dockerfile.
         failed (list): A list of tuples of the form: `(<test-name>, <reason>)`
         files (list): A list of files found during the linting process.
         git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
@@ -163,7 +163,6 @@ class PipelineLint(object):
         self.conda_config = {}
         self.conda_package_info = {}
         self.config = {}
-        self.dockerfile = []
         self.failed = []
         self.files = []
         self.git_sha = None
@@ -210,7 +209,7 @@ class PipelineLint(object):
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
             self.git_sha = os.environ["GITHUB_PR_COMMIT"]
 
-    def _parse_lint_config(self):
+    def _load_lint_config(self):
         """Parse a pipeline lint config file.
 
         Look for a file called either `.nf-core-lint.yml` or
@@ -237,9 +236,34 @@ class PipelineLint(object):
             if k not in self.lint_tests:
                 log.warn("Found unrecognised test name '{}' in pipeline lint config".format(k))
 
-    def _get_pipeline_config(self):
+    def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline"""
         self.config = nf_core.utils.fetch_wf_config(self.path)
+
+    def _load_conda_environment(self):
+        """Try to load the pipeline environment.yml file, if it exists"""
+        try:
+            with open(os.path.join(self.path, "environment.yml"), "r") as fh:
+                self.conda_config = yaml.safe_load(fh)
+        except FileNotFoundError:
+            log.debug("No conda environment.yml file found.")
+
+    def _list_files(self):
+        """Get a list of all files in the pipeline"""
+        try:
+            # First, try to get the list of files using git
+            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.path).splitlines()
+            self.files = [os.path.join(self.path, s.decode("utf-8")) for s in git_ls_files]
+        except subprocess.CalledProcessError as e:
+            # Failed, so probably not initialised as a git repository - just a list of all files
+            log.debug("Couldn't call 'git ls-files': {}".format(e))
+            self.files = []
+            for subdir, dirs, files in os.walk(self.path):
+                for fn in files:
+                    if os.path.isfile(fn):
+                        self.files.append(os.path.join(subdir, fn))
+                    else:
+                        log.warn("`git ls-files` returned '{}' but could not open it!".format(fn))
 
     def _lint_pipeline(self):
         """Main linting function.

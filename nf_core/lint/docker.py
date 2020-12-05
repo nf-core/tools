@@ -10,15 +10,13 @@ def docker(self):
     failed = []
 
     if "Dockerfile" in self.files:
-        fn = os.path.join(self.path, "Dockerfile")
-        content = ""
-        with open(fn, "r") as fh:
-            content = fh.read()
+        with open(os.path.join(self.path, "Dockerfile"), "r") as fh:
+            dockerfile_contents = fh.read()
 
         # Implicitly also checks if empty.
-        if "FROM " in content:
+        if "FROM " in dockerfile_contents:
             passed.append("Dockerfile check passed")
-            self.dockerfile = [line.strip() for line in content.splitlines()]
         else:
             failed.append("Dockerfile check failed")
+
     return {"passed": passed, "warned": warned, "failed": failed}

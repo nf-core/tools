@@ -9,6 +9,7 @@ def files_exist(self):
 
     Iterates through the pipeline's directory content and checkmarks files
     for presence.
+
     Files that **must** be present::
 
         'nextflow.config',
@@ -96,7 +97,6 @@ def files_exist(self):
     for files in files_fail:
         if any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
-            self.files.extend(files)
         else:
             failed.append("File not found: {}".format(self._wrap_quotes(files)))
 
@@ -104,7 +104,6 @@ def files_exist(self):
     for files in files_warn:
         if any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
-            self.files.extend(files)
         else:
             warned.append("File not found: {}".format(self._wrap_quotes(files)))
 
@@ -121,10 +120,5 @@ def files_exist(self):
             warned.append("File should be removed: {}".format(self._wrap_quotes(file)))
         else:
             passed.append("File not found check: {}".format(self._wrap_quotes(file)))
-
-    # Load and parse files for later
-    if "environment.yml" in self.files:
-        with open(os.path.join(self.path, "environment.yml"), "r") as fh:
-            self.conda_config = yaml.safe_load(fh)
 
     return {"passed": passed, "warned": warned, "failed": failed}

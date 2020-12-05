@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+import logging
+
+log = logging.getLogger(__name__)
+
 
 def conda_dockerfile(self):
     """Checks the Docker build file.
@@ -13,8 +17,9 @@ def conda_dockerfile(self):
     warned = []
     failed = []
 
-    if "environment.yml" not in self.files or "Dockerfile" not in self.files or len(self.dockerfile) == 0:
-        return
+    if "environment.yml" not in self.files or "Dockerfile" not in self.files:
+        log.debug("No environment.yml / Dockerfile file found - skipping conda_dockerfile test")
+        return {"passed": passed, "warned": warned, "failed": failed}
 
     expected_strings = [
         "COPY environment.yml /",
@@ -26,7 +31,10 @@ def conda_dockerfile(self):
     if "dev" not in self.version:
         expected_strings.append("FROM nfcore/base:{}".format(self.version))
 
-    difference = set(expected_strings) - set(self.dockerfile)
+    with open(os.path.join(self.path, "Dockerfile"), "r") as fh:
+        dockerfile_contents = fh.read()
+
+    difference = set(expected_strings) - set(dockerfile_contents)
     if not difference:
         passed.append("Found all expected strings in Dockerfile file")
     else:

@@ -11,6 +11,8 @@ nf_core.utils.setup_requests_cachedir()
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
+log = logging.getLogger(__name__)
+
 
 def conda_env_yaml(self):
     """Checks that the conda environment file is valid.
@@ -25,7 +27,8 @@ def conda_env_yaml(self):
     failed = []
 
     if "environment.yml" not in self.files:
-        return
+        log.debug("No environment.yml file found - skipping conda_env_yaml test")
+        return {"passed": passed, "warned": warned, "failed": failed}
 
     # Check that the environment name matches the pipeline name
     pipeline_version = self.config.get("manifest.version", "").strip(" '\"")
@@ -53,8 +56,10 @@ def conda_env_yaml(self):
                 try:
                     depname, depver = dep.split("=")[:2]
                     self._anaconda_package(dep)
-                except ValueError:
-                    pass
+                except LookupError as e:
+                    warned.append(e)
+                except ValueError as e:
+                    failed.append(e)
                 else:
                     # Check that required version is available at all
                     if depver not in self.conda_package_info[dep].get("versions"):
@@ -80,8 +85,10 @@ def conda_env_yaml(self):
                     try:
                         pip_depname, pip_depver = pip_dep.split("==", 1)
                         self._pip_package(pip_dep)
-                    except ValueError:
-                        pass
+                    except LookupError as e:
+                        warned.append(e)
+                    except ValueError as e:
+                        failed.append(e)
                     else:
                         # Check, if PyPi package version is available at all
                         if pip_depver not in self.conda_package_info[pip_dep].get("releases").keys():
@@ -107,11 +114,9 @@ def _anaconda_package(self, dep):
         dep (str): A conda package name.
 
     Raises:
-        A ValueError, if the package name can not be resolved.
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
     """
-    passed = []
-    warned = []
-    failed = []
 
     # Check if each dependency is the latest available version
     depname, depver = dep.split("=", 1)
@@ -128,31 +133,24 @@ def _anaconda_package(self, dep):
         try:
             response = requests.get(anaconda_api_url, timeout=10)
         except (requests.exceptions.Timeout):
-            warned.append("Anaconda API timed out: {}".format(anaconda_api_url))
-            raise ValueError
+            raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
         except (requests.exceptions.ConnectionError):
-            warned.append("Could not connect to Anaconda API")
-            raise ValueError
+            raise LookupError("Could not connect to Anaconda API")
         else:
             if response.status_code == 200:
                 dep_json = response.json()
                 self.conda_package_info[dep] = dep_json
-                return
             elif response.status_code != 404:
-                warned.append(
+                raise LookupError(
                     "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
                         response.status_code, anaconda_api_url, response
                     )
                 )
-                raise ValueError
             elif response.status_code == 404:
                 log.debug("Could not find {} in conda channel {}".format(dep, ch))
     else:
         # We have looped through each channel and had a 404 response code on everything
-        failed.append("Could not find Conda dependency using the Anaconda API: {}".format(dep))
-        raise ValueError
-
-    return {"passed": passed, "warned": warned, "failed": failed}
+        raise ValueError("Could not find Conda dependency using the Anaconda API: {}".format(dep))
 
 
 def _pip_package(self, dep):
@@ -164,28 +162,20 @@ def _pip_package(self, dep):
         dep (str): A PyPi package name.
 
     Raises:
-        A ValueError, if the package name can not be resolved or the connection timed out.
+        A LookupError, if the connection fails or times out
+        A ValueError, if the package name can not be found
     """
-    passed = []
-    warned = []
-    failed = []
-
     pip_depname, pip_depver = dep.split("=", 1)
     pip_api_url = "https://pypi.python.org/pypi/{}/json".format(pip_depname)
     try:
         response = requests.get(pip_api_url, timeout=10)
     except (requests.exceptions.Timeout):
-        warned.append("PyPi API timed out: {}".format(pip_api_url))
-        raise ValueError
+        raise LookupError("PyPi API timed out: {}".format(pip_api_url))
     except (requests.exceptions.ConnectionError):
-        warned.append("PyPi API Connection error: {}".format(pip_api_url))
-        raise ValueError
+        raise LookupError("PyPi API Connection error: {}".format(pip_api_url))
     else:
         if response.status_code == 200:
             pip_dep_json = response.json()
             self.conda_package_info[dep] = pip_dep_json
         else:
-            failed.append("Could not find pip dependency using the PyPi API: {}".format(dep))
-            raise ValueError
-
-    return {"passed": passed, "warned": warned, "failed": failed}
+            raise ValueError("Could not find pip dependency using the PyPi API: {}".format(dep))
