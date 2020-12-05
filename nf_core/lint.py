@@ -54,11 +54,14 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir)
+    lint_obj = PipelineLint(pipeline_dir, release_mode)
+
+    # Load the pipeline lint config, if there is one
+    lint_obj.parse_lint_config()
 
     # Run the linting tests
     try:
-        lint_obj.lint_pipeline(release_mode)
+        lint_obj.lint_pipeline()
     except AssertionError as e:
         log.critical("Critical error: {}".format(e))
         log.info("Stopping tests...")
@@ -102,6 +105,7 @@ class PipelineLint(object):
         failed (list): A list of tuples of the form: `(<error no>, <reason>)`
         files (list): A list of files found during the linting process.
         git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
+        lint_config (dict): The parsed nf-core linting config for this pipeline
         minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
         passed (list): A list of tuples of the form: `(<passed no>, <reason>)`
         path (str): Path to the pipeline directory.
@@ -146,7 +150,7 @@ class PipelineLint(object):
             ...
     """
 
-    def __init__(self, path):
+    def __init__(self, path, release_mode=False):
         """ Initialise linting object """
         self.conda_config = {}
         self.conda_package_info = {}
@@ -155,6 +159,7 @@ class PipelineLint(object):
         self.failed = []
         self.files = []
         self.git_sha = None
+        self.lint_config = {}
         self.minNextflowVersion = None
         self.passed = []
         self.path = path
@@ -163,6 +168,28 @@ class PipelineLint(object):
         self.schema_obj = None
         self.version = nf_core.__version__
         self.warned = []
+
+        self.lint_tests = [
+            "files_exist",
+            "licence",
+            "docker",
+            "nextflow_config",
+            "actions_branch_protection",
+            "actions_ci",
+            "actions_lint",
+            "actions_awstest",
+            "actions_awsfulltest",
+            "readme",
+            "conda_env_yaml",
+            "conda_dockerfile",
+            "pipeline_todos",
+            "pipeline_name_conventions",
+            "cookiecutter_strings",
+            "schema_lint",
+            "schema_params",
+        ]
+        if self.release_mode:
+            self.lint_tests.extend(["version_consistency"])
 
         try:
             repo = git.Repo(self.path)
@@ -174,7 +201,34 @@ class PipelineLint(object):
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
             self.git_sha = os.environ["GITHUB_PR_COMMIT"]
 
-    def lint_pipeline(self, release_mode=False):
+    def parse_lint_config(self):
+        """Parse a pipeline lint config file.
+
+        Look for a file called either `.nf-core-lint-config.yml` or
+        `.nf-core-lint-config.yaml` in the pipeline root directory and parse it.
+        (`.yml` takes precedence).
+
+        Add parsed config to the `self.lint_config` class attribute.
+        """
+        config_fn = os.path.join(self.path, ".nf-core-lint-config.yml")
+
+        # Pick up the file if it's .yaml instead of .yml
+        if not os.path.isfile(config_fn):
+            config_fn = os.path.join(self.path, ".nf-core-lint-config.yaml")
+
+        # Load the YAML
+        try:
+            with open(config_fn, "r") as fh:
+                self.lint_config = yaml.safe_load(fh)
+        except FileNotFoundError:
+            log.debug("No lint config file found: {}".format(config_fn))
+
+        # Check if we have any keys that don't match lint test names
+        for k in self.lint_config:
+            if k not in self.lint_tests:
+                log.warn("Found unrecognised test name '{}' in pipeline lint config".format(k))
+
+    def lint_pipeline(self):
         """Main linting function.
 
         Takes the pipeline directory as the primary input and iterates through
@@ -205,28 +259,6 @@ class PipelineLint(object):
         log.info("Testing pipeline: [magenta]{}".format(self.path))
         if self.release_mode:
             log.info("Including --release mode tests")
-        lint_functions = [
-            "files_exist",
-            "licence",
-            "docker",
-            "nextflow_config",
-            "actions_branch_protection",
-            "actions_ci",
-            "actions_lint",
-            "actions_awstest",
-            "actions_awsfulltest",
-            "readme",
-            "conda_env_yaml",
-            "conda_dockerfile",
-            "pipeline_todos",
-            "pipeline_name_conventions",
-            "cookiecutter_strings",
-            "schema_lint",
-            "schema_params",
-        ]
-        if release_mode:
-            self.release_mode = True
-            lint_functions.extend(["version_consistency"])
 
         progress = rich.progress.Progress(
             "[bold blue]{task.description}",
@@ -236,9 +268,9 @@ class PipelineLint(object):
         )
         with progress:
             lint_progress = progress.add_task(
-                "Running lint checks", total=len(lint_functions), func_name=lint_functions[0]
+                "Running lint checks", total=len(self.lint_tests), func_name=self.lint_tests[0]
             )
-            for fun_name in lint_functions:
+            for fun_name in self.lint_tests:
                 progress.update(lint_progress, advance=1, func_name=fun_name)
                 log.debug("Running lint test: {}".format(fun_name))
                 test_results = getattr(self, fun_name)()
