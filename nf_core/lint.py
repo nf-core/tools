@@ -271,6 +271,9 @@ class PipelineLint(object):
                 "Running lint checks", total=len(self.lint_tests), func_name=self.lint_tests[0]
             )
             for fun_name in self.lint_tests:
+                if self.lint_config.get(fun_name) is False:
+                    log.warn("Skipping lint test '{}'".format(fun_name))
+                    continue
                 progress.update(lint_progress, advance=1, func_name=fun_name)
                 log.debug("Running lint test: {}".format(fun_name))
                 test_results = getattr(self, fun_name)()
