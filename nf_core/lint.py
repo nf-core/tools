@@ -204,17 +204,17 @@ class PipelineLint(object):
     def parse_lint_config(self):
         """Parse a pipeline lint config file.
 
-        Look for a file called either `.nf-core-lint-config.yml` or
-        `.nf-core-lint-config.yaml` in the pipeline root directory and parse it.
+        Look for a file called either `.nf-core-lint.yml` or
+        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
         (`.yml` takes precedence).
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        config_fn = os.path.join(self.path, ".nf-core-lint-config.yml")
+        config_fn = os.path.join(self.path, ".nf-core-lint.yml")
 
         # Pick up the file if it's .yaml instead of .yml
         if not os.path.isfile(config_fn):
-            config_fn = os.path.join(self.path, ".nf-core-lint-config.yaml")
+            config_fn = os.path.join(self.path, ".nf-core-lint.yaml")
 
         # Load the YAML
         try:
