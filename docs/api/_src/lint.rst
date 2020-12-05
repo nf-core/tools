@@ -5,7 +5,9 @@ nf_core.lint
 
 .. automodule:: nf_core.lint
     :members: run_linting
-    :undoc-members:
     :show-inheritance:
 
 .. autoclass:: nf_core.lint.PipelineLint
+    :members: lint_pipeline
+    :private-members: _print_results, _get_results_md, _save_json_results, _wrap_quotes, _strip_ansi_codes
+    :show-inheritance:

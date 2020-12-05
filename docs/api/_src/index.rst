@@ -13,7 +13,7 @@ Welcome to nf-core tools API documentation!
    :glob:
 
    *
-   lint_tests/
+   lint_tests/index.rst
 
 
 Indices and tables
