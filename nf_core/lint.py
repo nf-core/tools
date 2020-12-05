@@ -88,7 +88,8 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
 
 class PipelineLint(object):
     """Object to hold linting information and results.
-    All objects attributes are set, after the :func:`PipelineLint.lint_pipeline` function was called.
+
+    Use the :func:`PipelineLint.lint_pipeline` function to run lint tests.
 
     Args:
         path (str): The path to the nf-core pipeline directory.
@@ -100,11 +101,14 @@ class PipelineLint(object):
         dockerfile (list): A list of lines (str) from the parsed Dockerfile.
         failed (list): A list of tuples of the form: `(<error no>, <reason>)`
         files (list): A list of files found during the linting process.
+        git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
         minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
         passed (list): A list of tuples of the form: `(<passed no>, <reason>)`
         path (str): Path to the pipeline directory.
         pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
         release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
+        schema_obj (obj): A :class:`PipelineSchema` object
+        version (str): The version number of nf-core/tools (to allow modification for testing)
         warned (list): A list of tuples of the form: `(<warned no>, <reason>)`
 
     **Attribute specifications**
@@ -144,21 +148,21 @@ class PipelineLint(object):
 
     def __init__(self, path):
         """ Initialise linting object """
-        self.release_mode = False
-        self.version = nf_core.__version__
-        self.path = path
-        self.git_sha = None
-        self.files = []
-        self.config = {}
-        self.pipeline_name = None
-        self.minNextflowVersion = None
-        self.dockerfile = []
         self.conda_config = {}
         self.conda_package_info = {}
-        self.schema_obj = None
-        self.passed = []
-        self.warned = []
+        self.config = {}
+        self.dockerfile = []
         self.failed = []
+        self.files = []
+        self.git_sha = None
+        self.minNextflowVersion = None
+        self.passed = []
+        self.path = path
+        self.pipeline_name = None
+        self.release_mode = False
+        self.schema_obj = None
+        self.version = nf_core.__version__
+        self.warned = []
 
         try:
             repo = git.Repo(self.path)
@@ -201,28 +205,28 @@ class PipelineLint(object):
         log.info("Testing pipeline: [magenta]{}".format(self.path))
         if self.release_mode:
             log.info("Including --release mode tests")
-        check_functions = [
-            "check_files_exist",
-            "check_licence",
-            "check_docker",
-            "check_nextflow_config",
-            "check_actions_branch_protection",
-            "check_actions_ci",
-            "check_actions_lint",
-            "check_actions_awstest",
-            "check_actions_awsfulltest",
-            "check_readme",
-            "check_conda_env_yaml",
-            "check_conda_dockerfile",
-            "check_pipeline_todos",
-            "check_pipeline_name",
-            "check_cookiecutter_strings",
-            "check_schema_lint",
-            "check_schema_params",
+        lint_functions = [
+            "files_exist",
+            "licence",
+            "docker",
+            "nextflow_config",
+            "actions_branch_protection",
+            "actions_ci",
+            "actions_lint",
+            "actions_awstest",
+            "actions_awsfulltest",
+            "readme",
+            "conda_env_yaml",
+            "conda_dockerfile",
+            "pipeline_todos",
+            "pipeline_name_conventions",
+            "cookiecutter_strings",
+            "schema_lint",
+            "schema_params",
         ]
         if release_mode:
             self.release_mode = True
-            check_functions.extend(["check_version_consistency"])
+            lint_functions.extend(["version_consistency"])
 
         progress = rich.progress.Progress(
             "[bold blue]{task.description}",
@@ -232,9 +236,9 @@ class PipelineLint(object):
         )
         with progress:
             lint_progress = progress.add_task(
-                "Running lint checks", total=len(check_functions), func_name=check_functions[0]
+                "Running lint checks", total=len(lint_functions), func_name=lint_functions[0]
             )
-            for fun_name in check_functions:
+            for fun_name in lint_functions:
                 progress.update(lint_progress, advance=1, func_name=fun_name)
                 log.debug("Running lint test: {}".format(fun_name))
                 getattr(self, fun_name)()
@@ -242,7 +246,7 @@ class PipelineLint(object):
                     log.critical("Found test failures in `{}`, halting lint run.".format(fun_name))
                     break
 
-    def check_files_exist(self):
+    def files_exist(self):
         """Checks a given pipeline directory for required files.
 
         Iterates through the pipeline's directory content and checkmarks files
@@ -361,7 +365,7 @@ class PipelineLint(object):
             with open(os.path.join(self.path, "environment.yml"), "r") as fh:
                 self.conda_config = yaml.safe_load(fh)
 
-    def check_docker(self):
+    def docker(self):
         """Checks that Dockerfile contains the string ``FROM``."""
         if "Dockerfile" not in self.files:
             return
@@ -379,7 +383,7 @@ class PipelineLint(object):
 
         self.failed.append((2, "Dockerfile check failed"))
 
-    def check_licence(self):
+    def licence(self):
         """Checks licence file is MIT.
 
         Currently the checkpoints are:
@@ -422,7 +426,7 @@ class PipelineLint(object):
 
         self.failed.append((3, "Couldn't find MIT licence file"))
 
-    def check_nextflow_config(self):
+    def nextflow_config(self):
         """Checks a given pipeline for required config variables.
 
         At least one string in each list must be present for fail and warn.
@@ -635,7 +639,7 @@ class PipelineLint(object):
                     )
                 )
 
-    def check_actions_branch_protection(self):
+    def actions_branch_protection(self):
         """Checks that the GitHub Actions branch protection workflow is valid.
 
         Makes sure PRs can only come from nf-core dev or 'patch' of a fork.
@@ -687,7 +691,7 @@ class PipelineLint(object):
                     )
                 )
 
-    def check_actions_ci(self):
+    def actions_ci(self):
         """Checks that the GitHub Actions CI workflow is valid
 
         Makes sure tests run with the required nextflow version.
@@ -767,7 +771,7 @@ class PipelineLint(object):
             else:
                 self.passed.append((5, "Continuous integration checks minimum NF version: `{}`".format(fn)))
 
-    def check_actions_lint(self):
+    def actions_lint(self):
         """Checks that the GitHub Actions lint workflow is valid
 
         Makes sure ``nf-core lint`` and ``markdownlint`` runs.
@@ -808,7 +812,7 @@ class PipelineLint(object):
             else:
                 self.passed.append((5, "Continuous integration runs nf-core lint Tests: `{}`".format(fn)))
 
-    def check_actions_awstest(self):
+    def actions_awstest(self):
         """Checks the GitHub Actions awstest is valid.
 
         Makes sure it is triggered only on ``push`` to ``master``.
@@ -835,7 +839,7 @@ class PipelineLint(object):
             else:
                 self.passed.append((5, "GitHub Actions AWS test is triggered on workflow_dispatch: `{}`".format(fn)))
 
-    def check_actions_awsfulltest(self):
+    def actions_awsfulltest(self):
         """Checks the GitHub Actions awsfulltest is valid.
 
         Makes sure it is triggered only on ``release`` and workflow_dispatch.
@@ -881,7 +885,7 @@ class PipelineLint(object):
             else:
                 self.warned.append((5, "GitHub Actions AWS full test should test full datasets: `{}`".format(fn)))
 
-    def check_readme(self):
+    def readme(self):
         """Checks the repository README file for errors.
 
         Currently just checks the badges at the top of the README.
@@ -926,7 +930,7 @@ class PipelineLint(object):
             else:
                 self.warned.append((6, "Found a bioconda environment.yml file but no badge in the README"))
 
-    def check_version_consistency(self):
+    def version_consistency(self):
         """Checks container tags versions.
 
         Runs on ``process.container`` (if set) and ``$GITHUB_REF`` (if a GitHub Actions release).
@@ -984,7 +988,7 @@ class PipelineLint(object):
 
         self.passed.append((7, "Version tags are numeric and consistent between container, release tag and config."))
 
-    def check_conda_env_yaml(self):
+    def conda_env_yaml(self):
         """Checks that the conda environment file is valid.
 
         Checks that:
@@ -1023,7 +1027,7 @@ class PipelineLint(object):
 
                     try:
                         depname, depver = dep.split("=")[:2]
-                        self.check_anaconda_package(dep)
+                        self.anaconda_package(dep)
                     except ValueError:
                         pass
                     else:
@@ -1050,7 +1054,7 @@ class PipelineLint(object):
 
                         try:
                             pip_depname, pip_depver = pip_dep.split("==", 1)
-                            self.check_pip_package(pip_dep)
+                            self.pip_package(pip_dep)
                         except ValueError:
                             pass
                         else:
@@ -1071,7 +1075,7 @@ class PipelineLint(object):
                             else:
                                 self.passed.append((8, "PyPi package is latest available: {}".format(pip_depver)))
 
-    def check_anaconda_package(self, dep):
+    def anaconda_package(self, dep):
         """Query conda package information.
 
         Sends a HTTP GET request to the Anaconda remote API.
@@ -1124,7 +1128,7 @@ class PipelineLint(object):
             self.failed.append((8, "Could not find Conda dependency using the Anaconda API: {}".format(dep)))
             raise ValueError
 
-    def check_pip_package(self, dep):
+    def pip_package(self, dep):
         """Query PyPi package information.
 
         Sends a HTTP GET request to the PyPi remote API.
@@ -1153,7 +1157,7 @@ class PipelineLint(object):
                 self.failed.append((8, "Could not find pip dependency using the PyPi API: {}".format(dep)))
                 raise ValueError
 
-    def check_conda_dockerfile(self):
+    def conda_dockerfile(self):
         """Checks the Docker build file.
 
         Checks that:
@@ -1181,7 +1185,7 @@ class PipelineLint(object):
             for missing in difference:
                 self.failed.append((9, "Could not find Dockerfile file string: {}".format(missing)))
 
-    def check_pipeline_todos(self):
+    def pipeline_todos(self):
         """ Go through all template files looking for the string 'TODO nf-core:' """
         ignore = [".git"]
         if os.path.isfile(os.path.join(self.path, ".gitignore")):
@@ -1207,7 +1211,7 @@ class PipelineLint(object):
                             )
                             self.warned.append((10, "TODO string in `{}`: _{}_".format(fname, l)))
 
-    def check_pipeline_name(self):
+    def pipeline_name_conventions(self):
         """Check whether pipeline name adheres to lower case/no hyphen naming convention"""
 
         if self.pipeline_name.islower() and self.pipeline_name.isalnum():
@@ -1219,7 +1223,7 @@ class PipelineLint(object):
                 (12, "Naming does not adhere to nf-core conventions: Contains non alphanumeric characters")
             )
 
-    def check_cookiecutter_strings(self):
+    def cookiecutter_strings(self):
         """
         Look for the string 'cookiecutter' in all pipeline files.
         Finding it probably means that there has been a copy+paste error from the template.
@@ -1263,7 +1267,7 @@ class PipelineLint(object):
         if num_matches == 0:
             self.passed.append((13, "Did not find any cookiecutter template strings ({} files)".format(num_files)))
 
-    def check_schema_lint(self):
+    def schema_lint(self):
         """ Lint the pipeline schema """
 
         # Only show error messages from schema
@@ -1286,7 +1290,7 @@ class PipelineLint(object):
             except AssertionError as e:
                 self.warned.append((14, e))
 
-    def check_schema_params(self):
+    def schema_params(self):
         """ Check that the schema describes all flat params in the pipeline """
 
         # First, get the top-level config options for the pipeline
