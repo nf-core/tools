@@ -102,12 +102,13 @@ class PipelineLint(object):
         conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
         config (dict): The Nextflow pipeline configuration file content.
         dockerfile (list): A list of lines (str) from the parsed Dockerfile.
-        failed (list): A list of tuples of the form: `(<error no>, <reason>)`
+        failed (list): A list of tuples of the form: `(<test-name>, <reason>)`
         files (list): A list of files found during the linting process.
         git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
+        ignored (list): A list of tuples of the form: `(<test-name>, <reason>)`
         lint_config (dict): The parsed nf-core linting config for this pipeline
         minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
-        passed (list): A list of tuples of the form: `(<passed no>, <reason>)`
+        passed (list): A list of tuples of the form: `(<test-name>, <reason>)`
         path (str): Path to the pipeline directory.
         pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
         release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
@@ -159,6 +160,7 @@ class PipelineLint(object):
         self.failed = []
         self.files = []
         self.git_sha = None
+        self.ignored = []
         self.lint_config = {}
         self.minNextflowVersion = None
         self.passed = []
@@ -272,7 +274,8 @@ class PipelineLint(object):
             )
             for fun_name in self.lint_tests:
                 if self.lint_config.get(fun_name) is False:
-                    log.warn("Skipping lint test '{}'".format(fun_name))
+                    log.debug("Skipping lint test '{}'".format(fun_name))
+                    self.ignored.append((fun_name, fun_name))
                     continue
                 progress.update(lint_progress, advance=1, func_name=fun_name)
                 log.debug("Running lint test: {}".format(fun_name))
@@ -1375,9 +1378,7 @@ class PipelineLint(object):
             string for the terminal with appropriate ASCII colours.
             """
             for eid, msg in test_results:
-                table.add_row(
-                    Markdown("[https://nf-co.re/errors#{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg))
-                )
+                table.add_row(Markdown("[{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg)))
             return table
 
         def _s(some_list):
@@ -1393,6 +1394,13 @@ class PipelineLint(object):
                 no_wrap=True,
             )
             table = format_result(self.passed, table)
+            console.print(table)
+
+        # Table of ignored tests
+        if len(self.ignored) > 0:
+            table = Table(style="grey58", box=rich.box.ROUNDED)
+            table.add_column(r"\[?] {} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True)
+            table = format_result(self.ignored, table)
             console.print(table)
 
         # Table of warning tests
@@ -1413,13 +1421,13 @@ class PipelineLint(object):
             console.print(table)
 
         # Summary table
-
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
         table.add_row(
             r"\[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
             style="green",
         )
+        table.add_row(r"\[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
         table.add_row(r"\[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row(r"\[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
@@ -1441,8 +1449,21 @@ class PipelineLint(object):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
                         for eid, msg in self.failed
+                    ]
+                )
+            )
+
+        test_ignored_count = ""
+        test_ignored = ""
+        if len(self.ignored) > 0:
+            test_ignored_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.ignored))
+            test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
+                "\n".join(
+                    [
+                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        for eid, msg in self.ignored
                     ]
                 )
             )
@@ -1454,20 +1475,20 @@ class PipelineLint(object):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
                         for eid, msg in self.warned
                     ]
                 )
             )
 
-        test_passe_count = ""
+        test_passed_count = ""
         test_passes = ""
         if len(self.passed) > 0:
             test_passed_count = "\n+| ✅ {:3d} tests passed       |+".format(len(self.passed))
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [Test #{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
                         for eid, msg in self.passed
                     ]
                 )
@@ -1481,12 +1502,12 @@ class PipelineLint(object):
 
         {}
 
-        ```diff{}{}{}
+        ```diff{}{}{}{}
         ```
 
         <details>
 
-        {}{}{}### Run details:
+        {}{}{}{}### Run details:
 
         * nf-core/tools version {}
         * Run at `{}`
@@ -1497,10 +1518,12 @@ class PipelineLint(object):
             overall_result,
             "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
             test_passed_count,
+            test_ignored_count,
             test_warning_count,
             test_failure_count,
             test_failures,
             test_warnings,
+            test_ignored,
             test_passes,
             nf_core.__version__,
             now.strftime("%Y-%m-%d %H:%M:%S"),
@@ -1519,9 +1542,11 @@ class PipelineLint(object):
             "nf_core_tools_version": nf_core.__version__,
             "date_run": now.strftime("%Y-%m-%d %H:%M:%S"),
             "tests_pass": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
+            "tests_ignored": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.ignored],
             "tests_warned": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
             "tests_failed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
             "num_tests_pass": len(self.passed),
+            "num_tests_ignored": len(self.ignored),
             "num_tests_warned": len(self.warned),
             "num_tests_failed": len(self.failed),
             "has_tests_pass": len(self.passed) > 0,
