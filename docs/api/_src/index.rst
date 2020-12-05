@@ -7,11 +7,13 @@ Welcome to nf-core tools API documentation!
 ===========================================
 
 .. toctree::
+   :hidden:
    :maxdepth: 2
    :caption: Contents:
    :glob:
 
    *
+   lint_tests/
 
 
 Indices and tables
