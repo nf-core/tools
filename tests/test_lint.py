@@ -77,24 +77,6 @@ class TestLint(unittest.TestCase):
         lint_obj._list_files()
         assert tmp_fn in lint_obj.files
 
-    def test_docker_fail(self):
-        """Tests for empty Dockerfile"""
-        # Create directory with a Dockerfile
-        tmpdir = tempfile.mkdtemp()
-        open(os.path.join(tmpdir, "Dockerfile"), "a").close()
-        lint_obj = nf_core.lint.PipelineLint(tmpdir)
-        lint_obj.files = ["Dockerfile"]
-        results = lint_obj.docker()
-        assert results["failed"] == ["Dockerfile check failed"]
-
-    def test_docker_pass(self):
-        """Tests for empty Dockerfile"""
-        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
-        lint_obj._list_files()
-        results = lint_obj.docker()
-        print(results)
-        assert results["passed"] == ["Dockerfile check passed"]
-
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
         lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)

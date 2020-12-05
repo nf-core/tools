@@ -140,7 +140,6 @@ class PipelineLint(object):
     """
 
     from .files_exist import files_exist
-    from .docker import docker
     from .licence import licence
     from .nextflow_config import nextflow_config
     from .actions_branch_protection import actions_branch_protection
@@ -180,7 +179,6 @@ class PipelineLint(object):
         self.lint_tests = [
             "files_exist",
             "licence",
-            "docker",
             "nextflow_config",
             "actions_branch_protection",
             "actions_ci",
