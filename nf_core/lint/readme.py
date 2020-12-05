@@ -40,7 +40,7 @@ def readme(self):
         warned.append("README did not have a Nextflow minimum version badge.")
 
     # Check that we have a bioconda badge if we have a bioconda environment file
-    if "environment.yml" in self.files:
+    if os.path.join(self.path, "environment.yml") in self.files:
         bioconda_badge = "[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)"
         if bioconda_badge in content:
             passed.append("README had a bioconda badge")

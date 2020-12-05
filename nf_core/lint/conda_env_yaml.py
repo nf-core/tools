@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import logging
+import os
 import requests
 import nf_core.utils
 
@@ -26,7 +27,7 @@ def conda_env_yaml(self):
     warned = []
     failed = []
 
-    if "environment.yml" not in self.files:
+    if os.path.join(self.path, "environment.yml") not in self.files:
         log.debug("No environment.yml file found - skipping conda_env_yaml test")
         return {"passed": passed, "warned": warned, "failed": failed}
 
@@ -140,6 +141,7 @@ def _anaconda_package(self, dep):
             if response.status_code == 200:
                 dep_json = response.json()
                 self.conda_package_info[dep] = dep_json
+                break
             elif response.status_code != 404:
                 raise LookupError(
                     "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
@@ -147,10 +149,12 @@ def _anaconda_package(self, dep):
                     )
                 )
             elif response.status_code == 404:
-                log.debug("Could not find {} in conda channel {}".format(dep, ch))
+                log.debug("Could not find `{}` in conda channel `{}`".format(dep, ch))
     else:
         # We have looped through each channel and had a 404 response code on everything
-        raise ValueError("Could not find Conda dependency using the Anaconda API: {}".format(dep))
+        raise ValueError(
+            "Could not find Conda dependency using the Anaconda API: `{}` (<{}>)".format(dep, anaconda_api_url)
+        )
 
 
 def _pip_package(self, dep):
@@ -178,4 +182,4 @@ def _pip_package(self, dep):
             pip_dep_json = response.json()
             self.conda_package_info[dep] = pip_dep_json
         else:
-            raise ValueError("Could not find pip dependency using the PyPi API: {}".format(dep))
+            raise ValueError("Could not find pip dependency using the PyPi API: `{}`".format(dep))

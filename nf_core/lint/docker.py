@@ -9,7 +9,7 @@ def docker(self):
     warned = []
     failed = []
 
-    if "Dockerfile" in self.files:
+    if os.path.join(self.path, "Dockerfile") in self.files:
         with open(os.path.join(self.path, "Dockerfile"), "r") as fh:
             dockerfile_contents = fh.read()
 

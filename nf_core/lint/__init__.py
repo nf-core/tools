@@ -70,7 +70,7 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
     if json_fn is not None:
         lint_obj._save_json_results(json_fn)
 
-    # Exit code
+    # Reminder about --release mode flag if we had failures
     if len(lint_obj.failed) > 0:
         if release_mode:
             log.info("Reminder: Lint tests were run in --release mode.")
@@ -172,7 +172,7 @@ class PipelineLint(object):
         self.passed = []
         self.path = path
         self.pipeline_name = None
-        self.release_mode = False
+        self.release_mode = release_mode
         self.schema_obj = None
         self.version = nf_core.__version__
         self.warned = []
@@ -234,7 +234,7 @@ class PipelineLint(object):
         # Check if we have any keys that don't match lint test names
         for k in self.lint_config:
             if k not in self.lint_tests:
-                log.warn("Found unrecognised test name '{}' in pipeline lint config".format(k))
+                log.warning("Found unrecognised test name '{}' in pipeline lint config".format(k))
 
     def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline"""
@@ -253,17 +253,20 @@ class PipelineLint(object):
         try:
             # First, try to get the list of files using git
             git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.path).splitlines()
-            self.files = [os.path.join(self.path, s.decode("utf-8")) for s in git_ls_files]
+            self.files = []
+            for fn in git_ls_files:
+                full_fn = os.path.join(self.path, fn.decode("utf-8"))
+                if os.path.isfile(full_fn):
+                    self.files.append(full_fn)
+                else:
+                    log.warning("`git ls-files` returned '{}' but could not open it!".format(full_fn))
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
             log.debug("Couldn't call 'git ls-files': {}".format(e))
             self.files = []
             for subdir, dirs, files in os.walk(self.path):
                 for fn in files:
-                    if os.path.isfile(fn):
-                        self.files.append(os.path.join(subdir, fn))
-                    else:
-                        log.warn("`git ls-files` returned '{}' but could not open it!".format(fn))
+                    self.files.append(os.path.join(subdir, fn))
 
     def _lint_pipeline(self):
         """Main linting function.
