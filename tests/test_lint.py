@@ -1,15 +1,5 @@
 #!/usr/bin/env python
 """Some tests covering the linting code.
-Provide example wokflow directory contents like:
-
-    --tests
-        |--lint_examples
-        |     |--missing_license
-        |     |     |...<files here>
-        |     |--missing_config
-        |     |     |....<files here>
-        |     |...
-        |--test_lint.py
 """
 import json
 import mock
@@ -19,91 +9,91 @@ import requests
 import tempfile
 import unittest
 import yaml
+import subprocess
 
+import nf_core.create
 import nf_core.lint
-
-
-def listfiles(path):
-    files_found = []
-    for (_, _, files) in os.walk(path):
-        files_found.extend(files)
-    return files_found
-
-
-def pf(wd, path):
-    return os.path.join(wd, path)
-
-
-WD = os.path.dirname(__file__)
-PATH_CRITICAL_EXAMPLE = pf(WD, "lint_examples/critical_example")
-PATH_FAILING_EXAMPLE = pf(WD, "lint_examples/failing_example")
-PATH_WORKING_EXAMPLE = pf(WD, "lint_examples/minimalworkingexample")
-PATH_MISSING_LICENSE_EXAMPLE = pf(WD, "lint_examples/missing_license_example")
-PATHS_WRONG_LICENSE_EXAMPLE = [
-    pf(WD, "lint_examples/wrong_license_example"),
-    pf(WD, "lint_examples/license_incomplete_example"),
-]
-
-# The maximum sum of passed tests currently possible
-MAX_PASS_CHECKS = 85
-# The additional tests passed for releases
-ADD_PASS_RELEASE = 1
-
-# The minimal working example expects a development release version
-if "dev" not in nf_core.__version__:
-    nf_core.__version__ = "{}dev".format(nf_core.__version__)
 
 
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
 
-    def assess_lint_status(self, lint_obj, **expected):
-        """Little helper function for assessing the lint
-        object status lists"""
-        for list_type, expect in expected.items():
-            observed = len(getattr(lint_obj, list_type))
-            oberved_list = yaml.safe_dump(getattr(lint_obj, list_type))
-            self.assertEqual(
-                observed,
-                expect,
-                "Expected {} tests in '{}', but found {}.\n{}".format(
-                    expect, list_type.upper(), observed, oberved_list
-                ),
-            )
+    def setUp(self):
+        """Use nf_core.create() to make a pipeline that we can use for testing"""
+        self.test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        create_obj = nf_core.create.PipelineCreate(
+            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
+        )
+        create_obj.init_pipeline()
 
-    def test_call_lint_pipeline_pass(self):
-        """Test the main execution function of PipelineLint (pass)
-        This should not result in any exception for the minimal
-        working example"""
-        old_nfcore_version = nf_core.__version__
-        nf_core.__version__ = "1.11"
-        lint_obj = nf_core.lint.run_linting(PATH_WORKING_EXAMPLE, False)
-        nf_core.__version__ = old_nfcore_version
-        expectations = {"failed": 0, "warned": 5, "passed": MAX_PASS_CHECKS - 1}
-        self.assess_lint_status(lint_obj, **expectations)
+    def test_run_linting_function(self):
+        """Run the master run_linting() function in lint.py
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
-    def test_call_lint_pipeline_fail(self):
-        """Test the main execution function of PipelineLint (fail)
-        This should fail after the first test and halt execution"""
-        lint_obj = nf_core.lint.run_linting(PATH_FAILING_EXAMPLE, False)
-        expectations = {"failed": 4, "warned": 2, "passed": 7}
-        self.assess_lint_status(lint_obj, **expectations)
+        We don't really check any of this code as it's just a series of function calls
+        and we're testing each of those individually. This is mostly to check for syntax errors."""
+        lint_obj = nf_core.lint.run_linting(self.test_pipeline_dir, False)
 
-    def test_call_lint_pipeline_release(self):
-        """Test the main execution function of PipelineLint when running with --release"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-        lint_obj.version = "1.11"
-        lint_obj.lint_pipeline(release_mode=True)
-        expectations = {"failed": 0, "warned": 4, "passed": MAX_PASS_CHECKS + ADD_PASS_RELEASE}
-        self.assess_lint_status(lint_obj, **expectations)
+    def test_init_PipelineLint(self):
+        """Simply create a PipelineLint object.
 
-    def test_failing_dockerfile_example(self):
+        This checks that all of the lint test imports are working properly,
+        we also check that the git sha was found and that the release flag works properly
+        """
+        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir, True)
+        assert "version_consistency" in lint_obj.lint_tests
+        assert len(lint_obj.git_sha) > 0
+
+    def test_load_lint_config_not_found(self):
+        """Try to load a linting config file that doesn't exist"""
+        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
+        lint_obj._load_lint_config()
+        assert lint_obj.lint_config == {}
+
+    def test_load_pipeline_config(self):
+        """Try to load the pipeline nextflow config"""
+        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
+        lint_obj._load_pipeline_config()
+        assert lint_obj.config["dag.enabled"] == "true"
+
+    def test_load_conda_env(self):
+        """Try to load the pipeline nextflow config"""
+        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
+        lint_obj._load_conda_environment()
+        assert lint_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
+
+    def test_list_files_git(self):
+        """Test listing pipeline files"""
+        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
+        lint_obj._list_files()
+        assert os.path.join(self.test_pipeline_dir, "main.nf") in lint_obj.files
+
+    def test_list_files_no_git(self):
+        """Test listing pipeline files without git-ls"""
+        # Create directory with a test file
+        tmpdir = tempfile.mkdtemp()
+        tmp_fn = os.path.join(tmpdir, "testfile")
+        open(tmp_fn, "a").close()
+        lint_obj = nf_core.lint.PipelineLint(tmpdir)
+        lint_obj._list_files()
+        assert tmp_fn in lint_obj.files
+
+    def test_docker_fail(self):
         """Tests for empty Dockerfile"""
-        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+        # Create directory with a Dockerfile
+        tmpdir = tempfile.mkdtemp()
+        open(os.path.join(tmpdir, "Dockerfile"), "a").close()
+        lint_obj = nf_core.lint.PipelineLint(tmpdir)
         lint_obj.files = ["Dockerfile"]
-        lint_obj.check_docker()
-        self.assess_lint_status(lint_obj, failed=1)
+        results = lint_obj.docker()
+        assert results["failed"] == ["Dockerfile check failed"]
+
+    def test_docker_pass(self):
+        """Tests for empty Dockerfile"""
+        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
+        lint_obj._list_files()
+        results = lint_obj.docker()
+        print(results)
+        assert results["passed"] == ["Dockerfile check passed"]
 
     def test_critical_missingfiles_example(self):
         """Tests for missing nextflow config and main.nf files"""
