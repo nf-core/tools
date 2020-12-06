@@ -103,7 +103,6 @@ def nextflow_config(self):
         )
     else:
         passed.append("Config `manifest.name` began with `nf-core/`")
-        self.pipeline_name = self.config.get("manifest.name", "").strip("'").replace("nf-core/", "")
 
     # Check that the homePage is set to the GitHub URL
     try:

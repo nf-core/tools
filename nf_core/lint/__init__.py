@@ -203,6 +203,7 @@ class PipelineLint(object):
     def _load_pipeline_config(self):
         """Get the nextflow config for this pipeline"""
         self.config = nf_core.utils.fetch_wf_config(self.path)
+        self.pipeline_name = self.config.get("manifest.name", "").strip("'").replace("nf-core/", "")
 
     def _load_conda_environment(self):
         """Try to load the pipeline environment.yml file, if it exists"""
