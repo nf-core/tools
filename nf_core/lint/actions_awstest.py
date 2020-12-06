@@ -9,27 +9,19 @@ def actions_awstest(self):
 
     Makes sure it is triggered only on ``push`` to ``master``.
     """
-    passed = []
-    warned = []
-    failed = []
-
     fn = os.path.join(self.wf_path, ".github", "workflows", "awstest.yml")
-    if os.path.isfile(fn):
-        with open(fn, "r") as fh:
-            wf = yaml.safe_load(fh)
+    if not os.path.isfile(fn):
+        return {"ignored": ["'awstest.yml' workflow not found: `{}`".format(fn)]}
 
-        # Check that the action is only turned on for workflow_dispatch
-        try:
-            assert "workflow_dispatch" in wf[True]
-            assert "push" not in wf[True]
-            assert "pull_request" not in wf[True]
-        except (AssertionError, KeyError, TypeError):
-            failed.append(
-                "GitHub Actions AWS test should be triggered on workflow_dispatch and not on push or PRs: `{}`".format(
-                    fn
-                )
-            )
-        else:
-            passed.append("GitHub Actions AWS test is triggered on workflow_dispatch: `{}`".format(fn))
+    with open(fn, "r") as fh:
+        wf = yaml.safe_load(fh)
 
-    return {"passed": passed, "warned": warned, "failed": failed}
+    # Check that the action is only turned on for workflow_dispatch
+    try:
+        assert "workflow_dispatch" in wf[True]
+        assert "push" not in wf[True]
+        assert "pull_request" not in wf[True]
+    except (AssertionError, KeyError, TypeError):
+        return {"failed": ["'.github/workflows/awstest.yml' is not triggered correctly"]}
+    else:
+        return {"passed": ["'.github/workflows/awstest.yml' is triggered correctly"]}
