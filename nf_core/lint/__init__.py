@@ -117,6 +117,7 @@ class PipelineLint(nf_core.utils.Pipeline):
 
     def __init__(self, wf_path, release_mode=False):
         """ Initialise linting object """
+
         # Initialise the parent object
         super().__init__(wf_path)
 

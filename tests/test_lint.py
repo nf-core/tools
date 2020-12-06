@@ -49,7 +49,11 @@ class TestLint(unittest.TestCase):
         we also check that the git sha was found and that the release flag works properly
         """
         lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir, True)
+
+        # Tests that extra test is added for release mode
         assert "version_consistency" in lint_obj.lint_tests
+
+        # Tests that parent nf_core.utils.Pipeline class __init__() is working to find git hash
         assert len(lint_obj.git_sha) > 0
 
     def test_load_lint_config_not_found(self):
@@ -83,7 +87,7 @@ class TestLint(unittest.TestCase):
     def test_load_pipeline_config(self):
         """Load the pipeline Nextflow config"""
         self.lint_obj._load_pipeline_config()
-        assert self.lint_obj.config["dag.enabled"] == "true"
+        assert self.lint_obj.nf_config["dag.enabled"] == "true"
 
     def test_load_conda_env(self):
         """Load the pipeline Conda environment.yml file"""

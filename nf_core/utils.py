@@ -3,8 +3,11 @@
 Common utility functions for the nf-core python package.
 """
 import nf_core
+
+from distutils import version
 import datetime
 import errno
+import git
 import hashlib
 import json
 import logging
@@ -16,7 +19,6 @@ import subprocess
 import sys
 import time
 import yaml
-from distutils import version
 
 log = logging.getLogger(__name__)
 
@@ -87,7 +89,7 @@ class Pipeline(object):
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
         except:
-            pass
+            log.debug("Could not find git hash for pipeline: {}".format(self.wf_path))
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
