@@ -25,10 +25,12 @@ class TestLint(unittest.TestCase):
         Use nf_core.create() to make a pipeline that we can use for testing
         """
         self.test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
-        create_obj = nf_core.create.PipelineCreate(
+        self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
         )
-        create_obj.init_pipeline()
+        self.create_obj.init_pipeline()
+        # Base lint object on this directory
+        self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
 
     ##########################
     # CORE lint.py FUNCTIONS #
@@ -52,8 +54,7 @@ class TestLint(unittest.TestCase):
 
     def test_load_lint_config_not_found(self):
         """Try to load a linting config file that doesn't exist"""
-        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
-        lint_obj._load_lint_config()
+        self.lint_obj._load_lint_config()
         assert lint_obj.lint_config == {}
 
     def test_load_lint_config_ignore_all_tests(self):
@@ -81,20 +82,17 @@ class TestLint(unittest.TestCase):
 
     def test_load_pipeline_config(self):
         """Load the pipeline Nextflow config"""
-        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
-        lint_obj._load_pipeline_config()
+        self.lint_obj._load_pipeline_config()
         assert lint_obj.config["dag.enabled"] == "true"
 
     def test_load_conda_env(self):
         """Load the pipeline Conda environment.yml file"""
-        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
-        lint_obj._load_conda_environment()
+        self.lint_obj._load_conda_environment()
         assert lint_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
 
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
-        lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
-        lint_obj._list_files()
+        self.lint_obj._list_files()
         assert os.path.join(self.test_pipeline_dir, "main.nf") in lint_obj.files
 
     def test_list_files_no_git(self):
@@ -131,14 +129,11 @@ class TestLint(unittest.TestCase):
             "has_tests_failed": false
         }
         """
-        # Don't run testing, just fake some testing results
-        pipeline = os.path.join(tempfile.mkdtemp(), "test-pipeline")
-        lint_obj = nf_core.lint.PipelineLint(pipeline)
-        lint_obj.passed.append(("test_one", "This test passed"))
-        lint_obj.passed.append(("test_two", "This test also passed"))
-        lint_obj.warned.append(("test_three", "This test gave a warning"))
+        self.lint_obj.passed.append(("test_one", "This test passed"))
+        self.lint_obj.passed.append(("test_two", "This test also passed"))
+        self.lint_obj.warned.append(("test_three", "This test gave a warning"))
 
-        # Make another temp dir for the JSON output
+        # Make a temp dir for the JSON output
         json_fn = os.path.join(tempfile.mkdtemp(), "lint_results.json")
         lint_obj._save_json_results(json_fn)
 
@@ -153,6 +148,18 @@ class TestLint(unittest.TestCase):
         assert saved_json["has_tests_warned"]
         assert not saved_json["has_tests_ignored"]
         assert not saved_json["has_tests_failed"]
+
+    def test_wrap_quotes(self):
+        md = self.lint_obj._wrap_quotes(["one", "two", "three"])
+        assert md == "`one` or `two` or `three`"
+
+    def test_strip_ansi_codes(self):
+        """Check that we can make rich text strings plain
+
+        String prints ls examplefile.zip, where examplefile.zip is red bold text
+        """
+        stripped = self.lint_obj._strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
+        assert stripped == "ls examplefile.zip"
 
     ################################
     # SPECIFIC LINT TEST FUNCTIONS #

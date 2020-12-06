@@ -492,6 +492,9 @@ class PipelineLint(object):
         return " or ".join(bfiles)
 
     def _strip_ansi_codes(self, string, replace_with=""):
-        # https://stackoverflow.com/a/14693789/713980
+        """Strip ANSI colouring codes from a string to return plain text.
+
+        Solution found on Stack Overflow: https://stackoverflow.com/a/14693789/713980
+        """
         ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
         return ansi_escape.sub(replace_with, string)
