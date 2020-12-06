@@ -32,6 +32,14 @@ class TestLint(unittest.TestCase):
         # Base lint object on this directory
         self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
 
+    def _make_pipeline_copy(self):
+        """Make a copy of the test pipeline that can be edited
+
+        Returns: Path to new temp directory with pipeline"""
+        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        shutil.copytree(self.test_pipeline_dir, new_pipeline)
+        return new_pipeline
+
     ##########################
     # CORE lint.py FUNCTIONS #
     ##########################
@@ -141,109 +149,14 @@ class TestLint(unittest.TestCase):
         assert stripped == "ls examplefile.zip"
 
     #######################
-    # actions_awsfulltest #
+    # SPECIFIC LINT TESTS #
     #######################
-
-    def test_actions_awsfulltest_warn(self):
-        """Lint test: actions_awsfulltest - WARN"""
-        self.lint_obj._load()
-        results = self.lint_obj.actions_awsfulltest()
-        assert results["passed"] == ["`.github/workflows/awsfulltest.yml` is triggered correctly"]
-        assert results["warned"] == [
-            "`.github/workflows/awsfulltest.yml` should test full datasets, not `-profile test`"
-        ]
-        assert len(results.get("failed", [])) == 0
-        assert len(results.get("ignored", [])) == 0
-
-    def test_actions_awsfulltest_pass(self):
-        """Lint test: actions_awsfulltest - PASS"""
-
-        # Make a copy of the test pipeline and create a lint object
-        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
-        shutil.copytree(self.test_pipeline_dir, new_pipeline)
-
-        # Edit .github/workflows/awsfulltest.yml to use -profile test_full
-        with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "r") as fh:
-            awsfulltest_yml = fh.read()
-        awsfulltest_yml = awsfulltest_yml.replace("-profile test ", "-profile test_full ")
-        with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "w") as fh:
-            fh.write(awsfulltest_yml)
-
-        # Make lint object
-        lint_obj = nf_core.lint.PipelineLint(new_pipeline)
-        lint_obj._load()
-
-        results = lint_obj.actions_awsfulltest()
-        assert results["passed"] == [
-            "`.github/workflows/awsfulltest.yml` is triggered correctly",
-            "`.github/workflows/awsfulltest.yml` does not use `-profile test`",
-        ]
-        assert len(results.get("warned", [])) == 0
-        assert len(results.get("failed", [])) == 0
-        assert len(results.get("ignored", [])) == 0
-
-    def test_actions_awsfulltest_fail(self):
-        """Lint test: actions_awsfulltest - FAIL"""
-
-        # Make a copy of the test pipeline and create a lint object
-        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
-        shutil.copytree(self.test_pipeline_dir, new_pipeline)
-
-        # Edit .github/workflows/awsfulltest.yml to use -profile test_full
-        with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "r") as fh:
-            awsfulltest_yml = yaml.safe_load(fh)
-        del awsfulltest_yml[True]["workflow_run"]
-        with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "w") as fh:
-            yaml.dump(awsfulltest_yml, fh)
-
-        # Make lint object
-        lint_obj = nf_core.lint.PipelineLint(new_pipeline)
-        lint_obj._load()
-
-        results = lint_obj.actions_awsfulltest()
-        assert results["failed"] == ["`.github/workflows/awsfulltest.yml` is not triggered correctly"]
-        assert results["warned"] == [
-            "`.github/workflows/awsfulltest.yml` should test full datasets, not `-profile test`"
-        ]
-        assert len(results.get("passed", [])) == 0
-        assert len(results.get("ignored", [])) == 0
-
-    ###################
-    # actions_awstest #
-    ###################
-
-    def test_actions_awstest_pass(self):
-        """Lint test: actions_awstest - PASS"""
-        self.lint_obj._load()
-        results = self.lint_obj.actions_awstest()
-        assert results["passed"] == ["'.github/workflows/awstest.yml' is triggered correctly"]
-        assert len(results.get("warned", [])) == 0
-        assert len(results.get("failed", [])) == 0
-        assert len(results.get("ignored", [])) == 0
-
-    def test_actions_awstest_fail(self):
-        """Lint test: actions_awsfulltest - FAIL"""
-
-        # Make a copy of the test pipeline and create a lint object
-        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
-        shutil.copytree(self.test_pipeline_dir, new_pipeline)
-
-        # Edit .github/workflows/awsfulltest.yml to use -profile test_full
-        with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "r") as fh:
-            awstest_yml = yaml.safe_load(fh)
-        awstest_yml[True]["push"] = ["master"]
-        with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:
-            yaml.dump(awstest_yml, fh)
-
-        # Make lint object
-        lint_obj = nf_core.lint.PipelineLint(new_pipeline)
-        lint_obj._load()
-
-        results = lint_obj.actions_awstest()
-        assert results["failed"] == ["'.github/workflows/awstest.yml' is not triggered correctly"]
-        assert len(results.get("warned", [])) == 0
-        assert len(results.get("passed", [])) == 0
-        assert len(results.get("ignored", [])) == 0
+    from lint.actions_awsfulltest import (
+        test_actions_awsfulltest_warn,
+        test_actions_awsfulltest_pass,
+        test_actions_awsfulltest_fail,
+    )
+    from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
 
 
 #    def test_critical_missingfiles_example(self):
