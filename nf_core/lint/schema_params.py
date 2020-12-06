@@ -11,7 +11,7 @@ def schema_params(self):
 
     # First, get the top-level config options for the pipeline
     # Schema object already created in the `schema_lint` test
-    self.schema_obj.get_schema_path(self.path)
+    self.schema_obj.get_schema_path(self.wf_path)
     self.schema_obj.get_wf_params()
     self.schema_obj.no_prompts = True
 

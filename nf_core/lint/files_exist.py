@@ -86,7 +86,7 @@ def files_exist(self):
     files_warn_ifexists = [".travis.yml"]
 
     def pf(file_path):
-        return os.path.join(self.path, file_path)
+        return os.path.join(self.wf_path, file_path)
 
     # First - critical files. Check that this is actually a Nextflow pipeline
     if not os.path.isfile(pf("nextflow.config")) and not os.path.isfile(pf("main.nf")):

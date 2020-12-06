@@ -12,7 +12,7 @@ def actions_lint(self):
     passed = []
     warned = []
     failed = []
-    fn = os.path.join(self.path, ".github", "workflows", "linting.yml")
+    fn = os.path.join(self.wf_path, ".github", "workflows", "linting.yml")
     if os.path.isfile(fn):
         with open(fn, "r") as fh:
             lintwf = yaml.safe_load(fh)

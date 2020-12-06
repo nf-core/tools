@@ -15,7 +15,7 @@ def schema_lint(self):
 
     # Lint the schema
     self.schema_obj = nf_core.schema.PipelineSchema()
-    self.schema_obj.get_schema_path(self.path)
+    self.schema_obj.get_schema_path(self.wf_path)
     try:
         self.schema_obj.load_lint_schema()
         passed.append("Schema lint passed")

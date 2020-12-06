@@ -12,7 +12,7 @@ def actions_branch_protection(self):
     passed = []
     warned = []
     failed = []
-    fn = os.path.join(self.path, ".github", "workflows", "branch.yml")
+    fn = os.path.join(self.wf_path, ".github", "workflows", "branch.yml")
     if os.path.isfile(fn):
         with open(fn, "r") as fh:
             branchwf = yaml.safe_load(fh)

@@ -46,7 +46,7 @@ class DownloadWorkflow(object):
         self.wf_name = None
         self.wf_sha = None
         self.wf_download_url = None
-        self.config = dict()
+        self.nf_config = dict()
         self.containers = list()
 
     def download_workflow(self):
@@ -255,10 +255,10 @@ class DownloadWorkflow(object):
         """ Find container image names for workflow """
 
         # Use linting code to parse the pipeline nextflow config
-        self.config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))
+        self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))
 
         # Find any config variables that look like a container
-        for k, v in self.config.items():
+        for k, v in self.nf_config.items():
             if k.startswith("process.") and k.endswith(".container"):
                 self.containers.append(v.strip('"').strip("'"))
 

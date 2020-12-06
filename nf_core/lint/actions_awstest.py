@@ -13,7 +13,7 @@ def actions_awstest(self):
     warned = []
     failed = []
 
-    fn = os.path.join(self.path, ".github", "workflows", "awstest.yml")
+    fn = os.path.join(self.wf_path, ".github", "workflows", "awstest.yml")
     if os.path.isfile(fn):
         with open(fn, "r") as fh:
             wf = yaml.safe_load(fh)

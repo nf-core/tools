@@ -12,11 +12,11 @@ def pipeline_todos(self):
     failed = []
 
     ignore = [".git"]
-    if os.path.isfile(os.path.join(self.path, ".gitignore")):
-        with io.open(os.path.join(self.path, ".gitignore"), "rt", encoding="latin1") as fh:
+    if os.path.isfile(os.path.join(self.wf_path, ".gitignore")):
+        with io.open(os.path.join(self.wf_path, ".gitignore"), "rt", encoding="latin1") as fh:
             for l in fh:
                 ignore.append(os.path.basename(l.strip().rstrip("/")))
-    for root, dirs, files in os.walk(self.path):
+    for root, dirs, files in os.walk(self.wf_path):
         # Ignore files
         for i in ignore:
             dirs = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]

@@ -13,7 +13,7 @@ def actions_ci(self):
     passed = []
     warned = []
     failed = []
-    fn = os.path.join(self.path, ".github", "workflows", "ci.yml")
+    fn = os.path.join(self.wf_path, ".github", "workflows", "ci.yml")
     if os.path.isfile(fn):
         with open(fn, "r") as fh:
             ciwf = yaml.safe_load(fh)
@@ -29,9 +29,9 @@ def actions_ci(self):
             passed.append("GitHub Actions CI is triggered on expected events: `{}`".format(fn))
 
         # Check that we're pulling the right docker image and tagging it properly
-        if self.config.get("process.container", ""):
-            docker_notag = re.sub(r":(?:[\.\d]+|dev)$", "", self.config.get("process.container", "").strip("\"'"))
-            docker_withtag = self.config.get("process.container", "").strip("\"'")
+        if self.nf_config.get("process.container", ""):
+            docker_notag = re.sub(r":(?:[\.\d]+|dev)$", "", self.nf_config.get("process.container", "").strip("\"'"))
+            docker_withtag = self.nf_config.get("process.container", "").strip("\"'")
 
             # docker build
             docker_build_cmd = "docker build --no-cache . -t {}".format(docker_withtag)

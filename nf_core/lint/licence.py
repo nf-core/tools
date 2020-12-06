@@ -16,7 +16,7 @@ def licence(self):
     failed = []
 
     for l in ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"]:
-        fn = os.path.join(self.path, l)
+        fn = os.path.join(self.wf_path, l)
         if os.path.isfile(fn):
             content = ""
             with open(fn, "r") as fh:

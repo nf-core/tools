@@ -14,7 +14,8 @@ import yaml
 import rich.console
 import rich.table
 
-import nf_core.lint
+import nf_core.utils
+import nf_core.lint.conda_env_yaml
 
 log = logging.getLogger(__name__)
 
@@ -52,38 +53,37 @@ class WorkflowLicences(object):
     def get_environment_file(self):
         """Get the conda environment file for the pipeline"""
         if os.path.exists(self.pipeline):
-            env_filename = os.path.join(self.pipeline, "environment.yml")
-            if not os.path.exists(self.pipeline):
-                raise LookupError("Pipeline {} exists, but no environment.yml file found".format(self.pipeline))
-            with open(env_filename, "r") as fh:
-                self.conda_config = yaml.safe_load(fh)
+            pipeline_obj = nf_core.utils.Pipeline(self.pipeline)
+            pipeline_obj._load()
+            if pipeline_obj._fp("environment.yml") not in pipeline_obj.files:
+                raise LookupError("No `environment.yml` file found")
+            self.conda_config = pipeline_obj.conda_config
         else:
             env_url = "https://raw.githubusercontent.com/nf-core/{}/master/environment.yml".format(self.pipeline)
             log.debug("Fetching environment.yml file: {}".format(env_url))
             response = requests.get(env_url)
             # Check that the pipeline exists
             if response.status_code == 404:
-                raise LookupError("Couldn't find pipeline nf-core/{}".format(self.pipeline))
+                raise LookupError("Couldn't find pipeline conda file: {}".format(env_url))
             self.conda_config = yaml.safe_load(response.text)
 
     def fetch_conda_licences(self):
         """Fetch package licences from Anaconda and PyPi."""
 
-        lint_obj = nf_core.lint.PipelineLint(self.pipeline)
-        lint_obj.conda_config = self.conda_config
         # Check conda dependency list
-        deps = lint_obj.conda_config.get("dependencies", [])
+        deps = self.conda_config.get("dependencies", [])
+        deps_data = {}
         log.info("Fetching licence information for {} tools".format(len(deps)))
         for dep in deps:
             try:
                 if isinstance(dep, str):
-                    lint_obj._anaconda_package(dep)
+                    deps_data[dep] = nf_core.lint.conda_env_yaml._anaconda_package(self.conda_config, dep)
                 elif isinstance(dep, dict):
-                    lint_obj._pip_package(dep)
+                    deps_data[dep] = nf_core.lint.conda_env_yaml._pip_package(dep)
             except ValueError:
                 log.error("Couldn't get licence information for {}".format(dep))
 
-        for dep, data in lint_obj.conda_package_info.items():
+        for dep, data in deps_data.items():
             try:
                 depname, depver = dep.split("=", 1)
                 licences = set()

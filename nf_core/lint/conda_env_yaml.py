@@ -27,12 +27,12 @@ def conda_env_yaml(self):
     warned = []
     failed = []
 
-    if os.path.join(self.path, "environment.yml") not in self.files:
+    if os.path.join(self.wf_path, "environment.yml") not in self.files:
         log.debug("No environment.yml file found - skipping conda_env_yaml test")
         return {"passed": passed, "warned": warned, "failed": failed}
 
     # Check that the environment name matches the pipeline name
-    pipeline_version = self.config.get("manifest.version", "").strip(" '\"")
+    pipeline_version = self.nf_config.get("manifest.version", "").strip(" '\"")
     expected_env_name = "nf-core-{}-{}".format(self.pipeline_name.lower(), pipeline_version)
     if self.conda_config["name"] != expected_env_name:
         failed.append(
@@ -56,7 +56,7 @@ def conda_env_yaml(self):
 
                 try:
                     depname, depver = dep.split("=")[:2]
-                    self._anaconda_package(dep)
+                    self.conda_package_info[dep] = _anaconda_package(self.conda_config, dep)
                 except LookupError as e:
                     warned.append(e)
                 except ValueError as e:
@@ -85,7 +85,7 @@ def conda_env_yaml(self):
 
                     try:
                         pip_depname, pip_depver = pip_dep.split("==", 1)
-                        self._pip_package(pip_dep)
+                        self.conda_package_info[dep] = _pip_package(pip_dep)
                     except LookupError as e:
                         warned.append(e)
                     except ValueError as e:
@@ -106,7 +106,7 @@ def conda_env_yaml(self):
     return {"passed": passed, "warned": warned, "failed": failed}
 
 
-def _anaconda_package(self, dep):
+def _anaconda_package(conda_config, dep):
     """Query conda package information.
 
     Sends a HTTP GET request to the Anaconda remote API.
@@ -121,7 +121,7 @@ def _anaconda_package(self, dep):
 
     # Check if each dependency is the latest available version
     depname, depver = dep.split("=", 1)
-    dep_channels = self.conda_config.get("channels", [])
+    dep_channels = conda_config.get("channels", [])
     # 'defaults' isn't actually a channel name. See https://docs.anaconda.com/anaconda/user-guide/tasks/using-repositories/
     if "defaults" in dep_channels:
         dep_channels.remove("defaults")
@@ -139,9 +139,7 @@ def _anaconda_package(self, dep):
             raise LookupError("Could not connect to Anaconda API")
         else:
             if response.status_code == 200:
-                dep_json = response.json()
-                self.conda_package_info[dep] = dep_json
-                break
+                return response.json()
             elif response.status_code != 404:
                 raise LookupError(
                     "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
@@ -157,7 +155,7 @@ def _anaconda_package(self, dep):
         )
 
 
-def _pip_package(self, dep):
+def _pip_package(dep):
     """Query PyPi package information.
 
     Sends a HTTP GET request to the PyPi remote API.
@@ -179,7 +177,6 @@ def _pip_package(self, dep):
         raise LookupError("PyPi API Connection error: {}".format(pip_api_url))
     else:
         if response.status_code == 200:
-            pip_dep_json = response.json()
-            self.conda_package_info[dep] = pip_dep_json
+            return response.json()
         else:
             raise ValueError("Could not find pip dependency using the PyPi API: `{}`".format(dep))

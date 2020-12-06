@@ -138,7 +138,7 @@ def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=Fals
         allow_multiple (bool): Replace all pattern hits, not only the first. Defaults to False.
 
     Raises:
-        SyntaxError, if the version number cannot be found.
+        ValueError, if the version number cannot be found.
     """
     # Load the file
     fn = os.path.join(lint_obj.path, filename)
@@ -149,9 +149,9 @@ def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=Fals
     # Check that we have exactly one match
     matches_pattern = re.findall("^.*{}.*$".format(pattern), content, re.MULTILINE)
     if len(matches_pattern) == 0:
-        raise SyntaxError("Could not find version number in {}: '{}'".format(filename, pattern))
+        raise ValueError("Could not find version number in {}: '{}'".format(filename, pattern))
     if len(matches_pattern) > 1 and not allow_multiple:
-        raise SyntaxError("Found more than one version number in {}: '{}'".format(filename, pattern))
+        raise ValueError("Found more than one version number in {}: '{}'".format(filename, pattern))
 
     # Replace the match
     new_content = re.sub(pattern, newstr, content)

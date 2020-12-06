@@ -78,8 +78,10 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
     return lint_obj
 
 
-class PipelineLint(object):
+class PipelineLint(nf_core.utils.Pipeline):
     """Object to hold linting information and results.
+
+    Inherits :class:`nf_core.utils.Pipeline` class.
 
     Use the :func:`PipelineLint._lint_pipeline` function to run lint tests.
 
@@ -87,21 +89,11 @@ class PipelineLint(object):
         path (str): The path to the nf-core pipeline directory.
 
     Attributes:
-        conda_config (dict): The parsed conda configuration file content (``environment.yml``).
-        conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
-        config (dict): The Nextflow pipeline configuration file content.
         failed (list): A list of tuples of the form: ``(<test-name>, <reason>)``
-        files (list): A list of files found during the linting process.
-        git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
         ignored (list): A list of tuples of the form: ``(<test-name>, <reason>)``
         lint_config (dict): The parsed nf-core linting config for this pipeline
-        minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
         passed (list): A list of tuples of the form: ``(<test-name>, <reason>)``
-        path (str): Path to the pipeline directory.
-        pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
         release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
-        schema_obj (obj): A :class:`PipelineSchema` object
-        version (str): The version number of nf-core/tools (to allow modification for testing)
         warned (list): A list of tuples of the form: ``(<warned no>, <reason>)``
     """
 
@@ -123,25 +115,17 @@ class PipelineLint(object):
     from .schema_lint import schema_lint
     from .schema_params import schema_params
 
-    def __init__(self, path, release_mode=False):
+    def __init__(self, wf_path, release_mode=False):
         """ Initialise linting object """
-        self.conda_config = {}
-        self.conda_package_info = {}
-        self.config = {}
+        # Initialise the parent object
+        super().__init__(wf_path)
+
         self.failed = []
-        self.files = []
-        self.git_sha = None
         self.ignored = []
         self.lint_config = {}
-        self.minNextflowVersion = None
         self.passed = []
-        self.path = path
-        self.pipeline_name = None
         self.release_mode = release_mode
-        self.schema_obj = None
-        self.version = nf_core.__version__
         self.warned = []
-
         self.lint_tests = [
             "files_exist",
             "licence",
@@ -163,15 +147,13 @@ class PipelineLint(object):
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
 
-        try:
-            repo = git.Repo(self.path)
-            self.git_sha = repo.head.object.hexsha
-        except:
-            pass
+    def _load(self):
+        """Load information about the pipeline into the PipelineLint object"""
+        # Load everything using the parent object
+        super()._load()
 
-        # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
-        if os.environ.get("GITHUB_PR_COMMIT", "") != "":
-            self.git_sha = os.environ["GITHUB_PR_COMMIT"]
+        # Load lint object specific stuff
+        self._load_lint_config()
 
     def _load_lint_config(self):
         """Parse a pipeline lint config file.
@@ -182,11 +164,11 @@ class PipelineLint(object):
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        config_fn = os.path.join(self.path, ".nf-core-lint.yml")
+        config_fn = os.path.join(self.wf_path, ".nf-core-lint.yml")
 
         # Pick up the file if it's .yaml instead of .yml
         if not os.path.isfile(config_fn):
-            config_fn = os.path.join(self.path, ".nf-core-lint.yaml")
+            config_fn = os.path.join(self.wf_path, ".nf-core-lint.yaml")
 
         # Load the YAML
         try:
@@ -200,39 +182,6 @@ class PipelineLint(object):
             if k not in self.lint_tests:
                 log.warning("Found unrecognised test name '{}' in pipeline lint config".format(k))
 
-    def _load_pipeline_config(self):
-        """Get the nextflow config for this pipeline"""
-        self.config = nf_core.utils.fetch_wf_config(self.path)
-        self.pipeline_name = self.config.get("manifest.name", "").strip("'").replace("nf-core/", "")
-
-    def _load_conda_environment(self):
-        """Try to load the pipeline environment.yml file, if it exists"""
-        try:
-            with open(os.path.join(self.path, "environment.yml"), "r") as fh:
-                self.conda_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug("No conda environment.yml file found.")
-
-    def _list_files(self):
-        """Get a list of all files in the pipeline"""
-        try:
-            # First, try to get the list of files using git
-            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.path).splitlines()
-            self.files = []
-            for fn in git_ls_files:
-                full_fn = os.path.join(self.path, fn.decode("utf-8"))
-                if os.path.isfile(full_fn):
-                    self.files.append(full_fn)
-                else:
-                    log.warning("`git ls-files` returned '{}' but could not open it!".format(full_fn))
-        except subprocess.CalledProcessError as e:
-            # Failed, so probably not initialised as a git repository - just a list of all files
-            log.debug("Couldn't call 'git ls-files': {}".format(e))
-            self.files = []
-            for subdir, dirs, files in os.walk(self.path):
-                for fn in files:
-                    self.files.append(os.path.join(subdir, fn))
-
     def _lint_pipeline(self):
         """Main linting function.
 
@@ -240,7 +189,7 @@ class PipelineLint(object):
         the different linting checks in order. Collects any warnings or errors
         into object attributes: ``passed``, ``ignored``, ``warned`` and ``failed``.
         """
-        log.info("Testing pipeline: [magenta]{}".format(self.path))
+        log.info("Testing pipeline: [magenta]{}".format(self.wf_path))
         if self.release_mode:
             log.info("Including --release mode tests")
 
