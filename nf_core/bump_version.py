@@ -117,6 +117,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
             about the pipeline contents and build files.
         new_version (str): The new version tag for the required Nextflow version.
     """
+
     # Collect the old and new version numbers - strip leading non-numeric characters (>=)
     current_version = pipeline_obj.nf_config.get("manifest.nextflowVersion", "").strip(" '\"")
     current_version = re.sub(r"^[^0-9\.]*", "", current_version)
