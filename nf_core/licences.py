@@ -77,9 +77,9 @@ class WorkflowLicences(object):
         for dep in deps:
             try:
                 if isinstance(dep, str):
-                    lint_obj.check_anaconda_package(dep)
+                    lint_obj._anaconda_package(dep)
                 elif isinstance(dep, dict):
-                    lint_obj.check_pip_package(dep)
+                    lint_obj._pip_package(dep)
             except ValueError:
                 log.error("Couldn't get licence information for {}".format(dep))
 
