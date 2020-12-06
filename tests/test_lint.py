@@ -55,7 +55,7 @@ class TestLint(unittest.TestCase):
     def test_load_lint_config_not_found(self):
         """Try to load a linting config file that doesn't exist"""
         self.lint_obj._load_lint_config()
-        assert lint_obj.lint_config == {}
+        assert self.lint_obj.lint_config == {}
 
     def test_load_lint_config_ignore_all_tests(self):
         """Try to load a linting config file that ignores all tests"""
@@ -83,17 +83,17 @@ class TestLint(unittest.TestCase):
     def test_load_pipeline_config(self):
         """Load the pipeline Nextflow config"""
         self.lint_obj._load_pipeline_config()
-        assert lint_obj.config["dag.enabled"] == "true"
+        assert self.lint_obj.config["dag.enabled"] == "true"
 
     def test_load_conda_env(self):
         """Load the pipeline Conda environment.yml file"""
         self.lint_obj._load_conda_environment()
-        assert lint_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
+        assert self.lint_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
 
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
         self.lint_obj._list_files()
-        assert os.path.join(self.test_pipeline_dir, "main.nf") in lint_obj.files
+        assert os.path.join(self.test_pipeline_dir, "main.nf") in self.lint_obj.files
 
     def test_list_files_no_git(self):
         """Test listing pipeline files without `git-ls`"""
@@ -135,7 +135,7 @@ class TestLint(unittest.TestCase):
 
         # Make a temp dir for the JSON output
         json_fn = os.path.join(tempfile.mkdtemp(), "lint_results.json")
-        lint_obj._save_json_results(json_fn)
+        self.lint_obj._save_json_results(json_fn)
 
         # Load created JSON file and check its contents
         with open(json_fn, "r") as fh:
