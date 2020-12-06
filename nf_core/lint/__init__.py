@@ -81,7 +81,7 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
 class PipelineLint(object):
     """Object to hold linting information and results.
 
-    Use the :func:`PipelineLint.lint_pipeline` function to run lint tests.
+    Use the :func:`PipelineLint._lint_pipeline` function to run lint tests.
 
     Args:
         path (str): The path to the nf-core pipeline directory.

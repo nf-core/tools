@@ -534,7 +534,7 @@ def bump_version(pipeline_dir, new_version, nextflow):
     # Run the lint tests
     try:
         lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
-        lint_obj.lint_pipeline()
+        lint_obj._lint_pipeline()
     except AssertionError as e:
         log.error("Please fix lint errors before bumping versions")
         return
