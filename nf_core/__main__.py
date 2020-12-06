@@ -534,6 +534,12 @@ def bump_version(pipeline_dir, new_version, nextflow):
     # Run the lint tests
     try:
         lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
+        # Load the various pipeline configs
+        lint_obj._load_lint_config()
+        lint_obj._load_pipeline_config()
+        lint_obj._load_conda_environment()
+        lint_obj._list_files()
+        # Run linting
         lint_obj._lint_pipeline()
     except AssertionError as e:
         log.error("Please fix lint errors before bumping versions")
