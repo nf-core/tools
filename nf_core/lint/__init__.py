@@ -87,56 +87,22 @@ class PipelineLint(object):
         path (str): The path to the nf-core pipeline directory.
 
     Attributes:
-        conda_config (dict): The parsed conda configuration file content (`environment.yml`).
+        conda_config (dict): The parsed conda configuration file content (``environment.yml``).
         conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
         config (dict): The Nextflow pipeline configuration file content.
-        failed (list): A list of tuples of the form: `(<test-name>, <reason>)`
+        failed (list): A list of tuples of the form: ``(<test-name>, <reason>)``
         files (list): A list of files found during the linting process.
         git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
-        ignored (list): A list of tuples of the form: `(<test-name>, <reason>)`
+        ignored (list): A list of tuples of the form: ``(<test-name>, <reason>)``
         lint_config (dict): The parsed nf-core linting config for this pipeline
         minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
-        passed (list): A list of tuples of the form: `(<test-name>, <reason>)`
+        passed (list): A list of tuples of the form: ``(<test-name>, <reason>)``
         path (str): Path to the pipeline directory.
         pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
         release_mode (bool): `True`, if you the to linting was run in release mode, `False` else.
         schema_obj (obj): A :class:`PipelineSchema` object
         version (str): The version number of nf-core/tools (to allow modification for testing)
-        warned (list): A list of tuples of the form: `(<warned no>, <reason>)`
-
-    **Attribute specifications**
-
-    Some of the more complex attributes of a PipelineLint object.
-
-    * `conda_config`::
-
-        # Example
-         {
-            'name': 'nf-core-hlatyping',
-            'channels': ['bioconda', 'conda-forge'],
-            'dependencies': ['optitype=1.3.2', 'yara=0.9.6']
-         }
-
-    * `conda_package_info`::
-
-        # See https://api.anaconda.org/package/bioconda/bioconda-utils as an example.
-         {
-            <package>: <API JSON repsonse object>
-         }
-
-    * `config`: Produced by calling Nextflow with :code:`nextflow config -flat <workflow dir>`. Here is an example from
-        the `nf-core/hlatyping <https://github.com/nf-core/hlatyping>`_ pipeline::
-
-            process.container = 'nfcore/hlatyping:1.1.1'
-            params.help = false
-            params.outdir = './results'
-            params.bam = false
-            params.single_end = false
-            params.seqtype = 'dna'
-            params.solver = 'glpk'
-            params.igenomes_base = './iGenomes'
-            params.clusterOptions = false
-            ...
+        warned (list): A list of tuples of the form: ``(<warned no>, <reason>)``
     """
 
     from .files_exist import files_exist
@@ -271,28 +237,7 @@ class PipelineLint(object):
 
         Takes the pipeline directory as the primary input and iterates through
         the different linting checks in order. Collects any warnings or errors
-        and returns summary at completion. Raises an exception if there is a
-        critical error that makes the rest of the tests pointless (eg. no
-        pipeline script). Results from this function are printed by the main script.
-
-        Args:
-            release_mode (boolean): Activates the release mode, which checks for
-                consistent version tags of containers. Default is `False`.
-
-        Returns:
-            dict: Summary of test result messages structured as follows::
-
-            {
-                'pass': [
-                    ( test-id (int), message (string) ),
-                    ( test-id (int), message (string) )
-                ],
-                'warn': [(id, msg)],
-                'fail': [(id, msg)],
-            }
-
-        Raises:
-            If a critical problem is found, an ``AssertionError`` is raised.
+        into object attributes: ``passed``, ``ignored``, ``warned`` and ``failed``.
         """
         log.info("Testing pipeline: [magenta]{}".format(self.path))
         if self.release_mode:
@@ -318,12 +263,19 @@ class PipelineLint(object):
                 test_results = getattr(self, fun_name)()
                 for test in test_results.get("passed", []):
                     self.passed.append((fun_name, test))
+                for test in test_results.get("ignored", []):
+                    self.ignored.append((fun_name, test))
                 for test in test_results.get("warned", []):
                     self.warned.append((fun_name, test))
                 for test in test_results.get("failed", []):
                     self.failed.append((fun_name, test))
 
     def _print_results(self, show_passed=False):
+        """Print linting results to the command line.
+
+        Uses the ``rich`` library to print a set of formatted tables to the command line
+        summarising the linting results.
+        """
 
         log.debug("Printing final results")
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
@@ -391,7 +343,10 @@ class PipelineLint(object):
 
     def _get_results_md(self):
         """
-        Function to create a markdown file suitable for posting in a GitHub comment
+        Create a markdown file suitable for posting in a GitHub comment.
+
+        Returns:
+            markdown (str): Formatting markdown content
         """
         # Overall header
         overall_result = "Passed :white_check_mark:"
@@ -491,6 +446,9 @@ class PipelineLint(object):
     def _save_json_results(self, json_fn):
         """
         Function to dump lint results to a JSON file for downstream use
+
+        Arguments:
+            json_fn (str): File path to write JSON to.
         """
 
         log.info("Writing lint results to {}".format(json_fn))
@@ -515,6 +473,18 @@ class PipelineLint(object):
             json.dump(results, fh, indent=4)
 
     def _wrap_quotes(self, files):
+        """Helper function to take a list of filenames and format with markdown.
+
+        Args:
+            files (list): List of filenames, eg::
+
+                ['foo', 'bar', 'baz']
+
+        Returns:
+            markdown (str): Formatted string of paths separated by word ``or``, eg::
+
+                `foo` or bar` or `baz`
+        """
         if not isinstance(files, list):
             files = [files]
         bfiles = ["`{}`".format(f) for f in files]

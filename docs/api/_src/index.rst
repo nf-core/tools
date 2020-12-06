@@ -12,8 +12,8 @@ Welcome to nf-core tools API documentation!
    :caption: Contents:
    :glob:
 
-   *
    lint_tests/index.rst
+   api/index.rst
 
 
 Indices and tables
