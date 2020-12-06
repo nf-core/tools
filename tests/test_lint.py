@@ -84,31 +84,6 @@ class TestLint(unittest.TestCase):
         assert len(lint_obj.failed) == 0
         assert len(lint_obj.ignored) == len(lint_obj.lint_tests)
 
-    def test_load_pipeline_config(self):
-        """Load the pipeline Nextflow config"""
-        self.lint_obj._load_pipeline_config()
-        assert self.lint_obj.nf_config["dag.enabled"] == "true"
-
-    def test_load_conda_env(self):
-        """Load the pipeline Conda environment.yml file"""
-        self.lint_obj._load_conda_environment()
-        assert self.lint_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
-
-    def test_list_files_git(self):
-        """Test listing pipeline files using `git ls`"""
-        self.lint_obj._list_files()
-        assert os.path.join(self.test_pipeline_dir, "main.nf") in self.lint_obj.files
-
-    def test_list_files_no_git(self):
-        """Test listing pipeline files without `git-ls`"""
-        # Create directory with a test file
-        tmpdir = tempfile.mkdtemp()
-        tmp_fn = os.path.join(tmpdir, "testfile")
-        open(tmp_fn, "a").close()
-        lint_obj = nf_core.lint.PipelineLint(tmpdir)
-        lint_obj._list_files()
-        assert tmp_fn in lint_obj.files
-
     def test_json_output(self):
         """
         Test creation of a JSON file with lint results
