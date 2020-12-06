@@ -6,10 +6,11 @@ import mock
 import os
 import pytest
 import requests
+import shutil
+import subprocess
 import tempfile
 import unittest
 import yaml
-import subprocess
 
 import nf_core.create
 import nf_core.lint
@@ -19,13 +20,19 @@ class TestLint(unittest.TestCase):
     """Class for lint tests"""
 
     def setUp(self):
-        """Use nf_core.create() to make a pipeline that we can use for testing"""
+        """Function that runs at start of tests for common resources
+
+        Use nf_core.create() to make a pipeline that we can use for testing
+        """
         self.test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
         create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
         )
         create_obj.init_pipeline()
 
+    ##########################
+    # CORE lint.py FUNCTIONS #
+    ##########################
     def test_run_linting_function(self):
         """Run the master run_linting() function in lint.py
 
@@ -49,26 +56,49 @@ class TestLint(unittest.TestCase):
         lint_obj._load_lint_config()
         assert lint_obj.lint_config == {}
 
+    def test_load_lint_config_ignore_all_tests(self):
+        """Try to load a linting config file that ignores all tests"""
+        # Make a copy of the test pipeline and create a lint object
+        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        shutil.copytree(self.test_pipeline_dir, new_pipeline)
+        lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+
+        # Make a config file listing all test names
+        config_dict = {test_name: False for test_name in lint_obj.lint_tests}
+        with open(os.path.join(new_pipeline, ".nf-core-lint.yml"), "w") as fh:
+            yaml.dump(config_dict, fh)
+
+        # Load the new lint config file and check
+        lint_obj._load_lint_config()
+        assert sorted(list(lint_obj.lint_config.keys())) == sorted(lint_obj.lint_tests)
+
+        # Try running linting and make sure that all tests are ignored
+        lint_obj._lint_pipeline()
+        assert len(lint_obj.passed) == 0
+        assert len(lint_obj.warned) == 0
+        assert len(lint_obj.failed) == 0
+        assert len(lint_obj.ignored) == len(lint_obj.lint_tests)
+
     def test_load_pipeline_config(self):
-        """Try to load the pipeline nextflow config"""
+        """Load the pipeline Nextflow config"""
         lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
         lint_obj._load_pipeline_config()
         assert lint_obj.config["dag.enabled"] == "true"
 
     def test_load_conda_env(self):
-        """Try to load the pipeline nextflow config"""
+        """Load the pipeline Conda environment.yml file"""
         lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
         lint_obj._load_conda_environment()
         assert lint_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
 
     def test_list_files_git(self):
-        """Test listing pipeline files"""
+        """Test listing pipeline files using `git ls`"""
         lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
         lint_obj._list_files()
         assert os.path.join(self.test_pipeline_dir, "main.nf") in lint_obj.files
 
     def test_list_files_no_git(self):
-        """Test listing pipeline files without git-ls"""
+        """Test listing pipeline files without `git-ls`"""
         # Create directory with a test file
         tmpdir = tempfile.mkdtemp()
         tmp_fn = os.path.join(tmpdir, "testfile")
@@ -76,6 +106,57 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(tmpdir)
         lint_obj._list_files()
         assert tmp_fn in lint_obj.files
+
+    def test_json_output(self):
+        """
+        Test creation of a JSON file with lint results
+
+        Expected JSON output:
+        {
+            "nf_core_tools_version": "1.10.dev0",
+            "date_run": "2020-06-05 10:56:42",
+            "tests_pass": [
+                [ 1, "This test passed"],
+                [ 2, "This test also passed"]
+            ],
+            "tests_warned": [
+                [ 2, "This test gave a warning"]
+            ],
+            "tests_failed": [],
+            "num_tests_pass": 2,
+            "num_tests_warned": 1,
+            "num_tests_failed": 0,
+            "has_tests_pass": true,
+            "has_tests_warned": true,
+            "has_tests_failed": false
+        }
+        """
+        # Don't run testing, just fake some testing results
+        pipeline = os.path.join(tempfile.mkdtemp(), "test-pipeline")
+        lint_obj = nf_core.lint.PipelineLint(pipeline)
+        lint_obj.passed.append(("test_one", "This test passed"))
+        lint_obj.passed.append(("test_two", "This test also passed"))
+        lint_obj.warned.append(("test_three", "This test gave a warning"))
+
+        # Make another temp dir for the JSON output
+        json_fn = os.path.join(tempfile.mkdtemp(), "lint_results.json")
+        lint_obj._save_json_results(json_fn)
+
+        # Load created JSON file and check its contents
+        with open(json_fn, "r") as fh:
+            saved_json = json.load(fh)
+        assert saved_json["num_tests_pass"] == 2
+        assert saved_json["num_tests_warned"] == 1
+        assert saved_json["num_tests_ignored"] == 0
+        assert saved_json["num_tests_failed"] == 0
+        assert saved_json["has_tests_pass"]
+        assert saved_json["has_tests_warned"]
+        assert not saved_json["has_tests_ignored"]
+        assert not saved_json["has_tests_failed"]
+
+    ################################
+    # SPECIFIC LINT TEST FUNCTIONS #
+    ################################
 
 
 #    def test_critical_missingfiles_example(self):
@@ -498,43 +579,3 @@ class TestLint(unittest.TestCase):
 #        expectations = {"failed": 0, "warned": 1, "passed": 0}
 #        self.assess_lint_status(critical_lint_obj, **expectations)
 #
-#    def test_json_output(self):
-#        """
-#        Test creation of a JSON file with lint results
-#
-#        Expected JSON output:
-#        {
-#            "nf_core_tools_version": "1.10.dev0",
-#            "date_run": "2020-06-05 10:56:42",
-#            "tests_pass": [
-#                [ 1, "This test passed"],
-#                [ 2, "This test also passed"]
-#            ],
-#            "tests_warned": [
-#                [ 2, "This test gave a warning"]
-#            ],
-#            "tests_failed": [],
-#            "num_tests_pass": 2,
-#            "num_tests_warned": 1,
-#            "num_tests_failed": 0,
-#            "has_tests_pass": true,
-#            "has_tests_warned": true,
-#            "has_tests_failed": false
-#        }
-#        """
-#        # Don't run testing, just fake some testing results
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.passed.append((1, "This test passed"))
-#        lint_obj.passed.append((2, "This test also passed"))
-#        lint_obj.warned.append((2, "This test gave a warning"))
-#        tmpdir = tempfile.mkdtemp()
-#        json_fn = os.path.join(tmpdir, "lint_results.json")
-#        lint_obj.save_json_results(json_fn)
-#        with open(json_fn, "r") as fh:
-#            saved_json = json.load(fh)
-#        assert saved_json["num_tests_pass"] == 2
-#        assert saved_json["num_tests_warned"] == 1
-#        assert saved_json["num_tests_failed"] == 0
-#        assert saved_json["has_tests_pass"]
-#        assert saved_json["has_tests_warned"]
-#        assert not saved_json["has_tests_failed"]

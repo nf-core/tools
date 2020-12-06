@@ -465,6 +465,7 @@ class PipelineLint(object):
             "num_tests_warned": len(self.warned),
             "num_tests_failed": len(self.failed),
             "has_tests_pass": len(self.passed) > 0,
+            "has_tests_ignored": len(self.ignored) > 0,
             "has_tests_warned": len(self.warned) > 0,
             "has_tests_failed": len(self.failed) > 0,
             "markdown_result": self._get_results_md(),
