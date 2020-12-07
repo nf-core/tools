@@ -150,44 +150,6 @@ You can always add steps to the workflows to suit your needs, but to ensure that
 
 This test will fail if the following requirements are not met in these files:
 
-1. `ci.yml`: Contains all the commands required to test the pipeline
-    * Must be triggered on the following events:
-
-      ```yaml
-      on:
-        push:
-          branches:
-            - dev
-        pull_request:
-        release:
-          types: [published]
-      ```
-
-    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in the test matrix:
-
-      ```yaml
-      strategy:
-        matrix:
-          # Nextflow versions: check pipeline minimum and current latest
-          nxf_ver: ['19.10.0', '']
-      ```
-
-    * The `Docker` container for the pipeline must be tagged appropriately for:
-        * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`
-        * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
-
-          ```yaml
-          - name: Build new docker image
-            if: env.GIT_DIFF
-            run: docker build --no-cache . -t nfcore/<pipeline_name>:1.0.0
-
-          - name: Pull docker image
-            if: ${{ !env.GIT_DIFF }}
-            run: |
-              docker pull nfcore/<pipeline_name>:dev
-              docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
-          ```
-
 2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
     * Must be turned on for `push` and `pull_request`.
     * Must have the command `nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}`.
