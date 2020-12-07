@@ -182,7 +182,11 @@ class TestLint(unittest.TestCase):
         test_actions_awsfulltest_fail,
     )
     from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
-    from lint.actions_branch_protection import test_actions_branch_protection_pass, test_actions_branch_protection_fail, test_actions_branch_protection_ignore
+    from lint.actions_branch_protection import (
+        test_actions_branch_protection_pass,
+        test_actions_branch_protection_fail,
+        test_actions_branch_protection_ignore,
+    )
 
 
 #    def test_critical_missingfiles_example(self):
