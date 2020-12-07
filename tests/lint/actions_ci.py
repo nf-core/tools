@@ -21,16 +21,36 @@ def test_actions_ci_pass(self):
     assert len(results.get("ignored", [])) == 0
 
 
-def test_actions_ci_fail(self):
-    """Lint test: actions_actions_ci - FAIL"""
+def test_actions_ci_fail_wrong_nf(self):
+    """Lint test: actions_ci - FAIL - wrong minimum version of Nextflow tested"""
+    self.lint_obj._load()
+    self.lint_obj.minNextflowVersion = "1.2.3"
+    results = self.lint_obj.actions_ci()
+    assert results["failed"] == ["Minimum NF version in '.github/workflows/ci.yml' different to pipeline's manifest"]
+
+
+def test_actions_ci_fail_wrong_docker_ver(self):
+    """Lint test: actions_actions_ci - FAIL - wrong pipeline version used for docker commands"""
+
+    self.lint_obj._load()
+    self.lint_obj.nf_config["process.container"] = "'nfcore/tools:0.4'"
+    results = self.lint_obj.actions_ci()
+    assert results["failed"] == [
+        "CI is not building the correct docker image. Should be: `docker build --no-cache . -t nfcore/tools:0.4`",
+        "CI is not pulling the correct docker image. Should be: `docker pull nfcore/tools:dev`",
+        "CI is not tagging docker image correctly. Should be: `docker tag nfcore/tools:dev nfcore/tools:0.4`",
+    ]
+
+
+def test_actions_ci_fail_wrong_trigger(self):
+    """Lint test: actions_actions_ci - FAIL - workflow triggered incorrectly, NF ver not checked at all"""
 
     # Edit .github/workflows/actions_ci.yml to mess stuff up!
     new_pipeline = self._make_pipeline_copy()
     with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml"), "r") as fh:
         ci_yml = yaml.safe_load(fh)
     ci_yml[True]["push"] = ["dev", "patch"]
-    ci_yml["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"] = ["foo", ""]
-    ci_yml["jobs"]["test"]["steps"] = [{"name": "Check out pipeline code", "uses": "actions/checkout@v2"}]
+    ci_yml["jobs"]["test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}
     with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml"), "w") as fh:
         yaml.dump(ci_yml, fh)
 
@@ -41,11 +61,5 @@ def test_actions_ci_fail(self):
     results = lint_obj.actions_ci()
     assert results["failed"] == [
         "'.github/workflows/ci.yml' is not triggered on expected events",
-        "CI is not building the correct docker image. Should be: `docker build --no-cache . -t nfcore/testpipeline:dev`",
-        "CI is not pulling the correct docker image. Should be: `docker pull nfcore/testpipeline:dev`",
-        "CI is not tagging docker image correctly. Should be: `docker tag nfcore/testpipeline:dev nfcore/testpipeline:dev`",
-        "Minimum NF version in '.github/workflows/ci.yml' different to pipeline's manifest"
+        "'.github/workflows/ci.yml' does not check minimum NF version",
     ]
-    assert len(results.get("warned", [])) == 0
-    assert len(results.get("passed", [])) == 0
-    assert len(results.get("ignored", [])) == 0

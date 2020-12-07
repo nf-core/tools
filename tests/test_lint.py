@@ -187,7 +187,12 @@ class TestLint(unittest.TestCase):
         test_actions_branch_protection_fail,
         test_actions_branch_protection_ignore,
     )
-    from lint.actions_ci import test_actions_ci_pass, test_actions_ci_fail
+    from lint.actions_ci import (
+        test_actions_ci_pass,
+        test_actions_ci_fail_wrong_nf,
+        test_actions_ci_fail_wrong_docker_ver,
+        test_actions_ci_fail_wrong_trigger,
+    )
 
 
 #    def test_critical_missingfiles_example(self):
@@ -236,52 +241,6 @@ class TestLint(unittest.TestCase):
 #        bad_lint_obj = nf_core.lint.PipelineLint("/non/existant/path")
 #        bad_lint_obj.check_nextflow_config()
 #
-#    def test_actions_wf_branch_pass(self):
-#        """Tests that linting for GitHub Actions workflow for branch protection works for a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.check_actions_branch_protection()
-#        expectations = {"failed": 0, "warned": 0, "passed": 2}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_branch_fail(self):
-#        """Tests that linting for GitHub Actions workflow for branch protection fails for a bad example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.check_actions_branch_protection()
-#        expectations = {"failed": 2, "warned": 0, "passed": 0}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_ci_pass(self):
-#        """Tests that linting for GitHub Actions CI workflow works for a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.minNextflowVersion = "20.04.0"
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
-#        lint_obj.check_actions_ci()
-#        expectations = {"failed": 0, "warned": 0, "passed": 5}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_ci_fail(self):
-#        """Tests that linting for GitHub Actions CI workflow fails for a bad example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.minNextflowVersion = "20.04.0"
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
-#        lint_obj.check_actions_ci()
-#        expectations = {"failed": 5, "warned": 0, "passed": 0}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_ci_fail_wrong_NF_version(self):
-#        """Tests that linting for GitHub Actions CI workflow fails for a bad NXF version"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.minNextflowVersion = "0.28.0"
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
-#        lint_obj.check_actions_ci()
-#        expectations = {"failed": 1, "warned": 0, "passed": 4}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
 #    def test_actions_wf_lint_pass(self):
 #        """Tests that linting for GitHub Actions linting wf works for a good example"""
 #        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
@@ -294,20 +253,6 @@ class TestLint(unittest.TestCase):
 #        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
 #        lint_obj.check_actions_lint()
 #        expectations = {"failed": 3, "warned": 0, "passed": 0}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_awstest_pass(self):
-#        """Tests that linting for GitHub Actions AWS test wf works for a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.check_actions_awstest()
-#        expectations = {"failed": 0, "warned": 0, "passed": 1}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_awstest_fail(self):
-#        """Tests that linting for GitHub Actions AWS test wf fails for a bad example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.check_actions_awstest()
-#        expectations = {"failed": 1, "warned": 0, "passed": 0}
 #        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_wrong_license_examples_with_failed(self):
