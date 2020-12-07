@@ -169,6 +169,8 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         # Pick up the file if it's .yaml instead of .yml
         if not os.path.isfile(config_fn):
+            print(config_fn)
+            print("cant find")
             config_fn = os.path.join(self.wf_path, ".nf-core-lint.yaml")
 
         # Load the YAML
@@ -205,7 +207,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "Running lint checks", total=len(self.lint_tests), func_name=self.lint_tests[0]
             )
             for fun_name in self.lint_tests:
-                if self.lint_config.get(fun_name) is False:
+                if self.lint_config.get(fun_name) and self.lint_config.get(fun_name)['run'] is False:
                     log.debug("Skipping lint test '{}'".format(fun_name))
                     self.ignored.append((fun_name, fun_name))
                     continue

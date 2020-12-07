@@ -85,6 +85,12 @@ def files_exist(self):
     ]
     files_warn_ifexists = [".travis.yml"]
 
+    # Remove files that should be ignored according to the linting config
+    ignore_files = self.lint_config.get('files_exist')['ignore']
+    files_fail = list(filter(None, [[f for f in l if not f in ignore_files] for l in files_fail]))
+    files_warn = list(filter(None, [[f for f in l if not f in ignore_files] for l in files_warn]))
+    files_fail_ifexists = [f for f in files_fail_ifexists if not f in ignore_files]
+
     def pf(file_path):
         return os.path.join(self.wf_path, file_path)
 
