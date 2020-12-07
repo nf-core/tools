@@ -86,10 +86,7 @@ def files_exist(self):
     files_warn_ifexists = [".travis.yml"]
 
     # Remove files that should be ignored according to the linting config
-    ignore_files = self.lint_config.get('files_exist')['ignore']
-    files_fail = list(filter(None, [[f for f in l if not f in ignore_files] for l in files_fail]))
-    files_warn = list(filter(None, [[f for f in l if not f in ignore_files] for l in files_warn]))
-    files_fail_ifexists = [f for f in files_fail_ifexists if not f in ignore_files]
+    ignore_files = self.lint_config.get('files_exist', [])
 
     def pf(file_path):
         return os.path.join(self.wf_path, file_path)
@@ -101,20 +98,26 @@ def files_exist(self):
 
     # Files that cause an error if they don't exist
     for files in files_fail:
-        if any([os.path.isfile(pf(f)) for f in files]):
+        if any([f in ignore_files for f in files]):
+            continue
+        elif any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
         else:
             failed.append("File not found: {}".format(self._wrap_quotes(files)))
 
     # Files that cause a warning if they don't exist
     for files in files_warn:
-        if any([os.path.isfile(pf(f)) for f in files]):
+        if any([f in ignore_files for f in files]):
+            continue
+        elif any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
         else:
             warned.append("File not found: {}".format(self._wrap_quotes(files)))
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:
+        if file in ignore_files:
+            continue
         if os.path.isfile(pf(file)):
             failed.append("File must be removed: {}".format(self._wrap_quotes(file)))
         else:

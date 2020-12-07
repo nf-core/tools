@@ -52,8 +52,14 @@ def nextflow_config(self):
         "params.igenomesIgnore",
     ]
 
+    # Remove field that should be ignored according to the linting config
+    ignore_configs = self.lint_config.get('nextflow_config', [])
+
+
     for cfs in config_fail:
         for cf in cfs:
+            if cf in ignore_configs:
+                continue
             if cf in self.nf_config.keys():
                 passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
                 break
@@ -61,12 +67,16 @@ def nextflow_config(self):
             failed.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
     for cfs in config_warn:
         for cf in cfs:
+            if cf in ignore_configs:
+                continue
             if cf in self.nf_config.keys():
                 passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
                 break
         else:
             warned.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
     for cf in config_fail_ifdefined:
+        if cf in ignore_configs:
+            continue
         if cf not in self.nf_config.keys():
             passed.append("Config variable (correctly) not found: {}".format(self._wrap_quotes(cf)))
         else:
