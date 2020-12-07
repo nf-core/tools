@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Some tests covering the linting code.
 """
+import fnmatch
 import json
 import mock
 import os
@@ -147,6 +148,30 @@ class TestLint(unittest.TestCase):
         """
         stripped = self.lint_obj._strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
         assert stripped == "ls examplefile.zip"
+
+    def test_sphinx_rst_files(self):
+        """Check that we have .rst files for all lint module code,
+        and that there are no unexpected files (eg. deleted lint tests)"""
+
+        docs_basedir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "lint_tests"
+        )
+
+        # Get list of existing .rst files
+        existing_docs = []
+        for fn in os.listdir(docs_basedir):
+            if fnmatch.fnmatch(fn, "*.rst") and not fnmatch.fnmatch(fn, "index.rst"):
+                existing_docs.append(os.path.join(docs_basedir, fn))
+
+        # Check .rst files against each test name
+        lint_obj = nf_core.lint.PipelineLint("", True)
+        for test_name in lint_obj.lint_tests:
+            fn = os.path.join(docs_basedir, "{}.rst".format(test_name))
+            assert os.path.exists(fn), "Could not find lint docs .rst file: {}".format(fn)
+            existing_docs.remove(fn)
+
+        # Check that we have no remaining .rst files that we didn't expect
+        assert len(existing_docs) == 0, "Unexpected lint docs .rst files found: {}".format(", ".join(existing_docs))
 
     #######################
     # SPECIFIC LINT TESTS #
