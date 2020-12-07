@@ -22,14 +22,18 @@ def actions_branch_protection(self):
 
     Specifically, the lint test checks that:
 
-    * The workflow is triggered for the ``pull_request`` event against ``master``:
+    * The workflow is triggered for the ``pull_request_target`` event against ``master``:
 
       .. code-block:: yaml
 
          on:
-           pull_request:
+           pull_request_target:
              branches:
              - master
+
+      .. note:: The event ``pull_request_target`` is used and not ``pull_request`` so that
+                it runs on the repo `recieving` the PR and has permissions to post a comment.
+                The ``github.event`` object that we want is still confusingly called ``pull_request`` though.
 
     * The code that checks PRs to the protected nf-core repo ``master`` branch can only come from an nf-core ``dev`` branch or a fork ``patch`` branch:
 
@@ -61,39 +65,42 @@ def actions_branch_protection(self):
                         run: |
                           { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
     """
+
     passed = []
-    warned = []
     failed = []
+
     fn = os.path.join(self.wf_path, ".github", "workflows", "branch.yml")
-    if os.path.isfile(fn):
-        with open(fn, "r") as fh:
-            branchwf = yaml.safe_load(fh)
+    if not os.path.isfile(fn):
+        return {"ignored": ["Could not find branch.yml workflow: {}".format(fn)]}
 
-        # Check that the action is turned on for PRs to master
-        try:
-            # Yaml 'on' parses as True - super weird
-            assert "master" in branchwf[True]["pull_request_target"]["branches"]
-        except (AssertionError, KeyError):
-            failed.append("GitHub Actions 'branch' workflow should be triggered for PRs to master: `{}`".format(fn))
-        else:
-            passed.append("GitHub Actions 'branch' workflow is triggered for PRs to master: `{}`".format(fn))
+    with open(fn, "r") as fh:
+        branchwf = yaml.safe_load(fh)
 
-        # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-        steps = branchwf.get("jobs", {}).get("test", {}).get("steps", [])
-        for step in steps:
-            has_name = step.get("name", "").strip() == "Check PRs"
-            has_if = step.get("if", "").strip() == "github.repository == 'nf-core/{}'".format(
-                self.pipeline_name.lower()
-            )
-            # Don't use .format() as the squiggly brackets get ridiculous
-            has_run = step.get(
-                "run", ""
-            ).strip() == '{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace(
-                "PIPELINENAME", self.pipeline_name.lower()
-            )
-            if has_name and has_if and has_run:
-                passed.append("GitHub Actions 'branch' workflow looks good: `{}`".format(fn))
-                break
-        else:
-            failed.append("Couldn't find GitHub Actions 'branch' check for PRs to master: `{}`".format(fn))
-    return {"passed": passed, "warned": warned, "failed": failed}
+    # Check that the action is turned on for PRs to master
+    try:
+        # Yaml 'on' parses as True - super weird
+        assert "master" in branchwf[True]["pull_request_target"]["branches"]
+    except (AssertionError, KeyError):
+        failed.append("GitHub Actions 'branch.yml' workflow should be triggered for PRs to master")
+    else:
+        passed.append("GitHub Actions 'branch.yml' workflow is triggered for PRs to master")
+
+    # Check that PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
+    steps = branchwf.get("jobs", {}).get("test", {}).get("steps", [])
+    for step in steps:
+        has_name = step.get("name", "").strip() == "Check PRs"
+        has_if = step.get("if", "").strip() == "github.repository == 'nf-core/{}'".format(self.pipeline_name.lower())
+        # Don't use .format() as the squiggly brackets get ridiculous
+        has_run = step.get(
+            "run", ""
+        ).strip() == '{ [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/PIPELINENAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]'.replace(
+            "PIPELINENAME", self.pipeline_name.lower()
+        )
+        if has_name and has_if and has_run:
+            passed.append("GitHub Actions 'branch.yml' workflow looks good")
+            break
+    # Break wasn't called - didn't find proper step
+    else:
+        failed.append("Couldn't find GitHub Actions 'branch.yml' check for PRs to master")
+
+    return {"passed": passed, "failed": failed}
