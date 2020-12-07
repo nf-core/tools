@@ -158,6 +158,8 @@ class TestLint(unittest.TestCase):
     )
     from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
 
+    from lint.files_exist import test_missing_config, test_missing_main, test_depreciated_file
+
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""

@@ -125,6 +125,8 @@ def files_exist(self):
 
     # Files that cause a warning if they exist
     for file in files_warn_ifexists:
+        if file in ignore_files:
+            continue
         if os.path.isfile(pf(file)):
             warned.append("File should be removed: {}".format(self._wrap_quotes(file)))
         else:
