@@ -42,7 +42,7 @@ def actions_branch_protection(self):
              run: |
                { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
 
-    .. seealso:: For branch protection in repositories outside of `nf-core`, you can add an additional step to this workflow.
+    .. tip:: For branch protection in repositories outside of `nf-core`, you can add an additional step to this workflow.
                  Keep the `nf-core` branch protection step, to ensure that the ``nf-core lint`` tests pass. It should just be ignored
                  if you're working outside of `nf-core`. Here's an example of how this code could look:
 

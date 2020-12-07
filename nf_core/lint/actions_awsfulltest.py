@@ -15,10 +15,10 @@ def actions_awsfulltest(self):
     .. warning::  This workflow incurs AWS costs, therefore it should only be triggered for pipeline releases:
                   ``workflow_run`` (after the docker hub release workflow) and ``workflow_dispatch``.
 
-    .. seealso::  You can manually trigger the AWS tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the
+    .. note::  You can manually trigger the AWS tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the
                   `nf-core AWS full size tests` workflow on the left.
 
-    .. seealso::  For tests on full data prior to release, `Nextflow Tower <https://tower.nf>`_ launch feature can be employed.
+    .. tip::  For tests on full data prior to release, `Nextflow Tower <https://tower.nf>`_ launch feature can be employed.
 
     The ``.github/workflows/awsfulltest.yml`` file is tested for the following:
 

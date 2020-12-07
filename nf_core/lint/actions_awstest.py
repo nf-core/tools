@@ -14,7 +14,7 @@ def actions_awstest(self):
                  Instead, they use the ``workflow_dispatch`` trigger, which allows for manual triggering
                  of the workflow when testing on AWS is desired.
 
-    .. seealso::  You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository
+    .. note::  You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository
                   and selecting the `nf-core AWS test` workflow on the left.
 
     The ``.github/workflows/awstest.yml`` file is tested for the following:
