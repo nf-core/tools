@@ -72,6 +72,8 @@ def actions_ci(self):
     passed = []
     failed = []
     fn = os.path.join(self.wf_path, ".github", "workflows", "ci.yml")
+
+    # Return an ignored status if we can't find the file
     if not os.path.isfile(fn):
         return {"ignored": ["'.github/workflows/ci.yml' not found"]}
 
@@ -84,9 +86,9 @@ def actions_ci(self):
         # NB: YAML dict key 'on' is evaluated to a Python dict key True
         assert ciwf[True] == expected
     except (AssertionError, KeyError, TypeError):
-        failed.append("GitHub Actions CI is not triggered on expected events: `{}`".format(fn))
+        failed.append("'.github/workflows/ci.yml' is not triggered on expected events")
     else:
-        passed.append("GitHub Actions CI is triggered on expected events: `{}`".format(fn))
+        passed.append("'.github/workflows/ci.yml' is triggered on expected events")
 
     # Check that we're pulling the right docker image and tagging it properly
     if self.nf_config.get("process.container", ""):
@@ -128,10 +130,10 @@ def actions_ci(self):
         matrix = ciwf["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"]
         assert any([self.minNextflowVersion in matrix])
     except (KeyError, TypeError):
-        failed.append("Continuous integration does not check minimum NF version: `{}`".format(fn))
+        failed.append("'.github/workflows/ci.yml' does not check minimum NF version")
     except AssertionError:
-        failed.append("Minimum NF version different in CI and pipelines manifest: `{}`".format(fn))
+        failed.append("Minimum NF version in '.github/workflows/ci.yml' different to pipeline's manifest")
     else:
-        passed.append("Continuous integration checks minimum NF version: `{}`".format(fn))
+        passed.append("'.github/workflows/ci.yml' checks minimum NF version")
 
     return {"passed": passed, "failed": failed}

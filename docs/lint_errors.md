@@ -150,7 +150,7 @@ You can always add steps to the workflows to suit your needs, but to ensure that
 
 This test will fail if the following requirements are not met in these files:
 
-2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
+1. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
     * Must be turned on for `push` and `pull_request`.
     * Must have the command `nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}`.
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.

@@ -187,6 +187,7 @@ class TestLint(unittest.TestCase):
         test_actions_branch_protection_fail,
         test_actions_branch_protection_ignore,
     )
+    from lint.actions_ci import test_actions_ci_pass, test_actions_ci_fail
 
 
 #    def test_critical_missingfiles_example(self):

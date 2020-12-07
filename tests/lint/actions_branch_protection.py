@@ -48,7 +48,7 @@ def test_actions_branch_protection_fail(self):
 def test_actions_branch_protection_ignore(self):
     """Lint test: actions_branch_protection - IGNORE"""
 
-    # Delete .github/workflows/awsfulltest.yml
+    # Delete .github/workflows/branch.yml
     new_pipeline = self._make_pipeline_copy()
     branch_fn = os.path.join(new_pipeline, ".github", "workflows", "branch.yml")
     os.remove(branch_fn)
