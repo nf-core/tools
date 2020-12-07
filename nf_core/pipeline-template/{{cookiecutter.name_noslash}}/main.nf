@@ -24,13 +24,31 @@ if (params.help) {
 }
 
 ////////////////////////////////////////////////////
-/* --         DEFAULT PARAMETER VALUES         -- */
+/* --          PARAMETER CHECKS                -- */
 ////////////////////////////////////////////////////
 
-// Check if genome exists in the config file
-if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
-    exit 1, "Genome '${params.genome}' was not found in any config files made available to the pipeline. Currently, the available genomes are ${params.genomes.keySet().join(", ")}"
-}
+// Check AWS batch settings
+Checks.aws_batch(workflow, params)
+
+// Check the hostnames against configured profiles
+Checks.hostname(workflow, params, log)
+
+// Check genome key exists if provided
+Checks.genome_exists(params, log)
+
+////////////////////////////////////////////////////
+/* --        GENOME PARAMETER VALUES           -- */
+////////////////////////////////////////////////////
+
+params.fasta = Checks.get_genome_attribute(params, 'fasta')
+params.gtf   = Checks.get_genome_attribute(params, 'gtf')
+
+////////////////////////////////////////////////////
+/* --         PRINT PARAMETER SUMMARY          -- */
+////////////////////////////////////////////////////
+
+def summary_params = Schema.params_summary_map(workflow, params, json_schema)
+log.info Schema.params_summary_log(workflow, params, json_schema)
 
 ////////////////////////////////////////////////////
 /* --          VALIDATE INPUTS                 -- */
@@ -52,23 +70,6 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 
 ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yaml", checkIfExists: true)
 ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
-
-////////////////////////////////////////////////////
-/* --         PRINT PARAMETER SUMMARY          -- */
-////////////////////////////////////////////////////
-
-def summary_params = Schema.params_summary_map(workflow, params, json_schema)
-log.info Schema.params_summary_log(workflow, params, json_schema)
-
-////////////////////////////////////////////////////
-/* --          PARAMETER CHECKS                -- */
-////////////////////////////////////////////////////
-
-// Check AWS batch settings
-Checks.aws_batch(workflow, params)
-
-// Check the hostnames against configured profiles
-Checks.hostname(workflow, params, log)
 
 ////////////////////////////////////////////////////
 /* --       IMPORT MODULES / SUBWORKFLOWS      -- */
@@ -95,7 +96,7 @@ include { FASTQC                } from './modules/nf-core/software/fastqc/main' 
 ////////////////////////////////////////////////////
 
 // Info required for completion email and summary
-def multiqc_report      = []
+def multiqc_report = []
 
 workflow {
 
@@ -117,7 +118,7 @@ workflow {
     ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
     
 
-        /*
+    /*
      * MODULE: Pipeline reporting
      */
     GET_SOFTWARE_VERSIONS ( 
