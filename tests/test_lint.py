@@ -159,44 +159,9 @@ class TestLint(unittest.TestCase):
     from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
     from lint.files_exist import test_missing_config, test_missing_main, test_depreciated_file
     from lint.licence import test_mit_licence_pass, test_mit_licence_fail
+    from lint.nextflow_config import test_config_variable_example_pass, test_config_variable_fail
+    from lint.actions_branch_protection import test_actions_wf_branch_pass, test_actions_wf_branch_fail
 
-
-#
-#    def test_config_variable_example_pass(self):
-#        """Tests that config variable existence test works with good pipeline example"""
-#        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        good_lint_obj.check_nextflow_config()
-#        expectations = {"failed": 0, "warned": 1, "passed": 34}
-#        self.assess_lint_status(good_lint_obj, **expectations)
-#
-#    def test_config_variable_example_with_failed(self):
-#        """Tests that config variable existence test fails with bad pipeline example"""
-#        bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        bad_lint_obj.check_nextflow_config()
-#        expectations = {"failed": 19, "warned": 6, "passed": 10}
-#        self.assess_lint_status(bad_lint_obj, **expectations)
-#
-#    @pytest.mark.xfail(raises=AssertionError, strict=True)
-#    def test_config_variable_error(self):
-#        """Tests that config variable existence test falls over nicely with nextflow can't run"""
-#        bad_lint_obj = nf_core.lint.PipelineLint("/non/existant/path")
-#        bad_lint_obj.check_nextflow_config()
-#
-#    def test_actions_wf_branch_pass(self):
-#        """Tests that linting for GitHub Actions workflow for branch protection works for a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.check_actions_branch_protection()
-#        expectations = {"failed": 0, "warned": 0, "passed": 2}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_branch_fail(self):
-#        """Tests that linting for GitHub Actions workflow for branch protection fails for a bad example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.check_actions_branch_protection()
-#        expectations = {"failed": 2, "warned": 0, "passed": 0}
-#        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_actions_wf_ci_pass(self):
 #        """Tests that linting for GitHub Actions CI workflow works for a good example"""
