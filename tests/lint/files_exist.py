@@ -40,4 +40,14 @@ def test_files_exist_depreciated_file(self):
 
     results = lint_obj.files_exist()
     assert results["failed"] == ["File must be removed: `parameters.settings.json`"]
+
+def test_files_exist_pass(self):
+    """Lint check should pass if all files are there"""
     
+    new_pipeline = self._make_pipeline_copy()
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load()
+
+    results = lint_obj.files_exist()
+    assert results["failed"] == []
+
