@@ -51,6 +51,7 @@ def files_exist(self):
     passed = []
     warned = []
     failed = []
+    ignored = []
 
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
@@ -85,6 +86,9 @@ def files_exist(self):
     ]
     files_warn_ifexists = [".travis.yml"]
 
+    # Remove files that should be ignored according to the linting config
+    ignore_files = self.lint_config.get('files_exist', [])
+
     def pf(file_path):
         return os.path.join(self.wf_path, file_path)
 
@@ -95,6 +99,8 @@ def files_exist(self):
 
     # Files that cause an error if they don't exist
     for files in files_fail:
+        if any([f in ignore_files for f in files]):
+            continue
         if any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
         else:
@@ -102,6 +108,8 @@ def files_exist(self):
 
     # Files that cause a warning if they don't exist
     for files in files_warn:
+        if any([f in ignore_files for f in files]):
+            continue
         if any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
         else:
@@ -109,6 +117,8 @@ def files_exist(self):
 
     # Files that cause an error if they exist
     for file in files_fail_ifexists:
+        if file in ignore_files:
+            continue
         if os.path.isfile(pf(file)):
             failed.append("File must be removed: {}".format(self._wrap_quotes(file)))
         else:
@@ -116,9 +126,15 @@ def files_exist(self):
 
     # Files that cause a warning if they exist
     for file in files_warn_ifexists:
+        if file in ignore_files:
+            continue
         if os.path.isfile(pf(file)):
             warned.append("File should be removed: {}".format(self._wrap_quotes(file)))
         else:
             passed.append("File not found check: {}".format(self._wrap_quotes(file)))
 
-    return {"passed": passed, "warned": warned, "failed": failed}
+    # Files that are ignoed
+    for file in ignore_files:
+        ignored.append("File is ignored: {}".format(self._wrap_quotes(file)))
+    
+    return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}

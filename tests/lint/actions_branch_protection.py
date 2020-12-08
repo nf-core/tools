@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import nf_core.lint
 import os
 import yaml

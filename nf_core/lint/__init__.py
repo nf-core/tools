@@ -205,7 +205,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "Running lint checks", total=len(self.lint_tests), func_name=self.lint_tests[0]
             )
             for fun_name in self.lint_tests:
-                if self.lint_config.get(fun_name) is False:
+                if self.lint_config.get(fun_name, {}) is False:
                     log.debug("Skipping lint test '{}'".format(fun_name))
                     self.ignored.append((fun_name, fun_name))
                     continue
