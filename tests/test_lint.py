@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Some tests covering the linting code.
 """
+import fnmatch
 import json
 import mock
 import os
@@ -148,6 +149,30 @@ class TestLint(unittest.TestCase):
         stripped = self.lint_obj._strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
         assert stripped == "ls examplefile.zip"
 
+    def test_sphinx_rst_files(self):
+        """Check that we have .rst files for all lint module code,
+        and that there are no unexpected files (eg. deleted lint tests)"""
+
+        docs_basedir = os.path.join(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "lint_tests"
+        )
+
+        # Get list of existing .rst files
+        existing_docs = []
+        for fn in os.listdir(docs_basedir):
+            if fnmatch.fnmatch(fn, "*.rst") and not fnmatch.fnmatch(fn, "index.rst"):
+                existing_docs.append(os.path.join(docs_basedir, fn))
+
+        # Check .rst files against each test name
+        lint_obj = nf_core.lint.PipelineLint("", True)
+        for test_name in lint_obj.lint_tests:
+            fn = os.path.join(docs_basedir, "{}.rst".format(test_name))
+            assert os.path.exists(fn), "Could not find lint docs .rst file: {}".format(fn)
+            existing_docs.remove(fn)
+
+        # Check that we have no remaining .rst files that we didn't expect
+        assert len(existing_docs) == 0, "Unexpected lint docs .rst files found: {}".format(", ".join(existing_docs))
+
     #######################
     # SPECIFIC LINT TESTS #
     #######################
@@ -160,38 +185,64 @@ class TestLint(unittest.TestCase):
     from lint.files_exist import test_missing_config, test_missing_main, test_depreciated_file
     from lint.licence import test_mit_licence_pass, test_mit_licence_fail
     from lint.nextflow_config import test_config_variable_example_pass, test_config_variable_fail
-    from lint.actions_branch_protection import test_actions_wf_branch_pass, test_actions_wf_branch_fail
+    from lint.actions_branch_protection import (
+        test_actions_branch_protection_pass,
+        test_actions_branch_protection_fail,
+        test_actions_branch_protection_ignore,
+    )
+    from lint.actions_ci import (
+        test_actions_ci_pass,
+        test_actions_ci_fail_wrong_nf,
+        test_actions_ci_fail_wrong_docker_ver,
+        test_actions_ci_fail_wrong_trigger,
+    )
 
+
+#    def test_critical_missingfiles_example(self):
+#        """Tests for missing nextflow config and main.nf files"""
+#        lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
+#        assert len(lint_obj.failed) == 1
 #
-#    def test_actions_wf_ci_pass(self):
-#        """Tests that linting for GitHub Actions CI workflow works for a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.minNextflowVersion = "20.04.0"
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
-#        lint_obj.check_actions_ci()
-#        expectations = {"failed": 0, "warned": 0, "passed": 5}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_ci_fail(self):
-#        """Tests that linting for GitHub Actions CI workflow fails for a bad example"""
+#    def test_failing_missingfiles_example(self):
+#        """Tests for missing files like Dockerfile or LICENSE"""
 #        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.minNextflowVersion = "20.04.0"
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
-#        lint_obj.check_actions_ci()
-#        expectations = {"failed": 5, "warned": 0, "passed": 0}
+#        lint_obj.check_files_exist()
+#        expectations = {"failed": 6, "warned": 2, "passed": 14}
 #        self.assess_lint_status(lint_obj, **expectations)
 #
-#    def test_actions_wf_ci_fail_wrong_NF_version(self):
-#        """Tests that linting for GitHub Actions CI workflow fails for a bad NXF version"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.minNextflowVersion = "0.28.0"
-#        lint_obj.pipeline_name = "tools"
-#        lint_obj.config["process.container"] = "'nfcore/tools:0.4'"
-#        lint_obj.check_actions_ci()
-#        expectations = {"failed": 1, "warned": 0, "passed": 4}
-#        self.assess_lint_status(lint_obj, **expectations)
+#    def test_mit_licence_example_pass(self):
+#        """Tests that MIT test works with good MIT licences"""
+#        good_lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
+#        good_lint_obj.check_licence()
+#        expectations = {"failed": 0, "warned": 0, "passed": 1}
+#        self.assess_lint_status(good_lint_obj, **expectations)
+#
+#    def test_mit_license_example_with_failed(self):
+#        """Tests that MIT test works with bad MIT licences"""
+#        bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+#        bad_lint_obj.check_licence()
+#        expectations = {"failed": 1, "warned": 0, "passed": 0}
+#        self.assess_lint_status(bad_lint_obj, **expectations)
+#
+#    def test_config_variable_example_pass(self):
+#        """Tests that config variable existence test works with good pipeline example"""
+#        good_lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
+#        good_lint_obj.check_nextflow_config()
+#        expectations = {"failed": 0, "warned": 1, "passed": 34}
+#        self.assess_lint_status(good_lint_obj, **expectations)
+#
+#    def test_config_variable_example_with_failed(self):
+#        """Tests that config variable existence test fails with bad pipeline example"""
+#        bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
+#        bad_lint_obj.check_nextflow_config()
+#        expectations = {"failed": 19, "warned": 6, "passed": 10}
+#        self.assess_lint_status(bad_lint_obj, **expectations)
+#
+#    @pytest.mark.xfail(raises=AssertionError, strict=True)
+#    def test_config_variable_error(self):
+#        """Tests that config variable existence test falls over nicely with nextflow can't run"""
+#        bad_lint_obj = nf_core.lint.PipelineLint("/non/existant/path")
+#        bad_lint_obj.check_nextflow_config()
 #
 #    def test_actions_wf_lint_pass(self):
 #        """Tests that linting for GitHub Actions linting wf works for a good example"""
@@ -205,20 +256,6 @@ class TestLint(unittest.TestCase):
 #        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
 #        lint_obj.check_actions_lint()
 #        expectations = {"failed": 3, "warned": 0, "passed": 0}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_awstest_pass(self):
-#        """Tests that linting for GitHub Actions AWS test wf works for a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.check_actions_awstest()
-#        expectations = {"failed": 0, "warned": 0, "passed": 1}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_awstest_fail(self):
-#        """Tests that linting for GitHub Actions AWS test wf fails for a bad example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.check_actions_awstest()
-#        expectations = {"failed": 1, "warned": 0, "passed": 0}
 #        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_wrong_license_examples_with_failed(self):

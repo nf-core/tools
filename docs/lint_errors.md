@@ -150,105 +150,10 @@ You can always add steps to the workflows to suit your needs, but to ensure that
 
 This test will fail if the following requirements are not met in these files:
 
-1. `ci.yml`: Contains all the commands required to test the pipeline
-    * Must be triggered on the following events:
-
-      ```yaml
-      on:
-        push:
-          branches:
-            - dev
-        pull_request:
-        release:
-          types: [published]
-      ```
-
-    * The minimum Nextflow version specified in the pipeline's `nextflow.config` has to match that defined by `nxf_ver` in the test matrix:
-
-      ```yaml
-      strategy:
-        matrix:
-          # Nextflow versions: check pipeline minimum and current latest
-          nxf_ver: ['19.10.0', '']
-      ```
-
-    * The `Docker` container for the pipeline must be tagged appropriately for:
-        * Development pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:dev`
-        * Released pipelines: `docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:<tag>`
-
-          ```yaml
-          - name: Build new docker image
-            if: env.GIT_DIFF
-            run: docker build --no-cache . -t nfcore/<pipeline_name>:1.0.0
-
-          - name: Pull docker image
-            if: ${{ !env.GIT_DIFF }}
-            run: |
-              docker pull nfcore/<pipeline_name>:dev
-              docker tag nfcore/<pipeline_name>:dev nfcore/<pipeline_name>:1.0.0
-          ```
-
-2. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
+1. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
     * Must be turned on for `push` and `pull_request`.
     * Must have the command `nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}`.
     * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
-
-3. `branch.yml`: Ensures that pull requests to the protected `master` branch are coming from the correct branch when a PR is opened against the _nf-core_ repository.
-    * Must be turned on for `pull_request` to `master`.
-
-      ```yaml
-      on:
-        pull_request:
-          branches:
-          - master
-      ```
-
-    * Checks that PRs to the protected nf-core repo `master` branch can only come from an nf-core `dev` branch or a fork `patch` branch:
-
-      ```yaml
-      steps:
-        # PRs to the nf-core repo master branch are only ok if coming from the nf-core repo `dev` or any `patch` branches
-        - name: Check PRs
-          if: github.repository == 'nf-core/<pipeline_name>'
-          run: |
-            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
-      ```
-
-    * For branch protection in repositories outside of _nf-core_, you can add an additional step to this workflow. Keep the _nf-core_ branch protection step, to ensure that the `nf-core lint` tests pass. Here's an example:
-
-      ```yaml
-      steps:
-        # PRs are only ok if coming from an nf-core `dev` branch or a fork `patch` branch
-        - name: Check PRs
-          if: github.repository == 'nf-core/<pipeline_name>'
-          run: |
-            { [[ ${{github.event.pull_request.head.repo.full_name}} == nf-core/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
-        - name: Check PRs in another repository
-          if: github.repository == '<repo_name>/<pipeline_name>'
-          run: |
-            { [[ ${{github.event.pull_request.head.repo.full_name}} == <repo_name>/<pipeline_name> ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
-      ```
-
-4. `awstest.yml`: Triggers tests on AWS batch. As running tests on AWS incurs costs, they should be only triggered on `workflow_dispatch`.
-This allows for manual triggering of the workflow when testing on AWS is desired.
-You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the `nf-core AWS test` workflow on the left.
-    * Must not be turned on for `push` or `pull_request`.
-    * Must be turned on for `workflow_dispatch`.
-
-### GitHub Actions AWS full tests
-
-Additionally, we provide the possibility of testing the pipeline on full size datasets on AWS.
-This should ensure that the pipeline runs as expected on AWS and provide a resource estimation.
-The GitHub Actions workflow is `awsfulltest.yml`, and it can be found in the `.github/workflows/` directory.
-This workflow incurrs higher AWS costs, therefore it should only be triggered for releases (`workflow_run` - after the docker hub release workflow) and `workflow_dispatch`.
-You can trigger the tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the `nf-core AWS full size tests` workflow on the left.
-For tests on full data prior to release, [Nextflow Tower](https://tower.nf) launch feature can be employed.
-
-`awsfulltest.yml`: Triggers full sized tests run on AWS batch after releasing.
-
-* Must be turned on `workflow_dispatch`.
-* Must be turned on for `workflow_run` with `workflows: ["nf-core Docker push (release)"]` and `types: [completed]`
-* Should run the profile `test_full` that should be edited to provide the links to full-size datasets. If it runs the profile `test` a warning is given.
 
 ## Error #6 - Repository `README.md` tests ## {#6}
 
