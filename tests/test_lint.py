@@ -157,35 +157,10 @@ class TestLint(unittest.TestCase):
         test_actions_awsfulltest_fail,
     )
     from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
-
     from lint.files_exist import test_missing_config, test_missing_main, test_depreciated_file
+    from lint.licence import test_mit_licence_pass, test_mit_licence_fail
 
 
-#    def test_critical_missingfiles_example(self):
-#        """Tests for missing nextflow config and main.nf files"""
-#        lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
-#        assert len(lint_obj.failed) == 1
-#
-#    def test_failing_missingfiles_example(self):
-#        """Tests for missing files like Dockerfile or LICENSE"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.check_files_exist()
-#        expectations = {"failed": 6, "warned": 2, "passed": 14}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_mit_licence_example_pass(self):
-#        """Tests that MIT test works with good MIT licences"""
-#        good_lint_obj = nf_core.lint.PipelineLint(PATH_CRITICAL_EXAMPLE)
-#        good_lint_obj.check_licence()
-#        expectations = {"failed": 0, "warned": 0, "passed": 1}
-#        self.assess_lint_status(good_lint_obj, **expectations)
-#
-#    def test_mit_license_example_with_failed(self):
-#        """Tests that MIT test works with bad MIT licences"""
-#        bad_lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        bad_lint_obj.check_licence()
-#        expectations = {"failed": 1, "warned": 0, "passed": 0}
-#        self.assess_lint_status(bad_lint_obj, **expectations)
 #
 #    def test_config_variable_example_pass(self):
 #        """Tests that config variable existence test works with good pipeline example"""
