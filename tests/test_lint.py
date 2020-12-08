@@ -184,14 +184,11 @@ class TestLint(unittest.TestCase):
     from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
     from lint.files_exist import (
         test_files_exist_missing_config,
-        test_files_exist_missing_main, 
+        test_files_exist_missing_main,
         test_files_exist_depreciated_file,
-        test_files_exist_pass
+        test_files_exist_pass,
     )
-    from lint.licence import (
-        test_licence_pass, 
-        test_licence_fail
-    )
+    from lint.licence import test_licence_pass, test_licence_fail
     from lint.actions_branch_protection import (
         test_actions_branch_protection_pass,
         test_actions_branch_protection_fail,

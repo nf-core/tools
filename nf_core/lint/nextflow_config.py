@@ -54,8 +54,7 @@ def nextflow_config(self):
     ]
 
     # Remove field that should be ignored according to the linting config
-    ignore_configs = self.lint_config.get('nextflow_config', [])
-
+    ignore_configs = self.lint_config.get("nextflow_config", [])
 
     for cfs in config_fail:
         for cf in cfs:
@@ -197,4 +196,4 @@ def nextflow_config(self):
 
     for config in ignore_configs:
         ignored.append("Config ignored: {}".format(self._wrap_quotes(config)))
-    return {"passed": passed, "warned": warned, "failed": failed, "ignored":ignored}
+    return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}

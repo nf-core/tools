@@ -4,6 +4,7 @@ import os
 import yaml
 import nf_core.lint
 
+
 def test_licence_pass(self):
     """Lint test: check a valid MIT licence"""
     new_pipeline = self._make_pipeline_copy()
@@ -12,6 +13,7 @@ def test_licence_pass(self):
 
     results = lint_obj.licence()
     assert results["passed"] == ["Licence check passed"]
+
 
 def test_licence_fail(self):
     """Lint test: invalid MIT licence"""
@@ -22,6 +24,6 @@ def test_licence_fail(self):
     fh = open(os.path.join(new_pipeline, "LICENSE"), "a")
     fh.write("[year]")
     fh.close()
-    
+
     results = lint_obj.licence()
     assert results["failed"] == ["Licence file contains placeholders: {}".format(os.path.join(new_pipeline, "LICENSE"))]
