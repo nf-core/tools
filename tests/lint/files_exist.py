@@ -4,7 +4,7 @@ import os
 import yaml
 import nf_core.lint
 
-def test_missing_config(self):
+def test_files_exist_missing_config(self):
     """Lint test: critical files missing FAIL"""
     new_pipeline = self._make_pipeline_copy()
 
@@ -16,7 +16,7 @@ def test_missing_config(self):
     results = lint_obj.files_exist()
     assert results["failed"] == ["File not found: `nextflow.config`"]
 
-def test_missing_main(self):
+def test_files_exist_missing_main(self):
     """Check if missing main issues warning"""
     new_pipeline = self._make_pipeline_copy()
 
@@ -28,7 +28,7 @@ def test_missing_main(self):
     results = lint_obj.files_exist()
     assert results["warned"] == ["File not found: `main.nf`"] 
 
-def test_depreciated_file(self):
+def test_files_exist_depreciated_file(self):
     """Check whether depreciated file issues warning"""
     new_pipeline = self._make_pipeline_copy()
 

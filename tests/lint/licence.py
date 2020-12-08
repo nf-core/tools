@@ -4,7 +4,7 @@ import os
 import yaml
 import nf_core.lint
 
-def test_mit_licence_pass(self):
+def test_licence_pass(self):
     """Lint test: check a valid MIT licence"""
     new_pipeline = self._make_pipeline_copy()
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
@@ -13,7 +13,7 @@ def test_mit_licence_pass(self):
     results = lint_obj.licence()
     assert results["passed"] == ["Licence check passed"]
 
-def test_mit_licence_fail(self):
+def test_licence_fail(self):
     """Lint test: invalid MIT licence"""
     new_pipeline = self._make_pipeline_copy()
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)

@@ -101,7 +101,7 @@ def files_exist(self):
     for files in files_fail:
         if any([f in ignore_files for f in files]):
             continue
-        elif any([os.path.isfile(pf(f)) for f in files]):
+        if any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
         else:
             failed.append("File not found: {}".format(self._wrap_quotes(files)))
@@ -110,7 +110,7 @@ def files_exist(self):
     for files in files_warn:
         if any([f in ignore_files for f in files]):
             continue
-        elif any([os.path.isfile(pf(f)) for f in files]):
+        if any([os.path.isfile(pf(f)) for f in files]):
             passed.append("File found: {}".format(self._wrap_quotes(files)))
         else:
             warned.append("File not found: {}".format(self._wrap_quotes(files)))
