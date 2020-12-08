@@ -16,6 +16,7 @@ def nextflow_config(self):
     passed = []
     warned = []
     failed = []
+    ignored = []
 
     # Fail tests if these are missing
     config_fail = [
@@ -193,4 +194,7 @@ def nextflow_config(self):
                     self.nf_config["manifest.version"]
                 )
             )
-    return {"passed": passed, "warned": warned, "failed": failed}
+
+    for config in ignore_configs:
+        ignored.append("Config ignored: {}".format(self._wrap_quotes(config)))
+    return {"passed": passed, "warned": warned, "failed": failed, "ignored":ignored}

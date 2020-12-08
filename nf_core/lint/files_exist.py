@@ -51,6 +51,7 @@ def files_exist(self):
     passed = []
     warned = []
     failed = []
+    ignored = []
 
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
@@ -132,4 +133,8 @@ def files_exist(self):
         else:
             passed.append("File not found check: {}".format(self._wrap_quotes(file)))
 
-    return {"passed": passed, "warned": warned, "failed": failed}
+    # Files that are ignoed
+    for file in ignore_files:
+        ignored.append("File is ignored: {}".format(self._wrap_quotes(file)))
+    
+    return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
