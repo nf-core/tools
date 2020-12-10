@@ -6,12 +6,18 @@ import re
 
 
 def cookiecutter_strings(self):
-    """
-    Look for the string 'cookiecutter' in all pipeline files.
-    Finding it probably means that there has been a copy+paste error from the template.
+    """Check for 'cookiecutter' placeholders.
+
+    The ``nf-core create`` pipeline template uses
+    `cookiecutter <https://github.com/cookiecutter/cookiecutter>`_ behind the scenes.
+
+    This lint test fails if any cookiecutter template variables such as
+    ``{{ cookiecutter.pipeline_name }}`` are found in your pipeline code.
+
+    Finding a placeholder like this means that something was probably copied and pasted
+    from the template without being properly rendered for your pipeline.
     """
     passed = []
-    warned = []
     failed = []
 
     # Loop through files, searching for string
@@ -29,4 +35,4 @@ def cookiecutter_strings(self):
     if num_matches == 0:
         passed.append("Did not find any cookiecutter template strings ({} files)".format(len(self.files)))
 
-    return {"passed": passed, "warned": warned, "failed": failed}
+    return {"passed": passed, "failed": failed}
