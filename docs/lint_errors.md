@@ -50,15 +50,6 @@ The following files will cause a failure if the _are_ present (to fix, delete th
 * `.github/workflows/push_dockerhub.yml`
   * The old dockerhub build script, now split into `.github/workflows/push_dockerhub_dev.yml` and `.github/workflows/push_dockerhub_release.yml`
 
-## Error #2 - Docker file check failed ## {#2}
-
-DSL1 pipelines should have a file called `Dockerfile` in their root directory.
-The file is used for automated docker image builds. This test checks that the file
-exists and contains at least the string `FROM` (`Dockerfile`).
-
-Some pipelines, especially DSL2, may not have a `Dockerfile`. In this case a warning
-will be generated which can be safely ignored.
-
 ## Error #3 - Licence check failed ## {#3}
 
 nf-core pipelines must ship with an open source [MIT licence](https://choosealicense.com/licenses/mit/).
@@ -194,36 +185,6 @@ Each dependency can have the following lint failures and warnings:
 * (Test warning) A newer version of the package is available
 
 > NB: Conda package versions should be pinned with one equals sign (`toolname=1.1`), pip with two (`toolname==1.2`)
-
-## Error #9 - Dockerfile for use with Conda environments ## {#9}
-
-> This test only runs if there is both `environment.yml`
-> and `Dockerfile` present in the workflow.
-
-If a workflow has a conda `environment.yml` file (see above), the `Dockerfile` should use this
-to create the container. Such `Dockerfile`s can usually be very short, eg:
-
-```Dockerfile
-FROM nfcore/base:1.11
-MAINTAINER Rocky Balboa <your@email.com>
-LABEL authors="your@email.com" \
-    description="Docker image containing all requirements for the nf-core mypipeline pipeline"
-
-COPY environment.yml /
-RUN conda env create --quiet -f /environment.yml && conda clean -a
-RUN conda env export --name nf-core-mypipeline-1.0 > nf-core-mypipeline-1.0.yml
-ENV PATH /opt/conda/envs/nf-core-mypipeline-1.0/bin:$PATH
-```
-
-To enforce this minimal `Dockerfile` and check for common copy+paste errors, we require
-that the above template is used.
-Failures are generated if the `FROM`, `COPY` and `RUN` statements above are not present.
-These lines must be an exact copy of the above example.
-
-Note that the base `nfcore/base` image should be tagged to the most recent release.
-The linting tool compares the tag against the currently installed version.
-
-Additional lines and different metadata can be added without causing the test to fail.
 
 ## Error #10 - Template TODO statement found ## {#10}
 
