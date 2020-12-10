@@ -161,31 +161,6 @@ These tests look at `process.container` and `$GITHUB_REF` only if they are set.
 * Container tag / `$GITHUB_REF` must contain only numbers and dots
 * Tags and `$GITHUB_REF` must all match one another
 
-## Error #8 - Conda environment tests ## {#8}
-
-> These tests only run when your pipeline has a root file called `environment.yml`
-
-* The environment `name` must match the pipeline name and version
-  * The pipeline name is defined in the config variable `manifest.name`
-  * Replace the slash with a hyphen as environment names shouldn't contain that character
-  * Example: For `nf-core/test` version 1.4, the conda environment name should be `nf-core-test-1.4`
-
-Each dependency is checked using the [Anaconda API service](https://api.anaconda.org/docs).
-Dependency sublists are ignored with the exception of `- pip`: these packages are also checked
-for pinned version numbers and checked using the [PyPI JSON API](https://wiki.python.org/moin/PyPIJSON).
-
-Note that conda dependencies with pinned channels (eg. `conda-forge::openjdk`) are fine
-and should be handled by the linting properly.
-
-Each dependency can have the following lint failures and warnings:
-
-* (Test failure) Dependency does not have a pinned version number, eg. `toolname=1.6.8`
-* (Test failure) The package cannot be found on any of the listed conda channels (or PyPI if `pip`)
-* (Test failure) The package version cannot be found on anaconda cloud (or on PyPi, for `pip` dependencies)
-* (Test warning) A newer version of the package is available
-
-> NB: Conda package versions should be pinned with one equals sign (`toolname=1.1`), pip with two (`toolname==1.2`)
-
 ## Error #10 - Template TODO statement found ## {#10}
 
 The nf-core workflow template contains a number of comment lines with the following format:
