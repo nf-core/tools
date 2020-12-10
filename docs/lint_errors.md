@@ -139,22 +139,6 @@ The following variables are depreciated and fail the test if they are still pres
 Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
 `process.$fastqc` instead of `process withName:'fastqc'`.
 
-## Error #5 - Continuous Integration configuration ## {#5}
-
-nf-core pipelines must have CI testing with GitHub Actions.
-
-### GitHub Actions CI
-
-There are 4 main GitHub Actions CI test files: `ci.yml`, `linting.yml`, `branch.yml` and `awstests.yml`, and they can all be found in the `.github/workflows/` directory.
-You can always add steps to the workflows to suit your needs, but to ensure that the `nf-core lint` tests pass, keep the steps indicated here.
-
-This test will fail if the following requirements are not met in these files:
-
-1. `linting.yml`: Specifies the commands to lint the pipeline repository using `nf-core lint` and `markdownlint`
-    * Must be turned on for `push` and `pull_request`.
-    * Must have the command `nf-core -l lint_log.txt lint ${GITHUB_WORKSPACE}`.
-    * Must have the command `markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml`.
-
 ## Error #6 - Repository `README.md` tests ## {#6}
 
 The `README.md` files for a project are very important and must meet some requirements:
