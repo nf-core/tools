@@ -2,67 +2,6 @@
 
 This page contains detailed descriptions of the tests done by the [nf-core/tools](https://github.com/nf-core/tools) package. Linting errors should show URLs next to any failures that link to the relevant heading below.
 
-## Error #1 - File not found / must be removed ## {#1}
-
-nf-core pipelines should adhere to a common file structure for consistency.
-
-The lint test looks for the following required files:
-
-* `nextflow.config`
-  * The main nextflow config file
-* `nextflow_schema.json`
-  * A JSON schema describing pipeline parameters, generated using `nf-core schema build`
-* Continuous integration tests with [GitHub Actions](https://github.com/features/actions)
-  * GitHub Actions workflows for CI of your pipeline (`.github/workflows/ci.yml`), branch protection (`.github/workflows/branch.yml`) and nf-core best practice linting (`.github/workflows/linting.yml`)
-* `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
-  * The MIT licence. Copy from [here](https://raw.githubusercontent.com/nf-core/tools/master/LICENSE).
-* `README.md`
-  * A well written readme file in markdown format
-* `CHANGELOG.md`
-  * A markdown file listing the changes for each pipeline release
-* `docs/README.md`, `docs/output.md` and `docs/usage.md`
-  * A `docs` directory with an index `README.md`, usage and output documentation
-
-The following files are suggested but not a hard requirement. If they are missing they trigger a warning:
-
-* `main.nf`
-  * It's recommended that the main workflow script is called `main.nf`
-* `environment.yml`
-  * A conda environment file describing the required software
-* `Dockerfile`
-  * A docker build script to generate a docker image with the required software
-* `conf/base.config`
-  * A `conf` directory with at least one config called `base.config`
-* `.github/workflows/awstest.yml` and `.github/workflows/awsfulltest.yml`
-  * GitHub workflow scripts used for automated tests on AWS
-
-The following files will cause a failure if the _are_ present (to fix, delete them):
-
-* `Singularity`
-  * As we are relying on [Docker Hub](https://https://hub.docker.com/) instead of Singularity
-    and all containers are automatically pulled from there, repositories should not
-    have a `Singularity` file present.
-* `parameters.settings.json`
-  * The syntax for pipeline schema has changed - old `parameters.settings.json` should be
-    deleted and new `nextflow_schema.json` files created instead.
-* `bin/markdown_to_html.r`
-  * The old markdown to HTML conversion script, now replaced by `markdown_to_html.py`
-* `.github/workflows/push_dockerhub.yml`
-  * The old dockerhub build script, now split into `.github/workflows/push_dockerhub_dev.yml` and `.github/workflows/push_dockerhub_release.yml`
-
-## Error #3 - Licence check failed ## {#3}
-
-nf-core pipelines must ship with an open source [MIT licence](https://choosealicense.com/licenses/mit/).
-
-This test fails if the following conditions are not met:
-
-* No licence file found
-  * `LICENSE`, `LICENSE.md`, `LICENCE.md` or `LICENCE.md`
-* Licence file contains fewer than 4 lines of text
-* File does not contain the string `without restriction`
-* Licence contains template placeholders
-  * `[year]`, `[fullname]`, `<YEAR>`, `<COPYRIGHT HOLDER>`, `<year>` or `<copyright holders>`
-
 ## Error #4 - Nextflow config check failed ## {#4}
 
 nf-core pipelines are required to be configured with a minimal set of variable

@@ -4,12 +4,19 @@ import os
 
 
 def licence(self):
-    """Checks licence file is MIT.
+    """Checks that the pipeline licence file.
 
-    Currently the checkpoints are:
-        * licence file must be long enough (4 or more lines)
-        * licence contains the string *without restriction*
-        * licence doesn't have any placeholder variables
+    All nf-core pipelines must ship with an open source `MIT licence <https://choosealicense.com/licenses/mit/>`_.
+
+    This test fails if the following conditions are not met:
+
+    * Licence file contains fewer than 4 lines of text
+    * File does not contain the string *"without restriction"*
+    * Licence contains template placeholders: ``[year]``, ``[fullname]``, ``<YEAR>``, ``<COPYRIGHT HOLDER>``, ``<year>`` or ``<copyright holders>``
+
+    .. note::
+        The lint test looks in any of the following filenames:
+        ``LICENSE``, ``LICENSE.md``, ``LICENCE.md`` or ``LICENCE.md`` *(British / American spellings)*
     """
     passed = []
     warned = []
