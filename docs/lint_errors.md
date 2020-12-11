@@ -68,13 +68,3 @@ The following variables are depreciated and fail the test if they are still pres
 
 Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
 `process.$fastqc` instead of `process withName:'fastqc'`.
-
-## Error #7 - Pipeline and container version numbers ## {#7}
-
-> This test only runs when `--release` is set or `$GITHUB_REF` is equal to `master`
-
-These tests look at `process.container` and `$GITHUB_REF` only if they are set.
-
-* Container name must have a tag specified (eg. `nfcore/pipeline:version`)
-* Container tag / `$GITHUB_REF` must contain only numbers and dots
-* Tags and `$GITHUB_REF` must all match one another
