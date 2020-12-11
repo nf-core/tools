@@ -69,27 +69,6 @@ The following variables are depreciated and fail the test if they are still pres
 Process-level configuration syntax is checked and fails if uses the old Nextflow syntax, for example:
 `process.$fastqc` instead of `process withName:'fastqc'`.
 
-## Error #6 - Repository `README.md` tests ## {#6}
-
-The `README.md` files for a project are very important and must meet some requirements:
-
-* Nextflow badge
-  * If no Nextflow badge is found, a warning is given
-  * If a badge is found but the version doesn't match the minimum version in the config file, the test fails
-  * Example badge code:
-
-    ```markdown
-    [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A50.27.6-brightgreen.svg)](https://www.nextflow.io/)
-    ```
-
-* Bioconda badge
-  * If your pipeline contains a file called `environment.yml`, a bioconda badge is required
-  * Required badge code:
-
-    ```markdown
-    [![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)
-    ```
-
 ## Error #7 - Pipeline and container version numbers ## {#7}
 
 > This test only runs when `--release` is set or `$GITHUB_REF` is equal to `master`
