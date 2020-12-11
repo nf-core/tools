@@ -110,14 +110,6 @@ The nf-core workflow template contains a number of comment lines with the follow
 
 This lint test runs through all files in the pipeline and searches for these lines.
 
-## Error #11 - Pipeline name ## {#11}
-
-_..removed.._
-
-## Error #12 - Pipeline name ## {#12}
-
-In order to ensure consistent naming, pipeline names should contain only lower case, alphanumeric characters. Otherwise a warning is displayed.
-
 ## Error #14 - Pipeline schema syntax ## {#14}
 
 Pipelines should have a `nextflow_schema.json` file that describes the different pipeline parameters (eg. `params.something`, `--something`).
