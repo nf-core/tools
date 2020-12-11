@@ -100,16 +100,6 @@ These tests look at `process.container` and `$GITHUB_REF` only if they are set.
 * Container tag / `$GITHUB_REF` must contain only numbers and dots
 * Tags and `$GITHUB_REF` must all match one another
 
-## Error #10 - Template TODO statement found ## {#10}
-
-The nf-core workflow template contains a number of comment lines with the following format:
-
-```groovy
-// TODO nf-core: Make some kind of change to the workflow here
-```
-
-This lint test runs through all files in the pipeline and searches for these lines.
-
 ## Error #14 - Pipeline schema syntax ## {#14}
 
 Pipelines should have a `nextflow_schema.json` file that describes the different pipeline parameters (eg. `params.something`, `--something`).

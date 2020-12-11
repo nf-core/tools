@@ -34,7 +34,7 @@ def conda_dockerfile(self):
         * The linting tool compares the tag against the currently installed version of tools.
         * This line is not checked if running a development version of nf-core/tools.
 
-    .. seealso:: Additional lines and different metadata can be added to the ``Dockerfile``
+    .. tip:: Additional lines and different metadata can be added to the ``Dockerfile``
                  without causing this lint test to fail.
     """
 

@@ -52,7 +52,7 @@ def actions_lint(self):
              steps:
                - run: yamllint $(find ${GITHUB_WORKSPACE} -type f -name "*.yml")
 
-    .. note::  These are minimal examples of the commands and YAML structure and are not complete
+    .. warning::  These are minimal examples of the commands and YAML structure and are not complete
                enough to be copied into the workflow file.
     """
     passed = []
