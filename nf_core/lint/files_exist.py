@@ -10,6 +10,11 @@ def files_exist(self):
     Iterates through the pipeline's directory content and checkmarks files
     for presence.
 
+    .. note::
+        This test raises an ``AssertionError`` if neither ``nextflow.config`` or ``main.nf`` are found.
+        If these files are not found then this cannot be a Nextflow pipeline and something has gone badly wrong.
+        All lint tests are stopped immediately with a critical error message.
+
     Files that **must** be present::
 
         'nextflow.config',
@@ -43,9 +48,6 @@ def files_exist(self):
     Files that *should not* be present::
 
         '.travis.yml'
-
-    Raises:
-        An AssertionError if neither `nextflow.config` or `main.nf` found.
     """
 
     passed = []
@@ -77,7 +79,7 @@ def files_exist(self):
         [os.path.join(".github", "workflows", "awsfulltest.yml")],
     ]
 
-    # List of strings. Dails / warns if any of the strings exist.
+    # List of strings. Fails / warns if any of the strings exist.
     files_fail_ifexists = [
         "Singularity",
         "parameters.settings.json",
