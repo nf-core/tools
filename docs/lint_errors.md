@@ -78,10 +78,3 @@ These tests look at `process.container` and `$GITHUB_REF` only if they are set.
 * Container name must have a tag specified (eg. `nfcore/pipeline:version`)
 * Container tag / `$GITHUB_REF` must contain only numbers and dots
 * Tags and `$GITHUB_REF` must all match one another
-
-## Error #15 - Schema config check ## {#15}
-
-The `nextflow_schema.json` pipeline schema should describe every flat parameter returned from the `nextflow config` command (params that are objects or more complex structures are ignored).
-Missing parameters result in a lint failure.
-
-If any parameters are found in the schema that were not returned from `nextflow config` a warning is given.
