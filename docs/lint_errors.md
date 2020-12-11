@@ -79,47 +79,6 @@ These tests look at `process.container` and `$GITHUB_REF` only if they are set.
 * Container tag / `$GITHUB_REF` must contain only numbers and dots
 * Tags and `$GITHUB_REF` must all match one another
 
-## Error #14 - Pipeline schema syntax ## {#14}
-
-Pipelines should have a `nextflow_schema.json` file that describes the different pipeline parameters (eg. `params.something`, `--something`).
-
-* Schema should be valid JSON files
-* Schema should adhere to [JSONSchema](https://json-schema.org/), Draft 7.
-* Parameters can be described in two places:
-  * As `properties` in the top-level schema object
-  * As `properties` within subschemas listed in a top-level `definitions` objects
-* The schema must describe at least one parameter
-* There must be no duplicate parameter IDs across the schema and definition subschema
-* All subschema in `definitions` must be referenced in the top-level `allOf` key
-* The top-level `allOf` key must not describe any non-existent definitions
-* Core top-level schema attributes should exist and be set as follows:
-  * `$schema`: `https://json-schema.org/draft-07/schema`
-  * `$id`: URL to the raw schema file, eg. `https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json`
-  * `title`: `YOURPIPELINE pipeline parameters`
-  * `description`: The piepline config `manifest.description`
-
-For example, an _extremely_ minimal schema could look like this:
-
-```json
-{
-  "$schema": "https://json-schema.org/draft-07/schema",
-  "$id": "https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json",
-  "title": "YOURPIPELINE pipeline parameters",
-  "description": "This pipeline is for testing",
-  "properties": {
-    "first_param": { "type": "string" }
-  },
-  "definitions": {
-    "my_first_group": {
-      "properties": {
-        "second_param": { "type": "string" }
-      }
-    }
-  },
-  "allOf": [{"$ref": "#/definitions/my_first_group"}]
-}
-```
-
 ## Error #15 - Schema config check ## {#15}
 
 The `nextflow_schema.json` pipeline schema should describe every flat parameter returned from the `nextflow config` command (params that are objects or more complex structures are ignored).
