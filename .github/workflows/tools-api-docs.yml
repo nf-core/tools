@@ -19,7 +19,8 @@ jobs:
 
       - name: Install python dependencies
         run: |
-          python -m pip install --upgrade pip Sphinx sphinxcontrib-napoleon
+          pip install --upgrade pip
+          pip install -r ./docs/api/requirements.txt
           pip install .
 
       - name: Build HTML docs
