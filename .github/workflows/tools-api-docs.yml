@@ -31,6 +31,7 @@ jobs:
         run: |
           git checkout --orphan api-doc
           git rm -r --cache .
+          rm .gitignore
           git config user.email "core@nf-co.re"
           git config user.name "nf-core-bot"
           git add docs
