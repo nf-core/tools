@@ -73,10 +73,10 @@ class TestUtils(unittest.TestCase):
         self.pipeline_obj._load_pipeline_config()
         assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
 
-    def test_load_conda_env(self):
-        """Load the pipeline Conda environment.yml file"""
-        self.pipeline_obj._load_conda_environment()
-        assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
+    # def test_load_conda_env(self):
+    #     """Load the pipeline Conda environment.yml file"""
+    #     self.pipeline_obj._load_conda_environment()
+    #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
 
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
