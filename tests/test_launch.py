@@ -62,7 +62,7 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
-            "description": "The output directory where the results will be saved.",
+            "description": "Path to the output directory where the results will be saved.",
             "default": "./results",
             "fa_icon": "fas fa-folder-open",
         }
