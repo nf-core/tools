@@ -2,6 +2,7 @@
 """Tests for the download subcommand of nf-core tools
 """
 
+import nf_core.create
 import nf_core.utils
 from nf_core.download import DownloadWorkflow
 
@@ -12,8 +13,6 @@ import pytest
 import shutil
 import tempfile
 import unittest
-
-PATH_WORKING_EXAMPLE = os.path.join(os.path.dirname(__file__), "lint_examples/minimalworkingexample")
 
 
 class DownloadTest(unittest.TestCase):
@@ -108,9 +107,15 @@ class DownloadTest(unittest.TestCase):
     #
     def test_wf_use_local_configs(self):
         # Get a workflow and configs
+        test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        create_obj = nf_core.create.PipelineCreate(
+            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir
+        )
+        create_obj.init_pipeline()
+
         test_outdir = tempfile.mkdtemp()
         download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0", outdir=test_outdir)
-        shutil.copytree(PATH_WORKING_EXAMPLE, os.path.join(test_outdir, "workflow"))
+        shutil.copytree(test_pipeline_dir, os.path.join(test_outdir, "workflow"))
         download_obj.download_configs()
 
         # Test the function

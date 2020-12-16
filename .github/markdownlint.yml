@@ -3,6 +3,13 @@ default: true
 line-length: false
 no-duplicate-header:
     siblings_only: true
+no-inline-html:
+    allowed_elements:
+        - img
+        - p
+        - kbd
+        - details
+        - summary
 # tools only - the {{ jinja variables }} break URLs and cause this to error
 no-bare-urls: false
 # tools only - suppresses error messages for usage of $ in main README
