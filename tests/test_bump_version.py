@@ -28,7 +28,7 @@ def test_bump_pipeline_version(datafiles):
     # Check nextflow.config
     new_pipeline_obj._load_pipeline_config()
     assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.1"
-    assert new_pipeline_obj.nf_config["process.container"].strip("'\"") == "nfcore/testpipeline:1.1"
+    #assert new_pipeline_obj.nf_config["process.container"].strip("'\"") == "nfcore/testpipeline:1.1"
 
     # Check .github/workflows/ci.yml
     with open(new_pipeline_obj._fp(".github/workflows/ci.yml")) as fh:
@@ -66,7 +66,7 @@ def test_dev_bump_pipeline_version(datafiles):
     # Check the pipeline config
     new_pipeline_obj._load_pipeline_config()
     assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.2dev"
-    assert new_pipeline_obj.nf_config["process.container"].strip("'\"") == "nfcore/testpipeline:dev"
+    #assert new_pipeline_obj.nf_config["process.container"].strip("'\"") == "nfcore/testpipeline:dev"
 
 
 def test_bump_nextflow_version(datafiles):
