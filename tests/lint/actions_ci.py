@@ -9,6 +9,7 @@ def test_actions_ci_pass(self):
     """Lint test: actions_ci - PASS"""
     self.lint_obj._load()
     results = self.lint_obj.actions_ci()
+    print(results)
     assert results["passed"] == [
         "'.github/workflows/ci.yml' is triggered on expected events",
         "CI is building the correct docker image: `docker build --no-cache . -t nfcore/testpipeline:dev`",
