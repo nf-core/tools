@@ -82,7 +82,6 @@ def multiqc_options   = modules['multiqc']
 multiqc_options.args += params.multiqc_title ? " --title \"$params.multiqc_title\"" : ''
 
 // Local: Modules
-include { MULTIQC               } from './modules/local/process/multiqc'               addParams( options: multiqc_options              )
 include { GET_SOFTWARE_VERSIONS } from './modules/local/process/get_software_versions' addParams( options: [publish_files : ['csv':'']] )
 
 // Local: Sub-workflows
@@ -90,6 +89,7 @@ include { INPUT_CHECK           } from './modules/local/subworkflow/input_check'
 
 // nf-core/modules: Modules
 include { FASTQC                } from './modules/nf-core/software/fastqc/main'        addParams( options: modules['fastqc'] )
+include { MULTIQC               } from './modules/nf-core/software/multiqc/main'       addParams( options: multiqc_options   )
 
 ////////////////////////////////////////////////////
 /* --           RUN MAIN WORKFLOW              -- */
@@ -131,12 +131,14 @@ workflow {
     workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
+    ch_multiqc_files = ch_multiqc_config
+    ch_multiqc_config.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+    ch_multiqc_config.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    ch_multiqc_config.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
+    ch_multiqc_config.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+
     MULTIQC (
-        ch_multiqc_config,
-        ch_multiqc_custom_config.collect().ifEmpty([]),
-        GET_SOFTWARE_VERSIONS.out.yaml.collect(),
-        ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'),
-        FASTQC.out.zip.collect{it[1]}.ifEmpty([]),
+        ch_multiqc_files
     )
     multiqc_report = MULTIQC.out.report.toList()
 }
