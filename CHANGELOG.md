@@ -6,6 +6,7 @@
 
 ### Template
 
+* Adding Validation class to `lib/` for parameter validation against Schema [#426](https://github.com/nf-core/tools/issues/426)
 * Move, modularise and import boilerplate code via Groovy `lib/` directory
 * Implement DSL2 syntax for pipeline template
 * Adding TODOs and MultiQC process in DSL2 template
