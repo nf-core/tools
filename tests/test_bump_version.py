@@ -85,7 +85,7 @@ def test_bump_nextflow_version(datafiles):
 
     # Check nextflow.config
     new_pipeline_obj._load_pipeline_config()
-    assert new_pipeline_obj.nf_config["manifest.nextflowVersion"].strip("'\"") == ">=19.10.3-edge"
+    assert new_pipeline_obj.nf_config["manifest.nextflowVersion"].strip("'\"") == "!>=20.11.0-edge"
 
     # # Check .github/workflows/ci.yml
     # with open(new_pipeline_obj._fp(".github/workflows/ci.yml")) as fh:
