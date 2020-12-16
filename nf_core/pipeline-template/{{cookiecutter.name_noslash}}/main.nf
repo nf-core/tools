@@ -24,8 +24,26 @@ if (params.help) {
 }
 
 ////////////////////////////////////////////////////
+/* --        GENOME PARAMETER VALUES           -- */
+////////////////////////////////////////////////////
+
+params.fasta = Checks.get_genome_attribute(params, 'fasta')
+
+////////////////////////////////////////////////////
+/* --         PRINT PARAMETER SUMMARY          -- */
+////////////////////////////////////////////////////
+
+def summary_params = Schema.params_summary_map(workflow, params, json_schema)
+log.info Schema.params_summary_log(workflow, params, json_schema)
+
+////////////////////////////////////////////////////
 /* --          PARAMETER CHECKS                -- */
 ////////////////////////////////////////////////////
+
+// Check that conda channels are set-up correctly
+if (params.enable_conda) {
+    Checks.check_conda_channels(log)
+}
 
 // Check AWS batch settings
 Checks.aws_batch(workflow, params)
@@ -37,32 +55,17 @@ Checks.hostname(workflow, params, log)
 Checks.genome_exists(params, log)
 
 ////////////////////////////////////////////////////
-/* --        GENOME PARAMETER VALUES           -- */
-////////////////////////////////////////////////////
-
-params.fasta = Checks.get_genome_attribute(params, 'fasta')
-params.gtf   = Checks.get_genome_attribute(params, 'gtf')
-
-////////////////////////////////////////////////////
-/* --         PRINT PARAMETER SUMMARY          -- */
-////////////////////////////////////////////////////
-
-def summary_params = Schema.params_summary_map(workflow, params, json_schema)
-log.info Schema.params_summary_log(workflow, params, json_schema)
-
-////////////////////////////////////////////////////
 /* --          VALIDATE INPUTS                 -- */
 ////////////////////////////////////////////////////
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
-checkPathParamList = [
-    params.input
-]
+checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
 for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
 // Check mandatory parameters
 if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
 
 ////////////////////////////////////////////////////
 /* --          CONFIG FILES                    -- */
@@ -131,7 +134,7 @@ workflow {
     workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-    ch_multiqc_files = ch_multiqc_config
+    ch_multiqc_files    = ch_multiqc_config
     ch_multiqc_config.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_config.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_config.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
@@ -140,7 +143,9 @@ workflow {
     MULTIQC (
         ch_multiqc_files
     )
-    multiqc_report = MULTIQC.out.report.toList()
+    multiqc_report       = MULTIQC.out.report.toList()
+    ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
+    
 }
 
 ////////////////////////////////////////////////////
