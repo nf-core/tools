@@ -33,8 +33,8 @@ ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
 /*
  * Validate parameters
  */
+Validation.validateParameters(params, json_schema, log, workflow)
 if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { exit 1, "Input samplesheet file not specified!" }
-
 /*
  * Reference genomes
  */
