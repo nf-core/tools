@@ -80,7 +80,7 @@ def test_bump_nextflow_version(datafiles):
     pipeline_obj._load()
 
     # Bump the version number
-    nf_core.bump_version.bump_nextflow_version(pipeline_obj, "19.10.3-edge")
+    nf_core.bump_version.bump_nextflow_version(pipeline_obj, "20.11.0-edge")
     new_pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
 
     # Check nextflow.config
@@ -98,7 +98,7 @@ def test_bump_nextflow_version(datafiles):
     assert (
         #"[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A5{}-brightgreen.svg)](https://www.nextflow.io/)".format( 
         "[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A5{}-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)".format( 
-            "19.10.3-edge".replace('-','--')
+            "20.11.0-edge".replace('-','--')
         )
         in readme
         
