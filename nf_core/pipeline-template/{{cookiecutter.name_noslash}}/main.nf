@@ -131,21 +131,22 @@ workflow {
     /*
      * MultiQC
      */
-    workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
-    ch_workflow_summary = Channel.value(workflow_summary)
+    if (!params.skip_multiqc) {
+        workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
+        ch_workflow_summary = Channel.value(workflow_summary)
 
-    ch_multiqc_files    = ch_multiqc_config
-    ch_multiqc_config.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-    ch_multiqc_config.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_config.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
-    ch_multiqc_config.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+        ch_multiqc_files    = ch_multiqc_config
+        ch_multiqc_config.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+        ch_multiqc_config.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+        ch_multiqc_config.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
+        ch_multiqc_config.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
-    MULTIQC (
-        ch_multiqc_files
-    )
-    multiqc_report       = MULTIQC.out.report.toList()
-    ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
-    
+        MULTIQC (
+            ch_multiqc_files
+        )
+        multiqc_report       = MULTIQC.out.report.toList()
+        ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
+    }    
 }
 
 ////////////////////////////////////////////////////

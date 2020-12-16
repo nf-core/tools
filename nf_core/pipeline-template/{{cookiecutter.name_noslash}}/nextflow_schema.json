@@ -206,6 +206,11 @@
                     "fa_icon": "fas fa-palette",
                     "hidden": true
                 },
+                "skip_multiqc": {
+                    "type": "boolean",
+                    "description": "Skip MultiQC.",
+                    "fa_icon": "fas fa-fast-forward"
+                },
                 "multiqc_config": {
                     "type": "string",
                     "description": "Custom config file to supply to MultiQC.",
