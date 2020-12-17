@@ -6,31 +6,29 @@ import nf_core.create
 import tempfile
 import unittest
 
-WD = os.path.dirname(__file__)
-PIPELINE_NAME = "nf-core/test"
-PIPELINE_DESCRIPTION = "just for 4w3s0m3 tests"
-PIPELINE_AUTHOR = "Chuck Norris"
-PIPELINE_VERSION = "1.0.0"
-
 
 class NfcoreCreateTest(unittest.TestCase):
     def setUp(self):
-        self.tmppath = tempfile.mkdtemp()
+        self.pipeline_name = "nf-core/test"
+        self.pipeline_description = "just for 4w3s0m3 tests"
+        self.pipeline_author = "Chuck Norris"
+        self.pipeline_version = "1.0.0"
+
         self.pipeline = nf_core.create.PipelineCreate(
-            name=PIPELINE_NAME,
-            description=PIPELINE_DESCRIPTION,
-            author=PIPELINE_AUTHOR,
-            new_version=PIPELINE_VERSION,
+            name=self.pipeline_name,
+            description=self.pipeline_description,
+            author=self.pipeline_author,
+            new_version=self.pipeline_version,
             no_git=False,
             force=True,
-            outdir=self.tmppath,
+            outdir=tempfile.mkdtemp(),
         )
 
     def test_pipeline_creation(self):
-        assert self.pipeline.name == PIPELINE_NAME
-        assert self.pipeline.description == PIPELINE_DESCRIPTION
-        assert self.pipeline.author == PIPELINE_AUTHOR
-        assert self.pipeline.new_version == PIPELINE_VERSION
+        assert self.pipeline.name == self.pipeline_name
+        assert self.pipeline.description == self.pipeline_description
+        assert self.pipeline.author == self.pipeline_author
+        assert self.pipeline.new_version == self.pipeline_version
 
     def test_pipeline_creation_initiation(self):
         self.pipeline.init_pipeline()

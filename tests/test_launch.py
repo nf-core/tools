@@ -62,7 +62,7 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
-            "description": "The output directory where the results will be saved.",
+            "description": "Path to the output directory where the results will be saved.",
             "default": "./results",
             "fa_icon": "fas fa-folder-open",
         }
@@ -93,21 +93,21 @@ class TestLaunch(unittest.TestCase):
         assert self.launcher.schema_obj.schema["allOf"][0] == {"$ref": "#/definitions/coreNextflow"}
         assert "-resume" in self.launcher.schema_obj.schema["definitions"]["coreNextflow"]["properties"]
 
-    def test_ob_to_pyinquirer_string(self):
+    def test_ob_to_questionary_string(self):
         """ Check converting a python dict to a pyenquirer format - simple strings """
         sc_obj = {
             "type": "string",
             "default": "data/*{1,2}.fastq.gz",
         }
-        result = self.launcher.single_param_to_pyinquirer("input", sc_obj)
+        result = self.launcher.single_param_to_questionary("input", sc_obj)
         assert result == {"type": "input", "name": "input", "message": "input", "default": "data/*{1,2}.fastq.gz"}
 
-    @mock.patch("PyInquirer.prompt", side_effect=[{"use_web_gui": "Web based"}])
+    @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
         """ Check the prompt to launch the web schema or use the cli """
         assert self.launcher.prompt_web_gui() == True
 
-    @mock.patch("PyInquirer.prompt", side_effect=[{"use_web_gui": "Command line"}])
+    @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Command line"}])
     def test_prompt_web_gui_false(self, mock_prompt):
         """ Check the prompt to launch the web schema or use the cli """
         assert self.launcher.prompt_web_gui() == False
@@ -198,13 +198,13 @@ class TestLaunch(unittest.TestCase):
         assert self.launcher.schema_obj.input_params["igenomes_ignore"] == True
         assert self.launcher.schema_obj.input_params["max_cpus"] == 12
 
-    def test_ob_to_pyinquirer_bool(self):
+    def test_ob_to_questionary_bool(self):
         """ Check converting a python dict to a pyenquirer format - booleans """
         sc_obj = {
             "type": "boolean",
             "default": "True",
         }
-        result = self.launcher.single_param_to_pyinquirer("single_end", sc_obj)
+        result = self.launcher.single_param_to_questionary("single_end", sc_obj)
         assert result["type"] == "list"
         assert result["name"] == "single_end"
         assert result["message"] == "single_end"
@@ -218,10 +218,10 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("false") == False
         assert result["filter"](False) == False
 
-    def test_ob_to_pyinquirer_number(self):
+    def test_ob_to_questionary_number(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
         sc_obj = {"type": "number", "default": 0.1}
-        result = self.launcher.single_param_to_pyinquirer("min_reps_consensus", sc_obj)
+        result = self.launcher.single_param_to_questionary("min_reps_consensus", sc_obj)
         assert result["type"] == "input"
         assert result["default"] == "0.1"
         assert result["validate"]("123") is True
@@ -232,10 +232,10 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("123.456") == float(123.456)
         assert result["filter"]("") == ""
 
-    def test_ob_to_pyinquirer_integer(self):
+    def test_ob_to_questionary_integer(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
         sc_obj = {"type": "integer", "default": 1}
-        result = self.launcher.single_param_to_pyinquirer("broad_cutoff", sc_obj)
+        result = self.launcher.single_param_to_questionary("broad_cutoff", sc_obj)
         assert result["type"] == "input"
         assert result["default"] == "1"
         assert result["validate"]("123") is True
@@ -246,10 +246,10 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("123") == int(123)
         assert result["filter"]("") == ""
 
-    def test_ob_to_pyinquirer_range(self):
+    def test_ob_to_questionary_range(self):
         """ Check converting a python dict to a pyenquirer format - with enum """
-        sc_obj = {"type": "range", "minimum": "10", "maximum": "20", "default": 15}
-        result = self.launcher.single_param_to_pyinquirer("broad_cutoff", sc_obj)
+        sc_obj = {"type": "number", "minimum": "10", "maximum": "20", "default": 15}
+        result = self.launcher.single_param_to_questionary("broad_cutoff", sc_obj)
         assert result["type"] == "input"
         assert result["default"] == "15"
         assert result["validate"]("20") is True
@@ -260,21 +260,18 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("20") == float(20)
         assert result["filter"]("") == ""
 
-    def test_ob_to_pyinquirer_enum(self):
-        """ Check converting a python dict to a pyenquirer format - with enum """
+    def test_ob_to_questionary_enum(self):
+        """ Check converting a python dict to a questionary format - with enum """
         sc_obj = {"type": "string", "default": "copy", "enum": ["symlink", "rellink"]}
-        result = self.launcher.single_param_to_pyinquirer("publish_dir_mode", sc_obj)
+        result = self.launcher.single_param_to_questionary("publish_dir_mode", sc_obj)
         assert result["type"] == "list"
         assert result["default"] == "copy"
         assert result["choices"] == ["symlink", "rellink"]
-        assert result["validate"]("symlink") is True
-        assert result["validate"]("") is True
-        assert result["validate"]("not_allowed") == "Must be one of: symlink, rellink"
 
-    def test_ob_to_pyinquirer_pattern(self):
-        """ Check converting a python dict to a pyenquirer format - with pattern """
+    def test_ob_to_questionary_pattern(self):
+        """ Check converting a python dict to a questionary format - with pattern """
         sc_obj = {"type": "string", "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"}
-        result = self.launcher.single_param_to_pyinquirer("email", sc_obj)
+        result = self.launcher.single_param_to_questionary("email", sc_obj)
         assert result["type"] == "input"
         assert result["validate"]("test@email.com") is True
         assert result["validate"]("") is True

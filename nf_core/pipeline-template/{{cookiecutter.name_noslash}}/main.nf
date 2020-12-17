@@ -9,111 +9,156 @@
 ----------------------------------------------------------------------------------------
 */
 
-nextflow.preview.dsl = 2
+nextflow.enable.dsl = 2
 
-/*
- * Print help message if required
- */
+////////////////////////////////////////////////////
+/* --               PRINT HELP                 -- */
+////////////////////////////////////////////////////
+
+def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
     // TODO nf-core: Update typical command used to run pipeline
     def command = "nextflow run {{ cookiecutter.name }} --input samplesheet.csv -profile docker"
-    log.info Headers.nf_core(workflow, params.monochrome_logs)
-    log.info Schema.params_help("$baseDir/nextflow_schema.json", command)
+    log.info Schema.params_help(workflow, params, json_schema, command)
     exit 0
 }
 
-/*
- * Stage config files
- */
-ch_multiqc_config = file("$baseDir/assets/multiqc_config.yaml", checkIfExists: true)
-ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config, checkIfExists: true) : Channel.empty()
-ch_output_docs = file("$projectDir/docs/output.md", checkIfExists: true)
-ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
+////////////////////////////////////////////////////
+/* --        GENOME PARAMETER VALUES           -- */
+////////////////////////////////////////////////////
 
-/*
- * Validate parameters
- */
-if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { exit 1, "Input samplesheet file not specified!" }
+params.fasta = Checks.get_genome_attribute(params, 'fasta')
 
-/*
- * Reference genomes
- */
-// TODO nf-core: Add any reference files that are needed
-// NOTE - FOR SIMPLICITY THIS IS NOT USED IN THIS PIPELINE
-// EXAMPLE ONLY TO DEMONSTRATE USAGE OF AWS IGENOMES
-if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
-    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
+////////////////////////////////////////////////////
+/* --         PRINT PARAMETER SUMMARY          -- */
+////////////////////////////////////////////////////
+
+def summary_params = Schema.params_summary_map(workflow, params, json_schema)
+log.info Schema.params_summary_log(workflow, params, json_schema)
+
+////////////////////////////////////////////////////
+/* --          PARAMETER CHECKS                -- */
+////////////////////////////////////////////////////
+
+// Check that conda channels are set-up correctly
+if (params.enable_conda) {
+    Checks.check_conda_channels(log)
 }
-params.fasta = params.genomes[params.genome]?.fasta
-if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
 
-/*
- * Check parameters
- */
-Checks.aws_batch(workflow, params)     // Check AWS batch settings
-Checks.hostname(workflow, params, log) // Check the hostnames against configured profiles
+// Check AWS batch settings
+Checks.aws_batch(workflow, params)
 
-/*
- * Print parameter summary
- */
-// Has the run name been specified by the user?
-// this has the bonus effect of catching both -name and --name
-run_name = params.name
-if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
-    run_name = workflow.runName
-}
-summary = Schema.params_summary(workflow, params, run_name)
-log.info Headers.nf_core(workflow, params.monochrome_logs)
-log.info summary.collect { k,v -> "${k.padRight(20)}: $v" }.join("\n")
-log.info "-\033[2m----------------------------------------------------\033[0m-"
+// Check the hostnames against configured profiles
+Checks.hostname(workflow, params, log)
 
-workflow_summary = Schema.params_mqc_summary(summary)
-ch_workflow_summary = Channel.value(workflow_summary)
+// Check genome key exists if provided
+Checks.genome_exists(params, log)
 
-/*
- * Include local pipeline modules
- */
-include { OUTPUT_DOCUMENTATION } from './modules/local/output_documentation' params(params)
-include { GET_SOFTWARE_VERSIONS } from './modules/local/get_software_versions' params(params)
-include { CHECK_SAMPLESHEET; check_samplesheet_paths } from './modules/local/check_samplesheet' params(params)
+////////////////////////////////////////////////////
+/* --          VALIDATE INPUTS                 -- */
+////////////////////////////////////////////////////
 
-/*
- * Include nf-core modules
- */
-include { FASTQC } from './modules/nf-core/fastqc' params(params)
-include { MULTIQC } from './modules/nf-core/multiqc' params(params)
+// TODO nf-core: Add all file path parameters for the pipeline to the list below
+// Check input path parameters to see if they exist
+checkPathParamList = [ params.input, params.multiqc_config, params.fasta ]
+for (param in checkPathParamList) { if (param) { file(param, checkIfExists: true) } }
 
-/*
- * Run the workflow
- */
+// Check mandatory parameters
+if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input samplesheet not specified!' }
+if (params.fasta) { ch_fasta = file(params.fasta) } else { exit 1, 'Genome fasta file not specified!' }
+
+////////////////////////////////////////////////////
+/* --          CONFIG FILES                    -- */
+////////////////////////////////////////////////////
+
+ch_multiqc_config        = file("$projectDir/assets/multiqc_config.yaml", checkIfExists: true)
+ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multiqc_config) : Channel.empty()
+
+////////////////////////////////////////////////////
+/* --       IMPORT MODULES / SUBWORKFLOWS      -- */
+////////////////////////////////////////////////////
+
+// Don't overwrite global params.modules, create a copy instead and use that within the main script.
+def modules = params.modules.clone()
+
+def multiqc_options   = modules['multiqc']
+multiqc_options.args += params.multiqc_title ? " --title \"$params.multiqc_title\"" : ''
+
+// Local: Modules
+include { GET_SOFTWARE_VERSIONS } from './modules/local/process/get_software_versions' addParams( options: [publish_files : ['csv':'']] )
+
+// Local: Sub-workflows
+include { INPUT_CHECK           } from './modules/local/subworkflow/input_check'       addParams( options: [:]                          )
+
+// nf-core/modules: Modules
+include { FASTQC                } from './modules/nf-core/software/fastqc/main'        addParams( options: modules['fastqc']            )
+include { MULTIQC               } from './modules/nf-core/software/multiqc/main'       addParams( options: multiqc_options              )
+
+////////////////////////////////////////////////////
+/* --           RUN MAIN WORKFLOW              -- */
+////////////////////////////////////////////////////
+
+// Info required for completion email and summary
+def multiqc_report = []
+
 workflow {
 
-    CHECK_SAMPLESHEET(ch_input)
-        .splitCsv(header:true, sep:',')
-        .map { check_samplesheet_paths(it) }
-        .set { ch_raw_reads }
+    ch_software_versions = Channel.empty()
 
-    FASTQC(ch_raw_reads)
+    /*
+     * SUBWORKFLOW: Read in samplesheet, validate and stage input files
+     */
+    INPUT_CHECK ( 
+        ch_input
+    )
 
-    OUTPUT_DOCUMENTATION(
-        ch_output_docs,
-        ch_output_docs_images)
+    /*
+     * MODULE: Run FastQC
+     */
+    FASTQC (
+        INPUT_CHECK.out.reads
+    )
+    ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
+    
 
-    GET_SOFTWARE_VERSIONS()
+    /*
+     * MODULE: Pipeline reporting
+     */
+    GET_SOFTWARE_VERSIONS ( 
+        ch_software_versions.map { it }.collect()
+    )
 
-    MULTIQC(
-        ch_multiqc_config,
-        ch_multiqc_custom_config.collect().ifEmpty([]),
-        FASTQC.out.collect(),
-        GET_SOFTWARE_VERSIONS.out.yml.collect(),
-        ch_workflow_summary)
+    /*
+     * MultiQC
+     */  
+    if (!params.skip_multiqc) {
+        workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
+        ch_workflow_summary = Channel.value(workflow_summary)
+
+        ch_multiqc_files = Channel.empty()
+        ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+        ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+        ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
+        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+        
+        MULTIQC (
+            ch_multiqc_files.collect()
+        )
+        multiqc_report       = MULTIQC.out.report.toList()
+        ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
+    }
 }
 
-/*
- * Send completion email
- */
+////////////////////////////////////////////////////
+/* --              COMPLETION EMAIL            -- */
+////////////////////////////////////////////////////
+
 workflow.onComplete {
-    def multiqc_report = []
-    Completion.email(workflow, params, summary, run_name, baseDir, multiqc_report, log)
+    Completion.email(workflow, params, summary_params, projectDir, log, multiqc_report)
     Completion.summary(workflow, params, log)
 }
+
+////////////////////////////////////////////////////
+/* --                  THE END                 -- */
+////////////////////////////////////////////////////
