@@ -29,6 +29,7 @@ def actions_schema_validation(self):
     # Load the GitHub workflow schema
     r = requests.get("https://json.schemastore.org/github-workflow", allow_redirects=True)
     schema = r.json()
+
     # Validate all workflows against the schema
     for wf in action_workflows:
         # load workflow
@@ -36,8 +37,8 @@ def actions_schema_validation(self):
         with open(wf_path, "r") as fh:
             wf_json = yaml.safe_load(fh)
 
+        # yaml parses 'on' as True --> try to fix it before schema validation
         try:
-            # fix yaml parsing on as True
             wf_json["on"] = wf_json.pop(True)
         except Exception as e:
             failed.append("Missing 'on' keyword in {}.format(wf)")
