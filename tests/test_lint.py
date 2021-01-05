@@ -201,6 +201,11 @@ class TestLint(unittest.TestCase):
         test_actions_ci_fail_wrong_trigger,
     )
 
+    from lint.actions_schema_validation import (
+        test_actions_schema_validation_missing_jobs,
+        test_actions_schema_validation_missing_on,
+    )
+
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""
