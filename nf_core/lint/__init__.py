@@ -114,6 +114,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .cookiecutter_strings import cookiecutter_strings
     from .schema_lint import schema_lint
     from .schema_params import schema_params
+    from .actions_schema_validation import actions_schema_validation
 
     def __init__(self, wf_path, release_mode=False):
         """ Initialise linting object """
@@ -144,6 +145,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "cookiecutter_strings",
             "schema_lint",
             "schema_params",
+            "actions_schema_validation",
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
