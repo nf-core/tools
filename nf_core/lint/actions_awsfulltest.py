@@ -32,8 +32,11 @@ def actions_awsfulltest(self):
 
     fn = os.path.join(self.wf_path, ".github", "workflows", "awsfulltest.yml")
     if os.path.isfile(fn):
-        with open(fn, "r") as fh:
-            wf = yaml.safe_load(fh)
+        try:
+            with open(fn, "r") as fh:
+                wf = yaml.safe_load(fh)
+        except:
+            return {"failed": ["Could not parse yaml file: {}".format(fn)]}
 
         aws_profile = "-profile test "
 

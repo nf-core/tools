@@ -32,10 +32,15 @@ def actions_schema_validation(self):
 
     # Validate all workflows against the schema
     for wf_path in action_workflows:
-        # load workflow
         wf = os.path.basename(wf_path)
-        with open(wf_path, "r") as fh:
-            wf_json = yaml.safe_load(fh)
+
+        # load workflow
+        try:
+            with open(wf_path, "r") as fh:
+                wf_json = yaml.safe_load(fh)
+        except Exception as e:
+            failed.append("Could not parse yaml file: {}".format(wf))
+            continue
 
         # yaml parses 'on' as True --> try to fix it before schema validation
         try:
