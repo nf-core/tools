@@ -27,8 +27,11 @@ def actions_awstest(self):
     if not os.path.isfile(fn):
         return {"ignored": ["'awstest.yml' workflow not found: `{}`".format(fn)]}
 
-    with open(fn, "r") as fh:
-        wf = yaml.safe_load(fh)
+    try:
+        with open(fn, "r") as fh:
+            wf = yaml.safe_load(fh)
+    except:
+        return {"failed": ["Could not parse yaml file: {}".format(fn)]}
 
     # Check that the action is only turned on for workflow_dispatch
     try:

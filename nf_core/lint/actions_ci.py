@@ -77,8 +77,11 @@ def actions_ci(self):
     if not os.path.isfile(fn):
         return {"ignored": ["'.github/workflows/ci.yml' not found"]}
 
-    with open(fn, "r") as fh:
-        ciwf = yaml.safe_load(fh)
+    try:
+        with open(fn, "r") as fh:
+            ciwf = yaml.safe_load(fh)
+    except:
+        return {"failed": ["Could not parse yaml file: {}".format(fn)]}
 
     # Check that the action is turned on for the correct events
     try:
