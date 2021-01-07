@@ -81,6 +81,6 @@ def schema_lint(self):
             self.schema_obj.validate_schema_title_description()
             passed.append("Schema title + description lint passed")
         except AssertionError as e:
-            warned.append(e)
+            warned.append(str(e))
 
     return {"passed": passed, "warned": warned, "failed": failed}
