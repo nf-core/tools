@@ -239,6 +239,11 @@ class PipelineSync(object):
         except git.exc.GitCommandError as e:
             raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
 
+    def create_merge_base_branch(self):
+        """Checkout a new branch from the updated TEMPLATE branch
+        This branch will then be used to create the PR
+        """
+
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),
         from a head branch (default: TEMPLATE)
