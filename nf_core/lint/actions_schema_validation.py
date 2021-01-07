@@ -10,12 +10,14 @@ import requests
 
 
 def actions_schema_validation(self):
-    """
-    Validate workflows against a schema
+    """Checks that the GitHub Action workflow yml/yaml files adhere to the correct schema
 
-    Uses the JSON Schema from
-    https://json.schemastore.org/github-workflow
-    to verify that all workflow yml files adhere to the correct Schema
+    nf-core pipelines use GitHub actions workflows to run CI tests, check formatting and also linting, among others.
+    These workflows are defined by ``yml``scripts in ``.github/workflows/``. This lint test verifies that these scripts are valid
+    by comparing them against the JSON schema for GitHub workflows <https://json.schemastore.org/github-workflow>
+
+    To pass this test, make sure that all your workflows contain the required properties ``on`` and ``jobs``and that
+    all other properties are of the correct type, as specified in the schema (link above).
     """
     passed = []
     failed = []
@@ -39,7 +41,7 @@ def actions_schema_validation(self):
             with open(wf_path, "r") as fh:
                 wf_json = yaml.safe_load(fh)
         except Exception as e:
-            failed.append("Could not parse yaml file: {}".format(wf))
+            failed.append("Could not parse yaml file: {}, {}".format(wf, e))
             continue
 
         # yaml parses 'on' as True --> try to fix it before schema validation
