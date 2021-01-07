@@ -67,6 +67,7 @@ class PipelineSync(object):
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
         self.original_branch = None
+        self.merge_branch = "nf-core-template-merge-{}".format(nf_core.__version__)
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -95,6 +96,8 @@ class PipelineSync(object):
         if self.made_changes and self.make_pr:
             try:
                 self.push_template_branch()
+                self.create_merge_base_branch()
+                self.push_merge_branch()
                 self.make_pull_request()
             except PullRequestException as e:
                 self.reset_target_dir()
@@ -248,8 +251,20 @@ class PipelineSync(object):
         """Checkout a new branch from the updated TEMPLATE branch
         This branch will then be used to create the PR
         """
-        # TODO implement this function
-        return None
+        log.info("Checking out merge base branch {}".format(self.merge_branch))
+        try:
+            self.repo.create_head(self.merge_branch)
+        except git.exc.GitCommandError:
+            raise SyncException("Could not checkout branch '{}'".format(self.merge_branch))
+
+    def push_merge_branch(self):
+        """Push the newly create merge branch to the remote repository"""
+        log.info("Pushing {} branch to remote".format(self.merge_branch))
+        try:
+            origin = self.repo.remote()
+            origin.push(self.merge_branch)
+        except git.exc.GitCommandError as e:
+            raise PullRequestException("Could not push {} branch:\n  {}".format(self.merge_branch, e))
 
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),
@@ -366,7 +381,7 @@ class PipelineSync(object):
             "title": pr_title,
             "body": pr_body_text,
             "maintainer_can_modify": True,
-            "head": "TEMPLATE",
+            "head": self.merge_branch,
             "base": self.from_branch,
         }
 
