@@ -67,7 +67,7 @@ class PipelineSync(object):
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
         self.original_branch = None
-        self.merge_branch = "nf-core-template-merge-8{}".format(nf_core.__version__)
+        self.merge_branch = "nf-core-template-merge-11{}".format(nf_core.__version__)
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -87,11 +87,11 @@ class PipelineSync(object):
 
         self.inspect_sync_dir()
         self.get_wf_config()
+        self.close_open_template_merge_pull_requests()
         self.checkout_template_branch()
         self.delete_template_branch_files()
         self.make_template_pipeline()
         self.commit_template_changes()
-        self.close_open_merge_pull_requests()
 
         # Push and make a pull request if we've been asked to
         if self.made_changes and self.make_pr:
@@ -243,22 +243,26 @@ class PipelineSync(object):
         except git.exc.GitCommandError as e:
             raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
 
-    def close_open_merge_pull_requests(self):
-        # TODO: implement this function
-        """Close any open merger PRs"""
+    def close_open_template_merge_pull_requests(self):
+        """Get all template merging branches (start with 'nf-core-template-merge-')
+        and check of any open PRs from these branches to the self.from_branch
+        If open PRs are found, close them
+        """
         assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         log.info("Checking for open PRs from template merge branches")
         # Get list of all branches
         branch_list = self.repo.branches
         branch_list = [b.name for b in branch_list]
-        # Get any merging branches
-        branch_list = [b for b in branch_list if b.startswith("nf-core-template-merge")]
+        # Subset to template merging branches
+        branch_list = [b for b in branch_list if b.startswith("nf-core-template-merge-")]
         for branch in branch_list:
-            log.info("Checking branch: {}".format(branch))
+            # Check for open PRs and close if found
+            self.close_open_pr(branch)
 
-            self._close_open_pr(branch)
-
-    def _close_open_pr(self, branch):
+    def close_open_pr(self, branch):
+        """Given a branch, check for open PRs from that branch to self.from_branch
+        and close if PRs have been found
+        """
         log.info("Checking branch: {}".format(branch))
         # Look for existing pull-requests
         list_prs_url = "https://api.github.com/repos/{}/pulls?head={}&base={}".format(
@@ -302,11 +306,11 @@ class PipelineSync(object):
             # PR update worked
             if r.status_code == 200:
                 log.debug("GitHub API PR-update worked:\n{}".format(r_pp))
-                log.info("Updated GitHub PR: {}".format(r_json["html_url"]))
+                log.info("Closed GitHub PR: {}".format(r_json["html_url"]))
                 return True
             # Something went wrong
             else:
-                log.warning("Could not update PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
+                log.warning("Could not close PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
                 return False
 
         # Something went wrong
@@ -314,14 +318,14 @@ class PipelineSync(object):
             log.warning("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
 
     def create_merge_base_branch(self):
-        """Checkout a new branch from the updated TEMPLATE branch
+        """Create a new branch from the updated TEMPLATE branch
         This branch will then be used to create the PR
         """
         log.info("Checking out merge base branch {}".format(self.merge_branch))
         try:
             self.repo.create_head(self.merge_branch)
         except git.exc.GitCommandError:
-            raise SyncException("Could not checkout branch '{}'".format(self.merge_branch))
+            raise SyncException("Could not create new branch '{}'".format(self.merge_branch))
 
     def push_merge_branch(self):
         """Push the newly create merge branch to the remote repository"""
@@ -370,73 +374,8 @@ class PipelineSync(object):
             "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag})."
         ).format(tag=nf_core.__version__)
 
-        # Try to update an existing pull-request
-        if self.update_existing_pull_request(pr_title, pr_body_text) is False:
-            # None found - make a new pull-request
-            self.submit_pull_request(pr_title, pr_body_text)
-
-    def update_existing_pull_request(self, pr_title, pr_body_text):
-        """
-        List existing pull-requests between TEMPLATE and self.from_branch
-
-        If one is found, attempt to update it with a new title and body text
-        If none are found, return False
-        """
-        assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
-        # Look for existing pull-requests
-        list_prs_url = "https://api.github.com/repos/{}/pulls?head=nf-core:TEMPLATE&base={}".format(
-            self.gh_repo, self.from_branch
-        )
-        r = requests.get(
-            url=list_prs_url,
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
-        )
-        try:
-            r_json = json.loads(r.content)
-            r_pp = json.dumps(r_json, indent=4)
-        except:
-            r_json = r.content
-            r_pp = r.content
-
-        # PR worked
-        if r.status_code == 200:
-            log.debug("GitHub API listing existing PRs:\n{}".format(r_pp))
-
-            # No open PRs
-            if len(r_json) == 0:
-                log.info("No open PRs found between TEMPLATE and {}".format(self.from_branch))
-                return False
-
-            # Update existing PR
-            pr_update_api_url = r_json[0]["url"]
-            pr_content = {"title": pr_title, "body": pr_body_text}
-
-            r = requests.patch(
-                url=pr_update_api_url,
-                data=json.dumps(pr_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
-            )
-            try:
-                r_json = json.loads(r.content)
-                r_pp = json.dumps(r_json, indent=4)
-            except:
-                r_json = r.content
-                r_pp = r.content
-
-            # PR update worked
-            if r.status_code == 200:
-                log.debug("GitHub API PR-update worked:\n{}".format(r_pp))
-                log.info("Updated GitHub PR: {}".format(r_json["html_url"]))
-                return True
-            # Something went wrong
-            else:
-                log.warning("Could not update PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
-                return False
-
-        # Something went wrong
-        else:
-            log.warning("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
-            return False
+        # Make new pull-request
+        self.submit_pull_request(pr_title, pr_body_text)
 
     def submit_pull_request(self, pr_title, pr_body_text):
         """
