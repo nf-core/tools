@@ -328,7 +328,7 @@ class PipelineSync(object):
             raise SyncException("Could not create new branch '{}'".format(self.merge_branch))
 
     def push_merge_branch(self):
-        """Push the newly create merge branch to the remote repository"""
+        """Push the newly created merge branch to the remote repository"""
         log.info("Pushing {} branch to remote".format(self.merge_branch))
         try:
             origin = self.repo.remote()
