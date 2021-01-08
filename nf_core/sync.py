@@ -251,8 +251,7 @@ class PipelineSync(object):
         assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         log.info("Checking for open PRs from template merge branches")
         # Get list of all branches
-        branch_list = self.repo.branches
-        branch_list = [b.name for b in branch_list]
+        branch_list = [b.name for b in self.repo.branches]
         # Subset to template merging branches
         branch_list = [b for b in branch_list if b.startswith("nf-core-template-merge-")]
         for branch in branch_list:
@@ -321,6 +320,11 @@ class PipelineSync(object):
         """Create a new branch from the updated TEMPLATE branch
         This branch will then be used to create the PR
         """
+        # Check if branch exists already
+        branch_list = [b.name for b in self.repo.branches]
+        if self.merge_branch in branch_list:
+            raise SyncException("Branch already exists: '{}'".format(self.merge_branch))
+        # Create new branch and checkout
         log.info("Checking out merge base branch {}".format(self.merge_branch))
         try:
             self.repo.create_head(self.merge_branch)
