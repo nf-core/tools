@@ -47,6 +47,10 @@ def test_bump_pipeline_version(datafiles):
     assert "ENV PATH /opt/conda/envs/nf-core-testpipeline-1.1/bin:$PATH" in dockerfile
     assert "RUN conda env export --name nf-core-testpipeline-1.1 > nf-core-testpipeline-1.1.yml" in dockerfile
 
+    # Check charliecloud.config
+    with open(new_pipeline_obj._fp("conf/charliecloud.config")) as fh:
+        charliecloud_config = fh.read().splitlines()
+    assert "PATH=/opt/conda/bin:/opt/conda/envs/nf-core-testpipeline-1.1/bin:$PATH" in charliecloud_config
 
 def test_dev_bump_pipeline_version(datafiles):
     """ Test that making a release works with a dev name and a leading v """
