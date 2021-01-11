@@ -51,7 +51,7 @@ This version number will be logged in reports when you run the pipeline, so that
 
 Use this parameter to choose a configuration profile. Profiles can give configuration presets for different compute environments.
 
-Several generic profiles are bundled with the pipeline which instruct the pipeline to use software packaged using different methods (Docker, Singularity, Podman, Conda) - see below.
+Several generic profiles are bundled with the pipeline which instruct the pipeline to use software packaged using different methods (Docker, Singularity, Podman, Charliecloud, Conda) - see below.
 
 > We highly recommend the use of Docker or Singularity containers for full pipeline reproducibility, however when this is not possible, Conda is also supported.
 
@@ -71,8 +71,11 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 * `podman`
   * A generic configuration profile to be used with [Podman](https://podman.io/)
   * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+* `charliecloud`
+  * A generic configuration profile to be used with [`Charliecloud`](https://hpc.github.io/charliecloud/)
+  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
 * `conda`
-  * Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity or Podman.
+  * Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity, Podman or Charliecloud.
   * A generic configuration profile to be used with [Conda](https://conda.io/docs/)
   * Pulls most software from [Bioconda](https://bioconda.github.io/)
 * `test`
