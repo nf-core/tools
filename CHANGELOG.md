@@ -2,6 +2,10 @@
 
 ## v1.13dev
 
+### Template
+
+* Added a profile to support the [Charliecloud container engine](https://hpc.github.io/charliecloud/) [[#824](https://github.com/nf-core/tools/issues/824)]
+
 ### Linting
 
 * Added schema validation of GitHub action workflows to lint function [[#795](https://github.com/nf-core/tools/issues/795)]
