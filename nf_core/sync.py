@@ -326,10 +326,11 @@ class PipelineSync(object):
             original_merge_branch = self.merge_branch
             # Try to create new branch with number at the end
             # If <branch_name>-2 already exists, increase the number until branch is new
-            branch_no = 1
+            branch_no = 2
+            self.merge_branch = original_merge_branch + "-" + str(branch_no)
             while self.merge_branch in branch_list:
                 branch_no += 1
-                self.merge_branch = self.merge_branch + "-" + str(branch_no)
+                self.merge_branch = original_merge_branch + "-" + str(branch_no)
             log.info(
                 "Branch already existed: '{}', creating branch '{}' instead.".format(
                     original_merge_branch, self.merge_branch
