@@ -244,9 +244,9 @@ class PipelineSync(object):
             raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
 
     def close_open_template_merge_pull_requests(self):
-        """Get all template merging branches (start with 'nf-core-template-merge-')
-        and check of any open PRs from these branches to the self.from_branch
-        If open PRs are found, close them
+        """Get all template merging branches (starting with 'nf-core-template-merge-')
+        and check for any open PRs from these branches to the self.from_branch
+        If open PRs are found, add a comment and close them
         """
         assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         log.info("Checking for open PRs from template merge branches")
