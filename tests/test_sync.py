@@ -191,7 +191,7 @@ class TestModules(unittest.TestCase):
                 self.status_code = status_code
                 self.content = json.dumps(data)
 
-        url_template = "https://api.github.com/repos/{}/response/pulls?head=nf-core:TEMPLATE&base=None"
+        url_template = "https://api.github.com/repos/{}/response/pulls?head=TEMPLATE&base=None"
         if kwargs["url"] == url_template.format("no_existing_pr"):
             response_data = []
             return MockResponse(response_data, 200)
@@ -258,9 +258,9 @@ class TestModules(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     @mock.patch("requests.patch", side_effect=mocked_requests_patch)
     def test_update_existing_pull_request(self, mock_get, mock_patch):
-        """ Try discovering a PR and updating it """
+        """ Try closing a PR """
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "existing_pr"
         psync.gh_repo = "existing_pr/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        assert psync.update_existing_pull_request("title", "body") is True
+        assert psync.close_open_pr("TEMPLATE") is True
