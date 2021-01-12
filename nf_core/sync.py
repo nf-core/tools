@@ -67,7 +67,7 @@ class PipelineSync(object):
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
         self.original_branch = None
-        self.merge_branch = "nf-core-template-merge-11{}".format(nf_core.__version__)
+        self.merge_branch = "nf-core-template-merge-{}".format(nf_core.__version__)
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -287,8 +287,16 @@ class PipelineSync(object):
                 return False
 
             # Close existing PR
+            pr_title = "Important! Template update for nf-core/tools v{} Closed because outdated!".format(
+                nf_core.__version__
+            )
+            pr_body_text = (
+                "A new release of the main template in nf-core/tools has just been released. "
+                "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
+                "This pull-request is outdated and has been closed. A new pull-request has been created instead."
+            )
             pr_update_api_url = r_json[0]["url"]
-            pr_content = {"state": "closed"}
+            pr_content = {"state": "closed", "title": pr_title, "body": pr_body_text}
 
             r = requests.patch(
                 url=pr_update_api_url,
