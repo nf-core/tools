@@ -388,7 +388,7 @@ class Launch(object):
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
             if not param_obj.get("hidden", False) or self.show_hidden:
                 is_required = param_id in self.schema_obj.schema.get("required", [])
-                answers.update(self.prompt_param(param_id, param_obj, is_required, answers))
+                answers = self.prompt_param(param_id, param_obj, is_required, answers)
 
         # Split answers into core nextflow options and params
         for key, answer in answers.items():
@@ -412,10 +412,18 @@ class Launch(object):
             log.error("'–-{}' is required".format(param_id))
             answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
 
-        # Don't return empty answers
+        # Ignore if empty
         if answer[param_id] == "":
-            return {}
-        return answer
+            answer = {}
+
+        # Previously entered something but this time we deleted it
+        if param_id not in answer and param_id in answers:
+            answers.pop(param_id)
+        # Everything else (first time answer no response or normal response)
+        else:
+            answers.update(answer)
+
+        return answers
 
     def prompt_group(self, group_id, group_obj):
         """
@@ -485,7 +493,7 @@ class Launch(object):
             else:
                 param_id = answer[group_id]
                 is_required = param_id in group_obj.get("required", [])
-                answers.update(self.prompt_param(param_id, group_obj["properties"][param_id], is_required, answers))
+                answers = self.prompt_param(param_id, group_obj["properties"][param_id], is_required, answers)
 
         return answers
 
