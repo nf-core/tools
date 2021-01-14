@@ -34,6 +34,9 @@ nfcore_question_style = prompt_toolkit.styles.Style(
         ("instruction", ""),  # user instructions for select, rawselect, checkbox
         ("text", ""),  # plain text
         ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
+        ("choice-default", "fg:ansiblack"),
+        ("choice-default-changed", "fg:ansiyellow"),
+        ("choice-required", "fg:ansired"),
     ]
 )
 
@@ -437,11 +440,16 @@ class Launch(object):
 
             for param_id, param in group_obj["properties"].items():
                 if not param.get("hidden", False) or self.show_hidden:
-                    q_title = param_id
-                    if param_id in answers:
-                        q_title += "  [{}]".format(answers[param_id])
+                    q_title = [("", param_id)]
+                    # If already filled in, show value
+                    if param_id in answers and answers.get(param_id) != param.get("default"):
+                        q_title.append(("class:choice-default-changed", "  [{}]".format(answers[param_id])))
+                    # If the schema has a default, show default
                     elif "default" in param:
-                        q_title += "  [{}]".format(param["default"])
+                        q_title.append(("class:choice-default", "  [{}]".format(param["default"])))
+                    # Show that it's required if not filled in and no default
+                    elif param_id in group_obj.get("required", []):
+                        q_title.append(("class:choice-required", "  (required)"))
                     question["choices"].append(questionary.Choice(title=q_title, value=param_id))
 
             # Skip if all questions hidden
