@@ -430,9 +430,12 @@ class Launch(object):
         """
         while_break = False
         answers = {}
-        first_ask = True
         error_msgs = []
         while not while_break:
+
+            if len(error_msgs) == 0:
+                self.print_param_header(group_id, group_obj, True)
+
             question = {
                 "type": "list",
                 "name": group_id,
@@ -469,9 +472,6 @@ class Launch(object):
             if len(question["choices"]) == 2:
                 return {}
 
-            if first_ask:
-                self.print_param_header(group_id, group_obj)
-            first_ask = False
             answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
             if answer[group_id] == "Continue >>":
                 while_break = True
@@ -504,7 +504,7 @@ class Launch(object):
         if answers is None:
             answers = {}
 
-        question = {"type": "input", "name": param_id, "message": param_id}
+        question = {"type": "input", "name": param_id, "message": ""}
 
         # Print the name, description & help text
         if print_help:
@@ -615,7 +615,7 @@ class Launch(object):
 
         return question
 
-    def print_param_header(self, param_id, param_obj):
+    def print_param_header(self, param_id, param_obj, is_group=False):
         if "description" not in param_obj and "help_text" not in param_obj:
             return
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
@@ -627,7 +627,8 @@ class Launch(object):
         if "help_text" in param_obj:
             help_md = Markdown(param_obj["help_text"].strip())
             console.print(help_md, style="dim")
-        console.print("(Use arrow keys)", style="italic", highlight=False)
+        if is_group:
+            console.print("(Use arrow keys)", style="italic", highlight=False)
 
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
