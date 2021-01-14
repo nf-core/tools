@@ -430,33 +430,48 @@ class Launch(object):
         """
         while_break = False
         answers = {}
+        first_ask = True
+        error_msgs = []
         while not while_break:
             question = {
                 "type": "list",
                 "name": group_id,
-                "message": group_obj.get("title", group_id),
+                "qmark": "",
+                "message": "",
+                "instruction": " ",
                 "choices": ["Continue >>", questionary.Separator()],
             }
 
+            # Show error messages if we have any
+            for msg in error_msgs:
+                question["choices"].append(
+                    questionary.Choice(
+                        [("bg:ansiblack fg:ansired bold", " error "), ("fg:ansired", f" - {msg}")], disabled=True
+                    )
+                )
+            error_msgs = []
+
             for param_id, param in group_obj["properties"].items():
                 if not param.get("hidden", False) or self.show_hidden:
-                    q_title = [("", param_id)]
+                    q_title = [("", "{}  ".format(param_id))]
                     # If already filled in, show value
                     if param_id in answers and answers.get(param_id) != param.get("default"):
-                        q_title.append(("class:choice-default-changed", "  [{}]".format(answers[param_id])))
+                        q_title.append(("class:choice-default-changed", "[{}]".format(answers[param_id])))
                     # If the schema has a default, show default
                     elif "default" in param:
-                        q_title.append(("class:choice-default", "  [{}]".format(param["default"])))
+                        q_title.append(("class:choice-default", "[{}]".format(param["default"])))
                     # Show that it's required if not filled in and no default
                     elif param_id in group_obj.get("required", []):
-                        q_title.append(("class:choice-required", "  (required)"))
+                        q_title.append(("class:choice-required", "(required)"))
                     question["choices"].append(questionary.Choice(title=q_title, value=param_id))
 
             # Skip if all questions hidden
             if len(question["choices"]) == 2:
                 return {}
 
-            self.print_param_header(group_id, group_obj)
+            if first_ask:
+                self.print_param_header(group_id, group_obj)
+            first_ask = False
             answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
             if answer[group_id] == "Continue >>":
                 while_break = True
@@ -465,7 +480,7 @@ class Launch(object):
                     req_default = self.schema_obj.input_params.get(p_required, "")
                     req_answer = answers.get(p_required, "")
                     if req_default == "" and req_answer == "":
-                        log.error("'--{}' is required.".format(p_required))
+                        error_msgs.append(f"`{p_required}` is required")
                         while_break = False
             else:
                 param_id = answer[group_id]
@@ -605,14 +620,14 @@ class Launch(object):
             return
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         console.print("\n")
-        console.print(param_obj.get("title", param_id), style="bold")
+        console.print("[bold blue]?[/] [bold on black] {} [/]".format(param_obj.get("title", param_id)))
         if "description" in param_obj:
             md = Markdown(param_obj["description"])
             console.print(md)
         if "help_text" in param_obj:
             help_md = Markdown(param_obj["help_text"].strip())
             console.print(help_md, style="dim")
-            console.print("\n")
+        console.print("(Use arrow keys)", style="italic", highlight=False)
 
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
