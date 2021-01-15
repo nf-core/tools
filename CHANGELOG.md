@@ -2,6 +2,10 @@
 
 ## v1.13dev
 
+### Tools helper code
+
+* Fixed some bugs in the command line interface for `nf-core launch` and improved formatting [[#829](https://github.com/nf-core/tools/pull/829)]
+
 ### Linting
 
 * Added schema validation of GitHub action workflows to lint function [[#795](https://github.com/nf-core/tools/issues/795)]
