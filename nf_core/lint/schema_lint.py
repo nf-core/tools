@@ -2,6 +2,7 @@
 
 import logging
 import nf_core.schema
+import jsonschema
 
 
 def schema_lint(self):
@@ -69,10 +70,15 @@ def schema_lint(self):
     # Lint the schema
     self.schema_obj = nf_core.schema.PipelineSchema()
     self.schema_obj.get_schema_path(self.wf_path)
+
     try:
-        self.schema_obj.load_lint_schema()
+        self.schema_obj.load_schema()
+        self.schema_obj.get_schema_defaults()
+        self.schema_obj.validate_schema()
+        # Check default params
+        jsonschema.validate(self.schema_obj.schema_defaults, self.schema_obj.schema)
         passed.append("Schema lint passed")
-    except AssertionError as e:
+    except Exception as e:
         failed.append("Schema lint failed: {}".format(e))
 
     # Check the title and description - gives warnings instead of fail
