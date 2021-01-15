@@ -16,7 +16,7 @@ nextflow.preview.dsl = 2
  */
 if (params.help) {
     // TODO nf-core: Update typical command used to run pipeline
-    def command = "nextflow run {{ cookiecutter.name }} --input samplesheet.csv -profile docker"
+    def command = 'nextflow run {{ cookiecutter.name }} --input samplesheet.csv -profile docker'
     log.info Headers.nf_core(workflow, params.monochrome_logs)
     log.info Schema.params_help("$baseDir/nextflow_schema.json", command)
     exit 0
@@ -33,8 +33,15 @@ ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
 /*
  * Validate parameters
  */
-Validation.validateParameters(params, json_schema, log, workflow)
-if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { exit 1, "Input samplesheet file not specified!" }
+////////////////////////////////////////////////////
+/* --         VALIDATE PARAMETERS              -- */
+////////////////////////////////////////////////////+
+def unexpectedParams = []
+if (params.validate_params) {
+    unexpectedParams = Validation.validateParameters(params, json_schema, log)
+}
+
+if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { exit 1, 'Input samplesheet file not specified!' }
 /*
  * Reference genomes
  */
@@ -42,7 +49,7 @@ if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { 
 // NOTE - FOR SIMPLICITY THIS IS NOT USED IN THIS PIPELINE
 // EXAMPLE ONLY TO DEMONSTRATE USAGE OF AWS IGENOMES
 if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
-    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(", ")}"
+    exit 1, "The provided genome '${params.genome}' is not available in the iGenomes file. Currently the available genomes are ${params.genomes.keySet().join(', ')}"
 }
 params.fasta = params.genomes[params.genome]?.fasta
 if (params.fasta) { ch_fasta = file(params.fasta, checkIfExists: true) }
@@ -64,7 +71,7 @@ if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
 }
 summary = Schema.params_summary(workflow, params, run_name)
 log.info Headers.nf_core(workflow, params.monochrome_logs)
-log.info summary.collect { k,v -> "${k.padRight(20)}: $v" }.join("\n")
+log.info summary.collect { k, v -> "${k.padRight(20)}: $v" }.join('\n')
 log.info "-\033[2m----------------------------------------------------\033[0m-"
 
 workflow_summary = Schema.params_mqc_summary(summary)
@@ -87,7 +94,6 @@ include { MULTIQC } from './modules/nf-core/multiqc' params(params)
  * Run the workflow
  */
 workflow {
-
     CHECK_SAMPLESHEET(ch_input)
         .splitCsv(header:true, sep:',')
         .map { check_samplesheet_paths(it) }
@@ -116,4 +122,11 @@ workflow.onComplete {
     def multiqc_report = []
     Completion.email(workflow, params, summary, run_name, baseDir, multiqc_report, log)
     Completion.summary(workflow, params, log)
+}
+
+workflow.onError {
+    // Print unexpected parameters
+    for (p in unexpectedParams) {
+        log.warn "Unexpected parameter: ${p}"
+    }
 }

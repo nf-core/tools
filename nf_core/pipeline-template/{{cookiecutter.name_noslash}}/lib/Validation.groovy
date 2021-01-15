@@ -1,5 +1,11 @@
+import org.everit.json.schema.Schema
+import org.everit.json.schema.loader.SchemaLoader
+import org.everit.json.schema.ValidationException
+import org.json.JSONObject
+import org.json.JSONTokener
+import org.json.JSONArray
 import groovy.json.JsonSlurper
-import groovy.util.logging.Log
+import groovy.json.JsonBuilder
 
 class Validation {
 
@@ -7,109 +13,97 @@ class Validation {
     * Function to loop over all parameters defined in schema and check
     * whether the given paremeters adhere to the specificiations
     */
-    private static void validateParameters(params, json_schema, log, workflow){
+    /* groovylint-disable-next-line UnusedPrivateMethodParameter */
+    private static ArrayList validateParameters(params, jsonSchema, log) {
+        //=====================================================================//
+        // Validate parameters against the schema
+        InputStream inputStream = new File(jsonSchema).newInputStream()
+        JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream))
+        Schema schema = SchemaLoader.load(rawSchema)
 
-        def json = new File(json_schema).text
-        def Map json_params = (Map) new JsonSlurper().parseText(json).get('definitions')
-        def specified_param_keys = params.keySet()
-        def nf_params = ['profile', 'config', 'c', 'C', 'syslog', 'd', 'dockerize', 
-                        'bg', 'h', 'log', 'quiet', 'q', 'v', 'version']
-        def valid_params = []
-        def expected_params = []
-        def blacklist  = ['hostnames'] // ignored parameters
-        
+        // Clean the parameters
+        def cleanedParams = cleanParameters(params)
 
-        // Loop over all parameters in schema and compare to given parameters
-        for (group in json_params){
-            for (p in group.value['properties']){
-                if (!blacklist.contains(p.key)){
-                    valid_params.push(validateParamPair(params[p.key], p, log))
-                    expected_params.push(p.key)
-                }
-            }
-        }
+        // Convert to JSONObject
+        def jsonParams = new JsonBuilder(cleanedParams)
+        JSONObject paramsJSON = new JSONObject(jsonParams.toString())
 
-        // Exit if any invalid params where found
-        if (valid_params.contains(false)){
-            System.exit(0)
+        // Validate
+        try {
+            schema.validate(paramsJSON)
+        } catch (ValidationException e) {
+            log.error 'Found parameter violations!'
+            JSONObject exceptionJSON = e.toJSON()
+            printExceptions(exceptionJSON, log)
+            System.exit(1)
         }
 
         // Check for nextflow core params and unexpected params
-        for (specified_param in specified_param_keys){
+        def json = new File(jsonSchema).text
+        def Map schemaParams = (Map) new JsonSlurper().parseText(json).get('definitions')
+        def specifiedParamKeys = params.keySet()
+        def nf_params = ['profile', 'config', 'c', 'C', 'syslog', 'd', 'dockerize',
+                        'bg', 'h', 'log', 'quiet', 'q', 'v', 'version']
+        def unexpectedParams = []
+
+        // Collect expected parameters from the schema
+        def expectedParams = []
+        for (group in schemaParams) {
+            for (p in group.value['properties']) {
+                expectedParams.push(p.key)
+            }
+        }
+
+        for (specifiedParam in specifiedParamKeys) {
             // nextflow params
-            if (nf_params.contains(specified_param)){
-                log.error "ERROR: You have overwritten the core Nextflow parameter -${specified_param} with --${specified_param}!"
-                System.exit(0)
+            if (nf_params.contains(specifiedParam)) {
+                log.error "ERROR: You used a core Nextflow option with two hyphens: --${specifiedParam}! Please resubmit with one."
+                System.exit(1)
             }
             // unexpected params
-            if (!expected_params.contains(specified_param)){
-                log.warn "Unexpected parameter specified: ${specified_param}"               
+            if (!expectedParams.contains(specifiedParam)) {
+                unexpectedParams.push(specifiedParam)
             }
-            
         }
 
+        return unexpectedParams
     }
 
-
-
-    /*
-    * Compare a pair of params (schema, command line) and check whether 
-    * they are valid
-    */
-     private static boolean validateParamPair(given_param, json_param, log){
-        def param_type = json_param.value['type']
-        def valid_param = true
-        def required = json_param.value['required']
-        def param_enum = json_param.value['enum']
-        def param_pattern = json_param.value['pattern']
-        
-        // Check only if required or parameter is given
-        if (required || given_param){
-            def given_param_class = given_param.getClass()
-
-                switch(param_type) {
-                    case 'string':
-                        // If pattern given, check that param adheres to it
-                        if (param_pattern){
-                            valid_param = given_param ==~ param_pattern
-                        } 
-                        // If enum given, check that param is within choices
-                        else if (param_enum){
-                            valid_param = param_enum.contains(given_param)
-                        }
-                        // else just check whether valid String
-                        else {
-                            valid_param = given_param_class == String
-                        } 
-                        break
-                    case 'boolean':
-                        if (given_param_class == Boolean){
-                            valid_param = true
-                        }
-                        else if (given_param){
-                            valid_param = true
-                        }
-                        break
-                    case 'integer':
-                        valid_param = given_param_class == Integer
-                        break
-                    case 'number':
-                        valid_param = given_param_class == BigDecimal
-                        break
-                }
-
-            if (!valid_param){
-                log.error "ERROR: Parameter ${json_param.key} is wrong type! Expected ${param_type}, found ${given_param_class}, ${given_param}"
-                if (param_enum){
-                    log.error "Must be one of: ${param_enum}"
-                }
-                if (param_pattern){
-                    log.error "Parameter must adhere to the following pattern: ${param_pattern}"
-                }
-            }
-
+    // Loop over nested exceptions and print the causingException
+    private static void printExceptions(exJSON, log) {
+        def causingExceptions = exJSON['causingExceptions']
+        if (causingExceptions.length() == 0) {
+            log.error "${exJSON['message']} ${exJSON['pointerToViolation']}"
         }
-        return valid_param
-     }
+        else {
+            log.error exJSON['message']
+            for (ex in causingExceptions) {
+                printExceptions(ex, log)
+            }
+        }
+    }
+
+    private static Map cleanParameters(params) {
+        def new_params = params.getClass().newInstance(params)
+        for (p in params) {
+            // remove anything evaluating to false
+            if (!p['value']) {
+                new_params.remove(p.key)
+            }
+            // Cast MemoryUnit to String
+            if (p['value'].getClass() == nextflow.util.MemoryUnit) {
+                new_params.replace(p.key, p['value'].toString())
+            }
+            // Cast Duration to String
+            if (p['value'].getClass() == nextflow.util.Duration) {
+                new_params.replace(p.key, p['value'].toString())
+            }
+            // Cast LinkedHashMap to String
+            if (p['value'].getClass() == LinkedHashMap) {
+                new_params.replace(p.key, p['value'].toString())
+            }
+        }
+        return new_params
+    }
 
 }
