@@ -79,13 +79,13 @@ class PipelineSchema(object):
             self.load_schema()
             num_params = self.validate_schema()
             self.get_schema_defaults()
-            log.info("[green]\[✓] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
+            log.info("[green][✓] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
         except json.decoder.JSONDecodeError as e:
             error_msg = "[bold red]Could not parse schema JSON:[/] {}".format(e)
             log.error(error_msg)
             raise AssertionError(error_msg)
         except AssertionError as e:
-            error_msg = "[red]\[✗] Pipeline schema does not follow nf-core specs:\n {}".format(e)
+            error_msg = "[red][✗] Pipeline schema does not follow nf-core specs:\n {}".format(e)
             log.error(error_msg)
             raise AssertionError(error_msg)
 
@@ -159,12 +159,12 @@ class PipelineSchema(object):
             assert self.schema is not None
             jsonschema.validate(self.input_params, self.schema)
         except AssertionError:
-            log.error("[red]\[✗] Pipeline schema not found")
+            log.error("[red][✗] Pipeline schema not found")
             return False
         except jsonschema.exceptions.ValidationError as e:
-            log.error("[red]\[✗] Input parameters are invalid: {}".format(e.message))
+            log.error("[red][✗] Input parameters are invalid: {}".format(e.message))
             return False
-        log.info("[green]\[✓] Input parameters look valid")
+        log.info("[green][✓] Input parameters look valid")
         return True
 
     def validate_schema(self, schema=None):
