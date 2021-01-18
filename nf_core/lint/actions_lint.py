@@ -63,8 +63,8 @@ def actions_lint(self):
         try:
             with open(fn, "r") as fh:
                 lintwf = yaml.safe_load(fh)
-        except:
-            return {"failed": ["Could not parse yaml file: {}".format(fn)]}
+        except Exception as e:
+            return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
 
         # Check that the action is turned on for push and pull requests
         try:
