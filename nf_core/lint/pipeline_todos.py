@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
+import logging
 import os
 import io
 import fnmatch
+
+log = logging.getLogger(__name__)
 
 
 def pipeline_todos(self):
@@ -44,17 +47,19 @@ def pipeline_todos(self):
             dirs = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
             files = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
         for fname in files:
-            with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
-                for l in fh:
-                    if "TODO nf-core" in l:
-                        l = (
-                            l.replace("<!--", "")
-                            .replace("-->", "")
-                            .replace("# TODO nf-core: ", "")
-                            .replace("// TODO nf-core: ", "")
-                            .replace("TODO nf-core: ", "")
-                            .strip()
-                        )
-                        warned.append("TODO string in `{}`: _{}_".format(fname, l))
-
+            try:
+                with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
+                    for l in fh:
+                        if "TODO nf-core" in l:
+                            l = (
+                                l.replace("<!--", "")
+                                .replace("-->", "")
+                                .replace("# TODO nf-core: ", "")
+                                .replace("// TODO nf-core: ", "")
+                                .replace("TODO nf-core: ", "")
+                                .strip()
+                            )
+                            warned.append("TODO string in `{}`: _{}_".format(fname, l))
+            except FileNotFoundError:
+                log.debug(f"Could not open file {fname} in pipeline_todos lint test")
     return {"passed": passed, "warned": warned, "failed": failed}

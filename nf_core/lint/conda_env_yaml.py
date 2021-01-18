@@ -70,7 +70,13 @@ def conda_env_yaml(self):
         passed.append("Conda environment name was correct ({})".format(expected_env_name))
 
     # Check conda dependency list
-    for dep in self.conda_config.get("dependencies", []):
+    conda_deps = self.conda_config.get("dependencies", [])
+    if len(conda_deps) > 0:
+        conda_progress = self.progress_bar.add_task(
+            "Checking Conda packages", total=len(conda_deps), test_name=conda_deps[0]
+        )
+    for dep in conda_deps:
+        self.progress_bar.update(conda_progress, advance=1, test_name=dep)
         if isinstance(dep, str):
             # Check that each dependency has a version number
             try:
@@ -100,7 +106,13 @@ def conda_env_yaml(self):
                         passed.append("Conda package is the latest available: `{}`".format(dep))
 
         elif isinstance(dep, dict):
-            for pip_dep in dep.get("pip", []):
+            pip_deps = dep.get("pip", [])
+            if len(pip_deps) > 0:
+                pip_progress = self.progress_bar.add_task(
+                    "Checking PyPI packages", total=len(pip_deps), test_name=pip_deps[0]
+                )
+            for pip_dep in pip_deps:
+                self.progress_bar.update(pip_progress, advance=1, test_name=pip_dep)
                 # Check that each pip dependency has a version number
                 try:
                     assert pip_dep.count("=") == 2
@@ -128,6 +140,8 @@ def conda_env_yaml(self):
                             )
                         else:
                             passed.append("PyPi package is latest available: {}".format(pip_depver))
+            self.progress_bar.update(pip_progress, visible=False)
+    self.progress_bar.update(conda_progress, visible=False)
 
     return {"passed": passed, "warned": warned, "failed": failed}
 

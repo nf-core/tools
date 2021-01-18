@@ -149,6 +149,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
+        self.progress_bar = None
 
     def _load(self):
         """Load information about the pipeline into the PipelineLint object"""
@@ -196,32 +197,32 @@ class PipelineLint(nf_core.utils.Pipeline):
         if self.release_mode:
             log.info("Including --release mode tests")
 
-        progress = rich.progress.Progress(
+        self.progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
             rich.progress.BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[func_name]}",
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
         )
-        with progress:
-            lint_progress = progress.add_task(
-                "Running lint checks", total=len(self.lint_tests), func_name=self.lint_tests[0]
+        with self.progress_bar:
+            lint_progress = self.progress_bar.add_task(
+                "Running lint checks", total=len(self.lint_tests), test_name=self.lint_tests[0]
             )
-            for fun_name in self.lint_tests:
-                if self.lint_config.get(fun_name, {}) is False:
-                    log.debug("Skipping lint test '{}'".format(fun_name))
-                    self.ignored.append((fun_name, fun_name))
+            for test_name in self.lint_tests:
+                if self.lint_config.get(test_name, {}) is False:
+                    log.debug("Skipping lint test '{}'".format(test_name))
+                    self.ignored.append((test_name, test_name))
                     continue
-                progress.update(lint_progress, advance=1, func_name=fun_name)
-                log.debug("Running lint test: {}".format(fun_name))
-                test_results = getattr(self, fun_name)()
+                self.progress_bar.update(lint_progress, advance=1, test_name=test_name)
+                log.debug("Running lint test: {}".format(test_name))
+                test_results = getattr(self, test_name)()
                 for test in test_results.get("passed", []):
-                    self.passed.append((fun_name, test))
+                    self.passed.append((test_name, test))
                 for test in test_results.get("ignored", []):
-                    self.ignored.append((fun_name, test))
+                    self.ignored.append((test_name, test))
                 for test in test_results.get("warned", []):
-                    self.warned.append((fun_name, test))
+                    self.warned.append((test_name, test))
                 for test in test_results.get("failed", []):
-                    self.failed.append((fun_name, test))
+                    self.failed.append((test_name, test))
 
     def _print_results(self, show_passed=False):
         """Print linting results to the command line.
@@ -252,7 +253,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column(
-                r"\[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
+                r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
                 no_wrap=True,
             )
             table = format_result(self.passed, table)
@@ -261,14 +262,14 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of ignored tests
         if len(self.ignored) > 0:
             table = Table(style="grey58", box=rich.box.ROUNDED)
-            table.add_column(r"\[?] {} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True)
+            table.add_column(r"[?] {} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True)
             table = format_result(self.ignored, table)
             console.print(table)
 
         # Table of warning tests
         if len(self.warned) > 0:
             table = Table(style="yellow", box=rich.box.ROUNDED)
-            table.add_column(r"\[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            table.add_column(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
             table = format_result(self.warned, table)
             console.print(table)
 
@@ -276,7 +277,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column(
-                r"\[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
+                r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
                 no_wrap=True,
             )
             table = format_result(self.failed, table)
@@ -286,12 +287,12 @@ class PipelineLint(nf_core.utils.Pipeline):
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
         table.add_row(
-            r"\[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
             style="green",
         )
-        table.add_row(r"\[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
-        table.add_row(r"\[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row(r"\[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        table.add_row(r"[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
+        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
+        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
 
     def _get_results_md(self):
