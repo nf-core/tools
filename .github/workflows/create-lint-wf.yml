@@ -28,6 +28,8 @@ jobs:
           sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
 
       - name: Run nf-core/tools
+        env:
+          GITHUB_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
           nf-core --log-file log.txt lint nf-core-testpipeline
