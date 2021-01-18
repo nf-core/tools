@@ -5,6 +5,21 @@ import nf_core.schema
 import jsonschema
 
 
+def remove_required_fields(schema):
+    """ Remove all required fields from a schema """
+    for group_key in schema["definitions"].keys():
+        group = schema["definitions"][group_key]
+        group_keys = list(group.keys())
+        if "required" in group_keys:
+            required_params = group["required"]
+            for rp in required_params:
+                schema["definitions"][group_key]["properties"].pop(rp)
+            # remove the 'required' key as well
+            schema["definitions"][group_key].pop("required")
+
+    return schema
+
+
 def schema_lint(self):
     """Pipeline schema syntax
 
@@ -75,8 +90,9 @@ def schema_lint(self):
         self.schema_obj.load_schema()
         self.schema_obj.get_schema_defaults()
         self.schema_obj.validate_schema()
-        # Check default params
-        jsonschema.validate(self.schema_obj.schema_defaults, self.schema_obj.schema)
+        # Validate default parameters, ignoring required ones as they might be empty
+        schema_no_required = remove_required_fields(self.schema_obj.schema)
+        jsonschema.validate(self.schema_obj.schema_defaults, schema_no_required)
         passed.append("Schema lint passed")
     except Exception as e:
         failed.append("Schema lint failed: {}".format(e))
