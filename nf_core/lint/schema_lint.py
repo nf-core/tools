@@ -7,8 +7,7 @@ import jsonschema
 
 def remove_required_fields(schema):
     """ Remove all required fields from a schema """
-    for group_key in schema["definitions"].keys():
-        group = schema["definitions"][group_key]
+    for group_key, group in schema["definitions"].items():
         group_keys = list(group.keys())
         if "required" in group_keys:
             required_params = group["required"]
