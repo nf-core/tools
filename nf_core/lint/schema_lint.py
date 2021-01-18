@@ -3,17 +3,15 @@
 import logging
 import nf_core.schema
 import jsonschema
+from jsonschema.exceptions import ValidationError, SchemaError
 
 
 def remove_required_fields(schema):
     """ Remove all required fields from a schema """
+    if "required" in schema:
+        schema.pop("required")
     for group_key, group in schema["definitions"].items():
-        group_keys = list(group.keys())
-        if "required" in group_keys:
-            required_params = group["required"]
-            for rp in required_params:
-                schema["definitions"][group_key]["properties"].pop(rp)
-            # remove the 'required' key as well
+        if "required" in group:
             schema["definitions"][group_key].pop("required")
 
     return schema
@@ -86,14 +84,12 @@ def schema_lint(self):
     self.schema_obj.get_schema_path(self.wf_path)
 
     try:
-        self.schema_obj.load_schema()
-        self.schema_obj.get_schema_defaults()
-        self.schema_obj.validate_schema()
+        self.schema_obj.load_lint_schema()
         # Validate default parameters, ignoring required ones as they might be empty
         schema_no_required = remove_required_fields(self.schema_obj.schema)
         jsonschema.validate(self.schema_obj.schema_defaults, schema_no_required)
         passed.append("Schema lint passed")
-    except Exception as e:
+    except (ValidationError, SchemaError) as e:
         failed.append("Schema lint failed: {}".format(e))
 
     # Check the title and description - gives warnings instead of fail
