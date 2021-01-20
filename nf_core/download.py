@@ -8,11 +8,14 @@ from io import BytesIO
 import logging
 import hashlib
 import os
+import re
 import requests
+import requests_cache
 import shutil
 import subprocess
 import sys
 import tarfile
+from rich.progress import BarColumn, DownloadColumn, TextColumn, TransferSpeedColumn, Progress
 from zipfile import ZipFile
 
 import nf_core.list
@@ -94,6 +97,10 @@ class DownloadWorkflow(object):
         if self.singularity:
             log.debug("Fetching container names for workflow")
             self.find_container_images()
+
+            # Remove duplicates
+            self.containers = list(set(self.containers))
+
             if len(self.containers) == 0:
                 log.info("No container names found in workflow")
             else:
@@ -103,6 +110,8 @@ class DownloadWorkflow(object):
                         len(self.containers), "s" if len(self.containers) > 1 else ""
                     )
                 )
+                if not os.environ.get("NXF_SINGULARITY_CACHEDIR"):
+                    log.info("Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for image downloads")
                 for container in self.containers:
                     try:
                         # Download from Docker Hub in all cases
@@ -252,7 +261,14 @@ class DownloadWorkflow(object):
             nfconfig_fh.write(nfconfig)
 
     def find_container_images(self):
-        """ Find container image names for workflow """
+        """Find container image names for workflow.
+
+        Starts by using `nextflow config` to pull out any process.container
+        declarations. This works for DSL1.
+
+        Second, we look for DSL2 containers. These can't be found with
+        `nextflow config` at the time of writing, so we scrape the pipeline files.
+        """
 
         # Use linting code to parse the pipeline nextflow config
         self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))
@@ -262,8 +278,33 @@ class DownloadWorkflow(object):
             if k.startswith("process.") and k.endswith(".container"):
                 self.containers.append(v.strip('"').strip("'"))
 
+        # Recursive search through any DSL2 module files for container spec lines.
+        for subdir, dirs, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
+            for file in files:
+                if file.endswith(".nf"):
+                    with open(os.path.join(subdir, file), "r") as fh:
+                        # Look for any lines with `container = "xxx"`
+                        matches = []
+                        for line in fh:
+                            match = re.match(r"\s*container\s+[\"']([^\"']+)[\"']", line)
+                            if match:
+                                matches.append(match.group(1))
+
+                        # If we have matches, save the first one that starts with http
+                        for m in matches:
+                            if m.startswith("http"):
+                                self.containers.append(m.strip('"').strip("'"))
+                                break
+                        # If we get here then we didn't call break - just save the first match
+                        else:
+                            if len(matches) > 0:
+                                self.containers.append(matches[0].strip('"').strip("'"))
+
     def pull_singularity_image(self, container):
-        """Uses a local installation of singularity to pull an image from Docker Hub.
+        """Fetch a singularity image.
+
+        If the image string begins with http, use native Python to download the file.
+        If not, attempt to use a local installation of singularity to pull the image.
 
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
@@ -274,14 +315,58 @@ class DownloadWorkflow(object):
         """
         out_name = "{}.simg".format(container.replace("nfcore", "nf-core").replace("/", "-").replace(":", "-"))
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
+        dl_path = out_path
+        if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
+            dl_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
+
+        # Check if we have a cached version
+        if os.path.exists(dl_path):
+            log.info(f"Using cached Singularity image: {dl_path}")
+            shutil.copyfile(dl_path, out_path)
+
+        # Download with Python
+        if container.startswith("http"):
+            # Set up progress bar
+            progress = Progress(
+                TextColumn("[bold blue]{task.fields[container]}", justify="right"),
+                BarColumn(bar_width=None),
+                "[progress.percentage]{task.percentage:>3.1f}%",
+                "•",
+                DownloadColumn(),
+                "•",
+                TransferSpeedColumn(),
+            )
+            with open(dl_path, "wb") as fh:
+                with progress:
+                    nicename = container.split("/")[-1][:50]
+                    task = progress.add_task("download", container=nicename, start=False)
+
+                    # Set up download - disable caching as this breaks streamed downloads
+                    with requests_cache.disabled():
+                        r = requests.get(container, allow_redirects=True, stream=True)
+                        progress.update(task, total=int(r.headers.get("Content-length")))
+                        progress.start_task(task)
+
+                        # Stream download
+                        for data in r.iter_content(chunk_size=4096):
+                            progress.update(task, advance=len(data))
+                            fh.write(data)
+
+            if dl_path != out_path:
+                shutil.copyfile(dl_path, out_path)
+            return
+
+        # Pull using singularity
         address = "docker://{}".format(container.replace("docker://", ""))
-        singularity_command = ["singularity", "pull", "--name", out_path, address]
-        log.info("Building singularity image from Docker Hub: {}".format(address))
+        singularity_command = ["singularity", "pull", "--name", dl_path, address]
+        log.info("Building singularity image: {}".format(address))
         log.debug("Singularity command: {}".format(" ".join(singularity_command)))
 
         # Try to use singularity to pull image
         try:
             subprocess.call(singularity_command)
+            if dl_path != out_path:
+                shutil.copyfile(dl_path, out_path)
         except OSError as e:
             if e.errno == errno.ENOENT:
                 # Singularity is not installed
