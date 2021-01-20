@@ -98,8 +98,9 @@ class DownloadWorkflow(object):
             log.debug("Fetching container names for workflow")
             self.find_container_images()
 
-            # Remove duplicates
-            self.containers = list(set(self.containers))
+            # Remove duplicates and sort
+            # (running in the same order each time is less frustrating with caching etc)
+            self.containers = sorted(list(set(self.containers)))
 
             if len(self.containers) == 0:
                 log.info("No container names found in workflow")
@@ -111,7 +112,9 @@ class DownloadWorkflow(object):
                     )
                 )
                 if not os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                    log.info("Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for image downloads")
+                    log.info(
+                        "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
+                    )
                 for container in self.containers:
                     try:
                         # Download from Docker Hub in all cases
@@ -313,7 +316,10 @@ class DownloadWorkflow(object):
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
-        out_name = "{}.simg".format(container.replace("nfcore", "nf-core").replace("/", "-").replace(":", "-"))
+        if container.startswith("http"):
+            out_name = "{}.sif".format(container.split("/")[-1]).replace(":", "-")
+        else:
+            out_name = "{}.sif".format(container.replace("nfcore", "nf-core").replace("/", "-").replace(":", "-"))
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
         dl_path = out_path
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
@@ -321,8 +327,9 @@ class DownloadWorkflow(object):
 
         # Check if we have a cached version
         if os.path.exists(dl_path):
-            log.info(f"Using cached Singularity image: {dl_path}")
+            log.info(f"Using cached Singularity image: '{out_name}'")
             shutil.copyfile(dl_path, out_path)
+            return
 
         # Download with Python
         if container.startswith("http"):
@@ -336,24 +343,35 @@ class DownloadWorkflow(object):
                 "•",
                 TransferSpeedColumn(),
             )
-            with open(dl_path, "wb") as fh:
-                with progress:
-                    nicename = container.split("/")[-1][:50]
-                    task = progress.add_task("download", container=nicename, start=False)
+            try:
+                with open(dl_path, "wb") as fh:
+                    with progress:
+                        nice_name = container.split("/")[-1][:50]
+                        task = progress.add_task("download", container=nice_name, start=False, total=False)
 
-                    # Set up download - disable caching as this breaks streamed downloads
-                    with requests_cache.disabled():
-                        r = requests.get(container, allow_redirects=True, stream=True)
-                        progress.update(task, total=int(r.headers.get("Content-length")))
-                        progress.start_task(task)
+                        # Set up download - disable caching as this breaks streamed downloads
+                        with requests_cache.disabled():
+                            r = requests.get(container, allow_redirects=True, stream=True)
+                            filesize = r.headers.get("Content-length")
+                            if filesize:
+                                progress.update(task, total=int(filesize))
+                                progress.start_task(task)
 
-                        # Stream download
-                        for data in r.iter_content(chunk_size=4096):
-                            progress.update(task, advance=len(data))
-                            fh.write(data)
+                            # Stream download
+                            for data in r.iter_content(chunk_size=4096):
+                                progress.update(task, advance=len(data))
+                                fh.write(data)
 
+            # Try to delete the incomplete download if something goes wrong
+            except:
+                log.warning(f"Deleting incompleted download: {dl_path}")
+                os.remove(dl_path)
+                raise
+
+            # If using NXF_SINGULARITY_CACHEDIR, copy final result to download
             if dl_path != out_path:
                 shutil.copyfile(dl_path, out_path)
+
             return
 
         # Pull using singularity
@@ -365,8 +383,11 @@ class DownloadWorkflow(object):
         # Try to use singularity to pull image
         try:
             subprocess.call(singularity_command)
+
+            # If using NXF_SINGULARITY_CACHEDIR, copy final result to download
             if dl_path != out_path:
                 shutil.copyfile(dl_path, out_path)
+
         except OSError as e:
             if e.errno == errno.ENOENT:
                 # Singularity is not installed
