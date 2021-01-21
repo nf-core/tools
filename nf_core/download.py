@@ -97,32 +97,7 @@ class DownloadWorkflow(object):
         if self.singularity:
             log.debug("Fetching container names for workflow")
             self.find_container_images()
-
-            # Remove duplicates and sort
-            # (running in the same order each time is less frustrating with caching etc)
-            self.containers = sorted(list(set(self.containers)))
-
-            if len(self.containers) == 0:
-                log.info("No container names found in workflow")
-            else:
-                os.mkdir(os.path.join(self.outdir, "singularity-images"))
-                log.info(
-                    "Downloading {} singularity container{}".format(
-                        len(self.containers), "s" if len(self.containers) > 1 else ""
-                    )
-                )
-                if not os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                    log.info(
-                        "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
-                    )
-                for container in self.containers:
-                    try:
-                        # Download from Docker Hub in all cases
-                        self.pull_singularity_image(container)
-                    except RuntimeWarning as r:
-                        # Raise exception if this is not possible
-                        log.error("Not able to pull image. Service might be down or internet connection is dead.")
-                        raise r
+            self.download_singularity_images()
 
         # Compress into an archive
         if self.compress_type is not None:
@@ -303,19 +278,64 @@ class DownloadWorkflow(object):
                             if len(matches) > 0:
                                 self.containers.append(matches[0].strip('"').strip("'"))
 
-    def pull_singularity_image(self, container):
-        """Fetch a singularity image.
+    def download_singularity_images(self):
+        """Loop through container names and download Singularity images"""
+        # Remove duplicates and sort
+        # (running in the same order each time is less frustrating with caching etc)
+        self.containers = sorted(list(set(self.containers)))
 
-        If the image string begins with http, use native Python to download the file.
-        If not, attempt to use a local installation of singularity to pull the image.
+        if len(self.containers) == 0:
+            log.info("No container names found in workflow")
+        else:
+            os.mkdir(os.path.join(self.outdir, "singularity-images"))
+            log.info(
+                "Downloading {} singularity container{}".format(
+                    len(self.containers), "s" if len(self.containers) > 1 else ""
+                )
+            )
+            if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
+                log.info("Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"]))
+            else:
+                log.info(
+                    "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
+                )
+            for container in self.containers:
+                try:
+                    # Copy from the cache if we can, generate download path if not
+                    output_path = self.singularity_copy_cache_image(container)
+                    # Copied from cache
+                    if output_path is True:
+                        continue
+
+                    # Direct download within Python
+                    if container.startswith("http"):
+                        self.singularity_download_image(container, output_path)
+
+                    # Pull using singularity
+                    else:
+                        self.singularity_pull_image(container, output_path)
+
+                    # Run cache copy again in case we pulled to the cache
+                    self.singularity_copy_cache_image(container)
+
+                except RuntimeWarning as r:
+                    # Raise exception if this is not possible
+                    log.error("Not able to pull image. Service might be down or internet connection is dead.")
+                    raise r
+
+    def singularity_copy_cache_image(self, container):
+        """Check Singularity cache for image, copy to destination folder if found.
 
         Args:
-            container (str): A pipeline's container name. Usually it is of similar format
-                to `nfcore/name:dev`.
+            container (str): A pipeline's container name. Can be direct download URL
+                             or a Docker Hub repository ID.
 
-        Raises:
-            Various exceptions possible from `subprocess` execution of Singularity.
+        Returns:
+            results (bool, str): Returns True if we have the image in the target location.
+                                 Returns a download path if not.
         """
+
+        # Generate file paths
         if container.startswith("http"):
             out_name = "{}.sif".format(container.split("/")[-1]).replace(":", "-")
         else:
@@ -325,55 +345,76 @@ class DownloadWorkflow(object):
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
             dl_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
 
-        # Check if we have a cached version
+        # We already have the target file in place, return
+        # Typical for second run of this function after pulling if no cachedir in place
+        if os.path.exists(out_path):
+            return True
+
+        # Copy to destination folder if we have a cached version
         if os.path.exists(dl_path):
-            log.info(f"Using cached Singularity image: '{out_name}'")
+            log.debug(f"Copying Singularity image from cache: '{out_name}'")
             shutil.copyfile(dl_path, out_path)
-            return
+            return True
 
-        # Download with Python
-        if container.startswith("http"):
-            # Set up progress bar
-            progress = Progress(
-                TextColumn("[bold blue]{task.fields[container]}", justify="right"),
-                BarColumn(bar_width=None),
-                "[progress.percentage]{task.percentage:>3.1f}%",
-                "•",
-                DownloadColumn(),
-                "•",
-                TransferSpeedColumn(),
-            )
-            try:
-                with open(dl_path, "wb") as fh:
-                    with progress:
-                        nice_name = container.split("/")[-1][:50]
-                        task = progress.add_task("download", container=nice_name, start=False, total=False)
+        # No cached version found, return download path
+        return dl_path
 
-                        # Set up download - disable caching as this breaks streamed downloads
-                        with requests_cache.disabled():
-                            r = requests.get(container, allow_redirects=True, stream=True)
-                            filesize = r.headers.get("Content-length")
-                            if filesize:
-                                progress.update(task, total=int(filesize))
-                                progress.start_task(task)
+    def singularity_download_image(self, container, output_path):
+        """Download a singularity image from the web.
 
-                            # Stream download
-                            for data in r.iter_content(chunk_size=4096):
-                                progress.update(task, advance=len(data))
-                                fh.write(data)
+        Use native Python to download the file.
 
-            # Try to delete the incomplete download if something goes wrong
-            except:
-                log.warning(f"Deleting incompleted download: {dl_path}")
-                os.remove(dl_path)
-                raise
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to ``https://depot.galaxyproject.org/singularity/name:version``
+        """
+        # Set up progress bar
+        progress = Progress(
+            TextColumn("[bold blue]{task.fields[container]}", justify="right"),
+            BarColumn(bar_width=None),
+            "[progress.percentage]{task.percentage:>3.1f}%",
+            "•",
+            DownloadColumn(),
+            "•",
+            TransferSpeedColumn(),
+        )
+        try:
+            with open(output_path, "wb") as fh:
+                with progress:
+                    nice_name = container.split("/")[-1][:50]
+                    task = progress.add_task("download", container=nice_name, start=False, total=False)
 
-            # If using NXF_SINGULARITY_CACHEDIR, copy final result to download
-            if dl_path != out_path:
-                shutil.copyfile(dl_path, out_path)
+                    # Set up download - disable caching as this breaks streamed downloads
+                    with requests_cache.disabled():
+                        r = requests.get(container, allow_redirects=True, stream=True)
+                        filesize = r.headers.get("Content-length")
+                        if filesize:
+                            progress.update(task, total=int(filesize))
+                            progress.start_task(task)
 
-            return
+                        # Stream download
+                        for data in r.iter_content(chunk_size=4096):
+                            progress.update(task, advance=len(data))
+                            fh.write(data)
 
+        # Try to delete the incomplete download if something goes wrong
+        except:
+            log.warning(f"Deleting incompleted download: {output_path}")
+            os.remove(output_path)
+            raise
+
+    def singularity_pull_image(self, container, output_path):
+        """Pull a singularity image using ``singularity pull``
+
+        Attempt to use a local installation of singularity to pull the image.
+
+        Args:
+            container (str): A pipeline's container name. Usually it is of similar format
+                to ``nfcore/name:version``.
+
+        Raises:
+            Various exceptions possible from `subprocess` execution of Singularity.
+        """
         # Pull using singularity
         address = "docker://{}".format(container.replace("docker://", ""))
         singularity_command = ["singularity", "pull", "--name", dl_path, address]
@@ -383,11 +424,6 @@ class DownloadWorkflow(object):
         # Try to use singularity to pull image
         try:
             subprocess.call(singularity_command)
-
-            # If using NXF_SINGULARITY_CACHEDIR, copy final result to download
-            if dl_path != out_path:
-                shutil.copyfile(dl_path, out_path)
-
         except OSError as e:
             if e.errno == errno.ENOENT:
                 # Singularity is not installed
