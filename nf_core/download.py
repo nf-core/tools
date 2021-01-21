@@ -36,9 +36,9 @@ class DownloadProgress(Progress):
                         justify="right",
                     ),
                     BarColumn(bar_width=None),
-                    "[progress.percentage]{task.percentage:>3.1f}%",
+                    "[progress.percentage]{task.percentage:>3.0f}%",
                     "•",
-                    TextColumn("[green]{task.completed} of {task.total} completed", justify="right"),
+                    TextColumn("[green]{task.completed}/{task.total} completed", justify="right"),
                 )
             if task.fields.get("progress_type") == "download":
                 self.columns = (
@@ -406,7 +406,7 @@ class DownloadWorkflow(object):
 
                 # Set up download - disable caching as this breaks streamed downloads
                 with requests_cache.disabled():
-                    r = requests.get(container, allow_redirects=True, stream=True)
+                    r = requests.get(container, allow_redirects=True, stream=True, timeout=60 * 5)
                     filesize = r.headers.get("Content-length")
                     if filesize:
                         progress.update(task, total=int(filesize))
@@ -416,6 +416,8 @@ class DownloadWorkflow(object):
                     for data in r.iter_content(chunk_size=4096):
                         progress.update(task, advance=len(data))
                         fh.write(data)
+
+                progress.remove_task(task)
 
         # Try to delete the incomplete download if something goes wrong
         except:
