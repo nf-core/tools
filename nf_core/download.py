@@ -24,6 +24,35 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
+class DownloadProgress(Progress):
+    def get_renderables(self):
+        for task in self.tasks:
+            if task.fields.get("progress_type") == "summary":
+                self.columns = (
+                    TextColumn(
+                        "[magenta]Downloading [bold green]{}[/bold green] singularity container{}".format(
+                            task.total, "s" if task.total > 1 else ""
+                        ),
+                        justify="right",
+                    ),
+                    BarColumn(bar_width=None),
+                    "[progress.percentage]{task.percentage:>3.1f}%",
+                    "•",
+                    TextColumn("[green]{task.completed} of {task.total} completed", justify="right"),
+                )
+            if task.fields.get("progress_type") == "download":
+                self.columns = (
+                    TextColumn("[blue]{task.fields[container]}", justify="right"),
+                    BarColumn(bar_width=None),
+                    "[progress.percentage]{task.percentage:>3.1f}%",
+                    "•",
+                    DownloadColumn(),
+                    "•",
+                    TransferSpeedColumn(),
+                )
+            yield self.make_tasks_table([task])
+
+
 class DownloadWorkflow(object):
     """Downloads a nf-core workflow from GitHub to the local file system.
 
@@ -97,7 +126,7 @@ class DownloadWorkflow(object):
         if self.singularity:
             log.debug("Fetching container names for workflow")
             self.find_container_images()
-            self.download_singularity_images()
+            self.get_singularity_images()
 
         # Compress into an archive
         if self.compress_type is not None:
@@ -278,7 +307,7 @@ class DownloadWorkflow(object):
                             if len(matches) > 0:
                                 self.containers.append(matches[0].strip('"').strip("'"))
 
-    def download_singularity_images(self):
+    def get_singularity_images(self):
         """Loop through container names and download Singularity images"""
         # Remove duplicates and sort
         # (running in the same order each time is less frustrating with caching etc)
@@ -288,40 +317,39 @@ class DownloadWorkflow(object):
             log.info("No container names found in workflow")
         else:
             os.mkdir(os.path.join(self.outdir, "singularity-images"))
-            log.info(
-                "Downloading {} singularity container{}".format(
-                    len(self.containers), "s" if len(self.containers) > 1 else ""
-                )
-            )
             if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
                 log.info("Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"]))
             else:
                 log.info(
                     "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
                 )
-            for container in self.containers:
-                try:
-                    # Copy from the cache if we can, generate download path if not
-                    output_path = self.singularity_copy_cache_image(container)
-                    # Copied from cache
-                    if output_path is True:
-                        continue
 
-                    # Direct download within Python
-                    if container.startswith("http"):
-                        self.singularity_download_image(container, output_path)
+            with DownloadProgress() as progress:
+                task = progress.add_task("all_containers", total=len(self.containers), progress_type="summary")
+                for container in self.containers:
+                    progress.update(task, advance=1)
+                    try:
+                        # Copy from the cache if we can, generate download path if not
+                        output_path = self.singularity_copy_cache_image(container)
+                        # Copied from cache
+                        if output_path is True:
+                            continue
 
-                    # Pull using singularity
-                    else:
-                        self.singularity_pull_image(container, output_path)
+                        # Direct download within Python
+                        if container.startswith("http"):
+                            self.singularity_download_image(container, output_path, progress)
 
-                    # Run cache copy again in case we pulled to the cache
-                    self.singularity_copy_cache_image(container)
+                        # Pull using singularity
+                        else:
+                            self.singularity_pull_image(container, output_path)
 
-                except RuntimeWarning as r:
-                    # Raise exception if this is not possible
-                    log.error("Not able to pull image. Service might be down or internet connection is dead.")
-                    raise r
+                        # Run cache copy again in case we pulled to the cache
+                        self.singularity_copy_cache_image(container)
+
+                    except RuntimeWarning as r:
+                        # Raise exception if this is not possible
+                        log.error("Not able to pull image. Service might be down or internet connection is dead.")
+                        raise r
 
     def singularity_copy_cache_image(self, container):
         """Check Singularity cache for image, copy to destination folder if found.
@@ -359,7 +387,7 @@ class DownloadWorkflow(object):
         # No cached version found, return download path
         return dl_path
 
-    def singularity_download_image(self, container, output_path):
+    def singularity_download_image(self, container, output_path, progress):
         """Download a singularity image from the web.
 
         Use native Python to download the file.
@@ -369,33 +397,25 @@ class DownloadWorkflow(object):
                 to ``https://depot.galaxyproject.org/singularity/name:version``
         """
         # Set up progress bar
-        progress = Progress(
-            TextColumn("[bold blue]{task.fields[container]}", justify="right"),
-            BarColumn(bar_width=None),
-            "[progress.percentage]{task.percentage:>3.1f}%",
-            "•",
-            DownloadColumn(),
-            "•",
-            TransferSpeedColumn(),
-        )
         try:
             with open(output_path, "wb") as fh:
-                with progress:
-                    nice_name = container.split("/")[-1][:50]
-                    task = progress.add_task("download", container=nice_name, start=False, total=False)
+                nice_name = container.split("/")[-1][:50]
+                task = progress.add_task(
+                    "download", container=nice_name, start=False, total=False, progress_type="download"
+                )
 
-                    # Set up download - disable caching as this breaks streamed downloads
-                    with requests_cache.disabled():
-                        r = requests.get(container, allow_redirects=True, stream=True)
-                        filesize = r.headers.get("Content-length")
-                        if filesize:
-                            progress.update(task, total=int(filesize))
-                            progress.start_task(task)
+                # Set up download - disable caching as this breaks streamed downloads
+                with requests_cache.disabled():
+                    r = requests.get(container, allow_redirects=True, stream=True)
+                    filesize = r.headers.get("Content-length")
+                    if filesize:
+                        progress.update(task, total=int(filesize))
+                        progress.start_task(task)
 
-                        # Stream download
-                        for data in r.iter_content(chunk_size=4096):
-                            progress.update(task, advance=len(data))
-                            fh.write(data)
+                    # Stream download
+                    for data in r.iter_content(chunk_size=4096):
+                        progress.update(task, advance=len(data))
+                        fh.write(data)
 
         # Try to delete the incomplete download if something goes wrong
         except:
