@@ -439,7 +439,7 @@ class DownloadWorkflow(object):
         """
         # Pull using singularity
         address = "docker://{}".format(container.replace("docker://", ""))
-        singularity_command = ["singularity", "pull", "--name", dl_path, address]
+        singularity_command = ["singularity", "pull", "--name", output_path, address]
         log.info("Building singularity image: {}".format(address))
         log.debug("Singularity command: {}".format(" ".join(singularity_command)))
 

@@ -172,15 +172,15 @@ class DownloadTest(unittest.TestCase):
         os.remove(tmpfile)
 
     #
-    # Tests for 'pull_singularity_image'
+    # Tests for 'singularity_pull_image'
     #
     # If Singularity is not installed, will log an error and exit
     # If Singularity is installed, should raise an OSError due to non-existant image
     @pytest.mark.xfail(raises=OSError)
-    def test_pull_singularity_image(self):
+    def test_singularity_pull_image(self):
         tmp_dir = tempfile.mkdtemp()
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        download_obj.pull_singularity_image("a-container")
+        download_obj.singularity_pull_image("a-container", tmp_dir)
 
         # Clean up
         shutil.rmtree(tmp_dir)
@@ -188,7 +188,7 @@ class DownloadTest(unittest.TestCase):
     #
     # Tests for the main entry method 'download_workflow'
     #
-    @mock.patch("nf_core.download.DownloadWorkflow.pull_singularity_image")
+    @mock.patch("nf_core.download.DownloadWorkflow.singularity_pull_image")
     def test_download_workflow_with_success(self, mock_download_image):
 
         tmp_dir = tempfile.mkdtemp()
