@@ -211,14 +211,15 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     default="tar.gz",
     help="Compression type",
 )
-def download(pipeline, release, singularity, outdir, compress):
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+def download(pipeline, release, singularity, outdir, compress, force):
     """
     Download a pipeline, configs and singularity container.
 
     Collects all workflow files and shared configs from nf-core/configs.
     Configures the downloaded workflow to use the relative path to the configs.
     """
-    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress)
+    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress, force)
     dl.download_workflow()
 
 

@@ -25,6 +25,10 @@ log = logging.getLogger(__name__)
 
 
 class DownloadProgress(Progress):
+    """Custom Progress bar class, allowing us to have two progress
+    bars with different columns / layouts.
+    """
+
     def get_renderables(self):
         for task in self.tasks:
             if task.fields.get("progress_type") == "summary":
@@ -65,7 +69,7 @@ class DownloadWorkflow(object):
         outdir (str): Path to the local download directory. Defaults to None.
     """
 
-    def __init__(self, pipeline, release=None, singularity=False, outdir=None, compress_type="tar.gz"):
+    def __init__(self, pipeline, release=None, singularity=False, outdir=None, compress_type="tar.gz", force=False):
         self.pipeline = pipeline
         self.release = release
         self.singularity = singularity
@@ -74,6 +78,7 @@ class DownloadWorkflow(object):
         self.compress_type = compress_type
         if self.compress_type == "none":
             self.compress_type = None
+        self.force = force
 
         self.wf_name = None
         self.wf_sha = None
@@ -98,20 +103,26 @@ class DownloadWorkflow(object):
 
         # Set an output filename now that we have the outdir
         if self.compress_type is not None:
-            self.output_filename = "{}.{}".format(self.outdir, self.compress_type)
-            summary_log.append("Output file: '{}'".format(self.output_filename))
+            self.output_filename = f"{self.outdir}.{self.compress_type}"
+            summary_log.append(f"Output file: '{self.output_filename}'")
         else:
-            summary_log.append("Output directory: '{}'".format(self.outdir))
+            summary_log.append(f"Output directory: '{self.outdir}'")
 
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
-            log.error("Output directory '{}' already exists".format(self.outdir))
-            sys.exit(1)
+            if not self.force:
+                log.error(f"Output directory '{self.outdir}' already exists (use [red]--force[/] to overwrite)")
+                sys.exit(1)
+            log.warning(f"Deleting existing output directory: '{self.outdir}'")
+            shutil.rmtree(self.outdir)
 
         # Check that compressed output file doesn't already exist
         if self.output_filename and os.path.exists(self.output_filename):
-            log.error("Output file '{}' already exists".format(self.output_filename))
-            sys.exit(1)
+            if not self.force:
+                log.error(f"Output file '{self.output_filename}' already exists (use [red]--force[/] to overwrite)")
+                sys.exit(1)
+            log.warning(f"Deleting existing output file: '{self.output_filename}'")
+            os.remove(self.output_filename)
 
         # Summary log
         log.info("Saving {}\n {}".format(self.pipeline, "\n ".join(summary_log)))
