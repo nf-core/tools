@@ -89,12 +89,19 @@ class DownloadWorkflow(object):
         except LookupError:
             sys.exit(1)
 
-        output_logmsg = "Output directory: '{}'".format(self.outdir)
+        summary_log = [
+            "Pipeline release: '{}'".format(self.release),
+            "Pull singularity containers: '{}'".format("Yes" if self.singularity else "No"),
+        ]
+        if self.singularity and os.environ.get("NXF_SINGULARITY_CACHEDIR"):
+            summary_log.append("Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"]))
 
         # Set an output filename now that we have the outdir
         if self.compress_type is not None:
             self.output_filename = "{}.{}".format(self.outdir, self.compress_type)
-            output_logmsg = "Output file: '{}'".format(self.output_filename)
+            summary_log.append("Output file: '{}'".format(self.output_filename))
+        else:
+            summary_log.append("Output directory: '{}'".format(self.outdir))
 
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
@@ -106,12 +113,8 @@ class DownloadWorkflow(object):
             log.error("Output file '{}' already exists".format(self.output_filename))
             sys.exit(1)
 
-        log.info(
-            "Saving {}".format(self.pipeline)
-            + "\n Pipeline release: '{}'".format(self.release)
-            + "\n Pull singularity containers: '{}'".format("Yes" if self.singularity else "No")
-            + "\n {}".format(output_logmsg)
-        )
+        # Summary log
+        log.info("Saving {}\n {}".format(self.pipeline, "\n ".join(summary_log)))
 
         # Download the pipeline files
         log.info("Downloading workflow files from GitHub")
@@ -317,9 +320,7 @@ class DownloadWorkflow(object):
             log.info("No container names found in workflow")
         else:
             os.mkdir(os.path.join(self.outdir, "singularity-images"))
-            if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                log.info("Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"]))
-            else:
+            if not os.environ.get("NXF_SINGULARITY_CACHEDIR"):
                 log.info(
                     "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
                 )
@@ -414,14 +415,11 @@ class DownloadWorkflow(object):
                 to ``https://depot.galaxyproject.org/singularity/name:version``
         """
         # Set up progress bar
+        nice_name = container.split("/")[-1][:50]
+        task = progress.add_task("download", container=nice_name, start=False, total=False, progress_type="download")
         try:
             with open(output_path, "wb") as fh:
-                nice_name = container.split("/")[-1][:50]
-                task = progress.add_task(
-                    "download", container=nice_name, start=False, total=False, progress_type="download"
-                )
-
-                # Set up download - disable caching as this breaks streamed downloads
+                # Disable caching as this breaks streamed downloads
                 with requests_cache.disabled():
                     r = requests.get(container, allow_redirects=True, stream=True, timeout=60 * 5)
                     filesize = r.headers.get("Content-length")
@@ -436,10 +434,14 @@ class DownloadWorkflow(object):
 
                 progress.remove_task(task)
 
-        # Try to delete the incomplete download if something goes wrong
         except:
-            log.warning(f"Deleting incompleted download: {output_path}")
+            # Kill the progress bars
+            for t in progress.task_ids:
+                progress.remove_task(t)
+            # Try to delete the incomplete download
+            log.warning(f"Deleting incompleted download: '{output_path}'")
             os.remove(output_path)
+            # Re-raise the caught exception
             raise
 
     def singularity_pull_image(self, container, output_path):
