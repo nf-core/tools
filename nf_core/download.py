@@ -89,12 +89,12 @@ class DownloadWorkflow(object):
         except LookupError:
             sys.exit(1)
 
-        output_logmsg = "Output directory: {}".format(self.outdir)
+        output_logmsg = "Output directory: '{}'".format(self.outdir)
 
         # Set an output filename now that we have the outdir
         if self.compress_type is not None:
             self.output_filename = "{}.{}".format(self.outdir, self.compress_type)
-            output_logmsg = "Output file: {}".format(self.output_filename)
+            output_logmsg = "Output file: '{}'".format(self.output_filename)
 
         # Check that the outdir doesn't already exist
         if os.path.exists(self.outdir):
@@ -108,8 +108,8 @@ class DownloadWorkflow(object):
 
         log.info(
             "Saving {}".format(self.pipeline)
-            + "\n Pipeline release: {}".format(self.release)
-            + "\n Pull singularity containers: {}".format("Yes" if self.singularity else "No")
+            + "\n Pipeline release: '{}'".format(self.release)
+            + "\n Pull singularity containers: '{}'".format("Yes" if self.singularity else "No")
             + "\n {}".format(output_logmsg)
         )
 
@@ -364,10 +364,27 @@ class DownloadWorkflow(object):
         """
 
         # Generate file paths
-        if container.startswith("http"):
-            out_name = "{}.sif".format(container.split("/")[-1]).replace(":", "-")
-        else:
-            out_name = "{}.sif".format(container.replace("nfcore", "nf-core").replace("/", "-").replace(":", "-"))
+        # Based on simpleName() function in Nextflow code:
+        # https://github.com/nextflow-io/nextflow/blob/671ae6d85df44f906747c16f6d73208dbc402d49/modules/nextflow/src/main/groovy/nextflow/container/SingularityCache.groovy#L69-L94
+        out_name = container
+        # Strip URI prefix
+        out_name = re.sub(r"^.*:\/\/", "", out_name)
+        # Detect file extension
+        extension = ".img"
+        if ".sif:" in out_name:
+            extension = ".sif"
+            out_name = out_name.replace(".sif:", "-")
+        elif out_name.endswith(".sif"):
+            extension = ".sif"
+            out_name = out_name[:-4]
+        # Strip : and / characters
+        out_name = out_name.replace("/", "-").replace(":", "-")
+        # Stupid Docker Hub not allowing hyphens
+        out_name = out_name.replace("nfcore", "nf-core")
+        # Add file extension
+        out_name = out_name + extension
+
+        # Full destination and cache paths
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
         dl_path = out_path
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
