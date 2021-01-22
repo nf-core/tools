@@ -16,6 +16,7 @@ import sys
 import time
 import webbrowser
 import yaml
+import copy
 
 import nf_core.list, nf_core.utils
 
@@ -166,6 +167,28 @@ class PipelineSchema(object):
             return False
         log.info("[green]\[✓] Input parameters look valid")
         return True
+
+    def validate_default_params(self):
+        """
+        Check that all default parameters in the schema are valid
+        Ignores 'required' flag, as required parameters might have no defaults
+        """
+        self.get_schema_defaults()
+        try:
+            assert self.schema is not None
+            # Make copy of schema and remove required flags
+            schema_no_required = copy.deepcopy(self.schema)
+            if "required" in schema_no_required:
+                schema_no_required.pop("required")
+            for group_key, group in schema_no_required["definitions"].items():
+                if "required" in group:
+                    schema_no_required["definitions"][group_key].pop("required")
+            jsonschema.validate(self.schema_defaults, schema_no_required)
+        except AssertionError:
+            log.error("[red]\[✗] Pipeline schema not found")
+        except jsonschema.exceptions.ValidationError as e:
+            raise AssertionError("Default parameters are invalid: {}".format(e.message))
+        log.info("[green]\[✓] Default parameters look valid")
 
     def validate_schema(self, schema=None):
         """
