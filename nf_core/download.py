@@ -15,7 +15,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
-from rich.progress import BarColumn, DownloadColumn, TextColumn, TransferSpeedColumn, Progress
+from rich.progress import BarColumn, DownloadColumn, TransferSpeedColumn, Progress
 from zipfile import ZipFile
 
 import nf_core.list
@@ -33,20 +33,15 @@ class DownloadProgress(Progress):
         for task in self.tasks:
             if task.fields.get("progress_type") == "summary":
                 self.columns = (
-                    TextColumn(
-                        "[magenta]Downloading [bold green]{}[/bold green] singularity container{}".format(
-                            task.total, "s" if task.total > 1 else ""
-                        ),
-                        justify="right",
-                    ),
+                    "[magenta]Downloading singularity containers",
                     BarColumn(bar_width=None),
                     "[progress.percentage]{task.percentage:>3.0f}%",
                     "•",
-                    TextColumn("[green]{task.completed}/{task.total} completed", justify="right"),
+                    "[green]{task.completed}/{task.total} completed",
                 )
             if task.fields.get("progress_type") == "download":
                 self.columns = (
-                    TextColumn("[blue]{task.fields[container]}", justify="right"),
+                    "[blue]{task.fields[container]}",
                     BarColumn(bar_width=None),
                     "[progress.percentage]{task.percentage:>3.1f}%",
                     "•",
@@ -138,7 +133,6 @@ class DownloadWorkflow(object):
 
         # Download the singularity images
         if self.singularity:
-            log.debug("Fetching container names for workflow")
             self.find_container_images()
             self.get_singularity_images()
 
@@ -291,6 +285,8 @@ class DownloadWorkflow(object):
         `nextflow config` at the time of writing, so we scrape the pipeline files.
         """
 
+        log.debug("Fetching container names for workflow")
+
         # Use linting code to parse the pipeline nextflow config
         self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))
 
@@ -321,11 +317,13 @@ class DownloadWorkflow(object):
                             if len(matches) > 0:
                                 self.containers.append(matches[0].strip('"').strip("'"))
 
+        # Remove duplicates and sort
+        self.containers = sorted(list(set(self.containers)))
+
+        log.info("Found {} container{}".format(len(self.containers), "s" if len(self.containers) > 1 else ""))
+
     def get_singularity_images(self):
         """Loop through container names and download Singularity images"""
-        # Remove duplicates and sort
-        # (running in the same order each time is less frustrating with caching etc)
-        self.containers = sorted(list(set(self.containers)))
 
         if len(self.containers) == 0:
             log.info("No container names found in workflow")
@@ -425,6 +423,8 @@ class DownloadWorkflow(object):
             container (str): A pipeline's container name. Usually it is of similar format
                 to ``https://depot.galaxyproject.org/singularity/name:version``
         """
+        log.debug(f"Downloading Singularity image: '{container}'")
+
         # Set up progress bar
         nice_name = container.split("/")[-1][:50]
         task = progress.add_task("download", container=nice_name, start=False, total=False, progress_type="download")
