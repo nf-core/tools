@@ -15,6 +15,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import concurrent.futures
 from rich.progress import BarColumn, DownloadColumn, TransferSpeedColumn, Progress
 from zipfile import ZipFile
 
@@ -64,7 +65,16 @@ class DownloadWorkflow(object):
         outdir (str): Path to the local download directory. Defaults to None.
     """
 
-    def __init__(self, pipeline, release=None, singularity=False, outdir=None, compress_type="tar.gz", force=False):
+    def __init__(
+        self,
+        pipeline,
+        release=None,
+        singularity=False,
+        outdir=None,
+        compress_type="tar.gz",
+        force=False,
+        parallel_downloads=4,
+    ):
         self.pipeline = pipeline
         self.release = release
         self.singularity = singularity
@@ -74,6 +84,7 @@ class DownloadWorkflow(object):
         if self.compress_type == "none":
             self.compress_type = None
         self.force = force
+        self.parallel_downloads = parallel_downloads
 
         self.wf_name = None
         self.wf_sha = None
@@ -375,10 +386,20 @@ class DownloadWorkflow(object):
                     self.singularity_copy_cache_image(*container)
                     progress.update(task, advance=1)
 
-                for container in containers_download:
+                with concurrent.futures.ThreadPoolExecutor(max_workers=self.parallel_downloads) as pool:
                     progress.update(task, description="Downloading singularity images")
-                    self.singularity_download_image(*container, progress)
-                    progress.update(task, advance=1)
+
+                    # Kick off concurrent downloads
+                    future_downloads = [
+                        pool.submit(self.singularity_download_image, *container, progress)
+                        for container in containers_download
+                    ]
+                    # Iterate over each threaded download as it finishes
+                    for future in concurrent.futures.as_completed(future_downloads):
+                        if future.exception():
+                            raise future.exception()
+                        else:
+                            progress.update(task, advance=1)
 
                 for container in containers_pull:
                     progress.update(task, description="Pulling singularity images")

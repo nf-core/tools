@@ -212,14 +212,15 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     help="Compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-def download(pipeline, release, singularity, outdir, compress, force):
+@click.option("-p", "--parallel_downloads", type=int, default=4, help="Number of parallel container downloads")
+def download(pipeline, release, singularity, outdir, compress, force, parallel_downloads):
     """
     Download a pipeline, configs and singularity container.
 
     Collects all workflow files and shared configs from nf-core/configs.
     Configures the downloaded workflow to use the relative path to the configs.
     """
-    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress, force)
+    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress, force, parallel_downloads)
     dl.download_workflow()
 
 
