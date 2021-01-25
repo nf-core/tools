@@ -80,8 +80,8 @@ def actions_ci(self):
     try:
         with open(fn, "r") as fh:
             ciwf = yaml.safe_load(fh)
-    except:
-        return {"failed": ["Could not parse yaml file: {}".format(fn)]}
+    except Exception as e:
+        return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
 
     # Check that the action is turned on for the correct events
     try:

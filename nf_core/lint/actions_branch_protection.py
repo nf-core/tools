@@ -76,8 +76,8 @@ def actions_branch_protection(self):
     try:
         with open(fn, "r") as fh:
             branchwf = yaml.safe_load(fh)
-    except:
-        return {"failed": ["Could not parse yaml file: {}".format(fn)]}
+    except Exception as e:
+        return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
 
     # Check that the action is turned on for PRs to master
     try:

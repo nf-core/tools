@@ -100,7 +100,7 @@ class TestLaunch(unittest.TestCase):
             "default": "data/*{1,2}.fastq.gz",
         }
         result = self.launcher.single_param_to_questionary("input", sc_obj)
-        assert result == {"type": "input", "name": "input", "message": "input", "default": "data/*{1,2}.fastq.gz"}
+        assert result == {"type": "input", "name": "input", "message": "", "default": "data/*{1,2}.fastq.gz"}
 
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
@@ -207,7 +207,7 @@ class TestLaunch(unittest.TestCase):
         result = self.launcher.single_param_to_questionary("single_end", sc_obj)
         assert result["type"] == "list"
         assert result["name"] == "single_end"
-        assert result["message"] == "single_end"
+        assert result["message"] == ""
         assert result["choices"] == ["True", "False"]
         assert result["default"] == "True"
         print(type(True))
