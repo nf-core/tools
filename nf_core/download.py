@@ -478,7 +478,13 @@ class DownloadWorkflow(object):
         nice_name = container.split("/")[-1][:50]
         task = progress.add_task(nice_name, start=False, total=False, progress_type="download")
         try:
-            with open(output_path, "wb") as fh:
+            # Set a temporary filename to download to
+            output_path_tmp = f"{output_path}.partial"
+            if os.path.exists(output_path_tmp):
+                os.remove(output_path_tmp)
+
+            # Open file handle and download
+            with open(output_path_tmp, "wb") as fh:
                 # Disable caching as this breaks streamed downloads
                 with requests_cache.disabled():
                     r = requests.get(container, allow_redirects=True, stream=True, timeout=60 * 5)
@@ -492,13 +498,16 @@ class DownloadWorkflow(object):
                         progress.update(task, advance=len(data))
                         fh.write(data)
 
-                # Copy cached download if we are using the cache
-                if cache_path:
-                    log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
-                    progress.update(task, description="Copying from cache to target directory")
-                    shutil.copyfile(cache_path, out_path)
+            # Rename partial filename to final filename
+            os.rename(output_path_tmp, output_path)
 
-                progress.remove_task(task)
+            # Copy cached download if we are using the cache
+            if cache_path:
+                log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+                progress.update(task, description="Copying from cache to target directory")
+                shutil.copyfile(cache_path, out_path)
+
+            progress.remove_task(task)
 
         except:
             # Kill the progress bars
