@@ -74,7 +74,6 @@ def schema_lint(self):
 
     try:
         self.schema_obj.load_lint_schema()
-        self.schema_obj.validate_default_params()
         passed.append("Schema lint passed")
     except AssertionError as e:
         failed.append("Schema lint failed: {}".format(e))

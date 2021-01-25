@@ -80,6 +80,7 @@ class PipelineSchema(object):
             self.load_schema()
             num_params = self.validate_schema()
             self.get_schema_defaults()
+            self.validate_default_params()
             log.info("[green]\[✓] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
         except json.decoder.JSONDecodeError as e:
             error_msg = "[bold red]Could not parse schema JSON:[/] {}".format(e)
@@ -173,7 +174,6 @@ class PipelineSchema(object):
         Check that all default parameters in the schema are valid
         Ignores 'required' flag, as required parameters might have no defaults
         """
-        self.get_schema_defaults()
         try:
             assert self.schema is not None
             # Make copy of schema and remove required flags
