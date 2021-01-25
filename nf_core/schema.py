@@ -185,10 +185,10 @@ class PipelineSchema(object):
                     schema_no_required["definitions"][group_key].pop("required")
             jsonschema.validate(self.schema_defaults, schema_no_required)
         except AssertionError:
-            log.error("[red]\[✗] Pipeline schema not found")
+            log.error("[red][✗] Pipeline schema not found")
         except jsonschema.exceptions.ValidationError as e:
             raise AssertionError("Default parameters are invalid: {}".format(e.message))
-        log.info("[green]\[✓] Default parameters look valid")
+        log.info("[green][✓] Default parameters look valid")
 
     def validate_schema(self, schema=None):
         """
