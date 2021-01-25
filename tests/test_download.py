@@ -180,7 +180,7 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image(self):
         tmp_dir = tempfile.mkdtemp()
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        download_obj.singularity_pull_image("a-container", tmp_dir)
+        download_obj.singularity_pull_image("a-container", tmp_dir, None)
 
         # Clean up
         shutil.rmtree(tmp_dir)
