@@ -33,7 +33,7 @@ class DownloadProgress(Progress):
         for task in self.tasks:
             if task.fields.get("progress_type") == "summary":
                 self.columns = (
-                    "[magenta]Downloading singularity containers",
+                    "[magenta]{task.description}",
                     BarColumn(bar_width=None),
                     "[progress.percentage]{task.percentage:>3.0f}%",
                     "•",
@@ -41,7 +41,7 @@ class DownloadProgress(Progress):
                 )
             if task.fields.get("progress_type") == "download":
                 self.columns = (
-                    "[blue]{task.fields[container]}",
+                    "[blue]{task.description}",
                     BarColumn(bar_width=None),
                     "[progress.percentage]{task.percentage:>3.1f}%",
                     "•",
@@ -336,32 +336,61 @@ class DownloadWorkflow(object):
 
             with DownloadProgress() as progress:
                 task = progress.add_task("all_containers", total=len(self.containers), progress_type="summary")
+
+                # Organise containers based on what we need to do with them
+                containers_exist = []
+                containers_cache = []
+                containers_download = []
+                containers_pull = []
                 for container in self.containers:
+
+                    # Copy from the cache if we can, generate download path if not
+                    out_path, cache_path = self.singularity_image_filenames(container)
+
+                    # We already have the target file in place, return
+                    if os.path.exists(out_path):
+                        containers_exist.append(container)
+                        continue
+
+                    # We have a copy of this in the NXF_SINGULARITY_CACHE dir
+                    if cache_path and os.path.exists(cache_path):
+                        containers_cache.append([container, out_path, cache_path])
+                        continue
+
+                    # Direct download within Python
+                    if container.startswith("http"):
+                        containers_download.append([container, out_path, cache_path])
+                        continue
+
+                    # Pull using singularity
+                    containers_pull.append([container, out_path, cache_path])
+
+                # Go through each method of fetching containers in order
+                for container in containers_exist:
+                    progress.update(task, description="Image file exists")
                     progress.update(task, advance=1)
+
+                for container in containers_cache:
+                    progress.update(task, description=f"Copying singularity images from cache")
+                    self.singularity_copy_cache_image(*container)
+                    progress.update(task, advance=1)
+
+                for container in containers_download:
+                    progress.update(task, description="Downloading singularity images")
+                    self.singularity_download_image(*container, progress)
+                    progress.update(task, advance=1)
+
+                for container in containers_pull:
+                    progress.update(task, description="Pulling singularity images")
                     try:
-                        # Copy from the cache if we can, generate download path if not
-                        output_path = self.singularity_copy_cache_image(container)
-                        # Copied from cache
-                        if output_path is True:
-                            continue
-
-                        # Direct download within Python
-                        if container.startswith("http"):
-                            self.singularity_download_image(container, output_path, progress)
-
-                        # Pull using singularity
-                        else:
-                            self.singularity_pull_image(container, output_path)
-
-                        # Run cache copy again in case we pulled to the cache
-                        self.singularity_copy_cache_image(container)
-
+                        self.singularity_pull_image(*container, progress)
                     except RuntimeWarning as r:
                         # Raise exception if this is not possible
                         log.error("Not able to pull image. Service might be down or internet connection is dead.")
                         raise r
+                    progress.update(task, advance=1)
 
-    def singularity_copy_cache_image(self, container):
+    def singularity_image_filenames(self, container):
         """Check Singularity cache for image, copy to destination folder if found.
 
         Args:
@@ -396,25 +425,20 @@ class DownloadWorkflow(object):
 
         # Full destination and cache paths
         out_path = os.path.abspath(os.path.join(self.outdir, "singularity-images", out_name))
-        dl_path = out_path
+        cache_path = None
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-            dl_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
+            cache_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
 
-        # We already have the target file in place, return
-        # Typical for second run of this function after pulling if no cachedir in place
-        if os.path.exists(out_path):
-            return True
+        return (out_path, cache_path)
 
+    def singularity_copy_cache_image(self, container, out_path, cache_path):
+        """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
         # Copy to destination folder if we have a cached version
-        if os.path.exists(dl_path):
-            log.debug(f"Copying Singularity image from cache: '{out_name}'")
-            shutil.copyfile(dl_path, out_path)
-            return True
+        if cache_path and os.path.exists(cache_path):
+            log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+            shutil.copyfile(cache_path, out_path)
 
-        # No cached version found, return download path
-        return dl_path
-
-    def singularity_download_image(self, container, output_path, progress):
+    def singularity_download_image(self, container, out_path, cache_path, progress):
         """Download a singularity image from the web.
 
         Use native Python to download the file.
@@ -422,12 +446,16 @@ class DownloadWorkflow(object):
         Args:
             container (str): A pipeline's container name. Usually it is of similar format
                 to ``https://depot.galaxyproject.org/singularity/name:version``
+            out_path (str): The final target output path
+            cache_path (str, None): The NXF_SINGULARITY_CACHEDIR path if set, None if not
+            progress (Progress): Rich progress bar instance to add tasks to.
         """
         log.debug(f"Downloading Singularity image: '{container}'")
+        output_path = cache_path or out_path
 
         # Set up progress bar
         nice_name = container.split("/")[-1][:50]
-        task = progress.add_task("download", container=nice_name, start=False, total=False, progress_type="download")
+        task = progress.add_task(nice_name, start=False, total=False, progress_type="download")
         try:
             with open(output_path, "wb") as fh:
                 # Disable caching as this breaks streamed downloads
@@ -443,6 +471,12 @@ class DownloadWorkflow(object):
                         progress.update(task, advance=len(data))
                         fh.write(data)
 
+                # Copy cached download if we are using the cache
+                if cache_path:
+                    log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+                    progress.update(task, description="Copying from cache to target directory")
+                    shutil.copyfile(cache_path, out_path)
+
                 progress.remove_task(task)
 
         except:
@@ -450,12 +484,12 @@ class DownloadWorkflow(object):
             for t in progress.task_ids:
                 progress.remove_task(t)
             # Try to delete the incomplete download
-            log.warning(f"Deleting incompleted download: '{output_path}'")
+            log.warning(f"Deleting incompleted download:\n'{output_path}'")
             os.remove(output_path)
             # Re-raise the caught exception
             raise
 
-    def singularity_pull_image(self, container, output_path):
+    def singularity_pull_image(self, container, out_path, cache_path):
         """Pull a singularity image using ``singularity pull``
 
         Attempt to use a local installation of singularity to pull the image.
@@ -467,6 +501,8 @@ class DownloadWorkflow(object):
         Raises:
             Various exceptions possible from `subprocess` execution of Singularity.
         """
+        output_path = cache_path or out_path
+
         # Pull using singularity
         address = "docker://{}".format(container.replace("docker://", ""))
         singularity_command = ["singularity", "pull", "--name", output_path, address]
@@ -483,6 +519,11 @@ class DownloadWorkflow(object):
             else:
                 # Something else went wrong with singularity command
                 raise e
+        else:
+            # Copy cached download if we are using the cache
+            if cache_path:
+                log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+                shutil.copyfile(cache_path, out_path)
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
