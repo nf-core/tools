@@ -11,6 +11,10 @@ import os
 import requests
 import sys
 import tempfile
+import glob
+import hashlib
+import yaml
+
 
 log = logging.getLogger(__name__)
 
@@ -202,3 +206,80 @@ class PipelineModules(object):
         # Write the file contents
         with open(dl_filename, "wb") as fh:
             fh.write(file_contents)
+
+
+class ModulesTestHelper(object):
+    def __init__(self, modules_dir=""):
+        self.modules_dir = modules_dir
+
+    # Using a custom Dumper class to prevent changing the global state
+    class CustomDumper(yaml.Dumper):
+        # Super neat hack to preserve the mapping key order. See https://stackoverflow.com/a/52621703/1497385
+        def represent_dict_preserve_order(self, data):
+            return self.represent_dict(data.items())
+
+    CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
+
+    def _md5(self, fname):
+        """Generate md5 sum for file"""
+        hash_md5 = hashlib.md5()
+        with open(fname, "rb") as f:
+            for chunk in iter(lambda: f.read(4096), b""):
+                hash_md5.update(chunk)
+        md5sum = hash_md5.hexdigest()
+        return md5sum
+
+    def _get_md5_sums(self, dir, md5_sums=None):
+        """
+        Recursively go through directories and subdirectories
+        and generate tuples of (<file_path>, <md5sum>)
+        returns: list of tuples
+        """
+        if not md5_sums:
+            md5_sums = []
+        elements = glob.glob(dir + "/*")
+        for elem in elements:
+            # if file, get md5 sum
+            if os.path.isfile(elem):
+                elem_md5 = self._md5(elem)
+                md5_sums.append((elem, elem_md5))
+            # if directory, apply recursion
+            if os.path.isdir(elem):
+                md5_sums += self._get_md5_sums(elem, md5_sums)
+            else:
+                continue
+
+        return md5_sums
+
+    def generate_test_yml(self):
+        """
+        Generate the test yml file
+        """
+        # Look for output directory
+        output_dir = os.path.join(self.modules_dir, "output")
+        try:
+            assert os.path.exists(output_dir)
+            assert len(glob.glob(os.path.join(output_dir, "*"))) > 0
+        except:
+            print("output directory doesn't exist or is empty")
+
+        # Get list of files and their md5sums
+        md5_sums = self._get_md5_sums(output_dir)
+
+        # Create yaml output
+        file_dicts = []
+        for elem in md5_sums:
+            file_dicts.append({"path": elem[0], "md5sum": elem[1]})
+
+        yml_dict = [
+            {
+                "name": "<name of test>",
+                "command": "<command here>",
+                "tags": ["<tag>"],
+                "files": file_dicts,
+            }
+        ]
+
+        # print yaml to console
+
+        print(yaml.dump(yml_dict, Dumper=self.CustomDumper))
