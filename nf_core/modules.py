@@ -266,6 +266,7 @@ class ModulesTestHelper(object):
 
         # Get list of files and their md5sums
         md5_sums = self._get_md5_sums(output_dir)
+        md5_sums = list(set(md5_sums))
 
         # Create yaml output
         file_dicts = []
