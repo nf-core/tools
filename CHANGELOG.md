@@ -4,6 +4,7 @@
 
 ### Tools helper code
 
+* Added `nf-core modules md5` command to automatically generate md5 sums and a yaml file for module tests
 * Fixed some bugs in the command line interface for `nf-core launch` and improved formatting [[#829](https://github.com/nf-core/tools/pull/829)]
 
 ### Linting
