@@ -416,6 +416,18 @@ def check(ctx):
     mods.check_modules()
 
 
+@modules.command(help_priority=6)
+@click.pass_context
+@click.argument("modules_dir", type=click.Path(exists=True), required=True, metavar="<modules directory>")
+def md5(ctx, modules_dir):
+    """
+    Generate md5 sums for all files in the "output" directory after running a command used for testing
+    Helper utility to ease the generation of module tests
+    """
+    modules_test_helper = nf_core.modules.ModulesTestHelper(modules_dir=modules_dir)
+    modules_test_helper.generate_test_yml()
+
+
 ## nf-core schema subcommands
 @nf_core_cli.group(cls=CustomHelpOrder, help_priority=8)
 def schema():

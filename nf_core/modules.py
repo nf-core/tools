@@ -212,9 +212,10 @@ class ModulesTestHelper(object):
     def __init__(self, modules_dir=""):
         self.modules_dir = modules_dir
 
-    # Using a custom Dumper class to prevent changing the global state
+    # Add custom dumper class to prevent overwriting the global state
+    # This prevents yaml from changing the output order
+    # See https://stackoverflow.com/a/52621703/1497385
     class CustomDumper(yaml.Dumper):
-        # Super neat hack to preserve the mapping key order. See https://stackoverflow.com/a/52621703/1497385
         def represent_dict_preserve_order(self, data):
             return self.represent_dict(data.items())
 
