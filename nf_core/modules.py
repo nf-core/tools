@@ -271,7 +271,7 @@ class ModulesTestHelper(object):
         # Create yaml output
         file_dicts = []
         for elem in md5_sums:
-            file_dicts.append({"path": elem[0], "md5sum": elem[1]})
+            file_dicts.append({"path": elem[0], "md5sum": elem[1], "should_exist": True})
 
         yml_dict = [
             {
