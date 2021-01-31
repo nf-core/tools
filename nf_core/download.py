@@ -394,12 +394,27 @@ class DownloadWorkflow(object):
                         pool.submit(self.singularity_download_image, *container, progress)
                         for container in containers_download
                     ]
-                    # Iterate over each threaded download as it finishes
-                    for future in concurrent.futures.as_completed(future_downloads):
-                        if future.exception():
-                            raise future.exception()
-                        else:
-                            progress.update(task, advance=1)
+
+                    # Make ctrl-c work with multi-threading
+                    self.kill_with_fire = False
+
+                    try:
+                        # Iterate over each threaded download, waiting for them to finish
+                        for future in concurrent.futures.wait(future_downloads):
+                            if future.exception():
+                                raise future.exception()
+                            else:
+                                progress.update(task, advance=1)
+
+                    except KeyboardInterrupt:
+                        # Cancel the future threads that haven't started yet
+                        for future in future_downloads:
+                            future.cancel()
+                        # Set the variable that the threaded function looks for
+                        # Will trigger an exception from each thread
+                        self.kill_with_fire = True
+                        # Re-raise exception on the main thread
+                        raise
 
                 for container in containers_pull:
                     progress.update(task, description="Pulling singularity images")
@@ -473,6 +488,7 @@ class DownloadWorkflow(object):
         """
         log.debug(f"Downloading Singularity image: '{container}'")
         output_path = cache_path or out_path
+        output_path_tmp = None
 
         # Set up progress bar
         nice_name = container.split("/")[-1][:50]
@@ -495,11 +511,15 @@ class DownloadWorkflow(object):
 
                     # Stream download
                     for data in r.iter_content(chunk_size=4096):
+                        # Check that the user didn't hit ctrl-c
+                        if self.kill_with_fire:
+                            raise KeyboardInterrupt
                         progress.update(task, advance=len(data))
                         fh.write(data)
 
             # Rename partial filename to final filename
             os.rename(output_path_tmp, output_path)
+            output_path_tmp = None
 
             # Copy cached download if we are using the cache
             if cache_path:
@@ -514,7 +534,8 @@ class DownloadWorkflow(object):
             for t in progress.task_ids:
                 progress.remove_task(t)
             # Try to delete the incomplete download
-            log.warning(f"Deleting incompleted download:\n'{output_path}'")
+            log.warning(f"Deleting incompleted singularity image download:\n'{output_path_tmp}'")
+            os.remove(output_path_tmp)
             os.remove(output_path)
             # Re-raise the caught exception
             raise
