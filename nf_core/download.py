@@ -73,6 +73,7 @@ class DownloadWorkflow(object):
         outdir=None,
         compress_type="tar.gz",
         force=False,
+        use_singularity_cache=False,
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
@@ -84,6 +85,7 @@ class DownloadWorkflow(object):
         if self.compress_type == "none":
             self.compress_type = None
         self.force = force
+        self.use_singularity_cache = use_singularity_cache
         self.parallel_downloads = parallel_downloads
 
         self.wf_name = None
@@ -339,7 +341,8 @@ class DownloadWorkflow(object):
         if len(self.containers) == 0:
             log.info("No container names found in workflow")
         else:
-            os.mkdir(os.path.join(self.outdir, "singularity-images"))
+            if not self.use_singularity_cache:
+                os.mkdir(os.path.join(self.outdir, "singularity-images"))
             if not os.environ.get("NXF_SINGULARITY_CACHEDIR"):
                 log.info(
                     "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
@@ -401,8 +404,10 @@ class DownloadWorkflow(object):
                     try:
                         # Iterate over each threaded download, waiting for them to finish
                         for future in concurrent.futures.as_completed(future_downloads):
-                            if future.exception():
-                                raise future.exception()
+                            try:
+                                future.result()
+                            except Exception:
+                                raise
                             else:
                                 progress.update(task, advance=1)
 
@@ -464,6 +469,12 @@ class DownloadWorkflow(object):
         cache_path = None
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
             cache_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
+            # Use only the cache - set this as the main output path
+            if self.use_singularity_cache:
+                out_path = cache_path
+                cache_path = None
+        elif self.use_singularity_cache:
+            raise FileNotFoundError("'--use_singularity_cache' specified but no $NXF_SINGULARITY_CACHEDIR set!")
 
         return (out_path, cache_path)
 
@@ -487,6 +498,14 @@ class DownloadWorkflow(object):
             progress (Progress): Rich progress bar instance to add tasks to.
         """
         log.debug(f"Downloading Singularity image: '{container}'")
+
+        # Check that download directories exist
+        if not os.path.isdir(os.path.dirname(out_path)):
+            raise FileNotFoundError("Output directory not found: '{}'".format(os.path.dirname(out_path)))
+        if cache_path and not os.path.isdir(os.path.dirname(cache_path)):
+            raise FileNotFoundError("Output directory not found: '{}'".format(os.path.dirname(cache_path)))
+
+        # Set output path to save file to
         output_path = cache_path or out_path
         output_path_tmp = None
 
@@ -534,9 +553,11 @@ class DownloadWorkflow(object):
             for t in progress.task_ids:
                 progress.remove_task(t)
             # Try to delete the incomplete download
-            log.warning(f"Deleting incompleted singularity image download:\n'{output_path_tmp}'")
-            os.remove(output_path_tmp)
-            os.remove(output_path)
+            log.debug(f"Deleting incompleted singularity image download:\n'{output_path_tmp}'")
+            if output_path_tmp and os.path.exists(output_path_tmp):
+                os.remove(output_path_tmp)
+            if output_path and os.path.exists(output_path):
+                os.remove(output_path)
             # Re-raise the caught exception
             raise
 

@@ -202,23 +202,30 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 @nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
-@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity containers")
+@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity images")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
     "-c",
     "--compress",
     type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
     default="tar.gz",
-    help="Compression type",
+    help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-@click.option("-p", "--parallel_downloads", type=int, default=4, help="Number of parallel container downloads")
-def download(pipeline, release, singularity, outdir, compress, force, parallel_downloads):
+@click.option(
+    "-c",
+    "--use_singularity_cache",
+    is_flag=True,
+    default=False,
+    help="Don't copy images to the output directory and don't configure singularity.cacheDir",
+)
+@click.option("-p", "--parallel_downloads", type=int, default=4, help="Number of parallel image downloads")
+def download(pipeline, release, singularity, outdir, compress, force, use_singularity_cache, parallel_downloads):
     """
-    Download a pipeline, configs and singularity container.
+    Download a pipeline, nf-core/configs and pipeline singularity images.
 
-    Collects all workflow files and shared configs from nf-core/configs.
-    Configures the downloaded workflow to use the relative path to the configs.
+    Collects all files in a single archive and configures the downloaded
+    workflow to use relative paths to the configs and singularity images.
     """
     dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress, force, parallel_downloads)
     dl.download_workflow()
