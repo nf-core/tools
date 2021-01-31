@@ -400,7 +400,7 @@ class DownloadWorkflow(object):
 
                     try:
                         # Iterate over each threaded download, waiting for them to finish
-                        for future in concurrent.futures.wait(future_downloads):
+                        for future in concurrent.futures.as_completed(future_downloads):
                             if future.exception():
                                 raise future.exception()
                             else:
