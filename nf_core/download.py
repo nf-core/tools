@@ -51,6 +51,12 @@ class DownloadProgress(Progress):
                     "•",
                     TransferSpeedColumn(),
                 )
+            if task.fields.get("progress_type") == "singularity_pull":
+                self.columns = (
+                    "[magenta]{task.description}",
+                    "[blue]{task.fields[current_log]}",
+                    BarColumn(bar_width=None),
+                )
             yield self.make_tasks_table([task])
 
 
@@ -450,7 +456,7 @@ class DownloadWorkflow(object):
                 for container in containers_pull:
                     progress.update(task, description="Pulling singularity images")
                     try:
-                        self.singularity_pull_image(*container)
+                        self.singularity_pull_image(*container, progress)
                     except RuntimeWarning as r:
                         # Raise exception if this is not possible
                         log.error("Not able to pull image. Service might be down or internet connection is dead.")
@@ -581,7 +587,7 @@ class DownloadWorkflow(object):
             # Re-raise the caught exception
             raise
 
-    def singularity_pull_image(self, container, out_path, cache_path):
+    def singularity_pull_image(self, container, out_path, cache_path, progress):
         """Pull a singularity image using ``singularity pull``
 
         Attempt to use a local installation of singularity to pull the image.
@@ -598,12 +604,30 @@ class DownloadWorkflow(object):
         # Pull using singularity
         address = "docker://{}".format(container.replace("docker://", ""))
         singularity_command = ["singularity", "pull", "--name", output_path, address]
-        log.info("Building singularity image: {}".format(address))
+        log.debug("Building singularity image: {}".format(address))
         log.debug("Singularity command: {}".format(" ".join(singularity_command)))
+
+        # Progress bar to show that something is happening
+        task = progress.add_task(container, start=False, total=False, progress_type="singularity_pull", current_log="")
 
         # Try to use singularity to pull image
         try:
-            subprocess.call(singularity_command)
+            # Run the singularity pull command
+            proc = subprocess.Popen(
+                singularity_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
+            )
+            for line in proc.stdout:
+                log.debug(line.strip())
+                progress.update(task, current_log=line.strip())
+
+            # Copy cached download if we are using the cache
+            if cache_path:
+                log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+                progress.update(task, current_log="Copying from cache to target directory")
+                shutil.copyfile(cache_path, out_path)
+
+            progress.remove_task(task)
+
         except OSError as e:
             if e.errno == errno.ENOENT:
                 # Singularity is not installed
@@ -611,11 +635,6 @@ class DownloadWorkflow(object):
             else:
                 # Something else went wrong with singularity command
                 raise e
-        else:
-            # Copy cached download if we are using the cache
-            if cache_path:
-                log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
-                shutil.copyfile(cache_path, out_path)
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
