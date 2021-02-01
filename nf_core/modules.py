@@ -11,6 +11,7 @@ import os
 import requests
 import sys
 import tempfile
+import shutil
 
 log = logging.getLogger(__name__)
 
@@ -61,15 +62,8 @@ class PipelineModules(object):
 
         log.info("Installing {}".format(module))
 
-        # Check that we were given a pipeline
-        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
-            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
-            return False
-        main_nf = os.path.join(self.pipeline_dir, "main.nf")
-        nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
-        if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
-            return False
+        # Check whether pipelines is valid
+        self.has_valid_pipeline()
 
         # Get the available modules
         self.get_modules_file_tree()
@@ -101,7 +95,28 @@ class PipelineModules(object):
         pass
 
     def remove(self, module):
-        log.error("This command is not yet implemented")
+        log.info("Removing {}".format(module))
+
+        # Check whether pipelines is valid
+        self.has_valid_pipeline()
+
+        # Get the module directory
+        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+
+        # Verify that the module is actually installed
+        if not os.path.exists(module_dir):
+            log.error("Module directory does not installed: {}".format(module_dir))
+            log.info("The module you want to remove seems not to be installed. Is it a local module?")
+            return False
+
+        # Remove the module
+        try:
+            shutil.rmtree(module_dir)
+            log.info("Successfully removed {} module".format(module))
+        except Exception as e:
+            log.error("Could not remove module: {}".format(e))
+            return False
+
         pass
 
     def check_modules(self):
@@ -202,3 +217,14 @@ class PipelineModules(object):
         # Write the file contents
         with open(dl_filename, "wb") as fh:
             fh.write(file_contents)
+
+    def has_valid_pipeline(self):
+        # Check that we were given a pipeline
+        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
+            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
+            return False
+        main_nf = os.path.join(self.pipeline_dir, "main.nf")
+        nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
+        if not os.path.exists(main_nf) and not os.path.exists(nf_config):
+            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
+            return False
