@@ -370,8 +370,19 @@ class DownloadWorkflow(object):
                 containers_pull = []
                 for container in self.containers:
 
-                    # Copy from the cache if we can, generate download path if not
+                    # Fetch the output and cached filenames for this container
                     out_path, cache_path = self.singularity_image_filenames(container)
+
+                    # Check that the directories exist
+                    out_path_dir = os.path.dirname(out_path)
+                    if not os.path.isdir(out_path_dir):
+                        log.debug(f"Output directory not found, creating: {out_path_dir}")
+                        os.makedirs(out_path_dir)
+                    if cache_path:
+                        cache_path_dir = os.path.dirname(cache_path)
+                        if not os.path.isdir(cache_path_dir):
+                            log.debug(f"Cache directory not found, creating: {cache_path_dir}")
+                            os.makedirs(cache_path_dir)
 
                     # We already have the target file in place, return
                     if os.path.exists(out_path):
@@ -514,17 +525,6 @@ class DownloadWorkflow(object):
             progress (Progress): Rich progress bar instance to add tasks to.
         """
         log.debug(f"Downloading Singularity image: '{container}'")
-
-        # Check that download directories exist
-        out_path_dir = os.path.dirname(out_path)
-        if not os.path.isdir(out_path_dir):
-            log.debug(f"Output directory not found, creating: {out_path_dir}")
-            os.makedirs(out_path_dir)
-        if cache_path:
-            cache_path_dir = os.path.dirname(cache_path)
-            if not os.path.isdir(cache_path_dir):
-                log.debug(f"Cache directory not found, creating: {cache_path_dir}")
-                os.makedirs(cache_path_dir)
 
         # Set output path to save file to
         output_path = cache_path or out_path
