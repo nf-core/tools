@@ -214,10 +214,10 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
     "-c",
-    "--use_singularity_cache",
+    "--use-singularity-cache",
     is_flag=True,
     default=False,
-    help="Don't copy images to the output directory and don't configure singularity.cacheDir",
+    help="Don't copy images to the output directory and don't configure 'singularity.cacheDir'",
 )
 @click.option("-p", "--parallel_downloads", type=int, default=4, help="Number of parallel image downloads")
 def download(pipeline, release, singularity, outdir, compress, force, use_singularity_cache, parallel_downloads):

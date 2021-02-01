@@ -515,12 +515,12 @@ class DownloadWorkflow(object):
         out_path_dir = os.path.dirname(out_path)
         if not os.path.isdir(out_path_dir):
             log.debug(f"Output directory not found, creating: {out_path_dir}")
-            os.mkdirs(out_path_dir)
+            os.makedirs(out_path_dir)
         if cache_path:
             cache_path_dir = os.path.dirname(cache_path)
             if not os.path.isdir(cache_path_dir):
                 log.debug(f"Cache directory not found, creating: {cache_path_dir}")
-                os.mkdirs(cache_path_dir)
+                os.makedirs(cache_path_dir)
 
         # Set output path to save file to
         output_path = cache_path or out_path
