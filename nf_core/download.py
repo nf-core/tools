@@ -19,6 +19,7 @@ import concurrent.futures
 from rich.progress import BarColumn, DownloadColumn, TransferSpeedColumn, Progress
 from zipfile import ZipFile
 
+import nf_core
 import nf_core.list
 import nf_core.utils
 
@@ -87,6 +88,11 @@ class DownloadWorkflow(object):
         self.force = force
         self.use_singularity_cache = use_singularity_cache
         self.parallel_downloads = parallel_downloads
+
+        # Sanity checks
+        if self.use_singularity_cache and not self.singularity:
+            log.error("Command has '--use_singularity_cache' set, but not '--singularity'")
+            sys.exit(1)
 
         self.wf_name = None
         self.wf_sha = None
@@ -284,6 +290,14 @@ class DownloadWorkflow(object):
         # Replace the target string
         nfconfig = nfconfig.replace(find_str, repl_str)
 
+        # Append the singularity.cacheDir to the end if we need it
+        if self.singularity and not self.use_singularity_cache:
+            nfconfig += (
+                f"\n\n// Added by `nf-core download` v{nf_core.__version__} //\n"
+                + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
+                + "\n///////////////////////////////////////"
+            )
+
         # Write the file out again
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
@@ -298,7 +312,7 @@ class DownloadWorkflow(object):
         `nextflow config` at the time of writing, so we scrape the pipeline files.
         """
 
-        log.debug("Fetching container names for workflow")
+        log.info("Fetching container names for workflow")
 
         # Use linting code to parse the pipeline nextflow config
         self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))

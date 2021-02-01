@@ -227,7 +227,9 @@ def download(pipeline, release, singularity, outdir, compress, force, use_singul
     Collects all files in a single archive and configures the downloaded
     workflow to use relative paths to the configs and singularity images.
     """
-    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress, force, parallel_downloads)
+    dl = nf_core.download.DownloadWorkflow(
+        pipeline, release, singularity, outdir, compress, force, use_singularity_cache, parallel_downloads
+    )
     dl.download_workflow()
 
 
