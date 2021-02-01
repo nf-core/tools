@@ -614,7 +614,11 @@ class DownloadWorkflow(object):
         try:
             # Run the singularity pull command
             proc = subprocess.Popen(
-                singularity_command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, bufsize=1
+                singularity_command,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                universal_newlines=True,
+                bufsize=1,
             )
             for line in proc.stdout:
                 log.debug(line.strip())
