@@ -355,8 +355,6 @@ class DownloadWorkflow(object):
         if len(self.containers) == 0:
             log.info("No container names found in workflow")
         else:
-            if not self.use_singularity_cache:
-                os.mkdir(os.path.join(self.outdir, "singularity-images"))
             if not os.environ.get("NXF_SINGULARITY_CACHEDIR"):
                 log.info(
                     "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
@@ -514,10 +512,15 @@ class DownloadWorkflow(object):
         log.debug(f"Downloading Singularity image: '{container}'")
 
         # Check that download directories exist
-        if not os.path.isdir(os.path.dirname(out_path)):
-            raise FileNotFoundError("Output directory not found: '{}'".format(os.path.dirname(out_path)))
-        if cache_path and not os.path.isdir(os.path.dirname(cache_path)):
-            raise FileNotFoundError("Output directory not found: '{}'".format(os.path.dirname(cache_path)))
+        out_path_dir = os.path.dirname(out_path)
+        if not os.path.isdir(out_path_dir):
+            log.debug(f"Output directory not found, creating: {out_path_dir}")
+            os.mkdirs(out_path_dir)
+        if cache_path:
+            cache_path_dir = os.path.dirname(cache_path)
+            if not os.path.isdir(cache_path_dir):
+                log.debug(f"Cache directory not found, creating: {cache_path_dir}")
+                os.mkdirs(cache_path_dir)
 
         # Set output path to save file to
         output_path = cache_path or out_path
