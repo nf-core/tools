@@ -427,18 +427,14 @@ class DownloadWorkflow(object):
                     try:
                         # Iterate over each threaded download, waiting for them to finish
                         for future in concurrent.futures.as_completed(future_downloads):
+                            future.result()
                             try:
-                                future.result()
+                                progress.update(task, advance=1)
                             except Exception as e:
-                                log.error(f"Download failed: {e}")
-                                raise KeyboardInterrupt
-                            else:
-                                try:
-                                    progress.update(task, advance=1)
-                                except Exception as e:
-                                    log.error(f"Error updating progress bar: {e}")
+                                log.error(f"Error updating progress bar: {e}")
 
-                    except KeyboardInterrupt:
+                    except Exception as e:
+                        log.error(f"Error downloading container: {e}")
                         # Cancel the future threads that haven't started yet
                         for future in future_downloads:
                             future.cancel()
