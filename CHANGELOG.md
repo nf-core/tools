@@ -5,7 +5,7 @@
 ### Tools helper code
 
 * Fixed some bugs in the command line interface for `nf-core launch` and improved formatting [[#829](https://github.com/nf-core/tools/pull/829)]
-* New functionality for `nf-core download` to make it compatible with DSL2 pipelines
+* New functionality for `nf-core download` to make it compatible with DSL2 pipelines [[#832](https://github.com/nf-core/tools/pull/832)]
   * Singularity images in module files are now discovered and fetched
   * Direct downloads of Singularity images in python allowed (much faster than running `singularity pull`)
   * Downloads now work with `$NXF_SINGULARITY_CACHEDIR` so that pipelines sharing containers have efficient downloads
