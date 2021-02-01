@@ -177,10 +177,11 @@ class DownloadTest(unittest.TestCase):
     # If Singularity is not installed, will log an error and exit
     # If Singularity is installed, should raise an OSError due to non-existant image
     @pytest.mark.xfail(raises=OSError)
-    def test_singularity_pull_image(self):
+    @mock.patch("rich.progress.Progress.add_task")
+    def test_singularity_pull_image(self, mock_rich_progress):
         tmp_dir = tempfile.mkdtemp()
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        download_obj.singularity_pull_image("a-container", tmp_dir, None)
+        download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
 
         # Clean up
         shutil.rmtree(tmp_dir)
