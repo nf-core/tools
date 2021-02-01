@@ -254,8 +254,8 @@ class PipelineSync(object):
         branch_list = [b.name for b in self.repo.branches]
         # Subset to template merging branches
         branch_list = [b for b in branch_list if b.startswith("nf-core-template-merge-")]
+        # Check for open PRs and close if found
         for branch in branch_list:
-            # Check for open PRs and close if found
             self.close_open_pr(branch)
 
     def close_open_pr(self, branch):
