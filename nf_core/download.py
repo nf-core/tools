@@ -438,7 +438,7 @@ class DownloadWorkflow(object):
                 for container in containers_pull:
                     progress.update(task, description="Pulling singularity images")
                     try:
-                        self.singularity_pull_image(*container, progress)
+                        self.singularity_pull_image(*container)
                     except RuntimeWarning as r:
                         # Raise exception if this is not possible
                         log.error("Not able to pull image. Service might be down or internet connection is dead.")
