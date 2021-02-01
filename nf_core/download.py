@@ -418,8 +418,9 @@ class DownloadWorkflow(object):
                         for future in concurrent.futures.as_completed(future_downloads):
                             try:
                                 future.result()
-                            except Exception:
-                                raise
+                            except Exception as e:
+                                log.error(f"Download failed: {e}")
+                                raise KeyboardInterrupt
                             else:
                                 try:
                                     progress.update(task, advance=1)
