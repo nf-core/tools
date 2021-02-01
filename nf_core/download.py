@@ -281,7 +281,7 @@ class DownloadWorkflow(object):
         nfconfig_fn = os.path.join(self.outdir, "workflow", "nextflow.config")
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "../configs/"
-        log.debug("Editing params.custom_config_base in {}".format(nfconfig_fn))
+        log.debug("Editing 'params.custom_config_base' in '{}'".format(nfconfig_fn))
 
         # Load the nextflow.config file into memory
         with open(nfconfig_fn, "r") as nfconfig_fh:
@@ -537,6 +537,7 @@ class DownloadWorkflow(object):
             output_path_tmp = f"{output_path}.partial"
             if os.path.exists(output_path_tmp):
                 os.remove(output_path_tmp)
+            log.debug(f"Downloading to: '{output_path_tmp}'")
 
             # Open file handle and download
             with open(output_path_tmp, "wb") as fh:
