@@ -95,6 +95,10 @@ class PipelineModules(object):
         pass
 
     def remove(self, module):
+        """
+        Remove an already installed module
+        This command only works for modules that are installed from 'nf-core/modules'
+        """
         log.info("Removing {}".format(module))
 
         # Check whether pipelines is valid
