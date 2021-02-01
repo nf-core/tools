@@ -527,17 +527,16 @@ class DownloadWorkflow(object):
 
         # Set output path to save file to
         output_path = cache_path or out_path
-        output_path_tmp = None
+        output_path_tmp = f"{output_path}.partial"
+        log.debug(f"Downloading to: '{output_path_tmp}'")
 
         # Set up progress bar
         nice_name = container.split("/")[-1][:50]
         task = progress.add_task(nice_name, start=False, total=False, progress_type="download")
         try:
-            # Set a temporary filename to download to
-            output_path_tmp = f"{output_path}.partial"
+            # Delete temporary file if it already exists
             if os.path.exists(output_path_tmp):
                 os.remove(output_path_tmp)
-            log.debug(f"Downloading to: '{output_path_tmp}'")
 
             # Open file handle and download
             with open(output_path_tmp, "wb") as fh:
