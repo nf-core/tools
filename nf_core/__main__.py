@@ -202,7 +202,6 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 @nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
-@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity images")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
     "-c",
@@ -212,15 +211,16 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity images")
 @click.option(
     "-c",
-    "--use-singularity-cache",
+    "--singularity-cache",
     is_flag=True,
     default=False,
-    help="Don't copy images to the output directory and don't configure 'singularity.cacheDir'",
+    help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
 )
-@click.option("-p", "--parallel_downloads", type=int, default=4, help="Number of parallel image downloads")
-def download(pipeline, release, singularity, outdir, compress, force, use_singularity_cache, parallel_downloads):
+@click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
+def download(pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
 
@@ -228,7 +228,7 @@ def download(pipeline, release, singularity, outdir, compress, force, use_singul
     workflow to use relative paths to the configs and singularity images.
     """
     dl = nf_core.download.DownloadWorkflow(
-        pipeline, release, singularity, outdir, compress, force, use_singularity_cache, parallel_downloads
+        pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads
     )
     dl.download_workflow()
 

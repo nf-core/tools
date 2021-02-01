@@ -70,28 +70,28 @@ class DownloadWorkflow(object):
         self,
         pipeline,
         release=None,
-        singularity=False,
         outdir=None,
         compress_type="tar.gz",
         force=False,
-        use_singularity_cache=False,
+        singularity=False,
+        singularity_cache_only=False,
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
         self.release = release
-        self.singularity = singularity
         self.outdir = outdir
         self.output_filename = None
         self.compress_type = compress_type
         if self.compress_type == "none":
             self.compress_type = None
         self.force = force
-        self.use_singularity_cache = use_singularity_cache
+        self.singularity = singularity
+        self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
 
         # Sanity checks
-        if self.use_singularity_cache and not self.singularity:
-            log.error("Command has '--use_singularity_cache' set, but not '--singularity'")
+        if self.singularity_cache_only and not self.singularity:
+            log.error("Command has '--singularity-cache' set, but not '--singularity'")
             sys.exit(1)
 
         self.wf_name = None
@@ -291,7 +291,7 @@ class DownloadWorkflow(object):
         nfconfig = nfconfig.replace(find_str, repl_str)
 
         # Append the singularity.cacheDir to the end if we need it
-        if self.singularity and not self.use_singularity_cache:
+        if self.singularity and not self.singularity_cache_only:
             nfconfig += (
                 f"\n\n// Added by `nf-core download` v{nf_core.__version__} //\n"
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
@@ -421,7 +421,10 @@ class DownloadWorkflow(object):
                             except Exception:
                                 raise
                             else:
-                                progress.update(task, advance=1)
+                                try:
+                                    progress.update(task, advance=1)
+                                except Exception as e:
+                                    log.error(f"Error updating progress bar: {e}")
 
                     except KeyboardInterrupt:
                         # Cancel the future threads that haven't started yet
@@ -482,11 +485,11 @@ class DownloadWorkflow(object):
         if os.environ.get("NXF_SINGULARITY_CACHEDIR"):
             cache_path = os.path.join(os.environ["NXF_SINGULARITY_CACHEDIR"], out_name)
             # Use only the cache - set this as the main output path
-            if self.use_singularity_cache:
+            if self.singularity_cache_only:
                 out_path = cache_path
                 cache_path = None
-        elif self.use_singularity_cache:
-            raise FileNotFoundError("'--use_singularity_cache' specified but no $NXF_SINGULARITY_CACHEDIR set!")
+        elif self.singularity_cache_only:
+            raise FileNotFoundError("'--singularity-cache' specified but no '$NXF_SINGULARITY_CACHEDIR' set!")
 
         return (out_path, cache_path)
 
