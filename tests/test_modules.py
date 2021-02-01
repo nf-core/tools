@@ -58,3 +58,12 @@ class TestModules(unittest.TestCase):
         """ Test installing a module - FastQC already there """
         self.mods.install("fastqc")
         assert self.mods.install("fastqc") is False
+
+    def test_modules_remove_fastqc(self):
+        """ Test removing FastQC module after installing it"""
+        self.mods.install("fastqc")
+        assert self.mods.remove("fastqc")
+
+    def test_modules_remove_fastqc_uninstalled(self):
+        """ Test removing FastQC module without installing it """
+        assert self.mods.remove("fastqc") is False

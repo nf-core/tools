@@ -113,6 +113,7 @@ class PipelineModules(object):
         try:
             shutil.rmtree(module_dir)
             log.info("Successfully removed {} module".format(module))
+            return True
         except Exception as e:
             log.error("Could not remove module: {}".format(e))
             return False
