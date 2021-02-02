@@ -12,6 +12,7 @@ import requests
 import sys
 import tempfile
 import shutil
+import yaml
 
 log = logging.getLogger(__name__)
 
@@ -151,10 +152,12 @@ class PipelineModules(object):
     def lint_nfcore_modules(self, nfcore_modules):
         # lint nfore modules
         for mod in nfcore_modules:
+            module_name = mod.split("/")[-1]
+            print(module_name)
 
             # Lint the main.nf file
             main_nf = os.path.join(mod, "main.nf")
-            self.lint_main_nf(main_nf)
+            result_main_nf = self.lint_main_nf(main_nf)
 
             # Lint the functions file
             functions_nf = os.path.join(mod, "functions.nf")
@@ -162,12 +165,36 @@ class PipelineModules(object):
 
             # Lint the meta.yml file
             meta_yml = os.path.join(mod, "meta.yml")
-            # self.lint_meta_yml(meta_yml) TODO
+            print(self.lint_meta_yml(meta_yml, module_name))
 
         return False
 
+    def lint_meta_yml(self, file, module_name):
+        """ Lint a meta yml file """
+        passed = []
+        failed = []
+        required_keys = ["name", "tools", "params", "input", "output", "authors"]
+        try:
+            with open(file, "r") as fh:
+                meta_yaml = yaml.safe_load(fh)
+            passed.append("meta.yml exists {}".format(file))
+        except FileNotFoundError:
+            failed.append("meta.yml doesn't exist {}".format(file))
+            return {"passed": passed, "failed": failed}
+
+        # Confirm that all required keys are given
+        for rk in required_keys:
+            if rk in meta_yaml.keys():
+                passed.append("{} is specified in {}".format(rk, file))
+            else:
+                failed.append("{} not specified in {}".format(rk, file))
+
+        return {"passed": passed, "failed": failed}
+
     def lint_main_nf(self, file):
         """ Lint a single main.nf module file """
+        passed = []
+        failed = []
         conda_env = False
         container = False
         software_version = False
@@ -182,16 +209,27 @@ class PipelineModules(object):
                     if "emit:" in l and "version" in l:
                         software_version = True
                     l = fh.readline()
+            passed.append("main.nf exists {}".format(file))
+        except FileNotFoundError as e:
+            failed.append("main.nf does'nt exist {}".format(file))
+            return {"passed": passed, "failed": failed}
 
-        except FileExistsError as e:
-            log.error("main.nf file doesn't exist: {}".format(file))
+        if conda_env:
+            passed.append("Conda environment specified in {}".format(file))
+        else:
+            failed.append("No conda environment specified in {}".format(file))
 
-        if not conda_env:
-            log.error("No conda environment specified in {}".format(file))
-        if not container:
-            log.error("No container specified in {}".format(file))
-        if not software_version:
-            log.error("Module doesn't omit a software version")
+        if container:
+            passed.append("Container specified in {}".format(file))
+        else:
+            failed.append("No container specified in {}".format(file))
+
+        if software_version:
+            passed.append("Module emits software version: {}".format(file))
+        else:
+            failed.append("Module doesn't emit  software version {}".format(file))
+
+        return {"passed": passed, "failed": failed}
 
     def get_repo_type(self):
         """
