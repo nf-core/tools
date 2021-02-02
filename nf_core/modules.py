@@ -122,7 +122,6 @@ class PipelineModules(object):
             log.error("Could not remove module: {}".format(e))
             return False
 
-
     def check_modules(self):
         log.error("This command is not yet implemented")
         pass
@@ -223,8 +222,7 @@ class PipelineModules(object):
             fh.write(file_contents)
 
     def has_valid_pipeline(self):
-        """Check that we were given a pipeline
-        """
+        """Check that we were given a pipeline"""
         if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
             log.error("Could not find pipeline: {}".format(self.pipeline_dir))
             return False
