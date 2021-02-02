@@ -122,7 +122,6 @@ class PipelineModules(object):
             log.error("Could not remove module: {}".format(e))
             return False
 
-        pass
 
     def check_modules(self):
         log.error("This command is not yet implemented")
