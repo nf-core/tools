@@ -151,23 +151,32 @@ class PipelineModules(object):
 
     def lint_nfcore_modules(self, nfcore_modules):
         # lint nfore modules
+        # TODO change code to pass the passed/failed list to funtions directly to make it cleaner
+        passed = []
+        failed = []
+
         for mod in nfcore_modules:
             module_name = mod.split("/")[-1]
-            print(module_name)
 
             # Lint the main.nf file
             main_nf = os.path.join(mod, "main.nf")
             result_main_nf = self.lint_main_nf(main_nf)
+            passed.append(result_main_nf["passed"])
+            failed.append(result_main_nf["failed"])
 
             # Lint the functions file
             functions_nf = os.path.join(mod, "functions.nf")
-            # self.lint_functions_nf(functions_nf) TODO
+            result_functions_nf = self.lint_functions_nf(functions_nf)
+            passed.append(result_functions_nf["passed"])
+            failed.append(result_functions_nf["failed"])
 
             # Lint the meta.yml file
             meta_yml = os.path.join(mod, "meta.yml")
-            print(self.lint_meta_yml(meta_yml, module_name))
+            result_meta_yml = self.lint_meta_yml(meta_yml, module_name)
+            passed.append(result_meta_yml["passed"])
+            failed.append(result_meta_yml["failed"])
 
-        return False
+        return {"passed": passed, "failed": failed}
 
     def lint_meta_yml(self, file, module_name):
         """ Lint a meta yml file """
@@ -228,6 +237,18 @@ class PipelineModules(object):
             passed.append("Module emits software version: {}".format(file))
         else:
             failed.append("Module doesn't emit  software version {}".format(file))
+
+        return {"passed": passed, "failed": failed}
+
+    def lint_functions_nf(self, file):
+        """ Lint a functions.nf file """
+        passed = []
+        failed = []
+
+        if os.path.exists(file):
+            passed.append("functions.nf exists {}".format(file))
+        else:
+            failed.append("functions.nf doesn't exist {}".format(file))
 
         return {"passed": passed, "failed": failed}
 
