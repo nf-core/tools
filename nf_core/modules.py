@@ -152,24 +152,46 @@ class PipelineModules(object):
         # lint nfore modules
         for mod in nfcore_modules:
 
-            # Check that required files exist
-            main_nf = os.path.join(mod, "main.nf")
-            meta_yml = os.path.join(mod, "meta.yml")
-            functions_nf = os.path.join(mod, "functions.nf")
-            if not os.path.exists(main_nf):
-                print("main.nf doesn't exist {}".format(main_nf))
-            if not os.path.exists(meta_yml):
-                print("meta.yml doesn't exist {}".format(meta_yml))
-            if not os.path.exists(functions_nf):
-                print("functions.nf doesn't exist {}".format(functions_nf))
-
             # Lint the main.nf file
+            main_nf = os.path.join(mod, "main.nf")
+            self.lint_main_nf(main_nf)
 
             # Lint the functions file
+            functions_nf = os.path.join(mod, "functions.nf")
+            # self.lint_functions_nf(functions_nf) TODO
 
             # Lint the meta.yml file
+            meta_yml = os.path.join(mod, "meta.yml")
+            # self.lint_meta_yml(meta_yml) TODO
 
         return False
+
+    def lint_main_nf(self, file):
+        """ Lint a single main.nf module file """
+        conda_env = False
+        container = False
+        software_version = False
+        try:
+            with open(file, "r") as fh:
+                l = fh.readline()
+                while l:
+                    if "conda" in l:
+                        conda_env = True
+                    if "container" in l:
+                        container = True
+                    if "emit:" in l and "version" in l:
+                        software_version = True
+                    l = fh.readline()
+
+        except FileExistsError as e:
+            log.error("main.nf file doesn't exist: {}".format(file))
+
+        if not conda_env:
+            log.error("No conda environment specified in {}".format(file))
+        if not container:
+            log.error("No container specified in {}".format(file))
+        if not software_version:
+            log.error("Module doesn't omit a software version")
 
     def get_repo_type(self):
         """
