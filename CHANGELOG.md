@@ -2,6 +2,10 @@
 
 ## v1.13dev
 
+### Modules
+
+* added `nf-core modules remove` command to uninstall modules
+
 ### Tools helper code
 
 * Fixed some bugs in the command line interface for `nf-core launch` and improved formatting [[#829](https://github.com/nf-core/tools/pull/829)]

@@ -53,8 +53,21 @@ class TestModules(unittest.TestCase):
     def test_modules_install_fastqc(self):
         """ Test installing a module - FastQC """
         assert self.mods.install("fastqc") is not False
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
+        assert os.path.exists(module_path)
 
     def test_modules_install_fastqc_twice(self):
         """ Test installing a module - FastQC already there """
         self.mods.install("fastqc")
         assert self.mods.install("fastqc") is False
+
+    def test_modules_remove_fastqc(self):
+        """ Test removing FastQC module after installing it"""
+        self.mods.install("fastqc")
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
+        assert self.mods.remove("fastqc")
+        assert os.path.exists(module_path) is False
+
+    def test_modules_remove_fastqc_uninstalled(self):
+        """ Test removing FastQC module without installing it """
+        assert self.mods.remove("fastqc") is False
