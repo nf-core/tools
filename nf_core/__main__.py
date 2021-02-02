@@ -418,11 +418,11 @@ def check(ctx):
 
 @modules.command(help_priority=6)
 @click.pass_context
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
 @click.argument("tool", type=str, required=False, metavar="<tool name>")
 def lint(ctx, pipeline_dir, tool):
     """
-    Lint all modules or a specified one in a pipeline directory
+    Lint all modules or a specified one in a pipeline directory.
 
     Looks for important code that should be part of all modules used in nf-core,
     e.g. specification of a Docker and Singularity container or

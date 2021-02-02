@@ -131,10 +131,84 @@ class PipelineModules(object):
         Lint a module
         """
 
-        # Check whether pipelines is valid
-        self.has_valid_pipeline()
+        # Determine repository type (pipeline or nf-core/modules clone)
+        repo_type = self.get_repo_type()
 
         # Get list of all modules in a pipeline
+        local_modules, nfcore_modules = self.get_installed_modules(repo_type=repo_type)
+        print(local_modules)
+        print(nfcore_modules)
+
+        # Check local modules
+        self.lint_local_modules(local_modules)
+
+        # Check them nf-core modules
+        self.lint_nfcore_modules(nfcore_modules)
+
+    def lint_local_modules(self, local_modules):
+        # lint local modules
+        #TODO implement
+    
+    def lint_nfcore_modules(self, nfcore_modules):
+        # lint nfore modules
+        #TODO implement
+
+    def get_repo_type(self):
+        """
+        Determine whether this is a pipeline repository or a clone of
+        nf-core/modules
+        """
+        # Verify that the pipeline dir exists
+        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
+            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
+            sys.exit(1)
+
+        # Determine repository type
+        if os.path.exists(os.path.join(self.pipeline_dir, "main.nf")):
+            repo_type = "pipeline"
+        elif os.path.exists(os.path.join(self.pipeline_dir, "software")):
+            repo_type = "modules"
+        else:
+            log.error("Could not determine repository type of {}".format(self.pipeline_dir))
+            sys.exit(1)
+
+        return repo_type
+
+    def get_installed_modules(self, repo_type="pipeline"):
+        """
+        Make a list of all modules installed in this repository
+
+        Returns a tuple of two lists, one for local modules
+        and one for nfcore modules. The local modules are represented as filenames,
+        while for nf-core modules the module diretories are used.
+
+        returns (local_modules, nfcore_modules)
+        """
+        # pipeline repository
+        local_modules = []
+        nfcore_modules_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software")
+        if repo_type == "pipeline":
+            local_modules_dir = os.path.join(self.pipeline_dir, "modules", "local", "process")
+
+            # Filter local modules
+            local_modules = os.listdir(local_modules_dir)
+            local_modules = [x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")]
+
+        # nf-core/modules
+        if repo_type == "modules":
+            nfcore_modules_dir = os.path.join(self.pipeline_dir, "software")
+
+        # Get nf-core modules
+        nfcore_modules = os.listdir(nfcore_modules_dir)
+        for m in nfcore_modules:
+            m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
+            # Not a module, but contains sub-modules
+            if not "main.nf" in m_content:
+                for tool in m_content:
+                    nfcore_modules.append(os.path.join(m, tool))
+                nfcore_modules.remove(m)
+
+        return local_modules, nfcore_modules
 
     def get_modules_file_tree(self):
         """
