@@ -126,6 +126,16 @@ class PipelineModules(object):
         log.error("This command is not yet implemented")
         pass
 
+    def lint(self, module=None):
+        """
+        Lint a module
+        """
+
+        # Check whether pipelines is valid
+        self.has_valid_pipeline()
+
+        # Get list of all modules in a pipeline
+
     def get_modules_file_tree(self):
         """
         Fetch the file list from the repo, using the GitHub API

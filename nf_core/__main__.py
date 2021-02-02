@@ -416,6 +416,24 @@ def check(ctx):
     mods.check_modules()
 
 
+@modules.command(help_priority=6)
+@click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.argument("tool", type=str, required=False, metavar="<tool name>")
+def lint(ctx, pipeline_dir, tool):
+    """
+    Lint all modules or a specified one in a pipeline directory
+
+    Looks for important code that should be part of all modules used in nf-core,
+    e.g. specification of a Docker and Singularity container or
+    that the module emits a software version.
+    """
+    mods = nf_core.modules.PipelineModules()
+    mods.modules_repo = ctx.obj["modules_repo_obj"]
+    mods.pipeline_dir = pipeline_dir
+    mods.lint(module=tool)
+
+
 ## nf-core schema subcommands
 @nf_core_cli.group(cls=CustomHelpOrder, help_priority=8)
 def schema():
