@@ -136,8 +136,6 @@ class PipelineModules(object):
 
         # Get list of all modules in a pipeline
         local_modules, nfcore_modules = self.get_installed_modules(repo_type=repo_type)
-        print(local_modules)
-        print(nfcore_modules)
 
         # Check local modules
         self.lint_local_modules(local_modules)
@@ -147,11 +145,31 @@ class PipelineModules(object):
 
     def lint_local_modules(self, local_modules):
         # lint local modules
-        #TODO implement
-    
+        # TODO implement
+        return False
+
     def lint_nfcore_modules(self, nfcore_modules):
         # lint nfore modules
-        #TODO implement
+        for mod in nfcore_modules:
+
+            # Check that required files exist
+            main_nf = os.path.join(mod, "main.nf")
+            meta_yml = os.path.join(mod, "meta.yml")
+            functions_nf = os.path.join(mod, "functions.nf")
+            if not os.path.exists(main_nf):
+                print("main.nf doesn't exist {}".format(main_nf))
+            if not os.path.exists(meta_yml):
+                print("meta.yml doesn't exist {}".format(meta_yml))
+            if not os.path.exists(functions_nf):
+                print("functions.nf doesn't exist {}".format(functions_nf))
+
+            # Lint the main.nf file
+
+            # Lint the functions file
+
+            # Lint the meta.yml file
+
+        return False
 
     def get_repo_type(self):
         """
@@ -186,6 +204,7 @@ class PipelineModules(object):
         """
         # pipeline repository
         local_modules = []
+        local_modules_dir = None
         nfcore_modules_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software")
         if repo_type == "pipeline":
             local_modules_dir = os.path.join(self.pipeline_dir, "modules", "local", "process")
@@ -207,6 +226,11 @@ class PipelineModules(object):
                 for tool in m_content:
                     nfcore_modules.append(os.path.join(m, tool))
                 nfcore_modules.remove(m)
+
+        # Make full (relative) file paths
+        if local_modules_dir:
+            local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+        nfcore_modules = [os.path.join(nfcore_modules_dir, m) for m in nfcore_modules]
 
         return local_modules, nfcore_modules
 
