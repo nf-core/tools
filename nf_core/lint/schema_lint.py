@@ -2,6 +2,7 @@
 
 import logging
 import nf_core.schema
+import jsonschema
 
 
 def schema_lint(self):
@@ -27,6 +28,7 @@ def schema_lint(self):
     * There must be no duplicate parameter IDs across the schema and definition subschema
     * All subschema in ``definitions`` must be referenced in the top-level ``allOf`` key
     * The top-level ``allOf`` key must not describe any non-existent definitions
+    * Default parameters in the schema must be valid
     * Core top-level schema attributes should exist and be set as follows:
 
         * ``$schema``: ``https://json-schema.org/draft-07/schema``
@@ -69,6 +71,7 @@ def schema_lint(self):
     # Lint the schema
     self.schema_obj = nf_core.schema.PipelineSchema()
     self.schema_obj.get_schema_path(self.wf_path)
+
     try:
         self.schema_obj.load_lint_schema()
         passed.append("Schema lint passed")

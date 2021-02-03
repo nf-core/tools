@@ -35,8 +35,8 @@ def actions_awsfulltest(self):
         try:
             with open(fn, "r") as fh:
                 wf = yaml.safe_load(fh)
-        except:
-            return {"failed": ["Could not parse yaml file: {}".format(fn)]}
+        except Exception as e:
+            return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
 
         aws_profile = "-profile test "
 

@@ -6,10 +6,20 @@
 
 * Added profiles to support the [Charliecloud](https://hpc.github.io/charliecloud/) and [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/) container engines [[#824](https://github.com/nf-core/tools/issues/824)]
 
+### Modules
+
+* added `nf-core modules remove` command to uninstall modules
+
+### Tools helper code
+
+* Fixed some bugs in the command line interface for `nf-core launch` and improved formatting [[#829](https://github.com/nf-core/tools/pull/829)]
+
 ### Linting
 
+* Added validation of default params to `nf-core schema lint` [[#823](https://github.com/nf-core/tools/issues/823)]
 * Added schema validation of GitHub action workflows to lint function [[#795](https://github.com/nf-core/tools/issues/795)]
 * Fixed bug in schema title and description validation
+* Added second progress bar for conda dependencies lint check, as it can be slow [[#299](https://github.com/nf-core/tools/issues/299)]
 
 ## [v1.12.1 - Silver Dolphin](https://github.com/nf-core/tools/releases/tag/1.12.1) - [2020-12-03]
 
