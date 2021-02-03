@@ -262,7 +262,7 @@ class ModulesTestHelper(object):
             assert os.path.exists(output_dir)
             assert len(glob.glob(os.path.join(output_dir, "*"))) > 0
         except:
-            print("output directory doesn't exist or is empty")
+            log.error("Output directory doesn't exist or is empty")
 
         # Get list of files and their md5sums
         md5_sums = self._get_md5_sums(output_dir)
@@ -283,5 +283,4 @@ class ModulesTestHelper(object):
         ]
 
         # print yaml to console
-
         print(yaml.dump(yml_dict, Dumper=self.CustomDumper))
