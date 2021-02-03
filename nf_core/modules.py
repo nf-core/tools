@@ -127,208 +127,6 @@ class PipelineModules(object):
         log.error("This command is not yet implemented")
         pass
 
-    def lint(self, module=None):
-        """
-        Lint a module
-        """
-
-        # Determine repository type (pipeline or nf-core/modules clone)
-        repo_type = self.get_repo_type()
-
-        # Get list of all modules in a pipeline
-        local_modules, nfcore_modules = self.get_installed_modules(repo_type=repo_type)
-
-        # Check local modules
-        self.lint_local_modules(local_modules)
-
-        # Check them nf-core modules
-        results_nfcore_modules = self.lint_nfcore_modules(nfcore_modules, repo_type=repo_type)
-
-    def lint_local_modules(self, local_modules):
-        # lint local modules
-        passed = []
-        warned = []
-
-        for mod in local_modules:
-            self.lint_main_nf(mod, passed, warned)
-
-        return {"passed": passed, "warned": warned}
-
-    def lint_nfcore_modules(self, nfcore_modules, repo_type):
-        """
-        Lint nf-core modules
-        For each nf-core module, checks for existence of the files
-        - main.nf
-        - meta.yml
-        - functions.nf
-        And verifies that their content.
-
-        If the linting is run for modules in the central nf-core/modules repo
-        (repo_type==modules), files that are relevant for module testing are
-        also examined
-        """
-        # TODO implement the look for test-relevant files
-        passed = []
-        failed = []
-
-        # Iterate over modules and run all checks on them
-        for mod in nfcore_modules:
-            module_name = mod.split("/")[-1]
-
-            # Lint the main.nf file
-            main_nf = os.path.join(mod, "main.nf")
-            self.lint_main_nf(main_nf, passed, failed)
-
-            # Lint the functions file
-            functions_nf = os.path.join(mod, "functions.nf")
-            self.lint_functions_nf(functions_nf, passed, failed)
-
-            # Lint the meta.yml file
-            meta_yml = os.path.join(mod, "meta.yml")
-            self.lint_meta_yml(meta_yml, module_name, passed, failed)
-
-            if repo_type == "modules":
-                # TODO implement nf-core/modules specific tests
-                pass
-
-        return {"passed": passed, "failed": failed}
-
-    def lint_meta_yml(self, file, module_name, passed, failed):
-        """ Lint a meta yml file """
-        required_keys = ["name", "tools", "params", "input", "output", "authors"]
-        try:
-            with open(file, "r") as fh:
-                meta_yaml = yaml.safe_load(fh)
-            passed.append("meta.yml exists {}".format(file))
-        except FileNotFoundError:
-            failed.append("meta.yml doesn't exist {}".format(file))
-            return {"passed": passed, "failed": failed}
-
-        # Confirm that all required keys are given
-        for rk in required_keys:
-            if rk in meta_yaml.keys():
-                passed.append("{} is specified in {}".format(rk, file))
-            else:
-                failed.append("{} not specified in {}".format(rk, file))
-
-        return {"passed": passed, "failed": failed}
-
-    def lint_main_nf(self, file, passed, failed):
-        """
-        Lint a single main.nf module file
-        Can also be used to lint local module files,
-        in which case failures should be interpreted
-        as warnings
-        """
-        conda_env = False
-        container = False
-        software_version = False
-        try:
-            with open(file, "r") as fh:
-                l = fh.readline()
-                while l:
-                    if "conda" in l:
-                        conda_env = True
-                    if "container" in l:
-                        container = True
-                    if "emit:" in l and "version" in l:
-                        software_version = True
-                    l = fh.readline()
-            passed.append("Module file exists {}".format(file))
-        except FileNotFoundError as e:
-            failed.append("Module file does'nt exist {}".format(file))
-            return {"passed": passed, "failed": failed}
-
-        if conda_env:
-            passed.append("Conda environment specified in {}".format(file))
-        else:
-            failed.append("No conda environment specified in {}".format(file))
-
-        if container:
-            passed.append("Container specified in {}".format(file))
-        else:
-            failed.append("No container specified in {}".format(file))
-
-        if software_version:
-            passed.append("Module emits software version: {}".format(file))
-        else:
-            failed.append("Module doesn't emit  software version {}".format(file))
-
-        return {"passed": passed, "failed": failed}
-
-    def lint_functions_nf(self, file, passed, failed):
-        """ Lint a functions.nf file """
-        if os.path.exists(file):
-            passed.append("functions.nf exists {}".format(file))
-        else:
-            failed.append("functions.nf doesn't exist {}".format(file))
-
-        return {"passed": passed, "failed": failed}
-
-    def get_repo_type(self):
-        """
-        Determine whether this is a pipeline repository or a clone of
-        nf-core/modules
-        """
-        # Verify that the pipeline dir exists
-        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
-            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
-            sys.exit(1)
-
-        # Determine repository type
-        if os.path.exists(os.path.join(self.pipeline_dir, "main.nf")):
-            repo_type = "pipeline"
-        elif os.path.exists(os.path.join(self.pipeline_dir, "software")):
-            repo_type = "modules"
-        else:
-            log.error("Could not determine repository type of {}".format(self.pipeline_dir))
-            sys.exit(1)
-
-        return repo_type
-
-    def get_installed_modules(self, repo_type="pipeline"):
-        """
-        Make a list of all modules installed in this repository
-
-        Returns a tuple of two lists, one for local modules
-        and one for nfcore modules. The local modules are represented as filenames,
-        while for nf-core modules the module diretories are used.
-
-        returns (local_modules, nfcore_modules)
-        """
-        # pipeline repository
-        local_modules = []
-        local_modules_dir = None
-        nfcore_modules_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software")
-        if repo_type == "pipeline":
-            local_modules_dir = os.path.join(self.pipeline_dir, "modules", "local", "process")
-
-            # Filter local modules
-            local_modules = os.listdir(local_modules_dir)
-            local_modules = [x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")]
-
-        # nf-core/modules
-        if repo_type == "modules":
-            nfcore_modules_dir = os.path.join(self.pipeline_dir, "software")
-
-        # Get nf-core modules
-        nfcore_modules = os.listdir(nfcore_modules_dir)
-        nfcore_modules = [m for m in nfcore_modules if not m == "lib"]  # omit the lib directory TODO lint that one too
-        for m in nfcore_modules:
-            m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
-            # Not a module, but contains sub-modules
-            if not "main.nf" in m_content:
-                for tool in m_content:
-                    nfcore_modules.append(os.path.join(m, tool))
-                nfcore_modules.remove(m)
-
-        # Make full (relative) file paths
-        if local_modules_dir:
-            local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
-        nfcore_modules = [os.path.join(nfcore_modules_dir, m) for m in nfcore_modules]
-
-        return local_modules, nfcore_modules
-
     def get_modules_file_tree(self):
         """
         Fetch the file list from the repo, using the GitHub API
@@ -434,3 +232,223 @@ class PipelineModules(object):
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
             return False
+
+
+class ModuleLint(object):
+    """
+    An object to store details about the repository being used for modules.
+
+    Used by the `nf-core modules` top-level command with -r and -b flags,
+    so that this can be used in the same way by all sucommands.
+    """
+
+    def __init__(self, dir):
+        self.dir = dir
+        self.get_repo_type()
+
+    def lint(self, module=None):
+        """
+        Lint a module
+        """
+
+        # Get list of all modules in a pipeline
+        local_modules, nfcore_modules = self.get_installed_modules()
+
+        # Check local modules
+        self.lint_local_modules(local_modules)
+
+        # Check them nf-core modules
+        results_nfcore_modules = self.lint_nfcore_modules(nfcore_modules)
+
+    def lint_local_modules(self, local_modules):
+        """
+        Lint a local module
+        Only issues warnings instead of failures
+        """
+        passed = []
+        warned = []
+
+        for mod in local_modules:
+            self.lint_main_nf(mod, passed, warned)
+
+        return {"passed": passed, "warned": warned}
+
+    def lint_nfcore_modules(self, nfcore_modules):
+        """
+        Lint nf-core modules
+        For each nf-core module, checks for existence of the files
+        - main.nf
+        - meta.yml
+        - functions.nf
+        And verifies that their content.
+
+        If the linting is run for modules in the central nf-core/modules repo
+        (repo_type==modules), files that are relevant for module testing are
+        also examined
+        """
+        # TODO implement the look for test-relevant files
+        passed = []
+        failed = []
+
+        # Iterate over modules and run all checks on them
+        for mod in nfcore_modules:
+            module_name = mod.split("/")[-1]
+
+            # Lint the main.nf file
+            main_nf = os.path.join(mod, "main.nf")
+            self.lint_main_nf(main_nf, passed, failed)
+
+            # Lint the functions file
+            functions_nf = os.path.join(mod, "functions.nf")
+            self.lint_functions_nf(functions_nf, passed, failed)
+
+            # Lint the meta.yml file
+            meta_yml = os.path.join(mod, "meta.yml")
+            self.lint_meta_yml(meta_yml, module_name, passed, failed)
+
+            if self.repo_type == "modules":
+                self.lint_module_tests(mod, passed, failed)
+
+        return {"passed": passed, "failed": failed}
+
+    def lint_module_tests(self, mod, passed, failed):
+        """ Lint module tests """
+        # Extract the software name
+        software = mod.split("software/")[1].split("/")[0]
+
+        # Check if test directory exists
+        # test_dir =
+
+    def lint_meta_yml(self, file, module_name, passed, failed):
+        """ Lint a meta yml file """
+        required_keys = ["name", "tools", "params", "input", "output", "authors"]
+        try:
+            with open(file, "r") as fh:
+                meta_yaml = yaml.safe_load(fh)
+            passed.append("meta.yml exists {}".format(file))
+        except FileNotFoundError:
+            failed.append("meta.yml doesn't exist {}".format(file))
+            return {"passed": passed, "failed": failed}
+
+        # Confirm that all required keys are given
+        for rk in required_keys:
+            if rk in meta_yaml.keys():
+                passed.append("{} is specified in {}".format(rk, file))
+            else:
+                failed.append("{} not specified in {}".format(rk, file))
+
+        return {"passed": passed, "failed": failed}
+
+    def lint_main_nf(self, file, passed, failed):
+        """
+        Lint a single main.nf module file
+        Can also be used to lint local module files,
+        in which case failures should be interpreted
+        as warnings
+        """
+        conda_env = False
+        container = False
+        software_version = False
+        try:
+            with open(file, "r") as fh:
+                l = fh.readline()
+                while l:
+                    if "conda" in l:
+                        conda_env = True
+                    if "container" in l:
+                        container = True
+                    if "emit:" in l and "version" in l:
+                        software_version = True
+                    l = fh.readline()
+            passed.append("Module file exists {}".format(file))
+        except FileNotFoundError as e:
+            failed.append("Module file does'nt exist {}".format(file))
+            return {"passed": passed, "failed": failed}
+
+        if conda_env:
+            passed.append("Conda environment specified in {}".format(file))
+        else:
+            failed.append("No conda environment specified in {}".format(file))
+
+        if container:
+            passed.append("Container specified in {}".format(file))
+        else:
+            failed.append("No container specified in {}".format(file))
+
+        if software_version:
+            passed.append("Module emits software version: {}".format(file))
+        else:
+            failed.append("Module doesn't emit  software version {}".format(file))
+
+        return {"passed": passed, "failed": failed}
+
+    def lint_functions_nf(self, file, passed, failed):
+        """ Lint a functions.nf file """
+        if os.path.exists(file):
+            passed.append("functions.nf exists {}".format(file))
+        else:
+            failed.append("functions.nf doesn't exist {}".format(file))
+
+        return {"passed": passed, "failed": failed}
+
+    def get_repo_type(self):
+        """
+        Determine whether this is a pipeline repository or a clone of
+        nf-core/modules
+        """
+        # Verify that the pipeline dir exists
+        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
+            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
+            sys.exit(1)
+
+        # Determine repository type
+        if os.path.exists(os.path.join(self.pipeline_dir, "main.nf")):
+            self.repo_type = "pipeline"
+        elif os.path.exists(os.path.join(self.pipeline_dir, "software")):
+            self.repo_type = "modules"
+        else:
+            log.error("Could not determine repository type of {}".format(self.pipeline_dir))
+            sys.exit(1)
+
+    def get_installed_modules(self):
+        """
+        Make a list of all modules installed in this repository
+
+        Returns a tuple of two lists, one for local modules
+        and one for nfcore modules. The local modules are represented as filenames,
+        while for nf-core modules the module diretories are used.
+
+        returns (local_modules, nfcore_modules)
+        """
+        # pipeline repository
+        local_modules = []
+        local_modules_dir = None
+        nfcore_modules_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software")
+        if self.repo_type == "pipeline":
+            local_modules_dir = os.path.join(self.pipeline_dir, "modules", "local", "process")
+
+            # Filter local modules
+            local_modules = os.listdir(local_modules_dir)
+            local_modules = [x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")]
+
+        # nf-core/modules
+        if self.repo_type == "modules":
+            nfcore_modules_dir = os.path.join(self.pipeline_dir, "software")
+
+        # Get nf-core modules
+        nfcore_modules = os.listdir(nfcore_modules_dir)
+        nfcore_modules = [m for m in nfcore_modules if not m == "lib"]  # omit the lib directory TODO lint that one too
+        for m in nfcore_modules:
+            m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
+            # Not a module, but contains sub-modules
+            if not "main.nf" in m_content:
+                for tool in m_content:
+                    nfcore_modules.append(os.path.join(m, tool))
+                nfcore_modules.remove(m)
+
+        # Make full (relative) file paths
+        if local_modules_dir:
+            local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+        nfcore_modules = [os.path.join(nfcore_modules_dir, m) for m in nfcore_modules]
+
+        return local_modules, nfcore_modules
