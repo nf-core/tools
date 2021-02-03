@@ -2,6 +2,10 @@
 
 ## v1.13dev
 
+### Modules
+
+* added `nf-core modules remove` command to uninstall modules
+
 ### Tools helper code
 
 * Added `nf-core modules md5` command to automatically generate md5 sums and a yaml file for module tests
