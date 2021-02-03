@@ -252,6 +252,7 @@ class ModuleLint(object):
     def lint(self, module=None):
         """
         Lint a module
+        TODO implement single-module linting
         """
 
         # Get list of all modules in a pipeline
@@ -284,8 +285,6 @@ class ModuleLint(object):
         (repo_type==modules), files that are relevant for module testing are
         also examined
         """
-        # TODO implement the look for test-relevant files
-
         # Iterate over modules and run all checks on them
         for mod in nfcore_modules:
             module_name = mod.split("/")[-1]
@@ -312,7 +311,27 @@ class ModuleLint(object):
 
         # Check if test directory exists
         test_dir = os.path.join(self.dir, "tests", "software", software)
-        # if
+        if os.path.exists(test_dir):
+            self.passed.append("Test directory exsists for {}".format(software))
+        else:
+            self.failed.append("Test directory is missing for {}: {}".format(software, test_dir))
+            return
+
+        # Lint the test main.nf file
+        test_main_nf = os.path.join(self.dir, "tests", "software", software, "main.nf")
+        if os.path.exists(test_main_nf):
+            self.passed.append("test main.nf exists for {}".format(software))
+        else:
+            self.failed.append("test.yml doesn't exist for {}".format(software))
+
+        # Lint the test.yml file
+        test_yml_file = os.path.join(self.dir, "tests", "software", software, "test.yml")
+        try:
+            with open(test_yml_file, "r") as fh:
+                test_yml = yaml.safe_load(fh)
+            self.passed.append("test.yml exists for {}".format(software))
+        except FileNotFoundError:
+            self.failed.append("test.yml doesn't exist for {}".format(software))
 
     def lint_meta_yml(self, file, module_name):
         """ Lint a meta yml file """
@@ -385,17 +404,17 @@ class ModuleLint(object):
         nf-core/modules
         """
         # Verify that the pipeline dir exists
-        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
-            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
+        if self.dir is None or not os.path.exists(self.dir):
+            log.error("Could not find pipeline: {}".format(self.dir))
             sys.exit(1)
 
         # Determine repository type
-        if os.path.exists(os.path.join(self.pipeline_dir, "main.nf")):
+        if os.path.exists(os.path.join(self.dir, "main.nf")):
             self.repo_type = "pipeline"
-        elif os.path.exists(os.path.join(self.pipeline_dir, "software")):
+        elif os.path.exists(os.path.join(self.dir, "software")):
             self.repo_type = "modules"
         else:
-            log.error("Could not determine repository type of {}".format(self.pipeline_dir))
+            log.error("Could not determine repository type of {}".format(self.dir))
             sys.exit(1)
 
     def get_installed_modules(self):
@@ -411,9 +430,9 @@ class ModuleLint(object):
         # pipeline repository
         local_modules = []
         local_modules_dir = None
-        nfcore_modules_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software")
+        nfcore_modules_dir = os.path.join(self.dir, "modules", "nf-core", "software")
         if self.repo_type == "pipeline":
-            local_modules_dir = os.path.join(self.pipeline_dir, "modules", "local", "process")
+            local_modules_dir = os.path.join(self.dir, "modules", "local", "process")
 
             # Filter local modules
             local_modules = os.listdir(local_modules_dir)
@@ -421,7 +440,7 @@ class ModuleLint(object):
 
         # nf-core/modules
         if self.repo_type == "modules":
-            nfcore_modules_dir = os.path.join(self.pipeline_dir, "software")
+            nfcore_modules_dir = os.path.join(self.dir, "software")
 
         # Get nf-core modules
         nfcore_modules = os.listdir(nfcore_modules_dir)
