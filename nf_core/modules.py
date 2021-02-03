@@ -263,11 +263,12 @@ class ModuleLint(object):
 
         # Get list of all modules in a pipeline
         local_modules, nfcore_modules = self.get_installed_modules()
-        print(nfcore_modules)
         # Only lint the given module (Note: currently only works for nf-core modules)
         if module:
             local_modules = []
-            nfcore_modules_names = [m.split(os.sep)[-1] for m in nfcore_modules]
+            nfcore_modules_names = [
+                m.split("software" + os.sep)[1] for m in nfcore_modules
+            ]  # TODO there is probably a better way
             try:
                 idx = nfcore_modules_names.index(module)
                 nfcore_modules = [nfcore_modules[idx]]
