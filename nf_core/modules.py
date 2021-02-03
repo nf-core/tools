@@ -245,6 +245,9 @@ class ModuleLint(object):
     def __init__(self, dir):
         self.dir = dir
         self.get_repo_type()
+        self.passed = []
+        self.warned = []
+        self.failed = []
 
     def lint(self, module=None):
         """
@@ -258,20 +261,15 @@ class ModuleLint(object):
         self.lint_local_modules(local_modules)
 
         # Check them nf-core modules
-        results_nfcore_modules = self.lint_nfcore_modules(nfcore_modules)
+        self.lint_nfcore_modules(nfcore_modules)
 
     def lint_local_modules(self, local_modules):
         """
         Lint a local module
         Only issues warnings instead of failures
         """
-        passed = []
-        warned = []
-
         for mod in local_modules:
-            self.lint_main_nf(mod, passed, warned)
-
-        return {"passed": passed, "warned": warned}
+            self.lint_main_nf(mod)
 
     def lint_nfcore_modules(self, nfcore_modules):
         """
@@ -287,8 +285,6 @@ class ModuleLint(object):
         also examined
         """
         # TODO implement the look for test-relevant files
-        passed = []
-        failed = []
 
         # Iterate over modules and run all checks on them
         for mod in nfcore_modules:
@@ -296,50 +292,47 @@ class ModuleLint(object):
 
             # Lint the main.nf file
             main_nf = os.path.join(mod, "main.nf")
-            self.lint_main_nf(main_nf, passed, failed)
+            self.lint_main_nf(main_nf)
 
             # Lint the functions file
             functions_nf = os.path.join(mod, "functions.nf")
-            self.lint_functions_nf(functions_nf, passed, failed)
+            self.lint_functions_nf(functions_nf)
 
             # Lint the meta.yml file
             meta_yml = os.path.join(mod, "meta.yml")
-            self.lint_meta_yml(meta_yml, module_name, passed, failed)
+            self.lint_meta_yml(meta_yml, module_name)
 
             if self.repo_type == "modules":
-                self.lint_module_tests(mod, passed, failed)
+                self.lint_module_tests(mod)
 
-        return {"passed": passed, "failed": failed}
-
-    def lint_module_tests(self, mod, passed, failed):
+    def lint_module_tests(self, mod):
         """ Lint module tests """
         # Extract the software name
         software = mod.split("software/")[1].split("/")[0]
 
         # Check if test directory exists
-        # test_dir =
+        test_dir = os.path.join(self.dir, "tests", "software", software)
+        # if
 
-    def lint_meta_yml(self, file, module_name, passed, failed):
+    def lint_meta_yml(self, file, module_name):
         """ Lint a meta yml file """
         required_keys = ["name", "tools", "params", "input", "output", "authors"]
         try:
             with open(file, "r") as fh:
                 meta_yaml = yaml.safe_load(fh)
-            passed.append("meta.yml exists {}".format(file))
+            self.passed.append("meta.yml exists {}".format(file))
         except FileNotFoundError:
-            failed.append("meta.yml doesn't exist {}".format(file))
-            return {"passed": passed, "failed": failed}
+            self.failed.append("meta.yml doesn't exist {}".format(file))
+            return
 
         # Confirm that all required keys are given
         for rk in required_keys:
             if rk in meta_yaml.keys():
-                passed.append("{} is specified in {}".format(rk, file))
+                self.passed.append("{} is specified in {}".format(rk, file))
             else:
-                failed.append("{} not specified in {}".format(rk, file))
+                self.failed.append("{} not specified in {}".format(rk, file))
 
-        return {"passed": passed, "failed": failed}
-
-    def lint_main_nf(self, file, passed, failed):
+    def lint_main_nf(self, file):
         """
         Lint a single main.nf module file
         Can also be used to lint local module files,
@@ -360,36 +353,31 @@ class ModuleLint(object):
                     if "emit:" in l and "version" in l:
                         software_version = True
                     l = fh.readline()
-            passed.append("Module file exists {}".format(file))
+            self.passed.append("Module file exists {}".format(file))
         except FileNotFoundError as e:
-            failed.append("Module file does'nt exist {}".format(file))
-            return {"passed": passed, "failed": failed}
+            self.failed.append("Module file does'nt exist {}".format(file))
 
         if conda_env:
-            passed.append("Conda environment specified in {}".format(file))
+            self.passed.append("Conda environment specified in {}".format(file))
         else:
-            failed.append("No conda environment specified in {}".format(file))
+            self.failed.append("No conda environment specified in {}".format(file))
 
         if container:
-            passed.append("Container specified in {}".format(file))
+            self.passed.append("Container specified in {}".format(file))
         else:
-            failed.append("No container specified in {}".format(file))
+            self.failed.append("No container specified in {}".format(file))
 
         if software_version:
-            passed.append("Module emits software version: {}".format(file))
+            self.passed.append("Module emits software version: {}".format(file))
         else:
-            failed.append("Module doesn't emit  software version {}".format(file))
+            self.failed.append("Module doesn't emit  software version {}".format(file))
 
-        return {"passed": passed, "failed": failed}
-
-    def lint_functions_nf(self, file, passed, failed):
+    def lint_functions_nf(self, file):
         """ Lint a functions.nf file """
         if os.path.exists(file):
-            passed.append("functions.nf exists {}".format(file))
+            self.passed.append("functions.nf exists {}".format(file))
         else:
-            failed.append("functions.nf doesn't exist {}".format(file))
-
-        return {"passed": passed, "failed": failed}
+            self.failed.append("functions.nf doesn't exist {}".format(file))
 
     def get_repo_type(self):
         """
