@@ -142,19 +142,36 @@ class PipelineModules(object):
         self.lint_local_modules(local_modules)
 
         # Check them nf-core modules
-        results_nfcore_modules = self.lint_nfcore_modules(nfcore_modules)
+        results_nfcore_modules = self.lint_nfcore_modules(nfcore_modules, repo_type=repo_type)
 
     def lint_local_modules(self, local_modules):
         # lint local modules
-        # TODO implement
-        return False
+        passed = []
+        warned = []
 
-    def lint_nfcore_modules(self, nfcore_modules):
-        # lint nfore modules
-        # TODO implement the looko for test-relevant files
+        for mod in local_modules:
+            self.lint_main_nf(mod, passed, warned)
+
+        return {"passed": passed, "warned": warned}
+
+    def lint_nfcore_modules(self, nfcore_modules, repo_type):
+        """
+        Lint nf-core modules
+        For each nf-core module, checks for existence of the files
+        - main.nf
+        - meta.yml
+        - functions.nf
+        And verifies that their content.
+
+        If the linting is run for modules in the central nf-core/modules repo
+        (repo_type==modules), files that are relevant for module testing are
+        also examined
+        """
+        # TODO implement the look for test-relevant files
         passed = []
         failed = []
 
+        # Iterate over modules and run all checks on them
         for mod in nfcore_modules:
             module_name = mod.split("/")[-1]
 
@@ -169,6 +186,10 @@ class PipelineModules(object):
             # Lint the meta.yml file
             meta_yml = os.path.join(mod, "meta.yml")
             self.lint_meta_yml(meta_yml, module_name, passed, failed)
+
+            if repo_type == "modules":
+                # TODO implement nf-core/modules specific tests
+                pass
 
         return {"passed": passed, "failed": failed}
 
@@ -193,7 +214,12 @@ class PipelineModules(object):
         return {"passed": passed, "failed": failed}
 
     def lint_main_nf(self, file, passed, failed):
-        """ Lint a single main.nf module file """
+        """
+        Lint a single main.nf module file
+        Can also be used to lint local module files,
+        in which case failures should be interpreted
+        as warnings
+        """
         conda_env = False
         container = False
         software_version = False
@@ -208,9 +234,9 @@ class PipelineModules(object):
                     if "emit:" in l and "version" in l:
                         software_version = True
                     l = fh.readline()
-            passed.append("main.nf exists {}".format(file))
+            passed.append("Module file exists {}".format(file))
         except FileNotFoundError as e:
-            failed.append("main.nf does'nt exist {}".format(file))
+            failed.append("Module file does'nt exist {}".format(file))
             return {"passed": passed, "failed": failed}
 
         if conda_env:
