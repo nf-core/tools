@@ -142,7 +142,7 @@ class PipelineModules(object):
         self.lint_local_modules(local_modules)
 
         # Check them nf-core modules
-        self.lint_nfcore_modules(nfcore_modules)
+        results_nfcore_modules = self.lint_nfcore_modules(nfcore_modules)
 
     def lint_local_modules(self, local_modules):
         # lint local modules
@@ -151,7 +151,7 @@ class PipelineModules(object):
 
     def lint_nfcore_modules(self, nfcore_modules):
         # lint nfore modules
-        # TODO change code to pass the passed/failed list to funtions directly to make it cleaner
+        # TODO implement the looko for test-relevant files
         passed = []
         failed = []
 
@@ -160,28 +160,20 @@ class PipelineModules(object):
 
             # Lint the main.nf file
             main_nf = os.path.join(mod, "main.nf")
-            result_main_nf = self.lint_main_nf(main_nf)
-            passed.append(result_main_nf["passed"])
-            failed.append(result_main_nf["failed"])
+            self.lint_main_nf(main_nf, passed, failed)
 
             # Lint the functions file
             functions_nf = os.path.join(mod, "functions.nf")
-            result_functions_nf = self.lint_functions_nf(functions_nf)
-            passed.append(result_functions_nf["passed"])
-            failed.append(result_functions_nf["failed"])
+            self.lint_functions_nf(functions_nf, passed, failed)
 
             # Lint the meta.yml file
             meta_yml = os.path.join(mod, "meta.yml")
-            result_meta_yml = self.lint_meta_yml(meta_yml, module_name)
-            passed.append(result_meta_yml["passed"])
-            failed.append(result_meta_yml["failed"])
+            self.lint_meta_yml(meta_yml, module_name, passed, failed)
 
         return {"passed": passed, "failed": failed}
 
-    def lint_meta_yml(self, file, module_name):
+    def lint_meta_yml(self, file, module_name, passed, failed):
         """ Lint a meta yml file """
-        passed = []
-        failed = []
         required_keys = ["name", "tools", "params", "input", "output", "authors"]
         try:
             with open(file, "r") as fh:
@@ -200,10 +192,8 @@ class PipelineModules(object):
 
         return {"passed": passed, "failed": failed}
 
-    def lint_main_nf(self, file):
+    def lint_main_nf(self, file, passed, failed):
         """ Lint a single main.nf module file """
-        passed = []
-        failed = []
         conda_env = False
         container = False
         software_version = False
@@ -240,11 +230,8 @@ class PipelineModules(object):
 
         return {"passed": passed, "failed": failed}
 
-    def lint_functions_nf(self, file):
+    def lint_functions_nf(self, file, passed, failed):
         """ Lint a functions.nf file """
-        passed = []
-        failed = []
-
         if os.path.exists(file):
             passed.append("functions.nf exists {}".format(file))
         else:
@@ -300,6 +287,7 @@ class PipelineModules(object):
 
         # Get nf-core modules
         nfcore_modules = os.listdir(nfcore_modules_dir)
+        nfcore_modules = [m for m in nfcore_modules if not m == "lib"]  # omit the lib directory TODO lint that one too
         for m in nfcore_modules:
             m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
             # Not a module, but contains sub-modules
