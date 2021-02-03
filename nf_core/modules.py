@@ -236,10 +236,9 @@ class PipelineModules(object):
 
 class ModuleLint(object):
     """
-    An object to store details about the repository being used for modules.
+    An object for linting module either in a clone of the 'nf-core/modules'
+    repository or in any nf-core pipeline directory
 
-    Used by the `nf-core modules` top-level command with -r and -b flags,
-    so that this can be used in the same way by all sucommands.
     """
 
     def __init__(self, dir):
@@ -251,12 +250,30 @@ class ModuleLint(object):
 
     def lint(self, module=None):
         """
-        Lint a module
-        TODO implement single-module linting
+        Lint all or one specific module
+
+        First gets a list of all local modules (in modules/local/process) and all modules
+        installed from nf-core (in modules/nf-core/software)
+        For all nf-core modules, the correct file structure is assured and important
+        file content is verified. If directory subject to linting is a clone of 'nf-core/modules',
+        the files necessary for testing the modules are also inspected.
+        For all local modules, the '.nf' file is checked for some important flags, and warnings
+        are issued if some untypical content is found.
         """
 
         # Get list of all modules in a pipeline
         local_modules, nfcore_modules = self.get_installed_modules()
+        print(nfcore_modules)
+        # Only lint the given module (Note: currently only works for nf-core modules)
+        if module:
+            local_modules = []
+            nfcore_modules_names = [m.split(os.sep)[-1] for m in nfcore_modules]
+            try:
+                idx = nfcore_modules_names.index(module)
+                nfcore_modules = [nfcore_modules[idx]]
+            except ValueError as e:
+                log.error("Could not find the given module!")
+                sys.exit(1)
 
         # Check local modules
         self.lint_local_modules(local_modules)
@@ -287,7 +304,7 @@ class ModuleLint(object):
         """
         # Iterate over modules and run all checks on them
         for mod in nfcore_modules:
-            module_name = mod.split("/")[-1]
+            module_name = mod.split(os.sep)[-1]
 
             # Lint the main.nf file
             main_nf = os.path.join(mod, "main.nf")
@@ -307,8 +324,7 @@ class ModuleLint(object):
     def lint_module_tests(self, mod):
         """ Lint module tests """
         # Extract the software name
-        software = mod.split("software/")[1].split("/")[0]
-
+        software = mod.split("software")[1].split(os.sep)[1]
         # Check if test directory exists
         test_dir = os.path.join(self.dir, "tests", "software", software)
         if os.path.exists(test_dir):
@@ -443,19 +459,20 @@ class ModuleLint(object):
             nfcore_modules_dir = os.path.join(self.dir, "software")
 
         # Get nf-core modules
-        nfcore_modules = os.listdir(nfcore_modules_dir)
-        nfcore_modules = [m for m in nfcore_modules if not m == "lib"]  # omit the lib directory TODO lint that one too
-        for m in nfcore_modules:
+        nfcore_modules_tmp = os.listdir(nfcore_modules_dir)
+        nfcore_modules_tmp = [m for m in nfcore_modules_tmp if not m == "lib"]
+        nfcore_modules = []
+        for m in nfcore_modules_tmp:
             m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
             # Not a module, but contains sub-modules
             if not "main.nf" in m_content:
                 for tool in m_content:
                     nfcore_modules.append(os.path.join(m, tool))
-                nfcore_modules.remove(m)
+            else:
+                nfcore_modules.append(m)
 
         # Make full (relative) file paths
-        if local_modules_dir:
-            local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+        local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
         nfcore_modules = [os.path.join(nfcore_modules_dir, m) for m in nfcore_modules]
 
         return local_modules, nfcore_modules
