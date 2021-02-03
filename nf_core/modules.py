@@ -246,7 +246,7 @@ class ModulesTestHelper(object):
                 md5_sums.append((elem, elem_md5))
             # if directory, apply recursion
             if os.path.isdir(elem):
-                md5_sums += self._get_md5_sums(elem, md5_sums)
+                md5_sums = self._get_md5_sums(elem, md5_sums)
             else:
                 continue
 
@@ -266,7 +266,6 @@ class ModulesTestHelper(object):
 
         # Get list of files and their md5sums
         md5_sums = self._get_md5_sums(output_dir)
-        md5_sums = list(set(md5_sums))
 
         # Create yaml output
         file_dicts = []
