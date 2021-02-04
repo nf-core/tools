@@ -4,7 +4,6 @@ Code to handle DSL2 module imports from a GitHub repository
 """
 
 from __future__ import print_function
-
 import base64
 import logging
 import os
@@ -13,6 +12,11 @@ import sys
 import tempfile
 import shutil
 import yaml
+from rich.console import Console
+from rich.table import Table
+from rich.markdown import Markdown
+import rich
+from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
@@ -247,7 +251,7 @@ class ModuleLint(object):
         self.warned = []
         self.failed = []
 
-    def lint(self, module=None, print_results=True):
+    def lint(self, module=None, print_results=True, show_passed=False):
         """
         Lint all or one specific module
 
@@ -263,6 +267,7 @@ class ModuleLint(object):
 
         :param module:          A specific module to lint
         :param print_results:   Whether to print the linting results
+        :param show_passed:     Whether passed tests should be shown as well
 
         :returns:               dict of {passed, warned, failed}
         """
@@ -289,12 +294,7 @@ class ModuleLint(object):
         self.lint_nfcore_modules(nfcore_modules)
 
         if print_results:
-            # TODO implement better printing function
-            # Print out for testing
-            for elem in self.failed:
-                log.error(elem)
-            for elem in self.warned:
-                log.warn(elem)
+            self._print_results(show_passed=show_passed)
 
         return {"passed": self.passed, "warned": self.warned, "failed": self.failed}
 
@@ -524,3 +524,66 @@ class ModuleLint(object):
         nfcore_modules = [os.path.join(nfcore_modules_dir, m) for m in nfcore_modules]
 
         return local_modules, nfcore_modules
+
+    def _print_results(self, show_passed=False):
+        """Print linting results to the command line.
+
+        Uses the ``rich`` library to print a set of formatted tables to the command line
+        summarising the linting results.
+        """
+
+        log.debug("Printing final results")
+        console = Console(force_terminal=rich_force_colors())
+
+        # Helper function to format test links nicely
+        def format_result(test_results, table):
+            """
+            Given an list of error message IDs and the message texts, return a nicely formatted
+            string for the terminal with appropriate ASCII colours.
+            """
+            for msg in test_results:
+                table.add_row(Markdown("Module lint: {}".format(msg)))
+            return table
+
+        def _s(some_list):
+            if len(some_list) > 1:
+                return "s"
+            return ""
+
+        # Table of passed tests
+        if len(self.passed) > 0 and show_passed:
+            table = Table(style="green", box=rich.box.ROUNDED)
+            table.add_column(
+                r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
+                no_wrap=True,
+            )
+            table = format_result(self.passed, table)
+            console.print(table)
+
+        # Table of warning tests
+        if len(self.warned) > 0:
+            table = Table(style="yellow", box=rich.box.ROUNDED)
+            table.add_column(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            table = format_result(self.warned, table)
+            console.print(table)
+
+        # Table of failing tests
+        if len(self.failed) > 0:
+            table = Table(style="red", box=rich.box.ROUNDED)
+            table.add_column(
+                r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
+                no_wrap=True,
+            )
+            table = format_result(self.failed, table)
+            console.print(table)
+
+        # Summary table
+        table = Table(box=rich.box.ROUNDED)
+        table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        table.add_row(
+            r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            style="green",
+        )
+        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
+        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        console.print(table)
