@@ -329,7 +329,7 @@ class ModuleLint(object):
 
     def lint_module_tests(self, mod):
         """ Lint module tests """
-        # TODO more robust testing of the test files
+        # TODO adapt to new modules structure
         # Extract the software name
         software = mod.split("software")[1].split(os.sep)[1]
         # Check if test directory exists
@@ -419,10 +419,24 @@ class ModuleLint(object):
     def lint_functions_nf(self, file):
         """ Lint a functions.nf file """
         # TODO add further tests for this file
-        if os.path.exists(file):
+        try:
+            with open(file, "r") as fh:
+                lines = fh.readlines()
             self.passed.append("functions.nf exists {}".format(file))
-        else:
+        except FileNotFoundError as e:
             self.failed.append("functions.nf doesn't exist {}".format(file))
+            return
+
+        # Test whether all required functions are present
+        required_functions = ["getSoftwareName", "initOptions", "getPathFromList", "saveFiles"]
+        lines = "\n".join(lines)
+        contains_all_functions = True
+        for f in required_functions:
+            if not "def " + f in lines:
+                self.failed.append("functions.nf is missing '{}', {}".format(f, file))
+                contains_all_functions = False
+        if contains_all_functions:
+            self.passed.append("Contains all functions: {}".format(file))
 
     def get_repo_type(self):
         """
@@ -450,7 +464,7 @@ class ModuleLint(object):
         Returns a tuple of two lists, one for local modules
         and one for nf-core modules. The local modules are represented
         as direct filepaths to the module '.nf' file.
-        Nf-core module are returned as file paths to the module directory.
+        Nf-core module are returned as file paths to the module directories.
         In case the module contains several tools, one path to each tool directory
         is returned.
 
@@ -462,7 +476,7 @@ class ModuleLint(object):
         local_modules_dir = None
         nfcore_modules_dir = os.path.join(self.dir, "modules", "nf-core", "software")
 
-        #
+        # Get local modules
         if self.repo_type == "pipeline":
             local_modules_dir = os.path.join(self.dir, "modules", "local", "process")
 
