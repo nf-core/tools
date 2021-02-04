@@ -325,13 +325,12 @@ class ModuleLint(object):
             self.lint_meta_yml(os.path.join(mod, "meta.yml"), module_name)
 
             if self.repo_type == "modules":
-                self.lint_module_tests(mod)
+                self.lint_module_tests(mod, module_name)
 
-    def lint_module_tests(self, mod):
+    def lint_module_tests(self, mod, module_name):
         """ Lint module tests """
-        # TODO adapt to new modules structure
         # Extract the software name
-        software = mod.split("software")[1].split(os.sep)[1]
+        software = mod.split("software" + os.sep)[1]
         # Check if test directory exists
         test_dir = os.path.join(self.dir, "tests", "software", software)
         if os.path.exists(test_dir):
@@ -341,14 +340,14 @@ class ModuleLint(object):
             return
 
         # Lint the test main.nf file
-        test_main_nf = os.path.join(self.dir, "tests", "software", software, "main.nf")
+        test_main_nf = os.path.join(test_dir, "main.nf")
         if os.path.exists(test_main_nf):
             self.passed.append("test main.nf exists for {}".format(software))
         else:
             self.failed.append("test.yml doesn't exist for {}".format(software))
 
         # Lint the test.yml file
-        test_yml_file = os.path.join(self.dir, "tests", "software", software, "test.yml")
+        test_yml_file = os.path.join(test_dir, "test.yml")
         try:
             with open(test_yml_file, "r") as fh:
                 test_yml = yaml.safe_load(fh)
