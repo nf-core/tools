@@ -429,7 +429,7 @@ def lint(ctx, pipeline_dir, tool):
     that the module emits a software version.
     """
     module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
-    module_lint.lint(module=tool)
+    module_lint.lint(module=tool, print_results=True)
 
 
 ## nf-core schema subcommands

@@ -247,7 +247,7 @@ class ModuleLint(object):
         self.warned = []
         self.failed = []
 
-    def lint(self, module=None):
+    def lint(self, module=None, print_results=True):
         """
         Lint all or one specific module
 
@@ -260,6 +260,11 @@ class ModuleLint(object):
 
         For all local modules, the '.nf' file is checked for some important flags, and warnings
         are issued if untypical content is found.
+
+        :param module:          A specific module to lint
+        :param print_results:   Whether to print the linting results
+
+        :returns:               dict of {passed, warned, failed}
         """
 
         # Get list of all modules in a pipeline
@@ -283,12 +288,15 @@ class ModuleLint(object):
         # Lint nf-core modules
         self.lint_nfcore_modules(nfcore_modules)
 
-        # Print out for testing
-        for elem in self.failed:
-            log.error(elem)
+        if print_results:
+            # TODO implement better printing function
+            # Print out for testing
+            for elem in self.failed:
+                log.error(elem)
+            for elem in self.warned:
+                log.warn(elem)
 
-        for elem in self.warned:
-            log.warn(elem)
+        return {"passed": self.passed, "warned": self.warned, "failed": self.failed}
 
     def lint_local_modules(self, local_modules):
         """
