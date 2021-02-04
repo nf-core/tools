@@ -2,6 +2,10 @@
 
 ## v1.13dev
 
+### Template
+
+* Fixed typo in nf-core-lint CI that prevented the markdown summary from being automatically posted on PRs as a comment.
+
 ### Modules
 
 * added `nf-core modules remove` command to uninstall modules
