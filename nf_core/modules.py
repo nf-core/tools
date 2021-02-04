@@ -358,7 +358,6 @@ class ModuleLint(object):
 
     def lint_meta_yml(self, file, module_name):
         """ Lint a meta yml file """
-        # TODO more robust testing of the meta.yml file
         required_keys = ["name", "tools", "params", "input", "output", "authors"]
         try:
             with open(file, "r") as fh:
@@ -369,11 +368,26 @@ class ModuleLint(object):
             return
 
         # Confirm that all required keys are given
+        contains_required_keys = True
         for rk in required_keys:
-            if rk in meta_yaml.keys():
-                self.passed.append("{} is specified in {}".format(rk, file))
-            else:
+            if not rk in meta_yaml.keys():
                 self.failed.append("{} not specified in {}".format(rk, file))
+                contains_required_keys = False
+            if contains_required_keys:
+                self.passed.append("{} contains all required keys".format(file))
+
+        # TODO --> decide whether we want/need this test? or make it silent for now
+        # Check that 'name' adheres to guidelines
+        software_name = file.split("software")[1].split(os.sep)[1]
+        if module_name == software_name:
+            required_name = module_name
+        else:
+            required_name = software_name + " " + module_name
+
+        if meta_yaml["name"] == required_name:
+            self.passed.append("meta.yaml module name is correct: {}".format(module_name))
+        else:
+            self.warned.append("meta.yaml module name not according to guidelines: {}".format(module_name))
 
     def lint_main_nf(self, file):
         """
@@ -417,8 +431,10 @@ class ModuleLint(object):
             self.failed.append("Module doesn't emit  software version {}".format(file))
 
     def lint_functions_nf(self, file):
-        """ Lint a functions.nf file """
-        # TODO add further tests for this file
+        """
+        Lint a functions.nf file
+        Verifies that the file exists and contains all necessary functions
+        """
         try:
             with open(file, "r") as fh:
                 lines = fh.readlines()
