@@ -396,39 +396,35 @@ class ModuleLint(object):
         in which case failures should be interpreted
         as warnings
         """
-        # TODO more robust testing of the main file
-        conda_env = False
-        container = False
-        software_version = False
         try:
             with open(file, "r") as fh:
-                l = fh.readline()
-                while l:
-                    if "conda" in l:
-                        conda_env = True
-                    if "container" in l:
-                        container = True
-                    if "emit:" in l and "version" in l:
-                        software_version = True
-                    l = fh.readline()
+                lines = fh.readlines()
             self.passed.append("Module file exists {}".format(file))
         except FileNotFoundError as e:
             self.failed.append("Module file does'nt exist {}".format(file))
+            return
 
-        if conda_env:
+        # Test for important content in the main.nf file
+        # Check conda is specified
+        if any("conda" in l for l in lines):
             self.passed.append("Conda environment specified in {}".format(file))
         else:
-            self.failed.append("No conda environment specified in {}".format(file))
-
-        if container:
+            self.warned.append("No conda environment specified in {}".format(file))
+        # Check container is specified
+        if any("container" in l for l in lines):
             self.passed.append("Container specified in {}".format(file))
         else:
             self.failed.append("No container specified in {}".format(file))
-
-        if software_version:
+        # Check that a software version is emitted
+        if any("version" in l and "emit:" in l for l in lines):
             self.passed.append("Module emits software version: {}".format(file))
         else:
             self.failed.append("Module doesn't emit  software version {}".format(file))
+        # Check that options are defined
+        if any("def options" in l for l in lines):
+            self.passed.append("options specified in {}".format(file))
+        else:
+            self.warned.append("options not specified in {}".format(file))
 
     def lint_functions_nf(self, file):
         """
