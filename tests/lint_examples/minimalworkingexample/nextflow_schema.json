@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/nf-core/tools/master/nextflow_schema.json",
+    "title": "nf-core/tools pipeline parameters",
+    "description": "Minimal working example pipeline",
+    "type": "object",
+    "properties": {
+        "outdir": {
+            "type": "string",
+            "default": "'./results'"
+        },
+        "input": {
+            "type": "string",
+            "default": "'data/*.fastq'"
+        },
+        "single_end": {
+            "type": "string",
+            "default": "false"
+        },
+        "custom_config_version": {
+            "type": "string",
+            "default": "'master'"
+        },
+        "custom_config_base": {
+            "type": "string",
+            "default": "'https://raw.githubusercontent.com/nf-core/configs/master'"
+        }
+    }
+}

@@ -2,63 +2,86 @@
 
 Hi there! Many thanks for taking an interest in improving nf-core/tools.
 
-We try to manage the required tasks for nf-core/tools using GitHub issues, you probably came to this page when creating one. Please use the pre-filled templates to save time.
-
-However, don't be put off by this template - other more general issues and suggestions are welcome! Contributions to the code are even more welcome ;)
-
-> If you need help using or developing nf-core/tools then the best place to ask is the nf-core `tools` channel on [Slack](https://nf-co.re/join/slack/).
+If you need help then the best place to ask is the [`#tools` channel](https://nfcore.slack.com/channels/tools) on the nf-core Slack.
+You can get an invite on the [nf-core website](https://nf-co.re/join/slack/).
 
 ## Contribution workflow
+
 If you'd like to write some code for nf-core/tools, the standard workflow
 is as follows:
 
-1. Check that there isn't already an issue about your idea in the
-   [nf-core/tools issues](https://github.com/nf-core/tools/issues) to avoid
-   duplicating work.
+1. Check that there isn't [already an issue](https://github.com/nf-core/tools/issues) about your idea to avoid duplicating work.
     * If there isn't one already, please create one so that others know you're working on this
 2. Fork the [nf-core/tools repository](https://github.com/nf-core/tools) to your GitHub account
 3. Make the necessary changes / additions within your forked repository
 4. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged.
 
-If you're not used to this workflow with git, you can start with some [basic docs from GitHub](https://help.github.com/articles/fork-a-repo/) or even their [excellent interactive tutorial](https://try.github.io/).
+If you're not used to this workflow with git, you can start with some [basic docs from GitHub](https://help.github.com/articles/fork-a-repo/).
 
-## Style guide
-Google provides an excellent [style guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md), which
-is a best practise extension of [PEP](https://www.python.org/dev/peps/), the Python Enhancement Proposals. Have a look at the
-[docstring](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings) section, which is in particular
-important, as nf-core tool's code documentation is generated out of these automatically.
+## Installing dev requirements
 
-In order to test the documentation, you have to install Sphinx on the machine, where the documentation should be generated.
+If you want to work with developing the nf-core/tools code, you'll need a couple of extra Python packages.
+These are listed in `requirements-dev.txt` and can be installed as follows:
 
-Please follow Sphinx's [installation instruction](http://www.sphinx-doc.org/en/master/usage/installation.html).
+```bash
+pip install --upgrade -r requirements-dev.txt
+```
 
-Once done, you can run `make clean` and then `make html` in the root directory of `nf-core tools`, where the `Makefile` is located.
+Then install your local fork of nf-core/tools:
 
+```bash
+pip install -e .
+```
+
+## Code formatting with Black
+
+All Python code in nf-core/tools must be passed through the [Black Python code formatter](https://black.readthedocs.io/en/stable/).
+This ensures a harmonised code formatting style throughout the package, from all contributors.
+
+You can run Black on the command line (it's included in `requirements-dev.txt`) - eg. to run recursively on the whole repository:
+
+```bash
+black .
+```
+
+Alternatively, Black has [integrations for most common editors](https://black.readthedocs.io/en/stable/editor_integration.html)
+to automatically format code when you hit save.
+You can also set it up to run when you [make a commit](https://black.readthedocs.io/en/stable/version_control_integration.html).
+
+There is an automated CI check that runs when you open a pull-request to nf-core/tools that will fail if
+any code does not adhere to Black formatting.
+
+## API Documentation
+
+We aim to write function docstrings according to the [Google Python style-guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings). These are used to automatically generate package documentation on the nf-core website using Sphinx.
+You can find this documentation here: [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/)
+
+If you would like to test the documentation, you can install Sphinx locally by following Sphinx's [installation instruction](https://www.sphinx-doc.org/en/master/usage/installation.html).
+Once done, you can run `make clean` and then `make html` in the root directory of `nf-core tools`.
 The HTML will then be generated in `docs/api/_build/html`.
 
-
 ## Tests
+
 When you create a pull request with changes, [GitHub Actions](https://github.com/features/actions) will run automatic tests.
 Typically, pull-requests are only fully reviewed when these tests are passing, though of course we can help out before then.
 
 There are two types of tests that run:
 
 ### Unit Tests
+
 The nf-core tools package has a set of unit tests bundled, which can be found in the `tests/` directory.
 New features should also come with new tests, to keep the test-coverage high (we use [codecov.io](https://codecov.io/gh/nf-core/tools/) to check this automatically).
 
 You can try running the tests locally before pushing code using the following command:
 
 ```bash
-python -m pytest .
+pytest --color=yes tests/
 ```
 
 ### Lint Tests
-nf-core has a [set of guidelines](http://nf-co.re/guidelines) which all pipelines must adhere to.
-To enforce these and ensure that all pipelines stay in sync, we have developed a helper tool which runs checks on the pipeline code. This is in the [nf-core/tools repository](https://github.com/nf-core/tools) and once installed can be run locally with the `nf-core lint <pipeline-directory>` command.
 
-The nf-core/tools repo itself contains the master template for creating new nf-core pipelines.
-Once you have created a new pipeline from this template GitHub Actions is automatically set up to run lint tests on it.
+nf-core/tools contains both the main nf-core template for pipelines and the code used to test that pipelines adhere to the nf-core guidelines.
+As these two commonly need to be edited together, we test the creation of a pipeline and then linting using a CI check.
 This ensures that any changes we make to either the linting or the template stay in sync.
 You can replicate this process locally with the following commands:
 
@@ -66,6 +89,3 @@ You can replicate this process locally with the following commands:
 nf-core create -n testpipeline -d "This pipeline is for testing"
 nf-core lint nf-core-testpipeline
 ```
-
-## Getting help
-For further information/help, please consult the [nf-core/tools documentation](https://github.com/nf-core/tools#documentation) and don't hesitate to get in touch on the nf-core `tools` channel on [Slack](https://nf-co.re/join/slack/).
