@@ -5,6 +5,7 @@
 ### Template
 
 * Fixed typo in nf-core-lint CI that prevented the markdown summary from being automatically posted on PRs as a comment.
+* Fixed a mistake in template documentation regarding how profiles are loaded, and added how to identify process name for resource customisation
 
 ### Modules
 
