@@ -5,6 +5,7 @@
 ### Template
 
 * Added profiles to support the [Charliecloud](https://hpc.github.io/charliecloud/) and [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/) container engines [[#824](https://github.com/nf-core/tools/issues/824)]
+* Fixed typo in nf-core-lint CI that prevented the markdown summary from being automatically posted on PRs as a comment.
 
 ### Modules
 
