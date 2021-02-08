@@ -7,6 +7,7 @@ from __future__ import print_function
 import base64
 import logging
 import os
+import re
 import requests
 import sys
 import tempfile
@@ -354,7 +355,7 @@ class ModuleLint(object):
         if os.path.exists(test_main_nf):
             self.passed.append("test main.nf exists for {}".format(software))
         else:
-            self.failed.append("test.yml doesn't exist for {}".format(software))
+            self.failed.append("test main.nf doesn't exist for {}".format(software))
 
         # Lint the test.yml file
         test_yml_file = os.path.join(test_dir, "test.yml")
@@ -367,7 +368,7 @@ class ModuleLint(object):
 
     def lint_meta_yml(self, file, module_name, inputs=[], outputs=[]):
         """ Lint a meta yml file """
-        required_keys = ["name", "tools", "params", "input", "output", "authors"]
+        required_keys = ["params", "input", "output"]
         try:
             with open(file, "r") as fh:
                 meta_yaml = yaml.safe_load(fh)
@@ -385,7 +386,7 @@ class ModuleLint(object):
             if contains_required_keys:
                 self.passed.append("{} contains all required keys".format(file))
 
-        # Confirm that all input and output parameters are specified
+        # Confirm that all input and output channels are specified
         meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
         for input in inputs:
             if input in meta_input:
@@ -439,19 +440,20 @@ class ModuleLint(object):
         else:
             self.warned.append("options not specified in {}".format(file))
 
+        # Go through module main.nf file and switch state according to current section
+        # Perform section-specific linting
         state = "module"
         process_lines = []
         for l in lines:
-            # Check if state is switched
             if l.startswith("process") and state == "module":
                 state = "process"
-            if "input:" in l and state == "process":
+            if re.search("input\s*:", l) and state == "process":
                 state = "input"
                 continue
-            if "output:" in l and state == "input":
+            if re.search("output\s*:", l) and state == "input":
                 state = "output"
                 continue
-            if "script:" in l and state == "output":
+            if re.search("script\s*:", l) and state == "output":
                 state = "script"
                 continue
 
@@ -480,19 +482,6 @@ class ModuleLint(object):
         else:
             self.failed.append("Module doesn't emit  software version {}".format(file))
 
-        # Test for important content in the main.nf file
-        # Check conda is specified
-        if any("conda" in l for l in lines):
-            self.passed.append("Conda environment specified in {}".format(file))
-        else:
-            self.warned.append("No conda environment specified in {}".format(file))
-
-        # Check container is specified
-        if any("container" in l for l in lines):
-            self.passed.append("Container specified in {}".format(file))
-        else:
-            self.failed.append("No container specified in {}".format(file))
-
         return inputs, outputs
 
     def check_process_section(self, lines):
@@ -502,6 +491,7 @@ class ModuleLint(object):
         Specifically checks for correct software versions
         and containers
         """
+        # TODO just a hacky proof-of-concept right now --> needs to be rewritten
         if any("mulled" in l for l in lines):
             return
         build_id = "build"
