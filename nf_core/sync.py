@@ -248,7 +248,6 @@ class PipelineSync(object):
         and check for any open PRs from these branches to the self.from_branch
         If open PRs are found, add a comment and close them
         """
-        assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
         try:
             log.info("Checking for open PRs from template merge branches")
             # Get list of all branches
