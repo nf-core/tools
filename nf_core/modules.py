@@ -423,38 +423,7 @@ class ModuleLint(object):
         inputs = []
         outputs = []
 
-        def parse_input(line):
-            input = []
-            # more than one input
-            if "tuple" in line:
-                line = line.replace("tuple", "")
-                line = line.replace(" ", "")
-                line = line.split(",")
-
-                for elem in line:
-                    elem = elem.split("(")[1]
-                    elem = elem.replace(")", "").strip()
-                    input.append(elem)
-            else:
-                input.append(line.split()[1])
-            return input
-
-        def parse_output(line):
-            output = []
-            if "meta" in line:
-                output.append("meta")
-            output.append(line.split("emit:")[1].strip())
-
-            return output
-
-        def is_empty(line):
-            empty = False
-            if line.startswith("//"):
-                empty = True
-            if line.strip().replace(" ", "") == "":
-                empty = True
-            return empty
-
+        # Check whether file exists and load it
         try:
             with open(file, "r") as fh:
                 lines = fh.readlines()
@@ -471,26 +440,32 @@ class ModuleLint(object):
             self.warned.append("options not specified in {}".format(file))
 
         state = "module"
+        process_lines = []
         for l in lines:
             # Check if state is switched
-            if l.startswith("process"):
+            if l.startswith("process") and state == "module":
                 state = "process"
-            if "input:" in l:
+            if "input:" in l and state == "process":
                 state = "input"
                 continue
-            if "output:" in l:
+            if "output:" in l and state == "input":
                 state = "output"
                 continue
-            if "script:" in l:
+            if "script:" in l and state == "output":
                 state = "script"
                 continue
 
             # Perform state-specific linting checks
-            if state == "input" and not is_empty(l):
-                inputs += parse_input(l)
-            if state == "output" and not is_empty(l):
-                outputs += parse_output(l)
+            if state == "process" and not self._is_empty(l):
+                process_lines.append(l)
+            if state == "input" and not self._is_empty(l):
+                inputs += self._parse_input(l)
+            if state == "output" and not self._is_empty(l):
+                outputs += self._parse_output(l)
                 outputs = list(set(outputs))  # remove duplicate 'meta's
+
+        # Check the process defintions
+        self.check_process_section(process_lines)
 
         # Check whether 'meta' is emitted when given as input
         if "meta" in inputs:
@@ -519,6 +494,36 @@ class ModuleLint(object):
             self.failed.append("No container specified in {}".format(file))
 
         return inputs, outputs
+
+    def check_process_section(self, lines):
+        """
+        Lint the section of a module between the process definition
+        and the 'input:' definition
+        Specifically checks for correct software versions
+        and containers
+        """
+        if any("mulled" in l for l in lines):
+            return
+        build_id = "build"
+        singularity_tag = "singularity"
+        docker_tag = "docker"
+        for l in lines:
+            if "bioconda::" in l:
+                bioconda = l.split()
+                bioconda = [b for b in bioconda if "bioconda" in b][0]
+                version = bioconda.split("::")[1].replace('"', "").replace("'", "")
+                build_id = version.split("=")[-1]
+            if "org/singularity" in l:
+                singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+            if "biocontainers" in l:
+                docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+
+        if build_id == docker_tag and build_id == singularity_tag:
+            self.passed.append("Bioconda build IDs are matching.")
+        else:
+            self.failed.append("Bioconda build IDs are not matching: {}".format(bioconda))
+
+        return True
 
     def lint_functions_nf(self, file):
         """
@@ -674,3 +679,36 @@ class ModuleLint(object):
         table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
+
+    def _parse_input(self, line):
+        input = []
+        # more than one input
+        if "tuple" in line:
+            line = line.replace("tuple", "")
+            line = line.replace(" ", "")
+            line = line.split(",")
+
+            for elem in line:
+                elem = elem.split("(")[1]
+                elem = elem.replace(")", "").strip()
+                input.append(elem)
+        else:
+            input.append(line.split()[1])
+        return input
+
+    def _parse_output(self, line):
+        output = []
+        if "meta" in line:
+            output.append("meta")
+        output.append(line.split("emit:")[1].strip())
+
+        return output
+
+    def _is_empty(self, line):
+        """ Check whether a line is empty or a comment """
+        empty = False
+        if line.startswith("//"):
+            empty = True
+        if line.strip().replace(" ", "") == "":
+            empty = True
+        return empty
