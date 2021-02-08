@@ -44,7 +44,7 @@ def files_unchanged(self):
         'docs/README.md',
         'docs/images/nf-core-PIPELINE_logo.png'
 
-    Files that can have additional content but must include the template contents:
+    Files that can have additional content but must include the template contents::
 
         '.gitignore',
         'assets/multiqc_config.yaml'
