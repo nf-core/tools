@@ -375,9 +375,7 @@ class PipelineSync(object):
             raise PullRequestException("Could not find GitHub username and repo name")
 
         # If we've been asked to make a PR, check that we have the credentials
-        try:
-            assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
-        except AssertionError:
+        if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
             raise PullRequestException(
                 "Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR\n"
                 "Make a PR at the following URL:\n  https://github.com/{}/compare/{}...TEMPLATE".format(
