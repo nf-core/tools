@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
 import os
-import yaml
 
 
 def files_exist(self):
     """Checks a given pipeline directory for required files.
 
-    Iterates through the pipeline's directory content and checkmarks files
-    for presence.
+    Iterates through the pipeline's directory content and checks that specified
+    files are either present or absent, as required.
 
     .. note::
         This test raises an ``AssertionError`` if neither ``nextflow.config`` or ``main.nf`` are found.
@@ -20,6 +19,7 @@ def files_exist(self):
         'nextflow.config',
         'nextflow_schema.json',
         ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
+        'CODE_OF_CONDUCT.md',
         'README.md',
         'CHANGELOG.md',
         'docs/README.md',
@@ -61,6 +61,7 @@ def files_exist(self):
         ["nextflow.config"],
         ["nextflow_schema.json"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
+        ["CODE_OF_CONDUCT.md"],
         ["README.md"],
         ["CHANGELOG.md"],
         [os.path.join("docs", "README.md")],
