@@ -263,7 +263,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             return table
 
         def _s(some_list):
-            if len(some_list) > 1:
+            if len(some_list) != 1:
                 return "s"
             return ""
 
