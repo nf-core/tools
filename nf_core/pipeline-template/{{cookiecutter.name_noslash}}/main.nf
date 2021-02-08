@@ -38,7 +38,7 @@ ch_output_docs_images = file("$projectDir/docs/images/", checkIfExists: true)
 ////////////////////////////////////////////////////+
 def unexpectedParams = []
 if (params.validate_params) {
-    unexpectedParams = Validation.validateParameters(params, json_schema, log)
+    unexpectedParams = Schema.validateParameters(params, json_schema, log)
 }
 
 if (params.input) { ch_input = file(params.input, checkIfExists: true) } else { exit 1, 'Input samplesheet file not specified!' }
