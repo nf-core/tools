@@ -321,7 +321,7 @@ class ModuleLint(object):
         """
         # Iterate over modules and run all checks on them
         for mod in nfcore_modules:
-            if "SOFTWARE/TOOL" in mod:
+            if "TOOL/SUBTOOL" in mod:
                 continue
             module_name = mod.split(os.sep)[-1]
 
@@ -439,6 +439,14 @@ class ModuleLint(object):
                 input.append(line.split()[1])
             return input
 
+        def parse_output(line):
+            output = []
+            if "meta" in line:
+                output.append("meta")
+            output.append(line.split("emit:")[1].strip())
+
+            return output
+
         def is_empty(line):
             empty = False
             if line.startswith("//"):
@@ -481,7 +489,15 @@ class ModuleLint(object):
             if state == "input" and not is_empty(l):
                 inputs += parse_input(l)
             if state == "output" and not is_empty(l):
-                outputs.append(l.split("emit:")[1].strip())
+                outputs += parse_output(l)
+                outputs = list(set(outputs))  # remove duplicate 'meta's
+
+        # Check whether 'meta' is emitted when given as input
+        if "meta" in inputs:
+            if "meta" in outputs:
+                self.passed.append("'meta' emitted in {}".format(file))
+            else:
+                self.failed.append("'meta' given as input but not emitted in {}".format(file))
 
         # Check that a software version is emitted
         if "version" in outputs:
