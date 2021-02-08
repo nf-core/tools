@@ -404,37 +404,39 @@ class PipelineSync(object):
         """
         Create a new pull-request on GitHub
         """
-        assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
-        pr_content = {
-            "title": pr_title,
-            "body": pr_body_text,
-            "maintainer_can_modify": True,
-            "head": self.merge_branch,
-            "base": self.from_branch,
-        }
+        if not os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
+            pr_content = {
+                "title": pr_title,
+                "body": pr_body_text,
+                "maintainer_can_modify": True,
+                "head": self.merge_branch,
+                "base": self.from_branch,
+            }
 
-        r = requests.post(
-            url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-            data=json.dumps(pr_content),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
-        )
-        try:
-            self.gh_pr_returned_data = json.loads(r.content)
-            returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
-        except:
-            self.gh_pr_returned_data = r.content
-            returned_data_prettyprint = r.content
-
-        # PR worked
-        if r.status_code == 201:
-            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
-            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
-
-        # Something went wrong
-        else:
-            raise PullRequestException(
-                "GitHub API returned code {}: \n{}".format(r.status_code, returned_data_prettyprint)
+            r = requests.post(
+                url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
+                data=json.dumps(pr_content),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
             )
+            try:
+                self.gh_pr_returned_data = json.loads(r.content)
+                returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
+            except:
+                self.gh_pr_returned_data = r.content
+                returned_data_prettyprint = r.content
+
+            # PR worked
+            if r.status_code == 201:
+                log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
+                log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
+
+            # Something went wrong
+            else:
+                raise PullRequestException(
+                    "GitHub API returned code {}: \n{}".format(r.status_code, returned_data_prettyprint)
+                )
+        else:
+            raise PullRequestException("Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR")
 
     def reset_target_dir(self):
         """
