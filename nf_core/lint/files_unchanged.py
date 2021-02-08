@@ -37,7 +37,6 @@ def files_unchanged(self):
         '.github/workflows/push_dockerhub_release.yml',
         'assets/email_template.html',
         'assets/email_template.txt',
-        'assets/multiqc_config.yaml',
         'assets/nf-core-test_logo.png',
         'assets/sendmail_template.txt',
         'bin/markdown_to_html.py',
@@ -47,7 +46,18 @@ def files_unchanged(self):
 
     Files that can have additional content but must include the template contents:
 
-        '.gitignore'
+        '.gitignore',
+        'assets/multiqc_config.yaml'
+
+    .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
+             the ``files_unchanged`` key as follows in your linting config file. For example:
+
+             .. code-block:: yaml
+
+                files_unchanged:
+                  - .github/workflows/branch.yml
+                  - assets/multiqc_config.yaml
+
     """
 
     passed = []
@@ -87,7 +97,6 @@ def files_unchanged(self):
         [os.path.join(".github", "workflows", "push_dockerhub_release.yml")],
         [os.path.join("assets", "email_template.html")],
         [os.path.join("assets", "email_template.txt")],
-        [os.path.join("assets", "multiqc_config.yaml")],
         [os.path.join("assets", "nf-core-test_logo.png")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("bin", "markdown_to_html.py")],
@@ -95,7 +104,10 @@ def files_unchanged(self):
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "images", "nf-core-{}_logo.png".format(short_name))],
     ]
-    files_partial = [[".gitignore", "foo"]]
+    files_partial = [
+        [".gitignore", "foo"],
+        [os.path.join("assets", "multiqc_config.yaml")],
+    ]
 
     # Only show error messages from pipeline creation
     logging.getLogger("nf_core.create").setLevel(logging.ERROR)
