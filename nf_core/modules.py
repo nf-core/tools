@@ -467,7 +467,10 @@ class ModuleLint(object):
                 outputs = list(set(outputs))  # remove duplicate 'meta's
 
         # Check the process defintions
-        self.check_process_section(process_lines)
+        if self.check_process_section(process_lines):
+            self.passed.append("Matching build versions in {}".format(file))
+        else:
+            self.failed.append("Build versions are not matching: {}".format(file))
 
         # Check whether 'meta' is emitted when given as input
         if "meta" in inputs:
@@ -492,28 +495,29 @@ class ModuleLint(object):
         and containers
         """
         # TODO just a hacky proof-of-concept right now --> needs to be rewritten
-        if any("mulled" in l for l in lines):
-            return
+        # Checks for multi tool container
+
         build_id = "build"
         singularity_tag = "singularity"
         docker_tag = "docker"
         for l in lines:
-            if "bioconda::" in l:
+            if re.search("bioconda::", l):
                 bioconda = l.split()
                 bioconda = [b for b in bioconda if "bioconda" in b][0]
-                version = bioconda.split("::")[1].replace('"', "").replace("'", "")
-                build_id = version.split("=")[-1]
-            if "org/singularity" in l:
+                build_id = bioconda.split("::")[1].replace('"', "").replace("'", "").split("=")[-1].strip()
+            if re.search("org/singularity", l):
                 singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-            if "biocontainers" in l:
+            if re.search("biocontainers", l):
                 docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
 
-        if build_id == docker_tag and build_id == singularity_tag:
-            self.passed.append("Bioconda build IDs are matching.")
-        else:
-            self.failed.append("Bioconda build IDs are not matching: {}".format(bioconda))
+        # If it's amulled container, just compared singularity and docker containers
+        if any("mulled" in l for l in lines):
+            build_id = docker_tag
 
-        return True
+        if build_id == docker_tag and build_id == singularity_tag:
+            return True
+        else:
+            return False
 
     def lint_functions_nf(self, file):
         """
