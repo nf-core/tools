@@ -149,7 +149,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             "schema_params",
             "actions_schema_validation",
         ]
-        self.lint_tests = ["nextflow_config", "files_unchanged"]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
         self.progress_bar = None
