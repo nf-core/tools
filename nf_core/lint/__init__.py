@@ -322,6 +322,9 @@ class PipelineLint(nf_core.utils.Pipeline):
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
 
+        if len(self.failed) and not self.fix:
+            console.print("Tip: Running with '--fix' can automatically resolve some lint failures.")
+
     def _get_results_md(self):
         """
         Create a markdown file suitable for posting in a GitHub comment.
