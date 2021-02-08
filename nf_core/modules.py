@@ -321,10 +321,12 @@ class ModuleLint(object):
         """
         # Iterate over modules and run all checks on them
         for mod in nfcore_modules:
+            if "SOFTWARE/TOOL" in mod:
+                continue
             module_name = mod.split(os.sep)[-1]
 
             # Lint the main.nf file
-            self.lint_main_nf(os.path.join(mod, "main.nf"))
+            inputs, outputs = self.lint_main_nf(os.path.join(mod, "main.nf"))
 
             # Lint the functions.nf file
             self.lint_functions_nf(os.path.join(mod, "functions.nf"))
@@ -403,6 +405,33 @@ class ModuleLint(object):
         in which case failures should be interpreted
         as warnings
         """
+        inputs = []
+        outputs = []
+
+        def parse_input(line):
+            input = []
+            # more than one input
+            if "tuple" in line:
+                line = line.replace("tuple", "")
+                line = line.replace(" ", "")
+                line = line.split(",")
+
+                for elem in line:
+                    elem = elem.split("(")[1]
+                    elem = elem.replace(")", "").strip()
+                    input.append(elem)
+            else:
+                input.append(line.split()[1])
+            return input
+
+        def is_empty(line):
+            empty = False
+            if line.startswith("//"):
+                empty = True
+            if line.strip().replace(" ", "") == "":
+                empty = True
+            return empty
+
         try:
             with open(file, "r") as fh:
                 lines = fh.readlines()
@@ -418,6 +447,33 @@ class ModuleLint(object):
         else:
             self.warned.append("options not specified in {}".format(file))
 
+        state = "module"
+        for l in lines:
+            # Check if state is switched
+            if l.startswith("process"):
+                state = "process"
+            if "input:" in l:
+                state = "input"
+                continue
+            if "output:" in l:
+                state = "output"
+                continue
+            if "script:" in l:
+                state = "script"
+                continue
+
+            # Perform state-specific linting checks
+            if state == "input" and not is_empty(l):
+                inputs += parse_input(l)
+            if state == "output" and not is_empty(l):
+                outputs.append(l.split("emit:")[1].strip())
+
+        # Check that a software version is emitted
+        if "version" in outputs:
+            self.passed.append("Module emits software version: {}".format(file))
+        else:
+            self.failed.append("Module doesn't emit  software version {}".format(file))
+
         # Test for important content in the main.nf file
         # Check conda is specified
         if any("conda" in l for l in lines):
@@ -431,11 +487,7 @@ class ModuleLint(object):
         else:
             self.failed.append("No container specified in {}".format(file))
 
-        # Check that a software version is emitted
-        if any("version" in l and "emit:" in l for l in lines):
-            self.passed.append("Module emits software version: {}".format(file))
-        else:
-            self.failed.append("Module doesn't emit  software version {}".format(file))
+        return inputs, outputs
 
     def lint_functions_nf(self, file):
         """
