@@ -249,14 +249,17 @@ class PipelineSync(object):
         If open PRs are found, add a comment and close them
         """
         assert os.environ.get("GITHUB_AUTH_TOKEN", "") != ""
-        log.info("Checking for open PRs from template merge branches")
-        # Get list of all branches
-        branch_list = [b.name for b in self.repo.branches]
-        # Subset to template merging branches
-        branch_list = [b for b in branch_list if b.startswith("nf-core-template-merge-")]
-        # Check for open PRs and close if found
-        for branch in branch_list:
-            self.close_open_pr(branch)
+        try:
+            log.info("Checking for open PRs from template merge branches")
+            # Get list of all branches
+            branch_list = [b.name for b in self.repo.branches]
+            # Subset to template merging branches
+            branch_list = [b for b in branch_list if b.startswith("nf-core-template-merge-")]
+            # Check for open PRs and close if found
+            for branch in branch_list:
+                self.close_open_pr(branch)
+        except Exception as e:
+            raise PullRequestException("Could not close open pull requests! {}".format(e))
 
     def close_open_pr(self, branch):
         """Given a branch, check for open PRs from that branch to self.from_branch

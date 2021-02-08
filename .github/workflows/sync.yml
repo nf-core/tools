@@ -30,7 +30,7 @@ jobs:
         with:
           repository: nf-core/${{ matrix.pipeline }}
           ref: dev
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.nf_core_bot_auth_token }}
           path: nf-core/${{ matrix.pipeline }}
           fetch-depth: "0"
 
