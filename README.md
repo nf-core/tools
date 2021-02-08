@@ -530,6 +530,13 @@ $ nf-core lint .
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
 
+Some lint tests can try to automatically fix any issues they find. To enable this functionality, use the `--fix` flag.
+The pipeline must be a `git` repository with no uncommitted changes for this to work.
+This is so that any automated changes can then be reviewed and undone (`git checkout .`) if you disagree.
+
+The output from `nf-core lint` is designed to be viewed on the command line and is deliberately succinct.
+You can view all passed tests with `--show-passed` or generate JSON / markdown results with the `--json` and `--markdown` flags.
+
 ## Working with pipeline schema
 
 nf-core pipelines have a `nextflow_schema.json` file in their root which describes the different parameters used by the workflow.

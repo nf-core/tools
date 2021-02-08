@@ -301,10 +301,11 @@ def create(name, description, author, new_version, no_git, force, outdir):
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
 )
-@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line.")
+@click.option("-f", "--fix", is_flag=True, help="Attempt to automatically fix failing tests")
+@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(pipeline_dir, release, show_passed, markdown, json):
+def lint(pipeline_dir, release, fix, show_passed, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -314,7 +315,7 @@ def lint(pipeline_dir, release, show_passed, markdown, json):
     """
 
     # Run the lint tests!
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, show_passed, markdown, json)
+    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, markdown, json)
     if len(lint_obj.failed) > 0:
         sys.exit(1)
 

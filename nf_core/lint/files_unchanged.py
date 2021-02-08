@@ -53,6 +53,7 @@ def files_unchanged(self):
     passed = []
     failed = []
     ignored = []
+    fixed = []
 
     # Check that we have the minimum required config
     try:
@@ -137,7 +138,16 @@ def files_unchanged(self):
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"'{f}' matches the template")
                     else:
-                        failed.append(f"'{f}' does not match the template")
+                        if not self.fix:
+                            failed.append(f"'{f}' does not match the template")
+                        else:
+                            # Try to fix the problem by overwriting the pipeline file
+                            with open(_tf(f), "r") as fh:
+                                template_file = fh.read()
+                            with open(_pf(f), "w") as fh:
+                                fh.write(template_file)
+                            passed.append(f"'{f}' matches the template")
+                            fixed.append(f"'{f}' overwritten with template file")
                 except FileNotFoundError:
                     pass
 
@@ -164,8 +174,17 @@ def files_unchanged(self):
                     if template_file in pipeline_file:
                         passed.append(f"'{f}' matches the template")
                     else:
-                        failed.append(f"'{f}' does not match the template")
+                        if not self.fix:
+                            failed.append(f"'{f}' does not match the template")
+                        else:
+                            # Try to fix the problem by overwriting the pipeline file
+                            with open(_tf(f), "r") as fh:
+                                template_file = fh.read()
+                            with open(_pf(f), "w") as fh:
+                                fh.write(template_file)
+                            passed.append(f"'{f}' matches the template")
+                            fixed.append(f"'{f}' overwritten with template file")
                 except FileNotFoundError:
                     pass
 
-    return {"passed": passed, "failed": failed, "ignored": ignored}
+    return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed}
