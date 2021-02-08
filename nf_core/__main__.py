@@ -527,26 +527,15 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
-
-    # First, lint the pipeline to check everything is in order
-    log.info("Running nf-core lint tests")
-
-    # Run the lint tests
-    try:
-        lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
-        lint_obj.lint_pipeline()
-    except AssertionError as e:
-        log.error("Please fix lint errors before bumping versions")
-        return
-    if len(lint_obj.failed) > 0:
-        log.error("Please fix lint errors before bumping versions")
-        return
+    # Make a pipeline object and load config etc
+    pipeline_obj = nf_core.utils.Pipeline(pipeline_dir)
+    pipeline_obj._load()
 
     # Bump the pipeline version number
     if not nextflow:
-        nf_core.bump_version.bump_pipeline_version(lint_obj, new_version)
+        nf_core.bump_version.bump_pipeline_version(pipeline_obj, new_version)
     else:
-        nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
+        nf_core.bump_version.bump_nextflow_version(pipeline_obj, new_version)
 
 
 @nf_core_cli.command("sync", help_priority=10)

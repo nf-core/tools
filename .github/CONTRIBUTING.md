@@ -57,7 +57,7 @@ We aim to write function docstrings according to the [Google Python style-guide]
 You can find this documentation here: [https://nf-co.re/tools-docs/](https://nf-co.re/tools-docs/)
 
 If you would like to test the documentation, you can install Sphinx locally by following Sphinx's [installation instruction](https://www.sphinx-doc.org/en/master/usage/installation.html).
-Once done, you can run `make clean` and then `make html` in the root directory of `nf-core tools`.
+Once done, you can run `make clean` and then `make html` in the `docs/api` directory of `nf-core tools`.
 The HTML will then be generated in `docs/api/_build/html`.
 
 ## Tests

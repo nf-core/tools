@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
 # TODO nf-core: Update the script to check the samplesheet
-# This script is based on the example at: https://raw.githubusercontent.com/nf-core/test-datasets/viralrecon/samplesheet/samplesheet_test_sispa.csv
+# This script is based on the example at: https://raw.githubusercontent.com/nf-core/test-datasets/atacseq/design.csv
+
 
 import os
 import sys

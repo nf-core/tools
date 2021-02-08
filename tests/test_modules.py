@@ -50,11 +50,11 @@ class TestModules(unittest.TestCase):
         """ Test installing a module - unrecognised module given """
         assert self.mods.install("foo") is False
 
-    def test_modules_install_fastqc(self):
-        """ Test installing a module - FastQC """
-        assert self.mods.install("fastqc") is not False
+    def test_modules_install_trimgalore(self):
+        """ Test installing a module - TrimGalore! """
+        assert self.mods.install("trimgalore") is not False
 
-    def test_modules_install_fastqc_twice(self):
-        """ Test installing a module - FastQC already there """
-        self.mods.install("fastqc")
-        assert self.mods.install("fastqc") is False
+    def test_modules_install_trimgalore_twice(self):
+        """ Test installing a module - TrimGalore! already there """
+        self.mods.install("trimgalore")
+        assert self.mods.install("trimgalore") is False
