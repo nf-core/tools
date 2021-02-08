@@ -188,7 +188,6 @@ class TestLint(unittest.TestCase):
         test_files_exist_depreciated_file,
         test_files_exist_pass,
     )
-    from lint.licence import test_licence_pass, test_licence_fail
     from lint.actions_branch_protection import (
         test_actions_branch_protection_pass,
         test_actions_branch_protection_fail,
