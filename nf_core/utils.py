@@ -243,9 +243,6 @@ def setup_requests_cachedir():
     Caching directory will be set up in the user's home directory under
     a .nfcore_cache subdir.
     """
-    # Only import it if we need it
-    import requests_cache
-
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
     if not os.path.exists(cachedir):
