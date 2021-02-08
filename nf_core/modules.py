@@ -328,11 +328,11 @@ class ModuleLint(object):
             # Lint the main.nf file
             inputs, outputs = self.lint_main_nf(os.path.join(mod, "main.nf"))
 
+            # Lint the meta.yml file
+            self.lint_meta_yml(os.path.join(mod, "meta.yml"), module_name, inputs=inputs, outputs=outputs)
+
             # Lint the functions.nf file
             self.lint_functions_nf(os.path.join(mod, "functions.nf"))
-
-            # Lint the meta.yml file
-            self.lint_meta_yml(os.path.join(mod, "meta.yml"), module_name)
 
             if self.repo_type == "modules":
                 self.lint_module_tests(mod, module_name)
@@ -365,7 +365,7 @@ class ModuleLint(object):
         except FileNotFoundError:
             self.failed.append("test.yml doesn't exist for {}".format(software))
 
-    def lint_meta_yml(self, file, module_name):
+    def lint_meta_yml(self, file, module_name, inputs=[], outputs=[]):
         """ Lint a meta yml file """
         required_keys = ["name", "tools", "params", "input", "output", "authors"]
         try:
@@ -384,6 +384,21 @@ class ModuleLint(object):
                 contains_required_keys = False
             if contains_required_keys:
                 self.passed.append("{} contains all required keys".format(file))
+
+        # Confirm that all input and output parameters are specified
+        meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
+        for input in inputs:
+            if input in meta_input:
+                self.passed.append("{} specified for {}".format(input, module_name))
+            else:
+                self.failed.append("{} missing in meta.yml for {}".format(input, module_name))
+
+        meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
+        for output in outputs:
+            if output in meta_output:
+                self.passed.append("{} specified for {}".format(output, module_name))
+            else:
+                self.failed.append("{} missing in meta.yml for {}".format(output, module_name))
 
         # TODO --> decide whether we want/need this test? or make it silent for now
         # Check that 'name' adheres to guidelines
