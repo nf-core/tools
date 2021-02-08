@@ -408,8 +408,15 @@ class ModuleLint(object):
                 lines = fh.readlines()
             self.passed.append("Module file exists {}".format(file))
         except FileNotFoundError as e:
-            self.failed.append("Module file does'nt exist {}".format(file))
+            self.failed.append("Module file doesn't exist {}".format(file))
             return
+
+        # Check that options are defined
+        options_keywords = ["def", "options", "=", "initOptions(params.options)"]
+        if any(l.split() == options_keywords for l in lines):
+            self.passed.append("options specified in {}".format(file))
+        else:
+            self.warned.append("options not specified in {}".format(file))
 
         # Test for important content in the main.nf file
         # Check conda is specified
@@ -417,21 +424,18 @@ class ModuleLint(object):
             self.passed.append("Conda environment specified in {}".format(file))
         else:
             self.warned.append("No conda environment specified in {}".format(file))
+
         # Check container is specified
         if any("container" in l for l in lines):
             self.passed.append("Container specified in {}".format(file))
         else:
             self.failed.append("No container specified in {}".format(file))
+
         # Check that a software version is emitted
         if any("version" in l and "emit:" in l for l in lines):
             self.passed.append("Module emits software version: {}".format(file))
         else:
             self.failed.append("Module doesn't emit  software version {}".format(file))
-        # Check that options are defined
-        if any("def options" in l for l in lines):
-            self.passed.append("options specified in {}".format(file))
-        else:
-            self.warned.append("options not specified in {}".format(file))
 
     def lint_functions_nf(self, file):
         """
