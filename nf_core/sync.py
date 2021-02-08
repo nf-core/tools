@@ -258,7 +258,7 @@ class PipelineSync(object):
             for branch in branch_list:
                 self.close_open_pr(branch)
         except Exception as e:
-            raise PullRequestException("Could not close open pull requests! {}".format(e))
+            raise log.error("Could not close open pull requests! {}".format(e))
 
     def close_open_pr(self, branch):
         """Given a branch, check for open PRs from that branch to self.from_branch
