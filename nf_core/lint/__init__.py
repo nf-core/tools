@@ -100,7 +100,6 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .files_exist import files_exist
     from .files_unchanged import files_unchanged
     from .nextflow_config import nextflow_config
-    from .actions_branch_protection import actions_branch_protection
     from .actions_ci import actions_ci
     from .actions_lint import actions_lint
     from .actions_awstest import actions_awstest
@@ -133,7 +132,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             "files_exist",
             "nextflow_config",
             "files_unchanged",
-            "actions_branch_protection",
             "actions_ci",
             "actions_lint",
             "actions_awstest",
