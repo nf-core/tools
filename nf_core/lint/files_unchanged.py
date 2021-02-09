@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-import logging
 import filecmp
+import logging
 import os
+import shutil
 import tempfile
 
 import nf_core.create
@@ -148,10 +149,7 @@ def files_unchanged(self):
                             failed.append(f"'{f}' does not match the template")
                         else:
                             # Try to fix the problem by overwriting the pipeline file
-                            with open(_tf(f), "r") as fh:
-                                template_file = fh.read()
-                            with open(_pf(f), "w") as fh:
-                                fh.write(template_file)
+                            shutil.copy(_tf(f), _pf(f))
                             passed.append(f"'{f}' matches the template")
                             fixed.append(f"'{f}' overwritten with template file")
                 except FileNotFoundError:
