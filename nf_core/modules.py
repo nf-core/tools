@@ -687,21 +687,27 @@ class ModuleLint(object):
                 elem = elem.replace(")", "").strip()
                 input.append(elem)
         else:
-            input.append(line.split()[1])
+            if "(" in line:
+                input.append(line.split("(")[1].replace(")", ""))
+            else:
+                input.append(line.split()[1])
         return input
 
     def _parse_output(self, line):
+        print(line)
         output = []
         if "meta" in line:
             output.append("meta")
-        output.append(line.split("emit:")[1].strip())
+        # TODO: should we ignore outputs without emit statement?
+        if "emit" in line:
+            output.append(line.split("emit:")[1].strip())
 
         return output
 
     def _is_empty(self, line):
         """ Check whether a line is empty or a comment """
         empty = False
-        if line.startswith("//"):
+        if line.strip().startswith("//"):
             empty = True
         if line.strip().replace(" ", "") == "":
             empty = True
