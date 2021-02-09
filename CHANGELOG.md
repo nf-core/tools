@@ -4,6 +4,7 @@
 
 ### Modules
 
+* added `nf-core modules lint` command to enable linting of nf-core and local modules
 * added `nf-core modules remove` command to uninstall modules
 
 ### Tools helper code
