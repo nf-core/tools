@@ -342,6 +342,7 @@ class ModuleLint(object):
         """ Lint module tests """
         # Extract the software name
         software = mod.split("software" + os.sep)[1]
+
         # Check if test directory exists
         test_dir = os.path.join(self.dir, "tests", "software", software)
         if os.path.exists(test_dir):
@@ -435,7 +436,9 @@ class ModuleLint(object):
 
         # Check that options are defined
         options_keywords = ["def", "options", "=", "initOptions(params.options)"]
-        if any(l.split() == options_keywords for l in lines):
+        options_keywords_2 = ["params.options", "=", "[:]"]
+
+        if any(l.split() == options_keywords for l in lines) and any(l.split() == options_keywords_2 for l in lines):
             self.passed.append("options specified in {}".format(file))
         else:
             self.warned.append("options not specified in {}".format(file))
@@ -494,12 +497,11 @@ class ModuleLint(object):
         Specifically checks for correct software versions
         and containers
         """
-        # TODO just a hacky proof-of-concept right now --> needs to be rewritten
-        # Checks for multi tool container
-
+        # Checks that build numbers of bioconda, singularity and docker container are matching
         build_id = "build"
         singularity_tag = "singularity"
         docker_tag = "docker"
+
         for l in lines:
             if re.search("bioconda::", l):
                 bioconda = l.split()
@@ -510,7 +512,7 @@ class ModuleLint(object):
             if re.search("biocontainers", l):
                 docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
 
-        # If it's amulled container, just compared singularity and docker containers
+        # If it's a mulled container, just compare singularity and docker tags
         if any("mulled" in l for l in lines):
             build_id = docker_tag
 
@@ -586,24 +588,26 @@ class ModuleLint(object):
             local_modules_dir = os.path.join(self.dir, "modules", "local", "process")
 
             # Filter local modules
-            local_modules = os.listdir(local_modules_dir)
-            local_modules = [x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")]
+            if os.path.exists(local_modules_dir):
+                local_modules = os.listdir(local_modules_dir)
+                local_modules = [x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")]
 
         # nf-core/modules
         if self.repo_type == "modules":
             nfcore_modules_dir = os.path.join(self.dir, "software")
 
         # Get nf-core modules
-        nfcore_modules_tmp = os.listdir(nfcore_modules_dir)
-        nfcore_modules_tmp = [m for m in nfcore_modules_tmp if not m == "lib"]
-        for m in nfcore_modules_tmp:
-            m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
-            # Not a module, but contains sub-modules
-            if not "main.nf" in m_content:
-                for tool in m_content:
-                    nfcore_modules.append(os.path.join(m, tool))
-            else:
-                nfcore_modules.append(m)
+        if os.path.exists(nfcore_modules_dir):
+            nfcore_modules_tmp = os.listdir(nfcore_modules_dir)
+            nfcore_modules_tmp = [m for m in nfcore_modules_tmp if not m == "lib"]
+            for m in nfcore_modules_tmp:
+                m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
+                # Not a module, but contains sub-modules
+                if not "main.nf" in m_content:
+                    for tool in m_content:
+                        nfcore_modules.append(os.path.join(m, tool))
+                else:
+                    nfcore_modules.append(m)
 
         # Make full (relative) file paths
         local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
@@ -694,7 +698,6 @@ class ModuleLint(object):
         return input
 
     def _parse_output(self, line):
-        print(line)
         output = []
         if "meta" in line:
             output.append("meta")
