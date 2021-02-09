@@ -27,14 +27,9 @@ def files_unchanged(self):
         '.github/ISSUE_TEMPLATE/bug_report.md',
         '.github/ISSUE_TEMPLATE/config.yml',
         '.github/ISSUE_TEMPLATE/feature_request.md',
-        '.github/workflows/awsfulltest.yml',
-        '.github/workflows/awstest.yml',
         '.github/workflows/branch.yml',
-        '.github/workflows/ci.yml',
         '.github/workflows/linting.yml',
         '.github/workflows/linting_comment.yml',
-        '.github/workflows/push_dockerhub_dev.yml',
-        '.github/workflows/push_dockerhub_release.yml',
         'assets/email_template.html',
         'assets/email_template.txt',
         'assets/nf-core-test_logo.png',
@@ -47,7 +42,9 @@ def files_unchanged(self):
     Files that can have additional content but must include the template contents::
 
         '.gitignore',
-        'assets/multiqc_config.yaml'
+        'assets/multiqc_config.yaml',
+        '.github/workflows/push_dockerhub_dev.yml',
+        '.github/workflows/push_dockerhub_release.yml',
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your linting config file. For example:
@@ -87,14 +84,9 @@ def files_unchanged(self):
         [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
-        [os.path.join(".github", "workflows", "awsfulltest.yml")],
-        [os.path.join(".github", "workflows", "awstest.yml")],
         [os.path.join(".github", "workflows", "branch.yml")],
-        [os.path.join(".github", "workflows", "ci.yml")],
         [os.path.join(".github", "workflows", "linting.yml")],
         [os.path.join(".github", "workflows", "linting_comment.yml")],
-        [os.path.join(".github", "workflows", "push_dockerhub_dev.yml")],
-        [os.path.join(".github", "workflows", "push_dockerhub_release.yml")],
         [os.path.join("assets", "email_template.html")],
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "nf-core-test_logo.png")],
@@ -107,6 +99,8 @@ def files_unchanged(self):
     files_partial = [
         [".gitignore", "foo"],
         [os.path.join("assets", "multiqc_config.yaml")],
+        [os.path.join(".github", "workflows", "push_dockerhub_dev.yml")],
+        [os.path.join(".github", "workflows", "push_dockerhub_release.yml")],
     ]
 
     # Only show error messages from pipeline creation
