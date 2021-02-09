@@ -72,10 +72,19 @@ class TestModules(unittest.TestCase):
         """ Test removing FastQC module without installing it """
         assert self.mods.remove("fastqc") is False
 
-    def test_modules_lint(self):
+    def test_modules_lint_fastqc(self):
+        """ Test linting the fastqc module """
         self.mods.install("fastqc")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False)
         assert len(module_lint.passed) == 18
+        assert len(module_lint.warned) == 0
+        assert len(module_lint.failed) == 0
+
+    def test_modules_lint_empty(self):
+        """ Test linting a pipeline with no modules installed """
+        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
+        module_lint.lint(print_results=False)
+        assert len(module_lint.passed) == 0
         assert len(module_lint.warned) == 0
         assert len(module_lint.failed) == 0
