@@ -101,7 +101,6 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .files_unchanged import files_unchanged
     from .nextflow_config import nextflow_config
     from .actions_ci import actions_ci
-    from .actions_lint import actions_lint
     from .actions_awstest import actions_awstest
     from .actions_awsfulltest import actions_awsfulltest
     from .readme import readme
@@ -133,7 +132,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             "nextflow_config",
             "files_unchanged",
             "actions_ci",
-            "actions_lint",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
