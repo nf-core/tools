@@ -724,14 +724,16 @@ class NFCoreModule(object):
         # Check that process labels are correct
         correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
         process_label = [l for l in lines if "label" in l]
-        if len(process_label) == 0:
-            self.warned.append("No process label specified for {}".format(self.module_name))
-        elif not process_label[0] in correct_process_labels:
-            self.warned.append(
-                "Process label ({}) is not among standard labels: {}".format(process_label, correct_process_labels)
-            )
+        if len(process_label) > 0:
+            process_label = process_label[0].split()[1].strip().strip("'").strip('"')
+            if not process_label in correct_process_labels:
+                self.warned.append(
+                    "Process label ({}) is not among standard labels: {}".format(process_label, correct_process_labels)
+                )
+            else:
+                self.passed.append("Correct process label for {}".format(self.module_name))
         else:
-            self.passed.append("Correct process label for {}".format(self.module_name))
+            self.warned.append("No process label specified for {}".format(self.module_name))
 
         for l in lines:
             if re.search("bioconda::", l):
@@ -756,15 +758,29 @@ class NFCoreModule(object):
             if not bp.count("=") >= 2:
                 all_packages_have_build_numbers = False
 
+            # Check for correct version and newer versions
             try:
+                bioconda_version = bp.split("=")[1]
                 response = _bioconda_package(bp)
             except LookupError as e:
                 self.warned.append(e)
             except ValueError as e:
                 self.failed.append(e)
             else:
-                self.passed.append("todo")
-                # TODO complete this section
+                # Check that required version is available at all
+                if bioconda_version not in response.get("versions"):
+                    self.failed.append("Conda dep had unknown version: {}".format(bp))
+                    continue  # No need to test for latest version, continue linting
+                # Check version is latest available
+                last_ver = response.get("latest_version")
+                if last_ver is not None and last_ver != bioconda_version:
+                    print(bioconda_version)
+                    print(last_ver)
+                    self.warned.append(
+                        "Bioconda version outdated: `{}`, `{}` available ({})".format(bp, last_ver, self.module_name)
+                    )
+                else:
+                    self.passed.append("Biocnda package is the latest available: `{}`".format(bp))
 
         if all_packages_have_build_numbers:
             self.passed.append("All bioconda packages have build numbers in {}".format(self.module_name))
