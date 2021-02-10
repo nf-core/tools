@@ -640,7 +640,7 @@ class NFCoreModule(object):
                 outputs += self._parse_output(l)
                 outputs = list(set(outputs))  # remove duplicate 'meta's
 
-        # Check the process defintions
+        # Check the process definitions
         if self.check_process_section(process_lines):
             self.passed.append("Matching build versions in {}".format(self.main_nf))
         else:
@@ -652,6 +652,15 @@ class NFCoreModule(object):
                 self.passed.append("'meta' emitted in {}".format(self.main_nf))
             else:
                 self.failed.append("'meta' given as input but not emitted in {}".format(self.main_nf))
+
+            # if meta is specified, it should also be used as 'saveAs ... publishId:meta.id'
+            save_as = [pl for pl in process_lines if "saveAs" in pl]
+            if len(save_as) > 0 and re.search("\s*publish_id\s*:\s*meta.id", save_as[0]):
+                self.passed.append("'meta.id' used in saveAs function for {}".format(self.module_name))
+            else:
+                self.failed.append(
+                    "'meta.id' specified but not used in saveAs function for {}".format(self.module_name)
+                )
 
         # Check that a software version is emitted
         if "version" in outputs:
@@ -672,12 +681,15 @@ class NFCoreModule(object):
         build_id = "build"
         singularity_tag = "singularity"
         docker_tag = "docker"
+        bioconda_packages = []
 
         for l in lines:
             if re.search("bioconda::", l):
-                bioconda = l.split()
-                bioconda = [b for b in bioconda if "bioconda" in b][0]
-                build_id = bioconda.split("::")[1].strip("'\"").split("=")[-1].strip()
+                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+                bioconda = bioconda_packages[
+                    0
+                ]  # use the first bioconda package to check against conatiners if not mulled
+                build_id = bioconda.split("::")[1].replace('"', "").replace("'", "").split("=")[-1].strip()
             if re.search("org/singularity", l):
                 singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
             if re.search("biocontainers", l):
@@ -686,6 +698,16 @@ class NFCoreModule(object):
         # If it's a mulled container, just compare singularity and docker tags
         if any("mulled" in l for l in lines):
             build_id = docker_tag
+
+        # Check that all bioconda packages ahve build numbers
+        all_packages_have_build_numbers = True
+        for bp in bioconda_packages:
+            if not bp.count("=") >= 2:
+                all_packages_have_build_numbers = False
+        if all_packages_have_build_numbers:
+            self.passed.append("All bioconda packages have build numbers in {}".format(self.module_name))
+        else:
+            self.failed.append("Missing build numbers for bioconda packages in {}".format(self.module_name))
 
         if build_id == docker_tag and build_id == singularity_tag:
             return True
