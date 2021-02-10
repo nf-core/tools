@@ -624,6 +624,7 @@ class NFCoreModule(object):
         # Perform section-specific linting
         state = "module"
         process_lines = []
+        script_lines = []
         for l in lines:
             if l.startswith("process") and state == "module":
                 state = "process"
@@ -645,12 +646,17 @@ class NFCoreModule(object):
             if state == "output" and not self._is_empty(l):
                 outputs += self._parse_output(l)
                 outputs = list(set(outputs))  # remove duplicate 'meta's
+            if state == "script" and not self._is_empty(l):
+                script_lines.append(l)
 
         # Check the process definitions
         if self.check_process_section(process_lines):
             self.passed.append("Matching build versions in {}".format(self.main_nf))
         else:
             self.failed.append("Build versions are not matching: {}".format(self.main_nf))
+
+        # Check the script definition
+        self.check_script_section(script_lines)
 
         # Check whether 'meta' is emitted when given as input
         if "meta" in inputs:
@@ -675,6 +681,25 @@ class NFCoreModule(object):
             self.failed.append("Module doesn't emit  software version {}".format(self.main_nf))
 
         return inputs, outputs
+
+    def check_script_section(self, lines):
+        """
+        Lint the script section
+        Checks whether 'def sotware' and 'def prefix' are defined
+        """
+        script = "".join(lines)
+
+        # check for software
+        if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
+            self.passed.append("Software version specified in script section: {}".format(self.module_name))
+        else:
+            self.failed.append("Software version not specified in script section: {}".format(self.module_name))
+
+        # check for prefix
+        if re.search("\s*def\s*prefix\s*=\s*options.suffix", script):
+            self.passed.append("prefix specified in script section: {}".format(self.module_name))
+        else:
+            self.failed.append("prefix not specified in script section: {}".format(self.module_name))
 
     def check_process_section(self, lines):
         """
