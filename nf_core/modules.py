@@ -574,6 +574,12 @@ class NFCoreModule(object):
             else:
                 self.failed.append("{} missing in meta.yml for {}".format(output, self.module_name))
 
+        # confirm that the name matches the process name in main.nf
+        if meta_yaml["name"].upper() == self.process_name:
+            self.passed.append("Correct name specified in meta.yml: ".format(self.meta_yml))
+        else:
+            self.failed.append("Name in meta.yml doesn't match process name in main.nf: ".format(self.meta_yml))
+
         # TODO --> decide whether we want/need this test? or make it silent for now
         # Check that 'name' adheres to guidelines
         software_name = self.meta_yml.split("software")[1].split(os.sep)[1]
@@ -683,6 +689,13 @@ class NFCoreModule(object):
         docker_tag = "docker"
         bioconda_packages = []
 
+        # Process name should be all capital letters
+        self.process_name = lines[0].split()[1]
+        if all([x.upper() for x in self.process_name]):
+            self.passed.append("Process name is in capital letters: {}".format(self.module_name))
+        else:
+            self.failed.append("Process name is not in captial letters: {}".format(self.module_name))
+
         for l in lines:
             if re.search("bioconda::", l):
                 bioconda_packages = [b for b in l.split() if "bioconda::" in b]
@@ -699,11 +712,23 @@ class NFCoreModule(object):
         if any("mulled" in l for l in lines):
             build_id = docker_tag
 
-        # Check that all bioconda packages ahve build numbers
+        # Check that all bioconda packages have build numbers
+        # Also check for newer versions
         all_packages_have_build_numbers = True
         for bp in bioconda_packages:
             if not bp.count("=") >= 2:
                 all_packages_have_build_numbers = False
+
+            try:
+                response = _bioconda_package(bp)
+            except LookupError as e:
+                self.warned.append(e)
+            except ValueError as e:
+                self.failed.append(e)
+            else:
+                self.passed.append("todo")
+                # TODO complete this section
+
         if all_packages_have_build_numbers:
             self.passed.append("All bioconda packages have build numbers in {}".format(self.module_name))
         else:
@@ -775,3 +800,40 @@ class NFCoreModule(object):
         if line.strip().replace(" ", "") == "":
             empty = True
         return empty
+
+
+def _bioconda_package(package):
+    """Query bioconda package information.
+
+    Sends a HTTP GET request to the Anaconda remote API.
+
+    Args:
+        package (str): A bioconda package name.
+
+    Raises:
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
+    """
+    dep = package.split("::")[1]
+    depname = dep.split("=")[0]
+    depver = dep.split("=")[1]
+
+    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format("bioconda", depname)
+
+    try:
+        response = requests.get(anaconda_api_url, timeout=10)
+    except (requests.exceptions.Timeout):
+        raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
+    except (requests.exceptions.ConnectionError):
+        raise LookupError("Could not connect to Anaconda API")
+    else:
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code != 404:
+            raise LookupError(
+                "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
+                    response.status_code, anaconda_api_url, response
+                )
+            )
+        elif response.status_code == 404:
+            raise ValueError("Could not find `{}` in bioconda channel".format(package))
