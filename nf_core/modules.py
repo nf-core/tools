@@ -258,7 +258,7 @@ class ModuleLint(object):
         self.warned = []
         self.failed = []
 
-    def lint(self, module=None, print_results=True, show_passed=False):
+    def lint(self, module=None, print_results=True, show_passed=False, lint_local_modules=False):
         """
         Lint all or one specific module
 
@@ -294,7 +294,8 @@ class ModuleLint(object):
                 raise ModuleLintException("Could not find the specified module: {}".format(module))
 
         # Lint local modules
-        self.lint_local_modules(local_modules)
+        if lint_local_modules:
+            self.lint_local_modules(local_modules)
 
         # Lint nf-core modules
         self.lint_nfcore_modules(nfcore_modules)

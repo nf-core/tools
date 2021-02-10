@@ -419,7 +419,10 @@ def check(ctx):
 @modules.command(help_priority=6)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
-@click.argument("tool", type=str, required=False, metavar="<tool name>")
+@click.argument(
+    "tool", type=str, required=False, metavar="<tool name>", help="Specify a single tool that should be linted"
+)
+@click.option("--local", is_flag=True, help="Additional lint local modules")
 def lint(ctx, pipeline_dir, tool):
     """
     Lint all modules or a specified one in a pipeline directory.
