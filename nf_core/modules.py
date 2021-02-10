@@ -294,7 +294,7 @@ class ModuleLint(object):
                 raise ModuleLintException("Could not find the specified module: {}".format(module))
 
         # Lint local modules
-        # self.lint_local_modules(local_modules)
+        self.lint_local_modules(local_modules)
 
         # Lint nf-core modules
         self.lint_nfcore_modules(nfcore_modules)
@@ -310,7 +310,11 @@ class ModuleLint(object):
         Only issues warnings instead of failures
         """
         for mod in local_modules:
-            self.lint_main_nf(mod)
+            mod_object = NFCoreModule(module_dir=mod, base_dir=self.dir, repo_type=self.repo_type, local_module=True)
+            mod_object.main_nf = mod
+            mod_object.lint_main_nf()
+            self.warned += mod_object.warned + mod_object.failed
+            self.passed += mod_object.passed
 
     def lint_nfcore_modules(self, nfcore_modules):
         """
@@ -477,7 +481,7 @@ class NFCoreModule(object):
     Includes functionality for lintislng
     """
 
-    def __init__(self, module_dir, repo_type, base_dir):
+    def __init__(self, module_dir, repo_type, base_dir, local_module=False):
         self.module_dir = module_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
@@ -488,12 +492,13 @@ class NFCoreModule(object):
         self.inputs = []
         self.outputs = []
 
-        # Initialize the important files
-        self.main_nf = os.path.join(self.module_dir, "main.nf")
-        self.meta_yml = os.path.join(self.module_dir, "meta.yml")
-        self.function_nf = os.path.join(self.module_dir, "functions.nf")
-        self.software = self.module_dir.split("software" + os.sep)[1]
-        self.test_dir = os.path.join(self.base_dir, "tests", "software", self.software)
+        if not local_module:
+            # Initialize the important files
+            self.main_nf = os.path.join(self.module_dir, "main.nf")
+            self.meta_yml = os.path.join(self.module_dir, "meta.yml")
+            self.function_nf = os.path.join(self.module_dir, "functions.nf")
+            self.software = self.module_dir.split("software" + os.sep)[1]
+            self.test_dir = os.path.join(self.base_dir, "tests", "software", self.software)
 
     def lint(self):
         """ Perform linting on this module """
@@ -774,8 +779,6 @@ class NFCoreModule(object):
                 # Check version is latest available
                 last_ver = response.get("latest_version")
                 if last_ver is not None and last_ver != bioconda_version:
-                    print(bioconda_version)
-                    print(last_ver)
                     self.warned.append(
                         "Bioconda version outdated: `{}`, `{}` available ({})".format(bp, last_ver, self.module_name)
                     )
