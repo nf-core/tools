@@ -22,6 +22,12 @@ from nf_core.utils import rich_force_colors
 log = logging.getLogger(__name__)
 
 
+class ModuleLintException(Exception):
+    """Exception raised when there was an error with module linting"""
+
+    pass
+
+
 class ModulesRepo(object):
     """
     An object to store details about the repository being used for modules.
@@ -285,11 +291,10 @@ class ModuleLint(object):
                 idx = nfcore_modules_names.index(module)
                 nfcore_modules = [nfcore_modules[idx]]
             except ValueError as e:
-                log.error("Could not find the given module!")
-                sys.exit(1)
+                raise ModuleLintException("Could not find the specified module: {}".format(module))
 
         # Lint local modules
-        self.lint_local_modules(local_modules)
+        # self.lint_local_modules(local_modules)
 
         # Lint nf-core modules
         self.lint_nfcore_modules(nfcore_modules)
@@ -320,229 +325,14 @@ class ModuleLint(object):
         (repo_type==modules), files that are relevant for module testing are
         also examined
         """
-        # Iterate over modules and run all checks on them
         for mod in nfcore_modules:
-            if "TOOL/SUBTOOL" in mod:
-                continue
-            module_name = mod.split(os.sep)[-1]
-
-            # Lint the main.nf file
-            inputs, outputs = self.lint_main_nf(os.path.join(mod, "main.nf"))
-
-            # Lint the meta.yml file
-            self.lint_meta_yml(os.path.join(mod, "meta.yml"), module_name, inputs=inputs, outputs=outputs)
-
-            # Lint the functions.nf file
-            self.lint_functions_nf(os.path.join(mod, "functions.nf"))
-
-            if self.repo_type == "modules":
-                self.lint_module_tests(mod, module_name)
-
-    def lint_module_tests(self, mod, module_name):
-        """ Lint module tests """
-        # Extract the software name
-        software = mod.split("software" + os.sep)[1]
-
-        # Check if test directory exists
-        test_dir = os.path.join(self.dir, "tests", "software", software)
-        if os.path.exists(test_dir):
-            self.passed.append("Test directory exsists for {}".format(software))
-        else:
-            self.failed.append("Test directory is missing for {}: {}".format(software, test_dir))
-            return
-
-        # Lint the test main.nf file
-        test_main_nf = os.path.join(test_dir, "main.nf")
-        if os.path.exists(test_main_nf):
-            self.passed.append("test main.nf exists for {}".format(software))
-        else:
-            self.failed.append("test main.nf doesn't exist for {}".format(software))
-
-        # Lint the test.yml file
-        test_yml_file = os.path.join(test_dir, "test.yml")
-        try:
-            with open(test_yml_file, "r") as fh:
-                test_yml = yaml.safe_load(fh)
-            self.passed.append("test.yml exists for {}".format(software))
-        except FileNotFoundError:
-            self.failed.append("test.yml doesn't exist for {}".format(software))
-
-    def lint_meta_yml(self, file, module_name, inputs=[], outputs=[]):
-        """ Lint a meta yml file """
-        required_keys = ["params", "input", "output"]
-        try:
-            with open(file, "r") as fh:
-                meta_yaml = yaml.safe_load(fh)
-            self.passed.append("meta.yml exists {}".format(file))
-        except FileNotFoundError:
-            self.failed.append("meta.yml doesn't exist for {} ({})".format(module_name, file))
-            return
-
-        # Confirm that all required keys are given
-        contains_required_keys = True
-        for rk in required_keys:
-            if not rk in meta_yaml.keys():
-                self.failed.append("{} not specified in {}".format(rk, file))
-                contains_required_keys = False
-            if contains_required_keys:
-                self.passed.append("{} contains all required keys".format(file))
-
-        # Confirm that all input and output channels are specified
-        meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
-        for input in inputs:
-            if input in meta_input:
-                self.passed.append("{} specified for {}".format(input, module_name))
-            else:
-                self.failed.append("{} missing in meta.yml for {}".format(input, module_name))
-
-        meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
-        for output in outputs:
-            if output in meta_output:
-                self.passed.append("{} specified for {}".format(output, module_name))
-            else:
-                self.failed.append("{} missing in meta.yml for {}".format(output, module_name))
-
-        # TODO --> decide whether we want/need this test? or make it silent for now
-        # Check that 'name' adheres to guidelines
-        software_name = file.split("software")[1].split(os.sep)[1]
-        if module_name == software_name:
-            required_name = module_name
-        else:
-            required_name = software_name + " " + module_name
-
-        if meta_yaml["name"] == required_name:
-            self.passed.append("meta.yaml module name is correct: {}".format(module_name))
-        else:
-            self.warned.append("meta.yaml module name not according to guidelines: {}".format(module_name))
-
-    def lint_main_nf(self, file):
-        """
-        Lint a single main.nf module file
-        Can also be used to lint local module files,
-        in which case failures should be interpreted
-        as warnings
-        """
-        inputs = []
-        outputs = []
-
-        # Check whether file exists and load it
-        try:
-            with open(file, "r") as fh:
-                lines = fh.readlines()
-            self.passed.append("Module file exists {}".format(file))
-        except FileNotFoundError as e:
-            self.failed.append("Module file doesn't exist {}".format(file))
-            return
-
-        # Check that options are defined
-        initoptions_re = re.compile(r"\s*def\s+options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
-        paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
-        if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
-            self.passed.append("options specified in {}".format(file))
-        else:
-            self.warned.append("options not specified in {}".format(file))
-
-        # Go through module main.nf file and switch state according to current section
-        # Perform section-specific linting
-        state = "module"
-        process_lines = []
-        for l in lines:
-            if l.startswith("process") and state == "module":
-                state = "process"
-            if re.search("input\s*:", l) and state == "process":
-                state = "input"
-                continue
-            if re.search("output\s*:", l) and state == "input":
-                state = "output"
-                continue
-            if re.search("script\s*:", l) and state == "output":
-                state = "script"
+            if "TOOL/SUBTOOL" in mod.module_dir:
                 continue
 
-            # Perform state-specific linting checks
-            if state == "process" and not self._is_empty(l):
-                process_lines.append(l)
-            if state == "input" and not self._is_empty(l):
-                inputs += self._parse_input(l)
-            if state == "output" and not self._is_empty(l):
-                outputs += self._parse_output(l)
-                outputs = list(set(outputs))  # remove duplicate 'meta's
-
-        # Check the process defintions
-        if self.check_process_section(process_lines):
-            self.passed.append("Matching build versions in {}".format(file))
-        else:
-            self.failed.append("Build versions are not matching: {}".format(file))
-
-        # Check whether 'meta' is emitted when given as input
-        if "meta" in inputs:
-            if "meta" in outputs:
-                self.passed.append("'meta' emitted in {}".format(file))
-            else:
-                self.failed.append("'meta' given as input but not emitted in {}".format(file))
-
-        # Check that a software version is emitted
-        if "version" in outputs:
-            self.passed.append("Module emits software version: {}".format(file))
-        else:
-            self.failed.append("Module doesn't emit  software version {}".format(file))
-
-        return inputs, outputs
-
-    def check_process_section(self, lines):
-        """
-        Lint the section of a module between the process definition
-        and the 'input:' definition
-        Specifically checks for correct software versions
-        and containers
-        """
-        # Checks that build numbers of bioconda, singularity and docker container are matching
-        build_id = "build"
-        singularity_tag = "singularity"
-        docker_tag = "docker"
-
-        for l in lines:
-            if re.search("bioconda::", l):
-                bioconda = l.split()
-                bioconda = [b for b in bioconda if "bioconda" in b][0]
-                build_id = bioconda.split("::")[1].strip("'\"").split("=")[-1].strip()
-            if re.search("org/singularity", l):
-                singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-            if re.search("biocontainers", l):
-                docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-
-        # If it's a mulled container, just compare singularity and docker tags
-        if any("mulled" in l for l in lines):
-            build_id = docker_tag
-
-        if build_id == docker_tag and build_id == singularity_tag:
-            return True
-        else:
-            return False
-
-    def lint_functions_nf(self, file):
-        """
-        Lint a functions.nf file
-        Verifies that the file exists and contains all necessary functions
-        """
-        try:
-            with open(file, "r") as fh:
-                lines = fh.readlines()
-            self.passed.append("functions.nf exists {}".format(file))
-        except FileNotFoundError as e:
-            self.failed.append("functions.nf doesn't exist {}".format(file))
-            return
-
-        # Test whether all required functions are present
-        required_functions = ["getSoftwareName", "initOptions", "getPathFromList", "saveFiles"]
-        lines = "\n".join(lines)
-        contains_all_functions = True
-        for f in required_functions:
-            if not "def " + f in lines:
-                self.failed.append("functions.nf is missing '{}', {}".format(f, file))
-                contains_all_functions = False
-        if contains_all_functions:
-            self.passed.append("Contains all functions: {}".format(file))
+            passed, warned, failed = mod.lint()
+            self.passed += passed
+            self.warned += warned
+            self.failed += failed
 
     def get_repo_type(self):
         """
@@ -608,9 +398,12 @@ class ModuleLint(object):
                 else:
                     nfcore_modules.append(m)
 
-        # Make full (relative) file paths
+        # Make full (relative) file paths and create NFCoreModule objects
         local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
-        nfcore_modules = [os.path.join(nfcore_modules_dir, m) for m in nfcore_modules]
+        nfcore_modules = [
+            NFCoreModule(os.path.join(nfcore_modules_dir, m), repo_type=self.repo_type, base_dir=self.dir)
+            for m in nfcore_modules
+        ]
 
         return local_modules, nfcore_modules
 
@@ -676,6 +469,252 @@ class ModuleLint(object):
         table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
+
+
+class NFCoreModule(object):
+    """
+    A class to hold the information a bout a nf-core module
+    Includes functionality for lintislng
+    """
+
+    def __init__(self, module_dir, repo_type, base_dir):
+        self.module_dir = module_dir
+        self.repo_type = repo_type
+        self.base_dir = base_dir
+        self.module_name = module_dir.split(os.sep)[-1]
+        self.passed = []
+        self.warned = []
+        self.failed = []
+        self.inputs = []
+        self.outputs = []
+
+        # Initialize the important files
+        self.main_nf = os.path.join(self.module_dir, "main.nf")
+        self.meta_yml = os.path.join(self.module_dir, "meta.yml")
+        self.function_nf = os.path.join(self.module_dir, "functions.nf")
+        self.software = self.module_dir.split("software" + os.sep)[1]
+        self.test_dir = os.path.join(self.base_dir, "tests", "software", self.software)
+
+    def lint(self):
+        """ Perform linting on this module """
+        # Iterate over modules and run all checks on them
+
+        # Lint the main.nf file
+        self.lint_main_nf()
+
+        # Lint the meta.yml file
+        self.lint_meta_yml()
+
+        # Lint the functions.nf file
+        self.lint_functions_nf()
+
+        # Lint the tests
+        if self.repo_type == "modules":
+            self.lint_module_tests()
+
+        return self.passed, self.warned, self.failed
+
+    def lint_module_tests(self):
+        """ Lint module tests """
+
+        if os.path.exists(self.test_dir):
+            self.passed.append("Test directory exsists for {}".format(self.software))
+        else:
+            self.failed.append("Test directory is missing for {}: {}".format(self.software, self.test_dir))
+            return
+
+        # Lint the test main.nf file
+        test_main_nf = os.path.join(self.test_dir, "main.nf")
+        if os.path.exists(test_main_nf):
+            self.passed.append("test main.nf exists for {}".format(self.software))
+        else:
+            self.failed.append("test main.nf doesn't exist for {}".format(self.software))
+
+        # Lint the test.yml file
+        test_yml_file = os.path.join(self.test_dir, "test.yml")
+        try:
+            with open(test_yml_file, "r") as fh:
+                test_yml = yaml.safe_load(fh)
+            self.passed.append("test.yml exists for {}".format(self.software))
+        except FileNotFoundError:
+            self.failed.append("test.yml doesn't exist for {}".format(self.software))
+
+    def lint_meta_yml(self):
+        """ Lint a meta yml file """
+        required_keys = ["params", "input", "output"]
+        try:
+            with open(self.meta_yml, "r") as fh:
+                meta_yaml = yaml.safe_load(fh)
+            self.passed.append("meta.yml exists {}".format(self.meta_yml))
+        except FileNotFoundError:
+            self.failed.append("meta.yml doesn't exist for {} ({})".format(self.module_name, self.meta_yml))
+            return
+
+        # Confirm that all required keys are given
+        contains_required_keys = True
+        for rk in required_keys:
+            if not rk in meta_yaml.keys():
+                self.failed.append("{} not specified in {}".format(rk, self.meta_yml))
+                contains_required_keys = False
+            if contains_required_keys:
+                self.passed.append("{} contains all required keys".format(self.meta_yml))
+
+        # Confirm that all input and output channels are specified
+        meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
+        for input in self.inputs:
+            if input in meta_input:
+                self.passed.append("{} specified for {}".format(input, self.module_name))
+            else:
+                self.failed.append("{} missing in meta.yml for {}".format(input, self.module_name))
+
+        meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
+        for output in self.outputs:
+            if output in meta_output:
+                self.passed.append("{} specified for {}".format(output, self.module_name))
+            else:
+                self.failed.append("{} missing in meta.yml for {}".format(output, self.module_name))
+
+        # TODO --> decide whether we want/need this test? or make it silent for now
+        # Check that 'name' adheres to guidelines
+        software_name = self.meta_yml.split("software")[1].split(os.sep)[1]
+        if self.module_name == software_name:
+            required_name = self.module_name
+        else:
+            required_name = software_name + " " + self.module_name
+
+        if meta_yaml["name"] == required_name:
+            self.passed.append("meta.yaml module name is correct: {}".format(self.module_name))
+        else:
+            self.warned.append("meta.yaml module name not according to guidelines: {}".format(self.module_name))
+
+    def lint_main_nf(self):
+        """
+        Lint a single main.nf module file
+        Can also be used to lint local module files,
+        in which case failures should be interpreted
+        as warnings
+        """
+        inputs = []
+        outputs = []
+
+        # Check whether file exists and load it
+        try:
+            with open(self.main_nf, "r") as fh:
+                lines = fh.readlines()
+            self.passed.append("Module file exists {}".format(self.main_nf))
+        except FileNotFoundError as e:
+            self.failed.append("Module file doesn't exist {}".format(self.main_nf))
+            return
+
+        # Check that options are defined
+        initoptions_re = re.compile(r"\s*def\s+options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
+        paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
+        if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
+            self.passed.append("options specified in {}".format(self.main_nf))
+        else:
+            self.warned.append("options not specified in {}".format(self.main_nf))
+
+        # Go through module main.nf file and switch state according to current section
+        # Perform section-specific linting
+        state = "module"
+        process_lines = []
+        for l in lines:
+            if l.startswith("process") and state == "module":
+                state = "process"
+            if re.search("input\s*:", l) and state == "process":
+                state = "input"
+                continue
+            if re.search("output\s*:", l) and state == "input":
+                state = "output"
+                continue
+            if re.search("script\s*:", l) and state == "output":
+                state = "script"
+                continue
+
+            # Perform state-specific linting checks
+            if state == "process" and not self._is_empty(l):
+                process_lines.append(l)
+            if state == "input" and not self._is_empty(l):
+                inputs += self._parse_input(l)
+            if state == "output" and not self._is_empty(l):
+                outputs += self._parse_output(l)
+                outputs = list(set(outputs))  # remove duplicate 'meta's
+
+        # Check the process defintions
+        if self.check_process_section(process_lines):
+            self.passed.append("Matching build versions in {}".format(self.main_nf))
+        else:
+            self.failed.append("Build versions are not matching: {}".format(self.main_nf))
+
+        # Check whether 'meta' is emitted when given as input
+        if "meta" in inputs:
+            if "meta" in outputs:
+                self.passed.append("'meta' emitted in {}".format(self.main_nf))
+            else:
+                self.failed.append("'meta' given as input but not emitted in {}".format(self.main_nf))
+
+        # Check that a software version is emitted
+        if "version" in outputs:
+            self.passed.append("Module emits software version: {}".format(self.main_nf))
+        else:
+            self.failed.append("Module doesn't emit  software version {}".format(self.main_nf))
+
+        return inputs, outputs
+
+    def check_process_section(self, lines):
+        """
+        Lint the section of a module between the process definition
+        and the 'input:' definition
+        Specifically checks for correct software versions
+        and containers
+        """
+        # Checks that build numbers of bioconda, singularity and docker container are matching
+        build_id = "build"
+        singularity_tag = "singularity"
+        docker_tag = "docker"
+
+        for l in lines:
+            if re.search("bioconda::", l):
+                bioconda = l.split()
+                bioconda = [b for b in bioconda if "bioconda" in b][0]
+                build_id = bioconda.split("::")[1].strip("'\"").split("=")[-1].strip()
+            if re.search("org/singularity", l):
+                singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+            if re.search("biocontainers", l):
+                docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+
+        # If it's a mulled container, just compare singularity and docker tags
+        if any("mulled" in l for l in lines):
+            build_id = docker_tag
+
+        if build_id == docker_tag and build_id == singularity_tag:
+            return True
+        else:
+            return False
+
+    def lint_functions_nf(self):
+        """
+        Lint a functions.nf file
+        Verifies that the file exists and contains all necessary functions
+        """
+        try:
+            with open(self.function_nf, "r") as fh:
+                lines = fh.readlines()
+            self.passed.append("functions.nf exists {}".format(self.function_nf))
+        except FileNotFoundError as e:
+            self.failed.append("functions.nf doesn't exist {}".format(self.function_nf))
+            return
+
+        # Test whether all required functions are present
+        required_functions = ["getSoftwareName", "initOptions", "getPathFromList", "saveFiles"]
+        lines = "\n".join(lines)
+        contains_all_functions = True
+        for f in required_functions:
+            if not "def " + f in lines:
+                self.failed.append("functions.nf is missing '{}', {}".format(f, self.function_nf))
+                contains_all_functions = False
+        if contains_all_functions:
+            self.passed.append("Contains all functions: {}".format(self.function_nf))
 
     def _parse_input(self, line):
         input = []
