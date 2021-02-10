@@ -420,10 +420,13 @@ def check(ctx):
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
 @click.argument(
-    "tool", type=str, required=False, metavar="<tool name>", help="Specify a single tool that should be linted"
+    "tool",
+    type=str,
+    required=False,
+    metavar="<tool name>",
 )
 @click.option("--local", is_flag=True, help="Additional lint local modules")
-def lint(ctx, pipeline_dir, tool):
+def lint(ctx, pipeline_dir, tool, local):
     """
     Lint all modules or a specified one in a pipeline directory.
 
@@ -433,7 +436,7 @@ def lint(ctx, pipeline_dir, tool):
     """
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
-        module_lint.lint(module=tool, print_results=True)
+        module_lint.lint(module=tool, print_results=True, lint_local_modules=local)
     except nf_core.modules.ModuleLintException as e:
         log.error(e)
         sys.exit(1)

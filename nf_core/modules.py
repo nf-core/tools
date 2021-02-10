@@ -286,7 +286,7 @@ class ModuleLint(object):
         # TODO --> decide whether to implement this for local modules as well
         if module:
             local_modules = []
-            nfcore_modules_names = [m.split("software" + os.sep)[1] for m in nfcore_modules]
+            nfcore_modules_names = [m.module_name for m in nfcore_modules]
             try:
                 idx = nfcore_modules_names.index(module)
                 nfcore_modules = [nfcore_modules[idx]]
