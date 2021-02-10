@@ -435,10 +435,9 @@ class ModuleLint(object):
             return
 
         # Check that options are defined
-        options_keywords = ["def", "options", "=", "initOptions(params.options)"]
-        options_keywords_2 = ["params.options", "=", "[:]"]
-
-        if any(l.split() == options_keywords for l in lines) and any(l.split() == options_keywords_2 for l in lines):
+        initoptions_re = re.compile(r"\s*def\s+options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
+        paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
+        if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
             self.passed.append("options specified in {}".format(file))
         else:
             self.warned.append("options not specified in {}".format(file))
@@ -506,7 +505,7 @@ class ModuleLint(object):
             if re.search("bioconda::", l):
                 bioconda = l.split()
                 bioconda = [b for b in bioconda if "bioconda" in b][0]
-                build_id = bioconda.split("::")[1].replace('"', "").replace("'", "").split("=")[-1].strip()
+                build_id = bioconda.split("::")[1].strip("'\"").split("=")[-1].strip()
             if re.search("org/singularity", l):
                 singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
             if re.search("biocontainers", l):
