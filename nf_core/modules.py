@@ -721,6 +721,18 @@ class NFCoreModule(object):
         else:
             self.failed.append("Process name is not in captial letters: {}".format(self.module_name))
 
+        # Check that process labels are correct
+        correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
+        process_label = [l for l in lines if "label" in l]
+        if len(process_label) == 0:
+            self.warned.append("No process label specified for {}".format(self.module_name))
+        elif not process_label[0] in correct_process_labels:
+            self.warned.append(
+                "Process label ({}) is not among standard labels: {}".format(process_label, correct_process_labels)
+            )
+        else:
+            self.passed.append("Correct process label for {}".format(self.module_name))
+
         for l in lines:
             if re.search("bioconda::", l):
                 bioconda_packages = [b for b in l.split() if "bioconda::" in b]
