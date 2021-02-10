@@ -428,8 +428,12 @@ def lint(ctx, pipeline_dir, tool):
     e.g. specification of a Docker and Singularity container or
     that the module emits a software version.
     """
-    module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
-    module_lint.lint(module=tool, print_results=True)
+    try:
+        module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
+        module_lint.lint(module=tool, print_results=True)
+    except nf_core.modules.ModuleLintException as e:
+        log.error(e)
+        sys.exit(1)
 
 
 ## nf-core schema subcommands
