@@ -315,8 +315,12 @@ def lint(pipeline_dir, release, fix, show_passed, markdown, json):
     """
 
     # Run the lint tests!
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, markdown, json)
-    if len(lint_obj.failed) > 0:
+    try:
+        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, markdown, json)
+        if len(lint_obj.failed) > 0:
+            sys.exit(1)
+    except AssertionError as e:
+        log.critical(e)
         sys.exit(1)
 
 
