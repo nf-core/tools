@@ -60,8 +60,11 @@ def actions_lint(self):
     failed = []
     fn = os.path.join(self.wf_path, ".github", "workflows", "linting.yml")
     if os.path.isfile(fn):
-        with open(fn, "r") as fh:
-            lintwf = yaml.safe_load(fh)
+        try:
+            with open(fn, "r") as fh:
+                lintwf = yaml.safe_load(fh)
+        except Exception as e:
+            return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
 
         # Check that the action is turned on for push and pull requests
         try:

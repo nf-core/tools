@@ -73,8 +73,11 @@ def actions_branch_protection(self):
     if not os.path.isfile(fn):
         return {"ignored": ["Could not find branch.yml workflow: {}".format(fn)]}
 
-    with open(fn, "r") as fh:
-        branchwf = yaml.safe_load(fh)
+    try:
+        with open(fn, "r") as fh:
+            branchwf = yaml.safe_load(fh)
+    except Exception as e:
+        return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
 
     # Check that the action is turned on for PRs to master
     try:

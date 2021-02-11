@@ -276,9 +276,11 @@ Do you want to run this command now? [y/N]: n
 
 ## Downloading pipelines for offline use
 
-Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection. In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
+Sometimes you may need to run an nf-core pipeline on a server or HPC system that has no internet connection.
+In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
 
-To make this process easier and ensure accurate retrieval of correctly versioned code and software containers, we have written a download helper tool. Simply specify the name of the nf-core pipeline and it will be downloaded to your current working directory.
+To make this process easier and ensure accurate retrieval of correctly versioned code and software containers, we have written a download helper tool.
+Simply specify the name of the nf-core pipeline and it will be downloaded to your current working directory.
 
 By default, the pipeline will download the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files.
 If you specify the flag `--singularity`, it will also download any singularity image files that are required.
@@ -297,9 +299,9 @@ $ nf-core download methylseq -r 1.4 --singularity
     nf-core/tools version 1.10
 
   INFO     Saving methylseq
-            Pipeline release: 1.4
-            Pull singularity containers: No
-            Output file: nf-core-methylseq-1.4.tar.gz
+            Pipeline release: '1.4'
+            Pull singularity containers: 'No'
+            Output file: 'nf-core-methylseq-1.4.tar.gz'
   INFO     Downloading workflow files from GitHub
   INFO     Downloading centralised configs from GitHub
   INFO     Compressing download..
@@ -311,7 +313,7 @@ The tool automatically compresses all of the resulting file in to a `.tar.gz` ar
 You can choose other formats (`.tar.bz2`, `zip`) or to not compress (`none`) with the `-c`/`--compress` flag.
 The console output provides the command you need to extract the files.
 
-Once uncompressed, you will see the following file structure for the downloaded pipeline:
+Once uncompressed, you will see something like the following file structure for the downloaded pipeline:
 
 ```console
 $ tree -L 2 nf-core-methylseq-1.4/
@@ -326,8 +328,6 @@ nf-core-methylseq-1.4
 │   ├── nextflow.config
 │   ├── nfcore_custom.config
 │   └── README.md
-├── singularity-images
-│   └── nf-core-methylseq-1.4.simg
 └── workflow
     ├── assets
     ├── bin
@@ -342,24 +342,62 @@ nf-core-methylseq-1.4
     ├── nextflow.config
     ├── nextflow_schema.json
     └── README.md
-
-10 directories, 15 files
 ```
 
-The pipeline files are automatically updated so that the local copy of institutional configs are available when running the pipeline.
+The pipeline files are automatically updated (`params.custom_config_base` is set to `../configs`), so that the local copy of institutional configs are available when running the pipeline.
 So using `-profile <NAME>` should work if available within [nf-core/configs](https://github.com/nf-core/configs).
 
-You can run the pipeline by simply providing the directory path for the `workflow` folder.
-Note that if using Singularity, you will also need to provide the path to the Singularity image.
-For example:
+You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command.
 
-```bash
-nextflow run /path/to/nf-core-methylseq-1.4/workflow/ \
-     -profile singularity \
-     -with-singularity /path/to/nf-core-methylseq-1.4/singularity-images/nf-core-methylseq-1.4.simg \
-     # .. other normal pipeline parameters from here on..
-     --input '*_R{1,2}.fastq.gz' --genome GRCh38
+By default, the download will not run if a target directory or archive already exists. Use the `--force` flag to overwrite / delete any existing download files _(not including those in the Singularity cache directory, see below)_.
+
+### Downloading singularity containers
+
+If you're using Singularity, the `nf-core download` command can also fetch the required Singularity container images for you.
+To do this, specify the `--singularity` option.
+Your archive / target output directory will then include three folders: `workflow`, `configs` and also `singularity-containers`.
+
+The downloaded workflow files are again edited to add the following line to the end of the pipeline's `nextflow.config` file:
+
+```nextflow
+singularity.cacheDir = "${projectDir}/../singularity-images/"
 ```
+
+This tells Nextflow to use the `singularity-containers` directory relative to the workflow for the singularity image cache directory.
+All images should be downloaded there, so Nextflow will use them instead of trying to pull from the internet.
+
+### Singularity cache directory
+
+We highly recommend setting the `$NXF_SINGULARITY_CACHEDIR` environment variable on your system, even if that is a different system to where you will be running Nextflow.
+
+If found, the tool will fetch the Singularity images to this directory first before copying to the target output archive / directory.
+Any images previously fetched will be found there and copied directly - this includes images that may be shared with other pipelines or previous pipeline version downloads or download attempts.
+
+If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose specify `--singularity-cache`.
+This instructs `nf-core download` to fetch all Singularity images to the `$NXF_SINGULARITY_CACHEDIR` directory but does _not_ copy them to the workflow archive / directory.
+The workflow config file is _not_ edited. This means that when you later run the workflow, Nextflow will just use the cache folder directly.
+
+### How the Singularity image downloads work
+
+The Singularity image download finds containers using two methods:
+
+1. It runs `nextflow config` on the downloaded workflow to look for a `process.container` statement for the whole pipeline.
+   This is the typical method used for DSL1 pipelines.
+2. It scrapes any files it finds with a `.nf` file extension in the workflow `modules` directory for lines
+   that look like `container = "xxx"`. This is the typical method for DSL2 pipelines, which have one container per process.
+
+Some DSL2 modules have container addresses for docker (eg. `quay.io/biocontainers/fastqc:0.11.9--0`) and also URLs for direct downloads of a Singularity continaer (eg. `https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0`).
+Where both are found, the download URL is preferred.
+
+Once a full list of containers is found, they are processed in the following order:
+
+1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache` specified)
+2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache` is _not_ specified, they are copied to the output directory
+3. If they start with `http` they are downloaded directly within Python (default 4 at a time, you can customise this with `--parallel-downloads`)
+4. If they look like a Docker image name, they are fetched using a `singularity pull` command
+    * This requires Singularity to be installed on the system and is substantially slower
+
+Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
 
 ## Pipeline software licences
 

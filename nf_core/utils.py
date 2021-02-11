@@ -19,6 +19,8 @@ import subprocess
 import sys
 import time
 import yaml
+from rich.live import Live
+from rich.spinner import Spinner
 
 log = logging.getLogger(__name__)
 
@@ -241,9 +243,6 @@ def setup_requests_cachedir():
     Caching directory will be set up in the user's home directory under
     a .nfcore_cache subdir.
     """
-    # Only import it if we need it
-    import requests_cache
-
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
     if not os.path.exists(cachedir):
@@ -269,30 +268,12 @@ def wait_cli_function(poll_func, poll_every=20):
        None. Just sits in an infite loop until the function returns True.
     """
     try:
-        is_finished = False
-        check_count = 0
-
-        def spinning_cursor():
+        spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
+        with Live(spinner, refresh_per_second=20) as live:
             while True:
-                for cursor in "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏":
-                    yield "{} Use ctrl+c to stop waiting and force exit. ".format(cursor)
-
-        spinner = spinning_cursor()
-        while not is_finished:
-            # Write a new loading text
-            loading_text = next(spinner)
-            sys.stdout.write(loading_text)
-            sys.stdout.flush()
-            # Show the loading spinner every 0.1s
-            time.sleep(0.1)
-            # Wipe the previous loading text
-            sys.stdout.write("\b" * len(loading_text))
-            sys.stdout.flush()
-            # Only check every 2 seconds, but update the spinner every 0.1s
-            check_count += 1
-            if check_count > poll_every:
-                is_finished = poll_func()
-                check_count = 0
+                if poll_func():
+                    break
+                time.sleep(2)
     except KeyboardInterrupt:
         raise AssertionError("Cancelled!")
 
