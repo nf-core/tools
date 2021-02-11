@@ -2,7 +2,7 @@
  * This file holds several functions used to perform JSON parameter validation, help and summary rendering for the nf-core pipeline template.
  */
 
-import org.everit.json.schema.Schema
+import org.everit.json.schema.Schema as JsonSchema
 import org.everit.json.schema.loader.SchemaLoader
 import org.everit.json.schema.ValidationException
 import org.json.JSONObject
@@ -244,7 +244,7 @@ class Schema {
         // Validate parameters against the schema
         InputStream inputStream = new File(jsonSchema).newInputStream()
         JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream))
-        Schema schema = SchemaLoader.load(rawSchema)
+        JsonSchema schema = SchemaLoader.load(rawSchema)
 
         // Clean the parameters
         def cleanedParams = cleanParameters(params)
