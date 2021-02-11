@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
+from click.types import File
 from rich import print
 import click
 import logging
@@ -424,8 +425,11 @@ def md5(ctx, modules_dir):
     Generate md5 sums for all files in the "output" directory after running a command used for testing
     Helper utility to ease the generation of module tests
     """
-    modules_test_helper = nf_core.modules.ModulesTestHelper(modules_dir=modules_dir)
-    modules_test_helper.generate_test_yml()
+    try:
+        modules_test_helper = nf_core.modules.ModulesTestHelper(modules_dir=modules_dir)
+        modules_test_helper.generate_test_yml()
+    except FileNotFoundError as e:
+        log.error("Could not create test.yml file: {}".format(e))
 
 
 ## nf-core schema subcommands

@@ -224,6 +224,17 @@ class PipelineModules(object):
         with open(dl_filename, "wb") as fh:
             fh.write(file_contents)
 
+    def has_valid_pipeline(self):
+        """Check that we were given a pipeline"""
+        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
+            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
+            return False
+        main_nf = os.path.join(self.pipeline_dir, "main.nf")
+        nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
+        if not os.path.exists(main_nf) and not os.path.exists(nf_config):
+            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
+            return False
+
 
 class ModulesTestHelper(object):
     def __init__(self, modules_dir=""):
@@ -279,7 +290,7 @@ class ModulesTestHelper(object):
             assert os.path.exists(output_dir)
             assert len(glob.glob(os.path.join(output_dir, "*"))) > 0
         except:
-            log.error("Output directory doesn't exist or is empty")
+            raise FileNotFoundError("Output directory doesn't exist or is empty")
 
         # Get list of files and their md5sums
         md5_sums = self._get_md5_sums(output_dir)
@@ -300,14 +311,4 @@ class ModulesTestHelper(object):
 
         # print yaml to console
         print(yaml.dump(yml_dict, Dumper=self.CustomDumper))
-
-        def has_valid_pipeline(self):
-        """Check that we were given a pipeline"""
-        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
-            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
-            return False
-        main_nf = os.path.join(self.pipeline_dir, "main.nf")
-        nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
-        if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
-            return False
+        return True
