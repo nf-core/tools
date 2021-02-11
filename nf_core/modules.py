@@ -487,12 +487,12 @@ class NFCoreModule(object):
         self.module_dir = module_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.module_name = module_dir.split(os.sep)[-1]
         self.passed = []
         self.warned = []
         self.failed = []
         self.inputs = []
         self.outputs = []
+        self.module_name = module_dir.split("software" + os.sep)[1]
 
         if not local_module:
             # Initialize the important files
