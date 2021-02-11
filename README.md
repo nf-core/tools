@@ -739,7 +739,7 @@ To list all available modules, use `nf-core modules list`. To install a module i
 
 You can also lint a clone of the [nf-core/modules](https://github.com/nf-core/modules), which we recommend when you want to add new modules there. The command for linting is `nf-core modules lint <directory> <module>`, where `<module>` can be omitted, in which case all modules are linted. 
 
-```
+```console
 nf-core modules lint modules fastqc
 
                                           ,--./,-.
@@ -761,8 +761,8 @@ nf-core modules lint modules fastqc
 ╰──────────────────────╯
 
 ```
-This command can also be used for DSL2 pipelines. When additonal using the `--local` flag, warnings for your local modules are printed out as well.
 
+This command can also be used for DSL2 pipelines. When additonal using the `--local` flag, warnings for your local modules are printed out as well.
 
 ## Citation
 
