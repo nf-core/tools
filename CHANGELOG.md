@@ -2,7 +2,9 @@
 
 ## v1.13dev
 
-_..nothing yet.._
+### Tools helper code
+
+* changed behaviour of `nf-core sync` command as discussed in [[#787]](https://github.com/nf-core/tools/issues/787)
 
 ## [v1.12.1 - Silver Dolphin](https://github.com/nf-core/tools/releases/tag/1.12.1) - [2020-12-03]
 
