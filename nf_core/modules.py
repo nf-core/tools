@@ -629,9 +629,12 @@ class NFCoreModule(object):
         # Go through module main.nf file and switch state according to current section
         # Perform section-specific linting
         state = "module"
+        contains_todo_comments = False
         process_lines = []
         script_lines = []
         for l in lines:
+            if re.search("\s*TODO\s*", l):
+                contains_todo_comments = True
             if l.startswith("process") and state == "module":
                 state = "process"
             if re.search("input\s*:", l) and state == "process":
@@ -660,6 +663,12 @@ class NFCoreModule(object):
             self.passed.append("Matching build versions in {}".format(self.main_nf))
         else:
             self.failed.append("Build versions are not matching: {}".format(self.main_nf))
+
+        # Warn in TODOs are still in the file
+        if contains_todo_comments:
+            self.warned.append("main.nf still contains TODO comments: {}".format(self.main_nf))
+        else:
+            self.passed.append("No TODO comments left in {}".format(self.main_nf))
 
         # Check the script definition
         self.check_script_section(script_lines)
