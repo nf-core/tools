@@ -127,6 +127,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         self.fixed = []
         self.passed = []
         self.warned = []
+        self.could_fix = []
         self.lint_tests = [
             "files_exist",
             "nextflow_config",
@@ -247,6 +248,8 @@ class PipelineLint(nf_core.utils.Pipeline):
                     self.warned.append((test_name, test))
                 for test in test_results.get("failed", []):
                     self.failed.append((test_name, test))
+                if test_results.get("could_fix", False):
+                    self.could_fix.append(test_name)
 
     def _print_results(self, show_passed=False):
         """Print linting results to the command line.
@@ -328,8 +331,11 @@ class PipelineLint(nf_core.utils.Pipeline):
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
 
-        if len(self.failed):
-            console.print("Tip: Running with '--fix' can automatically resolve some lint failures.")
+        if len(self.could_fix):
+            fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
+            console.print(
+                f"\nTip: Some of these linting errors can automatically resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+            )
 
     def _get_results_md(self):
         """

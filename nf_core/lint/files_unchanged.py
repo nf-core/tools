@@ -62,6 +62,7 @@ def files_unchanged(self):
     failed = []
     ignored = []
     fixed = []
+    could_fix = False
 
     # Check that we have the minimum required config
     try:
@@ -152,6 +153,7 @@ def files_unchanged(self):
                             fixed.append(f"'{f}' overwritten with template file")
                         else:
                             failed.append(f"'{f}' does not match the template")
+                            could_fix = True
                 except FileNotFoundError:
                     pass
 
@@ -188,7 +190,8 @@ def files_unchanged(self):
                             fixed.append(f"'{f}' overwritten with template file")
                         else:
                             failed.append(f"'{f}' does not match the template")
+                            could_fix = True
                 except FileNotFoundError:
                     pass
 
-    return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed}
+    return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed, "could_fix": could_fix}

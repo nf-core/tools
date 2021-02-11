@@ -55,6 +55,7 @@ def conda_env_yaml(self):
     warned = []
     failed = []
     fixed = []
+    could_fix = False
 
     env_path = os.path.join(self.wf_path, "environment.yml")
     if env_path not in self.files:
@@ -79,6 +80,7 @@ def conda_env_yaml(self):
                     self.conda_config["name"], expected_env_name
                 )
             )
+            could_fix = True
     else:
         passed.append("Conda environment name was correct ({})".format(expected_env_name))
 
@@ -120,6 +122,7 @@ def conda_env_yaml(self):
                             raw_environment_yml = raw_environment_yml.replace(dep, f"{depname}={last_ver}")
                         else:
                             warned.append("Conda dep outdated: `{}`, `{}` available".format(dep, last_ver))
+                            could_fix = True
                     else:
                         passed.append("Conda package is the latest available: `{}`".format(dep))
 
@@ -163,6 +166,7 @@ def conda_env_yaml(self):
                                         pip_depver, pip_last_ver
                                     )
                                 )
+                                could_fix = True
                         else:
                             passed.append("PyPI package is latest available: {}".format(pip_depver))
             self.progress_bar.update(pip_progress, visible=False)
@@ -174,7 +178,7 @@ def conda_env_yaml(self):
         with open(env_path, "w") as fh:
             fh.write(raw_environment_yml)
 
-    return {"passed": passed, "warned": warned, "failed": failed, "fixed": fixed}
+    return {"passed": passed, "warned": warned, "failed": failed, "fixed": fixed, "could_fix": could_fix}
 
 
 def _anaconda_package(conda_config, dep):
