@@ -111,15 +111,14 @@
                 },
                 "config_profile_url": {
                     "type": "string",
-
+                    "description": "Institutional config URL link.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
                 "validate_params": {
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",
                     "default": true
-                },
-                    "description": "Institutional config URL link.",
-                    "hidden": true,
-                    "fa_icon": "fas fa-users-cog"
                 }
             }
         },
