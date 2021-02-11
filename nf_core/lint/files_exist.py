@@ -43,6 +43,7 @@ def files_exist(self):
         'Singularity',
         'parameters.settings.json',
         'bin/markdown_to_html.r',
+        'conf/aws.config',
         '.github/workflows/push_dockerhub.yml'
 
     Files that *should not* be present::
@@ -84,6 +85,7 @@ def files_exist(self):
         "Singularity",
         "parameters.settings.json",
         os.path.join("bin", "markdown_to_html.r"),
+        os.path.join("conf", "aws.config"),
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
     ]
     files_warn_ifexists = [".travis.yml"]
