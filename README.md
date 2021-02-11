@@ -24,6 +24,7 @@ A python package with helper tools for the nf-core community.
 * [`nf-core schema` - Work with pipeline schema files](#working-with-pipeline-schema)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+* [`nf-core modules` - List, install, remove, create and lint module](#modules)
 * [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -729,6 +730,39 @@ INFO     Syncing nf-core/ampliseq
 [...]
 INFO     Successfully synchronised [n] pipelines
 ```
+
+## Modules
+
+The [nf-core/modules](https://github.com/nf-core/modules) repository was created to help building DSL2 pipelines by offering a repository of ready-to-use code modules. The `nf-core modules` helper tool allows to list, install or remove modules from the [nf-core/modules](https://github.com/nf-core/modules) repository. It can also help you to create new modules from a template, and lint existing ones to make sure they are build according to the [nf-core/modules](https://github.com/nf-core/modules) guidelines.
+
+To list all available modules, use `nf-core modules list`. To install a module in a DSL2 pipeline, you can run the command `nf-core modules install <pipeline_dir> <module_name>`. Removing a module works similarly: `nf-core modules remove <pipeline_dir> <module_name>`.
+
+You can also lint a clone of the [nf-core/modules](https://github.com/nf-core/modules), which we recommend when you want to add new modules there. The command for linting is `nf-core modules lint <directory> <module>`, where `<module>` can be omitted, in which case all modules are linted. 
+
+```
+nf-core modules lint modules fastqc
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 1.13
+
+
+
+╭──────────────────────╮
+│ LINT RESULTS SUMMARY │
+├──────────────────────┤
+│ [✔]  24 Tests Passed │
+│ [!]   0 Test Warning │
+│ [✗]   0 Test Failed  │
+╰──────────────────────╯
+
+```
+This command can also be used for DSL2 pipelines. When additonal using the `--local` flag, warnings for your local modules are printed out as well.
+
 
 ## Citation
 
