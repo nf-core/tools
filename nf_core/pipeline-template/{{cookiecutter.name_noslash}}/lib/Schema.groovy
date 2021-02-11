@@ -2,9 +2,17 @@
  * This file holds several functions used to perform JSON parameter validation, help and summary rendering for the nf-core pipeline template.
  */
 
+import org.everit.json.schema.Schema
+import org.everit.json.schema.loader.SchemaLoader
+import org.everit.json.schema.ValidationException
+import org.json.JSONObject
+import org.json.JSONTokener
+import org.json.JSONArray
 import groovy.json.JsonSlurper
+import groovy.json.JsonBuilder
 
 class Schema {
+
     /*
      * This method tries to read a JSON params file
      */
@@ -84,24 +92,24 @@ class Schema {
      * Beautify parameters for --help
      */
     private static String params_help(workflow, params, json_schema, command) {
-        String output  = Headers.nf_core(workflow, params.monochrome_logs) + "\n"
-        output        += "Typical pipeline command:\n\n"
+        String output  = Headers.nf_core(workflow, params.monochrome_logs) + '\n'
+        output        += 'Typical pipeline command:\n\n'
         output        += "    ${command}\n\n"
         def params_map = params_load(json_schema)
         def max_chars  = params_max_chars(params_map) + 1
         for (group in params_map.keySet()) {
-            output += group + "\n"
+            output += group + '\n'
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
             for (param in group_params.keySet()) {
-                def type = "[" + group_params.get(param).type + "]"
+                def type = '[' + group_params.get(param).type + ']'
                 def description = group_params.get(param).description
-                output += "    \u001B[1m--" +  param.padRight(max_chars) + "\u001B[1m" + type.padRight(10) + description + "\n"
+                output += "    \u001B[1m--" +  param.padRight(max_chars) + "\u001B[1m" + type.padRight(10) + description + '\n'
             }
-            output += "\n"
+            output += '\n'
         }
         output += Headers.dashed_line(params.monochrome_logs)
-        output += "\n\n" + Checks.citation(workflow)
-        output += "\n\n" + Headers.dashed_line(params.monochrome_logs)
+        output += '\n\n' + Checks.citation(workflow)
+        output += '\n\n' + Headers.dashed_line(params.monochrome_logs)
         return output
     }
 
@@ -110,7 +118,7 @@ class Schema {
      */
     private static LinkedHashMap params_summary_map(workflow, params, json_schema) {
         // Get a selection of core Nextflow workflow options
-        def Map workflow_summary = [:]        
+        def Map workflow_summary = [:]
         if (workflow.revision) {
             workflow_summary['revision'] = workflow.revision
         }
@@ -127,7 +135,7 @@ class Schema {
         workflow_summary['userName']     = workflow.userName
         workflow_summary['profile']      = workflow.profile
         workflow_summary['configFiles']  = workflow.configFiles.join(', ')
-        
+
         // Get pipeline parameters defined in JSON Schema
         def Map params_summary = [:]
         def blacklist  = ['hostnames']
@@ -153,15 +161,15 @@ class Schema {
                     } else {
                         if (param_type == 'string') {
                             if (schema_value.contains('$projectDir') || schema_value.contains('${projectDir}')) {
-                                def sub_string = schema_value.replace('\$projectDir','')
-                                sub_string     = sub_string.replace('\${projectDir}','')
+                                def sub_string = schema_value.replace('\$projectDir', '')
+                                sub_string     = sub_string.replace('\${projectDir}', '')
                                 if (params_value.contains(sub_string)) {
                                     schema_value = params_value
                                 }
                             }
                             if (schema_value.contains('$params.outdir') || schema_value.contains('${params.outdir}')) {
-                                def sub_string = schema_value.replace('\$params.outdir','')
-                                sub_string     = sub_string.replace('\${params.outdir}','')
+                                def sub_string = schema_value.replace('\$params.outdir', '')
+                                sub_string     = sub_string.replace('\${params.outdir}', '')
                                 if ("${params.outdir}${sub_string}" == params_value) {
                                     schema_value = params_value
                                 }
@@ -183,22 +191,22 @@ class Schema {
      * Beautify parameters for summary and return as string
      */
     private static String params_summary_log(workflow, params, json_schema) {
-        String output  = Headers.nf_core(workflow, params.monochrome_logs) + "\n"
+        String output  = Headers.nf_core(workflow, params.monochrome_logs) + '\n'
         def params_map = params_summary_map(workflow, params, json_schema)
         def max_chars  = params_max_chars(params_map)
         for (group in params_map.keySet()) {
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
             if (group_params) {
-                output += group + "\n"
+                output += group + '\n'
                 for (param in group_params.keySet()) {
-                    output += "    \u001B[1m" +  param.padRight(max_chars) + ": \u001B[1m" + group_params.get(param) + "\n"
+                    output += "    \u001B[1m" +  param.padRight(max_chars) + ": \u001B[1m" + group_params.get(param) + '\n'
                 }
-                output += "\n"
+                output += '\n'
             }
         }
         output += Headers.dashed_line(params.monochrome_logs)
-        output += "\n\n" + Checks.citation(workflow)
-        output += "\n\n" + Headers.dashed_line(params.monochrome_logs)
+        output += '\n\n' + Checks.citation(workflow)
+        output += '\n\n' + Headers.dashed_line(params.monochrome_logs)
         return output
     }
 
@@ -212,20 +220,19 @@ class Schema {
                 for (param in group_params.keySet()) {
                     summary_section += "        <dt>$param</dt><dd><samp>${group_params.get(param) ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>\n"
                 }
-                summary_section += "    </dl>\n"
+                summary_section += '    </dl>\n'
             }
         }
 
-        String yaml_file_text  = "id: '${workflow.manifest.name.replace('/','-')}-summary'\n"
+        String yaml_file_text  = "id: '${workflow.manifest.name.replace('/', '-')}-summary'\n"
         yaml_file_text        += "description: ' - this information is collected when the pipeline is started.'\n"
         yaml_file_text        += "section_name: '${workflow.manifest.name} Workflow Summary'\n"
         yaml_file_text        += "section_href: 'https://github.com/${workflow.manifest.name}'\n"
         yaml_file_text        += "plot_type: 'html'\n"
-        yaml_file_text        += "data: |\n"
+        yaml_file_text        += 'data: |\n'
         yaml_file_text        += "${summary_section}"
         return yaml_file_text
     }
-
 
     /*
     * Function to loop over all parameters defined in schema and check
@@ -323,5 +330,5 @@ class Schema {
         }
         return new_params
     }
-}
 
+}
