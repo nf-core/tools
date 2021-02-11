@@ -737,7 +737,7 @@ The [nf-core/modules](https://github.com/nf-core/modules) repository was created
 
 To list all available modules, use `nf-core modules list`. To install a module in a DSL2 pipeline, you can run the command `nf-core modules install <pipeline_dir> <module_name>`. Removing a module works similarly: `nf-core modules remove <pipeline_dir> <module_name>`.
 
-You can also lint a clone of the [nf-core/modules](https://github.com/nf-core/modules), which we recommend when you want to add new modules there. The command for linting is `nf-core modules lint <directory> <module>`, where `<module>` can be omitted, in which case all modules are linted. 
+You can also lint a clone of the [nf-core/modules](https://github.com/nf-core/modules), which we recommend when you want to add new modules there. The command for linting is `nf-core modules lint <directory> <module>`, where `<module>` can be omitted, in which case all modules are linted.
 
 ```console
 nf-core modules lint modules fastqc
