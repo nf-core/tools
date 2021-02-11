@@ -67,18 +67,18 @@ def conda_env_yaml(self):
     pipeline_version = self.nf_config.get("manifest.version", "").strip(" '\"")
     expected_env_name = "nf-core-{}-{}".format(self.pipeline_name.lower(), pipeline_version)
     if self.conda_config["name"] != expected_env_name:
-        if not self.fix:
-            failed.append(
-                "Conda environment name is incorrect ({}, should be {})".format(
-                    self.conda_config["name"], expected_env_name
-                )
-            )
-        else:
+        if "conda_env_yaml" in self.fix:
             passed.append("Conda environment name was correct ({})".format(expected_env_name))
             fixed.append(
                 "Fixed Conda environment name: '{}' to '{}'".format(self.conda_config["name"], expected_env_name)
             )
             raw_environment_yml = raw_environment_yml.replace(self.conda_config["name"], expected_env_name)
+        else:
+            failed.append(
+                "Conda environment name is incorrect ({}, should be {})".format(
+                    self.conda_config["name"], expected_env_name
+                )
+            )
     else:
         passed.append("Conda environment name was correct ({})".format(expected_env_name))
 
@@ -114,12 +114,12 @@ def conda_env_yaml(self):
                     # Check version is latest available
                     last_ver = self.conda_package_info[dep].get("latest_version")
                     if last_ver is not None and last_ver != depver:
-                        if not self.fix:
-                            warned.append("Conda dep outdated: `{}`, `{}` available".format(dep, last_ver))
-                        else:
+                        if "conda_env_yaml" in self.fix:
                             passed.append("Conda package is the latest available: `{}`".format(dep))
                             fixed.append("Conda package updated: '{}' to '{}'".format(dep, last_ver))
                             raw_environment_yml = raw_environment_yml.replace(dep, f"{depname}={last_ver}")
+                        else:
+                            warned.append("Conda dep outdated: `{}`, `{}` available".format(dep, last_ver))
                     else:
                         passed.append("Conda package is the latest available: `{}`".format(dep))
 
@@ -153,16 +153,16 @@ def conda_env_yaml(self):
                             continue  # No need to test latest version, if not available
                         pip_last_ver = self.conda_package_info[pip_dep].get("info").get("version")
                         if pip_last_ver is not None and pip_last_ver != pip_depver:
-                            if not self.fix:
+                            if "conda_env_yaml" in self.fix:
+                                passed.append("PyPI package is latest available: {}".format(pip_depver))
+                                fixed.append("PyPI package updated: '{}' to '{}'".format(pip_depname, pip_last_ver))
+                                raw_environment_yml = raw_environment_yml.replace(pip_depver, pip_last_ver)
+                            else:
                                 warned.append(
                                     "PyPI package is not latest available: {}, {} available".format(
                                         pip_depver, pip_last_ver
                                     )
                                 )
-                            else:
-                                passed.append("PyPI package is latest available: {}".format(pip_depver))
-                                fixed.append("PyPI package updated: '{}' to '{}'".format(pip_depname, pip_last_ver))
-                                raw_environment_yml = raw_environment_yml.replace(pip_depver, pip_last_ver)
                         else:
                             passed.append("PyPI package is latest available: {}".format(pip_depver))
             self.progress_bar.update(pip_progress, visible=False)
@@ -170,7 +170,7 @@ def conda_env_yaml(self):
 
     # NB: It would be a lot easier to just do a yaml.dump on the dictionary we have,
     # but this discards all formatting and comments which is a pain.
-    if self.fix and len(fixed) > 0:
+    if "conda_env_yaml" in self.fix and len(fixed) > 0:
         with open(env_path, "w") as fh:
             fh.write(raw_environment_yml)
 

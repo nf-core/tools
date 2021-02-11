@@ -145,13 +145,13 @@ def files_unchanged(self):
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
                         passed.append(f"'{f}' matches the template")
                     else:
-                        if not self.fix:
-                            failed.append(f"'{f}' does not match the template")
-                        else:
+                        if "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
                             shutil.copy(_tf(f), _pf(f))
                             passed.append(f"'{f}' matches the template")
                             fixed.append(f"'{f}' overwritten with template file")
+                        else:
+                            failed.append(f"'{f}' does not match the template")
                 except FileNotFoundError:
                     pass
 
@@ -178,9 +178,7 @@ def files_unchanged(self):
                     if template_file in pipeline_file:
                         passed.append(f"'{f}' matches the template")
                     else:
-                        if not self.fix:
-                            failed.append(f"'{f}' does not match the template")
-                        else:
+                        if "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
                             with open(_tf(f), "r") as fh:
                                 template_file = fh.read()
@@ -188,6 +186,8 @@ def files_unchanged(self):
                                 fh.write(template_file)
                             passed.append(f"'{f}' matches the template")
                             fixed.append(f"'{f}' overwritten with template file")
+                        else:
+                            failed.append(f"'{f}' does not match the template")
                 except FileNotFoundError:
                     pass
 

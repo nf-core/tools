@@ -25,7 +25,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def run_linting(pipeline_dir, release_mode=False, fix=False, show_passed=False, md_fn=None, json_fn=None):
+def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_fn=None, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -114,7 +114,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .schema_params import schema_params
     from .actions_schema_validation import actions_schema_validation
 
-    def __init__(self, wf_path, release_mode=False, fix=False):
+    def __init__(self, wf_path, release_mode=False, fix=()):
         """ Initialise linting object """
 
         # Initialise the parent object
@@ -194,7 +194,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         log.info(f"Testing pipeline: [magenta]{self.wf_path}")
         if self.release_mode:
             log.info("Including --release mode tests")
-        if self.fix:
+        if len(self.fix):
             log.info("Attempting to automatically fix failing tests")
             # Check that the pipeline_dir is a git repo
             try:
@@ -311,14 +311,14 @@ class PipelineLint(nf_core.utils.Pipeline):
             r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
             style="green",
         )
-        if self.fix:
+        if len(self.fix):
             table.add_row(r"[?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), style="bright_blue")
         table.add_row(r"[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
         table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
 
-        if len(self.failed) and not self.fix:
+        if len(self.failed):
             console.print("Tip: Running with '--fix' can automatically resolve some lint failures.")
 
     def _get_results_md(self):
