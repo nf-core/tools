@@ -336,6 +336,10 @@ class PipelineLint(nf_core.utils.Pipeline):
             console.print(
                 f"\nTip: Some of these linting errors can automatically resolved with the following command:\n\n[blue]    {fix_cmd}\n"
             )
+        if len(self.fix):
+            console.print(
+                "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
+            )
 
     def _get_results_md(self):
         """

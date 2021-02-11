@@ -21,6 +21,7 @@
 
 ### Linting
 
+* Added new option `--fix` to automatically correct some problems detected by linting
 * Added validation of default params to `nf-core schema lint` [[#823](https://github.com/nf-core/tools/issues/823)]
 * Added schema validation of GitHub action workflows to lint function [[#795](https://github.com/nf-core/tools/issues/795)]
 * Fixed bug in schema title and description validation

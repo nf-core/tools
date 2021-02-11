@@ -342,7 +342,7 @@ class LocalWorkflow(object):
 
             # Use `nextflow info` to get more details about the workflow
             else:
-                nfinfo_raw = str(nf_core.utils.nextflow_cmd(f"nextflow indo -d {self.full_name}"))
+                nfinfo_raw = str(nf_core.utils.nextflow_cmd(f"nextflow info -d {self.full_name}"))
                 re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
                 for key, pattern in re_patterns.items():
                     m = re.search(pattern, nfinfo_raw)
