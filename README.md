@@ -508,27 +508,64 @@ $ nf-core lint .
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
-    nf-core/tools version 1.10.dev0
+    nf-core/tools version 1.13.dev0
 
 
   INFO     Testing pipeline: nf-core-testpipeline/
 ╭──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ [!] 3 Test Warnings                                                                                      │
 ├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ https://nf-co.re/errors#5: GitHub Actions AWS full test should test full datasets: nf-core-testpipeline… │
-│ https://nf-co.re/errors#8: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                 │
-│ https://nf-co.re/errors#8: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                      │
+│ actions_awsfulltest: .github/workflows/awsfulltest.yml should test full datasets, not -profile test      │
+│ conda_env_yaml: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                            │
+│ conda_env_yaml: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                                 │
 ╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭───────────────────────╮
 │ LINT RESULTS SUMMARY  │
 ├───────────────────────┤
-│ [✔] 117 Tests Passed  │
+│ [✔] 155 Tests Passed  │
+│ [?]   0 Tests Ignored │
 │ [!]   3 Test Warnings │
-│ [✗]   0 Test Failed   │
+│ [✗]   0 Tests Failed  │
 ╰───────────────────────╯
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
+
+### Linting config
+
+It's sometimes desirable to disable certain lint tests, especially if you're using nf-core/tools with your
+own pipeline that is outside of nf-core.
+
+To help with this, you can add a linting config file to your pipeline called `.nf-core-lint.yml` or
+`.nf-core-lint.yaml` in the pipeline root directory. Here you can list the names of any tests that you
+would like to disable and set them to `False`, for example:
+
+```yaml
+actions_awsfulltest: False
+pipeline_todos: False
+```
+
+Some lint tests allow greater granularity, for example skipping a test only for a specific file.
+This is documented in the test-specific docs but generally involves passing a list, for example:
+
+```yaml
+files_exist:
+  - CODE_OF_CONDUCT.md
+files_unchanged:
+  - assets/email_template.html
+  - CODE_OF_CONDUCT.md
+```
+
+### Fixing errors
+
+Some lint tests can try to automatically fix any issues they find. To enable this functionality, use the `--fix` flag.
+The pipeline must be a `git` repository with no uncommitted changes for this to work.
+This is so that any automated changes can then be reviewed and undone (`git checkout .`) if you disagree.
+
+### Lint results output
+
+The output from `nf-core lint` is designed to be viewed on the command line and is deliberately succinct.
+You can view all passed tests with `--show-passed` or generate JSON / markdown results with the `--json` and `--markdown` flags.
 
 ## Working with pipeline schema
 
