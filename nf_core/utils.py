@@ -233,7 +233,7 @@ def fetch_wf_config(wf_path):
 def nextflow_cmd(cmd):
     """Run a Nextflow command and capture the output. Handle errors nicely"""
     try:
-        nf_proc = subprocess.run(shlex.split(cmd), capture_output=True, check=True)
+        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
         return nf_proc.stdout
     except OSError as e:
         if e.errno == errno.ENOENT:
