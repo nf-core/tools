@@ -194,9 +194,19 @@ class PipelineLint(nf_core.utils.Pipeline):
         log.info(f"Testing pipeline: [magenta]{self.wf_path}")
         if self.release_mode:
             log.info("Including --release mode tests")
+
+        # Check that we recognise all --fix arguments
+        unrecognised_fixes = list(test for test in self.fix if test not in self.lint_tests)
+        if len(unrecognised_fixes):
+            raise AssertionError(
+                "Unrecognised lint test{} for '--fix': '{}'".format(
+                    "s" if len(unrecognised_fixes) > 1 else "", "', '".join(unrecognised_fixes)
+                )
+            )
+
+        # Check that the pipeline_dir is a clean git repo
         if len(self.fix):
             log.info("Attempting to automatically fix failing tests")
-            # Check that the pipeline_dir is a git repo
             try:
                 repo = git.Repo(self.wf_path)
             except git.exc.InvalidGitRepositoryError as e:
