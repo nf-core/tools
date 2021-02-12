@@ -250,15 +250,12 @@ class PipelineSync(object):
         """
         try:
             log.info("Checking for open PRs from template merge branches")
-            # Get list of all branches
-            branch_list = [b.name for b in self.repo.branches]
-            # Subset to template merging branches
-            branch_list = [b for b in branch_list if b.startswith("nf-core-template-merge-")]
             # Check for open PRs and close if found
-            for branch in branch_list:
+            for branch in [b.name for b in self.repo.branches if b.name.startswith("nf-core-template-merge-")]:
                 self.close_open_pr(branch)
         except Exception as e:
-            raise log.error("Could not close open pull requests! {}".format(e))
+            log.error("Could not close open pull requests! {}".format(e))
+            raise
 
     def close_open_pr(self, branch):
         """Given a branch, check for open PRs from that branch to self.from_branch
@@ -266,9 +263,7 @@ class PipelineSync(object):
         """
         log.info("Checking branch: {}".format(branch))
         # Look for existing pull-requests
-        list_prs_url = "https://api.github.com/repos/{}/pulls?head={}&base={}".format(
-            self.gh_repo, branch, self.from_branch
-        )
+        list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls?head={branch}&base={self.from_branch}"
         r = requests.get(
             url=list_prs_url,
             auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
@@ -319,7 +314,7 @@ class PipelineSync(object):
                 return True
             # Something went wrong
             else:
-                log.warning("Could not close PR ('{}'):\n{}\n{}".format(r.status_code, pr_update_api_url, r_pp))
+                log.warning(f"Could not close PR ('{r.status_code}'):\n{pr_update_api_url}\n{r_pp}")
                 return False
 
         # Something went wrong
@@ -351,8 +346,8 @@ class PipelineSync(object):
         log.info("Checking out merge base branch {}".format(self.merge_branch))
         try:
             self.repo.create_head(self.merge_branch)
-        except git.exc.GitCommandError:
-            raise SyncException("Could not create new branch '{}'".format(self.merge_branch))
+        except git.exc.GitCommandError as e:
+            raise SyncException(f"Could not create new branch '{self.merge_branch}'\n{e}")
 
     def push_merge_branch(self):
         """Push the newly created merge branch to the remote repository"""
@@ -361,7 +356,7 @@ class PipelineSync(object):
             origin = self.repo.remote()
             origin.push(self.merge_branch)
         except git.exc.GitCommandError as e:
-            raise PullRequestException("Could not push {} branch:\n  {}".format(self.merge_branch, e))
+            raise PullRequestException(f"Could not push branch '{self.merge_branch}':\n  {e}")
 
     def make_pull_request(self):
         """Create a pull request to a base branch (default: dev),

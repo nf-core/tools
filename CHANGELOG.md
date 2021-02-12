@@ -18,7 +18,9 @@
   * Singularity images in module files are now discovered and fetched
   * Direct downloads of Singularity images in python allowed (much faster than running `singularity pull`)
   * Downloads now work with `$NXF_SINGULARITY_CACHEDIR` so that pipelines sharing containers have efficient downloads
-* changed behaviour of `nf-core sync` command as discussed in [[#787]](https://github.com/nf-core/tools/issues/787)
+* Changed behaviour of `nf-core sync` command [[#787](https://github.com/nf-core/tools/issues/787)]
+  * Instead of opening or updating a PR from `TEMPLATE` directly to `dev`, a new branch is now created from `TEMPLATE` and a PR opened from this to `dev`.
+  * This is to make it easier to fix merge conflicts without accidentally bringing the entire pipeline history back into the `TEMPLATE` branch (which makes subsequent sync merges much more difficult)
 
 ### Linting
 
