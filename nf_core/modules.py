@@ -258,7 +258,7 @@ class ModuleLint(object):
         self.warned = []
         self.failed = []
 
-    def lint(self, module=None, print_results=True, show_passed=False, lint_local_modules=False):
+    def lint(self, module=None, print_results=True, show_passed=False, local=False):
         """
         Lint all or one specific module
 
@@ -293,8 +293,12 @@ class ModuleLint(object):
             except ValueError as e:
                 raise ModuleLintException("Could not find the specified module: {}".format(module))
 
+        log.info("Linting pipeline: [magenta]{}".format(self.dir))
+        if module:
+            log.info("Linting only {} module".format(module))
+
         # Lint local modules
-        if lint_local_modules:
+        if local and len(local_modules) > 0:
             self.lint_local_modules(local_modules)
 
         # Lint nf-core modules
@@ -310,12 +314,26 @@ class ModuleLint(object):
         Lint a local module
         Only issues warnings instead of failures
         """
-        for mod in local_modules:
-            mod_object = NFCoreModule(module_dir=mod, base_dir=self.dir, repo_type=self.repo_type, local_module=True)
-            mod_object.main_nf = mod
-            mod_object.lint_main_nf()
-            self.warned += mod_object.warned + mod_object.failed
-            self.passed += mod_object.passed
+        progress_bar = rich.progress.Progress(
+            "[bold blue]{task.description}",
+            rich.progress.BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+            transient=True,
+        )
+        with progress_bar:
+            lint_progress = progress_bar.add_task(
+                "Linting local modules", total=len(local_modules), test_name=os.path.basename(local_modules[0])
+            )
+
+            for mod in local_modules:
+                progress_bar.update(lint_progress, advance=1, test_name=os.path.basename(mod))
+                mod_object = NFCoreModule(
+                    module_dir=mod, base_dir=self.dir, repo_type=self.repo_type, local_module=True
+                )
+                mod_object.main_nf = mod
+                mod_object.lint_main_nf()
+                self.warned += mod_object.warned + mod_object.failed
+                self.passed += mod_object.passed
 
     def lint_nfcore_modules(self, nfcore_modules):
         """
@@ -330,6 +348,26 @@ class ModuleLint(object):
         (repo_type==modules), files that are relevant for module testing are
         also examined
         """
+
+        progress_bar = rich.progress.Progress(
+            "[bold blue]{task.description}",
+            rich.progress.BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+            transient=True,
+        )
+        with progress_bar:
+            lint_progress = progress_bar.add_task(
+                "Linting nf-core modules", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
+            )
+            for mod in nfcore_modules:
+                if "TOOL/SUBTOOL" in mod.module_dir:
+                    continue
+                progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
+                passed, warned, failed = mod.lint()
+                self.passed += passed
+                self.warned += warned
+                self.failed += failed
+
         for mod in nfcore_modules:
             if "TOOL/SUBTOOL" in mod.module_dir:
                 continue

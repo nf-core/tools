@@ -436,7 +436,7 @@ def lint(ctx, pipeline_dir, tool, local):
     """
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
-        module_lint.lint(module=tool, print_results=True, lint_local_modules=local)
+        module_lint.lint(module=tool, print_results=True, local=local)
     except nf_core.modules.ModuleLintException as e:
         log.error(e)
         sys.exit(1)
