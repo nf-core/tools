@@ -239,6 +239,7 @@ class PipelineModules(object):
 class ModulesTestHelper(object):
     def __init__(self, modules_dir=""):
         self.modules_dir = modules_dir
+        self.file_dicts = []
 
     # Add custom dumper class to prevent overwriting the global state
     # This prevents yaml from changing the output order
@@ -271,12 +272,10 @@ class ModulesTestHelper(object):
             # if file, get md5 sum
             if os.path.isfile(elem):
                 elem_md5 = self._md5(elem)
-                md5_sums.append((elem, elem_md5))
+                self.file_dicts.append({"path": elem, "md5sum": elem_md5})
             # if directory, apply recursion
             if os.path.isdir(elem):
                 md5_sums = self._get_md5_sums(elem, md5_sums)
-
-        return md5_sums
 
     def generate_test_yml(self):
         """
@@ -291,19 +290,14 @@ class ModulesTestHelper(object):
             raise FileNotFoundError("Output directory doesn't exist or is empty")
 
         # Get list of files and their md5sums
-        md5_sums = self._get_md5_sums(output_dir)
-
-        # Create yaml output
-        file_dicts = []
-        for elem in md5_sums:
-            file_dicts.append({"path": elem[0], "md5sum": elem[1]})
+        self._get_md5_sums(output_dir)
 
         yml_dict = [
             {
                 "name": "<name of test>",
                 "command": "<command here>",
                 "tags": ["<tag>"],
-                "files": file_dicts,
+                "files": self.file_dicts,
             }
         ]
 
