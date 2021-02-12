@@ -329,9 +329,10 @@ class ModuleLint(object):
             for mod in local_modules:
                 progress_bar.update(lint_progress, advance=1, test_name=os.path.basename(mod))
                 mod_object = NFCoreModule(
-                    module_dir=mod, base_dir=self.dir, repo_type=self.repo_type, local_module=True
+                    module_dir=mod, base_dir=self.dir, repo_type=self.repo_type, nf_core_module=False
                 )
                 mod_object.main_nf = mod
+                mod_object.module_name = os.path.basename(mod)
                 mod_object.lint_main_nf()
                 self.warned += mod_object.warned + mod_object.failed
                 self.passed += mod_object.passed
@@ -521,7 +522,7 @@ class NFCoreModule(object):
     Includes functionality for lintislng
     """
 
-    def __init__(self, module_dir, repo_type, base_dir, local_module=False):
+    def __init__(self, module_dir, repo_type, base_dir, nf_core_module=True):
         self.module_dir = module_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
@@ -530,15 +531,15 @@ class NFCoreModule(object):
         self.failed = []
         self.inputs = []
         self.outputs = []
-        self.module_name = module_dir.split("software" + os.sep)[1]
 
-        if not local_module:
+        if nf_core_module:
             # Initialize the important files
             self.main_nf = os.path.join(self.module_dir, "main.nf")
             self.meta_yml = os.path.join(self.module_dir, "meta.yml")
             self.function_nf = os.path.join(self.module_dir, "functions.nf")
             self.software = self.module_dir.split("software" + os.sep)[1]
             self.test_dir = os.path.join(self.base_dir, "tests", "software", self.software)
+            self.module_name = module_dir.split("software" + os.sep)[1]
 
     def lint(self):
         """ Perform linting on this module """
