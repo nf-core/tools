@@ -9,9 +9,10 @@
 ----------------------------------------------------------------------------------------
 */
 
+log.info nfcoreHeader()
+
 def helpMessage() {
     // TODO nf-core: Add to this help message with new command line parameters
-    log.info nfcoreHeader()
     log.info"""
     Usage:
     The typical command for running the pipeline is as follows:
@@ -44,7 +45,6 @@ if (params.help) {
     helpMessage()
     exit 0
 }
-
 
 ////////////////////////////////////////////////////
 /* --         VALIDATE PARAMETERS              -- */
@@ -125,7 +125,6 @@ if (params.input_paths) {
 }
 
 // Header log info
-log.info nfcoreHeader()
 def summary = [:]
 if (workflow.revision) summary['Pipeline Release'] = workflow.revision
 summary['Run Name']         = custom_runName ?: workflow.runName

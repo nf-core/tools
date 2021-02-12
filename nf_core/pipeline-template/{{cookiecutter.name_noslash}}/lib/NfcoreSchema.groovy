@@ -19,28 +19,6 @@ class NfcoreSchema {
     /* groovylint-disable-next-line UnusedPrivateMethodParameter */
     private static ArrayList validateParameters(params, jsonSchema, log) {
         //=====================================================================//
-        // Validate parameters against the schema
-        InputStream inputStream = new File(jsonSchema).newInputStream()
-        JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream))
-        Schema schema = SchemaLoader.load(rawSchema)
-
-        // Clean the parameters
-        def cleanedParams = cleanParameters(params)
-
-        // Convert to JSONObject
-        def jsonParams = new JsonBuilder(cleanedParams)
-        JSONObject paramsJSON = new JSONObject(jsonParams.toString())
-
-        // Validate
-        try {
-            schema.validate(paramsJSON)
-        } catch (ValidationException e) {
-            log.error 'Error, validation of pipeline parameters failed!'
-            JSONObject exceptionJSON = e.toJSON()
-            printExceptions(exceptionJSON, log)
-            System.exit(1)
-        }
-
         // Check for nextflow core params and unexpected params
         def json = new File(jsonSchema).text
         def Map schemaParams = (Map) new JsonSlurper().parseText(json).get('definitions')
@@ -64,22 +42,68 @@ class NfcoreSchema {
                 System.exit(1)
             }
             // unexpected params
-            if (!expectedParams.contains(specifiedParam)) {
+            if (!expectedParams.contains(specifiedParam) && !params.schema_ignore_params.contains(specifiedParam)) {
                 unexpectedParams.push(specifiedParam)
             }
+        }
+
+        //=====================================================================//
+        // Validate parameters against the schema
+        InputStream inputStream = new File(jsonSchema).newInputStream()
+        JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream))
+        Schema schema = SchemaLoader.load(rawSchema)
+
+        // Clean the parameters
+        def cleanedParams = cleanParameters(params)
+
+        // Convert to JSONObject
+        def jsonParams = new JsonBuilder(cleanedParams)
+        JSONObject paramsJSON = new JSONObject(jsonParams.toString())
+
+        // Validate
+        try {
+            schema.validate(paramsJSON)
+        } catch (ValidationException e) {
+            println ""
+            log.error 'Error, validation of pipeline parameters failed!'
+            JSONObject exceptionJSON = e.toJSON()
+            printExceptions(exceptionJSON, paramsJSON, log)
+            if (unexpectedParams.size() > 0){
+                println ""
+                log.error 'Found unexpected parameters:'
+                for (unexpectedParam in unexpectedParams){
+                    log.error "* --${unexpectedParam}: ${paramsJSON[unexpectedParam].toString()}"
+                }
+            }
+            println ""
+            System.exit(1)
         }
 
         return unexpectedParams
     }
 
     // Loop over nested exceptions and print the causingException
-    private static void printExceptions(exJSON, log) {
+    private static void printExceptions(exJSON, paramsJSON, log) {
         def causingExceptions = exJSON['causingExceptions']
         if (causingExceptions.length() == 0) {
-            log.error "- params.${exJSON['pointerToViolation'] - ~/^#\//}: ${exJSON['message']}"
+            def m = exJSON['message'] =~ /required key \[([^\]]+)\] not found/
+            // Missing required param
+            if(m.matches()){
+                log.error "* Missing required parameter: --${m[0][1]}"
+            }
+            // Other base-level error
+            else if(exJSON['pointerToViolation'] == '#'){
+                log.error "* ${exJSON['message']}"
+            }
+            // Error with specific param
+            else {
+                def param = exJSON['pointerToViolation'] - ~/^#\//
+                def param_val = paramsJSON[param].toString()
+                log.error "* --${param}: ${exJSON['message']} (${param_val})"
+            }
         }
         for (ex in causingExceptions) {
-            printExceptions(ex, log)
+            printExceptions(ex, paramsJSON, log)
         }
     }
 
