@@ -85,6 +85,9 @@ class PipelineSync(object):
         if self.make_pr:
             log.info("Will attempt to automatically create a pull request")
 
+        if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
+            raise SyncException("GITHUB_AUTH_TOKEN not set!")
+
         self.inspect_sync_dir()
         self.get_wf_config()
         self.close_open_template_merge_pull_requests()
@@ -248,14 +251,10 @@ class PipelineSync(object):
         and check for any open PRs from these branches to the self.from_branch
         If open PRs are found, add a comment and close them
         """
-        try:
-            log.info("Checking for open PRs from template merge branches")
-            # Check for open PRs and close if found
-            for branch in [b.name for b in self.repo.branches if b.name.startswith("nf-core-template-merge-")]:
-                self.close_open_pr(branch)
-        except Exception as e:
-            log.error("Could not close open pull requests! {}".format(e))
-            raise
+        log.info("Checking for open PRs from template merge branches")
+        # Check for open PRs and close if found
+        for branch in [b.name for b in self.repo.branches if b.name.startswith("nf-core-template-merge-")]:
+            self.close_open_pr(branch)
 
     def close_open_pr(self, branch):
         """Given a branch, check for open PRs from that branch to self.from_branch
