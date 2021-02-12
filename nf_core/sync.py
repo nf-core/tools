@@ -75,6 +75,7 @@ class PipelineSync(object):
 
         self.gh_username = gh_username
         self.gh_repo = gh_repo
+        self.pr_url = ""
 
     def sync(self):
         """Find workflow attributes, create a new template pipeline on TEMPLATE"""
@@ -99,9 +100,9 @@ class PipelineSync(object):
                     raise PullRequestException("GITHUB_AUTH_TOKEN not set!")
                 self.push_template_branch()
                 self.create_merge_base_branch()
-                self.close_open_template_merge_pull_requests()
                 self.push_merge_branch()
                 self.make_pull_request()
+                self.close_open_template_merge_pull_requests()
             except PullRequestException as e:
                 self.reset_target_dir()
                 raise PullRequestException(e)
@@ -281,17 +282,23 @@ class PipelineSync(object):
                 log.info("No open PRs found between {} and {}".format(branch, self.from_branch))
                 return False
 
-            # Close existing PR
-            pr_title = "Important! Template update for nf-core/tools v{} Closed because outdated!".format(
-                nf_core.__version__
-            )
-            pr_body_text = (
+            # Make a new comment
+            comment_text = (
                 "A new release of the main template in nf-core/tools has just been released. "
                 "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
                 "This pull-request is outdated and has been closed. A new pull-request has been created instead."
+                "Link to new PR: {}".format(self.pr_url)
             )
+            comment_content = {"body": comment_text}
+            comments_url = r_json[0]["comments_url"]
+            comment_r = requests.post(
+                url=comments_url,
+                data=json.dumps(comment_content),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+            )
+
             pr_update_api_url = r_json[0]["url"]
-            pr_content = {"state": "closed", "title": pr_title, "body": pr_body_text}
+            pr_content = {"state": "closed"}
 
             r = requests.patch(
                 url=pr_update_api_url,
@@ -419,6 +426,7 @@ class PipelineSync(object):
 
             # PR worked
             if r.status_code == 201:
+                self.pr_url = self.gh_pr_returned_data["html_url"]
                 log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
                 log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
