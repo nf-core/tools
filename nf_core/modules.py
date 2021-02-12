@@ -655,7 +655,7 @@ class NFCoreModule(object):
         process_lines = []
         script_lines = []
         for l in lines:
-            if l.startswith("process") and state == "module":
+            if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
                 state = "process"
             if re.search("input\s*:", l) and state == "process":
                 state = "input"
