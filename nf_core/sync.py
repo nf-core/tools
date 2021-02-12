@@ -85,12 +85,8 @@ class PipelineSync(object):
         if self.make_pr:
             log.info("Will attempt to automatically create a pull request")
 
-        if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
-            raise SyncException("GITHUB_AUTH_TOKEN not set!")
-
         self.inspect_sync_dir()
         self.get_wf_config()
-        self.close_open_template_merge_pull_requests()
         self.checkout_template_branch()
         self.delete_template_branch_files()
         self.make_template_pipeline()
@@ -99,8 +95,11 @@ class PipelineSync(object):
         # Push and make a pull request if we've been asked to
         if self.made_changes and self.make_pr:
             try:
+                if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
+                    raise PullRequestException("GITHUB_AUTH_TOKEN not set!")
                 self.push_template_branch()
                 self.create_merge_base_branch()
+                self.close_open_template_merge_pull_requests()
                 self.push_merge_branch()
                 self.make_pull_request()
             except PullRequestException as e:
