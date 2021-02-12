@@ -18,6 +18,7 @@ from rich.table import Table
 from rich.markdown import Markdown
 import rich
 from nf_core.utils import rich_force_colors
+from nf_core.lint.pipeline_todos import pipeline_todos
 
 log = logging.getLogger(__name__)
 
@@ -524,12 +525,12 @@ class NFCoreModule(object):
         self.module_dir = module_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
-        self.module_name = module_dir.split(os.sep)[-1]
         self.passed = []
         self.warned = []
         self.failed = []
         self.inputs = []
         self.outputs = []
+        self.module_name = module_dir.split("software" + os.sep)[1]
 
         if not local_module:
             # Initialize the important files
@@ -555,6 +556,10 @@ class NFCoreModule(object):
         # Lint the tests
         if self.repo_type == "modules":
             self.lint_module_tests()
+
+        # Check for TODOs
+        self.wf_path = self.module_dir
+        self.warned += pipeline_todos(self)["warned"]
 
         return self.passed, self.warned, self.failed
 
