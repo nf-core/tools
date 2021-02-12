@@ -35,7 +35,7 @@ class NfcoreSchema {
         try {
             schema.validate(paramsJSON)
         } catch (ValidationException e) {
-            log.error 'Found parameter violations!'
+            log.error 'Error, validation of pipeline parameters failed!'
             JSONObject exceptionJSON = e.toJSON()
             printExceptions(exceptionJSON, log)
             System.exit(1)
@@ -76,13 +76,10 @@ class NfcoreSchema {
     private static void printExceptions(exJSON, log) {
         def causingExceptions = exJSON['causingExceptions']
         if (causingExceptions.length() == 0) {
-            log.error "${exJSON['message']} ${exJSON['pointerToViolation']}"
+            log.error "- params.${exJSON['pointerToViolation'] - ~/^#\//}: ${exJSON['message']}"
         }
-        else {
-            log.error exJSON['message']
-            for (ex in causingExceptions) {
-                printExceptions(ex, log)
-            }
+        for (ex in causingExceptions) {
+            printExceptions(ex, log)
         }
     }
 
