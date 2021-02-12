@@ -259,23 +259,17 @@ class ModulesTestHelper(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def _get_md5_sums(self, dir, md5_sums=None):
+    def _get_md5_sums(self, dir):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
         returns: list of tuples
         """
-        if not md5_sums:
-            md5_sums = []
-        elements = glob.glob(dir + "/*")
-        for elem in elements:
-            # if file, get md5 sum
-            if os.path.isfile(elem):
+        for root, dir, file in os.walk(dir):
+            for elem in file:
+                elem = os.path.join(root, elem)
                 elem_md5 = self._md5(elem)
                 self.file_dicts.append({"path": elem, "md5sum": elem_md5})
-            # if directory, apply recursion
-            if os.path.isdir(elem):
-                md5_sums = self._get_md5_sums(elem, md5_sums)
 
     def generate_test_yml(self):
         """
@@ -283,14 +277,12 @@ class ModulesTestHelper(object):
         """
         # Look for output directory
         output_dir = os.path.join(self.modules_dir, "output")
-        try:
-            assert os.path.exists(output_dir)
-            assert len(glob.glob(os.path.join(output_dir, "*"))) > 0
-        except:
-            raise FileNotFoundError("Output directory doesn't exist or is empty")
 
         # Get list of files and their md5sums
         self._get_md5_sums(output_dir)
+
+        if len(self.file_dicts) == 0:
+            log.warn("Could not find any output files. Does the 'output' directory exist?")
 
         yml_dict = [
             {
