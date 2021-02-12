@@ -53,6 +53,17 @@ if (params.help) {
     exit 0
 }
 
+
+////////////////////////////////////////////////////
+/* --         VALIDATE PARAMETERS              -- */
+////////////////////////////////////////////////////+
+def json_schema = "$baseDir/nextflow_schema.json"
+def unexpectedParams = []
+if (params.validate_params) {
+    unexpectedParams = Schema.validateParameters(params, json_schema, log)
+}
+////////////////////////////////////////////////////
+
 /*
  * SET UP CONFIGURATION VARIABLES
  */
@@ -389,6 +400,12 @@ workflow.onComplete {
 
 }
 
+workflow.onError {
+    // Print unexpected parameters
+    for (p in unexpectedParams) {
+        log.warn "Unexpected parameter: ${p}"
+    }
+}
 
 def nfcoreHeader() {
     // Log colors ANSI codes
