@@ -275,8 +275,6 @@ class ModulesTestHelper(object):
             # if directory, apply recursion
             if os.path.isdir(elem):
                 md5_sums = self._get_md5_sums(elem, md5_sums)
-            else:
-                continue
 
         return md5_sums
 
@@ -311,4 +309,3 @@ class ModulesTestHelper(object):
 
         # print yaml to console
         print(yaml.dump(yml_dict, Dumper=self.CustomDumper))
-        return True
