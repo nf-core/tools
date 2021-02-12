@@ -426,7 +426,8 @@ def check(ctx):
     metavar="<tool name>",
 )
 @click.option("--local", is_flag=True, help="Additional lint local modules")
-def lint(ctx, pipeline_dir, tool, local):
+@click.option("--passed", is_flag=True, help="Show passed tests")
+def lint(ctx, pipeline_dir, tool, local, passed):
     """
     Lint all modules or a specified one in a pipeline directory.
 
@@ -436,7 +437,7 @@ def lint(ctx, pipeline_dir, tool, local):
     """
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
-        module_lint.lint(module=tool, print_results=True, local=local)
+        module_lint.lint(module=tool, print_results=True, local=local, show_passed=passed)
     except nf_core.modules.ModuleLintException as e:
         log.error(e)
         sys.exit(1)

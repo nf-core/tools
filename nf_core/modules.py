@@ -303,7 +303,8 @@ class ModuleLint(object):
             self.lint_local_modules(local_modules)
 
         # Lint nf-core modules
-        self.lint_nfcore_modules(nfcore_modules)
+        if len(nfcore_modules) > 0:
+            self.lint_nfcore_modules(nfcore_modules)
 
         if print_results:
             self._print_results(show_passed=show_passed)
@@ -369,15 +370,6 @@ class ModuleLint(object):
                 self.passed += passed
                 self.warned += warned
                 self.failed += failed
-
-        for mod in nfcore_modules:
-            if "TOOL/SUBTOOL" in mod.module_dir:
-                continue
-
-            passed, warned, failed = mod.lint()
-            self.passed += passed
-            self.warned += warned
-            self.failed += failed
 
     def get_repo_type(self):
         """
@@ -606,8 +598,8 @@ class NFCoreModule(object):
             if not rk in meta_yaml.keys():
                 self.failed.append("{} not specified in {}".format(rk, self.meta_yml))
                 contains_required_keys = False
-            if contains_required_keys:
-                self.passed.append("{} contains all required keys".format(self.meta_yml))
+        if contains_required_keys:
+            self.passed.append("{} contains all required keys".format(self.meta_yml))
 
         # Confirm that all input and output channels are specified
         meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
@@ -629,19 +621,6 @@ class NFCoreModule(object):
             self.passed.append("Correct name specified in meta.yml: ".format(self.meta_yml))
         else:
             self.failed.append("Name in meta.yml doesn't match process name in main.nf: ".format(self.meta_yml))
-
-        # TODO --> decide whether we want/need this test? or make it silent for now
-        # Check that 'name' adheres to guidelines
-        software_name = self.meta_yml.split("software")[1].split(os.sep)[1]
-        if self.module_name == software_name:
-            required_name = self.module_name
-        else:
-            required_name = software_name + " " + self.module_name
-
-        if meta_yaml["name"] == required_name:
-            self.passed.append("meta.yaml module name is correct: {}".format(self.module_name))
-        else:
-            self.warned.append("meta.yaml module name not according to guidelines: {}".format(self.module_name))
 
     def lint_main_nf(self):
         """
@@ -828,7 +807,7 @@ class NFCoreModule(object):
                         "Bioconda version outdated: `{}`, `{}` available ({})".format(bp, last_ver, self.module_name)
                     )
                 else:
-                    self.passed.append("Biocnda package is the latest available: `{}`".format(bp))
+                    self.passed.append("Bioconda package is the latest available: `{}`".format(bp))
 
         if all_packages_have_build_numbers:
             self.passed.append("All bioconda packages have build numbers in {}".format(self.module_name))
