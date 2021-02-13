@@ -18,6 +18,7 @@ class NfcoreSchema {
     */
     /* groovylint-disable-next-line UnusedPrivateMethodParameter */
     private static ArrayList validateParameters(params, jsonSchema, log) {
+        def has_error = false
         //=====================================================================//
         // Check for nextflow core params and unexpected params
         def json = new File(jsonSchema).text
@@ -107,7 +108,7 @@ class NfcoreSchema {
             // nextflow params
             if (nf_params.contains(specifiedParam)) {
                 log.error "ERROR: You used a core Nextflow option with two hyphens: '--${specifiedParam}'. Please resubmit with '-${specifiedParam}'"
-                System.exit(1)
+                has_error = true
             }
             // unexpected params
             if (!expectedParams.contains(specifiedParam) && !params.schema_ignore_params.contains(specifiedParam)) {
@@ -133,17 +134,22 @@ class NfcoreSchema {
             schema.validate(paramsJSON)
         } catch (ValidationException e) {
             println ""
-            log.error 'Error, validation of pipeline parameters failed!'
+            log.error 'ERROR: Validation of pipeline parameters failed!'
             JSONObject exceptionJSON = e.toJSON()
             printExceptions(exceptionJSON, paramsJSON, log)
             if (unexpectedParams.size() > 0){
                 println ""
-                log.error 'Found unexpected parameters:'
+                def warn_msg = 'Found unexpected parameters:'
                 for (unexpectedParam in unexpectedParams){
-                    log.error "* --${unexpectedParam}: ${paramsJSON[unexpectedParam].toString()}"
+                    warn_msg = warn_msg + "\n* --${unexpectedParam}: ${paramsJSON[unexpectedParam].toString()}"
                 }
+                log.warn warn_msg
             }
             println ""
+            has_error = true
+        }
+
+        if(has_error){
             System.exit(1)
         }
 
