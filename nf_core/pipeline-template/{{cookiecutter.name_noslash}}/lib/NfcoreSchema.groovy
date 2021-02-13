@@ -111,7 +111,8 @@ class NfcoreSchema {
                 has_error = true
             }
             // unexpected params
-            if (!expectedParams.contains(specifiedParam) && !params.schema_ignore_params.contains(specifiedParam)) {
+            def params_ignore = params.schema_ignore_params.split(',') + 'schema_ignore_params'
+            if (!expectedParams.contains(specifiedParam) && !params_ignore.contains(specifiedParam)) {
                 unexpectedParams.push(specifiedParam)
             }
         }
