@@ -240,8 +240,8 @@ process multiqc {
     rtitle = ''
     rfilename = ''
     if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
-        rtitle = "--title \"${workflow.runName}\"" : ''
-        rfilename = "--filename " + workflow.runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report" : ''
+        rtitle = "--title \"${workflow.runName}\""
+        rfilename = "--filename " + workflow.runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report"
     }
     custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
     // TODO nf-core: Specify which MultiQC modules to use with -m for a faster run time

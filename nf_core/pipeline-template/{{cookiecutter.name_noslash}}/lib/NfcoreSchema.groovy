@@ -106,7 +106,7 @@ class NfcoreSchema {
         for (specifiedParam in specifiedParamKeys) {
             // nextflow params
             if (nf_params.contains(specifiedParam)) {
-                log.error "ERROR: You used a core Nextflow option with two hyphens: --${specifiedParam}! Please resubmit with one."
+                log.error "ERROR: You used a core Nextflow option with two hyphens: '--${specifiedParam}'. Please resubmit with '-${specifiedParam}'"
                 System.exit(1)
             }
             // unexpected params
