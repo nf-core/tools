@@ -38,7 +38,9 @@ def files_unchanged(self):
         'bin/markdown_to_html.py',
         'conf/charliecloud.config',
         'docs/README.md',
-        'docs/images/nf-core-PIPELINE_logo.png'
+        'docs/images/nf-core-PIPELINE_logo.png',
+        'lib/NfcoreSchema.groovy',
+        'lib/nfcore_external_java_deps.jar'
 
     Files that can have additional content but must include the template contents::
 
@@ -97,6 +99,8 @@ def files_unchanged(self):
         [os.path.join("conf", "charliecloud.config")],
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "images", "nf-core-{}_logo.png".format(short_name))],
+        [os.path.join("lib", "NfcoreSchema.groovy")],
+        [os.path.join("lib", "nfcore_external_java_deps.jar")],
     ]
     files_partial = [
         [".gitignore", "foo"],

@@ -27,7 +27,9 @@ def files_exist(self):
         'docs/usage.md',
         '.github/workflows/branch.yml',
         '.github/workflows/ci.yml',
-        '.github/workflows/linting.yml'
+        '.github/workflows/linting.yml',
+        'lib/NfcoreSchema.groovy',
+        'lib/nfcore_external_java_deps.jar'
 
     Files that *should* be present::
 
@@ -71,6 +73,8 @@ def files_exist(self):
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
         [os.path.join(".github", "workflows", "linting.yml")],
+        [os.path.join("lib","NfcoreSchema.groovy")],
+        [os.path.join("lib","nfcore_external_java_deps.jar")]
     ]
     files_warn = [
         ["main.nf"],
