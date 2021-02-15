@@ -15,6 +15,7 @@
 * Changed default for `--input` from `data/*{1,2}.fastq.gz` to `null`, as this is now validated by the schema as a required value.
 * Removed support for `--name` parameter for custom run names.
   * The same functionality for MultiQC still exists with the core Nextflow `-name` option.
+* Added to template docs about how to identify process name for resource customisation
 
 ### Modules
 
