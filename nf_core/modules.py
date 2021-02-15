@@ -295,3 +295,4 @@ class ModulesTestHelper(object):
 
         # print yaml to console
         print(yaml.dump(yml_dict, Dumper=self.CustomDumper))
+        return yaml.dump(yml_dict, Dumper=self.CustomDumper)
