@@ -8,6 +8,7 @@ import base64
 import logging
 import os
 import re
+import hashlib
 import requests
 import sys
 import tempfile
@@ -284,7 +285,6 @@ class ModuleLint(object):
         local_modules, nfcore_modules = self.get_installed_modules()
 
         # Only lint the given module
-        # TODO --> decide whether to implement this for local modules as well
         if module:
             local_modules = []
             nfcore_modules_names = [m.module_name for m in nfcore_modules]
@@ -294,9 +294,9 @@ class ModuleLint(object):
             except ValueError as e:
                 raise ModuleLintException("Could not find the specified module: {}".format(module))
 
-        log.info("Linting pipeline: [magenta]{}".format(self.dir))
+        log.info(f"Linting pipeline: [magenta]{self.dir}")
         if module:
-            log.info("Linting only {} module".format(module))
+            log.info(f"Linting module: [magenta]{module}")
 
         # Lint local modules
         if local and len(local_modules) > 0:
@@ -305,6 +305,8 @@ class ModuleLint(object):
         # Lint nf-core modules
         if len(nfcore_modules) > 0:
             self.lint_nfcore_modules(nfcore_modules)
+
+            self.check_module_changes(nfcore_modules)
 
         if print_results:
             self._print_results(show_passed=show_passed)
@@ -506,6 +508,46 @@ class ModuleLint(object):
         table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
+
+    def get_sha(self, file):
+        """ Calcualte the SHA256 sum for a file """
+        sha_hash = hashlib.sha1()
+        with open(file, "rb") as f:
+            for byte_block in iter(lambda: f.read(4096), b""):
+                sha_hash.update(byte_block)
+        return sha_hash.hexdigest()
+
+    def check_module_changes(self, nfcore_modules):
+        """
+        Checks whether installed nf-core modules have changed compared to the
+        original repository
+        """
+        passed = []
+        failed = []
+
+        pipeline_modules = PipelineModules()
+        pipeline_modules.pipeline_dir = self.dir
+        pipeline_modules.get_modules_file_tree()
+
+        # Compare sha sums for files
+        for mod in nfcore_modules:
+            # for testing
+            if mod.module_name == "pangolin":
+                print(mod.module_name)
+                # check main.nf
+                main_nf_sha = self.get_sha(os.path.join(mod.module_dir, "main.nf"))
+                files = pipeline_modules.get_module_file_urls(mod.module_name)
+                for filename, api_url in files.items():
+                    # Call the GitHub API
+                    r = requests.get(api_url)
+                    if r.status_code != 200:
+                        raise SystemError(
+                            "Could not fetch {} file: {}\n {}".format(self.modules_repo.name, r.status_code, api_url)
+                        )
+                    result = r.json()
+                    file_contents = base64.b64decode(result["content"])
+
+        return {"passed": passed, "failed": failed}
 
 
 class NFCoreModule(object):
