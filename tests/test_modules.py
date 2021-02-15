@@ -80,4 +80,4 @@ class TestModules(unittest.TestCase):
         modules_test_helper = nf_core.modules.ModulesTestHelper(modules_dir="./")
         res = yaml.safe_load(modules_test_helper.generate_test_yml())
         shutil.rmtree("output")
-        assert res[3][1] == "d41d8cd98f00b204e9800998ecf8427e"
+        assert res[0]["files"][0]["md5sum"] == "d41d8cd98f00b204e9800998ecf8427e"
