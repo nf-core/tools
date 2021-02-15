@@ -254,6 +254,9 @@ class PipelineSync(object):
         log.info("Checking for open PRs from template merge branches")
         # Check for open PRs and close if found
         for branch in [b.name for b in self.repo.branches if b.name.startswith("nf-core-template-merge-")]:
+            # Don't close the new merge branch
+            if branch == self.merge_branch:
+                continue
             self.close_open_pr(branch)
 
     def close_open_pr(self, branch):
