@@ -340,10 +340,10 @@ class PipelineSync(object):
             # Try to create new branch with number at the end
             # If <branch_name>-2 already exists, increase the number until branch is new
             branch_no = 2
-            self.merge_branch = original_merge_branch + "-" + str(branch_no)
+            self.merge_branch = f"{original_merge_branch}-{branch_no}"
             while self.merge_branch in branch_list:
                 branch_no += 1
-                self.merge_branch = original_merge_branch + "-" + str(branch_no)
+                self.merge_branch = f"{original_merge_branch}-{branch_no}"
             log.info(
                 "Branch already existed: '{}', creating branch '{}' instead.".format(
                     original_merge_branch, self.merge_branch
@@ -376,15 +376,6 @@ class PipelineSync(object):
         if self.gh_username is None and self.gh_repo is None:
             raise PullRequestException("Could not find GitHub username and repo name")
 
-        # If we've been asked to make a PR, check that we have the credentials
-        if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
-            raise PullRequestException(
-                "Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR\n"
-                "Make a PR at the following URL:\n  https://github.com/{}/compare/{}...TEMPLATE".format(
-                    self.gh_repo, self.original_branch
-                )
-            )
-
         log.info("Submitting a pull request via the GitHub API")
 
         pr_title = "Important! Template update for nf-core/tools v{}".format(nf_core.__version__)
@@ -406,40 +397,35 @@ class PipelineSync(object):
         """
         Create a new pull-request on GitHub
         """
-        if not os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
-            pr_content = {
-                "title": pr_title,
-                "body": pr_body_text,
-                "maintainer_can_modify": True,
-                "head": self.merge_branch,
-                "base": self.from_branch,
-            }
+        pr_content = {
+            "title": pr_title,
+            "body": pr_body_text,
+            "maintainer_can_modify": True,
+            "head": self.merge_branch,
+            "base": self.from_branch,
+        }
 
-            r = requests.post(
-                url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-                data=json.dumps(pr_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
-            )
-            try:
-                self.gh_pr_returned_data = json.loads(r.content)
-                returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
-            except:
-                self.gh_pr_returned_data = r.content
-                returned_data_prettyprint = r.content
+        r = requests.post(
+            url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
+            data=json.dumps(pr_content),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+        )
+        try:
+            self.gh_pr_returned_data = json.loads(r.content)
+            returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
+        except:
+            self.gh_pr_returned_data = r.content
+            returned_data_prettyprint = r.content
 
-            # PR worked
-            if r.status_code == 201:
-                self.pr_url = self.gh_pr_returned_data["html_url"]
-                log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
-                log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
+        # PR worked
+        if r.status_code == 201:
+            self.pr_url = self.gh_pr_returned_data["html_url"]
+            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
+            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
 
-            # Something went wrong
-            else:
-                raise PullRequestException(
-                    "GitHub API returned code {}: \n{}".format(r.status_code, returned_data_prettyprint)
-                )
+        # Something went wrong
         else:
-            raise PullRequestException("Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR")
+            raise PullRequestException(f"GitHub API returned code {r.status_code}: \n{returned_data_prettyprint}")
 
     def reset_target_dir(self):
         """
