@@ -299,15 +299,16 @@ class PipelineSync(object):
 
         pr_title = f"Important! Template update for nf-core/tools v{nf_core.__version__}"
         pr_body_text = (
-            "A new release of the main template in nf-core/tools has just been released. "
+            "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
             "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
-            "Please make sure to merge this pull-request as soon as possible. "
+            "Please make sure to merge this pull-request as soon as possible, "
+            "resolving any merge conflicts in the `{merge_branch}` branch (or your own fork, if you prefer). "
             "Once complete, make a new minor release of your pipeline. "
             "For instructions on how to merge this PR, please see "
             "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
-            "please see the [nf-core/tools v{tag} release page](https://github.com/nf-core/tools/releases/tag/{tag})."
-        ).format(tag=nf_core.__version__)
+            "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
+        ).format(tag=nf_core.__version__, mb=self.merge_branch)
 
         # Make new pull-request
         pr_content = {
