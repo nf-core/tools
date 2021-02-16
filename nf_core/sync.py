@@ -108,7 +108,7 @@ class PipelineSync(object):
                 self.create_merge_base_branch()
                 self.push_merge_branch()
                 self.make_pull_request()
-                self.close_open_template_merge_pull_requests()
+                self.close_open_template_merge_prs()
             except PullRequestException as e:
                 self.reset_target_dir()
                 raise PullRequestException(e)
@@ -340,7 +340,7 @@ class PipelineSync(object):
         else:
             raise PullRequestException(f"GitHub API returned code {r.status_code}: \n{returned_data_prettyprint}")
 
-    def close_open_template_merge_pull_requests(self):
+    def close_open_template_merge_prs(self):
         """Get all template merging branches (starting with 'nf-core-template-merge-')
         and check for any open PRs from these branches to the self.from_branch
         If open PRs are found, add a comment and close them
