@@ -148,15 +148,15 @@ def files_unchanged(self):
             for f in files:
                 try:
                     if filecmp.cmp(_pf(f), _tf(f), shallow=True):
-                        passed.append(f"'{f}' matches the template")
+                        passed.append(f"`{f}` matches the template")
                     else:
                         if "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
                             shutil.copy(_tf(f), _pf(f))
-                            passed.append(f"'{f}' matches the template")
-                            fixed.append(f"'{f}' overwritten with template file")
+                            passed.append(f"`{f}` matches the template")
+                            fixed.append(f"`{f}` overwritten with template file")
                         else:
-                            failed.append(f"'{f}' does not match the template")
+                            failed.append(f"`{f}` does not match the template")
                             could_fix = True
                 except FileNotFoundError:
                     pass
@@ -182,7 +182,7 @@ def files_unchanged(self):
                     with open(_tf(f), "r") as fh:
                         template_file = fh.read()
                     if template_file in pipeline_file:
-                        passed.append(f"'{f}' matches the template")
+                        passed.append(f"`{f}` matches the template")
                     else:
                         if "files_unchanged" in self.fix:
                             # Try to fix the problem by overwriting the pipeline file
@@ -190,10 +190,10 @@ def files_unchanged(self):
                                 template_file = fh.read()
                             with open(_pf(f), "w") as fh:
                                 fh.write(template_file)
-                            passed.append(f"'{f}' matches the template")
-                            fixed.append(f"'{f}' overwritten with template file")
+                            passed.append(f"`{f}` matches the template")
+                            fixed.append(f"`{f}` overwritten with template file")
                         else:
-                            failed.append(f"'{f}' does not match the template")
+                            failed.append(f"`{f}` does not match the template")
                             could_fix = True
                 except FileNotFoundError:
                     pass
