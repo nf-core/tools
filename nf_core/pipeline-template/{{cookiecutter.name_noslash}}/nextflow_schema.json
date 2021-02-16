@@ -104,6 +104,11 @@
                         "move"
                     ]
                 },
+                "validate_params": {
+                    "type": "boolean",
+                    "description": "Boolean whether to validate parameters against the schema at runtime",
+                    "default": true
+                },
                 "name": {
                     "type": "string",
                     "description": "Workflow name.",
