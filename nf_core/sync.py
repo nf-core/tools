@@ -252,89 +252,6 @@ class PipelineSync(object):
         except git.exc.GitCommandError as e:
             raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
 
-    def close_open_template_merge_pull_requests(self):
-        """Get all template merging branches (starting with 'nf-core-template-merge-')
-        and check for any open PRs from these branches to the self.from_branch
-        If open PRs are found, add a comment and close them
-        """
-        log.info("Checking for open PRs from template merge branches")
-        # Check for open PRs and close if found
-        for branch in [b.name for b in self.repo.branches if b.name.startswith("nf-core-template-merge-")]:
-            # Don't close the new merge branch
-            if branch == self.merge_branch:
-                continue
-            self.close_open_pr(branch)
-
-    def close_open_pr(self, branch):
-        """Given a branch, check for open PRs from that branch to self.from_branch
-        and close if PRs have been found
-        """
-        log.info("Checking branch: {}".format(branch))
-        # Look for existing pull-requests
-        list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls?head={branch}&base={self.from_branch}"
-        r = requests.get(
-            url=list_prs_url,
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
-        try:
-            r_json = json.loads(r.content)
-            r_pp = json.dumps(r_json, indent=4)
-        except:
-            r_json = r.content
-            r_pp = r.content
-
-        if r.status_code == 200:
-            log.debug("GitHub API listing existing PRs:\n{}".format(r_pp))
-
-            # No open PRs
-            if len(r_json) == 0:
-                log.info("No open PRs found between {} and {}".format(branch, self.from_branch))
-                return False
-
-            # Make a new comment
-            comment_text = (
-                "A new release of the main template in nf-core/tools has just been released. "
-                "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
-                "This pull-request is outdated and has been closed. A new pull-request has been created instead."
-                "Link to new PR: {}".format(self.pr_url)
-            )
-            comment_content = {"body": comment_text}
-            comments_url = r_json[0]["comments_url"]
-            comment_r = requests.post(
-                url=comments_url,
-                data=json.dumps(comment_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
-
-            pr_update_api_url = r_json[0]["url"]
-            pr_content = {"state": "closed"}
-
-            r = requests.patch(
-                url=pr_update_api_url,
-                data=json.dumps(pr_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
-            try:
-                r_json = json.loads(r.content)
-                r_pp = json.dumps(r_json, indent=4)
-            except:
-                r_json = r.content
-                r_pp = r.content
-
-            # PR update worked
-            if r.status_code == 200:
-                log.debug("GitHub API PR-update worked:\n{}".format(r_pp))
-                log.info("Closed GitHub PR: {}".format(r_json["html_url"]))
-                return True
-            # Something went wrong
-            else:
-                log.warning(f"Could not close PR ('{r.status_code}'):\n{pr_update_api_url}\n{r_pp}")
-                return False
-
-        # Something went wrong
-        else:
-            log.warning("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
-
     def create_merge_base_branch(self):
         """Create a new branch from the updated TEMPLATE branch
         This branch will then be used to create the PR
@@ -422,6 +339,89 @@ class PipelineSync(object):
         # Something went wrong
         else:
             raise PullRequestException(f"GitHub API returned code {r.status_code}: \n{returned_data_prettyprint}")
+
+    def close_open_template_merge_pull_requests(self):
+        """Get all template merging branches (starting with 'nf-core-template-merge-')
+        and check for any open PRs from these branches to the self.from_branch
+        If open PRs are found, add a comment and close them
+        """
+        log.info("Checking for open PRs from template merge branches")
+        # Check for open PRs and close if found
+        for branch in [b.name for b in self.repo.branches if b.name.startswith("nf-core-template-merge-")]:
+            # Don't close the new merge branch
+            if branch == self.merge_branch:
+                continue
+            self.close_open_pr(branch)
+
+    def close_open_pr(self, branch):
+        """Given a branch, check for open PRs from that branch to self.from_branch
+        and close if PRs have been found
+        """
+        log.info("Checking branch: {}".format(branch))
+        # Look for existing pull-requests
+        list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls?head={branch}&base={self.from_branch}"
+        r = requests.get(
+            url=list_prs_url,
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+        )
+        try:
+            r_json = json.loads(r.content)
+            r_pp = json.dumps(r_json, indent=4)
+        except:
+            r_json = r.content
+            r_pp = r.content
+
+        if r.status_code == 200:
+            log.debug("GitHub API listing existing PRs:\n{}".format(r_pp))
+
+            # No open PRs
+            if len(r_json) == 0:
+                log.info("No open PRs found between {} and {}".format(branch, self.from_branch))
+                return False
+
+            # Make a new comment
+            comment_text = (
+                "A new release of the main template in nf-core/tools has just been released. "
+                "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
+                "This pull-request is outdated and has been closed. A new pull-request has been created instead."
+                "Link to new PR: {}".format(self.pr_url)
+            )
+            comment_content = {"body": comment_text}
+            comments_url = r_json[0]["comments_url"]
+            comment_r = requests.post(
+                url=comments_url,
+                data=json.dumps(comment_content),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
+
+            pr_update_api_url = r_json[0]["url"]
+            pr_content = {"state": "closed"}
+
+            r = requests.patch(
+                url=pr_update_api_url,
+                data=json.dumps(pr_content),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
+            try:
+                r_json = json.loads(r.content)
+                r_pp = json.dumps(r_json, indent=4)
+            except:
+                r_json = r.content
+                r_pp = r.content
+
+            # PR update worked
+            if r.status_code == 200:
+                log.debug("GitHub API PR-update worked:\n{}".format(r_pp))
+                log.info("Closed GitHub PR: {}".format(r_json["html_url"]))
+                return True
+            # Something went wrong
+            else:
+                log.warning(f"Could not close PR ('{r.status_code}'):\n{pr_update_api_url}\n{r_pp}")
+                return False
+
+        # Something went wrong
+        else:
+            log.warning("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
 
     def reset_target_dir(self):
         """
