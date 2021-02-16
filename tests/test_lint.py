@@ -188,12 +188,6 @@ class TestLint(unittest.TestCase):
         test_files_exist_depreciated_file,
         test_files_exist_pass,
     )
-    from lint.licence import test_licence_pass, test_licence_fail
-    from lint.actions_branch_protection import (
-        test_actions_branch_protection_pass,
-        test_actions_branch_protection_fail,
-        test_actions_branch_protection_ignore,
-    )
     from lint.actions_ci import (
         test_actions_ci_pass,
         test_actions_ci_fail_wrong_nf,
@@ -253,19 +247,6 @@ class TestLint(unittest.TestCase):
 #        bad_lint_obj = nf_core.lint.PipelineLint("/non/existant/path")
 #        bad_lint_obj.check_nextflow_config()
 #
-#    def test_actions_wf_lint_pass(self):
-#        """Tests that linting for GitHub Actions linting wf works for a good example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_WORKING_EXAMPLE)
-#        lint_obj.check_actions_lint()
-#        expectations = {"failed": 0, "warned": 0, "passed": 3}
-#        self.assess_lint_status(lint_obj, **expectations)
-#
-#    def test_actions_wf_lint_fail(self):
-#        """Tests that linting for GitHub Actions linting wf fails for a bad example"""
-#        lint_obj = nf_core.lint.PipelineLint(PATH_FAILING_EXAMPLE)
-#        lint_obj.check_actions_lint()
-#        expectations = {"failed": 3, "warned": 0, "passed": 0}
-#        self.assess_lint_status(lint_obj, **expectations)
 #
 #    def test_wrong_license_examples_with_failed(self):
 #        """Tests for checking the license test behavior"""

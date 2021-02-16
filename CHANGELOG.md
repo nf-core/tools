@@ -4,8 +4,18 @@
 
 ### Template
 
+* **Major new feature** - Validation of pipeline parameters [[#426]](https://github.com/nf-core/tools/issues/426)
+  * The addition runs as soon as the pipeline launches and checks the pipeline input parameters two main things:
+    * No parameters are supplied that share a name with core Nextflow options (eg. `--resume` instead of `-resume`)
+    * Supplied parameters validate against the pipeline JSON schema (eg. correct variable types, required values)
+  * If either parameter validation fails or the pipeline has errors, a warning is given about any unexpected parameters found which are not described in the pipeline schema.
+  * This behaviour can be disabled by using `--validate_params false`
 * Added profiles to support the [Charliecloud](https://hpc.github.io/charliecloud/) and [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/) container engines [[#824](https://github.com/nf-core/tools/issues/824)]
 * Fixed typo in nf-core-lint CI that prevented the markdown summary from being automatically posted on PRs as a comment.
+* Changed default for `--input` from `data/*{1,2}.fastq.gz` to `null`, as this is now validated by the schema as a required value.
+* Removed support for `--name` parameter for custom run names.
+  * The same functionality for MultiQC still exists with the core Nextflow `-name` option.
+* Added to template docs about how to identify process name for resource customisation
 
 ### Modules
 
@@ -24,10 +34,12 @@
 
 ### Linting
 
+* Added new option `--fix` to automatically correct some problems detected by linting
 * Added validation of default params to `nf-core schema lint` [[#823](https://github.com/nf-core/tools/issues/823)]
 * Added schema validation of GitHub action workflows to lint function [[#795](https://github.com/nf-core/tools/issues/795)]
 * Fixed bug in schema title and description validation
 * Added second progress bar for conda dependencies lint check, as it can be slow [[#299](https://github.com/nf-core/tools/issues/299)]
+* Added new lint test to check files that should be unchanged from the pipeline.
 
 ## [v1.12.1 - Silver Dolphin](https://github.com/nf-core/tools/releases/tag/1.12.1) - [2020-12-03]
 
