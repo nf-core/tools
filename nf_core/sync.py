@@ -9,6 +9,7 @@ import logging
 import os
 import re
 import requests
+import requests_cache
 import shutil
 import tempfile
 
@@ -80,9 +81,12 @@ class PipelineSync(object):
     def sync(self):
         """Find workflow attributes, create a new template pipeline on TEMPLATE"""
 
+        # Clear requests_cache so that we don't get stale API responses
+        requests_cache.clear()
+
         log.info("Pipeline directory: {}".format(self.pipeline_dir))
         if self.from_branch:
-            log.info("Using branch `{}` to fetch workflow variables".format(self.from_branch))
+            log.info("Using branch '{}' to fetch workflow variables".format(self.from_branch))
         if self.make_pr:
             log.info("Will attempt to automatically create a pull request")
 
@@ -192,7 +196,7 @@ class PipelineSync(object):
         Delete all files in the TEMPLATE branch
         """
         # Delete everything
-        log.info("Deleting all files in TEMPLATE branch")
+        log.info("Deleting all files in 'TEMPLATE' branch")
         for the_file in os.listdir(self.pipeline_dir):
             if the_file == ".git":
                 continue
@@ -236,7 +240,7 @@ class PipelineSync(object):
             self.repo.git.add(A=True)
             self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
             self.made_changes = True
-            log.info("Committed changes to TEMPLATE branch")
+            log.info("Committed changes to 'TEMPLATE' branch")
         except Exception as e:
             raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
         return True
@@ -274,7 +278,7 @@ class PipelineSync(object):
             )
 
         # Create new branch and checkout
-        log.info("Checking out merge base branch {}".format(self.merge_branch))
+        log.info(f"Checking out merge base branch '{self.merge_branch}'")
         try:
             self.repo.create_head(self.merge_branch)
         except git.exc.GitCommandError as e:
@@ -282,7 +286,7 @@ class PipelineSync(object):
 
     def push_merge_branch(self):
         """Push the newly created merge branch to the remote repository"""
-        log.info("Pushing {} branch to remote".format(self.merge_branch))
+        log.info(f"Pushing '{self.merge_branch}' branch to remote")
         try:
             origin = self.repo.remote()
             origin.push(self.merge_branch)
@@ -302,13 +306,13 @@ class PipelineSync(object):
             "Version `{tag}` of [nf-core/tools](https://github.com/nf-core/tools) has just been released with updates to the nf-core template. "
             "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
             "Please make sure to merge this pull-request as soon as possible, "
-            "resolving any merge conflicts in the `{merge_branch}` branch (or your own fork, if you prefer). "
-            "Once complete, make a new minor release of your pipeline. "
+            f"resolving any merge conflicts in the `{self.merge_branch}` branch (or your own fork, if you prefer). "
+            "Once complete, make a new minor release of your pipeline.\n\n"
             "For instructions on how to merge this PR, please see "
             "[https://nf-co.re/developers/sync](https://nf-co.re/developers/sync#merging-automated-prs).\n\n"
             "For more information about this release of [nf-core/tools](https://github.com/nf-core/tools), "
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
-        ).format(tag=nf_core.__version__, mb=self.merge_branch)
+        ).format(tag=nf_core.__version__)
 
         # Make new pull-request
         pr_content = {
@@ -347,17 +351,9 @@ class PipelineSync(object):
         If open PRs are found, add a comment and close them
         """
         log.info("Checking for open PRs from template merge branches")
-        for branch in [b.name for b in self.repo.branches]:
-            if branch.startswith("nf-core-template-merge-") and branch != self.merge_branch:
-                self.close_open_pr(branch)
 
-    def close_open_pr(self, branch):
-        """Given a branch, check for open PRs from that branch to self.from_branch
-        and close if PRs have been found
-        """
-        log.info("Checking branch: {}".format(branch))
         # Look for existing pull-requests
-        list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls?head={branch}&base={self.from_branch}"
+        list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
         list_prs_request = requests.get(
             url=list_prs_url,
             auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
@@ -369,52 +365,66 @@ class PipelineSync(object):
             list_prs_json = list_prs_request.content
             list_prs_pp = list_prs_request.content
 
-        if list_prs_request.status_code == 200:
-            log.debug("GitHub API listing existing PRs:\n{}".format(list_prs_pp))
+        log.debug(f"GitHub API listing existing PRs:\n{list_prs_url}\n{list_prs_pp}")
+        if list_prs_request.status_code != 200:
+            log.warning(f"Could not list open PRs ('{list_prs_request.status_code}')\n{list_prs_url}\n{list_prs_pp}")
+            return False
 
-            # No open PRs
-            if len(list_prs_json) == 0:
-                log.info("No open PRs found between {} and {}".format(branch, self.from_branch))
-                return False
+        for pr in list_prs_json:
+            log.debug(f"Looking at PR from '{pr['head']['ref']}': {pr['html_url']}")
+            # Ignore closed PRs
+            if pr["state"] != "open":
+                log.debug(f"Ignoring PR as state not open ({pr['state']}): {pr['html_url']}")
+                continue
 
-            # Make a new comment explaining why the PR is being closed
-            comment_text = (
-                f"Version {nf_core.__version__} of the @nf-core template in nf-core/tools has just been released.\n\n"
-                f"This pull-request is now outdated and has been closed in favour of {self.pr_url}"
+            # Don't close the new PR that we just opened
+            if pr["head"]["ref"] == self.merge_branch:
+                continue
+
+            # PR is from an automated branch and goes to our target base
+            if pr["head"]["ref"].startswith("nf-core-template-merge-") and pr["base"]["ref"] == self.from_branch:
+                self.close_open_pr(pr)
+
+    def close_open_pr(self, pr):
+        """Given a PR API response, add a comment and close."""
+        log.debug(f"Attempting to close PR: '{pr['html_url']}'")
+
+        # Make a new comment explaining why the PR is being closed
+        comment_text = (
+            f"Version `{nf_core.__version__}` of the [nf-core/tools](https://github.com/nf-core/tools) pipeline template has just been released. "
+            f"This pull-request is now outdated and has been closed in favour of {self.pr_url}\n\n"
+            f"Please use {self.pr_url} to merge in the new changes from the nf-core template as soon as possible."
+        )
+        comment_request = requests.post(
+            url=pr["comments_url"],
+            data=json.dumps({"body": comment_text}),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+        )
+
+        # Update the PR status to be closed
+        pr_request = requests.patch(
+            url=pr["url"],
+            data=json.dumps({"state": "closed"}),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+        )
+        try:
+            pr_request_json = json.loads(pr_request.content)
+            pr_request_pp = json.dumps(pr_request_json, indent=4)
+        except:
+            pr_request_json = pr_request.content
+            pr_request_pp = pr_request.content
+
+        # PR update worked
+        if pr_request.status_code == 200:
+            log.debug("GitHub API PR-update worked:\n{}".format(pr_request_pp))
+            log.info(
+                f"Closed GitHub PR from '{pr['head']['ref']}' to '{pr['base']['ref']}': {pr_request_json['html_url']}"
             )
-            comment_request = requests.post(
-                url=list_prs_json[0]["comments_url"],
-                data=json.dumps({"body": comment_text}),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
-
-            # Update the PR status to be closed
-            pr_update_api_url = list_prs_json[0]["url"]
-            pr_request = requests.patch(
-                url=pr_update_api_url,
-                data=json.dumps({"state": "closed"}),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
-            try:
-                pr_request_json = json.loads(pr_request.content)
-                pr_request_pp = json.dumps(pr_request_json, indent=4)
-            except:
-                pr_request_json = pr_request.content
-                pr_request_pp = pr_request.content
-
-            # PR update worked
-            if pr_request.status_code == 200:
-                log.debug("GitHub API PR-update worked:\n{}".format(pr_request_pp))
-                log.info("Closed GitHub PR: {}".format(pr_request_json["html_url"]))
-                return True
-            # Something went wrong
-            else:
-                log.warning(f"Could not close PR ('{pr_request.status_code}'):\n{pr_update_api_url}\n{pr_request_pp}")
-                return False
-
+            return True
         # Something went wrong
         else:
-            log.warning(f"Could not list open PRs ('{list_prs_request.status_code}')\n{list_prs_url}\n{list_prs_pp}")
+            log.warning(f"Could not close PR ('{pr_request.status_code}'):\n{pr['url']}\n{pr_request_pp}")
+            return False
 
     def reset_target_dir(self):
         """
