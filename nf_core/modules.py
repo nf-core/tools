@@ -531,21 +531,23 @@ class ModuleLint(object):
 
         # Compare sha sums for files
         for mod in nfcore_modules:
-            # for testing
-            if mod.module_name == "pangolin":
-                print(mod.module_name)
-                # check main.nf
-                main_nf_sha = self.get_sha(os.path.join(mod.module_dir, "main.nf"))
-                files = pipeline_modules.get_module_file_urls(mod.module_name)
-                for filename, api_url in files.items():
-                    # Call the GitHub API
-                    r = requests.get(api_url)
-                    if r.status_code != 200:
-                        raise SystemError(
-                            "Could not fetch {} file: {}\n {}".format(self.modules_repo.name, r.status_code, api_url)
-                        )
-                    result = r.json()
-                    file_contents = base64.b64decode(result["content"])
+
+            files = pipeline_modules.get_module_file_urls(mod.module_name)
+            for filename, api_url in files.items():
+                basename = os.path.basename(filename)
+                local_copy = open(os.path.join(mod.module_dir, basename), "r").read()
+
+                # download from nf-core/modules and compare
+                r = requests.get(api_url)
+                if r.status_code != 200:
+                    raise SystemError(f"Could not fetch {filename} from GitHub. {r.status_code}")
+                result = r.json()
+                file_contents = base64.b64decode(result["content"]).decode("ascii")
+
+                if file_contents == local_copy:
+                    print("matches")
+                else:
+                    print("doesnt match")
 
         return {"passed": passed, "failed": failed}
 
@@ -636,27 +638,32 @@ class NFCoreModule(object):
 
         # Confirm that all required keys are given
         contains_required_keys = True
+        all_list_children = True
         for rk in required_keys:
             if not rk in meta_yaml.keys():
-                self.failed.append("{} not specified in {}".format(rk, self.meta_yml))
+                self.failed.append(f"{rk} not specified in {self.meta_yml}")
                 contains_required_keys = False
+            elif not isinstance(meta_yaml[rk], list):
+                self.failed.append(f"{rk} doesn't have a list as child in {self.meta_yml}.")
+                all_list_children = False
         if contains_required_keys:
             self.passed.append("{} contains all required keys".format(self.meta_yml))
 
         # Confirm that all input and output channels are specified
-        meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
-        for input in self.inputs:
-            if input in meta_input:
-                self.passed.append("{} specified for {}".format(input, self.module_name))
-            else:
-                self.failed.append("{} missing in meta.yml for {}".format(input, self.module_name))
+        if contains_required_keys and all_list_children:
+            meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
+            for input in self.inputs:
+                if input in meta_input:
+                    self.passed.append("{} specified for {}".format(input, self.module_name))
+                else:
+                    self.failed.append("{} missing in meta.yml for {}".format(input, self.module_name))
 
-        meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
-        for output in self.outputs:
-            if output in meta_output:
-                self.passed.append("{} specified for {}".format(output, self.module_name))
-            else:
-                self.failed.append("{} missing in meta.yml for {}".format(output, self.module_name))
+            meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
+            for output in self.outputs:
+                if output in meta_output:
+                    self.passed.append("{} specified for {}".format(output, self.module_name))
+                else:
+                    self.failed.append("{} missing in meta.yml for {}".format(output, self.module_name))
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == self.process_name:
