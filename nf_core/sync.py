@@ -96,8 +96,14 @@ class PipelineSync(object):
         # Push and make a pull request if we've been asked to
         if self.made_changes and self.make_pr:
             try:
+                # Check that we have an API auth token
                 if os.environ.get("GITHUB_AUTH_TOKEN", "") == "":
                     raise PullRequestException("GITHUB_AUTH_TOKEN not set!")
+
+                # Check that we know the github username and repo name
+                if self.gh_username is None and self.gh_repo is None:
+                    raise PullRequestException("Could not find GitHub username and repo name")
+
                 self.push_template_branch()
                 self.create_merge_base_branch()
                 self.push_merge_branch()
@@ -268,7 +274,7 @@ class PipelineSync(object):
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls?head={branch}&base={self.from_branch}"
         r = requests.get(
             url=list_prs_url,
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
         )
         try:
             r_json = json.loads(r.content)
@@ -297,7 +303,7 @@ class PipelineSync(object):
             comment_r = requests.post(
                 url=comments_url,
                 data=json.dumps(comment_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
             )
 
             pr_update_api_url = r_json[0]["url"]
@@ -306,7 +312,7 @@ class PipelineSync(object):
             r = requests.patch(
                 url=pr_update_api_url,
                 data=json.dumps(pr_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
             )
             try:
                 r_json = json.loads(r.content)
@@ -372,13 +378,9 @@ class PipelineSync(object):
 
         Returns: An instance of class requests.Response
         """
-        # Check that we know the github username and repo name
-        if self.gh_username is None and self.gh_repo is None:
-            raise PullRequestException("Could not find GitHub username and repo name")
-
         log.info("Submitting a pull request via the GitHub API")
 
-        pr_title = "Important! Template update for nf-core/tools v{}".format(nf_core.__version__)
+        pr_title = f"Important! Template update for nf-core/tools v{nf_core.__version__}"
         pr_body_text = (
             "A new release of the main template in nf-core/tools has just been released. "
             "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
@@ -391,12 +393,6 @@ class PipelineSync(object):
         ).format(tag=nf_core.__version__)
 
         # Make new pull-request
-        self.submit_pull_request(pr_title, pr_body_text)
-
-    def submit_pull_request(self, pr_title, pr_body_text):
-        """
-        Create a new pull-request on GitHub
-        """
         pr_content = {
             "title": pr_title,
             "body": pr_body_text,
@@ -408,7 +404,7 @@ class PipelineSync(object):
         r = requests.post(
             url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
             data=json.dumps(pr_content),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ.get("GITHUB_AUTH_TOKEN")),
+            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
         )
         try:
             self.gh_pr_returned_data = json.loads(r.content)
