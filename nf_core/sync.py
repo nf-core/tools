@@ -346,12 +346,9 @@ class PipelineSync(object):
         If open PRs are found, add a comment and close them
         """
         log.info("Checking for open PRs from template merge branches")
-        # Check for open PRs and close if found
-        for branch in [b.name for b in self.repo.branches if b.name.startswith("nf-core-template-merge-")]:
-            # Don't close the new merge branch
-            if branch == self.merge_branch:
-                continue
-            self.close_open_pr(branch)
+        for branch in [b.name for b in self.repo.branches]:
+            if branch.startswith("nf-core-template-merge-") and branch != self.merge_branch:
+                self.close_open_pr(branch)
 
     def close_open_pr(self, branch):
         """Given a branch, check for open PRs from that branch to self.from_branch
@@ -360,68 +357,63 @@ class PipelineSync(object):
         log.info("Checking branch: {}".format(branch))
         # Look for existing pull-requests
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls?head={branch}&base={self.from_branch}"
-        r = requests.get(
+        list_prs_request = requests.get(
             url=list_prs_url,
             auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
         )
         try:
-            r_json = json.loads(r.content)
-            r_pp = json.dumps(r_json, indent=4)
+            list_prs_json = json.loads(list_prs_request.content)
+            list_prs_pp = json.dumps(list_prs_json, indent=4)
         except:
-            r_json = r.content
-            r_pp = r.content
+            list_prs_json = list_prs_request.content
+            list_prs_pp = list_prs_request.content
 
-        if r.status_code == 200:
-            log.debug("GitHub API listing existing PRs:\n{}".format(r_pp))
+        if list_prs_request.status_code == 200:
+            log.debug("GitHub API listing existing PRs:\n{}".format(list_prs_pp))
 
             # No open PRs
-            if len(r_json) == 0:
+            if len(list_prs_json) == 0:
                 log.info("No open PRs found between {} and {}".format(branch, self.from_branch))
                 return False
 
-            # Make a new comment
+            # Make a new comment explaining why the PR is being closed
             comment_text = (
-                "A new release of the main template in nf-core/tools has just been released. "
-                "This automated pull-request attempts to apply the relevant updates to this pipeline.\n\n"
-                "This pull-request is outdated and has been closed. A new pull-request has been created instead."
-                "Link to new PR: {}".format(self.pr_url)
+                f"Version {nf_core.__version__} of the @nf-core template in nf-core/tools has just been released.\n\n"
+                f"This pull-request is now outdated and has been closed in favour of {self.pr_url}"
             )
-            comment_content = {"body": comment_text}
-            comments_url = r_json[0]["comments_url"]
-            comment_r = requests.post(
-                url=comments_url,
-                data=json.dumps(comment_content),
+            comment_request = requests.post(
+                url=list_prs_json[0]["comments_url"],
+                data=json.dumps({"body": comment_text}),
                 auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
             )
 
-            pr_update_api_url = r_json[0]["url"]
-            pr_content = {"state": "closed"}
-
-            r = requests.patch(
+            # Update the PR status to be closed
+            pr_update_api_url = list_prs_json[0]["url"]
+            pr_request = requests.patch(
                 url=pr_update_api_url,
-                data=json.dumps(pr_content),
+                data=json.dumps({"state": "closed"}),
                 auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
             )
             try:
-                r_json = json.loads(r.content)
-                r_pp = json.dumps(r_json, indent=4)
+                pr_request_json = json.loads(pr_request.content)
+                pr_request_pp = json.dumps(pr_request_json, indent=4)
             except:
-                r_json = r.content
-                r_pp = r.content
+                pr_request_json = pr_request.content
+                pr_request_pp = pr_request.content
 
             # PR update worked
-            if r.status_code == 200:
-                log.debug("GitHub API PR-update worked:\n{}".format(r_pp))
-                log.info("Closed GitHub PR: {}".format(r_json["html_url"]))
+            if pr_request.status_code == 200:
+                log.debug("GitHub API PR-update worked:\n{}".format(pr_request_pp))
+                log.info("Closed GitHub PR: {}".format(pr_request_json["html_url"]))
                 return True
             # Something went wrong
             else:
-                log.warning(f"Could not close PR ('{r.status_code}'):\n{pr_update_api_url}\n{r_pp}")
+                log.warning(f"Could not close PR ('{pr_request.status_code}'):\n{pr_update_api_url}\n{pr_request_pp}")
                 return False
 
         # Something went wrong
         else:
-            log.warning("Could not list open PRs ('{}')\n{}\n{}".format(r.status_code, list_prs_url, r_pp))
+            log.warning(f"Could not list open PRs ('{list_prs_request.status_code}')\n{list_prs_url}\n{list_prs_pp}")
 
     def reset_target_dir(self):
         """
