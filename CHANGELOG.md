@@ -16,6 +16,9 @@
 * Removed support for `--name` parameter for custom run names.
   * The same functionality for MultiQC still exists with the core Nextflow `-name` option.
 * Added to template docs about how to identify process name for resource customisation
+* The parameters `--max_memory` and `--max_time` are now validated against a regular expression [[#793](https://github.com/nf-core/tools/issues/793)]
+  * Must be written in the format `123.GB` / `456.h` with any of the prefixes listed in the [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#memory)
+  * Bare numbers no longer allowed, avoiding people from trying to specify GB and actually specifying bytes.
 
 ### Modules
 
