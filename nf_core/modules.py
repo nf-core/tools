@@ -513,6 +513,8 @@ class ModuleLint(object):
         """
         Checks whether installed nf-core modules have changed compared to the
         original repository
+        Downloads the 'main.nf', 'functions.nf' and 'meta.yml' files for every module
+        and compare them to the local copies
         """
         all_modules_up_to_date = True
         files_to_check = ["main.nf", "functions.nf", "meta.yml"]
@@ -527,7 +529,7 @@ class ModuleLint(object):
             comparison_progress = progress_bar.add_task(
                 "Comparing local file to remote", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
             )
-            # Compare files
+            # Loop over nf-core modules
             for mod in nfcore_modules:
                 progress_bar.update(comparison_progress, advance=1, test_name=mod.module_name)
                 module_base_url = (
@@ -535,14 +537,14 @@ class ModuleLint(object):
                 )
 
                 for f in files_to_check:
-                    # open local copy
+                    # open local copy - add a warning if not found (somewhat redundant because that's already checked)
                     try:
                         local_copy = open(os.path.join(mod.module_dir, f), "r").read()
                     except FileNotFoundError as e:
                         self.warned.append(f"The module {mod.module_name} has no {f} file!")
                         continue
 
-                    # get remote copy
+                    # Download remote copy and compare
                     url = module_base_url + f
                     r = requests.get(url=url)
 
@@ -739,9 +741,9 @@ class NFCoreModule(object):
 
         # Check the process definitions
         if self.check_process_section(process_lines):
-            self.passed.append("Matching build versions in {}".format(self.main_nf))
+            self.passed.append("Matching container versions in {}".format(self.main_nf))
         else:
-            self.failed.append("Build versions are not matching: {}".format(self.main_nf))
+            self.failed.append("Container versions are not matching: {}".format(self.main_nf))
 
         # Check the script definition
         self.check_script_section(script_lines)
@@ -826,26 +828,15 @@ class NFCoreModule(object):
         for l in lines:
             if re.search("bioconda::", l):
                 bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-                bioconda = bioconda_packages[
-                    0
-                ]  # use the first bioconda package to check against conatiners if not mulled
-                build_id = bioconda.split("::")[1].replace('"', "").replace("'", "").split("=")[-1].strip()
             if re.search("org/singularity", l):
                 singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
             if re.search("biocontainers", l):
                 docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
 
-        # If it's a mulled container, just compare singularity and docker tags
-        if any("mulled" in l for l in lines):
-            build_id = docker_tag
-
         # Check that all bioconda packages have build numbers
         # Also check for newer versions
-        all_packages_have_build_numbers = True
         for bp in bioconda_packages:
-            if not bp.count("=") >= 2:
-                all_packages_have_build_numbers = False
-
+            bp = bp.strip("'").strip('"')
             # Check for correct version and newer versions
             try:
                 bioconda_version = bp.split("=")[1]
@@ -868,12 +859,7 @@ class NFCoreModule(object):
                 else:
                     self.passed.append("Bioconda package is the latest available: `{}`".format(bp))
 
-        if all_packages_have_build_numbers:
-            self.passed.append("All bioconda packages have build numbers in {}".format(self.module_name))
-        else:
-            self.failed.append("Missing build numbers for bioconda packages in {}".format(self.module_name))
-
-        if build_id == docker_tag and build_id == singularity_tag:
+        if docker_tag == singularity_tag:
             return True
         else:
             return False
