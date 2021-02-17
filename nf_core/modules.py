@@ -509,47 +509,57 @@ class ModuleLint(object):
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
 
-    def get_sha(self, file):
-        """ Calcualte the SHA256 sum for a file """
-        sha_hash = hashlib.sha1()
-        with open(file, "rb") as f:
-            for byte_block in iter(lambda: f.read(4096), b""):
-                sha_hash.update(byte_block)
-        return sha_hash.hexdigest()
-
     def check_module_changes(self, nfcore_modules):
         """
         Checks whether installed nf-core modules have changed compared to the
         original repository
         """
-        passed = []
-        failed = []
+        all_modules_up_to_date = True
+        files_to_check = ["main.nf", "functions.nf", "meta.yml"]
 
-        pipeline_modules = PipelineModules()
-        pipeline_modules.pipeline_dir = self.dir
-        pipeline_modules.get_modules_file_tree()
+        progress_bar = rich.progress.Progress(
+            "[bold blue]{task.description}",
+            rich.progress.BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+            transient=True,
+        )
+        with progress_bar:
+            comparison_progress = progress_bar.add_task(
+                "Comparing local file to remote", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
+            )
+            # Compare files
+            for mod in nfcore_modules:
+                progress_bar.update(comparison_progress, advance=1, test_name=mod.module_name)
+                module_base_url = (
+                    f"https://raw.githubusercontent.com/nf-core/modules/master/software/{mod.module_name}/"
+                )
 
-        # Compare sha sums for files
-        for mod in nfcore_modules:
+                for f in files_to_check:
+                    # open local copy
+                    try:
+                        local_copy = open(os.path.join(mod.module_dir, f), "r").read()
+                    except FileNotFoundError as e:
+                        self.warned.append(f"The module {mod.module_name} has no {f} file!")
+                        continue
 
-            files = pipeline_modules.get_module_file_urls(mod.module_name)
-            for filename, api_url in files.items():
-                basename = os.path.basename(filename)
-                local_copy = open(os.path.join(mod.module_dir, basename), "r").read()
+                    # get remote copy
+                    url = module_base_url + f
+                    r = requests.get(url=url)
 
-                # download from nf-core/modules and compare
-                r = requests.get(api_url)
-                if r.status_code != 200:
-                    raise SystemError(f"Could not fetch {filename} from GitHub. {r.status_code}")
-                result = r.json()
-                file_contents = base64.b64decode(result["content"]).decode("ascii")
+                    if r.status_code != 200:
+                        self.warned.append(f"Could not fetch remote copy of {mod.module_name}. Skipping comparison.")
+                    else:
+                        try:
+                            remote_copy = r.content.decode("ascii")
 
-                if file_contents == local_copy:
-                    print("matches")
-                else:
-                    print("doesnt match")
+                            if local_copy != remote_copy:
+                                all_modules_up_to_date = False
+                                self.failed.append(f"Your local copy of {mod.module_name} is not up to date!")
+                        except UnicodeDecodeError as e:
+                            self.warned.append(f"Could not decode file from {url}. Skipping comparison ({e})")
 
-        return {"passed": passed, "failed": failed}
+        if all_modules_up_to_date:
+            self.passed.append("All modules are up to date!")
 
 
 class NFCoreModule(object):
