@@ -1,4 +1,4 @@
-FROM continuumio/miniconda3:4.8.2
+FROM continuumio/miniconda3:4.9.2
 LABEL authors="phil.ewels@scilifelab.se,alexander.peltzer@boehringer-ingelheim.com" \
       description="Docker image containing base requirements for the nfcore pipelines"
 
