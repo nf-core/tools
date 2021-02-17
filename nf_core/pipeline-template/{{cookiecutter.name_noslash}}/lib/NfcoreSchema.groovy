@@ -219,6 +219,11 @@ class NfcoreSchema {
         return params_map
     }
 
+    static String dashed_line(monochrome_logs) {
+        Map colors = log_colours(monochrome_logs)
+        return "-${colors.dim}----------------------------------------------------${colors.reset}-"
+    }
+
     /*
     Method to actually read in JSON file using Groovy.
     Group (as Key), values are all parameters
@@ -299,8 +304,8 @@ class NfcoreSchema {
             }
             output += "\n"
         }
-        output += Headers.dashed_line(params.monochrome_logs)
-        output += "\n\n" + Headers.dashed_line(params.monochrome_logs)
+        output += dashed_line(params.monochrome_logs)
+        output += "\n\n" + dashed_line(params.monochrome_logs)
         return output
     }
 
@@ -395,8 +400,8 @@ class NfcoreSchema {
                 output += "\n"
             }
         }
-        output += Headers.dashed_line(params.monochrome_logs)
-        output += "\n\n" + Headers.dashed_line(params.monochrome_logs)
+        output += dashed_line(params.monochrome_logs)
+        output += "\n\n" + dashed_line(params.monochrome_logs)
         return output
     }
 
