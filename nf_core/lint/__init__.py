@@ -113,6 +113,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .schema_lint import schema_lint
     from .schema_params import schema_params
     from .actions_schema_validation import actions_schema_validation
+    from .merge_markers import merge_markers
 
     def __init__(self, wf_path, release_mode=False, fix=()):
         """ Initialise linting object """
@@ -144,6 +145,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "schema_lint",
             "schema_params",
             "actions_schema_validation",
+            "merge_markers",
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
