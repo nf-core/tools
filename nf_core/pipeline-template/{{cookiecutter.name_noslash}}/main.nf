@@ -93,8 +93,6 @@ if (params.input_paths) {
 ////////////////////////////////////////////////////
 /* --         PRINT PARAMETER SUMMARY          -- */
 ////////////////////////////////////////////////////
-
-def summary_params = NfcoreSchema.params_summary_map(workflow, params, json_schema)
 log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
 
 // Header log info
@@ -131,10 +129,10 @@ if (params.email || params.email_on_fail) {
 // Check the hostnames against configured profiles
 checkHostname()
 
-Channel.from(summary.collect { [it.key, it.value] })
-    .map { k, v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
-    .reduce { a, b -> return [a, b].join('\n            ') }
-    .map { x -> '''
+Channel.from(summary.collect{ [it.key, it.value] })
+    .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
+    .reduce { a, b -> return [a, b].join("\n            ") }
+    .map { x -> """
     id: '{{ cookiecutter.name_noslash }}-summary'
     description: " - this information is collected when the pipeline is started."
     section_name: '{{ cookiecutter.name }} Workflow Summary'
@@ -144,7 +142,7 @@ Channel.from(summary.collect { [it.key, it.value] })
         <dl class=\"dl-horizontal\">
             $x
         </dl>
-    '''.stripIndent() }
+    """.stripIndent() }
     .set { ch_workflow_summary }
 
 /*
@@ -207,19 +205,19 @@ process multiqc {
     // TODO nf-core: Add in log files from your new processes for MultiQC to find!
     file ('fastqc/*') from ch_fastqc_results.collect().ifEmpty([])
     file ('software_versions/*') from ch_software_versions_yaml.collect()
-    file workflow_summary from ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml')
+    file workflow_summary from ch_workflow_summary.collectFile(name: "workflow_summary_mqc.yaml")
 
     output:
-    file '*multiqc_report.html' into ch_multiqc_report
-    file '*_data'
-    file 'multiqc_plots'
+    file "*multiqc_report.html" into ch_multiqc_report
+    file "*_data"
+    file "multiqc_plots"
 
     script:
     rtitle = ''
     rfilename = ''
     if (!(workflow.runName ==~ /[a-z]+_[a-z]+/)) {
         rtitle = "--title \"${workflow.runName}\""
-        rfilename = '--filename ' + workflow.runName.replaceAll('\\W', '_').replaceAll('_+', '_') + '_multiqc_report'
+        rfilename = "--filename " + workflow.runName.replaceAll('\\W','_').replaceAll('_+','_') + "_multiqc_report"
     }
     custom_config_file = params.multiqc_config ? "--config $mqc_custom_config" : ''
     // TODO nf-core: Specify which MultiQC modules to use with -m for a faster run time
@@ -251,6 +249,7 @@ process output_documentation {
  * Completion e-mail notification
  */
 workflow.onComplete {
+
     // Set up the e-mail variables
     def subject = "[{{ cookiecutter.name }}] Successful: $workflow.runName"
     if (!workflow.success) {
@@ -291,7 +290,7 @@ workflow.onComplete {
             }
         }
     } catch (all) {
-        log.warn '[{{ cookiecutter.name }}] Could not attach MultiQC report to summary email'
+        log.warn "[{{ cookiecutter.name }}] Could not attach MultiQC report to summary email"
     }
 
     // Check if we are only sending emails on failure
@@ -328,7 +327,7 @@ workflow.onComplete {
             // Catch failures and try with plaintext
             def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
             if ( mqc_report.size() <= params.max_multiqc_email_size.toBytes() ) {
-                mail_cmd += [ '-A', mqc_report ]
+              mail_cmd += [ '-A', mqc_report ]
             }
             mail_cmd.execute() << email_html
             log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $email_address (mail)"
@@ -340,15 +339,15 @@ workflow.onComplete {
     if (!output_d.exists()) {
         output_d.mkdirs()
     }
-    def output_hf = new File(output_d, 'pipeline_report.html')
+    def output_hf = new File(output_d, "pipeline_report.html")
     output_hf.withWriter { w -> w << email_html }
-    def output_tf = new File(output_d, 'pipeline_report.txt')
+    def output_tf = new File(output_d, "pipeline_report.txt")
     output_tf.withWriter { w -> w << email_txt }
 
     c_green = params.monochrome_logs ? '' : "\033[0;32m";
     c_purple = params.monochrome_logs ? '' : "\033[0;35m";
     c_red = params.monochrome_logs ? '' : "\033[0;31m";
-    c_reset = params.monochrome_logs ? '' : "\033[0m"
+    c_reset = params.monochrome_logs ? '' : "\033[0m";
 
     if (workflow.stats.ignoredCount > 0 && workflow.success) {
         log.info "-${c_purple}Warning, pipeline completed, but with errored process(es) ${c_reset}-"
@@ -362,6 +361,7 @@ workflow.onComplete {
         checkHostname()
         log.info "-${c_purple}[{{ cookiecutter.name }}]${c_red} Pipeline completed with errors${c_reset}-"
     }
+
 }
 
 workflow.onError {
