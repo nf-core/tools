@@ -206,7 +206,7 @@ class NfcoreSchema {
         return new_params
     }
 
-        /*
+     /*
      * This method tries to read a JSON params file
      */
     private static LinkedHashMap params_load(String json_schema) {
