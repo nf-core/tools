@@ -12,6 +12,7 @@ import groovy.json.JsonSlurper
 import groovy.json.JsonBuilder
 
 class NfcoreSchema {
+
     /*
     * Function to loop over all parameters defined in schema and check
     * whether the given paremeters adhere to the specificiations
@@ -134,23 +135,23 @@ class NfcoreSchema {
         try {
             schema.validate(paramsJSON)
         } catch (ValidationException e) {
-            println ""
+            println ''
             log.error 'ERROR: Validation of pipeline parameters failed!'
             JSONObject exceptionJSON = e.toJSON()
             printExceptions(exceptionJSON, paramsJSON, log)
-            if (unexpectedParams.size() > 0){
-                println ""
+            if (unexpectedParams.size() > 0) {
+                println ''
                 def warn_msg = 'Found unexpected parameters:'
-                for (unexpectedParam in unexpectedParams){
+                for (unexpectedParam in unexpectedParams) {
                     warn_msg = warn_msg + "\n* --${unexpectedParam}: ${paramsJSON[unexpectedParam].toString()}"
                 }
                 log.warn warn_msg
             }
-            println ""
+            println ''
             has_error = true
         }
 
-        if(has_error){
+        if (has_error) {
             System.exit(1)
         }
 
@@ -163,11 +164,11 @@ class NfcoreSchema {
         if (causingExceptions.length() == 0) {
             def m = exJSON['message'] =~ /required key \[([^\]]+)\] not found/
             // Missing required param
-            if(m.matches()){
+            if (m.matches()) {
                 log.error "* Missing required parameter: --${m[0][1]}"
             }
             // Other base-level error
-            else if(exJSON['pointerToViolation'] == '#'){
+            else if (exJSON['pointerToViolation'] == '#') {
                 log.error "* ${exJSON['message']}"
             }
             // Error with specific param
@@ -217,6 +218,22 @@ class NfcoreSchema {
             params_map = new LinkedHashMap()
         }
         return params_map
+    }
+
+    private static Map log_colours(Boolean monochrome_logs) {
+        Map colorcodes = [:]
+        colorcodes['reset']       = monochrome_logs ? '' : "\033[0m"
+        colorcodes['dim']         = monochrome_logs ? '' : "\033[2m"
+        colorcodes['black']       = monochrome_logs ? '' : "\033[0;30m"
+        colorcodes['green']       = monochrome_logs ? '' : "\033[0;32m"
+        colorcodes['yellow']      = monochrome_logs ? '' :  "\033[0;33m"
+        colorcodes['yellow_bold'] = monochrome_logs ? '' : "\033[1;93m"
+        colorcodes['blue']        = monochrome_logs ? '' : "\033[0;34m"
+        colorcodes['purple']      = monochrome_logs ? '' : "\033[0;35m"
+        colorcodes['cyan']        = monochrome_logs ? '' : "\033[0;36m"
+        colorcodes['white']       = monochrome_logs ? '' : "\033[0;37m"
+        colorcodes['red']         = monochrome_logs ? '' : "\033[1;91m"
+        return colorcodes
     }
 
     static String dashed_line(monochrome_logs) {
@@ -289,23 +306,23 @@ class NfcoreSchema {
      * Beautify parameters for --help
      */
     private static String params_help(workflow, params, json_schema, command) {
-        String output  = ""
-        output        += "Typical pipeline command:\n\n"
+        String output  = ''
+        output        += 'Typical pipeline command:\n\n'
         output        += "    ${command}\n\n"
         def params_map = params_load(json_schema)
         def max_chars  = params_max_chars(params_map) + 1
         for (group in params_map.keySet()) {
-            output += group + "\n"
+            output += group + '\n'
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
             for (param in group_params.keySet()) {
-                def type = "[" + group_params.get(param).type + "]"
+                def type = '[' + group_params.get(param).type + ']'
                 def description = group_params.get(param).description
-                output += "    \u001B[1m--" +  param.padRight(max_chars) + "\u001B[1m" + type.padRight(10) + description + "\n"
+                output += "    \u001B[1m--" +  param.padRight(max_chars) + "\u001B[1m" + type.padRight(10) + description + '\n'
             }
-            output += "\n"
+            output += '\n'
         }
         output += dashed_line(params.monochrome_logs)
-        output += "\n\n" + dashed_line(params.monochrome_logs)
+        output += '\n\n' + dashed_line(params.monochrome_logs)
         return output
     }
 
@@ -314,7 +331,7 @@ class NfcoreSchema {
      */
     private static LinkedHashMap params_summary_map(workflow, params, json_schema) {
         // Get a selection of core Nextflow workflow options
-        def Map workflow_summary = [:]        
+        def Map workflow_summary = [:]
         if (workflow.revision) {
             workflow_summary['revision'] = workflow.revision
         }
@@ -331,7 +348,7 @@ class NfcoreSchema {
         workflow_summary['userName']     = workflow.userName
         workflow_summary['profile']      = workflow.profile
         workflow_summary['configFiles']  = workflow.configFiles.join(', ')
-        
+
         // Get pipeline parameters defined in JSON Schema
         def Map params_summary = [:]
         def blacklist  = ['hostnames']
@@ -357,15 +374,15 @@ class NfcoreSchema {
                     } else {
                         if (param_type == 'string') {
                             if (schema_value.contains('$projectDir') || schema_value.contains('${projectDir}')) {
-                                def sub_string = schema_value.replace('\$projectDir','')
-                                sub_string     = sub_string.replace('\${projectDir}','')
+                                def sub_string = schema_value.replace('\$projectDir', '')
+                                sub_string     = sub_string.replace('\${projectDir}', '')
                                 if (params_value.contains(sub_string)) {
                                     schema_value = params_value
                                 }
                             }
                             if (schema_value.contains('$params.outdir') || schema_value.contains('${params.outdir}')) {
-                                def sub_string = schema_value.replace('\$params.outdir','')
-                                sub_string     = sub_string.replace('\${params.outdir}','')
+                                def sub_string = schema_value.replace('\$params.outdir', '')
+                                sub_string     = sub_string.replace('\${params.outdir}', '')
                                 if ("${params.outdir}${sub_string}" == params_value) {
                                     schema_value = params_value
                                 }
@@ -387,21 +404,21 @@ class NfcoreSchema {
      * Beautify parameters for summary and return as string
      */
     private static String params_summary_log(workflow, params, json_schema) {
-        String output  = ""
+        String output  = ''
         def params_map = params_summary_map(workflow, params, json_schema)
         def max_chars  = params_max_chars(params_map)
         for (group in params_map.keySet()) {
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
             if (group_params) {
-                output += group + "\n"
+                output += group + '\n'
                 for (param in group_params.keySet()) {
-                    output += "    \u001B[1m" +  param.padRight(max_chars) + ": \u001B[1m" + group_params.get(param) + "\n"
+                    output += "    \u001B[1m" +  param.padRight(max_chars) + ": \u001B[1m" + group_params.get(param) + '\n'
                 }
-                output += "\n"
+                output += '\n'
             }
         }
         output += dashed_line(params.monochrome_logs)
-        output += "\n\n" + dashed_line(params.monochrome_logs)
+        output += '\n\n' + dashed_line(params.monochrome_logs)
         return output
     }
 
@@ -415,16 +432,16 @@ class NfcoreSchema {
                 for (param in group_params.keySet()) {
                     summary_section += "        <dt>$param</dt><dd><samp>${group_params.get(param) ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>\n"
                 }
-                summary_section += "    </dl>\n"
+                summary_section += '    </dl>\n'
             }
         }
 
-        String yaml_file_text  = "id: '${workflow.manifest.name.replace('/','-')}-summary'\n"
+        String yaml_file_text  = "id: '${workflow.manifest.name.replace('/', '-')}-summary'\n"
         yaml_file_text        += "description: ' - this information is collected when the pipeline is started.'\n"
         yaml_file_text        += "section_name: '${workflow.manifest.name} Workflow Summary'\n"
         yaml_file_text        += "section_href: 'https://github.com/${workflow.manifest.name}'\n"
         yaml_file_text        += "plot_type: 'html'\n"
-        yaml_file_text        += "data: |\n"
+        yaml_file_text        += 'data: |\n'
         yaml_file_text        += "${summary_section}"
         return yaml_file_text
     }
