@@ -39,5 +39,5 @@ def merge_markers(self):
                         if "<<<<<<<" in l:
                             warned.append(f"Merge marker in `{fname}`: {l}")
             except FileNotFoundError:
-                log.debug(f"Could not open file {fname} in pipeline_todos lint test")
+                log.debug(f"Could not open file {fname} in merge_markers lint test")
     return {"passed": passed, "warned": warned, "failed": failed}
