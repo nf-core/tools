@@ -15,6 +15,7 @@ import os
 import re
 import requests
 import requests_cache
+import shlex
 import subprocess
 import sys
 import time
@@ -198,23 +199,15 @@ def fetch_wf_config(wf_path):
             return config
     log.debug("No config cache found")
 
-    # Call `nextflow config` and pipe stderr to /dev/null
-    try:
-        with open(os.devnull, "w") as devnull:
-            nfconfig_raw = subprocess.check_output(["nextflow", "config", "-flat", wf_path], stderr=devnull)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
-    except subprocess.CalledProcessError as e:
-        raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
-    else:
-        for l in nfconfig_raw.splitlines():
-            ul = l.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                config[k] = v
-            except ValueError:
-                log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
+    # Call `nextflow config`
+    nfconfig_raw = nextflow_cmd(f"nextflow config -flat {wf_path}")
+    for l in nfconfig_raw.splitlines():
+        ul = l.decode("utf-8")
+        try:
+            k, v = ul.split(" = ", 1)
+            config[k] = v
+        except ValueError:
+            log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -237,15 +230,26 @@ def fetch_wf_config(wf_path):
     return config
 
 
+def nextflow_cmd(cmd):
+    """Run a Nextflow command and capture the output. Handle errors nicely"""
+    try:
+        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return nf_proc.stdout
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+    except subprocess.CalledProcessError as e:
+        raise AssertionError(
+            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}"
+        )
+
+
 def setup_requests_cachedir():
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
     a .nfcore_cache subdir.
     """
-    # Only import it if we need it
-    import requests_cache
-
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
     if not os.path.exists(cachedir):
