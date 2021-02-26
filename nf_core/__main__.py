@@ -418,6 +418,16 @@ def remove(ctx, pipeline_dir, tool):
 
 @modules.command(help_priority=5)
 @click.pass_context
+@click.argument("directory", type=click.Path(exists=True), required=True, metavar="<target directory>")
+@click.argument("tool", type=str, required=True, metavar="<tool name>")
+@click.argument("subtool", type=str, required=False, metavar="<subtool name>")
+def create(ctx, directory, tool, subtool=None):
+    mods = nf_core.modules.PipelineModules()
+    mods.create(directory=directory, tool=tool, subtool=subtool)
+
+
+@modules.command(help_priority=5)
+@click.pass_context
 def check(ctx):
     """
     Check that imported module code has not been modified.
