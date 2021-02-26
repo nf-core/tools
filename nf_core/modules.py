@@ -12,6 +12,7 @@ import requests
 import sys
 import tempfile
 import shutil
+import re
 
 log = logging.getLogger(__name__)
 
@@ -254,7 +255,7 @@ class PipelineModules(object):
                 log.error(f"Module file {module_file} already exists!")
                 sys.exit(1)
 
-            # Dowload template
+            # Download template
             template_copy = self.download_template()
 
             # Replace TOOL and SUBTOOL with correct names
@@ -268,9 +269,69 @@ class PipelineModules(object):
 
         # Create template for new module in an nf-core pipeline
         if self.repo_type == "modules":
-            print("hello")
-        # Dowload the template and create the necessary files and dctinoaries
+            if subtool:
+                tool_dir = os.path.join(directory, "software", tool, subtool)
+                test_dir = os.path.join(directory, "tests", "software", tool, subtool)
+                tool_name = tool + "_" + subtool
+            else:
+                tool_dir = os.path.join(directory, "software", tool)
+                tool_name = tool
+                test_dir = os.path.join(directory, "tests", "software", tool)
+            if os.path.exists(tool_dir) or os.path.exists(test_dir):
+                log.error(f"Module {tool_dir} already exists")
+                sys.exit(1)
 
+            # Get the template copies for all the files
+            template_urls = {
+                'module.nf': "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/main.nf",
+                'functions.nf': "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/functions.nf",
+                'meta.yml': "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/meta.yml",
+                'test.yml': "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/test.yml",
+                'test.nf': "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/main.nf"
+            }
+            module_nf = self.download_template(template_urls['module.nf'])
+            functions_nf = self.download_template(template_urls['functions.nf'])
+            meta_yml = self.download_template(template_urls['meta.yml'])
+            test_yml = self.download_template(template_urls['test.yml'])
+            test_nf = self.download_template(template_urls['test.nf'])
+
+            # Replace TOOL/SUBTOOL
+            module_nf = module_nf.replace("TOOL_SUBTOOL", tool_name.upper())
+            if subtool:
+                meta_yml = meta_yml.replace("subtool", subtool).replace("tool_", tool + "_")
+                meta_yml = re.sub("^tool", tool, meta_yml)
+                test_nf = test_nf.replace("TOOL", tool.upper()).replace("SUBTOOL", subtool.upper())
+                test_yml = test_yml.replace("subtool", subtool).replace("tool_", tool + "_")
+                test_yml = re.sub("^tool", tool, test_yml)
+
+            else:
+                meta_yml = meta_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
+                meta_yml = re.sub("^tool", tool_name, meta_yml)
+                test_nf = test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace("SUBTOOL/", "").replace("TOOL",
+                                                                                                        tool.upper())
+                test_yml = test_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
+                test_yml = re.sub("^tool", tool_name, test_yml)
+
+            # Install main module files
+            os.makedirs(tool_dir, exist_ok=True)
+            # main.nf
+            with open(os.path.join(tool_dir, "main.nf"), "w") as fh:
+                fh.write(module_nf)
+            # meta.yml
+            with open(os.path.join(tool_dir, "meta.yml"), "w") as fh:
+                fh.write(meta_yml)
+            # functions.nf
+            with open(os.path.join(tool_dir, "functions.nf"), "w") as fh:
+                fh.write(functions_nf)
+
+            # Install test files
+            os.makedirs(test_dir, exist_ok=True)
+            # main.nf
+            with open(os.path.join(test_dir, "main.nf"), "w") as fh:
+                fh.write(test_nf)
+            # test.yml
+            with open(os.path.join(test_dir, "test.yml"), "w") as fh:
+                fh.write(test_yml)
 
 
     def get_repo_type(self, directory):
@@ -292,10 +353,10 @@ class PipelineModules(object):
             log.error("Could not determine repository type of {}".format(directory))
             sys.exit(1)
 
-    def download_template(self):
+    def download_template(self, url):
         """ Download the module template """
 
-        url = "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/main.nf"
+
         r = requests.get(url=url)
 
         if r.status_code != 200:
