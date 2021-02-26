@@ -434,6 +434,18 @@ def check(ctx):
     mods.check_modules()
 
 
+@modules.command(help_priority=6)
+@click.pass_context
+@click.argument("directory", type=click.Path(exists=True), required=True, metavar="<target directory>")
+@click.argument("tool", type=str, required=True, metavar="<tool name>")
+@click.argument("subtool", type=str, required=False, metavar="<subtool name>")
+def create(ctx, directory, tool, subtool=None):
+    mods = nf_core.modules.PipelineModules()
+    mods.create(directory=directory, tool=tool, subtool=subtool)
+
+
+
+
 ## nf-core schema subcommands
 @nf_core_cli.group(cls=CustomHelpOrder, help_priority=8)
 def schema():
