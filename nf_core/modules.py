@@ -283,17 +283,17 @@ class PipelineModules(object):
 
             # Get the template copies for all the files
             template_urls = {
-                'module.nf': "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/main.nf",
-                'functions.nf': "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/functions.nf",
-                'meta.yml': "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/meta.yml",
-                'test.yml': "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/test.yml",
-                'test.nf': "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/main.nf"
+                "module.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/main.nf",
+                "functions.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/functions.nf",
+                "meta.yml": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/meta.yml",
+                "test.yml": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/test.yml",
+                "test.nf": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/main.nf",
             }
-            module_nf = self.download_template(template_urls['module.nf'])
-            functions_nf = self.download_template(template_urls['functions.nf'])
-            meta_yml = self.download_template(template_urls['meta.yml'])
-            test_yml = self.download_template(template_urls['test.yml'])
-            test_nf = self.download_template(template_urls['test.nf'])
+            module_nf = self.download_template(template_urls["module.nf"])
+            functions_nf = self.download_template(template_urls["functions.nf"])
+            meta_yml = self.download_template(template_urls["meta.yml"])
+            test_yml = self.download_template(template_urls["test.yml"])
+            test_nf = self.download_template(template_urls["test.nf"])
 
             # Replace TOOL/SUBTOOL
             module_nf = module_nf.replace("TOOL_SUBTOOL", tool_name.upper())
@@ -307,8 +307,9 @@ class PipelineModules(object):
             else:
                 meta_yml = meta_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
                 meta_yml = re.sub("^tool", tool_name, meta_yml)
-                test_nf = test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace("SUBTOOL/", "").replace("TOOL",
-                                                                                                        tool.upper())
+                test_nf = (
+                    test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace("SUBTOOL/", "").replace("TOOL", tool.upper())
+                )
                 test_yml = test_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
                 test_yml = re.sub("^tool", tool_name, test_yml)
 
@@ -333,6 +334,35 @@ class PipelineModules(object):
             with open(os.path.join(test_dir, "test.yml"), "w") as fh:
                 fh.write(test_yml)
 
+            # Add line to filters.yml
+            try:
+                with open(os.path.join(directory, ".github", "filters.yml"), "a") as fh:
+                    if subtool:
+                        content = (
+                            "\n"
+                            + f"{tool_name}:"
+                            + "\n"
+                            + f"  - software/{tool}/{subtool}/**"
+                            + "\n"
+                            + f"  - tests/software/{tool}/{subtool}/**\n"
+                        )
+                    else:
+                        content = (
+                            "\n"
+                            + f"{tool_name}:"
+                            + "\n"
+                            + f"  - software/{tool}/**"
+                            + "\n"
+                            + f"  - tests/software/{tool}/**\n"
+                        )
+                    fh.write(content)
+
+            except FileNotFoundError as e:
+                log.error(f"Could not open filters.yml file!")
+                sys.exit(1)
+
+            log.info(f"Successfully created module files at: {tool_dir}")
+            log.info(f"Added test files at: {test_dir}")
 
     def get_repo_type(self, directory):
         """
@@ -355,7 +385,6 @@ class PipelineModules(object):
 
     def download_template(self, url):
         """ Download the module template """
-
 
         r = requests.get(url=url)
 
