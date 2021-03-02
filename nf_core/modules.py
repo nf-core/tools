@@ -236,6 +236,28 @@ class PipelineModules(object):
     def create(self, directory, tool, subtool=None):
         """
         Create a new module from the template
+
+        If <directory> is a ppipeline, this function create a file in the
+        'directory/modules/local/process' dir called <tool_subtool.nf>
+
+        If <directory> is a clone of nf-core/modules, it creates the files and
+        corresponding directories:
+
+        modules/software/tool/subtool/
+            * main.nf
+            * meta.yml
+            * functoins.nf
+
+        modules/tests/software/tool/subtool/
+            * main.nf
+            * test.yml
+
+        Additionally the necessary lines to run the tests are appended to
+        modules/.github/filters.yml
+
+        :param directory:   the target directory to create the module template in
+        :param tool:        name of the tool
+        :param subtool:     name of the
         """
 
         # Check whether the given directory is a nf-core pipeline or a clone
