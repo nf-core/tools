@@ -237,7 +237,7 @@ class PipelineModules(object):
         """
         Create a new module from the template
 
-        If <directory> is a ppipeline, this function create a file in the
+        If <directory> is a ppipeline, this function creates a file in the
         'directory/modules/local/process' dir called <tool_subtool.nf>
 
         If <directory> is a clone of nf-core/modules, it creates the files and
@@ -259,26 +259,32 @@ class PipelineModules(object):
         :param tool:        name of the tool
         :param subtool:     name of the
         """
-
+        template_urls = {
+            "module.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/main.nf",
+            "functions.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/functions.nf",
+            "meta.yml": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/meta.yml",
+            "test.yml": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/test.yml",
+            "test.nf": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/main.nf",
+        }
         # Check whether the given directory is a nf-core pipeline or a clone
         # of nf-core modules
         self.repo_type = self.get_repo_type(directory)
 
-        # Create template for new module in nf-core
+        # Create template for new module in nf-core/modules
         if self.repo_type == "pipeline":
             # Create the (sub)tool name
             if subtool:
                 tool_name = tool + "_" + subtool
             else:
-                tool_name = tool + ".nf"
+                tool_name = tool
             module_file = os.path.join(directory, "modules", "local", "process", tool_name + ".nf")
             # Check whether module file already exists
             if os.path.exists(module_file):
-                log.error(f"Module file {module_file} already exists!")
+                log.error(f"Module file {module_file} exists already!")
                 sys.exit(1)
 
             # Download template
-            template_copy = self.download_template()
+            template_copy = self.download_template(url=template_urls["module.nf"])
 
             # Replace TOOL and SUBTOOL with correct names
             template_copy = template_copy.replace("TOOL_SUBTOOL", tool_name.upper())
@@ -299,18 +305,14 @@ class PipelineModules(object):
                 tool_dir = os.path.join(directory, "software", tool)
                 tool_name = tool
                 test_dir = os.path.join(directory, "tests", "software", tool)
-            if os.path.exists(tool_dir) or os.path.exists(test_dir):
-                log.error(f"Module {tool_dir} already exists")
+            if os.path.exists(tool_dir):
+                log.error(f"Module directory {tool_dir} exists already!")
+                sys.exit(1)
+            if os.path.exists(test_dir):
+                log.error(f"Module test directory {test_dir} exists already!")
                 sys.exit(1)
 
-            # Get the template copies for all the files
-            template_urls = {
-                "module.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/main.nf",
-                "functions.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/functions.nf",
-                "meta.yml": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/meta.yml",
-                "test.yml": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/test.yml",
-                "test.nf": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/main.nf",
-            }
+            # Get the template copies of all necessary files
             module_nf = self.download_template(template_urls["module.nf"])
             functions_nf = self.download_template(template_urls["functions.nf"])
             meta_yml = self.download_template(template_urls["meta.yml"])
@@ -325,7 +327,6 @@ class PipelineModules(object):
                 test_nf = test_nf.replace("TOOL", tool.upper()).replace("SUBTOOL", subtool.upper())
                 test_yml = test_yml.replace("subtool", subtool).replace("tool_", tool + "_")
                 test_yml = re.sub("^tool", tool, test_yml)
-
             else:
                 meta_yml = meta_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
                 meta_yml = re.sub("^tool", tool_name, meta_yml)
@@ -411,7 +412,7 @@ class PipelineModules(object):
         r = requests.get(url=url)
 
         if r.status_code != 200:
-            log.error("Could not download the demplate")
+            log.error("Could not download the template")
             sys.exit(1)
         else:
             try:
