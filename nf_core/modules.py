@@ -272,6 +272,8 @@ class PipelineModules(object):
 
         Additionally the necessary lines to run the tests are appended to
         modules/.github/filters.yml
+        The function will also try to look for a bioconda package called 'tool'
+        and for a matching container on quay.io
 
         :param directory:   the target directory to create the module template in
         :param tool:        name of the tool
@@ -287,6 +289,11 @@ class PipelineModules(object):
         # Check whether the given directory is a nf-core pipeline or a clone
         # of nf-core modules
         self.repo_type = self.get_repo_type(directory)
+
+        # Determine the tool name
+        tool_name = tool
+        if subtool:
+            tool_name += "_" + subtool
 
         # Try to find a bioconda package for 'tool'
         newest_version = None
@@ -307,14 +314,23 @@ class PipelineModules(object):
         except (ValueError, LookupError) as e:
             log.info(f"Could not find a container tag ({e})")
 
-        # Create template for new module in nf-core/modules
+        # Download and prepare the module.nf file
+        module_nf = self.download_template(template_urls["module.nf"])
+        module_nf = module_nf.replace("TOOL_SUBTOOL", tool_name.upper())
+
+        # Add the bioconda package
+        if newest_version:
+            module_nf = module_nf.replace(
+                "bioconda::samtools=1.10", newest_version)
+        # Add container
+        if container_tag:
+            module_nf = module_nf.replace("https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
+                                          f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}")
+            module_nf = module_nf.replace("quay.io/biocontainers/samtools:1.10--h9402c20_2",
+                                          f"quay.io/biocontainers/{tool}:{container_tag}")
+
+        # Create template for new module in nf-core pipeline
         if self.repo_type == "pipeline":
-
-            # Create the (sub)tool name
-            tool_name = tool
-            if subtool:
-                tool_name += "_" + subtool
-
             module_file = os.path.join(
                 directory, "modules", "local", "process", tool_name + ".nf")
             # Check whether module file already exists
@@ -322,43 +338,21 @@ class PipelineModules(object):
                 log.error(f"Module file {module_file} exists already!")
                 sys.exit(1)
 
-            # Download template
-            template_copy = self.download_template(
-                url=template_urls["module.nf"])
-
-            # Replace TOOL and SUBTOOL with correct names
-            template_copy = template_copy.replace(
-                "TOOL_SUBTOOL", tool_name.upper())
-
-            # Add the bioconda package
-            if newest_version:
-                template_copy = template_copy.replace(
-                    "bioconda::samtools=1.10", newest_version)
-
-            # Add container
-            if container_tag:
-                template_copy = template_copy.replace("https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
-                                                      f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}")
-                template_copy = template_copy.replace("quay.io/biocontainers/samtools:1.10--h9402c20_2",
-                                                      f"quay.io/biocontainers/{tool}:{container_tag}")
-
             # Create directories (if necessary) and the module .nf file
             os.makedirs(os.path.join(directory, "modules",
                                      "local", "process"), exist_ok=True)
             with open(module_file, "w") as fh:
-                fh.write(template_copy)
+                fh.write(module_nf)
             log.info(f"Module successfully created: {module_file}")
 
-        # Create template for new module in an nf-core pipeline
+        # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
             if subtool:
                 tool_dir = os.path.join(directory, "software", tool, subtool)
                 test_dir = os.path.join(
                     directory, "tests", "software", tool, subtool)
-                tool_name = tool + "_" + subtool
             else:
                 tool_dir = os.path.join(directory, "software", tool)
-                tool_name = tool
                 test_dir = os.path.join(directory, "tests", "software", tool)
             if os.path.exists(tool_dir):
                 log.error(f"Module directory {tool_dir} exists already!")
@@ -368,27 +362,13 @@ class PipelineModules(object):
                 sys.exit(1)
 
             # Get the template copies of all necessary files
-            module_nf = self.download_template(template_urls["module.nf"])
             functions_nf = self.download_template(
                 template_urls["functions.nf"])
             meta_yml = self.download_template(template_urls["meta.yml"])
             test_yml = self.download_template(template_urls["test.yml"])
             test_nf = self.download_template(template_urls["test.nf"])
 
-            # Add the bioconda package
-            if newest_version:
-                module_nf = module_nf.replace(
-                    "bioconda::samtools=1.10", newest_version)
-
-            # Add container
-            if container_tag:
-                module_nf = module_nf.replace("https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
-                                              f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}")
-                module_nf = module_nf.replace("quay.io/biocontainers/samtools:1.10--h9402c20_2",
-                                              f"quay.io/biocontainers/{tool}:{container_tag}")
-
             # Replace TOOL/SUBTOOL
-            module_nf = module_nf.replace("TOOL_SUBTOOL", tool_name.upper())
             if subtool:
                 meta_yml = meta_yml.replace(
                     "subtool", subtool).replace("tool_", tool + "_")
@@ -547,6 +527,16 @@ def _bioconda_package(package, full_dep=True):
 
 def _get_container_tag(package, version):
     """
+    Given a biocnda package and version, look for a container 
+    at quay.io and return the tag of the most recent image
+    that matches the package version
+    Sends a HTTP GET request to the quay.io API.
+    Args:
+        package (str): A bioconda package name.
+        version (str): Version of the bioconda package
+    Raises:
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
     """
 
     quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
