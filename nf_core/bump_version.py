@@ -7,161 +7,220 @@ import click
 import logging
 import os
 import re
+import rich.console
 import sys
+import nf_core.utils
 
 log = logging.getLogger(__name__)
+stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
 
 
-def bump_pipeline_version(lint_obj, new_version):
+def bump_pipeline_version(pipeline_obj, new_version):
     """Bumps a pipeline version number.
 
     Args:
-        lint_obj (nf_core.lint.PipelineLint): A `PipelineLint` object that holds information
+        pipeline_obj (nf_core.utils.Pipeline): A `Pipeline` object that holds information
             about the pipeline contents and build files.
         new_version (str): The new version tag for the pipeline. Semantic versioning only.
     """
+
     # Collect the old and new version numbers
-    current_version = lint_obj.config.get("manifest.version", "").strip(" '\"")
+    current_version = pipeline_obj.nf_config.get("manifest.version", "").strip(" '\"")
     if new_version.startswith("v"):
         log.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
     if not current_version:
-        log.error("Could not find config variable manifest.version")
+        log.error("Could not find config variable 'manifest.version'")
         sys.exit(1)
-    log.info(
-        "Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(
-            current_version, new_version
-        )
-    )
+    log.info("Changing version number from '{}' to '{}'".format(current_version, new_version))
 
-    # Update nextflow.config
-    nfconfig_pattern = r"version\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace(".", r"\."))
-    nfconfig_newstr = "version = '{}'".format(new_version)
-    update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
-
-    # Update container tag
+    # nextflow.config - workflow manifest version
+    # nextflow.config - process container manifest version
     docker_tag = "dev"
     if new_version.replace(".", "").isdigit():
         docker_tag = new_version
     else:
         log.info("New version contains letters. Setting docker tag to 'dev'")
-    nfconfig_pattern = r"container\s*=\s*[\'\"]nfcore/{}:(?:{}|dev)[\'\"]".format(
-        lint_obj.pipeline_name.lower(), current_version.replace(".", r"\.")
-    )
-    nfconfig_newstr = "container = 'nfcore/{}:{}'".format(lint_obj.pipeline_name.lower(), docker_tag)
-    update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
 
-    # Update GitHub Actions CI image tag (build)
-    nfconfig_pattern = r"docker build --no-cache . -t nfcore/{name}:(?:{tag}|dev)".format(
-        name=lint_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
-    )
-    nfconfig_newstr = "docker build --no-cache . -t nfcore/{name}:{tag}".format(
-        name=lint_obj.pipeline_name.lower(), tag=docker_tag
-    )
     update_file_version(
-        os.path.join(".github", "workflows", "ci.yml"), lint_obj, nfconfig_pattern, nfconfig_newstr, allow_multiple=True
+        "nextflow.config",
+        pipeline_obj,
+        [
+            (
+                r"version\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace(".", r"\.")),
+                "version = '{}'".format(new_version),
+            ),
+            (
+                r"container\s*=\s*[\'\"]nfcore/{}:(?:{}|dev)[\'\"]".format(
+                    pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")
+                ),
+                "container = 'nfcore/{}:{}'".format(pipeline_obj.pipeline_name.lower(), docker_tag),
+            ),
+        ],
     )
 
-    # Update GitHub Actions CI image tag (pull)
-    nfconfig_pattern = r"docker tag nfcore/{name}:dev nfcore/{name}:(?:{tag}|dev)".format(
-        name=lint_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
-    )
-    nfconfig_newstr = "docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(
-        name=lint_obj.pipeline_name.lower(), tag=docker_tag
-    )
+    # .github/workflows/ci.yml - docker build image tag
+    # .github/workflows/ci.yml - docker tag image
     update_file_version(
-        os.path.join(".github", "workflows", "ci.yml"), lint_obj, nfconfig_pattern, nfconfig_newstr, allow_multiple=True
+        os.path.join(".github", "workflows", "ci.yml"),
+        pipeline_obj,
+        [
+            (
+                r"docker build --no-cache . -t nfcore/{name}:(?:{tag}|dev)".format(
+                    name=pipeline_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
+                ),
+                "docker build --no-cache . -t nfcore/{name}:{tag}".format(
+                    name=pipeline_obj.pipeline_name.lower(), tag=docker_tag
+                ),
+            ),
+            (
+                r"docker tag nfcore/{name}:dev nfcore/{name}:(?:{tag}|dev)".format(
+                    name=pipeline_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
+                ),
+                "docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(
+                    name=pipeline_obj.pipeline_name.lower(), tag=docker_tag
+                ),
+            ),
+        ],
     )
 
-    if "environment.yml" in lint_obj.files:
-        # Update conda environment.yml
-        nfconfig_pattern = r"name: nf-core-{}-{}".format(
-            lint_obj.pipeline_name.lower(), current_version.replace(".", r"\.")
-        )
-        nfconfig_newstr = "name: nf-core-{}-{}".format(lint_obj.pipeline_name.lower(), new_version)
-        update_file_version("environment.yml", lint_obj, nfconfig_pattern, nfconfig_newstr)
+    # environment.yml - environment name
+    update_file_version(
+        "environment.yml",
+        pipeline_obj,
+        [
+            (
+                r"name: nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
+                "name: nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
+            )
+        ],
+    )
 
-        # Update Dockerfile ENV PATH and RUN conda env create
-        nfconfig_pattern = r"nf-core-{}-{}".format(lint_obj.pipeline_name.lower(), current_version.replace(".", r"\."))
-        nfconfig_newstr = "nf-core-{}-{}".format(lint_obj.pipeline_name.lower(), new_version)
-        update_file_version("Dockerfile", lint_obj, nfconfig_pattern, nfconfig_newstr, allow_multiple=True)
+    # Dockerfile - ENV PATH and RUN conda env create
+    update_file_version(
+        "Dockerfile",
+        pipeline_obj,
+        [
+            (
+                r"nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
+                "nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
+            )
+        ],
+    )
+
+    # conf/charliecloud.config - environment path
+    update_file_version(
+        "conf/charliecloud.config",
+        pipeline_obj,
+        [
+            (
+                r"nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
+                "nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
+            )
+        ],
+    )
 
 
-def bump_nextflow_version(lint_obj, new_version):
+def bump_nextflow_version(pipeline_obj, new_version):
     """Bumps the required Nextflow version number of a pipeline.
 
     Args:
-        lint_obj (nf_core.lint.PipelineLint): A `PipelineLint` object that holds information
+        pipeline_obj (nf_core.utils.Pipeline): A `Pipeline` object that holds information
             about the pipeline contents and build files.
         new_version (str): The new version tag for the required Nextflow version.
     """
-    # Collect the old and new version numbers
-    current_version = lint_obj.config.get("manifest.nextflowVersion", "").strip(" '\"")
-    current_version = re.sub(r"[^0-9\.]", "", current_version)
-    new_version = re.sub(r"[^0-9\.]", "", new_version)
+
+    # Collect the old and new version numbers - strip leading non-numeric characters (>=)
+    current_version = pipeline_obj.nf_config.get("manifest.nextflowVersion", "").strip(" '\"")
+    current_version = re.sub(r"^[^0-9\.]*", "", current_version)
+    new_version = re.sub(r"^[^0-9\.]*", "", new_version)
     if not current_version:
-        log.error("Could not find config variable manifest.nextflowVersion")
+        log.error("Could not find config variable 'manifest.nextflowVersion'")
         sys.exit(1)
-    log.info(
-        "Changing version number:\n  Current version number is '{}'\n  New version number will be '{}'".format(
-            current_version, new_version
-        )
-    )
+    log.info("Changing Nextlow version number from '{}' to '{}'".format(current_version, new_version))
 
-    # Update nextflow.config
-    nfconfig_pattern = r"nextflowVersion\s*=\s*[\'\"]?>={}[\'\"]?".format(current_version.replace(".", r"\."))
-    nfconfig_newstr = "nextflowVersion = '>={}'".format(new_version)
-    update_file_version("nextflow.config", lint_obj, nfconfig_pattern, nfconfig_newstr)
-
-    # Update GitHub Actions CI
-    nfconfig_pattern = r"nxf_ver: \[[\'\"]?{}[\'\"]?, ''\]".format(current_version.replace(".", r"\."))
-    nfconfig_newstr = "nxf_ver: ['{}', '']".format(new_version)
+    # nextflow.config - manifest minimum nextflowVersion
     update_file_version(
-        os.path.join(".github", "workflows", "ci.yml"), lint_obj, nfconfig_pattern, nfconfig_newstr, True
+        "nextflow.config",
+        pipeline_obj,
+        [
+            (
+                r"nextflowVersion\s*=\s*[\'\"]?>={}[\'\"]?".format(current_version.replace(".", r"\.")),
+                "nextflowVersion = '>={}'".format(new_version),
+            )
+        ],
     )
 
-    # Update README badge
-    nfconfig_pattern = r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace(".", r"\."))
-    nfconfig_newstr = "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version)
-    update_file_version("README.md", lint_obj, nfconfig_pattern, nfconfig_newstr, True)
+    # .github/workflows/ci.yml - Nextflow version matrix
+    update_file_version(
+        os.path.join(".github", "workflows", "ci.yml"),
+        pipeline_obj,
+        [
+            (
+                r"nxf_ver: \[[\'\"]?{}[\'\"]?, ''\]".format(current_version.replace(".", r"\.")),
+                "nxf_ver: ['{}', '']".format(new_version),
+            )
+        ],
+    )
+
+    # README.md - Nextflow version badge
+    update_file_version(
+        "README.md",
+        pipeline_obj,
+        [
+            (
+                r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace(".", r"\.")),
+                "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version),
+            )
+        ],
+    )
 
 
-def update_file_version(filename, lint_obj, pattern, newstr, allow_multiple=False):
+def update_file_version(filename, pipeline_obj, patterns):
     """Updates the version number in a requested file.
 
     Args:
         filename (str): File to scan.
-        lint_obj (nf_core.lint.PipelineLint): A PipelineLint object that holds information
+        pipeline_obj (nf_core.lint.PipelineLint): A PipelineLint object that holds information
             about the pipeline contents and build files.
         pattern (str): Regex pattern to apply.
         newstr (str): The replaced string.
-        allow_multiple (bool): Replace all pattern hits, not only the first. Defaults to False.
 
     Raises:
-        SyntaxError, if the version number cannot be found.
+        ValueError, if the version number cannot be found.
     """
     # Load the file
-    fn = os.path.join(lint_obj.path, filename)
+    fn = pipeline_obj._fp(filename)
     content = ""
-    with open(fn, "r") as fh:
-        content = fh.read()
+    try:
+        with open(fn, "r") as fh:
+            content = fh.read()
+    except FileNotFoundError:
+        log.warning("File not found: '{}'".format(fn))
+        return
 
-    # Check that we have exactly one match
-    matches_pattern = re.findall("^.*{}.*$".format(pattern), content, re.MULTILINE)
-    if len(matches_pattern) == 0:
-        raise SyntaxError("Could not find version number in {}: '{}'".format(filename, pattern))
-    if len(matches_pattern) > 1 and not allow_multiple:
-        raise SyntaxError("Found more than one version number in {}: '{}'".format(filename, pattern))
+    replacements = []
+    for pattern in patterns:
 
-    # Replace the match
-    new_content = re.sub(pattern, newstr, content)
-    matches_newstr = re.findall("^.*{}.*$".format(newstr), new_content, re.MULTILINE)
+        # Check that we have a match
+        matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), content, re.MULTILINE)
+        if len(matches_pattern) == 0:
+            log.error("Could not find version number in {}: '{}'".format(filename, pattern))
+            continue
 
-    log.info(
-        "Updating version in {}\n".format(filename)
-        + "[red] - {}\n".format("\n - ".join(matches_pattern).strip())
-        + "[green] + {}\n".format("\n + ".join(matches_newstr).strip())
-    )
+        # Replace the match
+        content = re.sub(pattern[0], pattern[1], content)
+        matches_newstr = re.findall("^.*{}.*$".format(pattern[1]), content, re.MULTILINE)
+
+        # Save for logging
+        replacements.append((matches_pattern, matches_newstr))
+
+    log.info("Updated version in '{}'".format(filename))
+    for replacement in replacements:
+        for idx, matched in enumerate(replacement[0]):
+            stderr.print("          [red] - {}".format(matched.strip()), highlight=False)
+            stderr.print("          [green] + {}".format(replacement[1][idx].strip()), highlight=False)
+    stderr.print("\n")
 
     with open(fn, "w") as fh:
-        fh.write(new_content)
+        fh.write(content)
