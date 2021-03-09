@@ -50,12 +50,14 @@ class PipelineModules(object):
         return_str = ""
 
         if len(self.modules_avail_module_names) > 0:
-            log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
+            log.info("Modules available from {} ({}):\n".format(
+                self.modules_repo.name, self.modules_repo.branch))
             # Print results to stdout
             return_str += "\n".join(self.modules_avail_module_names)
         else:
             log.info(
-                "No available modules found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
+                "No available modules found in {} ({}):\n".format(
+                    self.modules_repo.name, self.modules_repo.branch)
             )
         return return_str
 
@@ -71,23 +73,30 @@ class PipelineModules(object):
 
         # Check that the supplied name is an available module
         if module not in self.modules_avail_module_names:
-            log.error("Module '{}' not found in list of available modules.".format(module))
-            log.info("Use the command 'nf-core modules list' to view available software")
+            log.error(
+                "Module '{}' not found in list of available modules.".format(module))
+            log.info(
+                "Use the command 'nf-core modules list' to view available software")
             return False
-        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
+        log.debug("Installing module '{}' at modules hash {}".format(
+            module, self.modules_current_hash))
 
         # Check that we don't already have a folder for this module
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(
+            self.pipeline_dir, "modules", "nf-core", "software", module)
         if os.path.exists(module_dir):
             log.error("Module directory already exists: {}".format(module_dir))
-            log.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
+            log.info(
+                "To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
             return False
 
         # Download module files
         files = self.get_module_file_urls(module)
-        log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
+        log.debug(
+            "Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
-            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
+            dl_filename = os.path.join(
+                self.pipeline_dir, "modules", "nf-core", filename)
             self.download_gh_file(dl_filename, api_url)
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
@@ -106,12 +115,15 @@ class PipelineModules(object):
         self.has_valid_pipeline()
 
         # Get the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(
+            self.pipeline_dir, "modules", "nf-core", "software", module)
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
-            log.error("Module directory does not installed: {}".format(module_dir))
-            log.info("The module you want to remove seems not to be installed. Is it a local module?")
+            log.error(
+                "Module directory does not installed: {}".format(module_dir))
+            log.info(
+                "The module you want to remove seems not to be installed. Is it a local module?")
             return False
 
         # Remove the module
@@ -214,7 +226,8 @@ class PipelineModules(object):
         # Call the GitHub API
         r = requests.get(api_url)
         if r.status_code != 200:
-            raise SystemError("Could not fetch {} file: {}\n {}".format(self.modules_repo.name, r.status_code, api_url))
+            raise SystemError("Could not fetch {} file: {}\n {}".format(
+                self.modules_repo.name, r.status_code, api_url))
         result = r.json()
         file_contents = base64.b64decode(result["content"])
 
@@ -230,7 +243,8 @@ class PipelineModules(object):
         main_nf = os.path.join(self.pipeline_dir, "main.nf")
         nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
+            log.error("Could not find a main.nf or nextfow.config file in: {}".format(
+                self.pipeline_dir))
             return False
 
     def create(self, directory, tool, subtool=None):
@@ -272,25 +286,30 @@ class PipelineModules(object):
 
         # Create template for new module in nf-core/modules
         if self.repo_type == "pipeline":
+
             # Create the (sub)tool name
+            tool_name = tool
             if subtool:
-                tool_name = tool + "_" + subtool
-            else:
-                tool_name = tool
-            module_file = os.path.join(directory, "modules", "local", "process", tool_name + ".nf")
+                tool_name += "_" + subtool
+
+            module_file = os.path.join(
+                directory, "modules", "local", "process", tool_name + ".nf")
             # Check whether module file already exists
             if os.path.exists(module_file):
                 log.error(f"Module file {module_file} exists already!")
                 sys.exit(1)
 
             # Download template
-            template_copy = self.download_template(url=template_urls["module.nf"])
+            template_copy = self.download_template(
+                url=template_urls["module.nf"])
 
             # Replace TOOL and SUBTOOL with correct names
-            template_copy = template_copy.replace("TOOL_SUBTOOL", tool_name.upper())
+            template_copy = template_copy.replace(
+                "TOOL_SUBTOOL", tool_name.upper())
 
             # Create directories (if necessary) and the module .nf file
-            os.makedirs(os.path.join(directory, "modules", "local", "process"), exist_ok=True)
+            os.makedirs(os.path.join(directory, "modules",
+                                     "local", "process"), exist_ok=True)
             with open(module_file, "w") as fh:
                 fh.write(template_copy)
             log.info(f"Module successfully created: {module_file}")
@@ -299,7 +318,8 @@ class PipelineModules(object):
         if self.repo_type == "modules":
             if subtool:
                 tool_dir = os.path.join(directory, "software", tool, subtool)
-                test_dir = os.path.join(directory, "tests", "software", tool, subtool)
+                test_dir = os.path.join(
+                    directory, "tests", "software", tool, subtool)
                 tool_name = tool + "_" + subtool
             else:
                 tool_dir = os.path.join(directory, "software", tool)
@@ -314,7 +334,8 @@ class PipelineModules(object):
 
             # Get the template copies of all necessary files
             module_nf = self.download_template(template_urls["module.nf"])
-            functions_nf = self.download_template(template_urls["functions.nf"])
+            functions_nf = self.download_template(
+                template_urls["functions.nf"])
             meta_yml = self.download_template(template_urls["meta.yml"])
             test_yml = self.download_template(template_urls["test.yml"])
             test_nf = self.download_template(template_urls["test.nf"])
@@ -322,40 +343,53 @@ class PipelineModules(object):
             # Replace TOOL/SUBTOOL
             module_nf = module_nf.replace("TOOL_SUBTOOL", tool_name.upper())
             if subtool:
-                meta_yml = meta_yml.replace("subtool", subtool).replace("tool_", tool + "_")
+                meta_yml = meta_yml.replace(
+                    "subtool", subtool).replace("tool_", tool + "_")
                 meta_yml = re.sub("^tool", tool, meta_yml)
-                test_nf = test_nf.replace("TOOL", tool.upper()).replace("SUBTOOL", subtool.upper())
-                test_yml = test_yml.replace("subtool", subtool).replace("tool_", tool + "_")
-                test_yml = re.sub("^tool", tool, test_yml)
+                test_nf = test_nf.replace(
+                    "SUBTOOL", subtool).replace("TOOL", tool)
+                test_nf = test_nf.replace("tool_subtool", tool_name)
+                test_nf = test_nf.replace("TOOL_SUBTOOL", tool_name.upper())
+                test_yml = test_yml.replace(
+                    "subtool", subtool).replace("tool_", tool + "_")
+                test_yml = test_yml.replace(
+                    "SUBTOOL", subtool).replace("TOOL", tool)
+                test_yml = re.sub("tool", tool, test_yml)
             else:
-                meta_yml = meta_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
+                meta_yml = meta_yml.replace(
+                    "tool subtool", tool_name).replace("tool_subtool", "")
                 meta_yml = re.sub("^tool", tool_name, meta_yml)
                 test_nf = (
-                    test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace("SUBTOOL/", "").replace("TOOL", tool.upper())
+                    test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace(
+                        "SUBTOOL/", "").replace("TOOL", tool.upper())
                 )
-                test_yml = test_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
+                test_yml = test_yml.replace(
+                    "tool subtool", tool_name).replace("tool_subtool", "")
                 test_yml = re.sub("^tool", tool_name, test_yml)
 
             # Install main module files
-            os.makedirs(tool_dir, exist_ok=True)
-            # main.nf
-            with open(os.path.join(tool_dir, "main.nf"), "w") as fh:
-                fh.write(module_nf)
-            # meta.yml
-            with open(os.path.join(tool_dir, "meta.yml"), "w") as fh:
-                fh.write(meta_yml)
-            # functions.nf
-            with open(os.path.join(tool_dir, "functions.nf"), "w") as fh:
-                fh.write(functions_nf)
+            try:
+                os.makedirs(tool_dir, exist_ok=True)
+                # main.nf
+                with open(os.path.join(tool_dir, "main.nf"), "w") as fh:
+                    fh.write(module_nf)
+                # meta.yml
+                with open(os.path.join(tool_dir, "meta.yml"), "w") as fh:
+                    fh.write(meta_yml)
+                # functions.nf
+                with open(os.path.join(tool_dir, "functions.nf"), "w") as fh:
+                    fh.write(functions_nf)
 
-            # Install test files
-            os.makedirs(test_dir, exist_ok=True)
-            # main.nf
-            with open(os.path.join(test_dir, "main.nf"), "w") as fh:
-                fh.write(test_nf)
-            # test.yml
-            with open(os.path.join(test_dir, "test.yml"), "w") as fh:
-                fh.write(test_yml)
+                # Install test files
+                os.makedirs(test_dir, exist_ok=True)
+                # main.nf
+                with open(os.path.join(test_dir, "main.nf"), "w") as fh:
+                    fh.write(test_nf)
+                # test.yml
+                with open(os.path.join(test_dir, "test.yml"), "w") as fh:
+                    fh.write(test_yml)
+            except OSError as e:
+                log.error(f"Could not create module files: {e}")
 
             # Add line to filters.yml
             try:
@@ -403,7 +437,8 @@ class PipelineModules(object):
         elif os.path.exists(os.path.join(directory, "software")):
             return "modules"
         else:
-            log.error("Could not determine repository type of {}".format(directory))
+            log.error(
+                "Could not determine repository type of {}".format(directory))
             sys.exit(1)
 
     def download_template(self, url):
