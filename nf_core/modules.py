@@ -13,6 +13,10 @@ import sys
 import tempfile
 import shutil
 import re
+from datetime import datetime
+from requests import exceptions
+
+from requests.models import Response
 
 log = logging.getLogger(__name__)
 
@@ -284,6 +288,25 @@ class PipelineModules(object):
         # of nf-core modules
         self.repo_type = self.get_repo_type(directory)
 
+        # Try to find a bioconda package for 'tool'
+        newest_version = None
+        try:
+            response = _bioconda_package(tool, full_dep=False)
+            version = max(response['versions'])
+            newest_version = "bioconda::" + tool + "=" + version
+            log.info(f"Using bioconda package: {newest_version}")
+        except (ValueError, LookupError) as e:
+            log.info(f"Could not find bioconda package ({e})")
+
+        # Try to get the container tag
+        container_tag = None
+        try:
+            container_tag = _get_container_tag(tool, version)
+            log.info(
+                f"Using docker/singularity container with tag: {tool}:{container_tag}")
+        except (ValueError, LookupError) as e:
+            log.info(f"Could not find a container tag ({e})")
+
         # Create template for new module in nf-core/modules
         if self.repo_type == "pipeline":
 
@@ -306,6 +329,18 @@ class PipelineModules(object):
             # Replace TOOL and SUBTOOL with correct names
             template_copy = template_copy.replace(
                 "TOOL_SUBTOOL", tool_name.upper())
+
+            # Add the bioconda package
+            if newest_version:
+                template_copy = template_copy.replace(
+                    "bioconda::samtools=1.10", newest_version)
+
+            # Add container
+            if container_tag:
+                template_copy = template_copy.replace("https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
+                                                      f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}")
+                template_copy = template_copy.replace("quay.io/biocontainers/samtools:1.10--h9402c20_2",
+                                                      f"quay.io/biocontainers/{tool}:{container_tag}")
 
             # Create directories (if necessary) and the module .nf file
             os.makedirs(os.path.join(directory, "modules",
@@ -339,6 +374,18 @@ class PipelineModules(object):
             meta_yml = self.download_template(template_urls["meta.yml"])
             test_yml = self.download_template(template_urls["test.yml"])
             test_nf = self.download_template(template_urls["test.nf"])
+
+            # Add the bioconda package
+            if newest_version:
+                module_nf = module_nf.replace(
+                    "bioconda::samtools=1.10", newest_version)
+
+            # Add container
+            if container_tag:
+                module_nf = module_nf.replace("https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
+                                              f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}")
+                module_nf = module_nf.replace("quay.io/biocontainers/samtools:1.10--h9402c20_2",
+                                              f"quay.io/biocontainers/{tool}:{container_tag}")
 
             # Replace TOOL/SUBTOOL
             module_nf = module_nf.replace("TOOL_SUBTOOL", tool_name.upper())
@@ -457,3 +504,79 @@ class PipelineModules(object):
                 sys.exit(1)
 
         return template_copy
+
+
+def _bioconda_package(package, full_dep=True):
+    """Query bioconda package information.
+    Sends a HTTP GET request to the Anaconda remote API.
+    Args:
+        package (str): A bioconda package name.
+    Raises:
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
+    """
+    if full_dep:
+        dep = package.split("::")[1]
+        depname = dep.split("=")[0]
+    else:
+        depname = package
+
+    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format(
+        "bioconda", depname)
+
+    try:
+        response = requests.get(anaconda_api_url, timeout=10)
+    except (requests.exceptions.Timeout):
+        raise LookupError(
+            "Anaconda API timed out: {}".format(anaconda_api_url))
+    except (requests.exceptions.ConnectionError):
+        raise LookupError("Could not connect to Anaconda API")
+    else:
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code != 404:
+            raise LookupError(
+                "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
+                    response.status_code, anaconda_api_url, response
+                )
+            )
+        elif response.status_code == 404:
+            raise ValueError(
+                "Could not find `{}` in bioconda channel".format(package))
+
+
+def _get_container_tag(package, version):
+    """
+    """
+
+    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
+
+    try:
+        response = requests.get(quay_api_url)
+    except requests.exceptions.ConnectionError:
+        raise LookupError("Could not connect to quay.io API")
+    else:
+        if response.status_code == 200:
+            # Get the container tag
+            tags = response.json()['tags']
+            matching_tags = [t for t in tags if t['name'].startswith(version)]
+            # If version matches several images, get the most recent one, else return tag
+            if len(matching_tags) > 0:
+                tag = matching_tags[0]
+                tag_date = _get_tag_date(tag['last_modified'])
+                for t in matching_tags:
+                    if _get_tag_date(t['last_modified']) > tag_date:
+                        tag = t
+                return tag['name']
+            else:
+                return matching_tags[0]['name']
+        elif response.status_code != 404:
+            raise LookupError(
+                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}")
+        elif response.status_code == 404:
+            raise ValueError(
+                f"Could not find `{package}` on quayi.io/repository/biocontainers")
+
+
+def _get_tag_date(tag_date):
+    return datetime.strptime(tag_date.replace("-0000", "").strip(), '%a, %d %b %Y %H:%M:%S')
