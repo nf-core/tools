@@ -8,13 +8,16 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 import base64
+import errno
 import hashlib
 import logging
 import os
 import re
 import requests
 import rich
+import shlex
 import shutil
+import subprocess
 import sys
 import tempfile
 import yaml
@@ -377,7 +380,7 @@ class ModulesTestHelper(object):
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
-        ep_test["files"] = self.get_md5_sums(entry_point)
+        ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
 
         return ep_test
 
@@ -390,31 +393,63 @@ class ModulesTestHelper(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def get_md5_sums(self, entry_point):
+    def get_md5_sums(self, entry_point, command):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
         returns: list of tuples
         """
-        results_dir = None
-        while results_dir is None:
-            results_dir = rich.prompt.Prompt.ask(f"[violet]Results folder for test with this entry-point")
-            if not os.path.isdir(results_dir):
-                log.error(f"Directory '{results_dir}' does not exist")
-                results_dir = None
+        if self.run_test:
+            results_dir = self.run_test_workflow(command)
+        else:
+            results_dir = None
+            while results_dir is None:
+                results_dir = rich.prompt.Prompt.ask(f"[violet]Results folder for test with this entry-point")
+                if not os.path.isdir(results_dir):
+                    log.error(f"Directory '{results_dir}' does not exist")
+                    results_dir = None
 
         test_files = []
         for root, dir, file in os.walk(results_dir):
             for elem in file:
                 elem = os.path.join(root, elem)
                 elem_md5 = self._md5(elem)
+                # Switch out the temporary directory with the expected 'output' directory
+                if self.run_test:
+                    elem = elem.replace(results_dir, "output")
                 test_files.append({"path": elem, "md5sum": elem_md5})
 
         if len(test_files) == 0:
-            log.error(f"Could not find any test result files in '{results_dir}'")
-            test_files = self.get_md5_sums(entry_point)
+            raise UserWarning(f"Could not find any test result files in '{results_dir}'")
 
         return test_files
+
+    def run_test_workflow(self, command):
+        """ Given a test workflow and an entry point, run the test workflow """
+
+        # The config expects $PROFILE and Nextflow fails if it's not set
+        if os.environ.get("PROFILE") is None:
+            log.debug("Setting env var '$PROFILE' to an empty string as not set")
+            os.environ["PROFILE"] = ""
+
+        tmp_dir = tempfile.mkdtemp()
+        command += f" --outdir {tmp_dir}"
+
+        log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
+        try:
+            nfconfig_raw = subprocess.check_output(shlex.split(command))
+        except OSError as e:
+            if e.errno == errno.ENOENT:
+                raise AssertionError(
+                    "It looks like Nextflow is not installed. It is required for most nf-core functions."
+                )
+        except subprocess.CalledProcessError as e:
+            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{e.output.decode()}")
+        else:
+            log.info("Test workflow worked")
+            log.debug(nfconfig_raw)
+
+        return tmp_dir
 
     def print_test_yml(self):
         """
