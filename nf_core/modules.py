@@ -248,11 +248,13 @@ class ModulesTestHelper(object):
         test_input_results_dir=None,
         run_test=False,
         test_yml_output_path=None,
+        force_overwrite=False,
     ):
         self.module_name = module_name
         self.test_input_results_dir = test_input_results_dir
         self.run_test = run_test
         self.test_yml_output_path = test_yml_output_path
+        self.force_overwrite = force_overwrite
         self.modules_dir = os.path.join("software", *module_name.split("/"))
         self.test_yaml = {
             "name": test_name,
@@ -292,6 +294,16 @@ class ModulesTestHelper(object):
         if not self.run_test and self.test_input_results_dir is None:
             raise UserWarning(
                 f"Either supply a test output directory with '--input' or trigger a run with '--run-test'"
+            )
+
+        # Check that the output YAML file does not already exist
+        if (
+            self.test_yml_output_path is not None
+            and os.path.exists(self.test_yml_output_path)
+            and not self.force_overwrite
+        ):
+            raise UserWarning(
+                f"Test YAML file already exists! '{self.test_yml_output_path}'. Use '--force' to overwrite."
             )
 
     def build_test_yaml(self):
@@ -345,10 +357,13 @@ class ModulesTestHelper(object):
                 self.test_yml_output_path is not None
                 and self.test_yml_output_path != "-"
                 and os.path.exists(self.test_yml_output_path)
+                and not self.force_overwrite
             ):
-                if not rich.prompt.Confirm.ask(
+                if rich.prompt.Confirm.ask(
                     f"[red]File exists! [green]'{self.test_yml_output_path}' [violet]Overwrite?"
                 ):
+                    self.force_overwrite = True
+                else:
                     self.test_yml_output_path = None
 
         self.test_yaml["name"] = self.test_yaml["name"]

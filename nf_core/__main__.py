@@ -275,7 +275,7 @@ def create(name, description, author, new_version, no_git, force, outdir):
     Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
+    files, boilerplate code and bfest-practices.
     """
     create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
@@ -426,7 +426,8 @@ def check(ctx):
 @click.option("-i", "--input", type=click.Path(exists=True), help="Folder containing the test workflow results")
 @click.option("-r", "--run-test", is_flag=True, default=False, help="Run the test workflow")
 @click.option("-o", "--output", type=str, help="Path for output YAML file")
-def create_test(ctx, module, name, command, tag, input, run_test, output):
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
+def create_test(ctx, module, name, command, tag, input, run_test, output, force):
     """
     Run test workflow and generate a module test.yml file for a new module.
 
@@ -437,7 +438,9 @@ def create_test(ctx, module, name, command, tag, input, run_test, output):
     sensible defaults.
     """
     try:
-        modules_test_helper = nf_core.modules.ModulesTestHelper(module, name, command, tag, input, run_test, output)
+        modules_test_helper = nf_core.modules.ModulesTestHelper(
+            module, name, command, tag, input, run_test, output, force
+        )
         modules_test_helper.check_inputs()
         modules_test_helper.get_md5_sums()
         modules_test_helper.build_test_yaml()
