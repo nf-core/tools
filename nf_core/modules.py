@@ -293,11 +293,12 @@ class PipelineModules(object):
 
         # Try to get the container tag
         container_tag = None
-        try:
-            container_tag = _get_container_tag(tool, version)
-            log.info(f"Using docker/singularity container with tag: {tool}:{container_tag}")
-        except (ValueError, LookupError) as e:
-            log.info(f"Could not find a container tag ({e})")
+        if newest_version:
+            try:
+                container_tag = _get_container_tag(tool, version)
+                log.info(f"Using docker/singularity container with tag: {tool}:{container_tag}")
+            except (ValueError, LookupError) as e:
+                log.info(f"Could not find a container tag ({e})")
 
         # Download and prepare the module.nf file
         module_nf = self.download_template(template_urls["module.nf"])
