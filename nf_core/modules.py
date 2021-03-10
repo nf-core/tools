@@ -249,12 +249,14 @@ class ModulesTestHelper(object):
         run_test=False,
         test_yml_output_path=None,
         force_overwrite=False,
+        no_prompts=False,
     ):
         self.module_name = module_name
         self.test_input_results_dir = test_input_results_dir
         self.run_test = run_test
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
+        self.no_prompts = no_prompts
         self.modules_dir = os.path.join("software", *module_name.split("/"))
         self.test_yaml = {
             "name": test_name,
@@ -317,54 +319,69 @@ class ModulesTestHelper(object):
             any([x is None for x in [self.test_yaml["name"], self.test_yaml["command"], self.test_yml_output_path]])
             or len(self.test_yaml["tags"]) == 0
         ):
-            log.info("[green]Press enter to use default values [cyan bold](shown in brackets)")
+            if not self.no_prompts:
+                log.info("[green]Press enter to use default values [cyan bold](shown in brackets)")
 
         while self.test_yaml["name"] is None:
-            self.test_yaml["name"] = rich.prompt.Prompt.ask(
-                "[violet]Test name", default=f"Run tests for {self.module_name}"
-            ).strip()
-            if self.test_yaml["name"] == "":
-                self.test_yaml["name"] = None
+            default_val = f"Run tests for {self.module_name}"
+            if self.no_prompts:
+                self.test_yaml["name"] = default_val
+            else:
+                self.test_yaml["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
+                if self.test_yaml["name"] == "":
+                    self.test_yaml["name"] = None
 
         while self.test_yaml["command"] is None:
-            self.test_yaml["command"] = rich.prompt.Prompt.ask(
-                "[violet]Test command",
-                default=f"nextflow run tests/software/{self.module_name} -c tests/config/nextflow.config",
-            ).strip()
-            if self.test_yaml["command"] == "":
-                self.test_yaml["name"] = None
+            default_val = f"nextflow run tests/software/{self.module_name} -c tests/config/nextflow.config"
+            if self.no_prompts:
+                self.test_yaml["command"] = default_val
+            else:
+                self.test_yaml["command"] = rich.prompt.Prompt.ask("[violet]Test command", default=default_val).strip()
+                if self.test_yaml["command"] == "":
+                    self.test_yaml["name"] = None
 
         while len(self.test_yaml["tags"]) == 0:
             mod_name_parts = self.module_name.split("/")
             tag_defaults = []
             for idx in range(0, len(mod_name_parts)):
                 tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
-            tags_str = ""
-            while tags_str == "":
-                tags_str = rich.prompt.Prompt.ask(
-                    "[violet]Test tags[/] (comma separated)", default=",".join(tag_defaults)
-                ).strip()
-            self.test_yaml["tags"] = [t.strip() for t in tags_str.split(",")]
+            if self.no_prompts:
+                self.test_yaml["tags"] = tag_defaults
+            else:
+                tags_str = ""
+                while tags_str == "":
+                    tags_str = rich.prompt.Prompt.ask(
+                        "[violet]Test tags[/] (comma separated)", default=",".join(tag_defaults)
+                    ).strip()
+                self.test_yaml["tags"] = [t.strip() for t in tags_str.split(",")]
 
         while self.test_yml_output_path is None:
-            self.test_yml_output_path = rich.prompt.Prompt.ask(
-                "[violet]Test YAML output path[/] (- for stdout)", default=f"tests/software/{self.module_name}/test.yml"
-            ).strip()
-            if self.test_yml_output_path == "":
-                self.test_yml_output_path = None
-            # Check that the output YAML file does not already exist
-            if (
-                self.test_yml_output_path is not None
-                and self.test_yml_output_path != "-"
-                and os.path.exists(self.test_yml_output_path)
-                and not self.force_overwrite
-            ):
-                if rich.prompt.Confirm.ask(
-                    f"[red]File exists! [green]'{self.test_yml_output_path}' [violet]Overwrite?"
-                ):
-                    self.force_overwrite = True
-                else:
+            default_val = f"tests/software/{self.module_name}/test.yml"
+            if self.no_prompts:
+                self.test_yml_output_path = default_val
+                if os.path.exists(self.test_yml_output_path) and not self.force_overwrite:
+                    raise UserWarning(
+                        f"Test YAML file already exists! '{self.test_yml_output_path}'. Use '--force' to overwrite."
+                    )
+            else:
+                self.test_yml_output_path = rich.prompt.Prompt.ask(
+                    "[violet]Test YAML output path[/] (- for stdout)", default=default_val
+                ).strip()
+                if self.test_yml_output_path == "":
                     self.test_yml_output_path = None
+                # Check that the output YAML file does not already exist
+                if (
+                    self.test_yml_output_path is not None
+                    and self.test_yml_output_path != "-"
+                    and os.path.exists(self.test_yml_output_path)
+                    and not self.force_overwrite
+                ):
+                    if rich.prompt.Confirm.ask(
+                        f"[red]File exists! [green]'{self.test_yml_output_path}' [violet]Overwrite?"
+                    ):
+                        self.force_overwrite = True
+                    else:
+                        self.test_yml_output_path = None
 
         self.test_yaml["name"] = self.test_yaml["name"]
         self.test_yaml["command"] = self.test_yaml["command"]
@@ -407,6 +424,7 @@ class ModulesTestHelper(object):
             return
 
         try:
+            log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
                 yaml.dump([self.test_yaml], fh, Dumper=self.CustomDumper)
         except FileNotFoundError as e:
