@@ -11,6 +11,7 @@ import base64
 import hashlib
 import logging
 import os
+import re
 import requests
 import rich
 import shutil
@@ -242,117 +243,45 @@ class ModulesTestHelper(object):
     def __init__(
         self,
         module_name,
-        test_name=None,
-        test_command=None,
-        test_tags=[],
-        test_input_results_dir=None,
         run_test=False,
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
     ):
         self.module_name = module_name
-        self.test_input_results_dir = test_input_results_dir
         self.run_test = run_test
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
         self.no_prompts = no_prompts
-        self.modules_dir = os.path.join("software", *module_name.split("/"))
-        self.test_yaml = {
-            "name": test_name,
-            "command": test_command,
-            "tags": test_tags,
-            "files": [],
-        }
+        self.module_dir = os.path.join("software", *module_name.split("/"))
+        self.module_test_main = os.path.join("tests", "software", *module_name.split("/"), "main.nf")
+        self.entry_points = []
+        self.tests = []
 
     def run(self):
         """ Run build steps """
         self.check_inputs()
-        self.get_md5_sums()
-        self.build_test_yaml()
+        self.scrape_workflow_entry_points()
+        self.build_all_tests()
         self.print_test_yml()
 
     def check_inputs(self):
         """ Do more complex checks about supplied flags. """
         # First, sanity check that the module directory exists
-        if not os.path.isdir(self.modules_dir):
-            raise UserWarning(f"Cannot find directory '{self.modules_dir}'. Should be TOOL/SUBTOOL or TOOL")
-        if not os.path.exists(os.path.join(self.modules_dir, "main.nf")):
-            raise UserWarning(f"Cannot find module file '{self.modules_dir}/main.nf'")
+        if not os.path.isdir(self.module_dir):
+            raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
+        if not os.path.exists(self.module_test_main):
+            raise UserWarning(f"Cannot find module test workflow '{self.module_dir}/main.nf'")
 
-        # Sanity check + assign test run flags
-        if self.run_test and self.test_input_results_dir is not None:
-            raise UserWarning(f"Either supply '--input' or '--run-test', not both")
-        if not self.run_test and self.test_input_results_dir is None:
-            raise UserWarning(
-                f"Either supply a test output directory with '--input' or trigger a run with '--run-test'"
-            )
+        # Check that we're running tests if no prompts
+        if not self.run_test and self.no_prompts:
+            raise UserWarning(f"Must run tests if not using prompts. Please use '--run-test --no-prompts'")
 
-        # Check that the output YAML file does not already exist
-        if (
-            self.test_yml_output_path is not None
-            and os.path.exists(self.test_yml_output_path)
-            and not self.force_overwrite
-        ):
-            raise UserWarning(
-                f"Test YAML file already exists! '{self.test_yml_output_path}'. Use '--force' to overwrite."
-            )
-
-    def build_test_yaml(self):
-        """Given the supplied cli flags, prompt for any that are missing.
-
-        Returns: False if failure, None if success.
-        """
-
-        # Prompt for missing values
-        if (
-            any([x is None for x in [self.test_yaml["name"], self.test_yaml["command"], self.test_yml_output_path]])
-            or len(self.test_yaml["tags"]) == 0
-        ):
-            if not self.no_prompts:
-                log.info("[green]Press enter to use default values [cyan bold](shown in brackets)")
-
-        while self.test_yaml["name"] is None:
-            default_val = f"Run tests for {self.module_name}"
-            if self.no_prompts:
-                self.test_yaml["name"] = default_val
-            else:
-                self.test_yaml["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
-                if self.test_yaml["name"] == "":
-                    self.test_yaml["name"] = None
-
-        while self.test_yaml["command"] is None:
-            default_val = f"nextflow run tests/software/{self.module_name} -c tests/config/nextflow.config"
-            if self.no_prompts:
-                self.test_yaml["command"] = default_val
-            else:
-                self.test_yaml["command"] = rich.prompt.Prompt.ask("[violet]Test command", default=default_val).strip()
-                if self.test_yaml["command"] == "":
-                    self.test_yaml["name"] = None
-
-        while len(self.test_yaml["tags"]) == 0:
-            mod_name_parts = self.module_name.split("/")
-            tag_defaults = []
-            for idx in range(0, len(mod_name_parts)):
-                tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
-            if self.no_prompts:
-                self.test_yaml["tags"] = tag_defaults
-            else:
-                tags_str = ""
-                while tags_str == "":
-                    tags_str = rich.prompt.Prompt.ask(
-                        "[violet]Test tags[/] (comma separated)", default=",".join(tag_defaults)
-                    ).strip()
-                self.test_yaml["tags"] = [t.strip() for t in tags_str.split(",")]
-
+        # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
             default_val = f"tests/software/{self.module_name}/test.yml"
             if self.no_prompts:
                 self.test_yml_output_path = default_val
-                if os.path.exists(self.test_yml_output_path) and not self.force_overwrite:
-                    raise UserWarning(
-                        f"Test YAML file already exists! '{self.test_yml_output_path}'. Use '--force' to overwrite."
-                    )
             else:
                 self.test_yml_output_path = rich.prompt.Prompt.ask(
                     "[violet]Test YAML output path[/] (- for stdout)", default=default_val
@@ -372,10 +301,85 @@ class ModulesTestHelper(object):
                         self.force_overwrite = True
                     else:
                         self.test_yml_output_path = None
+        if os.path.exists(self.test_yml_output_path) and not self.force_overwrite:
+            raise UserWarning(
+                f"Test YAML file already exists! '{self.test_yml_output_path}'. Use '--force' to overwrite."
+            )
 
-        self.test_yaml["name"] = self.test_yaml["name"]
-        self.test_yaml["command"] = self.test_yaml["command"]
-        self.test_yaml["tags"] = self.test_yaml["tags"]
+    def scrape_workflow_entry_points(self):
+        """ Find the test workflow entry points from main.nf """
+        log.info(f"Looking for test workflow entry points: '{self.module_test_main}'")
+        with open(self.module_test_main, "r") as fh:
+            for line in fh:
+                match = re.match(r"workflow\s+(\S+)\s+{", line)
+                if match:
+                    self.entry_points.append(match.group(1))
+        if len(self.entry_points) == 0:
+            raise UserWarning("No workflow entry points found in 'self.module_test_main'")
+
+    def build_all_tests(self):
+        """
+        Go over each entry point and build structure
+        """
+        if not self.no_prompts:
+            log.info(
+                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+            )
+
+        for entry_point in self.entry_points:
+            ep_test = self.build_single_test(entry_point)
+            if ep_test:
+                self.tests.append(ep_test)
+
+    def build_single_test(self, entry_point):
+        """Given the supplied cli flags, prompt for any that are missing.
+
+        Returns: False if failure, None if success.
+        """
+        ep_test = {
+            "name": "",
+            "command": "",
+            "tags": [],
+            "files": [],
+        }
+
+        print("\n")
+        log.info(f"Building test meta for entry point '{entry_point}'")
+
+        while ep_test["name"] == "":
+            default_val = f"Run tests for {self.module_name} - {entry_point}"
+            if self.no_prompts:
+                ep_test["name"] = default_val
+            else:
+                ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
+
+        while ep_test["command"] == "":
+            default_val = (
+                f"nextflow run tests/software/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
+            )
+            if self.no_prompts:
+                ep_test["command"] = default_val
+            else:
+                ep_test["command"] = rich.prompt.Prompt.ask("[violet]Test command", default=default_val).strip()
+
+        while len(ep_test["tags"]) == 0:
+            mod_name_parts = self.module_name.split("/")
+            tag_defaults = []
+            for idx in range(0, len(mod_name_parts)):
+                tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
+            tag_defaults.append(entry_point.replace("test_", ""))
+            if self.no_prompts:
+                ep_test["tags"] = tag_defaults
+            else:
+                while len(ep_test["tags"]) == 0:
+                    prompt_tags = rich.prompt.Prompt.ask(
+                        "[violet]Test tags[/] (comma separated)", default=",".join(tag_defaults)
+                    ).strip()
+                    ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
+
+        ep_test["files"] = self.get_md5_sums(entry_point)
+
+        return ep_test
 
     def _md5(self, fname):
         """Generate md5 sum for file"""
@@ -386,26 +390,35 @@ class ModulesTestHelper(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def get_md5_sums(self):
+    def get_md5_sums(self, entry_point):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
         returns: list of tuples
         """
-        for root, dir, file in os.walk(self.test_input_results_dir):
+        results_dir = None
+        while results_dir is None:
+            results_dir = rich.prompt.Prompt.ask(f"[violet]Results folder for test with this entry-point")
+            if not os.path.isdir(results_dir):
+                log.error(f"Directory '{results_dir}' does not exist")
+                results_dir = None
+
+        test_files = []
+        for root, dir, file in os.walk(results_dir):
             for elem in file:
                 elem = os.path.join(root, elem)
                 elem_md5 = self._md5(elem)
-                self.test_yaml["files"].append({"path": elem, "md5sum": elem_md5})
+                test_files.append({"path": elem, "md5sum": elem_md5})
 
-        if len(self.test_yaml["files"]) == 0:
-            raise UserWarning(f"Could not find any test result files in '{self.test_input_results_dir}'")
+        if len(test_files) == 0:
+            log.error(f"Could not find any test result files in '{results_dir}'")
+            test_files = self.get_md5_sums(entry_point)
+
+        return test_files
 
     def print_test_yml(self):
         """
         Generate the test yml file.
-
-        NB: Results dict is wrapped in a list!
         """
 
         # Tweak YAML output
@@ -429,13 +442,13 @@ class ModulesTestHelper(object):
 
         if self.test_yml_output_path == "-":
             console = Console()
-            yaml_str = yaml.dump([self.test_yaml], Dumper=CustomDumper)
+            yaml_str = yaml.dump(self.tests, Dumper=CustomDumper)
             console.print("\n", Syntax(yaml_str, "yaml"), "\n")
             return
 
         try:
             log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump([self.test_yaml], fh, Dumper=CustomDumper)
+                yaml.dump(self.tests, fh, Dumper=CustomDumper)
         except FileNotFoundError as e:
             raise UserWarning("Could not create test.yml file: '{}'".format(e))

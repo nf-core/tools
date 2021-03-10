@@ -420,15 +420,11 @@ def check(ctx):
 @modules.command("create-test", help_priority=6)
 @click.pass_context
 @click.argument("module", type=str, required=True, metavar="<module name>")
-@click.option("-n", "--name", type=str, help="Test name")
-@click.option("-c", "--command", type=str, help="Nextflow run command for test")
-@click.option("-t", "--tag", type=str, multiple=True, help="Test tag (can specify multiple times)")
-@click.option("-i", "--input", type=click.Path(exists=True), help="Folder containing the test workflow results")
 @click.option("-r", "--run-test", is_flag=True, default=False, help="Run the test workflow")
 @click.option("-o", "--output", type=str, help="Path for output YAML file")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test(ctx, module, name, command, tag, input, run_test, output, force, no_prompts):
+def create_test(ctx, module, run_test, output, force, no_prompts):
     """
     Run test workflow and generate a module test.yml file for a new module.
 
@@ -439,9 +435,7 @@ def create_test(ctx, module, name, command, tag, input, run_test, output, force,
     sensible defaults.
     """
     try:
-        modules_test_helper = nf_core.modules.ModulesTestHelper(
-            module, name, command, tag, input, run_test, output, force, no_prompts
-        )
+        modules_test_helper = nf_core.modules.ModulesTestHelper(module, run_test, output, force, no_prompts)
         modules_test_helper.run()
     except UserWarning as e:
         log.critical(e)
