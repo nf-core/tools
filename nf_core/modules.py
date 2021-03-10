@@ -261,12 +261,22 @@ class ModulesTestHelper(object):
             "files": [],
         }
 
-    # Add custom dumper class to prevent overwriting the global state
-    # This prevents yaml from changing the output order
-    # See https://stackoverflow.com/a/52621703/1497385
+    # Tweak YAML output
     class CustomDumper(yaml.Dumper):
         def represent_dict_preserve_order(self, data):
+            """Add custom dumper class to prevent overwriting the global state
+            This prevents yaml from changing the output order
+
+            See https://stackoverflow.com/a/52621703/1497385
+            """
             return self.represent_dict(data.items())
+
+        def increase_indent(self, flow=False, *args, **kwargs):
+            """Indent YAML lists so that YAML validates with Prettier
+
+            See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
+            """
+            return super().increase_indent(flow=flow, indentless=False)
 
     CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
 
@@ -300,18 +310,18 @@ class ModulesTestHelper(object):
             any([x is None for x in [self.test_yaml["name"], self.test_yaml["command"], self.test_yml_output_path]])
             or len(self.test_yaml["tags"]) == 0
         ):
-            log.info("Prompting for test information. Press enter to use default values [cyan bold](shown in brackets)")
+            log.info("[green]Press enter to use default values [cyan bold](shown in brackets)")
 
         while self.test_yaml["name"] is None:
             self.test_yaml["name"] = rich.prompt.Prompt.ask(
-                "Test name", default=f"Run tests for {self.module_name}"
+                "[violet]Test name", default=f"Run tests for {self.module_name}"
             ).strip()
             if self.test_yaml["name"] == "":
                 self.test_yaml["name"] = None
 
         while self.test_yaml["command"] is None:
             self.test_yaml["command"] = rich.prompt.Prompt.ask(
-                "Test command",
+                "[violet]Test command",
                 default=f"nextflow run tests/software/{self.module_name} -c tests/config/nextflow.config",
             ).strip()
             if self.test_yaml["command"] == "":
@@ -324,26 +334,27 @@ class ModulesTestHelper(object):
                 tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
             tags_str = ""
             while tags_str == "":
-                tags_str = rich.prompt.Prompt.ask("Test tags (comma separated)", default=",".join(tag_defaults)).strip()
+                tags_str = rich.prompt.Prompt.ask(
+                    "[violet]Test tags[/] (comma separated)", default=",".join(tag_defaults)
+                ).strip()
             self.test_yaml["tags"] = [t.strip() for t in tags_str.split(",")]
 
         while self.test_yml_output_path is None:
             self.test_yml_output_path = rich.prompt.Prompt.ask(
-                "Test YAML output path (- for stdout)", default=f"tests/software/{self.module_name}/test.yml"
+                "[violet]Test YAML output path[/] (- for stdout)", default=f"tests/software/{self.module_name}/test.yml"
             ).strip()
-            if self.test_yml_output_path == "-":
-                self.test_yml_output_path = False
             if self.test_yml_output_path == "":
                 self.test_yml_output_path = None
             # Check that the output YAML file does not already exist
-            # TODO: Instead of clobbering can parse + append to list if already there
             if (
                 self.test_yml_output_path is not None
-                and self.test_yml_output_path is not False
+                and self.test_yml_output_path != "-"
                 and os.path.exists(self.test_yml_output_path)
             ):
-                log.warn(f"Test YAML file already exists! '{self.test_yml_output_path}'")
-                self.test_yml_output_path = None
+                if not rich.prompt.Confirm.ask(
+                    f"[red]File exists! [green]'{self.test_yml_output_path}' [violet]Overwrite?"
+                ):
+                    self.test_yml_output_path = None
 
         self.test_yaml["name"] = self.test_yaml["name"]
         self.test_yaml["command"] = self.test_yaml["command"]
@@ -379,10 +390,10 @@ class ModulesTestHelper(object):
 
         NB: Results dict is wrapped in a list!
         """
-        if self.test_yml_output_path is False:
+        if self.test_yml_output_path == "-":
             console = Console()
             yaml_str = yaml.dump([self.test_yaml], Dumper=self.CustomDumper)
-            console.print("\n", Syntax(yaml_str, "yaml", theme="material"), "\n")
+            console.print("\n", Syntax(yaml_str, "yaml"), "\n")
             return
 
         try:
