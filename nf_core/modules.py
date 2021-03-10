@@ -246,13 +246,13 @@ class ModulesTestHelper(object):
     def __init__(
         self,
         module_name,
-        run_test=False,
+        run_tests=False,
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
     ):
         self.module_name = module_name
-        self.run_test = run_test
+        self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
         self.no_prompts = no_prompts
@@ -263,6 +263,10 @@ class ModulesTestHelper(object):
 
     def run(self):
         """ Run build steps """
+        if not self.no_prompts:
+            log.info(
+                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+            )
         self.check_inputs()
         self.scrape_workflow_entry_points()
         self.build_all_tests()
@@ -277,8 +281,9 @@ class ModulesTestHelper(object):
             raise UserWarning(f"Cannot find module test workflow '{self.module_dir}/main.nf'")
 
         # Check that we're running tests if no prompts
-        if not self.run_test and self.no_prompts:
-            raise UserWarning(f"Must run tests if not using prompts. Please use '--run-test --no-prompts'")
+        if not self.run_tests and self.no_prompts:
+            log.debug("Setting run_tests to True as running without prompts")
+            self.run_tests = True
 
         # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
@@ -324,11 +329,6 @@ class ModulesTestHelper(object):
         """
         Go over each entry point and build structure
         """
-        if not self.no_prompts:
-            log.info(
-                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
-            )
-
         for entry_point in self.entry_points:
             ep_test = self.build_single_test(entry_point)
             if ep_test:
@@ -346,7 +346,10 @@ class ModulesTestHelper(object):
             "files": [],
         }
 
-        print("\n")
+        # Print nice divider line
+        console = Console()
+        console.print("[black]" + "─" * console.width)
+
         log.info(f"Building test meta for entry point '{entry_point}'")
 
         while ep_test["name"] == "":
@@ -399,13 +402,20 @@ class ModulesTestHelper(object):
         and generate tuples of (<file_path>, <md5sum>)
         returns: list of tuples
         """
-        if self.run_test:
-            results_dir = self.run_test_workflow(command)
-        else:
-            results_dir = None
-            while results_dir is None:
-                results_dir = rich.prompt.Prompt.ask(f"[violet]Results folder for test with this entry-point")
-                if not os.path.isdir(results_dir):
+
+        results_dir = None
+        run_this_test = False
+        while results_dir is None:
+            if self.run_tests or run_this_test:
+                results_dir = self.run_tests_workflow(command)
+            else:
+                results_dir = rich.prompt.Prompt.ask(
+                    f"[violet]Test output folder with results[/] (leave blank to run test)"
+                )
+                if results_dir == "":
+                    results_dir = None
+                    run_this_test = True
+                elif not os.path.isdir(results_dir):
                     log.error(f"Directory '{results_dir}' does not exist")
                     results_dir = None
 
@@ -414,9 +424,8 @@ class ModulesTestHelper(object):
             for elem in file:
                 elem = os.path.join(root, elem)
                 elem_md5 = self._md5(elem)
-                # Switch out the temporary directory with the expected 'output' directory
-                if self.run_test:
-                    elem = elem.replace(results_dir, "output")
+                # Switch out the results directory path with the expected 'output' directory
+                elem = elem.replace(results_dir, "output")
                 test_files.append({"path": elem, "md5sum": elem_md5})
 
         if len(test_files) == 0:
@@ -424,7 +433,7 @@ class ModulesTestHelper(object):
 
         return test_files
 
-    def run_test_workflow(self, command):
+    def run_tests_workflow(self, command):
         """ Given a test workflow and an entry point, run the test workflow """
 
         # The config expects $PROFILE and Nextflow fails if it's not set
@@ -446,7 +455,7 @@ class ModulesTestHelper(object):
         except subprocess.CalledProcessError as e:
             raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{e.output.decode()}")
         else:
-            log.info("Test workflow worked")
+            log.info("Test workflow finished!")
             log.debug(nfconfig_raw)
 
         return tmp_dir
