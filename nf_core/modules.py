@@ -339,11 +339,15 @@ class PipelineModules(object):
                 sys.exit(1)
 
             # Create directories (if necessary) and the module .nf file
-            os.makedirs(os.path.join(directory, "modules",
-                                     "local", "process"), exist_ok=True)
-            with open(module_file, "w") as fh:
-                fh.write(module_nf)
-            log.info(f"Module successfully created: {module_file}")
+            try:
+                os.makedirs(os.path.join(directory, "modules",
+                                        "local", "process"), exist_ok=True)
+                with open(module_file, "w") as fh:
+                    fh.write(module_nf)
+                log.info(f"Module successfully created: {module_file}")
+            except OSError as e:
+                log.error(f"Could not create module file {module_file}: {e}")
+                sys.exit(1)
 
         # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
@@ -417,6 +421,7 @@ class PipelineModules(object):
                     fh.write(test_yml)
             except OSError as e:
                 log.error(f"Could not create module files: {e}")
+                sys.exit(1)
 
             # Add line to filters.yml
             try:
@@ -569,4 +574,5 @@ def _get_container_tag(package, version):
 
 
 def _get_tag_date(tag_date):
+    # Reformat a date given by quay.io to  datetime
     return datetime.strptime(tag_date.replace("-0000", "").strip(), '%a, %d %b %Y %H:%M:%S')
