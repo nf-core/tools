@@ -294,11 +294,6 @@ class ModulesTestHelper(object):
                 f"Either supply a test output directory with '--input' or trigger a run with '--run-test'"
             )
 
-        # Check that the output YAML file does not already exist
-        # TODO: Instead of clobbering can parse + append to list if already there
-        if self.test_yml_output_path is not None and os.path.exists(self.test_yml_output_path):
-            raise UserWarning(f"Test YAML file already exists! '{self.test_yml_output_path}'")
-
     def build_test_yaml(self):
         """Given the supplied cli flags, prompt for any that are missing.
 
