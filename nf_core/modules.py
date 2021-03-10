@@ -265,30 +265,20 @@ class ModulesTestHelper(object):
             "files": [],
         }
 
-    # Tweak YAML output
-    class CustomDumper(yaml.Dumper):
-        def represent_dict_preserve_order(self, data):
-            """Add custom dumper class to prevent overwriting the global state
-            This prevents yaml from changing the output order
-
-            See https://stackoverflow.com/a/52621703/1497385
-            """
-            return self.represent_dict(data.items())
-
-        def increase_indent(self, flow=False, *args, **kwargs):
-            """Indent YAML lists so that YAML validates with Prettier
-
-            See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
-            """
-            return super().increase_indent(flow=flow, indentless=False)
-
-    CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
+    def run(self):
+        """ Run build steps """
+        self.check_inputs()
+        self.get_md5_sums()
+        self.build_test_yaml()
+        self.print_test_yml()
 
     def check_inputs(self):
         """ Do more complex checks about supplied flags. """
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.modules_dir):
-            raise UserWarning(f"Cannot find directory '{self.modules_dir}'! Should be TOOL/SUBTOOL or TOOL")
+            raise UserWarning(f"Cannot find directory '{self.modules_dir}'. Should be TOOL/SUBTOOL or TOOL")
+        if not os.path.exists(os.path.join(self.modules_dir, "main.nf")):
+            raise UserWarning(f"Cannot find module file '{self.modules_dir}/main.nf'")
 
         # Sanity check + assign test run flags
         if self.run_test and self.test_input_results_dir is not None:
@@ -417,15 +407,35 @@ class ModulesTestHelper(object):
 
         NB: Results dict is wrapped in a list!
         """
+
+        # Tweak YAML output
+        class CustomDumper(yaml.Dumper):
+            def represent_dict_preserve_order(self, data):
+                """Add custom dumper class to prevent overwriting the global state
+                This prevents yaml from changing the output order
+
+                See https://stackoverflow.com/a/52621703/1497385
+                """
+                return self.represent_dict(data.items())
+
+            def increase_indent(self, flow=False, *args, **kwargs):
+                """Indent YAML lists so that YAML validates with Prettier
+
+                See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
+                """
+                return super().increase_indent(flow=flow, indentless=False)
+
+        CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
+
         if self.test_yml_output_path == "-":
             console = Console()
-            yaml_str = yaml.dump([self.test_yaml], Dumper=self.CustomDumper)
+            yaml_str = yaml.dump([self.test_yaml], Dumper=CustomDumper)
             console.print("\n", Syntax(yaml_str, "yaml"), "\n")
             return
 
         try:
             log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump([self.test_yaml], fh, Dumper=self.CustomDumper)
+                yaml.dump([self.test_yaml], fh, Dumper=CustomDumper)
         except FileNotFoundError as e:
             raise UserWarning("Could not create test.yml file: '{}'".format(e))

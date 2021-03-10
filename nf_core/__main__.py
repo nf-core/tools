@@ -442,10 +442,7 @@ def create_test(ctx, module, name, command, tag, input, run_test, output, force,
         modules_test_helper = nf_core.modules.ModulesTestHelper(
             module, name, command, tag, input, run_test, output, force, no_prompts
         )
-        modules_test_helper.check_inputs()
-        modules_test_helper.get_md5_sums()
-        modules_test_helper.build_test_yaml()
-        modules_test_helper.print_test_yml()
+        modules_test_helper.run()
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
