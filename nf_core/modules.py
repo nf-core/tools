@@ -330,6 +330,13 @@ class PipelineModules(object):
                 os.makedirs(os.path.join(directory, "modules", "local", "process"), exist_ok=True)
                 with open(module_file, "w") as fh:
                     fh.write(module_nf)
+
+                # if functions.nf doesn't exist already, create it
+                if not os.path.exists(os.path.join(directory, "modules", "local", "process", "functions.nf")):
+                    functions_nf = self.download_template(template_urls["functions.nf"])
+                    with open(os.path.join(directory, "modules", "local", "process", "functions.nf"), "w") as fh:
+                        fh.write(functions_nf)
+
                 log.info(f"Module successfully created: {module_file}")
             except OSError as e:
                 log.error(f"Could not create module file {module_file}: {e}")
