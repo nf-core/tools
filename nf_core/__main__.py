@@ -417,19 +417,34 @@ def check(ctx):
     mods.check_modules()
 
 
-@modules.command(help_priority=6)
+@modules.command("create-test", help_priority=6)
 @click.pass_context
-@click.argument("modules_dir", type=click.Path(exists=True), required=True, metavar="<modules directory>")
-def md5(ctx, modules_dir):
+@click.argument("module", type=str, required=True, metavar="<module name>")
+@click.option("-n", "--name", type=str, help="Test name")
+@click.option("-c", "--command", type=str, help="Nextflow run command for test")
+@click.option("-t", "--tag", type=str, multiple=True, help="Test tag (can specify multiple times)")
+@click.option("-i", "--input", type=click.Path(exists=True), help="Folder containing the test workflow results")
+@click.option("-r", "--run-test", is_flag=True, default=False, help="Run the test workflow")
+@click.option("-o", "--output", type=str, help="Path for output YAML file")
+def create_test(ctx, module, name, command, tag, input, run_test, output):
     """
-    Generate md5 sums for all files in the "output" directory after running a command used for testing
-    Helper utility to ease the generation of module tests
+    Run test workflow and generate a module test.yml file for a new module.
+
+    Given the name of a new module, run the Nextflow test command and automatically generate
+    the required `test.yml` file based on the output files.
+
+    If not supplied on the command line, tool will prompt for name, command, tags etc with
+    sensible defaults.
     """
     try:
-        modules_test_helper = nf_core.modules.ModulesTestHelper(modules_dir=modules_dir)
-        modules_test_helper.generate_test_yml()
-    except FileNotFoundError as e:
-        log.error("Could not create test.yml file: {}".format(e))
+        modules_test_helper = nf_core.modules.ModulesTestHelper(module, name, command, tag, input, run_test, output)
+        modules_test_helper.check_inputs()
+        modules_test_helper.get_md5_sums()
+        modules_test_helper.build_test_yaml()
+        modules_test_helper.print_test_yml()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 ## nf-core schema subcommands

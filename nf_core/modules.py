@@ -4,17 +4,19 @@ Code to handle DSL2 module imports from a GitHub repository
 """
 
 from __future__ import print_function
+from rich.console import Console
+from rich.syntax import Syntax
 
 import base64
+import hashlib
 import logging
 import os
 import requests
+import rich
+import shutil
 import sys
 import tempfile
-import glob
-import hashlib
 import yaml
-import shutil
 
 log = logging.getLogger(__name__)
 
@@ -237,9 +239,27 @@ class PipelineModules(object):
 
 
 class ModulesTestHelper(object):
-    def __init__(self, modules_dir=""):
-        self.modules_dir = modules_dir
-        self.file_dicts = []
+    def __init__(
+        self,
+        module_name,
+        test_name=None,
+        test_command=None,
+        test_tags=[],
+        test_input_results_dir=None,
+        run_test=False,
+        test_yml_output_path=None,
+    ):
+        self.module_name = module_name
+        self.test_input_results_dir = test_input_results_dir
+        self.run_test = run_test
+        self.test_yml_output_path = test_yml_output_path
+        self.modules_dir = os.path.join("software", *module_name.split("/"))
+        self.test_yaml = {
+            "name": test_name,
+            "command": test_command,
+            "tags": test_tags,
+            "files": [],
+        }
 
     # Add custom dumper class to prevent overwriting the global state
     # This prevents yaml from changing the output order
@@ -250,6 +270,85 @@ class ModulesTestHelper(object):
 
     CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
 
+    def check_inputs(self):
+        """ Do more complex checks about supplied flags. """
+        # First, sanity check that the module directory exists
+        if not os.path.isdir(self.modules_dir):
+            raise UserWarning(f"Cannot find directory '{self.modules_dir}'! Should be TOOL/SUBTOOL or TOOL")
+
+        # Sanity check + assign test run flags
+        if self.run_test and self.test_input_results_dir is not None:
+            raise UserWarning(f"Either supply '--input' or '--run-test', not both")
+        if not self.run_test and self.test_input_results_dir is None:
+            raise UserWarning(
+                f"Either supply a test output directory with '--input' or trigger a run with '--run-test'"
+            )
+
+        # Check that the output YAML file does not already exist
+        # TODO: Instead of clobbering can parse + append to list if already there
+        if self.test_yml_output_path is not None and os.path.exists(self.test_yml_output_path):
+            raise UserWarning(f"Test YAML file already exists! '{self.test_yml_output_path}'")
+
+    def build_test_yaml(self):
+        """Given the supplied cli flags, prompt for any that are missing.
+
+        Returns: False if failure, None if success.
+        """
+
+        # Prompt for missing values
+        if (
+            any([x is None for x in [self.test_yaml["name"], self.test_yaml["command"], self.test_yml_output_path]])
+            or len(self.test_yaml["tags"]) == 0
+        ):
+            log.info("Prompting for test information. Press enter to use default values [cyan bold](shown in brackets)")
+
+        while self.test_yaml["name"] is None:
+            self.test_yaml["name"] = rich.prompt.Prompt.ask(
+                "Test name", default=f"Run tests for {self.module_name}"
+            ).strip()
+            if self.test_yaml["name"] == "":
+                self.test_yaml["name"] = None
+
+        while self.test_yaml["command"] is None:
+            self.test_yaml["command"] = rich.prompt.Prompt.ask(
+                "Test command",
+                default=f"nextflow run tests/software/{self.module_name} -c tests/config/nextflow.config",
+            ).strip()
+            if self.test_yaml["command"] == "":
+                self.test_yaml["name"] = None
+
+        while len(self.test_yaml["tags"]) == 0:
+            mod_name_parts = self.module_name.split("/")
+            tag_defaults = []
+            for idx in range(0, len(mod_name_parts)):
+                tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
+            tags_str = ""
+            while tags_str == "":
+                tags_str = rich.prompt.Prompt.ask("Test tags (comma separated)", default=",".join(tag_defaults)).strip()
+            self.test_yaml["tags"] = [t.strip() for t in tags_str.split(",")]
+
+        while self.test_yml_output_path is None:
+            self.test_yml_output_path = rich.prompt.Prompt.ask(
+                "Test YAML output path (- for stdout)", default=f"tests/software/{self.module_name}/test.yml"
+            ).strip()
+            if self.test_yml_output_path == "-":
+                self.test_yml_output_path = False
+            if self.test_yml_output_path == "":
+                self.test_yml_output_path = None
+            # Check that the output YAML file does not already exist
+            # TODO: Instead of clobbering can parse + append to list if already there
+            if (
+                self.test_yml_output_path is not None
+                and self.test_yml_output_path is not False
+                and os.path.exists(self.test_yml_output_path)
+            ):
+                log.warn(f"Test YAML file already exists! '{self.test_yml_output_path}'")
+                self.test_yml_output_path = None
+
+        self.test_yaml["name"] = self.test_yaml["name"]
+        self.test_yaml["command"] = self.test_yaml["command"]
+        self.test_yaml["tags"] = self.test_yaml["tags"]
+
     def _md5(self, fname):
         """Generate md5 sum for file"""
         hash_md5 = hashlib.md5()
@@ -259,40 +358,35 @@ class ModulesTestHelper(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def _get_md5_sums(self, dir):
+    def get_md5_sums(self):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
         returns: list of tuples
         """
-        for root, dir, file in os.walk(dir):
+        for root, dir, file in os.walk(self.test_input_results_dir):
             for elem in file:
                 elem = os.path.join(root, elem)
                 elem_md5 = self._md5(elem)
-                self.file_dicts.append({"path": elem, "md5sum": elem_md5})
+                self.test_yaml["files"].append({"path": elem, "md5sum": elem_md5})
 
-    def generate_test_yml(self):
+        if len(self.test_yaml["files"]) == 0:
+            raise UserWarning(f"Could not find any test result files in '{self.test_input_results_dir}'")
+
+    def print_test_yml(self):
         """
-        Generate the test yml file
+        Generate the test yml file.
+
+        NB: Results dict is wrapped in a list!
         """
-        # Look for output directory
-        output_dir = os.path.join(self.modules_dir, "output")
+        if self.test_yml_output_path is False:
+            console = Console()
+            yaml_str = yaml.dump([self.test_yaml], Dumper=self.CustomDumper)
+            console.print("\n", Syntax(yaml_str, "yaml", theme="material"), "\n")
+            return
 
-        # Get list of files and their md5sums
-        self._get_md5_sums(output_dir)
-
-        if len(self.file_dicts) == 0:
-            log.warn("Could not find any output files. Does the 'output' directory exist?")
-
-        yml_dict = [
-            {
-                "name": "<name of test>",
-                "command": "<command here>",
-                "tags": ["<tag>"],
-                "files": self.file_dicts,
-            }
-        ]
-
-        # print yaml to console
-        print(yaml.dump(yml_dict, Dumper=self.CustomDumper))
-        return yaml.dump(yml_dict, Dumper=self.CustomDumper)
+        try:
+            with open(self.test_yml_output_path, "w") as fh:
+                yaml.dump([self.test_yaml], fh, Dumper=self.CustomDumper)
+        except FileNotFoundError as e:
+            raise UserWarning("Could not create test.yml file: '{}'".format(e))
