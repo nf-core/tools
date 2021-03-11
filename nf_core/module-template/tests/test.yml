@@ -1,0 +1,8 @@
+- name: {{ cookiecutter.tool }} {{ cookiecutter.subtool }}
+  command: nextflow run ./tests/software/{{ cookiecutter.tool_dir }} -entry test_{{ cookiecutter.tool_name }} -c tests/config/nextflow.config
+  tags:
+    - {{ cookiecutter.tool }}
+    - {{ cookiecutter.tool_name }}
+  files:
+    - path: output/{{ cookiecutter.tool }}/test.bam
+      md5sum: e667c7caad0bc4b7ac383fd023c654fc

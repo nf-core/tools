@@ -8,10 +8,12 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 import base64
+import cookiecutter.main, cookiecutter.exceptions
 import datetime
 import errno
 import hashlib
 import logging
+import nf_core
 import os
 import re
 import requests
@@ -255,7 +257,7 @@ class PipelineModules(object):
         modules/software/tool/subtool/
             * main.nf
             * meta.yml
-            * functoins.nf
+            * functions.nf
 
         modules/tests/software/tool/subtool/
             * main.nf
@@ -270,79 +272,60 @@ class PipelineModules(object):
         :param tool:        name of the tool
         :param subtool:     name of the
         """
-        template_urls = {
-            "module.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/main.nf",
-            "functions.nf": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/functions.nf",
-            "meta.yml": "https://raw.githubusercontent.com/nf-core/modules/master/software/TOOL/SUBTOOL/meta.yml",
-            "test.yml": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/test.yml",
-            "test.nf": "https://raw.githubusercontent.com/nf-core/modules/master/tests/software/TOOL/SUBTOOL/main.nf",
-        }
+        self.directory = directory
+        self.tool = tool
+        self.subtool = subtool
+        # TODO author, label, --force
+        self.author = ""
+        self.label = "process_low"
+        self.force = False
+
         # Check whether the given directory is a nf-core pipeline or a clone
         # of nf-core modules
         self.repo_type = self.get_repo_type(directory)
 
+        # Collect module info TODO: use a prompt instead
         # Determine the tool name
-        tool_name = tool
-        if subtool:
-            tool_name += "_" + subtool
+        self.tool_name = self.tool
+        self.tool_dir = self.tool
+        if self.subtool:
+            self.tool_name += "_" + self.subtool
+            self.tool_dir += "/" + self.subtool
 
         # Try to find a bioconda package for 'tool'
-        newest_version = None
+        self.bioconda = None
         try:
-            response = _bioconda_package(tool, full_dep=False)
+            response = _bioconda_package(self.tool, full_dep=False)
             version = max(response["versions"])
-            newest_version = "bioconda::" + tool + "=" + version
-            log.info(f"Using bioconda package: {newest_version}")
+            self.bioconda = "bioconda::" + self.tool + "=" + version
+            log.info(f"Using bioconda package: {self.bioconda}")
         except (ValueError, LookupError) as e:
             log.info(f"Could not find bioconda package ({e})")
 
         # Try to get the container tag (only if bioconda package was found)
-        container_tag = None
-        if newest_version:
+        self.container_tag = None
+        if self.bioconda:
             try:
-                container_tag = _get_container_tag(tool, version)
-                log.info(f"Using docker/singularity container with tag: {tool}:{container_tag}")
+                self.container_tag = _get_container_tag(self.tool, version)
+                log.info(f"Using docker/singularity container with tag: {self.tool}:{self.container_tag}")
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
 
-        # Download and prepare the module.nf file
-        module_nf = self.download_template(template_urls["module.nf"])
-        module_nf = module_nf.replace("TOOL_SUBTOOL", tool_name.upper())
-
-        # Add the bioconda package
-        if newest_version:
-            module_nf = module_nf.replace("bioconda::samtools=1.10", newest_version)
-        # Add container
-        if container_tag:
-            module_nf = module_nf.replace(
-                "https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
-                f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}",
-            )
-            module_nf = module_nf.replace(
-                "quay.io/biocontainers/samtools:1.10--h9402c20_2", f"quay.io/biocontainers/{tool}:{container_tag}"
-            )
-
         # Create template for new module in nf-core pipeline
         if self.repo_type == "pipeline":
-            module_file = os.path.join(directory, "modules", "local", "process", tool_name + ".nf")
             # Check whether module file already exists
+            module_file = os.path.join(directory, "modules", "local", "process", self.tool_name + ".nf")
             if os.path.exists(module_file):
                 log.error(f"Module file {module_file} exists already!")
                 return False
 
-            # Create directories (if necessary) and the module .nf file
+            # Create module template with cokiecutter
+            # TODO
+            self.run_cookiecutter()
+
+            # Create directory and add the module template file
             try:
                 os.makedirs(os.path.join(directory, "modules", "local", "process"), exist_ok=True)
-                with open(module_file, "w") as fh:
-                    fh.write(module_nf)
-
-                # if functions.nf doesn't exist already, create it
-                if not os.path.exists(os.path.join(directory, "modules", "local", "process", "functions.nf")):
-                    functions_nf = self.download_template(template_urls["functions.nf"])
-                    with open(os.path.join(directory, "modules", "local", "process", "functions.nf"), "w") as fh:
-                        fh.write(functions_nf)
-
-                log.info(f"Module successfully created: {module_file}")
                 return True
             except OSError as e:
                 log.error(f"Could not create module file {module_file}: {e}")
@@ -350,81 +333,38 @@ class PipelineModules(object):
 
         # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
-            if subtool:
-                tool_dir = os.path.join(directory, "software", tool, subtool)
-                test_dir = os.path.join(directory, "tests", "software", tool, subtool)
-            else:
-                tool_dir = os.path.join(directory, "software", tool)
-                test_dir = os.path.join(directory, "tests", "software", tool)
-            if os.path.exists(tool_dir):
-                log.error(f"Module directory {tool_dir} exists already!")
+            self.software_dir = os.path.join(directory, "software", self.tool_dir)
+            self.test_dir = os.path.join(directory, "tests", "software", self.tool_dir)
+            if os.path.exists(self.software_dir):
+                log.error(f"Module directory {self.software_dir} exists already!")
                 return False
-            if os.path.exists(test_dir):
-                log.error(f"Module test directory {test_dir} exists already!")
+            if os.path.exists(self.test_dir):
+                log.error(f"Module test directory {self.test_dir} exists already!")
                 return False
 
-            # Get the template copies of all necessary files
-            functions_nf = self.download_template(template_urls["functions.nf"])
-            meta_yml = self.download_template(template_urls["meta.yml"])
-            test_yml = self.download_template(template_urls["test.yml"])
-            test_nf = self.download_template(template_urls["test.nf"])
+            self.run_cookiecutter()
 
-            # Replace TOOL/SUBTOOL
-            if subtool:
-                meta_yml = meta_yml.replace("subtool", subtool).replace("tool_", tool + "_")
-                meta_yml = re.sub("^tool", tool, meta_yml)
-                test_nf = test_nf.replace("SUBTOOL", subtool).replace("TOOL", tool)
-                test_nf = test_nf.replace("tool_subtool", tool_name)
-                test_nf = test_nf.replace("TOOL_SUBTOOL", tool_name.upper())
-                test_yml = test_yml.replace("subtool", subtool).replace("tool_", tool + "_")
-                test_yml = test_yml.replace("SUBTOOL", subtool).replace("TOOL", tool)
-                test_yml = re.sub("tool", tool, test_yml)
-            else:
-                meta_yml = meta_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
-                meta_yml = re.sub("^tool", tool_name, meta_yml)
-                test_nf = (
-                    test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace("SUBTOOL/", "").replace("TOOL", tool.upper())
-                )
-                test_yml = test_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
-                test_yml = re.sub("^tool", tool_name, test_yml)
-
-            # Install main module files
+            # Create directories and populate with template module files
             try:
-                os.makedirs(tool_dir, exist_ok=True)
-                # main.nf
-                with open(os.path.join(tool_dir, "main.nf"), "w") as fh:
-                    fh.write(module_nf)
-                # meta.yml
-                with open(os.path.join(tool_dir, "meta.yml"), "w") as fh:
-                    fh.write(meta_yml)
-                # functions.nf
-                with open(os.path.join(tool_dir, "functions.nf"), "w") as fh:
-                    fh.write(functions_nf)
-
-                # Install test files
-                os.makedirs(test_dir, exist_ok=True)
-                # main.nf
-                with open(os.path.join(test_dir, "main.nf"), "w") as fh:
-                    fh.write(test_nf)
-                # test.yml
-                with open(os.path.join(test_dir, "test.yml"), "w") as fh:
-                    fh.write(test_yml)
+                os.makedirs(self.software_dir, exist_ok=True)
+                os.makedirs(self.get_module_file_urlstest_dir, exist_ok=True)
             except OSError as e:
                 log.error(f"Could not create module files: {e}")
                 return False
 
             # Add line to filters.yml
+            # TODO: use yaml to write this in a safer way
             try:
                 with open(os.path.join(directory, ".github", "filters.yml"), "a") as fh:
                     if subtool:
                         content = [
-                            f"{tool_name}:",
+                            f"{self.tool_name}:",
                             f"  - software/{tool}/{subtool}/**",
                             f"  - tests/software/{tool}/{subtool}/**\n",
                         ]
                     else:
                         content = [
-                            f"{tool_name}:",
+                            f"{self.tool_name}:",
                             f"  - software/{tool}/**",
                             f"  - tests/software/{tool}/**\n",
                         ]
@@ -434,9 +374,35 @@ class PipelineModules(object):
                 log.error(f"Could not open filters.yml file!")
                 return False
 
-            log.info(f"Successfully created module files at: {tool_dir}")
-            log.info(f"Added test files at: {test_dir}")
+            log.info(f"Successfully created module files at: {self.software_dir}")
+            log.info(f"Added test files at: {self.test_dir}")
             return True
+
+    def run_cookiecutter(self):
+        """ Create new module templates with cookiecutter """
+        # Build the template in a temporary directory
+        self.tmpdir = tempfile.mkdtemp()
+        template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), "module-template/")
+        subtool = ""
+        if self.subtool:
+            subtool = self.subtool
+        cookiecutter.main.cookiecutter(
+            template,
+            extra_context={
+                "tool": self.tool,
+                "subtool": self.subtool,
+                "tool_name": self.tool_name,
+                "tool_dir": self.tool_dir,
+                "author": self.author,
+                "bioconda": self.bioconda,
+                "contaier_tag": self.container_tag,
+                "label": self.label,
+                "nf_core_version": nf_core.__version__,
+            },
+            no_input=True,
+            overwrite_if_exists=self.force,
+            output_dir=self.tmpdir,
+        )
 
     def get_repo_type(self, directory):
         """
