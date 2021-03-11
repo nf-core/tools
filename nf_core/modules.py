@@ -317,19 +317,21 @@ class PipelineModules(object):
             module_file = os.path.join(directory, "modules", "local", "process", self.tool_name + ".nf")
             if os.path.exists(module_file):
                 log.error(f"Module file {module_file} exists already!")
-                return False
 
             # Create module template with cokiecutter
             # TODO
             self.run_cookiecutter()
 
             # Create directory and add the module template file
+            outdir = os.path.join(directory, "modules", "local", "process")
             try:
-                os.makedirs(os.path.join(directory, "modules", "local", "process"), exist_ok=True)
-                return True
+                os.makedirs(outdir, exist_ok=True)
+                shutil.move(os.path.join(self.tmpdir, self.tool_name, self.tool_name + ".nf"), outdir)
+
             except OSError as e:
                 log.error(f"Could not create module file {module_file}: {e}")
-                return False
+
+            shutil.rmtree(self.tmpdir)
 
         # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
@@ -346,12 +348,22 @@ class PipelineModules(object):
 
             # Create directories and populate with template module files
             try:
+                # software dir (software/tool/subtool)
                 os.makedirs(self.software_dir, exist_ok=True)
-                os.makedirs(self.get_module_file_urlstest_dir, exist_ok=True)
+                shutil.move(os.path.join(self.tmpdir, self.tool_name, "software", "main.nf"), self.software_dir)
+                shutil.move(os.path.join(self.tmpdir, self.tool_name, "software", "functions.nf"), self.software_dir)
+                shutil.move(os.path.join(self.tmpdir, self.tool_name, "software", "meta.yml"), self.software_dir)
+
+                # testdir (tests/software/tool/subtool)
+                os.makedirs(self.test_dir, exist_ok=True)
+                shutil.move(os.path.join(self.tmpdir, self.tool_name, "tests", "main.nf"), self.test_dir)
+                shutil.move(os.path.join(self.tmpdir, self.tool_name, "tests", "test.yml"), self.test_dir)
+
             except OSError as e:
                 log.error(f"Could not create module files: {e}")
                 return False
 
+            shutil.rmtree(self.tmpdir)
             # Add line to filters.yml
             # TODO: use yaml to write this in a safer way
             try:
@@ -390,7 +402,7 @@ class PipelineModules(object):
             template,
             extra_context={
                 "tool": self.tool,
-                "subtool": self.subtool,
+                "subtool": subtool,
                 "tool_name": self.tool_name,
                 "tool_dir": self.tool_dir,
                 "author": self.author,

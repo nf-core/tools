@@ -7,8 +7,8 @@
     "tool_name_upper": "{{ cookiecutter.tool_name.upper() }}",
     "tool_dir": "tool/subtool",
     "author": "Rocky Balboa",
-    "bioconda": "{{ cookiecutter.bioconda }}",
-    "container_tag": "{{ cookiecutter.container_tag }}",
+    "bioconda": "bioconda",
+    "container_tag": "container",
     "label": "process_low",
     "nf_core_version": "{{ cookiecutter.nf_core_version }}"
 }
