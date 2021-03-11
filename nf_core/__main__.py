@@ -440,6 +440,30 @@ def check(ctx):
 @click.argument("tool", type=str, required=True, metavar="<tool name>")
 @click.argument("subtool", type=str, required=False, metavar="<subtool name>")
 def create(ctx, directory, tool, subtool=None):
+    """
+    Create a new module from the template
+
+    If <directory> is a ppipeline, this function creates a file in the
+    'directory/modules/local/process' dir called <tool_subtool.nf>
+
+    If <directory> is a clone of nf-core/modules, it creates the files and
+    corresponding directories:
+
+    modules/software/tool/subtool/
+        * main.nf
+        * meta.yml
+        * functoins.nf
+
+    modules/tests/software/tool/subtool/
+        * main.nf
+        * test.yml
+
+    Additionally the necessary lines to run the tests are appended to
+    modules/.github/filters.yml
+    The function will also try to look for a bioconda package called 'tool'
+    and for a matching container on quay.io
+
+    """
     mods = nf_core.modules.PipelineModules()
     mods.create(directory=directory, tool=tool, subtool=subtool)
 
