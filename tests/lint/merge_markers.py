@@ -19,5 +19,6 @@ def test_merge_markers_found(self):
     lint_obj._load()
 
     results = lint_obj.merge_markers()
-    assert len(results["warned"]) > 0
-    assert "Merge marker in `main.nf`: >>>>>>>\n" == results["warned"][0]
+    assert len(results["failed"]) > 0
+    assert len(results["passed"]) == 0
+    assert "Merge marker in `main.nf`: >>>>>>>\n" == results["failed"][0]
