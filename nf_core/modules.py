@@ -293,11 +293,12 @@ class PipelineModules(object):
 
         # Try to get the container tag
         container_tag = None
-        try:
-            container_tag = _get_container_tag(tool, version)
-            log.info(f"Using docker/singularity container with tag: {tool}:{container_tag}")
-        except (ValueError, LookupError) as e:
-            log.info(f"Could not find a container tag ({e})")
+        if newest_version:
+            try:
+                container_tag = _get_container_tag(tool, version)
+                log.info(f"Using docker/singularity container with tag: {tool}:{container_tag}")
+            except (ValueError, LookupError) as e:
+                log.info(f"Could not find a container tag ({e})")
 
         # Download and prepare the module.nf file
         module_nf = self.download_template(template_urls["module.nf"])
@@ -322,13 +323,25 @@ class PipelineModules(object):
             # Check whether module file already exists
             if os.path.exists(module_file):
                 log.error(f"Module file {module_file} exists already!")
-                sys.exit(1)
+                return False
 
             # Create directories (if necessary) and the module .nf file
-            os.makedirs(os.path.join(directory, "modules", "local", "process"), exist_ok=True)
-            with open(module_file, "w") as fh:
-                fh.write(module_nf)
-            log.info(f"Module successfully created: {module_file}")
+            try:
+                os.makedirs(os.path.join(directory, "modules", "local", "process"), exist_ok=True)
+                with open(module_file, "w") as fh:
+                    fh.write(module_nf)
+
+                # if functions.nf doesn't exist already, create it
+                if not os.path.exists(os.path.join(directory, "modules", "local", "process", "functions.nf")):
+                    functions_nf = self.download_template(template_urls["functions.nf"])
+                    with open(os.path.join(directory, "modules", "local", "process", "functions.nf"), "w") as fh:
+                        fh.write(functions_nf)
+
+                log.info(f"Module successfully created: {module_file}")
+                return True
+            except OSError as e:
+                log.error(f"Could not create module file {module_file}: {e}")
+                return False
 
         # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
@@ -340,10 +353,10 @@ class PipelineModules(object):
                 test_dir = os.path.join(directory, "tests", "software", tool)
             if os.path.exists(tool_dir):
                 log.error(f"Module directory {tool_dir} exists already!")
-                sys.exit(1)
+                return False
             if os.path.exists(test_dir):
                 log.error(f"Module test directory {test_dir} exists already!")
-                sys.exit(1)
+                return False
 
             # Get the template copies of all necessary files
             functions_nf = self.download_template(template_urls["functions.nf"])
@@ -393,6 +406,7 @@ class PipelineModules(object):
                     fh.write(test_yml)
             except OSError as e:
                 log.error(f"Could not create module files: {e}")
+                return False
 
             # Add line to filters.yml
             try:
@@ -419,10 +433,11 @@ class PipelineModules(object):
 
             except FileNotFoundError as e:
                 log.error(f"Could not open filters.yml file!")
-                sys.exit(1)
+                return False
 
             log.info(f"Successfully created module files at: {tool_dir}")
             log.info(f"Added test files at: {test_dir}")
+            return True
 
     def get_repo_type(self, directory):
         """
@@ -541,4 +556,5 @@ def _get_container_tag(package, version):
 
 
 def _get_tag_date(tag_date):
+    # Reformat a date given by quay.io to  datetime
     return datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
