@@ -242,7 +242,7 @@ class PipelineModules(object):
             return False
 
 
-class ModulesTestHelper(object):
+class ModulesTestMetaBuilder(object):
     def __init__(
         self,
         module_name,

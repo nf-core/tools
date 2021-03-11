@@ -77,7 +77,7 @@ class TestModules(unittest.TestCase):
         """ Test the modules md5 sum helper command """
         os.mkdir("output")
         open("output/test.txt", "w").close()
-        modules_test_helper = nf_core.modules.ModulesTestHelper(modules_dir="./")
+        modules_test_helper = nf_core.modules.ModulesTestMetaBuilder(modules_dir="./")
         res = yaml.safe_load(modules_test_helper.generate_test_yml())
         shutil.rmtree("output")
         assert res[0]["files"][0]["md5sum"] == "d41d8cd98f00b204e9800998ecf8427e"

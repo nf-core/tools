@@ -417,14 +417,14 @@ def check(ctx):
     mods.check_modules()
 
 
-@modules.command("create-test", help_priority=6)
+@modules.command("create-test-meta", help_priority=6)
 @click.pass_context
 @click.argument("module", type=str, required=True, metavar="<module name>")
 @click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-o", "--output", type=str, help="Path for output YAML file")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test(ctx, module, run_tests, output, force, no_prompts):
+def create_test_meta(ctx, module, run_tests, output, force, no_prompts):
     """
     Run test workflow and generate a module test.yml file for a new module.
 
@@ -435,8 +435,8 @@ def create_test(ctx, module, run_tests, output, force, no_prompts):
     sensible defaults.
     """
     try:
-        modules_test_helper = nf_core.modules.ModulesTestHelper(module, run_tests, output, force, no_prompts)
-        modules_test_helper.run()
+        meta_builder = nf_core.modules.ModulesTestMetaBuilder(module, run_tests, output, force, no_prompts)
+        meta_builder.run()
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
