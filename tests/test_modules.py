@@ -8,6 +8,7 @@ import os
 import shutil
 import tempfile
 import unittest
+import yaml
 
 
 class TestModules(unittest.TestCase):

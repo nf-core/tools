@@ -11,6 +11,8 @@
   * If either parameter validation fails or the pipeline has errors, a warning is given about any unexpected parameters found which are not described in the pipeline schema.
   * This behaviour can be disabled by using `--validate_params false`
 * Added profiles to support the [Charliecloud](https://hpc.github.io/charliecloud/) and [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/) container engines [[#824](https://github.com/nf-core/tools/issues/824)]
+  * Note that Charliecloud requires Nextflow version `v21.03.0-edge` or later.
+* Profiles for container engines now explicitly _disable_ all other engines [[#867](https://github.com/nf-core/tools/issues/867)]
 * Fixed typo in nf-core-lint CI that prevented the markdown summary from being automatically posted on PRs as a comment.
 * Changed default for `--input` from `data/*{1,2}.fastq.gz` to `null`, as this is now validated by the schema as a required value.
 * Removed support for `--name` parameter for custom run names.
@@ -26,6 +28,7 @@
 
 ### Tools helper code
 
+* Added `nf-core modules md5` command to automatically generate md5 sums and a yaml file for module tests
 * Fixed some bugs in the command line interface for `nf-core launch` and improved formatting [[#829](https://github.com/nf-core/tools/pull/829)]
 * New functionality for `nf-core download` to make it compatible with DSL2 pipelines [[#832](https://github.com/nf-core/tools/pull/832)]
   * Singularity images in module files are now discovered and fetched

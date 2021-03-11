@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
+from click.types import File
 from rich import print
 import click
 import logging
@@ -285,7 +286,7 @@ def create(name, description, author, new_version, no_git, force, outdir):
     Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
+    files, boilerplate code and bfest-practices.
     """
     create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
@@ -466,6 +467,31 @@ def create(ctx, directory, tool, subtool=None):
     """
     mods = nf_core.modules.PipelineModules()
     mods.create(directory=directory, tool=tool, subtool=subtool)
+
+
+@modules.command("create-test-yml", help_priority=7)
+@click.pass_context
+@click.argument("module", type=str, required=True, metavar="<module name>")
+@click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
+@click.option("-o", "--output", type=str, help="Path for output YAML file")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+def create_test_yml(ctx, module, run_tests, output, force, no_prompts):
+    """
+    Auto-generate a test.yml file for a new module.
+
+    Given the name of a new module, run the Nextflow test command and automatically generate
+    the required `test.yml` file based on the output files.
+
+    If not supplied on the command line, tool will prompt for name, command, tags etc with
+    sensible defaults.
+    """
+    try:
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder(module, run_tests, output, force, no_prompts)
+        meta_builder.run()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 ## nf-core schema subcommands
