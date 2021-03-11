@@ -435,14 +435,14 @@ def check(ctx):
     mods.check_modules()
 
 
-@modules.command(help_priority=6)
+@modules.command("create", help_priority=6)
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<target directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool name>")
 @click.argument("subtool", type=str, required=False, metavar="<subtool name>")
-def create(ctx, directory, tool, subtool=None):
+def create_module(ctx, directory, tool, subtool=None):
     """
-    Create a new module from the template
+    Create a new shared module from the template.
 
     If <directory> is a ppipeline, this function creates a file in the
     'directory/modules/local/process' dir called <tool_subtool.nf>
