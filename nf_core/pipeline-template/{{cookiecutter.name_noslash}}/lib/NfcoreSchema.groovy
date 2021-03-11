@@ -18,13 +18,12 @@ class NfcoreSchema {
     * whether the given paremeters adhere to the specificiations
     */
     /* groovylint-disable-next-line UnusedPrivateMethodParameter */
-    private static ArrayList validateParameters(params, jsonSchema, log) {
+    private static void validateParameters(params, jsonSchema, log) {
         def has_error = false
         //=====================================================================//
         // Check for nextflow core params and unexpected params
         def json = new File(jsonSchema).text
         def Map schemaParams = (Map) new JsonSlurper().parseText(json).get('definitions')
-        def specifiedParamKeys = params.keySet()
         def nf_params = [
             // Options for base `nextflow` command
             'bg',
@@ -105,7 +104,7 @@ class NfcoreSchema {
             }
         }
 
-        for (specifiedParam in specifiedParamKeys) {
+        for (specifiedParam in params.keySet()) {
             // nextflow params
             if (nf_params.contains(specifiedParam)) {
                 log.error "ERROR: You used a core Nextflow option with two hyphens: '--${specifiedParam}'. Please resubmit with '-${specifiedParam}'"
@@ -144,26 +143,21 @@ class NfcoreSchema {
         }
 
         // Check for unexpected parameters
-        // Getting this message a lot for parameters that you *do* expect?
-        // You can make a csv list of expected params not in the schema with 'params.schema_ignore_params'
-        // for example, in your institutional config
         if (unexpectedParams.size() > 0) {
             Map colors = log_colours(params.monochrome_logs)
             println ''
             def warn_msg = 'Found unexpected parameters:'
             for (unexpectedParam in unexpectedParams) {
-                warn_msg = warn_msg + "\n* --${unexpectedParam}: ${paramsJSON[unexpectedParam].toString()}"
+                warn_msg = warn_msg + "\n* --${unexpectedParam}: ${params[unexpectedParam].toString()}"
             }
             log.warn warn_msg
-            log.info "- ${colors.dim}(Hide this message with 'params.schema_ignore_params')${colors.reset} -"
+            log.info "- ${colors.dim}Ignore this warning: params.schema_ignore_params = \"${unexpectedParams.join(',')}\" ${colors.reset}"
             println ''
         }
 
         if (has_error) {
             System.exit(1)
         }
-
-        return unexpectedParams
     }
 
     // Loop over nested exceptions and print the causingException

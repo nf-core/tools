@@ -24,9 +24,8 @@ if (params.help) {
 ////////////////////////////////////////////////////
 /* --         VALIDATE PARAMETERS              -- */
 ////////////////////////////////////////////////////+
-def unexpectedParams = []
 if (params.validate_params) {
-    unexpectedParams = NfcoreSchema.validateParameters(params, json_schema, log)
+    NfcoreSchema.validateParameters(params, json_schema, log)
 }
 
 ////////////////////////////////////////////////////
@@ -365,10 +364,8 @@ workflow.onComplete {
 }
 
 workflow.onError {
-    // Print unexpected parameters
-    for (p in unexpectedParams) {
-        log.warn "Unexpected parameter: ${p}"
-    }
+    // Print unexpected parameters - easiest is to just rerun validation
+    NfcoreSchema.validateParameters(params, json_schema, log)
 }
 
 def checkHostname() {
