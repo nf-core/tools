@@ -8,6 +8,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 import base64
+import datetime
 import errno
 import hashlib
 import logging
@@ -20,12 +21,6 @@ import shutil
 import subprocess
 import sys
 import tempfile
-import shutil
-import re
-from datetime import datetime
-from requests import exceptions
-
-from requests.models import Response
 import yaml
 
 log = logging.getLogger(__name__)
@@ -561,7 +556,7 @@ def _get_container_tag(package, version):
 
 def _get_tag_date(tag_date):
     # Reformat a date given by quay.io to  datetime
-    return datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
+    return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
 
 
 class ModulesTestYmlBuilder(object):
