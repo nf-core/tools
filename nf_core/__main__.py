@@ -444,8 +444,6 @@ def create(ctx, directory, tool, subtool=None):
     mods.create(directory=directory, tool=tool, subtool=subtool)
 
 
-
-
 ## nf-core schema subcommands
 @nf_core_cli.group(cls=CustomHelpOrder, help_priority=8)
 def schema():

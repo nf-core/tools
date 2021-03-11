@@ -54,14 +54,12 @@ class PipelineModules(object):
         return_str = ""
 
         if len(self.modules_avail_module_names) > 0:
-            log.info("Modules available from {} ({}):\n".format(
-                self.modules_repo.name, self.modules_repo.branch))
+            log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
             # Print results to stdout
             return_str += "\n".join(self.modules_avail_module_names)
         else:
             log.info(
-                "No available modules found in {} ({}):\n".format(
-                    self.modules_repo.name, self.modules_repo.branch)
+                "No available modules found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
             )
         return return_str
 
@@ -77,30 +75,23 @@ class PipelineModules(object):
 
         # Check that the supplied name is an available module
         if module not in self.modules_avail_module_names:
-            log.error(
-                "Module '{}' not found in list of available modules.".format(module))
-            log.info(
-                "Use the command 'nf-core modules list' to view available software")
+            log.error("Module '{}' not found in list of available modules.".format(module))
+            log.info("Use the command 'nf-core modules list' to view available software")
             return False
-        log.debug("Installing module '{}' at modules hash {}".format(
-            module, self.modules_current_hash))
+        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
 
         # Check that we don't already have a folder for this module
-        module_dir = os.path.join(
-            self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
         if os.path.exists(module_dir):
             log.error("Module directory already exists: {}".format(module_dir))
-            log.info(
-                "To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
+            log.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
             return False
 
         # Download module files
         files = self.get_module_file_urls(module)
-        log.debug(
-            "Fetching module files:\n - {}".format("\n - ".join(files.keys())))
+        log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
-            dl_filename = os.path.join(
-                self.pipeline_dir, "modules", "nf-core", filename)
+            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
             self.download_gh_file(dl_filename, api_url)
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
@@ -119,15 +110,12 @@ class PipelineModules(object):
         self.has_valid_pipeline()
 
         # Get the module directory
-        module_dir = os.path.join(
-            self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
-            log.error(
-                "Module directory does not installed: {}".format(module_dir))
-            log.info(
-                "The module you want to remove seems not to be installed. Is it a local module?")
+            log.error("Module directory does not installed: {}".format(module_dir))
+            log.info("The module you want to remove seems not to be installed. Is it a local module?")
             return False
 
         # Remove the module
@@ -230,8 +218,7 @@ class PipelineModules(object):
         # Call the GitHub API
         r = requests.get(api_url)
         if r.status_code != 200:
-            raise SystemError("Could not fetch {} file: {}\n {}".format(
-                self.modules_repo.name, r.status_code, api_url))
+            raise SystemError("Could not fetch {} file: {}\n {}".format(self.modules_repo.name, r.status_code, api_url))
         result = r.json()
         file_contents = base64.b64decode(result["content"])
 
@@ -247,8 +234,7 @@ class PipelineModules(object):
         main_nf = os.path.join(self.pipeline_dir, "main.nf")
         nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            log.error("Could not find a main.nf or nextfow.config file in: {}".format(
-                self.pipeline_dir))
+            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
             return False
 
     def create(self, directory, tool, subtool=None):
@@ -299,7 +285,7 @@ class PipelineModules(object):
         newest_version = None
         try:
             response = _bioconda_package(tool, full_dep=False)
-            version = max(response['versions'])
+            version = max(response["versions"])
             newest_version = "bioconda::" + tool + "=" + version
             log.info(f"Using bioconda package: {newest_version}")
         except (ValueError, LookupError) as e:
@@ -309,8 +295,7 @@ class PipelineModules(object):
         container_tag = None
         try:
             container_tag = _get_container_tag(tool, version)
-            log.info(
-                f"Using docker/singularity container with tag: {tool}:{container_tag}")
+            log.info(f"Using docker/singularity container with tag: {tool}:{container_tag}")
         except (ValueError, LookupError) as e:
             log.info(f"Could not find a container tag ({e})")
 
@@ -320,27 +305,27 @@ class PipelineModules(object):
 
         # Add the bioconda package
         if newest_version:
-            module_nf = module_nf.replace(
-                "bioconda::samtools=1.10", newest_version)
+            module_nf = module_nf.replace("bioconda::samtools=1.10", newest_version)
         # Add container
         if container_tag:
-            module_nf = module_nf.replace("https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
-                                          f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}")
-            module_nf = module_nf.replace("quay.io/biocontainers/samtools:1.10--h9402c20_2",
-                                          f"quay.io/biocontainers/{tool}:{container_tag}")
+            module_nf = module_nf.replace(
+                "https://depot.galaxyproject.org/singularity/samtools:1.10--h9402c20_2",
+                f"https://depot.galaxyproject.org/singularity/{tool}:{container_tag}",
+            )
+            module_nf = module_nf.replace(
+                "quay.io/biocontainers/samtools:1.10--h9402c20_2", f"quay.io/biocontainers/{tool}:{container_tag}"
+            )
 
         # Create template for new module in nf-core pipeline
         if self.repo_type == "pipeline":
-            module_file = os.path.join(
-                directory, "modules", "local", "process", tool_name + ".nf")
+            module_file = os.path.join(directory, "modules", "local", "process", tool_name + ".nf")
             # Check whether module file already exists
             if os.path.exists(module_file):
                 log.error(f"Module file {module_file} exists already!")
                 sys.exit(1)
 
             # Create directories (if necessary) and the module .nf file
-            os.makedirs(os.path.join(directory, "modules",
-                                     "local", "process"), exist_ok=True)
+            os.makedirs(os.path.join(directory, "modules", "local", "process"), exist_ok=True)
             with open(module_file, "w") as fh:
                 fh.write(module_nf)
             log.info(f"Module successfully created: {module_file}")
@@ -349,8 +334,7 @@ class PipelineModules(object):
         if self.repo_type == "modules":
             if subtool:
                 tool_dir = os.path.join(directory, "software", tool, subtool)
-                test_dir = os.path.join(
-                    directory, "tests", "software", tool, subtool)
+                test_dir = os.path.join(directory, "tests", "software", tool, subtool)
             else:
                 tool_dir = os.path.join(directory, "software", tool)
                 test_dir = os.path.join(directory, "tests", "software", tool)
@@ -362,36 +346,28 @@ class PipelineModules(object):
                 sys.exit(1)
 
             # Get the template copies of all necessary files
-            functions_nf = self.download_template(
-                template_urls["functions.nf"])
+            functions_nf = self.download_template(template_urls["functions.nf"])
             meta_yml = self.download_template(template_urls["meta.yml"])
             test_yml = self.download_template(template_urls["test.yml"])
             test_nf = self.download_template(template_urls["test.nf"])
 
             # Replace TOOL/SUBTOOL
             if subtool:
-                meta_yml = meta_yml.replace(
-                    "subtool", subtool).replace("tool_", tool + "_")
+                meta_yml = meta_yml.replace("subtool", subtool).replace("tool_", tool + "_")
                 meta_yml = re.sub("^tool", tool, meta_yml)
-                test_nf = test_nf.replace(
-                    "SUBTOOL", subtool).replace("TOOL", tool)
+                test_nf = test_nf.replace("SUBTOOL", subtool).replace("TOOL", tool)
                 test_nf = test_nf.replace("tool_subtool", tool_name)
                 test_nf = test_nf.replace("TOOL_SUBTOOL", tool_name.upper())
-                test_yml = test_yml.replace(
-                    "subtool", subtool).replace("tool_", tool + "_")
-                test_yml = test_yml.replace(
-                    "SUBTOOL", subtool).replace("TOOL", tool)
+                test_yml = test_yml.replace("subtool", subtool).replace("tool_", tool + "_")
+                test_yml = test_yml.replace("SUBTOOL", subtool).replace("TOOL", tool)
                 test_yml = re.sub("tool", tool, test_yml)
             else:
-                meta_yml = meta_yml.replace(
-                    "tool subtool", tool_name).replace("tool_subtool", "")
+                meta_yml = meta_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
                 meta_yml = re.sub("^tool", tool_name, meta_yml)
                 test_nf = (
-                    test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace(
-                        "SUBTOOL/", "").replace("TOOL", tool.upper())
+                    test_nf.replace("TOOL_SUBTOOL", tool.upper()).replace("SUBTOOL/", "").replace("TOOL", tool.upper())
                 )
-                test_yml = test_yml.replace(
-                    "tool subtool", tool_name).replace("tool_subtool", "")
+                test_yml = test_yml.replace("tool subtool", tool_name).replace("tool_subtool", "")
                 test_yml = re.sub("^tool", tool_name, test_yml)
 
             # Install main module files
@@ -464,8 +440,7 @@ class PipelineModules(object):
         elif os.path.exists(os.path.join(directory, "software")):
             return "modules"
         else:
-            log.error(
-                "Could not determine repository type of {}".format(directory))
+            log.error("Could not determine repository type of {}".format(directory))
             sys.exit(1)
 
     def download_template(self, url):
@@ -501,14 +476,12 @@ def _bioconda_package(package, full_dep=True):
     else:
         depname = package
 
-    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format(
-        "bioconda", depname)
+    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format("bioconda", depname)
 
     try:
         response = requests.get(anaconda_api_url, timeout=10)
     except (requests.exceptions.Timeout):
-        raise LookupError(
-            "Anaconda API timed out: {}".format(anaconda_api_url))
+        raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
     except (requests.exceptions.ConnectionError):
         raise LookupError("Could not connect to Anaconda API")
     else:
@@ -521,13 +494,12 @@ def _bioconda_package(package, full_dep=True):
                 )
             )
         elif response.status_code == 404:
-            raise ValueError(
-                "Could not find `{}` in bioconda channel".format(package))
+            raise ValueError("Could not find `{}` in bioconda channel".format(package))
 
 
 def _get_container_tag(package, version):
     """
-    Given a biocnda package and version, look for a container 
+    Given a biocnda package and version, look for a container
     at quay.io and return the tag of the most recent image
     that matches the package version
     Sends a HTTP GET request to the quay.io API.
@@ -548,25 +520,25 @@ def _get_container_tag(package, version):
     else:
         if response.status_code == 200:
             # Get the container tag
-            tags = response.json()['tags']
-            matching_tags = [t for t in tags if t['name'].startswith(version)]
+            tags = response.json()["tags"]
+            matching_tags = [t for t in tags if t["name"].startswith(version)]
             # If version matches several images, get the most recent one, else return tag
             if len(matching_tags) > 0:
                 tag = matching_tags[0]
-                tag_date = _get_tag_date(tag['last_modified'])
+                tag_date = _get_tag_date(tag["last_modified"])
                 for t in matching_tags:
-                    if _get_tag_date(t['last_modified']) > tag_date:
+                    if _get_tag_date(t["last_modified"]) > tag_date:
                         tag = t
-                return tag['name']
+                return tag["name"]
             else:
-                return matching_tags[0]['name']
+                return matching_tags[0]["name"]
         elif response.status_code != 404:
             raise LookupError(
-                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}")
+                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
+            )
         elif response.status_code == 404:
-            raise ValueError(
-                f"Could not find `{package}` on quayi.io/repository/biocontainers")
+            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
 
 
 def _get_tag_date(tag_date):
-    return datetime.strptime(tag_date.replace("-0000", "").strip(), '%a, %d %b %Y %H:%M:%S')
+    return datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
