@@ -291,7 +291,7 @@ class PipelineModules(object):
         except (ValueError, LookupError) as e:
             log.info(f"Could not find bioconda package ({e})")
 
-        # Try to get the container tag
+        # Try to get the container tag (only if bioconda package was found)
         container_tag = None
         if newest_version:
             try:
