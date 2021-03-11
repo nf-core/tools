@@ -278,7 +278,7 @@ class ModulesTestYmlBuilder(object):
         if not os.path.isdir(self.module_dir):
             raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
         if not os.path.exists(self.module_test_main):
-            raise UserWarning(f"Cannot find module test workflow '{self.module_dir}/main.nf'")
+            raise UserWarning(f"Cannot find module test workflow '{self.module_test_main}'")
 
         # Check that we're running tests if no prompts
         if not self.run_tests and self.no_prompts:
@@ -448,12 +448,14 @@ class ModulesTestYmlBuilder(object):
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
         except OSError as e:
-            if e.errno == errno.ENOENT:
+            if e.errno == errno.ENOENT and command.strip().startswith("nextflow "):
                 raise AssertionError(
                     "It looks like Nextflow is not installed. It is required for most nf-core functions."
                 )
         except subprocess.CalledProcessError as e:
             raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{e.output.decode()}")
+        except Exception as e:
+            raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
             log.debug(nfconfig_raw)
