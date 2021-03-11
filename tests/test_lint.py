@@ -200,6 +200,8 @@ class TestLint(unittest.TestCase):
         test_actions_schema_validation_missing_on,
     )
 
+    from lint.merge_markers import test_merge_markers_found
+
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""
