@@ -412,24 +412,18 @@ class PipelineModules(object):
             try:
                 with open(os.path.join(directory, ".github", "filters.yml"), "a") as fh:
                     if subtool:
-                        content = (
-                            "\n"
-                            + f"{tool_name}:"
-                            + "\n"
-                            + f"  - software/{tool}/{subtool}/**"
-                            + "\n"
-                            + f"  - tests/software/{tool}/{subtool}/**\n"
-                        )
+                        content = [
+                            f"{tool_name}:",
+                            f"  - software/{tool}/{subtool}/**",
+                            f"  - tests/software/{tool}/{subtool}/**\n",
+                        ]
                     else:
-                        content = (
-                            "\n"
-                            + f"{tool_name}:"
-                            + "\n"
-                            + f"  - software/{tool}/**"
-                            + "\n"
-                            + f"  - tests/software/{tool}/**\n"
-                        )
-                    fh.write(content)
+                        content = [
+                            f"{tool_name}:",
+                            f"  - software/{tool}/**",
+                            f"  - tests/software/{tool}/**\n",
+                        ]
+                    fh.write("\n"+"\n".join(content))
 
             except FileNotFoundError as e:
                 log.error(f"Could not open filters.yml file!")
