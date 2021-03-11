@@ -108,18 +108,6 @@ def bump_pipeline_version(pipeline_obj, new_version):
         ],
     )
 
-    # conf/charliecloud.config - environment path
-    update_file_version(
-        "conf/charliecloud.config",
-        pipeline_obj,
-        [
-            (
-                r"nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
-                "nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
-            )
-        ],
-    )
-
 
 def bump_nextflow_version(pipeline_obj, new_version):
     """Bumps the required Nextflow version number of a pipeline.
