@@ -72,12 +72,3 @@ class TestModules(unittest.TestCase):
     def test_modules_remove_fastqc_uninstalled(self):
         """ Test removing FastQC module without installing it """
         assert self.mods.remove("fastqc") is False
-
-    def test_modules_md5_sum_helper(self):
-        """ Test the modules md5 sum helper command """
-        os.mkdir("output")
-        open("output/test.txt", "w").close()
-        modules_test_helper = nf_core.modules.ModulesTestYmlBuilder(modules_dir="./")
-        res = yaml.safe_load(modules_test_helper.generate_test_yml())
-        shutil.rmtree("output")
-        assert res[0]["files"][0]["md5sum"] == "d41d8cd98f00b204e9800998ecf8427e"
