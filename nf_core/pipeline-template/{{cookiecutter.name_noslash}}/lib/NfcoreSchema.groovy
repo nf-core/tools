@@ -139,16 +139,24 @@ class NfcoreSchema {
             log.error 'ERROR: Validation of pipeline parameters failed!'
             JSONObject exceptionJSON = e.toJSON()
             printExceptions(exceptionJSON, paramsJSON, log)
-            if (unexpectedParams.size() > 0) {
-                println ''
-                def warn_msg = 'Found unexpected parameters:'
-                for (unexpectedParam in unexpectedParams) {
-                    warn_msg = warn_msg + "\n* --${unexpectedParam}: ${paramsJSON[unexpectedParam].toString()}"
-                }
-                log.warn warn_msg
-            }
             println ''
             has_error = true
+        }
+
+        // Check for unexpected parameters
+        // Getting this message a lot for parameters that you *do* expect?
+        // You can make a csv list of expected params not in the schema with 'params.schema_ignore_params'
+        // for example, in your institutional config
+        if (unexpectedParams.size() > 0) {
+            Map colors = log_colours(params.monochrome_logs)
+            println ''
+            def warn_msg = 'Found unexpected parameters:'
+            for (unexpectedParam in unexpectedParams) {
+                warn_msg = warn_msg + "\n* --${unexpectedParam}: ${paramsJSON[unexpectedParam].toString()}"
+            }
+            log.warn warn_msg
+            log.info "- ${colors.dim}(Hide this message with 'params.schema_ignore_params')${colors.reset} -"
+            println ''
         }
 
         if (has_error) {
@@ -317,7 +325,7 @@ class NfcoreSchema {
             for (param in group_params.keySet()) {
                 def type = '[' + group_params.get(param).type + ']'
                 def description = group_params.get(param).description
-                def defaultValue = group_params.get(param).default ? "  [default: " + group_params.get(param).default.toString() + "]" : '' 
+                def defaultValue = group_params.get(param).default ? "  [default: " + group_params.get(param).default.toString() + "]" : ''
                 output += "    \u001B[1m--" +  param.padRight(max_chars) + "\u001B[1m" + type.padRight(10) + description + defaultValue + '\n'
             }
             output += '\n'
