@@ -108,7 +108,8 @@
                     "type": "boolean",
                     "description": "Boolean whether to validate parameters against the schema at runtime",
                     "default": true,
-                    "fa_icon": "fas fa-check-square"
+                    "fa_icon": "fas fa-check-square",
+                    "hidden": true
                 },
                 "email_on_fail": {
                     "type": "string",

@@ -303,7 +303,8 @@ class NfcoreSchema {
     */
     private static LinkedHashMap params_read(String json_schema) throws Exception {
         def json = new File(json_schema).text
-        def Map json_params = (Map) new JsonSlurper().parseText(json).get('definitions')
+        def Map schema_definitions = (Map) new JsonSlurper().parseText(json).get('definitions')
+        def Map schema_properties = (Map) new JsonSlurper().parseText(json).get('properties')
         /* Tree looks like this in nf-core schema
          * definitions <- this is what the first get('definitions') gets us
              group 1
@@ -323,17 +324,31 @@ class NfcoreSchema {
                    parameter 1
                      type
                      description
+         * properties <- parameters can also be ungrouped, outside of definitions
+            parameter 1
+             type
+             description
         */
+
+        // Grouped params
         def params_map = new LinkedHashMap()
-        json_params.each { key, val ->
-            def Map group = json_params."$key".properties // Gets the property object of the group
-            def title = json_params."$key".title
+        schema_definitions.each { key, val ->
+            def Map group = schema_definitions."$key".properties // Gets the property object of the group
+            def title = schema_definitions."$key".title
             def sub_params = new LinkedHashMap()
             group.each { innerkey, value ->
                 sub_params.put(innerkey, value)
             }
             params_map.put(title, sub_params)
         }
+
+        // Ungrouped params
+        def ungrouped_params = new LinkedHashMap()
+        schema_properties.each { innerkey, value ->
+            ungrouped_params.put(innerkey, value)
+        }
+        params_map.put("Other parameters", ungrouped_params)
+
         return params_map
     }
 
@@ -361,7 +376,7 @@ class NfcoreSchema {
         Integer num_hidden = 0
         String output  = ''
         output        += 'Typical pipeline command:\n\n'
-        output        += "    ${colors.cyan}${command}${colors.reset}\n\n"
+        output        += "  ${colors.cyan}${command}${colors.reset}\n\n"
         def params_map = params_load(json_schema)
         def max_chars  = params_max_chars(params_map) + 1
         for (group in params_map.keySet()) {
