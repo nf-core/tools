@@ -437,35 +437,32 @@ def check(ctx):
 
 @modules.command("create", help_priority=6)
 @click.pass_context
-@click.argument("directory", type=click.Path(exists=True), required=True, metavar="<target directory>")
-@click.argument("tool", type=str, required=False, metavar="<tool name>")
-@click.argument("subtool", type=str, required=False, default=None, metavar="<subtool name>")
+@click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
+@click.argument("tool", type=str, required=False, metavar="<tool>")
+@click.argument("subtool", type=str, required=False, default=None, metavar="<subtool>")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
 def create_module(ctx, directory, tool, subtool, force, no_prompts):
     """
     Create a new shared module from the template.
 
-    If <directory> is a ppipeline, this function creates a file in the
+    If <directory> is a pipeline, this function creates a file in the
     'directory/modules/local/process' dir called <tool_subtool.nf>
 
-    If <directory> is a clone of nf-core/modules, it creates the files and
-    corresponding directories:
+    If <directory> is a clone of nf-core/modules, it creates / modifies the following files:
 
+    \b
     modules/software/tool/subtool/
         * main.nf
         * meta.yml
-        * functoins.nf
-
+        * functions.nf
     modules/tests/software/tool/subtool/
         * main.nf
         * test.yml
-
-    Additionally the necessary lines to run the tests are appended to
     modules/.github/filters.yml
-    The function will also try to look for a bioconda package called 'tool'
-    and for a matching container on quay.io
 
+    The function will attempt to find a Bioconda package called 'tool'
+    and matching Docker / Singularity images from BioContainers.
     """
     module_create = nf_core.modules.ModuleCreate(directory=directory, tool=tool, subtool=subtool)
     module_create.create(force=force, no_prompts=no_prompts)
