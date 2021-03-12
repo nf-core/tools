@@ -428,23 +428,21 @@ class ModuleCreate(object):
             shutil.rmtree(self.tmpdir)
 
             # Add line to filters.yml
-            # TODO: use yaml to write this in a safer way
             try:
-                with open(os.path.join(self.directory, ".github", "filters.yml"), "a") as fh:
-                    if self.subtool:
-                        content = [
-                            f"{self.tool_name}:",
-                            f"  - software/{self.tool}/{self.subtool}/**",
-                            f"  - tests/software/{self.tool}/{self.subtool}/**\n",
-                        ]
-                    else:
-                        content = [
-                            f"{self.tool_name}:",
-                            f"  - software/{self.tool}/**",
-                            f"  - tests/software/{self.tool}/**\n",
-                        ]
-                    fh.write("\n" + "\n".join(content))
-
+                with open(os.path.join(self.directory, ".github", "filters.yml"), "r") as fh:
+                    filters_yml = yaml.safe_load(fh)
+                if self.subtool:
+                    filters_yml[self.tool_name] = [
+                        f"software/{self.tool}/{self.subtool}/**",
+                        f"tests/software/{self.tool}/{self.subtool}/**",
+                    ]
+                else:
+                    filters_yml[self.tool_name] = [
+                        f"software/{self.tool}/**",
+                        f"tests/software/{self.tool}/**",
+                    ]
+                with open(os.path.join(self.directory, ".github", "filters.yml"), "w") as fh:
+                    yaml.dump(filters_yml, fh, sort_keys=True, line_break=1)
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open filters.yml file!")
 
