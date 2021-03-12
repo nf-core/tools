@@ -377,8 +377,10 @@ class NfcoreSchema {
         String output  = ''
         output        += 'Typical pipeline command:\n\n'
         output        += "  ${colors.cyan}${command}${colors.reset}\n\n"
-        def params_map = params_load(json_schema)
-        def max_chars  = params_max_chars(params_map) + 1
+        Map params_map = params_load(json_schema)
+        Integer max_chars  = params_max_chars(params_map) + 1
+        Integer desc_indent = max_chars + 14
+        Integer dec_linewidth = 160 - desc_indent
         for (group in params_map.keySet()) {
             Integer num_params = 0
             String group_output = colors.underlined + colors.bold + group + colors.reset + '\n'
@@ -391,7 +393,24 @@ class NfcoreSchema {
                 def type = '[' + group_params.get(param).type + ']'
                 def description = group_params.get(param).description
                 def defaultValue = group_params.get(param).default ? " [default: " + group_params.get(param).default.toString() + "]" : ''
-                group_output += "  --" +  param.padRight(max_chars) + colors.dim + type.padRight(10) + colors.reset + description + colors.dim + defaultValue + colors.reset + '\n'
+                def description_default = description + colors.dim + defaultValue + colors.reset
+                // Wrap long description texts
+                // Loosely based on https://dzone.com/articles/groovy-plain-text-word-wrap
+                if (description_default.length() > dec_linewidth){
+                    List olines = []
+                    String oline = "" // " " * indent
+                    description_default.split(" ").each() { wrd ->
+                        if ((oline.size() + wrd.size()) <= dec_linewidth) {
+                            oline += wrd + " "
+                        } else {
+                            olines += oline
+                            oline = wrd + " "
+                        }
+                    }
+                    olines += oline
+                    description_default = olines.join("\n" + " " * desc_indent)
+                }
+                group_output += "  --" +  param.padRight(max_chars) + colors.dim + type.padRight(10) + colors.reset + description_default + '\n'
                 num_params += 1
             }
             group_output += '\n'
