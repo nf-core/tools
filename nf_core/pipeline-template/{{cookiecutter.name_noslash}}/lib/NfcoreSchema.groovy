@@ -358,23 +358,37 @@ class NfcoreSchema {
      */
     private static String params_help(workflow, params, json_schema, command) {
         Map colors = log_colours(params.monochrome_logs)
+        Integer num_hidden = 0
         String output  = ''
         output        += 'Typical pipeline command:\n\n'
         output        += "    ${colors.cyan}${command}${colors.reset}\n\n"
         def params_map = params_load(json_schema)
         def max_chars  = params_max_chars(params_map) + 1
         for (group in params_map.keySet()) {
-            output += colors.underlined + colors.bold + group + colors.reset + '\n'
+            Integer num_params = 0
+            String group_output = colors.underlined + colors.bold + group + colors.reset + '\n'
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
             for (param in group_params.keySet()) {
+                if (group_params.get(param).hidden && !params.show_hidden_params) {
+                    num_hidden += 1
+                    continue;
+                }
                 def type = '[' + group_params.get(param).type + ']'
                 def description = group_params.get(param).description
                 def defaultValue = group_params.get(param).default ? " [default: " + group_params.get(param).default.toString() + "]" : ''
-                output += "    --" +  param.padRight(max_chars) + colors.dim + type.padRight(10) + colors.reset + description + colors.dim + defaultValue + colors.reset + '\n'
+                group_output += "  --" +  param.padRight(max_chars) + colors.dim + type.padRight(10) + colors.reset + description + colors.dim + defaultValue + colors.reset + '\n'
+                num_params += 1
             }
-            output += '\n'
+            group_output += '\n'
+            if (num_params > 0){
+                output += group_output
+            }
         }
         output += dashed_line(params.monochrome_logs)
+        if (num_hidden > 0){
+            output += colors.dim + "\n Hiding $num_hidden params, use --show_hidden_params to show.\n" + colors.reset
+            output += dashed_line(params.monochrome_logs)
+        }
         return output
     }
 
