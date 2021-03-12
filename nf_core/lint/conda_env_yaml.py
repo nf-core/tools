@@ -6,6 +6,8 @@ import requests
 import yaml
 import nf_core.utils
 
+from nf_core.utils import anaconda_package
+
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
 
@@ -103,7 +105,9 @@ def conda_env_yaml(self):
 
                 try:
                     depname, depver = dep.split("=")[:2]
-                    self.conda_package_info[dep] = _anaconda_package(self.conda_config, dep)
+                    self.conda_package_info[dep] = anaconda_package(
+                        dep, dep_channels=self.conda_config.get("channels", [])
+                    )
                 except LookupError as e:
                     warned.append(e)
                 except ValueError as e:

@@ -72,11 +72,11 @@ class TestModules(unittest.TestCase):
         """ Test removing FastQC module without installing it """
         assert self.mods.remove("fastqc") is False
 
-    def test_modules_create_succeed(self):
-        """ Succeed at creating the FastQC module """
-        assert self.mods.create(directory=self.pipeline_dir, tool="fastqc") is True
+    # def test_modules_create_succeed(self):
+    #     """ Succeed at creating the FastQC module """
+    #     assert self.mods.create(directory=self.pipeline_dir, tool="fastqc") is True
 
-    def test_modules_create_fail_exists(self):
-        """ Fail at creating the same module twice"""
-        assert self.mods.create(directory=self.pipeline_dir, tool="fastqc") is True
-        assert self.mods.create(directory=self.pipeline_dir, tool="fastqc") is False
+    # def test_modules_create_fail_exists(self):
+    #     """ Fail at creating the same module twice"""
+    #     assert self.mods.create(directory=self.pipeline_dir, tool="fastqc") is True
+    #     assert self.mods.create(directory=self.pipeline_dir, tool="fastqc") is False

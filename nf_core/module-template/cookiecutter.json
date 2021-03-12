@@ -11,5 +11,6 @@
     "container_tag": "container",
     "label": "process_low",
     "has_meta": "yes",
+    "test_yml": "test.yml",
     "nf_core_version": "{{ cookiecutter.nf_core_version }}"
 }

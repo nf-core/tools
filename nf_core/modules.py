@@ -7,6 +7,7 @@ from __future__ import print_function
 from requests.models import default_hooks
 from rich.console import Console
 from rich.syntax import Syntax
+from nf_core.utils import anaconda_package, get_biocontainer_tag
 
 import base64
 import cookiecutter.main, cookiecutter.exceptions
@@ -324,7 +325,7 @@ class ModuleCreate(object):
         # Try to find a bioconda package for 'tool'
         self.bioconda = None
         try:
-            response = _bioconda_package(self.tool, full_dep=False)
+            response = anaconda_package(self.tool, has_version=False)
             version = max(response["versions"])
             self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using bioconda package: {self.bioconda}")
@@ -335,7 +336,7 @@ class ModuleCreate(object):
         self.container_tag = None
         if self.bioconda:
             try:
-                self.container_tag = _get_container_tag(self.tool, version)
+                self.container_tag = get_biocontainer_tag(self.tool, version)
                 log.info(f"Using docker/singularity container with tag: {self.container_tag}")
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
@@ -427,7 +428,7 @@ class ModuleCreate(object):
                 raise UserWarning(f"Could not create module files: {e}")
             shutil.rmtree(self.tmpdir)
 
-            # Add line to filters.yml
+            # Add entry to filters.yml
             try:
                 with open(os.path.join(self.directory, ".github", "filters.yml"), "r") as fh:
                     filters_yml = yaml.safe_load(fh)
@@ -441,8 +442,20 @@ class ModuleCreate(object):
                         f"software/{self.tool}/**",
                         f"tests/software/{self.tool}/**",
                     ]
+
+                # Tweak YAML output
+                class FiltersDumper(yaml.Dumper):
+                    # HACK: insert blank lines between top-level objects
+                    # inspired by https://stackoverflow.com/a/44284819/3786245
+                    # and https://github.com/yaml/pyyaml/issues/127
+                    def write_line_break(self, data=None):
+                        super().write_line_break(data)
+
+                        if len(self.indents) == 1:
+                            super().write_line_break()
+
                 with open(os.path.join(self.directory, ".github", "filters.yml"), "w") as fh:
-                    yaml.dump(filters_yml, fh, sort_keys=True, line_break=1)
+                    yaml.dump(filters_yml, fh, sort_keys=True, Dumper=FiltersDumper)
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open filters.yml file!")
 
@@ -752,87 +765,3 @@ class ModulesTestYmlBuilder(object):
                 yaml.dump(self.tests, fh, Dumper=CustomDumper)
         except FileNotFoundError as e:
             raise UserWarning("Could not create test.yml file: '{}'".format(e))
-
-
-def _bioconda_package(package, full_dep=True):
-    """Query bioconda package information.
-    Sends a HTTP GET request to the Anaconda remote API.
-    Args:
-        package (str): A bioconda package name.
-    Raises:
-        A LookupError, if the connection fails or times out or gives an unexpected status code
-        A ValueError, if the package name can not be found (404)
-    """
-    if full_dep:
-        dep = package.split("::")[1]
-        depname = dep.split("=")[0]
-    else:
-        depname = package
-
-    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format("bioconda", depname)
-
-    try:
-        response = requests.get(anaconda_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
-        raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
-    except (requests.exceptions.ConnectionError):
-        raise LookupError("Could not connect to Anaconda API")
-    else:
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code != 404:
-            raise LookupError(
-                "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
-                    response.status_code, anaconda_api_url, response
-                )
-            )
-        elif response.status_code == 404:
-            raise ValueError("Could not find `{}` in bioconda channel".format(package))
-
-
-def _get_container_tag(package, version):
-    """
-    Given a biocnda package and version, look for a container
-    at quay.io and return the tag of the most recent image
-    that matches the package version
-    Sends a HTTP GET request to the quay.io API.
-    Args:
-        package (str): A bioconda package name.
-        version (str): Version of the bioconda package
-    Raises:
-        A LookupError, if the connection fails or times out or gives an unexpected status code
-        A ValueError, if the package name can not be found (404)
-    """
-
-    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
-
-    try:
-        response = requests.get(quay_api_url)
-    except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to quay.io API")
-    else:
-        if response.status_code == 200:
-            # Get the container tag
-            tags = response.json()["tags"]
-            matching_tags = [t for t in tags if t["name"].startswith(version)]
-            # If version matches several images, get the most recent one, else return tag
-            if len(matching_tags) > 0:
-                tag = matching_tags[0]
-                tag_date = _get_tag_date(tag["last_modified"])
-                for t in matching_tags:
-                    if _get_tag_date(t["last_modified"]) > tag_date:
-                        tag = t
-                return package + ":" + tag["name"]
-            else:
-                return matching_tags[0]["name"]
-        elif response.status_code != 404:
-            raise LookupError(
-                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
-            )
-        elif response.status_code == 404:
-            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
-
-
-def _get_tag_date(tag_date):
-    # Reformat a date given by quay.io to  datetime
-    return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
