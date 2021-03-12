@@ -128,7 +128,7 @@ class ModuleCreate(object):
             self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using bioconda package: {self.bioconda}")
         except (ValueError, LookupError) as e:
-            log.info(f"Could not find bioconda package ({e})")
+            log.warning(e)
 
         # Try to get the container tag (only if bioconda package was found)
         self.container_tag = None
@@ -247,8 +247,8 @@ class ModuleCreate(object):
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open filters.yml file!")
 
-            log.info(f"Successfully created module files at: {self.software_dir}")
-            log.info(f"Added test files at: {self.test_dir}")
+            log.info(f"Created module files: '{self.software_dir}'")
+            log.info(f"Created test files: '{self.test_dir}'")
 
     def run_cookiecutter(self):
         """ Create new module templates with cookiecutter """

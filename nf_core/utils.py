@@ -376,7 +376,7 @@ def anaconda_package(dep, dep_channels=["bioconda"], has_version=True):
     else:
         # We have looped through each channel and had a 404 response code on everything
         raise ValueError(
-            "Could not find Conda dependency using the Anaconda API: `{}` (<{}>)".format(dep, anaconda_api_url)
+            "Could not find Conda dependency using the Anaconda API: '{}' ({})".format(dep, anaconda_api_url)
         )
 
 
@@ -425,6 +425,7 @@ def get_biocontainer_tag(package, version):
             )
         elif response.status_code == 404:
             raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
+
 
 def custom_yaml_dumper():
     """ Overwrite default PyYAML output to make Prettier YAML linting happy """
