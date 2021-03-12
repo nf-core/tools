@@ -69,7 +69,7 @@ If you wish to contribute a new step, please use the following coding standards:
 2. Write the process block (see below).
 3. Define the output channel if needed (see below).
 4. Add any new flags/options to `nextflow.config` with a default (see below).
-5. Add any new flags/options to `nextflow_schema.json` with help text (with `nf-core schema build .`)
+5. Add any new flags/options to `nextflow_schema.json` with help text (with `nf-core schema build .`).
 6. Add any new flags/options to the help message (for integer/text parameters, print to help the corresponding `nextflow.config` parameter).
 7. Add sanity checks for all relevant parameters.
 8. Add any new software to the `scrape_software_versions.py` script in `bin/` and the version command to the `scrape_software_versions` process in `main.nf`.

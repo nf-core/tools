@@ -1,0 +1,65 @@
+#!/usr/bin/env python
+
+import os
+import yaml
+import nf_core.lint
+
+
+def test_actions_ci_pass(self):
+    """Lint test: actions_ci - PASS"""
+    self.lint_obj._load()
+    results = self.lint_obj.actions_ci()
+    assert results["passed"] == [
+        "'.github/workflows/ci.yml' is triggered on expected events",
+        "CI is building the correct docker image: `docker build --no-cache . -t nfcore/testpipeline:dev`",
+        "CI is pulling the correct docker image: docker pull nfcore/testpipeline:dev",
+        "CI is tagging docker image correctly: docker tag nfcore/testpipeline:dev nfcore/testpipeline:dev",
+        "'.github/workflows/ci.yml' checks minimum NF version",
+    ]
+    assert len(results.get("warned", [])) == 0
+    assert len(results.get("failed", [])) == 0
+    assert len(results.get("ignored", [])) == 0
+
+
+def test_actions_ci_fail_wrong_nf(self):
+    """Lint test: actions_ci - FAIL - wrong minimum version of Nextflow tested"""
+    self.lint_obj._load()
+    self.lint_obj.minNextflowVersion = "1.2.3"
+    results = self.lint_obj.actions_ci()
+    assert results["failed"] == ["Minimum NF version in '.github/workflows/ci.yml' different to pipeline's manifest"]
+
+
+def test_actions_ci_fail_wrong_docker_ver(self):
+    """Lint test: actions_actions_ci - FAIL - wrong pipeline version used for docker commands"""
+
+    self.lint_obj._load()
+    self.lint_obj.nf_config["process.container"] = "'nfcore/tools:0.4'"
+    results = self.lint_obj.actions_ci()
+    assert results["failed"] == [
+        "CI is not building the correct docker image. Should be: `docker build --no-cache . -t nfcore/tools:0.4`",
+        "CI is not pulling the correct docker image. Should be: `docker pull nfcore/tools:dev`",
+        "CI is not tagging docker image correctly. Should be: `docker tag nfcore/tools:dev nfcore/tools:0.4`",
+    ]
+
+
+def test_actions_ci_fail_wrong_trigger(self):
+    """Lint test: actions_actions_ci - FAIL - workflow triggered incorrectly, NF ver not checked at all"""
+
+    # Edit .github/workflows/actions_ci.yml to mess stuff up!
+    new_pipeline = self._make_pipeline_copy()
+    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml"), "r") as fh:
+        ci_yml = yaml.safe_load(fh)
+    ci_yml[True]["push"] = ["dev", "patch"]
+    ci_yml["jobs"]["test"]["strategy"]["matrix"] = {"nxf_versionnn": ["foo", ""]}
+    with open(os.path.join(new_pipeline, ".github", "workflows", "ci.yml"), "w") as fh:
+        yaml.dump(ci_yml, fh)
+
+    # Make lint object
+    lint_obj = nf_core.lint.PipelineLint(new_pipeline)
+    lint_obj._load()
+
+    results = lint_obj.actions_ci()
+    assert results["failed"] == [
+        "'.github/workflows/ci.yml' is not triggered on expected events",
+        "'.github/workflows/ci.yml' does not check minimum NF version",
+    ]

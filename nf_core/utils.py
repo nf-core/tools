@@ -3,19 +3,25 @@
 Common utility functions for the nf-core python package.
 """
 import nf_core
+
+from distutils import version
 import datetime
 import errno
-import json
+import git
 import hashlib
+import json
 import logging
 import os
 import re
 import requests
 import requests_cache
+import shlex
 import subprocess
 import sys
 import time
-from distutils import version
+import yaml
+from rich.live import Live
+from rich.spinner import Spinner
 
 log = logging.getLogger(__name__)
 
@@ -50,6 +56,98 @@ def rich_force_colors():
     if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
         return True
     return None
+
+
+class Pipeline(object):
+    """Object to hold information about a local pipeline.
+
+    Args:
+        path (str): The path to the nf-core pipeline directory.
+
+    Attributes:
+        conda_config (dict): The parsed conda configuration file content (``environment.yml``).
+        conda_package_info (dict): The conda package(s) information, based on the API requests to Anaconda cloud.
+        nf_config (dict): The Nextflow pipeline configuration file content.
+        files (list): A list of files found during the linting process.
+        git_sha (str): The git sha for the repo commit / current GitHub pull-request (`$GITHUB_PR_COMMIT`)
+        minNextflowVersion (str): The minimum required Nextflow version to run the pipeline.
+        wf_path (str): Path to the pipeline directory.
+        pipeline_name (str): The pipeline name, without the `nf-core` tag, for example `hlatyping`.
+        schema_obj (obj): A :class:`PipelineSchema` object
+    """
+
+    def __init__(self, wf_path):
+        """ Initialise pipeline object """
+        self.conda_config = {}
+        self.conda_package_info = {}
+        self.nf_config = {}
+        self.files = []
+        self.git_sha = None
+        self.minNextflowVersion = None
+        self.wf_path = wf_path
+        self.pipeline_name = None
+        self.schema_obj = None
+
+        try:
+            repo = git.Repo(self.wf_path)
+            self.git_sha = repo.head.object.hexsha
+        except:
+            log.debug("Could not find git hash for pipeline: {}".format(self.wf_path))
+
+        # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
+        if os.environ.get("GITHUB_PR_COMMIT", "") != "":
+            self.git_sha = os.environ["GITHUB_PR_COMMIT"]
+
+    def _load(self):
+        """Run core load functions"""
+        self._list_files()
+        self._load_pipeline_config()
+        self._load_conda_environment()
+
+    def _list_files(self):
+        """Get a list of all files in the pipeline"""
+        try:
+            # First, try to get the list of files using git
+            git_ls_files = subprocess.check_output(["git", "ls-files"], cwd=self.wf_path).splitlines()
+            self.files = []
+            for fn in git_ls_files:
+                full_fn = os.path.join(self.wf_path, fn.decode("utf-8"))
+                if os.path.isfile(full_fn):
+                    self.files.append(full_fn)
+                else:
+                    log.warning("`git ls-files` returned '{}' but could not open it!".format(full_fn))
+        except subprocess.CalledProcessError as e:
+            # Failed, so probably not initialised as a git repository - just a list of all files
+            log.debug("Couldn't call 'git ls-files': {}".format(e))
+            self.files = []
+            for subdir, dirs, files in os.walk(self.wf_path):
+                for fn in files:
+                    self.files.append(os.path.join(subdir, fn))
+
+    def _load_pipeline_config(self):
+        """Get the nextflow config for this pipeline
+
+        Once loaded, set a few convienence reference class attributes
+        """
+        self.nf_config = fetch_wf_config(self.wf_path)
+
+        self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").replace("nf-core/", "")
+
+        nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
+        if nextflowVersionMatch:
+            self.minNextflowVersion = nextflowVersionMatch.group(0)
+
+    def _load_conda_environment(self):
+        """Try to load the pipeline environment.yml file, if it exists"""
+        try:
+            with open(os.path.join(self.wf_path, "environment.yml"), "r") as fh:
+                self.conda_config = yaml.safe_load(fh)
+        except FileNotFoundError:
+            log.debug("No conda `environment.yml` file found.")
+
+    def _fp(self, fn):
+        """Convenience function to get full path to a file in the pipeline"""
+        return os.path.join(self.wf_path, fn)
 
 
 def fetch_wf_config(wf_path):
@@ -101,23 +199,15 @@ def fetch_wf_config(wf_path):
             return config
     log.debug("No config cache found")
 
-    # Call `nextflow config` and pipe stderr to /dev/null
-    try:
-        with open(os.devnull, "w") as devnull:
-            nfconfig_raw = subprocess.check_output(["nextflow", "config", "-flat", wf_path], stderr=devnull)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
-    except subprocess.CalledProcessError as e:
-        raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
-    else:
-        for l in nfconfig_raw.splitlines():
-            ul = l.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                config[k] = v
-            except ValueError:
-                log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
+    # Call `nextflow config`
+    nfconfig_raw = nextflow_cmd(f"nextflow config -flat {wf_path}")
+    for l in nfconfig_raw.splitlines():
+        ul = l.decode("utf-8")
+        try:
+            k, v = ul.split(" = ", 1)
+            config[k] = v
+        except ValueError:
+            log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -140,15 +230,26 @@ def fetch_wf_config(wf_path):
     return config
 
 
+def nextflow_cmd(cmd):
+    """Run a Nextflow command and capture the output. Handle errors nicely"""
+    try:
+        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return nf_proc.stdout
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+    except subprocess.CalledProcessError as e:
+        raise AssertionError(
+            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}"
+        )
+
+
 def setup_requests_cachedir():
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
     a .nfcore_cache subdir.
     """
-    # Only import it if we need it
-    import requests_cache
-
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
     if not os.path.exists(cachedir):
@@ -174,30 +275,12 @@ def wait_cli_function(poll_func, poll_every=20):
        None. Just sits in an infite loop until the function returns True.
     """
     try:
-        is_finished = False
-        check_count = 0
-
-        def spinning_cursor():
+        spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
+        with Live(spinner, refresh_per_second=20) as live:
             while True:
-                for cursor in "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏":
-                    yield "{} Use ctrl+c to stop waiting and force exit. ".format(cursor)
-
-        spinner = spinning_cursor()
-        while not is_finished:
-            # Write a new loading text
-            loading_text = next(spinner)
-            sys.stdout.write(loading_text)
-            sys.stdout.flush()
-            # Show the loading spinner every 0.1s
-            time.sleep(0.1)
-            # Wipe the previous loading text
-            sys.stdout.write("\b" * len(loading_text))
-            sys.stdout.flush()
-            # Only check every 2 seconds, but update the spinner every 0.1s
-            check_count += 1
-            if check_count > poll_every:
-                is_finished = poll_func()
-                check_count = 0
+                if poll_func():
+                    break
+                time.sleep(2)
     except KeyboardInterrupt:
         raise AssertionError("Cancelled!")
 

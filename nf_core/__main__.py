@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
+from click.types import File
 from rich import print
 import click
 import logging
@@ -202,23 +203,34 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 @nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
-@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity containers")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
     "-c",
     "--compress",
     type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
     default="tar.gz",
-    help="Compression type",
+    help="Archive compression type",
 )
-def download(pipeline, release, singularity, outdir, compress):
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity images")
+@click.option(
+    "-c",
+    "--singularity-cache",
+    is_flag=True,
+    default=False,
+    help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
+)
+@click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
+def download(pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads):
     """
-    Download a pipeline, configs and singularity container.
+    Download a pipeline, nf-core/configs and pipeline singularity images.
 
-    Collects all workflow files and shared configs from nf-core/configs.
-    Configures the downloaded workflow to use the relative path to the configs.
+    Collects all files in a single archive and configures the downloaded
+    workflow to use relative paths to the configs and singularity images.
     """
-    dl = nf_core.download.DownloadWorkflow(pipeline, release, singularity, outdir, compress)
+    dl = nf_core.download.DownloadWorkflow(
+        pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads
+    )
     dl.download_workflow()
 
 
@@ -274,7 +286,7 @@ def create(name, description, author, new_version, no_git, force, outdir):
     Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and best-practices.
+    files, boilerplate code and bfest-practices.
     """
     create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
     create_obj.init_pipeline()
@@ -290,10 +302,13 @@ def create(name, description, author, new_version, no_git, force, outdir):
     and not os.environ.get("GITHUB_REPOSITORY", "") == "nf-core/tools",
     help="Execute additional checks for release-ready workflows.",
 )
-@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line.")
+@click.option(
+    "-f", "--fix", type=str, metavar="<test>", multiple=True, help="Attempt to automatically fix specified lint test"
+)
+@click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(pipeline_dir, release, show_passed, markdown, json):
+def lint(pipeline_dir, release, fix, show_passed, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -303,8 +318,12 @@ def lint(pipeline_dir, release, show_passed, markdown, json):
     """
 
     # Run the lint tests!
-    lint_obj = nf_core.lint.run_linting(pipeline_dir, release, show_passed, markdown, json)
-    if len(lint_obj.failed) > 0:
+    try:
+        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, markdown, json)
+        if len(lint_obj.failed) > 0:
+            sys.exit(1)
+    except AssertionError as e:
+        log.critical(e)
         sys.exit(1)
 
 
@@ -414,6 +433,31 @@ def check(ctx):
     mods = nf_core.modules.PipelineModules()
     mods.modules_repo = ctx.obj["modules_repo_obj"]
     mods.check_modules()
+
+
+@modules.command("create-test-yml", help_priority=6)
+@click.pass_context
+@click.argument("module", type=str, required=True, metavar="<module name>")
+@click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
+@click.option("-o", "--output", type=str, help="Path for output YAML file")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+def create_test_yml(ctx, module, run_tests, output, force, no_prompts):
+    """
+    Auto-generate a test.yml file for a new module.
+
+    Given the name of a new module, run the Nextflow test command and automatically generate
+    the required `test.yml` file based on the output files.
+
+    If not supplied on the command line, tool will prompt for name, command, tags etc with
+    sensible defaults.
+    """
+    try:
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder(module, run_tests, output, force, no_prompts)
+        meta_builder.run()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 ## nf-core schema subcommands
@@ -527,26 +571,15 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
-
-    # First, lint the pipeline to check everything is in order
-    log.info("Running nf-core lint tests")
-
-    # Run the lint tests
-    try:
-        lint_obj = nf_core.lint.PipelineLint(pipeline_dir)
-        lint_obj.lint_pipeline()
-    except AssertionError as e:
-        log.error("Please fix lint errors before bumping versions")
-        return
-    if len(lint_obj.failed) > 0:
-        log.error("Please fix lint errors before bumping versions")
-        return
+    # Make a pipeline object and load config etc
+    pipeline_obj = nf_core.utils.Pipeline(pipeline_dir)
+    pipeline_obj._load()
 
     # Bump the pipeline version number
     if not nextflow:
-        nf_core.bump_version.bump_pipeline_version(lint_obj, new_version)
+        nf_core.bump_version.bump_pipeline_version(pipeline_obj, new_version)
     else:
-        nf_core.bump_version.bump_nextflow_version(lint_obj, new_version)
+        nf_core.bump_version.bump_nextflow_version(pipeline_obj, new_version)
 
 
 @nf_core_cli.command("sync", help_priority=10)
