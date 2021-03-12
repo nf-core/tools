@@ -70,20 +70,19 @@ class ModuleCreate(object):
             log.info(
                 "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
             )
-        while self.tool is None or self.tool == "" or re.search(r'[^a-z]', self.tool):
-            if re.search(r'[^a-z]', self.tool):
-                log.warning("Tool name must be lower-case letters only")
-                tool_clean = re.sub(r'[^a-z]', '', self.tool.lower())
+        while self.tool is None or self.tool == "" or re.search(r"[^a-z]", self.tool):
+            if self.tool is not None and re.search(r"[^a-z]", self.tool):
+                log.warning("Tool name must be lower-case letters only, with no punctuation")
+                tool_clean = re.sub(r"[^a-z]", "", self.tool.lower())
                 if rich.prompt.Confirm.ask(f"[violet]Change '{self.tool}' to '{tool_clean}'?") or self.no_prompts:
                     self.tool = tool_clean
                     continue
             self.tool = rich.prompt.Prompt.ask("[violet]Tool name").strip()
 
-        while self.subtool is None or re.search(r'[^a-z]', self.subtool):
-            print("in this block")
-            if re.search(r'[^a-z]', self.subtool):
-                log.warning("Subtool name must be lower-case letters only")
-                subtool_clean = re.sub(r'[^a-z]', '', self.subtool.lower())
+        while self.subtool is None or re.search(r"[^a-z]", self.subtool):
+            if self.subtool is not None and re.search(r"[^a-z]", self.subtool):
+                log.warning("Subtool name must be lower-case letters only, with no punctuation")
+                subtool_clean = re.sub(r"[^a-z]", "", self.subtool.lower())
                 if rich.prompt.Confirm.ask(f"[violet]Change '{self.subtool}' to '{subtool_clean}'?") or self.no_prompts:
                     self.subtool = subtool_clean
                     continue
@@ -92,7 +91,7 @@ class ModuleCreate(object):
                 self.subtool = False
 
         # https://github.com/shinnn/github-username-regex
-        github_username_regex = re.compile(r'^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$')
+        github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
         while self.author is None or not github_username_regex.match(self.author):
             if self.no_prompts:
                 self.author = "@nf_core"
