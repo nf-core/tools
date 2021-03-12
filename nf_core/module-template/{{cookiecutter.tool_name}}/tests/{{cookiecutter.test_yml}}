@@ -1,3 +1,5 @@
+## TODO nf-core: Please run the following command to build this file:
+#                nf-core modules create-test-yml {{cookiecutter.tool}}/{{cookiecutter.subtool}}
 - name: {{ cookiecutter.tool }} {{cookiecutter.subtool }}
   command: nextflow run ./tests/software/{{ cookiecutter.tool_dir }} -entry test_{{ cookiecutter.tool_name }} -c tests/config/nextflow.config
   tags:

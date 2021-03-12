@@ -5,10 +5,12 @@ The ModuleCreate class handles generating of module templates
 
 from __future__ import print_function
 
-import cookiecutter.main, cookiecutter.exceptions
+import cookiecutter.exceptions
+import cookiecutter.main
 import logging
 import nf_core
 import os
+import re
 import rich
 import shutil
 import sys
@@ -68,16 +70,35 @@ class ModuleCreate(object):
             log.info(
                 "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
             )
-        while self.tool is None:
+        while self.tool is None or self.tool == "" or re.search(r'[^a-z]', self.tool):
+            if re.search(r'[^a-z]', self.tool):
+                log.warning("Tool name must be lower-case letters only")
+                tool_clean = re.sub(r'[^a-z]', '', self.tool.lower())
+                if rich.prompt.Confirm.ask(f"[violet]Change '{self.tool}' to '{tool_clean}'?") or self.no_prompts:
+                    self.tool = tool_clean
+                    continue
             self.tool = rich.prompt.Prompt.ask("[violet]Tool name").strip()
 
-        if self.subtool is None and not self.no_prompts:
+        while self.subtool is None or re.search(r'[^a-z]', self.subtool):
+            print("in this block")
+            if re.search(r'[^a-z]', self.subtool):
+                log.warning("Subtool name must be lower-case letters only")
+                subtool_clean = re.sub(r'[^a-z]', '', self.subtool.lower())
+                if rich.prompt.Confirm.ask(f"[violet]Change '{self.subtool}' to '{subtool_clean}'?") or self.no_prompts:
+                    self.subtool = subtool_clean
+                    continue
             self.subtool = rich.prompt.Prompt.ask("[violet]Subtool name[/] (leave empty if no subtool)", default=None)
+            if self.subtool == "":
+                self.subtool = False
 
-        while self.author is None or self.author == "":
+        # https://github.com/shinnn/github-username-regex
+        github_username_regex = re.compile(r'^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$')
+        while self.author is None or not github_username_regex.match(self.author):
             if self.no_prompts:
                 self.author = "@nf_core"
             else:
+                if self.author is not None and not github_username_regex.match(self.author):
+                    log.warning("Does not look like a value GitHub username!")
                 self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:[/] (@author)")
 
         while self.label is None:

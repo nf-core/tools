@@ -6,7 +6,6 @@ description: write your description here
 keywords:
   - sort
 tools:
-  ## TODO nf-core: Change the name of the tool below
   - {{ cookiecutter.tool }}:
       ## TODO nf-core: Add a description and other details for the software below
       description: |

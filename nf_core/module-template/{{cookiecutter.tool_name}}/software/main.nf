@@ -21,8 +21,6 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 def options    = initOptions(params.options)
 
-// TODO nf-core: Process name MUST be all uppercase,
-//               "TOOL" and (ideally) "SUBTOOL" MUST be all one word separated by an "_".
 process {{ cookiecutter.tool_name_upper }} {
     {{ 'tag "$meta.id"' if cookiecutter.has_meta else "'$bam'" }}
     // TODO nf-core: Provide appropriate resource label for process as listed in the nf-core pipeline template below:
