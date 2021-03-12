@@ -1,4 +1,6 @@
-# Our Pledge
+# Code of Conduct at nf-core (v1.0)
+
+## Our Pledge
 
 In the interest of fostering an open, collaborative, and welcoming environment, we as contributors and maintainers of nf-core, pledge to making participation in our projects and community a harassment-free experience for everyone, regardless of:
 
@@ -17,8 +19,6 @@ In the interest of fostering an open, collaborative, and welcoming environment, 
 - Socioeconomic status
 
 Please note that the list above is alphabetised and is therefore not ranked in any order of preference or importance.
-
-# Code of Conduct at nf-core (v1.0)
 
 ## Preamble
 
@@ -106,6 +106,6 @@ All reports will be handled with utmost discretion and confidentially.
 
 ## Changelog
 
-#### v1.0 - March 12th, 2021
+### v1.0 - March 12th, 2021
 
 - Complete rewrite from original [Contributor Covenant](http://contributor-covenant.org/) CoC.
