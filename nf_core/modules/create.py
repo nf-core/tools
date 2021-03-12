@@ -86,9 +86,10 @@ class ModuleCreate(object):
                 if rich.prompt.Confirm.ask(f"[violet]Change '{self.subtool}' to '{subtool_clean}'?") or self.no_prompts:
                     self.subtool = subtool_clean
                     continue
-            self.subtool = rich.prompt.Prompt.ask("[violet]Subtool name[/] (leave empty if no subtool)", default=None)
+            self.subtool = rich.prompt.Prompt.ask("[violet]Subtool name[/] (leave empty if no subtool)")
             if self.subtool == "":
                 self.subtool = False
+                break
 
         # https://github.com/shinnn/github-username-regex
         github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
