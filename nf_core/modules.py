@@ -340,6 +340,9 @@ class ModuleCreate(object):
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
 
+        # Create module template with cokiecutter
+        self.run_cookiecutter()
+
         # Create template for new module in nf-core pipeline
         if self.repo_type == "pipeline":
             # Check whether module file already exists
@@ -350,24 +353,27 @@ class ModuleCreate(object):
                 if not self.force:
                     raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
 
-            # Create module template with cokiecutter
-            self.run_cookiecutter()
-
             # Create directory and add the module template file
-            outdir = os.path.join(self.directory, "modules", "local", "process")
+            outdir = os.path.join(os.getcwd(), self.directory, "modules", "local", "process")
             try:
                 os.makedirs(outdir, exist_ok=True)
-                shutil.move(os.path.join(self.tmpdir, self.tool_name, self.tool_name + ".nf"), outdir)
+                shutil.move(
+                    os.path.join(self.tmpdir, self.tool_name, self.tool_name + ".nf"),
+                    os.path.join(outdir, self.tool_name + ".nf"),
+                )
 
             except OSError as e:
-                log.error(f"Could not create module file {module_file}: {e}")
-
+                shutil.rmtree(self.tmpdir)
+                raise UserWarning(f"Could not create module file {module_file}: {e}")
             shutil.rmtree(self.tmpdir)
 
         # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
             self.software_dir = os.path.join(self.directory, "software", self.tool_dir)
             self.test_dir = os.path.join(self.directory, "tests", "software", self.tool_dir)
+
+            # Check if module directories exist already
+            # If yes (and --force not specified) ask whether we should overwrite them
             if os.path.exists(self.software_dir) and not self.force:
                 if rich.prompt.Confirm.ask(
                     f"[red]Module directory exists already! [green]'{self.software_dir}' [violet]Overwrite?"
@@ -388,11 +394,8 @@ class ModuleCreate(object):
                         f"Module test directory exists already: '{self.test_dir}'. Use '--force' to overwrite"
                     )
 
-            self.run_cookiecutter()
-
             # Create directories and populate with template module files
             try:
-                print(self.tmpdir)
                 # software dir (software/tool/subtool)
                 os.makedirs(self.software_dir, exist_ok=True)
                 shutil.move(
@@ -420,10 +423,10 @@ class ModuleCreate(object):
                 )
 
             except OSError as e:
-                log.error(f"Could not create module files: {e}")
-                return False
-
+                shutil.rmtree(self.tmpdir)
+                raise UserWarning(f"Could not create module files: {e}")
             shutil.rmtree(self.tmpdir)
+
             # Add line to filters.yml
             # TODO: use yaml to write this in a safer way
             try:
@@ -443,12 +446,10 @@ class ModuleCreate(object):
                     fh.write("\n" + "\n".join(content))
 
             except FileNotFoundError as e:
-                log.error(f"Could not open filters.yml file!")
-                return False
+                raise UserWarning(f"Could not open filters.yml file!")
 
             log.info(f"Successfully created module files at: {self.software_dir}")
             log.info(f"Added test files at: {self.test_dir}")
-            return True
 
     def run_cookiecutter(self):
         """ Create new module templates with cookiecutter """
