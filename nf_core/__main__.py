@@ -438,9 +438,11 @@ def check(ctx):
 @modules.command("create", help_priority=6)
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<target directory>")
-@click.argument("tool", type=str, required=True, metavar="<tool name>")
-@click.argument("subtool", type=str, required=False, metavar="<subtool name>")
-def create_module(ctx, directory, tool, subtool=None):
+@click.argument("tool", type=str, required=False, metavar="<tool name>")
+@click.argument("subtool", type=str, required=False, default=None, metavar="<subtool name>")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+def create_module(ctx, directory, tool, subtool, force, no_prompts):
     """
     Create a new shared module from the template.
 
@@ -466,7 +468,7 @@ def create_module(ctx, directory, tool, subtool=None):
 
     """
     module_create = nf_core.modules.ModuleCreate(directory=directory, tool=tool, subtool=subtool)
-    module_create.create()
+    module_create.create(force=force, no_prompts=no_prompts)
 
 
 @modules.command("create-test-yml", help_priority=7)

@@ -4,6 +4,7 @@ Code to handle DSL2 module imports from a GitHub repository
 """
 
 from __future__ import print_function
+from requests.models import default_hooks
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -250,12 +251,11 @@ class ModuleCreate(object):
         self.directory = directory
         self.tool = tool
         self.subtool = subtool
-        self.author = "@author"
-        self.label = "process_low"
-        self.force = force
-        self.has_meta = "yes"
+        self.author = None
+        self.label = None
+        self.has_meta = None
 
-    def create(self):
+    def create(self, force=False, no_prompts=False):
         """
         Create a new module from the template
 
@@ -283,11 +283,37 @@ class ModuleCreate(object):
         :param tool:        name of the tool
         :param subtool:     name of the
         """
+        self.force = force
+        self.no_prompts = no_prompts
         # Check whether the given directory is a nf-core pipeline or a clone
         # of nf-core modules
-        self.repo_type = self.get_repo_type(directory)
+        self.repo_type = self.get_repo_type(self.directory)
 
-        # Collect module info TODO: use a prompt instead
+        # Collect module info via prompt if not already given
+        while self.tool is None:
+            self.tool = rich.prompt.Prompt.ask("[violet]Tool name").strip()
+
+        if self.subtool is None:
+            self.subtool = rich.prompt.Prompt.ask("[violet]Subtool name[/] (leave empty if no subtool)", default=None)
+
+        while self.author is None:
+            if self.no_prompts:
+                self.author = "@author"
+            else:
+                self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:", default="@author")
+
+        while self.label is None:
+            if self.no_prompts:
+                self.label = "process_low"
+            else:
+                self.label = rich.prompt.Prompt.ask("[violet]Process label:", default="process_low")
+
+        while self.has_meta is None:
+            if self.no_prompts:
+                self.has_meta = "yes"
+            else:
+                self.has_meta = rich.prompt.Prompt.ask("[violet]Use meta tag? (yes/no)", default="yes")
+
         # Determine the tool name
         self.tool_name = self.tool
         self.tool_dir = self.tool
@@ -317,15 +343,18 @@ class ModuleCreate(object):
         # Create template for new module in nf-core pipeline
         if self.repo_type == "pipeline":
             # Check whether module file already exists
-            module_file = os.path.join(directory, "modules", "local", "process", self.tool_name + ".nf")
-            if os.path.exists(module_file):
-                log.error(f"Module file {module_file} exists already!")
+            module_file = os.path.join(self.directory, "modules", "local", "process", self.tool_name + ".nf")
+            if os.path.exists(module_file) and not self.force:
+                if rich.prompt.Confirm.ask(f"[red]File exists! [green]'{module_file}' [violet]Overwrite?"):
+                    self.force = True
+                if not self.force:
+                    raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
 
             # Create module template with cokiecutter
             self.run_cookiecutter()
 
             # Create directory and add the module template file
-            outdir = os.path.join(directory, "modules", "local", "process")
+            outdir = os.path.join(self.directory, "modules", "local", "process")
             try:
                 os.makedirs(outdir, exist_ok=True)
                 shutil.move(os.path.join(self.tmpdir, self.tool_name, self.tool_name + ".nf"), outdir)
@@ -337,29 +366,58 @@ class ModuleCreate(object):
 
         # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
-            self.software_dir = os.path.join(directory, "software", self.tool_dir)
-            self.test_dir = os.path.join(directory, "tests", "software", self.tool_dir)
-            if os.path.exists(self.software_dir):
-                log.error(f"Module directory {self.software_dir} exists already!")
-                return False
-            if os.path.exists(self.test_dir):
-                log.error(f"Module test directory {self.test_dir} exists already!")
-                return False
+            self.software_dir = os.path.join(self.directory, "software", self.tool_dir)
+            self.test_dir = os.path.join(self.directory, "tests", "software", self.tool_dir)
+            if os.path.exists(self.software_dir) and not self.force:
+                if rich.prompt.Confirm.ask(
+                    f"[red]Module directory exists already! [green]'{self.software_dir}' [violet]Overwrite?"
+                ):
+                    self.force = True
+                if not self.force:
+                    raise UserWarning(
+                        f"Module directory exists already: '{self.software_dir}'. Use '--force' to overwrite"
+                    )
+
+            if os.path.exists(self.test_dir) and not self.force:
+                if rich.prompt.Confirm.ask(
+                    f"[red]Module test directory exists already! [green]'{self.test_dir}' [violet]Overwrite?"
+                ):
+                    self.force = True
+                if not self.force:
+                    raise UserWarning(
+                        f"Module test directory exists already: '{self.test_dir}'. Use '--force' to overwrite"
+                    )
 
             self.run_cookiecutter()
 
             # Create directories and populate with template module files
             try:
+                print(self.tmpdir)
                 # software dir (software/tool/subtool)
                 os.makedirs(self.software_dir, exist_ok=True)
-                shutil.move(os.path.join(self.tmpdir, self.tool_name, "software", "main.nf"), self.software_dir)
-                shutil.move(os.path.join(self.tmpdir, self.tool_name, "software", "functions.nf"), self.software_dir)
-                shutil.move(os.path.join(self.tmpdir, self.tool_name, "software", "meta.yml"), self.software_dir)
+                shutil.move(
+                    os.path.join(self.tmpdir, self.tool_name, "software", "main.nf"),
+                    os.path.join(os.getcwd(), self.software_dir, "main.nf"),
+                )
+                shutil.move(
+                    os.path.join(self.tmpdir, self.tool_name, "software", "functions.nf"),
+                    os.path.join(os.getcwd(), self.software_dir, "functions.nf"),
+                )
+                shutil.move(
+                    os.path.join(self.tmpdir, self.tool_name, "software", "meta.yml"),
+                    os.path.join(os.getcwd(), self.software_dir, "meta.yml"),
+                )
 
                 # testdir (tests/software/tool/subtool)
                 os.makedirs(self.test_dir, exist_ok=True)
-                shutil.move(os.path.join(self.tmpdir, self.tool_name, "tests", "main.nf"), self.test_dir)
-                shutil.move(os.path.join(self.tmpdir, self.tool_name, "tests", "test.yml"), self.test_dir)
+                shutil.move(
+                    os.path.join(self.tmpdir, self.tool_name, "tests", "main.nf"),
+                    os.path.join(os.getcwd(), self.test_dir, "main.nf"),
+                )
+                shutil.move(
+                    os.path.join(self.tmpdir, self.tool_name, "tests", "test.yml"),
+                    os.path.join(os.getcwd(), self.test_dir, "test.yml"),
+                )
 
             except OSError as e:
                 log.error(f"Could not create module files: {e}")
@@ -369,18 +427,18 @@ class ModuleCreate(object):
             # Add line to filters.yml
             # TODO: use yaml to write this in a safer way
             try:
-                with open(os.path.join(directory, ".github", "filters.yml"), "a") as fh:
-                    if subtool:
+                with open(os.path.join(self.directory, ".github", "filters.yml"), "a") as fh:
+                    if self.subtool:
                         content = [
                             f"{self.tool_name}:",
-                            f"  - software/{tool}/{subtool}/**",
-                            f"  - tests/software/{tool}/{subtool}/**\n",
+                            f"  - software/{self.tool}/{self.subtool}/**",
+                            f"  - tests/software/{self.tool}/{self.subtool}/**\n",
                         ]
                     else:
                         content = [
                             f"{self.tool_name}:",
-                            f"  - software/{tool}/**",
-                            f"  - tests/software/{tool}/**\n",
+                            f"  - software/{self.tool}/**",
+                            f"  - tests/software/{self.tool}/**\n",
                         ]
                     fh.write("\n" + "\n".join(content))
 
