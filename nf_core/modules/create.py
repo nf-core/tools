@@ -87,9 +87,9 @@ class ModuleCreate(object):
 
         while self.has_meta is None:
             if self.no_prompts:
-                self.has_meta = "yes"
+                self.has_meta = True
             else:
-                self.has_meta = rich.prompt.Prompt.ask("[violet]Use meta tag? (yes/no)", default="yes")
+                self.has_meta = rich.prompt.Prompt.confirm("[violet]Use meta tag? (yes/no)")
 
         # Determine the tool name
         self.tool_name = self.tool

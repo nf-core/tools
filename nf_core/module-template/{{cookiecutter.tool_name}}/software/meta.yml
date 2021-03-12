@@ -40,7 +40,7 @@ params:
         force the workflow to pull and convert Docker containers instead.
 ## TODO nf-core: Add a description of all of the variables used as input
 input:
-  {% if cookiecutter.has_meta == "yes" %}
+  {% if cookiecutter.has_meta %}
   - meta:
       type: map
       description: |
@@ -53,7 +53,7 @@ input:
       pattern: "*.{bam,cram,sam}"
 ## TODO nf-core: Add a description of all of the variables used as output
 output:
-  {% if cookiecutter.has_meta == "yes" %}
+  {% if cookiecutter.has_meta %}
   - meta:
       type: map
       description: |

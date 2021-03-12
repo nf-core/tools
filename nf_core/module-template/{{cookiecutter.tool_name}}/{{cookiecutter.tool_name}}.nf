@@ -24,7 +24,7 @@ def options    = initOptions(params.options)
 // TODO nf-core: Process name MUST be all uppercase,
 //               "TOOL" and (ideally) "SUBTOOL" MUST be all one word separated by an "_".
 process {{ cookiecutter.tool_name_upper }} {
-    {{ 'tag "$meta.id"' if cookiecutter.has_meta == "yes" else "'$bam'" }}
+    {{ 'tag "$meta.id"' if cookiecutter.has_meta else "'$bam'" }}
     // TODO nf-core: Provide appropriate resource label for process as listed in the nf-core pipeline template below:
     //               https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/%7B%7Bcookiecutter.name_noslash%7D%7D/conf/base.config#L29
     label '{{ cookiecutter.label }}'
@@ -53,18 +53,18 @@ process {{ cookiecutter.tool_name_upper }} {
     //               https://github.com/nf-core/modules/blob/master/software/bwa/index/main.nf
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    {{ 'tuple val(meta), path(bam)' if cookiecutter.has_meta == "yes" else 'path bam' }}
+    {{ 'tuple val(meta), path(bam)' if cookiecutter.has_meta else 'path bam' }}
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    {{ 'tuple val(meta), path("*.bam")' if cookiecutter.has_meta == "yes" else 'path "*.bam"' }}   , emit: bam
+    {{ 'tuple val(meta), path("*.bam")' if cookiecutter.has_meta else 'path "*.bam"' }}   , emit: bam
     // TODO nf-core: List additional required output channels/values here
     path "*.version.txt"          , emit: version
 
 
     script:
     def software = getSoftwareName(task.process)
-    {% if cookiecutter.has_meta == "yes" %}
+    {% if cookiecutter.has_meta %}
     // TODO nf-core: If a meta map of sample information is NOT provided in "input:" section delete the line below
     def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
     {% endif %}
