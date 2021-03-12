@@ -40,22 +40,26 @@ params:
         force the workflow to pull and convert Docker containers instead.
 ## TODO nf-core: Add a description of all of the variables used as input
 input:
+  {% if cookiecutter.has_meta == "yes" %}
   - meta:
       type: map
       description: |
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
+  {% endif %}
   - bam:
       type: file
       description: BAM/CRAM/SAM file
       pattern: "*.{bam,cram,sam}"
 ## TODO nf-core: Add a description of all of the variables used as output
 output:
+  {% if cookiecutter.has_meta == "yes" %}
   - meta:
       type: map
       description: |
         Groovy Map containing sample information
         e.g. [ id:'test', single_end:false ]
+  {% endif %}
   - bam:
       type: file
       description: Sorted BAM/CRAM/SAM file

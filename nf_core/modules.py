@@ -275,10 +275,10 @@ class PipelineModules(object):
         self.directory = directory
         self.tool = tool
         self.subtool = subtool
-        # TODO author, label, --force
         self.author = ""
         self.label = "process_low"
         self.force = False
+        self.has_meta = "no"
 
         # Check whether the given directory is a nf-core pipeline or a clone
         # of nf-core modules
@@ -307,7 +307,7 @@ class PipelineModules(object):
         if self.bioconda:
             try:
                 self.container_tag = _get_container_tag(self.tool, version)
-                log.info(f"Using docker/singularity container with tag: {self.tool}:{self.container_tag}")
+                log.info(f"Using docker/singularity container with tag: {self.container_tag}")
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
 
@@ -319,7 +319,6 @@ class PipelineModules(object):
                 log.error(f"Module file {module_file} exists already!")
 
             # Create module template with cokiecutter
-            # TODO
             self.run_cookiecutter()
 
             # Create directory and add the module template file
@@ -407,8 +406,9 @@ class PipelineModules(object):
                 "tool_dir": self.tool_dir,
                 "author": self.author,
                 "bioconda": self.bioconda,
-                "contaier_tag": self.container_tag,
+                "container_tag": self.container_tag,
                 "label": self.label,
+                "has_meta": self.has_meta,
                 "nf_core_version": nf_core.__version__,
             },
             no_input=True,
@@ -521,7 +521,7 @@ def _get_container_tag(package, version):
                 for t in matching_tags:
                     if _get_tag_date(t["last_modified"]) > tag_date:
                         tag = t
-                return tag["name"]
+                return package + ":" + tag["name"]
             else:
                 return matching_tags[0]["name"]
         elif response.status_code != 404:
