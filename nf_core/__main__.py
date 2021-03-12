@@ -465,8 +465,8 @@ def create_module(ctx, directory, tool, subtool=None):
     and for a matching container on quay.io
 
     """
-    mods = nf_core.modules.PipelineModules()
-    mods.create(directory=directory, tool=tool, subtool=subtool)
+    module_create = nf_core.modules.ModuleCreate(directory=directory, tool=tool, subtool=subtool)
+    module_create.create()
 
 
 @modules.command("create-test-yml", help_priority=7)

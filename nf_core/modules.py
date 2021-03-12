@@ -244,7 +244,18 @@ class PipelineModules(object):
             log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
             return False
 
-    def create(self, directory, tool, subtool=None):
+
+class ModuleCreate(object):
+    def __init__(self, directory=".", tool=None, subtool=None, force=False):
+        self.directory = directory
+        self.tool = tool
+        self.subtool = subtool
+        self.author = "@author"
+        self.label = "process_low"
+        self.force = force
+        self.has_meta = "yes"
+
+    def create(self):
         """
         Create a new module from the template
 
@@ -272,14 +283,6 @@ class PipelineModules(object):
         :param tool:        name of the tool
         :param subtool:     name of the
         """
-        self.directory = directory
-        self.tool = tool
-        self.subtool = subtool
-        self.author = ""
-        self.label = "process_low"
-        self.force = False
-        self.has_meta = "no"
-
         # Check whether the given directory is a nf-core pipeline or a clone
         # of nf-core modules
         self.repo_type = self.get_repo_type(directory)
@@ -434,107 +437,6 @@ class PipelineModules(object):
         else:
             log.error("Could not determine repository type of {}".format(directory))
             sys.exit(1)
-
-    def download_template(self, url):
-        """ Download the module template """
-
-        r = requests.get(url=url)
-
-        if r.status_code != 200:
-            log.error("Could not download the template")
-            sys.exit(1)
-        else:
-            try:
-                template_copy = r.content.decode("ascii")
-            except UnicodeDecodeError as e:
-                log.error(f"Could not decode template file from {url}: {e}")
-                sys.exit(1)
-
-        return template_copy
-
-
-def _bioconda_package(package, full_dep=True):
-    """Query bioconda package information.
-    Sends a HTTP GET request to the Anaconda remote API.
-    Args:
-        package (str): A bioconda package name.
-    Raises:
-        A LookupError, if the connection fails or times out or gives an unexpected status code
-        A ValueError, if the package name can not be found (404)
-    """
-    if full_dep:
-        dep = package.split("::")[1]
-        depname = dep.split("=")[0]
-    else:
-        depname = package
-
-    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format("bioconda", depname)
-
-    try:
-        response = requests.get(anaconda_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
-        raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
-    except (requests.exceptions.ConnectionError):
-        raise LookupError("Could not connect to Anaconda API")
-    else:
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code != 404:
-            raise LookupError(
-                "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
-                    response.status_code, anaconda_api_url, response
-                )
-            )
-        elif response.status_code == 404:
-            raise ValueError("Could not find `{}` in bioconda channel".format(package))
-
-
-def _get_container_tag(package, version):
-    """
-    Given a biocnda package and version, look for a container
-    at quay.io and return the tag of the most recent image
-    that matches the package version
-    Sends a HTTP GET request to the quay.io API.
-    Args:
-        package (str): A bioconda package name.
-        version (str): Version of the bioconda package
-    Raises:
-        A LookupError, if the connection fails or times out or gives an unexpected status code
-        A ValueError, if the package name can not be found (404)
-    """
-
-    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
-
-    try:
-        response = requests.get(quay_api_url)
-    except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to quay.io API")
-    else:
-        if response.status_code == 200:
-            # Get the container tag
-            tags = response.json()["tags"]
-            matching_tags = [t for t in tags if t["name"].startswith(version)]
-            # If version matches several images, get the most recent one, else return tag
-            if len(matching_tags) > 0:
-                tag = matching_tags[0]
-                tag_date = _get_tag_date(tag["last_modified"])
-                for t in matching_tags:
-                    if _get_tag_date(t["last_modified"]) > tag_date:
-                        tag = t
-                return package + ":" + tag["name"]
-            else:
-                return matching_tags[0]["name"]
-        elif response.status_code != 404:
-            raise LookupError(
-                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
-            )
-        elif response.status_code == 404:
-            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
-
-
-def _get_tag_date(tag_date):
-    # Reformat a date given by quay.io to  datetime
-    return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
 
 
 class ModulesTestYmlBuilder(object):
@@ -793,3 +695,87 @@ class ModulesTestYmlBuilder(object):
                 yaml.dump(self.tests, fh, Dumper=CustomDumper)
         except FileNotFoundError as e:
             raise UserWarning("Could not create test.yml file: '{}'".format(e))
+
+
+def _bioconda_package(package, full_dep=True):
+    """Query bioconda package information.
+    Sends a HTTP GET request to the Anaconda remote API.
+    Args:
+        package (str): A bioconda package name.
+    Raises:
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
+    """
+    if full_dep:
+        dep = package.split("::")[1]
+        depname = dep.split("=")[0]
+    else:
+        depname = package
+
+    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format("bioconda", depname)
+
+    try:
+        response = requests.get(anaconda_api_url, timeout=10)
+    except (requests.exceptions.Timeout):
+        raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
+    except (requests.exceptions.ConnectionError):
+        raise LookupError("Could not connect to Anaconda API")
+    else:
+        if response.status_code == 200:
+            return response.json()
+        elif response.status_code != 404:
+            raise LookupError(
+                "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
+                    response.status_code, anaconda_api_url, response
+                )
+            )
+        elif response.status_code == 404:
+            raise ValueError("Could not find `{}` in bioconda channel".format(package))
+
+
+def _get_container_tag(package, version):
+    """
+    Given a biocnda package and version, look for a container
+    at quay.io and return the tag of the most recent image
+    that matches the package version
+    Sends a HTTP GET request to the quay.io API.
+    Args:
+        package (str): A bioconda package name.
+        version (str): Version of the bioconda package
+    Raises:
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
+    """
+
+    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
+
+    try:
+        response = requests.get(quay_api_url)
+    except requests.exceptions.ConnectionError:
+        raise LookupError("Could not connect to quay.io API")
+    else:
+        if response.status_code == 200:
+            # Get the container tag
+            tags = response.json()["tags"]
+            matching_tags = [t for t in tags if t["name"].startswith(version)]
+            # If version matches several images, get the most recent one, else return tag
+            if len(matching_tags) > 0:
+                tag = matching_tags[0]
+                tag_date = _get_tag_date(tag["last_modified"])
+                for t in matching_tags:
+                    if _get_tag_date(t["last_modified"]) > tag_date:
+                        tag = t
+                return package + ":" + tag["name"]
+            else:
+                return matching_tags[0]["name"]
+        elif response.status_code != 404:
+            raise LookupError(
+                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
+            )
+        elif response.status_code == 404:
+            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
+
+
+def _get_tag_date(tag_date):
+    # Reformat a date given by quay.io to  datetime
+    return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
