@@ -55,13 +55,13 @@ Participation in the nf-core community is contingent on following these guidelin
 - Participating in workshops, training, and seminar series organised by nf-core (both online and in-person events). This applies to events hosted on web-based platforms such as Zoom, Jitsi, YouTube live etc.
 - Representing nf-core on social media. This includes both official and personal accounts.
 
-## nf-core cares :blush:
+## nf-core cares 😊
 
 nf-core's CoC and expectations of respectful behaviours for all participants (including organisers and the nf-core team) include but are not limited to the following (listed in alphabetical order):
 
 - Ask for consent before sharing another community member’s personal information (including photographs) on social media.
 - Be respectful of differing viewpoints and experiences. We are all here to learn from one another and a difference in opinion can present a good learning opportunity.
-- Celebrate your accomplishments at events! (Get creative with your use of emojis :tada: 🥳 :100: :raised_hands: !)
+- Celebrate your accomplishments at events! (Get creative with your use of emojis 🎉 🥳 💯 🙌 !)
 - Demonstrate empathy towards other community members. (We don’t all have the same amount of time to dedicate to nf-core. If tasks are pending, don’t hesitate to gently remind members of your team. If you are leading a task, ask for help if you feel overwhelmed.)
 - Engage with and enquire after others. (This is especially important given the geographically remote nature of the nf-core community, so let’s do this the best we can)
 - Focus on what is best for the team and the community. (When in doubt, ask)
