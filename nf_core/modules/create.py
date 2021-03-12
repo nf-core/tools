@@ -4,6 +4,7 @@ The ModuleCreate class handles generating of module templates
 """
 
 from __future__ import print_function
+from packaging.version import parse as parse_version
 
 import cookiecutter.exceptions
 import cookiecutter.main
@@ -124,7 +125,7 @@ class ModuleCreate(object):
         self.bioconda = None
         try:
             response = nf_core.utils.anaconda_package(self.tool, has_version=False)
-            version = max(response["versions"])
+            version = str(max([parse_version(v) for v in response["versions"]]))
             self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using bioconda package: {self.bioconda}")
         except (ValueError, LookupError) as e:
