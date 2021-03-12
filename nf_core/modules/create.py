@@ -4,7 +4,6 @@ The ModuleCreate class handles generating of module templates
 """
 
 from __future__ import print_function
-from nf_core.utils import anaconda_package, get_biocontainer_tag
 
 import cookiecutter.main, cookiecutter.exceptions
 import logging
@@ -15,6 +14,8 @@ import shutil
 import sys
 import tempfile
 import yaml
+
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 
@@ -73,11 +74,11 @@ class ModuleCreate(object):
         if self.subtool is None and not self.no_prompts:
             self.subtool = rich.prompt.Prompt.ask("[violet]Subtool name[/] (leave empty if no subtool)", default=None)
 
-        while self.author is None:
+        while self.author is None or self.author == "":
             if self.no_prompts:
-                self.author = "@author"
+                self.author = "@nf_core"
             else:
-                self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:", default="@author")
+                self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:[/] (@author)")
 
         while self.label is None:
             if self.no_prompts:
@@ -89,7 +90,7 @@ class ModuleCreate(object):
             if self.no_prompts:
                 self.has_meta = True
             else:
-                self.has_meta = rich.prompt.Prompt.confirm("[violet]Use meta tag? (yes/no)")
+                self.has_meta = rich.prompt.Confirm.ask("[violet]Use meta tag? (yes/no)")
 
         # Determine the tool name
         self.tool_name = self.tool
@@ -101,7 +102,7 @@ class ModuleCreate(object):
         # Try to find a bioconda package for 'tool'
         self.bioconda = None
         try:
-            response = anaconda_package(self.tool, has_version=False)
+            response = nf_core.utils.anaconda_package(self.tool, has_version=False)
             version = max(response["versions"])
             self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using bioconda package: {self.bioconda}")
@@ -112,7 +113,7 @@ class ModuleCreate(object):
         self.container_tag = None
         if self.bioconda:
             try:
-                self.container_tag = get_biocontainer_tag(self.tool, version)
+                self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
                 log.info(f"Using docker/singularity container with tag: {self.container_tag}")
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
@@ -219,19 +220,9 @@ class ModuleCreate(object):
                         f"tests/software/{self.tool}/**",
                     ]
 
-                # Tweak YAML output
-                class FiltersDumper(yaml.Dumper):
-                    # HACK: insert blank lines between top-level objects
-                    # inspired by https://stackoverflow.com/a/44284819/3786245
-                    # and https://github.com/yaml/pyyaml/issues/127
-                    def write_line_break(self, data=None):
-                        super().write_line_break(data)
-
-                        if len(self.indents) == 1:
-                            super().write_line_break()
-
+                CustomDumper = nf_core.utils.custom_yaml_dumper()
                 with open(os.path.join(self.directory, ".github", "filters.yml"), "w") as fh:
-                    yaml.dump(filters_yml, fh, sort_keys=True, Dumper=FiltersDumper)
+                    yaml.dump(filters_yml, fh, sort_keys=True, Dumper=CustomDumper)
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open filters.yml file!")
 

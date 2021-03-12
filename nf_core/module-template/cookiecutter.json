@@ -1,8 +1,6 @@
 {
     "tool": "tool",
     "subtool": "",
-    "tool_upper": "{{ cookiecutter.tool.upper() }}",
-    "subtool_upper": "{{ cookiecutter.subtool.upper() }}",
     "tool_name": "tool_name",
     "tool_name_upper": "{{ cookiecutter.tool_name.upper() }}",
     "tool_dir": "tool/subtool",

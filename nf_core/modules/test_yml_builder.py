@@ -19,6 +19,8 @@ import subprocess
 import tempfile
 import yaml
 
+import nf_core.utils
+
 log = logging.getLogger(__name__)
 
 
@@ -247,24 +249,7 @@ class ModulesTestYmlBuilder(object):
         Generate the test yml file.
         """
 
-        # Tweak YAML output
-        class CustomDumper(yaml.Dumper):
-            def represent_dict_preserve_order(self, data):
-                """Add custom dumper class to prevent overwriting the global state
-                This prevents yaml from changing the output order
-
-                See https://stackoverflow.com/a/52621703/1497385
-                """
-                return self.represent_dict(data.items())
-
-            def increase_indent(self, flow=False, *args, **kwargs):
-                """Indent YAML lists so that YAML validates with Prettier
-
-                See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
-                """
-                return super().increase_indent(flow=flow, indentless=False)
-
-        CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
+        CustomDumper = nf_core.utils.custom_yaml_dumper()
 
         if self.test_yml_output_path == "-":
             console = Console()

@@ -7,7 +7,7 @@ keywords:
   - sort
 tools:
   ## TODO nf-core: Change the name of the tool below
-  - { { cookiecutter.tool } }:
+  - {{ cookiecutter.tool }}:
       ## TODO nf-core: Add a description and other details for the software below
       description: |
         SAMtools is a set of utilities for interacting with and post-processing
@@ -16,6 +16,7 @@ tools:
       homepage: http://www.htslib.org/
       documentation: http://www.htslib.org/doc/samtools.html
       doi: 10.1093/bioinformatics/btp352
+
 ## TODO nf-core: If you are using any additional "params" in the main.nf script of the module add them below
 params:
   - outdir:
@@ -38,6 +39,7 @@ params:
       description: |
         Instead of directly downloading Singularity images for use with Singularity,
         force the workflow to pull and convert Docker containers instead.
+
 ## TODO nf-core: Add a description of all of the variables used as input
 input:
   {% if cookiecutter.has_meta %}
@@ -51,6 +53,7 @@ input:
       type: file
       description: BAM/CRAM/SAM file
       pattern: "*.{bam,cram,sam}"
+
 ## TODO nf-core: Add a description of all of the variables used as output
 output:
   {% if cookiecutter.has_meta %}
@@ -68,6 +71,6 @@ output:
       type: file
       description: File containing software version
       pattern: "*.{version.txt}"
-## TODO nf-core: Add your GitHub username below
+
 authors:
   - "{{ cookiecutter.author }}"

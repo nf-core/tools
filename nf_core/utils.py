@@ -425,3 +425,34 @@ def get_biocontainer_tag(package, version):
             )
         elif response.status_code == 404:
             raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
+
+def custom_yaml_dumper():
+    """ Overwrite default PyYAML output to make Prettier YAML linting happy """
+
+    class CustomDumper(yaml.Dumper):
+        def represent_dict_preserve_order(self, data):
+            """Add custom dumper class to prevent overwriting the global state
+            This prevents yaml from changing the output order
+
+            See https://stackoverflow.com/a/52621703/1497385
+            """
+            return self.represent_dict(data.items())
+
+        def increase_indent(self, flow=False, *args, **kwargs):
+            """Indent YAML lists so that YAML validates with Prettier
+
+            See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
+            """
+            return super().increase_indent(flow=flow, indentless=False)
+
+        # HACK: insert blank lines between top-level objects
+        # inspired by https://stackoverflow.com/a/44284819/3786245
+        # and https://github.com/yaml/pyyaml/issues/127
+        def write_line_break(self, data=None):
+            super().write_line_break(data)
+
+            if len(self.indents) == 1:
+                super().write_line_break()
+
+    CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
+    return CustomDumper
