@@ -14,5 +14,5 @@ workflow test_{{ cookiecutter.tool_name }} {
     def input = file("${launchDir}/tests/data/bam/test.paired_end.sorted.bam", checkIfExists: true)
     {% endif %}
 
-    cookiecutter.tool_name_upper ( input )
+    {{ cookiecutter.tool_name_upper }} ( input )
 }

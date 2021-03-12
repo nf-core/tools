@@ -1,8 +1,8 @@
 ## TODO nf-core: Please delete all of these TODO statements once the file has been curated
 ## TODO nf-core: Change the name of "tool_subtool" below
-name: { { cookiecutter.tool_name } }
+name: {{ cookiecutter.tool_name }}
 ## TODO nf-core: Add a description and keywords
-description: { { cookiecutter.description } }
+description: write your description here
 keywords:
   - sort
 tools:
