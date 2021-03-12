@@ -14,7 +14,7 @@ log.info Headers.nf_core(workflow, params.monochrome_logs)
 ////////////////////////////////////////////////////
 /* --               PRINT HELP                 -- */
 ////////////////////////////////////////////////////+
-def json_schema = "$baseDir/nextflow_schema.json"
+def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
     def command = "nextflow run {{ cookiecutter.name }} --input '*_R{1,2}.fastq.gz' -profile docker"
     log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
