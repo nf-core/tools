@@ -1,5 +1,5 @@
 # Our Pledge
-In the interest of fostering an open, collaborative, and welcoming environment, we as contributors and maintainers of nf-core pledge to making participation in our projects and community a harassment-free experience for everyone, regardless of:
+In the interest of fostering an open, collaborative, and welcoming environment, we as contributors and maintainers of nf-core, pledge to making participation in our projects and community a harassment-free experience for everyone, regardless of:
 
 - Age
 - Body size
@@ -17,24 +17,20 @@ In the interest of fostering an open, collaborative, and welcoming environment, 
 
 Please note that the list above is alphabetised and is therefore not ranked in any order of preference or importance. 
 
-# Code of Conduct (v.1) 
+# Code of Conduct at nf-core (v1.0) 
 
 ## Preamble
 
-**Note: This Code of Conduct (CoC) has been drafted by the nf-core Safety Officer and been edited after input from members of the nf-core team and others. The entity "We", in this document, refers to the Safety Officer and members of the nf-core team, both of whom are deemed to be members of the nf-core community and are therefore required to abide by this Code of Conduct.
-This document will be amended periodically to keep it up-to-date and the in case of any dispute, the most current version.**
+> Note: This Code of Conduct (CoC) has been drafted by the nf-core Safety Officer and been edited after input from members of the nf-core team and others. "We", in this document, refers to the Safety Officer and members of the nf-core core team, both of whom are deemed to be members of the nf-core community and are therefore required to abide by this Code of Conduct. This document will amended periodically to keep it up-to-date, and in case of any dispute, the most current version will apply.
 
 An up-to-date list of members of the nf-core core team can be found [here](https://nf-co.re/about). Our current safety officer is Renuka Kudva. 
 
 nf-core is a young and growing community that welcomes contributions from anyone with a shared vision for [Open Science Policies](https://www.fosteropenscience.eu/taxonomy/term/8). Open science policies encompass inclusive behaviours and we strive to build and maintain a safe and inclusive environment for all individuals. 
 
-We have therefore adopted this code of conduct (CoC), which we require all members of our community and attendees in nf-core events to adhere to in all our workspaces at all times. 
-
-**(Workspaces include but are not limited to Slack, meetings on Zoom, Jitsi, YouTube live etc)**. 
+We have therefore adopted this code of conduct (CoC), which we require all members of our community and attendees in nf-core events to adhere to in all our workspaces at all times. Workspaces include but are not limited to Slack, meetings on Zoom, Jitsi, YouTube live etc. 
 
 Our CoC will be strictly enforced and the nf-core team reserve the right to exclude participants who do not comply with our guidelines from our workspaces and future nf-core activities. 
 
-**This rule also applies to members of the nf-core team and the safety officer.**
 
 We ask all members of our community to help maintain a supportive and productive workspace and to avoid behaviours that can make individuals feel unsafe or unwelcome. Please help us maintain and uphold this CoC. 
 
@@ -62,13 +58,13 @@ Participation in the nf-core community is contingent on following these guidelin
 - Representing nf-core on social media. This includes both official and personal accounts. 
 
 
-## nf-core cares 😊
+## nf-core cares :blush:
 
 nf-core's CoC and expectations of respectful behaviours for all participants (including organisers and the nf-core team) include but are not limited to the following (listed in alphabetical order): 
 
 - Ask for consent before sharing another community member’s personal information (including photographs) on social media. 
 - Be respectful of differing viewpoints and experiences. We are all here to learn from one another and a difference in opinion can present a good learning opportunity. 
-- Celebrate your accomplishments at events! (Get creative with your use of emojis 🎉🥳💯🙌!) 
+- Celebrate your accomplishments at events! (Get creative with your use of emojis :tada: 🥳 :100: :raised_hands: !) 
 - Demonstrate empathy towards other community members. (We don’t all have the same amount of time to dedicate to nf-core. If tasks are pending, don’t hesitate to gently remind members of your team. If you are leading a task, ask for help if you feel overwhelmed.)
 - Engage with and enquire after others. (This is especially important given the geographically remote nature of the nf-core community, so let’s do this the best we can)
 - Focus on what is best for the team and the community. (When in doubt, ask) 
@@ -79,7 +75,7 @@ nf-core's CoC and expectations of respectful behaviours for all participants (in
 - Using welcoming and inclusive language. (Participants are encouraged to display their chosen pronouns on Zoom or in communication on Slack.)
 
 
-## nf-core frowns on ☹️
+## nf-core frowns on 😕
 
 The following behaviours from any participants within the nf-core community (including the organisers) will be considered unacceptable under this code of conduct. Engaging or advocating for any of the following could result in expulsion from nf-core workspaces. 
 
@@ -89,7 +85,7 @@ The following behaviours from any participants within the nf-core community (inc
 - Use of sexual or discriminatory imagery, comments, or jokes and unwelcome sexual attention. 
 - Verbal and text comments that reinforce social structures of domination related to gender, gender identity and expression, sexual orientation, ability, physical appearance, body size, race, age, religion or work experience.
 
-### Online Trolling: 
+### Online Trolling
 
 The majority of nf-core interactions and events are held online. Unfortunately, holding events online comes with the added issue of online trolling. This is unacceptable, reports of such behaviour will be taken very seriously, and perpetrators will be excluded from activities immediately. 
 
@@ -107,12 +103,16 @@ Issues directly concerning members of the core team will be dealt with by other 
 All reports will be handled with utmost discretion and confidentially.
 
 
-## Attribution
+## Attribution and Acknowledgements
 
 - The [Contributor Covenant, version 1.4](http://contributor-covenant.org/version/1/4)
 - The [OpenCon 2017 Code of Conduct](http://www.opencon2017.org/code_of_conduct) (CC BY 4.0 OpenCon organisers, SPARC and Right to Research Coalition)
 - The [eLife innovation sprint 2020 Code of Conduct](https://sprint.elifesciences.org/code-of-conduct/)
 - The [Mozilla Community Participation Guidelines v3.1](https://www.mozilla.org/en-US/about/governance/policies/participation/) (version 3.1, CC BY-SA 3.0 Mozilla) 
 
-#### Originally Published 
-March 12th, 2021
+
+## Changelog
+
+#### v1.0 - March 12th, 2021
+
+* Complete rewrite from original [Contributor Covenant](http://contributor-covenant.org/) CoC.
