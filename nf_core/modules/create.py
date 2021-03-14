@@ -36,6 +36,7 @@ class ModuleCreate(object):
         self.repo_type = None
         self.bioconda = None
         self.container_tag = None
+        self.file_paths = {}
 
     def create(self):
         """
@@ -62,8 +63,7 @@ class ModuleCreate(object):
         and matching Docker / Singularity images from BioContainers.
         """
 
-        # Check whether the given directory is a nf-core pipeline or a clone
-        # of nf-core modules
+        # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
         self.repo_type = self.get_repo_type(self.directory)
 
         log.info(
@@ -103,7 +103,7 @@ class ModuleCreate(object):
             self.tool_dir = os.path.join(self.tool, self.subtool)
 
         # Check existance of directories early for fast-fail
-        self.get_module_dirs()
+        self.file_paths = self.get_module_dirs()
 
         # Prompt + validate GitHub username
         # https://github.com/shinnn/github-username-regex
@@ -139,55 +139,19 @@ class ModuleCreate(object):
         # Create module template with cokiecutter
         cookiecutter_output = self.run_cookiecutter()
 
-        # Create template for new module in nf-core pipeline
-        if self.repo_type == "pipeline":
-            outdir = os.path.join(self.directory, "modules", "local", "process")
+        # Move cookiecutter output files
+        for source_fn_base, target_fn in self.file_paths.items():
+            source_fn = os.path.join(cookiecutter_output, source_fn_base)
+            log.debug(f"Transferring new module file from '{source_fn}' to '{target_fn}'")
             try:
-                os.makedirs(outdir, exist_ok=True)
-                shutil.move(
-                    os.path.join(cookiecutter_output, f"{self.tool_name}.nf"),
-                    os.path.join(outdir, f"{self.tool_name}.nf"),
-                )
-
-            except OSError as e:
-                shutil.rmtree(cookiecutter_output)
-                raise UserWarning(f"Could not create module file: {e}")
-            shutil.rmtree(cookiecutter_output)
-
-        # Create template for new module in nf-core/modules repository clone
-        if self.repo_type == "modules":
-            try:
-                # software dir (software/tool/subtool)
-                os.makedirs(self.software_dir, exist_ok=True)
-                shutil.move(
-                    os.path.join(cookiecutter_output, "software", "main.nf"),
-                    os.path.join(self.software_dir, "main.nf"),
-                )
-                shutil.move(
-                    os.path.join(cookiecutter_output, "software", "functions.nf"),
-                    os.path.join(self.software_dir, "functions.nf"),
-                )
-                shutil.move(
-                    os.path.join(cookiecutter_output, "software", "meta.yml"),
-                    os.path.join(self.software_dir, "meta.yml"),
-                )
-
-                # testdir (tests/software/tool/subtool)
-                os.makedirs(self.test_dir, exist_ok=True)
-                shutil.move(
-                    os.path.join(cookiecutter_output, "tests", "main.nf"),
-                    os.path.join(self.test_dir, "main.nf"),
-                )
-                shutil.move(
-                    os.path.join(cookiecutter_output, "tests", "test.yml"),
-                    os.path.join(self.test_dir, "test.yml"),
-                )
-
+                os.makedirs(os.path.dirname(target_fn), exist_ok=True)
+                shutil.move(source_fn, target_fn)
             except OSError as e:
                 shutil.rmtree(cookiecutter_output)
                 raise UserWarning(f"Could not create module files: {e}")
-            shutil.rmtree(cookiecutter_output)
+        shutil.rmtree(cookiecutter_output)
 
+        if self.repo_type == "modules":
             # Add entry to filters.yml
             try:
                 with open(os.path.join(self.directory, ".github", "filters.yml"), "r") as fh:
@@ -208,8 +172,7 @@ class ModuleCreate(object):
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open filters.yml file!")
 
-            log.info(f"Created module files: '{self.software_dir}'")
-            log.info(f"Created test files: '{self.test_dir}'")
+        log.info("Created module files:\n  " + "\n  ".join(self.file_paths.values()))
 
     def run_cookiecutter(self):
         """
@@ -258,20 +221,38 @@ class ModuleCreate(object):
             raise UserWarning(f"Could not determine repository type: '{directory}'")
 
     def get_module_dirs(self):
-        """ Given a directory and a tool/subtool, set the directory paths and check if they exist """
+        """Given a directory and a tool/subtool, set the file paths and check if they already exist
+
+        Returns dict: keys are file paths in cookiecutter output, vals are target paths.
+        """
+
+        file_paths = {}
+
         if self.repo_type == "pipeline":
             # Check whether module file already exists
             module_file = os.path.join(self.directory, "modules", "local", "process", f"{self.tool_name}.nf")
             if os.path.exists(module_file) and not self.force_overwrite:
                 raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
 
+            # Set file paths
+            file_paths[f"{self.tool_name}.nf"] = module_file
+
         if self.repo_type == "modules":
-            self.software_dir = os.path.join(self.directory, "software", self.tool_dir)
-            self.test_dir = os.path.join(self.directory, "tests", "software", self.tool_dir)
+            software_dir = os.path.join(self.directory, "software", self.tool_dir)
+            test_dir = os.path.join(self.directory, "tests", "software", self.tool_dir)
 
             # Check if module directories exist already
-            if os.path.exists(self.software_dir) and not self.force_overwrite:
-                raise UserWarning(f"Module directory exists: '{self.software_dir}'. Use '--force' to overwrite")
+            if os.path.exists(software_dir) and not self.force_overwrite:
+                raise UserWarning(f"Module directory exists: '{software_dir}'. Use '--force' to overwrite")
 
-            if os.path.exists(self.test_dir) and not self.force_overwrite:
-                raise UserWarning(f"Module test directory exists: '{self.test_dir}'. Use '--force' to overwrite")
+            if os.path.exists(test_dir) and not self.force_overwrite:
+                raise UserWarning(f"Module test directory exists: '{test_dir}'. Use '--force' to overwrite")
+
+            # Set file paths - can be tool/ or tool/subtool/ so can't do in cookiecutter template
+            file_paths[os.path.join("software", "functions.nf")] = os.path.join(software_dir, "functions.nf")
+            file_paths[os.path.join("software", "main.nf")] = os.path.join(software_dir, "main.nf")
+            file_paths[os.path.join("software", "meta.yml")] = os.path.join(software_dir, "meta.yml")
+            file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
+            file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
+
+        return file_paths
