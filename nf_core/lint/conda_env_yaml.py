@@ -148,7 +148,7 @@ def conda_env_yaml(self):
 
                     try:
                         pip_depname, pip_depver = pip_dep.split("==", 1)
-                        self.conda_package_info[pip_dep] = _pip_package(pip_dep)
+                        self.conda_package_info[pip_dep] = nf_core.utils.pip_package(pip_dep)
                     except LookupError as e:
                         warned.append(e)
                     except ValueError as e:
@@ -183,30 +183,3 @@ def conda_env_yaml(self):
             fh.write(raw_environment_yml)
 
     return {"passed": passed, "warned": warned, "failed": failed, "fixed": fixed, "could_fix": could_fix}
-
-
-def _pip_package(dep):
-    """Query PyPI package information.
-
-    Sends a HTTP GET request to the PyPI remote API.
-
-    Args:
-        dep (str): A PyPI package name.
-
-    Raises:
-        A LookupError, if the connection fails or times out
-        A ValueError, if the package name can not be found
-    """
-    pip_depname, pip_depver = dep.split("=", 1)
-    pip_api_url = "https://pypi.python.org/pypi/{}/json".format(pip_depname)
-    try:
-        response = requests.get(pip_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
-        raise LookupError("PyPI API timed out: {}".format(pip_api_url))
-    except (requests.exceptions.ConnectionError):
-        raise LookupError("PyPI API Connection error: {}".format(pip_api_url))
-    else:
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise ValueError("Could not find pip dependency using the PyPI API: `{}`".format(dep))
