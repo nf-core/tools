@@ -35,13 +35,13 @@ process {{ cookiecutter.tool_name_upper }} {
     // TODO nf-core: List required Conda packages.
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
     //               For Conda, the build (i.e. "h9402c20_2") must be excluded to support installation on different OS.
-    conda (params.enable_conda ? "{{ cookiecutter.bioconda }}" : null)
+    conda (params.enable_conda ? "{{ cookiecutter.bioconda if cookiecutter.bioconda else 'YOUR-TOOL-HERE' }}" : null)
 
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/{{ cookiecutter.container_tag }}"
+        container "https://depot.galaxyproject.org/singularity/{{ cookiecutter.container_tag if cookiecutter.container_tag else 'YOUR-TOOL-HERE' }}"
     } else {
-        container "quay.io/biocontainers/{{ cookiecutter.container_tag }}"
+        container "quay.io/biocontainers/{{ cookiecutter.container_tag if cookiecutter.container_tag else 'YOUR-TOOL-HERE' }}"
     }
 
     input:

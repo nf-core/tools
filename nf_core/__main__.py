@@ -438,13 +438,19 @@ def check(ctx):
 @modules.command("create", help_priority=6)
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
-@click.argument("tool", type=str, required=False, metavar="<tool>")
-@click.argument("subtool", type=str, required=False, default=None, metavar="<subtool>")
+@click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
+@click.option("-a", "--author", type=str, metavar="<author> (GitHub username)")
+@click.option("-l", "--label", type=str, metavar="<process label>")
+@click.option("-m", "--meta", is_flag=True, default=False, help="Use meta tag")
+@click.option("-n", "--no-meta", is_flag=True, default=False, help="Do not use meta tag")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_module(ctx, directory, tool, subtool, force, no_prompts):
+def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     """
-    Create a new shared module from the template.
+    Create a new DSL2 module from the nf-core template.
+
+    \b
+    Tool should be nanmed <tool/subtool> or just <tool>.
+    For example: fastqc, samtools/sort, bwa/index, multiqc.
 
     If <directory> is a pipeline, this function creates a file in the
     'directory/modules/local/process' dir called <tool_subtool.nf>
@@ -464,8 +470,22 @@ def create_module(ctx, directory, tool, subtool, force, no_prompts):
     The function will attempt to find a Bioconda package called 'tool'
     and matching Docker / Singularity images from BioContainers.
     """
-    module_create = nf_core.modules.ModuleCreate(directory=directory, tool=tool, subtool=subtool)
-    module_create.create(force=force, no_prompts=no_prompts)
+    # Combine two bool flags into one variable
+    has_meta = None
+    if meta and no_meta:
+        log.critical("Both arguments '--meta' and '--no-meta' given. Please pick one.")
+    elif meta:
+        has_meta = True
+    elif no_meta:
+        has_meta = False
+
+    # Run function
+    try:
+        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force)
+        module_create.create()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 @modules.command("create-test-yml", help_priority=7)

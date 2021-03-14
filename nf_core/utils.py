@@ -375,9 +375,7 @@ def anaconda_package(dep, dep_channels=["bioconda"], has_version=True):
                 log.debug("Could not find `{}` in conda channel `{}`".format(dep, ch))
     else:
         # We have looped through each channel and had a 404 response code on everything
-        raise ValueError(
-            "Could not find Conda dependency using the Anaconda API: '{}' ({})".format(dep, anaconda_api_url)
-        )
+        raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
 
 
 def get_biocontainer_tag(package, version):

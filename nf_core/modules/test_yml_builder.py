@@ -249,17 +249,15 @@ class ModulesTestYmlBuilder(object):
         Generate the test yml file.
         """
 
-        CustomDumper = nf_core.utils.custom_yaml_dumper()
-
         if self.test_yml_output_path == "-":
             console = Console()
-            yaml_str = yaml.dump(self.tests, Dumper=CustomDumper)
+            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper())
             console.print("\n", Syntax(yaml_str, "yaml"), "\n")
             return
 
         try:
             log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh, Dumper=CustomDumper)
+                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper())
         except FileNotFoundError as e:
             raise UserWarning("Could not create test.yml file: '{}'".format(e))

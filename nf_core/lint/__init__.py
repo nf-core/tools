@@ -16,7 +16,6 @@ import os
 import re
 import rich
 import rich.progress
-import subprocess
 import textwrap
 import yaml
 
@@ -105,7 +104,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_awsfulltest import actions_awsfulltest
     from .readme import readme
     from .version_consistency import version_consistency
-    from .conda_env_yaml import conda_env_yaml, _anaconda_package, _pip_package
+    from .conda_env_yaml import conda_env_yaml
     from .conda_dockerfile import conda_dockerfile
     from .pipeline_todos import pipeline_todos
     from .pipeline_name_conventions import pipeline_name_conventions

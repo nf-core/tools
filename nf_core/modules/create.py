@@ -24,208 +24,169 @@ log = logging.getLogger(__name__)
 
 
 class ModuleCreate(object):
-    def __init__(self, directory=".", tool=None, subtool=None):
+    def __init__(self, directory=".", tool="", author=None, process_label=None, has_meta=None, force=False):
         self.directory = directory
         self.tool = tool
-        self.subtool = subtool
-        self.author = None
-        self.label = None
-        self.has_meta = None
+        self.author = author
+        self.process_label = process_label
+        self.has_meta = has_meta
+        self.force_overwrite = force
 
-    def create(self, force=False, no_prompts=False):
+        self.subtool = None
+        self.repo_type = None
+        self.bioconda = None
+        self.container_tag = None
+
+    def create(self):
         """
-        Create a new module from the template
+        Create a new DSL2 module from the nf-core template.
 
-        If <directory> is a ppipeline, this function creates a file in the
+        Tool should be nanmed <tool/subtool> or just <tool>.
+        For example: fastqc, samtools/sort, bwa/index, multiqc.
+
+        If <directory> is a pipeline, this function creates a file in the
         'directory/modules/local/process' dir called <tool_subtool.nf>
 
-        If <directory> is a clone of nf-core/modules, it creates the files and
-        corresponding directories:
+        If <directory> is a clone of nf-core/modules, it creates / modifies the following files:
 
         modules/software/tool/subtool/
             * main.nf
             * meta.yml
             * functions.nf
-
         modules/tests/software/tool/subtool/
             * main.nf
             * test.yml
-
-        Additionally the necessary lines to run the tests are appended to
         modules/.github/filters.yml
-        The function will also try to look for a bioconda package called 'tool'
-        and for a matching container on quay.io
 
-        :param directory:   the target directory to create the module template in
-        :param tool:        name of the tool
-        :param subtool:     name of the
+        The function will attempt to find a Bioconda package called 'tool'
+        and matching Docker / Singularity images from BioContainers.
         """
-        self.force = force
-        self.no_prompts = no_prompts
+
         # Check whether the given directory is a nf-core pipeline or a clone
         # of nf-core modules
         self.repo_type = self.get_repo_type(self.directory)
 
-        # Collect module info via prompt if not already given
-        if not self.no_prompts or self.tool is None:
-            log.info(
-                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
-            )
-        while self.tool is None or self.tool == "" or re.search(r"[^a-z]", self.tool):
-            if self.tool is not None and re.search(r"[^a-z]", self.tool):
-                log.warning("Tool name must be lower-case letters only, with no punctuation")
-                tool_clean = re.sub(r"[^a-z]", "", self.tool.lower())
-                if rich.prompt.Confirm.ask(f"[violet]Change '{self.tool}' to '{tool_clean}'?") or self.no_prompts:
+        log.info(
+            "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+        )
+
+        # Collect module info via prompt if empty or invalid
+        while self.tool == "" or re.search(r"[^a-z/]", self.tool) or self.tool.count("/") > 0:
+
+            # Check + auto-fix for invalid chacters
+            if re.search(r"[^a-z/]", self.tool):
+                log.warning("Tool/subtool name must be lower-case letters only, with no punctuation")
+                tool_clean = re.sub(r"[^a-z/]", "", self.tool.lower())
+                if rich.prompt.Confirm.ask(f"[violet]Change '{self.tool}' to '{tool_clean}'?"):
                     self.tool = tool_clean
-                    continue
-            self.tool = rich.prompt.Prompt.ask("[violet]Tool name").strip()
+                else:
+                    self.tool = ""
 
-        while self.subtool is None or re.search(r"[^a-z]", self.subtool):
-            if self.subtool is not None and re.search(r"[^a-z]", self.subtool):
-                log.warning("Subtool name must be lower-case letters only, with no punctuation")
-                subtool_clean = re.sub(r"[^a-z]", "", self.subtool.lower())
-                if rich.prompt.Confirm.ask(f"[violet]Change '{self.subtool}' to '{subtool_clean}'?") or self.no_prompts:
-                    self.subtool = subtool_clean
-                    continue
-            self.subtool = rich.prompt.Prompt.ask("[violet]Subtool name[/] (leave empty if no subtool)")
-            if self.subtool == "":
-                self.subtool = False
-                break
-
-        # https://github.com/shinnn/github-username-regex
-        github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
-        while self.author is None or not github_username_regex.match(self.author):
-            if self.no_prompts:
-                self.author = "@nf_core"
+            # Split into tool and subtool
+            if self.tool.count("/") > 1:
+                log.warning("Tool/subtool can have maximum one '/' character")
+                self.tool = ""
+            elif self.tool.count("/") == 1:
+                self.tool, self.subtool = self.tool.split("/")
             else:
-                if self.author is not None and not github_username_regex.match(self.author):
-                    log.warning("Does not look like a value GitHub username!")
-                self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:[/] (@author)")
+                self.subtool = None  # Reset edge case: entered '/subtool' as name and gone round loop again
 
-        while self.label is None:
-            if self.no_prompts:
-                self.label = "process_low"
-            else:
-                self.label = rich.prompt.Prompt.ask("[violet]Process label:", default="process_low")
-
-        while self.has_meta is None:
-            if self.no_prompts:
-                self.has_meta = True
-            else:
-                self.has_meta = rich.prompt.Confirm.ask("[violet]Use meta tag? (yes/no)")
+            # Prompt for new entry if we reset
+            if self.tool == "":
+                self.tool = rich.prompt.Prompt.ask("[violet]Name of tool/subtool").strip()
 
         # Determine the tool name
         self.tool_name = self.tool
         self.tool_dir = self.tool
         if self.subtool:
-            self.tool_name += "_" + self.subtool
-            self.tool_dir += "/" + self.subtool
+            self.tool_name = f"{self.tool}_{self.subtool}"
+            self.tool_dir = os.path.join(self.tool, self.subtool)
+
+        # Check existance of directories early for fast-fail
+        self.get_module_dirs()
+
+        # Prompt + validate GitHub username
+        # https://github.com/shinnn/github-username-regex
+        github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
+        while self.author is None or not github_username_regex.match(self.author):
+            if self.author is not None and not github_username_regex.match(self.author):
+                log.warning("Does not look like a value GitHub username!")
+            self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:[/] (@author)")
+
+        while self.process_label is None:
+            self.process_label = rich.prompt.Prompt.ask("[violet]Process label:", default="process_low")
+
+        while self.has_meta is None:
+            self.has_meta = rich.prompt.Confirm.ask("[violet]Use meta tag? (yes/no)")
 
         # Try to find a bioconda package for 'tool'
-        self.bioconda = None
         try:
             response = nf_core.utils.anaconda_package(self.tool, has_version=False)
             version = str(max([parse_version(v) for v in response["versions"]]))
             self.bioconda = "bioconda::" + self.tool + "=" + version
-            log.info(f"Using bioconda package: {self.bioconda}")
+            log.info(f"Using Bioconda package: '{self.bioconda}'")
         except (ValueError, LookupError) as e:
             log.warning(e)
 
         # Try to get the container tag (only if bioconda package was found)
-        self.container_tag = None
         if self.bioconda:
             try:
                 self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
-                log.info(f"Using docker/singularity container with tag: {self.container_tag}")
+                log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
 
         # Create module template with cokiecutter
-        self.run_cookiecutter()
+        cookiecutter_output = self.run_cookiecutter()
 
         # Create template for new module in nf-core pipeline
         if self.repo_type == "pipeline":
-            # Check whether module file already exists
-            module_file = os.path.join(self.directory, "modules", "local", "process", self.tool_name + ".nf")
-            if os.path.exists(module_file) and not self.force:
-                if rich.prompt.Confirm.ask(f"[red]File exists! [green]'{module_file}' [violet]Overwrite?"):
-                    self.force = True
-                if not self.force:
-                    raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
-
-            # Create directory and add the module template file
-            outdir = os.path.join(os.getcwd(), self.directory, "modules", "local", "process")
+            outdir = os.path.join(self.directory, "modules", "local", "process")
             try:
                 os.makedirs(outdir, exist_ok=True)
                 shutil.move(
-                    os.path.join(self.tmpdir, self.tool_name, self.tool_name + ".nf"),
-                    os.path.join(outdir, self.tool_name + ".nf"),
+                    os.path.join(cookiecutter_output, f"{self.tool_name}.nf"),
+                    os.path.join(outdir, f"{self.tool_name}.nf"),
                 )
 
             except OSError as e:
-                shutil.rmtree(self.tmpdir)
-                raise UserWarning(f"Could not create module file {module_file}: {e}")
-            shutil.rmtree(self.tmpdir)
+                shutil.rmtree(cookiecutter_output)
+                raise UserWarning(f"Could not create module file: {e}")
+            shutil.rmtree(cookiecutter_output)
 
         # Create template for new module in nf-core/modules repository clone
         if self.repo_type == "modules":
-            self.software_dir = os.path.join(self.directory, "software", self.tool_dir)
-            self.test_dir = os.path.join(self.directory, "tests", "software", self.tool_dir)
-
-            # Check if module directories exist already
-            # If yes (and --force not specified) ask whether we should overwrite them
-            if os.path.exists(self.software_dir) and not self.force:
-                if rich.prompt.Confirm.ask(
-                    f"[red]Module directory exists already! [green]'{self.software_dir}' [violet]Overwrite?"
-                ):
-                    self.force = True
-                if not self.force:
-                    raise UserWarning(
-                        f"Module directory exists already: '{self.software_dir}'. Use '--force' to overwrite"
-                    )
-
-            if os.path.exists(self.test_dir) and not self.force:
-                if rich.prompt.Confirm.ask(
-                    f"[red]Module test directory exists already! [green]'{self.test_dir}' [violet]Overwrite?"
-                ):
-                    self.force = True
-                if not self.force:
-                    raise UserWarning(
-                        f"Module test directory exists already: '{self.test_dir}'. Use '--force' to overwrite"
-                    )
-
-            # Create directories and populate with template module files
             try:
                 # software dir (software/tool/subtool)
                 os.makedirs(self.software_dir, exist_ok=True)
                 shutil.move(
-                    os.path.join(self.tmpdir, self.tool_name, "software", "main.nf"),
-                    os.path.join(os.getcwd(), self.software_dir, "main.nf"),
+                    os.path.join(cookiecutter_output, "software", "main.nf"),
+                    os.path.join(self.software_dir, "main.nf"),
                 )
                 shutil.move(
-                    os.path.join(self.tmpdir, self.tool_name, "software", "functions.nf"),
-                    os.path.join(os.getcwd(), self.software_dir, "functions.nf"),
+                    os.path.join(cookiecutter_output, "software", "functions.nf"),
+                    os.path.join(self.software_dir, "functions.nf"),
                 )
                 shutil.move(
-                    os.path.join(self.tmpdir, self.tool_name, "software", "meta.yml"),
-                    os.path.join(os.getcwd(), self.software_dir, "meta.yml"),
+                    os.path.join(cookiecutter_output, "software", "meta.yml"),
+                    os.path.join(self.software_dir, "meta.yml"),
                 )
 
                 # testdir (tests/software/tool/subtool)
                 os.makedirs(self.test_dir, exist_ok=True)
                 shutil.move(
-                    os.path.join(self.tmpdir, self.tool_name, "tests", "main.nf"),
-                    os.path.join(os.getcwd(), self.test_dir, "main.nf"),
+                    os.path.join(cookiecutter_output, "tests", "main.nf"),
+                    os.path.join(self.test_dir, "main.nf"),
                 )
                 shutil.move(
-                    os.path.join(self.tmpdir, self.tool_name, "tests", "test.yml"),
-                    os.path.join(os.getcwd(), self.test_dir, "test.yml"),
+                    os.path.join(cookiecutter_output, "tests", "test.yml"),
+                    os.path.join(self.test_dir, "test.yml"),
                 )
 
             except OSError as e:
-                shutil.rmtree(self.tmpdir)
+                shutil.rmtree(cookiecutter_output)
                 raise UserWarning(f"Could not create module files: {e}")
-            shutil.rmtree(self.tmpdir)
+            shutil.rmtree(cookiecutter_output)
 
             # Add entry to filters.yml
             try:
@@ -242,9 +203,8 @@ class ModuleCreate(object):
                         f"tests/software/{self.tool}/**",
                     ]
 
-                CustomDumper = nf_core.utils.custom_yaml_dumper()
                 with open(os.path.join(self.directory, ".github", "filters.yml"), "w") as fh:
-                    yaml.dump(filters_yml, fh, sort_keys=True, Dumper=CustomDumper)
+                    yaml.dump(filters_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open filters.yml file!")
 
@@ -252,31 +212,33 @@ class ModuleCreate(object):
             log.info(f"Created test files: '{self.test_dir}'")
 
     def run_cookiecutter(self):
-        """ Create new module templates with cookiecutter """
+        """
+        Create new module files with cookiecutter in a temporyary directory.
+
+        Returns: Path to generated files.
+        """
         # Build the template in a temporary directory
-        self.tmpdir = tempfile.mkdtemp()
+        tmpdir = tempfile.mkdtemp()
         template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), "module-template/")
-        subtool = ""
-        if self.subtool:
-            subtool = self.subtool
         cookiecutter.main.cookiecutter(
             template,
             extra_context={
                 "tool": self.tool,
-                "subtool": subtool,
+                "subtool": self.subtool if self.subtool else "",
                 "tool_name": self.tool_name,
                 "tool_dir": self.tool_dir,
                 "author": self.author,
                 "bioconda": self.bioconda,
                 "container_tag": self.container_tag,
-                "label": self.label,
+                "label": self.process_label,
                 "has_meta": self.has_meta,
                 "nf_core_version": nf_core.__version__,
             },
             no_input=True,
-            overwrite_if_exists=self.force,
-            output_dir=self.tmpdir,
+            overwrite_if_exists=self.force_overwrite,
+            output_dir=tmpdir,
         )
+        return os.path.join(tmpdir, self.tool_name)
 
     def get_repo_type(self, directory):
         """
@@ -285,8 +247,7 @@ class ModuleCreate(object):
         """
         # Verify that the pipeline dir exists
         if dir is None or not os.path.exists(directory):
-            log.error("Could not find directory: {}".format(directory))
-            sys.exit(1)
+            raise UserWarning(f"Could not find directory: {directory}")
 
         # Determine repository type
         if os.path.exists(os.path.join(directory, "main.nf")):
@@ -294,5 +255,23 @@ class ModuleCreate(object):
         elif os.path.exists(os.path.join(directory, "software")):
             return "modules"
         else:
-            log.error("Could not determine repository type of {}".format(directory))
-            sys.exit(1)
+            raise UserWarning(f"Could not determine repository type: '{directory}'")
+
+    def get_module_dirs(self):
+        """ Given a directory and a tool/subtool, set the directory paths and check if they exist """
+        if self.repo_type == "pipeline":
+            # Check whether module file already exists
+            module_file = os.path.join(self.directory, "modules", "local", "process", f"{self.tool_name}.nf")
+            if os.path.exists(module_file) and not self.force_overwrite:
+                raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
+
+        if self.repo_type == "modules":
+            self.software_dir = os.path.join(self.directory, "software", self.tool_dir)
+            self.test_dir = os.path.join(self.directory, "tests", "software", self.tool_dir)
+
+            # Check if module directories exist already
+            if os.path.exists(self.software_dir) and not self.force_overwrite:
+                raise UserWarning(f"Module directory exists: '{self.software_dir}'. Use '--force' to overwrite")
+
+            if os.path.exists(self.test_dir) and not self.force_overwrite:
+                raise UserWarning(f"Module test directory exists: '{self.test_dir}'. Use '--force' to overwrite")
