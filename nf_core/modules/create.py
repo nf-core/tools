@@ -121,7 +121,7 @@ class ModuleCreate(object):
 
         # Try to find a bioconda package for 'tool'
         try:
-            response = nf_core.utils.anaconda_package(self.tool, has_version=False)
+            response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
             version = str(max([parse_version(v) for v in response["versions"]]))
             self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using Bioconda package: '{self.bioconda}'")

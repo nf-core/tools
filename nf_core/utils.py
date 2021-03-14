@@ -325,7 +325,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 return web_response
 
 
-def anaconda_package(dep, dep_channels=["bioconda"], has_version=True):
+def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
     """Query conda package information.
 
     Sends a HTTP GET request to the Anaconda remote API.
@@ -333,7 +333,6 @@ def anaconda_package(dep, dep_channels=["bioconda"], has_version=True):
     Args:
         dep (str): A conda package name.
         dep_channels (list): list of conda channels to use
-        has_version (bool): defines whether 'dep' contains a package with or without version info
 
     Raises:
         A LookupError, if the connection fails or times out or gives an unexpected status code
@@ -341,7 +340,7 @@ def anaconda_package(dep, dep_channels=["bioconda"], has_version=True):
     """
 
     # Check if each dependency is the latest available version
-    if has_version:
+    if "=" in dep:
         depname, depver = dep.split("=", 1)
     else:
         depname = dep

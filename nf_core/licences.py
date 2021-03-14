@@ -74,7 +74,8 @@ class WorkflowLicences(object):
         for dep in deps:
             try:
                 if isinstance(dep, str):
-                    deps_data[dep] = nf_core.utils.anaconda_package(self.conda_config, dep)
+                    dep_channels = self.conda_config.get("channels", [])
+                    deps_data[dep] = nf_core.utils.anaconda_package(dep, dep_channels)
                 elif isinstance(dep, dict):
                     deps_data[dep] = nf_core.utils.pip_package(dep)
             except ValueError:
