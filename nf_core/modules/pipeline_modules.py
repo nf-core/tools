@@ -39,131 +39,9 @@ class ModulesRepo(object):
     def __init__(self, repo="nf-core/modules", branch="master"):
         self.name = repo
         self.branch = branch
-
-
-class PipelineModules(object):
-    def __init__(self):
-        """
-        Initialise the PipelineModules object
-        """
-        self.modules_repo = ModulesRepo()
-        self.pipeline_dir = None
         self.modules_file_tree = {}
         self.modules_current_hash = None
         self.modules_avail_module_names = []
-
-    def list_modules(self, pipeline_dir=None, print_json=False):
-        """
-        Get available module names from GitHub tree for repo
-        and print as list to stdout
-        """
-
-        # Initialise rich table
-        table = rich.table.Table()
-        table.add_column("Module Name")
-        modules = []
-
-        # No pipeline given - show all remote
-        if pipeline_dir is None:
-            # Get the list of available modules
-            self.get_modules_file_tree()
-            modules = self.modules_avail_module_names
-
-        # We have a pipeline - list what's installed
-        else:
-            module_mains = glob.glob("modules/nf-core/software/**/main.nf", recursive=True)
-            for mod in module_mains:
-                modules.append(mod.replace("modules/nf-core/software/", "").replace("/main.nf", ""))
-
-        # Build output and return
-        if len(modules) == 0:
-            log.info(f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})")
-            return ""
-
-        log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
-        for mod in sorted(modules):
-            table.add_row(mod)
-        if print_json:
-            return json.dumps(modules, sort_keys=True, indent=4)
-        return table
-
-    def install(self, module=None):
-
-        # Check whether pipelines is valid
-        self.has_valid_pipeline()
-
-        # Get the available modules
-        self.get_modules_file_tree()
-
-        if module is None:
-            module = questionary.autocomplete(
-                "Choose module", choices=self.modules_avail_module_names, style=nf_core.utils.nfcore_question_style
-            ).ask()
-
-        log.info("Installing {}".format(module))
-
-        # Check that the supplied name is an available module
-        if module not in self.modules_avail_module_names:
-            log.error("Module '{}' not found in list of available modules.".format(module))
-            log.info("Use the command 'nf-core modules list' to view available software")
-            return False
-        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_current_hash))
-
-        # Check that we don't already have a folder for this module
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
-        if os.path.exists(module_dir):
-            log.error("Module directory already exists: {}".format(module_dir))
-            log.info("To update an existing module, use the commands 'nf-core update'")
-            return False
-
-        # Download module files
-        files = self.get_module_file_urls(module)
-        log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
-        for filename, api_url in files.items():
-            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
-            self.download_gh_file(dl_filename, api_url)
-        log.info("Downloaded {} files to {}".format(len(files), module_dir))
-
-    def update(self, module, force=False):
-        log.error("This command is not yet implemented")
-        pass
-
-    def remove(self, module):
-        """
-        Remove an already installed module
-        This command only works for modules that are installed from 'nf-core/modules'
-        """
-        log.info("Removing {}".format(module))
-
-        # Check whether pipelines is valid
-        self.has_valid_pipeline()
-
-        # Get the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
-
-        # Verify that the module is actually installed
-        if not os.path.exists(module_dir):
-            log.error("Module directory does not installed: {}".format(module_dir))
-            log.info("The module you want to remove seems not to be installed. Is it a local module?")
-            return False
-
-        # Remove the module
-        try:
-            shutil.rmtree(module_dir)
-            # Try cleaning up empty parent if tool/subtool and tool/ is empty
-            if module.count("/") > 0:
-                parent_dir = os.path.dirname(module_dir)
-                try:
-                    os.rmdir(parent_dir)
-                except OSError:
-                    log.debug(f"Parent directory not empty: '{parent_dir}'")
-                else:
-                    log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
-            log.info("Successfully removed {} module".format(module))
-            return True
-        except OSError as e:
-            log.error("Could not remove module: {}".format(e))
-            return False
 
     def get_modules_file_tree(self):
         """
@@ -173,22 +51,14 @@ class PipelineModules(object):
              self.modules_current_hash
              self.modules_avail_module_names
         """
-        api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(
-            self.modules_repo.name, self.modules_repo.branch
-        )
+        api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.name, self.branch)
         r = requests.get(api_url)
         if r.status_code == 404:
-            log.error(
-                "Repository / branch not found: {} ({})\n{}".format(
-                    self.modules_repo.name, self.modules_repo.branch, api_url
-                )
-            )
+            log.error("Repository / branch not found: {} ({})\n{}".format(self.name, self.branch, api_url))
             sys.exit(1)
         elif r.status_code != 200:
             raise SystemError(
-                "Could not fetch {} ({}) tree: {}\n{}".format(
-                    self.modules_repo.name, self.modules_repo.branch, r.status_code, api_url
-                )
+                "Could not fetch {} ({}) tree: {}\n{}".format(self.name, self.branch, r.status_code, api_url)
             )
 
         result = r.json()
@@ -252,13 +122,168 @@ class PipelineModules(object):
         # Call the GitHub API
         r = requests.get(api_url)
         if r.status_code != 200:
-            raise SystemError("Could not fetch {} file: {}\n {}".format(self.modules_repo.name, r.status_code, api_url))
+            raise SystemError("Could not fetch {} file: {}\n {}".format(self.name, r.status_code, api_url))
         result = r.json()
         file_contents = base64.b64decode(result["content"])
 
         # Write the file contents
         with open(dl_filename, "wb") as fh:
             fh.write(file_contents)
+
+
+class PipelineModules(object):
+    def __init__(self):
+        """
+        Initialise the PipelineModules object
+        """
+        self.modules_repo = ModulesRepo()
+        self.pipeline_dir = None
+        self.pipeline_module_names = []
+
+    def list_modules(self, print_json=False):
+        """
+        Get available module names from GitHub tree for repo
+        and print as list to stdout
+        """
+
+        # Initialise rich table
+        table = rich.table.Table()
+        table.add_column("Module Name")
+        modules = []
+
+        # No pipeline given - show all remote
+        if self.pipeline_dir is None:
+            # Get the list of available modules
+            self.modules_repo.get_modules_file_tree()
+            modules = self.modules_repo.modules_avail_module_names
+            # Nothing found
+            if len(modules) == 0:
+                log.info(f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})")
+                return ""
+
+        # We have a pipeline - list what's installed
+        else:
+            # Check whether pipelines is valid
+            try:
+                self.has_valid_pipeline()
+            except UserWarning as e:
+                log.error(e)
+                return ""
+            # Get installed modules
+            self.get_pipeline_modules()
+            modules = self.pipeline_module_names
+            # Nothing found
+            if len(modules) == 0:
+                log.info(f"No nf-core modules found in '{self.pipeline_dir}'")
+                return ""
+
+        log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
+        for mod in sorted(modules):
+            table.add_row(mod)
+        if print_json:
+            return json.dumps(modules, sort_keys=True, indent=4)
+        return table
+
+    def install(self, module=None):
+
+        # Check whether pipelines is valid
+        self.has_valid_pipeline()
+
+        # Get the available modules
+        self.modules_repo.get_modules_file_tree()
+
+        if module is None:
+            module = questionary.autocomplete(
+                "Tool name:",
+                choices=self.modules_repo.modules_avail_module_names,
+                style=nf_core.utils.nfcore_question_style,
+            ).ask()
+
+        log.info("Installing {}".format(module))
+
+        # Check that the supplied name is an available module
+        if module not in self.modules_repo.modules_avail_module_names:
+            log.error("Module '{}' not found in list of available modules.".format(module))
+            log.info("Use the command 'nf-core modules list' to view available software")
+            return False
+        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
+
+        # Check that we don't already have a folder for this module
+        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+        if os.path.exists(module_dir):
+            log.error("Module directory already exists: {}".format(module_dir))
+            log.info("To update an existing module, use the commands 'nf-core update'")
+            return False
+
+        # Download module files
+        files = self.modules_repo.get_module_file_urls(module)
+        log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
+        for filename, api_url in files.items():
+            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
+            self.modules_repo.download_gh_file(dl_filename, api_url)
+        log.info("Downloaded {} files to {}".format(len(files), module_dir))
+
+    def update(self, module, force=False):
+        log.error("This command is not yet implemented")
+        pass
+
+    def remove(self, module):
+        """
+        Remove an already installed module
+        This command only works for modules that are installed from 'nf-core/modules'
+        """
+
+        # Check whether pipelines is valid
+        self.has_valid_pipeline()
+
+        # Get the installed modules
+        self.get_pipeline_modules()
+
+        if module is None:
+            if len(self.pipeline_module_names) == 0:
+                log.error("No installed modules found in pipeline")
+                return False
+            module = questionary.autocomplete(
+                "Tool name:", choices=self.pipeline_module_names, style=nf_core.utils.nfcore_question_style
+            ).ask()
+
+        # Get the module directory
+        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+
+        # Verify that the module is actually installed
+        if not os.path.exists(module_dir):
+            log.error("Module directory does not installed: {}".format(module_dir))
+            log.info("The module you want to remove seems not to be installed. Is it a local module?")
+            return False
+
+        log.info("Removing {}".format(module))
+
+        # Remove the module
+        try:
+            shutil.rmtree(module_dir)
+            # Try cleaning up empty parent if tool/subtool and tool/ is empty
+            if module.count("/") > 0:
+                parent_dir = os.path.dirname(module_dir)
+                try:
+                    os.rmdir(parent_dir)
+                except OSError:
+                    log.debug(f"Parent directory not empty: '{parent_dir}'")
+                else:
+                    log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
+            log.info("Successfully removed {} module".format(module))
+            return True
+        except OSError as e:
+            log.error("Could not remove module: {}".format(e))
+            return False
+
+    def get_pipeline_modules(self):
+        """ Get list of modules installed in the current pipeline """
+        self.pipeline_module_names = []
+        module_mains = glob.glob(f"{self.pipeline_dir}/modules/nf-core/software/**/main.nf", recursive=True)
+        for mod in module_mains:
+            self.pipeline_module_names.append(
+                os.path.dirname(os.path.relpath(mod, f"{self.pipeline_dir}/modules/nf-core/software/"))
+            )
 
     def has_valid_pipeline(self):
         """Check that we were given a pipeline"""

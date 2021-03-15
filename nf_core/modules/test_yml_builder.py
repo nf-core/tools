@@ -5,22 +5,23 @@ along with running the tests and creating md5 sums
 """
 
 from __future__ import print_function
+from rich.syntax import Syntax
 
 import errno
 import hashlib
 import logging
 import os
+import questionary
 import re
+import rich
 import shlex
 import subprocess
 import tempfile
+import yaml
 
 import nf_core.utils
-import questionary
-import rich
-import yaml
-from rich.console import Console
-from rich.syntax import Syntax
+import nf_core.modules.pipeline_modules
+
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ log = logging.getLogger(__name__)
 class ModulesTestYmlBuilder(object):
     def __init__(
         self,
-        module_name,
+        module_name=None,
         run_tests=False,
         test_yml_output_path=None,
         force_overwrite=False,
@@ -39,8 +40,8 @@ class ModulesTestYmlBuilder(object):
         self.test_yml_output_path = test_yml_output_path
         self.force_overwrite = force_overwrite
         self.no_prompts = no_prompts
-        self.module_dir = os.path.join("software", *module_name.split("/"))
-        self.module_test_main = os.path.join("tests", "software", *module_name.split("/"), "main.nf")
+        self.module_dir = None
+        self.module_test_main = None
         self.entry_points = []
         self.tests = []
 
@@ -57,6 +58,19 @@ class ModulesTestYmlBuilder(object):
 
     def check_inputs(self):
         """ Do more complex checks about supplied flags. """
+
+        # Get the tool name if not specified
+        if self.module_name is None:
+            modules_repo = nf_core.modules.pipeline_modules.ModulesRepo()
+            modules_repo.get_modules_file_tree()
+            self.module_name = questionary.autocomplete(
+                "Tool name:",
+                choices=modules_repo.modules_avail_module_names,
+                style=nf_core.utils.nfcore_question_style,
+            ).ask()
+        self.module_dir = os.path.join("software", *self.module_name.split("/"))
+        self.module_test_main = os.path.join("tests", "software", *self.module_name.split("/"), "main.nf")
+
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.module_dir):
             raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
@@ -130,7 +144,7 @@ class ModulesTestYmlBuilder(object):
         }
 
         # Print nice divider line
-        console = Console()
+        console = rich.console.Console()
         console.print("[black]" + "─" * console.width)
 
         log.info(f"Building test meta for entry point '{entry_point}'")
@@ -270,7 +284,7 @@ class ModulesTestYmlBuilder(object):
         """
 
         if self.test_yml_output_path == "-":
-            console = Console()
+            console = rich.console.Console()
             yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
             console.print("\n", Syntax(yaml_str, "yaml"), "\n")
             return

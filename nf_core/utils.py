@@ -31,10 +31,10 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     [
         ("qmark", "fg:ansiblue bold"),  # token in front of the question
         ("question", "bold"),  # question text
-        ("answer", "fg:ansigreen nobold"),  # submitted answer text behind the question
+        ("answer", "fg:ansigreen nobold bg:"),  # submitted answer text behind the question
         ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
         ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
-        ("selected", "fg:ansigreen noreverse"),  # style for a selected item of a checkbox
+        ("selected", "fg:ansiyellow noreverse bold"),  # style for a selected item of a checkbox
         ("separator", "fg:ansiblack"),  # separator in lists
         ("instruction", ""),  # user instructions for select, rawselect, checkbox
         ("text", ""),  # plain text
@@ -44,6 +44,7 @@ nfcore_question_style = prompt_toolkit.styles.Style(
         ("choice-required", "fg:ansired"),
     ]
 )
+
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """

@@ -367,22 +367,20 @@ def list(ctx, pipeline_dir, json):
     """
     mods = nf_core.modules.PipelineModules()
     mods.modules_repo = ctx.obj["modules_repo_obj"]
-    print(mods.list_modules(pipeline_dir, json))
+    mods.pipeline_dir = pipeline_dir
+    print(mods.list_modules(json))
 
 
 @modules.command(help_priority=2)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
-@click.argument("tool", type=str, required=False, metavar="(<tool name>)")
+@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 def install(ctx, pipeline_dir, tool):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
-    Given a software name, finds the relevant files in nf-core/modules
-    and copies to the pipeline along with associated metadata.
-
-    If <tool name> is not supplied on the command line, an interactive fuzzy-finder
-    tool is given with available nf-core module names.
+    Finds the relevant files in nf-core/modules and copies to the pipeline,
+    along with associated metadata.
     """
     try:
         mods = nf_core.modules.PipelineModules()
@@ -418,7 +416,7 @@ def install(ctx, pipeline_dir, tool):
 @modules.command(help_priority=4)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
-@click.argument("tool", type=str, required=True, metavar="<tool name>")
+@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 def remove(ctx, pipeline_dir, tool):
     """
     Remove a software wrapper from a pipeline.
@@ -436,7 +434,7 @@ def remove(ctx, pipeline_dir, tool):
 @modules.command("create", help_priority=5)
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
-@click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
+@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 @click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username")
 @click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process")
 @click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
@@ -445,10 +443,6 @@ def remove(ctx, pipeline_dir, tool):
 def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     """
     Create a new DSL2 module from the nf-core template.
-
-    \b
-    Tool should be named just <tool> or <tool/subtool>
-    e.g fastqc or samtools/sort, respectively.
 
     If <directory> is a pipeline, this function creates a file called
     'modules/local/tool_subtool.nf'
@@ -476,23 +470,20 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
 
 @modules.command("create-test-yml", help_priority=6)
 @click.pass_context
-@click.argument("module", type=str, required=True, metavar="<module name>")
+@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 @click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-o", "--output", type=str, help="Path for output YAML file")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
-def create_test_yml(ctx, module, run_tests, output, force, no_prompts):
+def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     """
     Auto-generate a test.yml file for a new module.
 
-    Given the name of a new module, run the Nextflow test command and automatically generate
+    Given the name of a module, runs the Nextflow test command and automatically generate
     the required `test.yml` file based on the output files.
-
-    If not supplied on the command line, tool will prompt for name, command, tags etc with
-    sensible defaults.
     """
     try:
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder(module, run_tests, output, force, no_prompts)
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder(tool, run_tests, output, force, no_prompts)
         meta_builder.run()
     except UserWarning as e:
         log.critical(e)
