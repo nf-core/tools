@@ -71,6 +71,10 @@ process {{ tool_name|upper }} {
         sort \\
         $options.args \\
         -@ $task.cpus \\
+        {%- if has_meta %}
+        -o ${prefix}.bam \\
+        -T $prefix \\
+        {%- endif %}
         $bam
 
     echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' > ${software}.version.txt
