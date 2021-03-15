@@ -70,10 +70,9 @@ class PipelineModules(object):
 
         # We have a pipeline - list what's installed
         else:
-            module_mains = glob.glob('modules/nf-core/software/**/main.nf', recursive=True)
+            module_mains = glob.glob("modules/nf-core/software/**/main.nf", recursive=True)
             for mod in module_mains:
-                modules.append(mod.replace('modules/nf-core/software/', '').replace('/main.nf', ''))
-
+                modules.append(mod.replace("modules/nf-core/software/", "").replace("/main.nf", ""))
 
         # Build output and return
         if len(modules) == 0:
@@ -97,7 +96,9 @@ class PipelineModules(object):
 
         if module is None:
             nfcore_question_style = prompt_toolkit.styles.Style([("answer", "fg:ansigreen nobold bg:")])
-            module = questionary.autocomplete('Choose module', choices=self.modules_avail_module_names, style=nfcore_question_style).ask()
+            module = questionary.autocomplete(
+                "Choose module", choices=self.modules_avail_module_names, style=nfcore_question_style
+            ).ask()
 
         log.info("Installing {}".format(module))
 

@@ -393,6 +393,7 @@ def install(ctx, pipeline_dir, tool):
         log.critical(e)
         sys.exit(1)
 
+
 # TODO: Not yet implemented
 # @modules.command(help_priority=3)
 # @click.pass_context
