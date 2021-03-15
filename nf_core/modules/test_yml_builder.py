@@ -220,7 +220,11 @@ class ModulesTestYmlBuilder(object):
 
         # The config expects $PROFILE and Nextflow fails if it's not set
         if os.environ.get("PROFILE") is None:
-            log.debug("Setting env var '$PROFILE' to an empty string as not set")
+            log.info(
+                "Setting env var '$PROFILE' to an empty string as not set.\n"
+                "Tests will run with Docker by default. "
+                "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
+            )
             os.environ["PROFILE"] = ""
 
         tmp_dir = tempfile.mkdtemp()

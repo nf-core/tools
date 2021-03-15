@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { {{ tool_name|upper }} } from '../../../../software/{{ tool_dir }}/main.nf' addParams( options: [:] )
+include { {{ tool_name|upper }} } from '../../../{{ "../" if subtool else "" }}software/{{ tool_dir }}/main.nf' addParams( options: [:] )
 
 workflow test_{{ tool_name }} {
     {% if has_meta %}
