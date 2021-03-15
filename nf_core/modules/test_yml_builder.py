@@ -5,21 +5,22 @@ along with running the tests and creating md5 sums
 """
 
 from __future__ import print_function
-from rich.console import Console
-from rich.syntax import Syntax
 
 import errno
 import hashlib
 import logging
 import os
 import re
-import rich
 import shlex
 import subprocess
 import tempfile
-import yaml
 
 import nf_core.utils
+import questionary
+import rich
+import yaml
+from rich.console import Console
+from rich.syntax import Syntax
 
 log = logging.getLogger(__name__)
 
@@ -222,12 +223,25 @@ class ModulesTestYmlBuilder(object):
 
         # The config expects $PROFILE and Nextflow fails if it's not set
         if os.environ.get("PROFILE") is None:
-            log.info(
-                "Setting env var '$PROFILE' to an empty string as not set.\n"
-                "Tests will run with Docker by default. "
-                "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
-            )
             os.environ["PROFILE"] = ""
+            if self.no_prompts:
+                log.info(
+                    "Setting env var '$PROFILE' to an empty string as not set.\n"
+                    "Tests will run with Docker by default. "
+                    "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
+                )
+            else:
+                question = {
+                    "type": "list",
+                    "name": "profile",
+                    "message": "Choose software profile",
+                    "choices": ["Docker", "Singularity", "Conda"],
+                }
+                answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
+                profile = answer["profile"].lower()
+                if profile in ["singularity", "conda"]:
+                    os.environ["PROFILE"] = profile
+                    log.info(f"Setting env var '$PROFILE' to '{profile}'")
 
         tmp_dir = tempfile.mkdtemp()
         command += f" --outdir {tmp_dir}"

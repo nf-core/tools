@@ -17,12 +17,13 @@ import glob
 import json
 import logging
 import os
-import prompt_toolkit
 import questionary
 import requests
 import rich
 import shutil
 import sys
+
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 
@@ -95,9 +96,8 @@ class PipelineModules(object):
         self.get_modules_file_tree()
 
         if module is None:
-            nfcore_question_style = prompt_toolkit.styles.Style([("answer", "fg:ansigreen nobold bg:")])
             module = questionary.autocomplete(
-                "Choose module", choices=self.modules_avail_module_names, style=nfcore_question_style
+                "Choose module", choices=self.modules_avail_module_names, style=nf_core.utils.nfcore_question_style
             ).ask()
 
         log.info("Installing {}".format(module))
