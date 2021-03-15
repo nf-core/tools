@@ -71,12 +71,12 @@ class ModuleCreate(object):
         )
 
         # Collect module info via prompt if empty or invalid
-        while self.tool == "" or re.search(r"[^a-z/]", self.tool) or self.tool.count("/") > 0:
+        while self.tool == "" or re.search(r"[^a-z\d/]", self.tool) or self.tool.count("/") > 0:
 
             # Check + auto-fix for invalid chacters
-            if re.search(r"[^a-z/]", self.tool):
+            if re.search(r"[^a-z\d/]", self.tool):
                 log.warning("Tool/subtool name must be lower-case letters only, with no punctuation")
-                tool_clean = re.sub(r"[^a-z/]", "", self.tool.lower())
+                tool_clean = re.sub(r"[^a-z\d/]", "", self.tool.lower())
                 if rich.prompt.Confirm.ask(f"[violet]Change '{self.tool}' to '{tool_clean}'?"):
                     self.tool = tool_clean
                 else:
