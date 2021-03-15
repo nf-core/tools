@@ -45,6 +45,7 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
+
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """
     Check if the current version of nf-core is outdated
@@ -74,6 +75,17 @@ def rich_force_colors():
     """
     if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
         return True
+    return None
+
+
+def github_api_auto_auth():
+    try:
+        with open(os.path.join(os.path.expanduser("~/.config/gh/hosts.yml")), "r") as fh:
+            auth = yaml.safe_load(fh)
+            log.debug("Auto-authenticating GitHub API as '@{}'".format(auth["github.com"]["user"]))
+            return requests.auth.HTTPBasicAuth(auth["github.com"]["user"], auth["github.com"]["oauth_token"])
+    except Exception as e:
+        log.debug(f"Couldn't auto-auth for GitHub: [red]{e}")
     return None
 
 
