@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 """
-Code to handle several functions in order to deal with nf-core/modules in 
+Code to handle several functions in order to deal with nf-core/modules in
 nf-core pipelines
 
 * list modules
 * install modules
 * remove modules
 * update modules (TODO)
-* 
+*
 """
 
 from __future__ import print_function
 
 import base64
+import glob
+import json
 import logging
 import os
+import questionary
 import requests
+import rich
 import shutil
 import sys
+
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 
@@ -46,33 +52,55 @@ class PipelineModules(object):
         self.modules_current_hash = None
         self.modules_avail_module_names = []
 
-    def list_modules(self):
+    def list_modules(self, pipeline_dir=None, print_json=False):
         """
         Get available module names from GitHub tree for repo
         and print as list to stdout
         """
-        self.get_modules_file_tree()
-        return_str = ""
 
-        if len(self.modules_avail_module_names) > 0:
-            log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
-            # Print results to stdout
-            return_str += "\n".join(self.modules_avail_module_names)
+        # Initialise rich table
+        table = rich.table.Table()
+        table.add_column("Module Name")
+        modules = []
+
+        # No pipeline given - show all remote
+        if pipeline_dir is None:
+            # Get the list of available modules
+            self.get_modules_file_tree()
+            modules = self.modules_avail_module_names
+
+        # We have a pipeline - list what's installed
         else:
-            log.info(
-                "No available modules found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
-            )
-        return return_str
+            module_mains = glob.glob("modules/nf-core/software/**/main.nf", recursive=True)
+            for mod in module_mains:
+                modules.append(mod.replace("modules/nf-core/software/", "").replace("/main.nf", ""))
 
-    def install(self, module):
+        # Build output and return
+        if len(modules) == 0:
+            log.info(f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})")
+            return ""
 
-        log.info("Installing {}".format(module))
+        log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
+        for mod in modules:
+            table.add_row(mod)
+        if print_json:
+            return json.dumps(modules, sort_keys=True, indent=4)
+        return table
+
+    def install(self, module=None):
 
         # Check whether pipelines is valid
         self.has_valid_pipeline()
 
         # Get the available modules
         self.get_modules_file_tree()
+
+        if module is None:
+            module = questionary.autocomplete(
+                "Choose module", choices=self.modules_avail_module_names, style=nf_core.utils.nfcore_question_style
+            ).ask()
+
+        log.info("Installing {}".format(module))
 
         # Check that the supplied name is an available module
         if module not in self.modules_avail_module_names:
@@ -85,7 +113,7 @@ class PipelineModules(object):
         module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
         if os.path.exists(module_dir):
             log.error("Module directory already exists: {}".format(module_dir))
-            log.info("To update an existing module, use the commands 'nf-core update' or 'nf-core fix'")
+            log.info("To update an existing module, use the commands 'nf-core update'")
             return False
 
         # Download module files
@@ -127,10 +155,6 @@ class PipelineModules(object):
         except OSError as e:
             log.error("Could not remove module: {}".format(e))
             return False
-
-    def check_modules(self):
-        log.error("This command is not yet implemented")
-        pass
 
     def get_modules_file_tree(self):
         """
@@ -235,5 +259,4 @@ class PipelineModules(object):
         main_nf = os.path.join(self.pipeline_dir, "main.nf")
         nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
-            return False
+            raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.pipeline_dir}'")

@@ -10,35 +10,14 @@ import copy
 import json
 import logging
 import os
-import prompt_toolkit
 import questionary
 import re
 import subprocess
-import textwrap
 import webbrowser
 
 import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
-
-# Custom style for questionary
-nfcore_question_style = prompt_toolkit.styles.Style(
-    [
-        ("qmark", "fg:ansiblue bold"),  # token in front of the question
-        ("question", "bold"),  # question text
-        ("answer", "fg:ansigreen nobold"),  # submitted answer text behind the question
-        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
-        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
-        ("selected", "fg:ansigreen noreverse"),  # style for a selected item of a checkbox
-        ("separator", "fg:ansiblack"),  # separator in lists
-        ("instruction", ""),  # user instructions for select, rawselect, checkbox
-        ("text", ""),  # plain text
-        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
-        ("choice-default", "fg:ansiblack"),
-        ("choice-default-changed", "fg:ansiyellow"),
-        ("choice-required", "fg:ansired"),
-    ]
-)
 
 
 class Launch(object):
@@ -268,7 +247,7 @@ class Launch(object):
             "choices": ["Web based", "Command line"],
             "default": "Web based",
         }
-        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+        answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
@@ -405,12 +384,12 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_questionary(param_id, param_obj, answers)
-        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+        answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
             log.error("'–-{}' is required".format(param_id))
-            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
         # Ignore if empty
         if answer[param_id] == "":
@@ -480,7 +459,7 @@ class Launch(object):
             if len(question["choices"]) == 2:
                 return {}
 
-            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
             if answer[group_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
