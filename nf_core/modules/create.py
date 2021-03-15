@@ -59,7 +59,7 @@ class ModuleCreate(object):
         modules/tests/software/tool/subtool/
             * main.nf
             * test.yml
-        modules/tests/pytest_include.yml
+        tests/config/pytest_include.yml
 
         The function will attempt to find a Bioconda package called 'tool'
         and matching Docker / Singularity images from BioContainers.
@@ -189,7 +189,7 @@ class ModuleCreate(object):
         if self.repo_type == "modules":
             # Add entry to pytest_include.yml
             try:
-                with open(os.path.join(self.directory, "tests", "pytest_include.yml"), "r") as fh:
+                with open(os.path.join(self.directory, "tests", "config", "pytest_include.yml"), "r") as fh:
                     pytest_include_yml = yaml.safe_load(fh)
                 if self.subtool:
                     pytest_include_yml[self.tool_name] = [
@@ -202,10 +202,10 @@ class ModuleCreate(object):
                         f"tests/software/{self.tool}/**",
                     ]
 
-                with open(os.path.join(self.directory, "tests", "pytest_include.yml"), "w") as fh:
+                with open(os.path.join(self.directory, "tests", "config", "pytest_include.yml"), "w") as fh:
                     yaml.dump(pytest_include_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
-                raise UserWarning(f"Could not open 'tests/pytest_include.yml' file!")
+                raise UserWarning(f"Could not open 'tests/config/pytest_include.yml' file!")
 
         log.info("Created module files:\n  " + "\n  ".join(self.file_paths.values()))
 
