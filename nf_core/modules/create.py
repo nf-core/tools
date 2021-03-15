@@ -6,8 +6,7 @@ The ModuleCreate class handles generating of module templates
 from __future__ import print_function
 from packaging.version import parse as parse_version
 
-import cookiecutter.exceptions
-import cookiecutter.main
+import jinja2
 import json
 import logging
 import nf_core
@@ -16,7 +15,6 @@ import re
 import rich
 import shutil
 import subprocess
-import tempfile
 import yaml
 
 import nf_core.utils
@@ -36,6 +34,10 @@ class ModuleCreate(object):
         self.subtool = None
         self.tool_licence = None
         self.repo_type = None
+        self.tool_licence = ""
+        self.tool_description = ""
+        self.tool_doc_url = ""
+        self.tool_dev_url = ""
         self.bioconda = None
         self.container_tag = None
         self.file_paths = {}
@@ -49,7 +51,7 @@ class ModuleCreate(object):
 
         If <directory> is a pipeline, this function creates a file called:
         '<directory>/modules/local/tool.nf'
-        OR
+          OR
         '<directory>/modules/local/tool_subtool.nf'
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
@@ -71,7 +73,8 @@ class ModuleCreate(object):
         self.repo_type = self.get_repo_type(self.directory)
 
         log.info(
-            "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+            "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
+            "ctrl+click [link=https://youtu.be/dQw4w9WgXcQ]underlined text[/link] to open links."
         )
 
         # Collect module info via prompt if empty or invalid
@@ -108,6 +111,31 @@ class ModuleCreate(object):
 
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
+
+        # Try to find a bioconda package for 'tool'
+        try:
+            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+            version = anaconda_response.get("latest_version")
+            if not version:
+                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
+            self.tool_description = anaconda_response.get("summary", "")
+            self.tool_doc_url = anaconda_response.get("doc_url", "")
+            self.tool_dev_url = anaconda_response.get("dev_url", "")
+            self.bioconda = "bioconda::" + self.tool + "=" + version
+            log.info(f"Using Bioconda package: '{self.bioconda}'")
+        except (ValueError, LookupError) as e:
+            log.warning(
+                f"{e}\nBuilding module without tool software and meta, you will need to enter this information manually."
+            )
+
+        # Try to get the container tag (only if bioconda package was found)
+        if self.bioconda:
+            try:
+                self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
+                log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
+            except (ValueError, LookupError) as e:
+                log.info(f"Could not find a container tag ({e})")
 
         # Prompt for GitHub username
         # Try to guess the current user if `gh` is installed
@@ -150,99 +178,52 @@ class ModuleCreate(object):
                 "[violet]Will the module require a meta map of sample information? (yes/no)", default=True
             )
 
-        # Try to find a bioconda package for 'tool'
-        try:
-            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
-            version = anaconda_response.get("latest_version")
-            if not version:
-                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
-            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
-            self.tool_description = anaconda_response.get("summary", "")
-            self.tool_doc_url = anaconda_response.get("doc_url", "")
-            self.tool_dev_url = anaconda_response.get("dev_url", "")
-            self.bioconda = "bioconda::" + self.tool + "=" + version
-            log.info(f"Using Bioconda package: '{self.bioconda}'")
-        except (ValueError, LookupError) as e:
-            log.warning(e)
-
-        # Try to get the container tag (only if bioconda package was found)
-        if self.bioconda:
-            try:
-                self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
-                log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
-            except (ValueError, LookupError) as e:
-                log.info(f"Could not find a container tag ({e})")
-
         # Create module template with cokiecutter
-        cookiecutter_output = self.run_cookiecutter()
-
-        # Move cookiecutter output files
-        for source_fn_base, target_fn in self.file_paths.items():
-            source_fn = os.path.join(cookiecutter_output, source_fn_base)
-            log.debug(f"Transferring new module file from '{source_fn}' to '{target_fn}'")
-            try:
-                os.makedirs(os.path.dirname(target_fn), exist_ok=True)
-                shutil.move(source_fn, target_fn)
-            except OSError as e:
-                shutil.rmtree(cookiecutter_output)
-                raise UserWarning(f"Could not create module files: {e}")
-        shutil.rmtree(cookiecutter_output)
+        self.render_template()
 
         if self.repo_type == "modules":
-            # Add entry to filters.yml
+            # Add entry to pytest_software.yml
             try:
-                with open(os.path.join(self.directory, ".github", "filters.yml"), "r") as fh:
-                    filters_yml = yaml.safe_load(fh)
+                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "r") as fh:
+                    pytest_software_yml = yaml.safe_load(fh)
                 if self.subtool:
-                    filters_yml[self.tool_name] = [
+                    pytest_software_yml[self.tool_name] = [
                         f"software/{self.tool}/{self.subtool}/**",
                         f"tests/software/{self.tool}/{self.subtool}/**",
                     ]
                 else:
-                    filters_yml[self.tool_name] = [
+                    pytest_software_yml[self.tool_name] = [
                         f"software/{self.tool}/**",
                         f"tests/software/{self.tool}/**",
                     ]
 
-                with open(os.path.join(self.directory, ".github", "filters.yml"), "w") as fh:
-                    yaml.dump(filters_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
+                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "w") as fh:
+                    yaml.dump(pytest_software_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
-                raise UserWarning(f"Could not open filters.yml file!")
+                raise UserWarning(f"Could not open 'tests/config/pytest_software.yml' file!")
 
         log.info("Created module files:\n  " + "\n  ".join(self.file_paths.values()))
 
-    def run_cookiecutter(self):
+    def render_template(self):
         """
         Create new module files with cookiecutter in a temporyary directory.
 
         Returns: Path to generated files.
         """
-        # Build the template in a temporary directory
-        tmpdir = tempfile.mkdtemp()
-        template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), "module-template/")
-        cookiecutter.main.cookiecutter(
-            template,
-            extra_context={
-                "tool": self.tool,
-                "subtool": self.subtool if self.subtool else "",
-                "tool_name": self.tool_name,
-                "tool_dir": self.tool_dir,
-                "author": self.author,
-                "bioconda": self.bioconda,
-                "container_tag": self.container_tag,
-                "label": self.process_label,
-                "has_meta": self.has_meta,
-                "tool_licence": self.tool_licence,
-                "tool_description": self.tool_description,
-                "tool_doc_url": self.tool_doc_url,
-                "tool_dev_url": self.tool_dev_url,
-                "nf_core_version": nf_core.__version__,
-            },
-            no_input=True,
-            overwrite_if_exists=self.force_overwrite,
-            output_dir=tmpdir,
-        )
-        return os.path.join(tmpdir, self.tool_name)
+        # Run jinja2 for each file in the template folder
+        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "module-template"))
+        for template_fn, dest_fn in self.file_paths.items():
+            log.debug(f"Rendering template file: '{template_fn}'")
+            j_template = env.get_template(template_fn)
+            object_attrs = vars(self)
+            object_attrs["nf_core_version"] = nf_core.__version__
+            rendered_output = j_template.render(object_attrs)
+
+            # Write output to the target file
+            os.makedirs(os.path.dirname(dest_fn), exist_ok=True)
+            with open(dest_fn, "w") as fh:
+                log.debug(f"Writing output to: '{dest_fn}'")
+                fh.write(rendered_output)
 
     def get_repo_type(self, directory):
         """
@@ -271,7 +252,7 @@ class ModuleCreate(object):
 
         if self.repo_type == "pipeline":
             # Check whether module file already exists
-            module_file = os.path.join(self.directory, "modules", "local", "process", f"{self.tool_name}.nf")
+            module_file = os.path.join(self.directory, "modules", "local", f"{self.tool_name}.nf")
             if os.path.exists(module_file) and not self.force_overwrite:
                 raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
 

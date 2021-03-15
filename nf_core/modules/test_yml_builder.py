@@ -5,21 +5,22 @@ along with running the tests and creating md5 sums
 """
 
 from __future__ import print_function
-from rich.console import Console
-from rich.syntax import Syntax
 
 import errno
 import hashlib
 import logging
 import os
 import re
-import rich
 import shlex
 import subprocess
 import tempfile
-import yaml
 
 import nf_core.utils
+import questionary
+import rich
+import yaml
+from rich.console import Console
+from rich.syntax import Syntax
 
 log = logging.getLogger(__name__)
 
@@ -135,7 +136,7 @@ class ModulesTestYmlBuilder(object):
         log.info(f"Building test meta for entry point '{entry_point}'")
 
         while ep_test["name"] == "":
-            default_val = f"Run tests for {self.module_name} - {entry_point}"
+            default_val = f"{self.module_name.replace('/', ' ')} {entry_point}"
             if self.no_prompts:
                 ep_test["name"] = default_val
             else:
@@ -156,6 +157,8 @@ class ModulesTestYmlBuilder(object):
             for idx in range(0, len(mod_name_parts)):
                 tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
             tag_defaults.append(entry_point.replace("test_", ""))
+            # Remove duplicates
+            tag_defaults = list(set(tag_defaults))
             if self.no_prompts:
                 ep_test["tags"] = tag_defaults
             else:
@@ -220,8 +223,25 @@ class ModulesTestYmlBuilder(object):
 
         # The config expects $PROFILE and Nextflow fails if it's not set
         if os.environ.get("PROFILE") is None:
-            log.debug("Setting env var '$PROFILE' to an empty string as not set")
             os.environ["PROFILE"] = ""
+            if self.no_prompts:
+                log.info(
+                    "Setting env var '$PROFILE' to an empty string as not set.\n"
+                    "Tests will run with Docker by default. "
+                    "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
+                )
+            else:
+                question = {
+                    "type": "list",
+                    "name": "profile",
+                    "message": "Choose software profile",
+                    "choices": ["Docker", "Singularity", "Conda"],
+                }
+                answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
+                profile = answer["profile"].lower()
+                if profile in ["singularity", "conda"]:
+                    os.environ["PROFILE"] = profile
+                    log.info(f"Setting env var '$PROFILE' to '{profile}'")
 
         tmp_dir = tempfile.mkdtemp()
         command += f" --outdir {tmp_dir}"
@@ -251,13 +271,13 @@ class ModulesTestYmlBuilder(object):
 
         if self.test_yml_output_path == "-":
             console = Console()
-            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper())
+            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
             console.print("\n", Syntax(yaml_str, "yaml"), "\n")
             return
 
         try:
             log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper())
+                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
         except FileNotFoundError as e:
             raise UserWarning("Could not create test.yml file: '{}'".format(e))

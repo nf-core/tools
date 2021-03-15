@@ -258,7 +258,6 @@ class Workflows(object):
                 table.add_row(*rowdata, style="dim")
             else:
                 table.add_row(*rowdata)
-        t_headers = ["Name", "Latest Release", "Released", "Last Pulled", "Have latest release?"]
 
         # Print summary table
         return table
