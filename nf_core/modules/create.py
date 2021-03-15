@@ -49,7 +49,7 @@ class ModuleCreate(object):
 
         If <directory> is a pipeline, this function creates a file called:
         '<directory>/modules/local/tool.nf'
-        OR
+          OR
         '<directory>/modules/local/tool_subtool.nf'
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
@@ -271,7 +271,7 @@ class ModuleCreate(object):
 
         if self.repo_type == "pipeline":
             # Check whether module file already exists
-            module_file = os.path.join(self.directory, "modules", "local", "process", f"{self.tool_name}.nf")
+            module_file = os.path.join(self.directory, "modules", "local", f"{self.tool_name}.nf")
             if os.path.exists(module_file) and not self.force_overwrite:
                 raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
 
