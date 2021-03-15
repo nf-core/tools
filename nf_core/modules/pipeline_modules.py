@@ -13,6 +13,7 @@ nf-core pipelines
 from __future__ import print_function
 
 import base64
+import glob
 import json
 import logging
 import os
@@ -59,23 +60,31 @@ class PipelineModules(object):
         # Initialise rich table
         table = rich.table.Table()
         table.add_column("Module Name")
+        modules = []
 
         # No pipeline given - show all remote
         if pipeline_dir is None:
             # Get the list of available modules
             self.get_modules_file_tree()
-            if len(self.modules_avail_module_names) == 0:
-                log.info(f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})")
-                return ""
-
-            log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
-            for mod in self.modules_avail_module_names:
-                table.add_row(mod)
-            if print_json:
-                return json.dumps(self.modules_avail_module_names, sort_keys=True, indent=4)
+            modules = self.modules_avail_module_names
 
         # We have a pipeline - list what's installed
+        else:
+            module_mains = glob.glob('modules/nf-core/software/**/main.nf', recursive=True)
+            for mod in module_mains:
+                modules.append(mod.replace('modules/nf-core/software/', '').replace('/main.nf', ''))
 
+
+        # Build output and return
+        if len(modules) == 0:
+            log.info(f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})")
+            return ""
+
+        log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
+        for mod in modules:
+            table.add_row(mod)
+        if print_json:
+            return json.dumps(modules, sort_keys=True, indent=4)
         return table
 
     def install(self, module=None):
