@@ -8,13 +8,14 @@ from packaging.version import parse as parse_version
 
 import cookiecutter.exceptions
 import cookiecutter.main
+import json
 import logging
 import nf_core
 import os
 import re
 import rich
 import shutil
-import sys
+import subprocess
 import tempfile
 import yaml
 
@@ -106,13 +107,25 @@ class ModuleCreate(object):
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
 
-        # Prompt + validate GitHub username
-        # https://github.com/shinnn/github-username-regex
+        # Prompt for GitHub username
+        # Try to guess the current user if `gh` is installed
+        author_default = None
+        try:
+            with open(os.devnull, "w") as devnull:
+                gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=devnull))
+            author_default = "@{}".format(gh_auth_user["login"])
+        except Exception as e:
+            log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
+
+        # Regex to valid GitHub username: https://github.com/shinnn/github-username-regex
         github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a value GitHub username!")
-            self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:[/] (@author)")
+            self.author = rich.prompt.Prompt.ask(
+                "[violet]GitHub Username:[/]{}".format(" (@author)" if author_default is None else ""),
+                default=author_default,
+            )
 
         if self.process_label is None:
             log.info(
