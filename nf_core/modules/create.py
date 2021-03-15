@@ -214,22 +214,9 @@ class ModuleCreate(object):
         for template_fn, dest_fn in self.file_paths.items():
             log.debug(f"Rendering template file: '{template_fn}'")
             j_template = env.get_template(template_fn)
-            rendered_output = j_template.render(
-                tool=self.tool,
-                subtool=self.subtool if self.subtool else "",
-                tool_name=self.tool_name,
-                tool_dir=self.tool_dir,
-                author=self.author,
-                bioconda=self.bioconda,
-                container_tag=self.container_tag,
-                label=self.process_label,
-                has_meta=self.has_meta,
-                tool_licence=self.tool_licence,
-                tool_description=self.tool_description,
-                tool_doc_url=self.tool_doc_url,
-                tool_dev_url=self.tool_dev_url,
-                nf_core_version=nf_core.__version__,
-            )
+            object_attrs = vars(self)
+            object_attrs["nf_core_version"] = nf_core.__version__
+            rendered_output = j_template.render(object_attrs)
 
             # Write output to the target file
             os.makedirs(os.path.dirname(dest_fn), exist_ok=True)
