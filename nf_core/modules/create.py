@@ -36,6 +36,10 @@ class ModuleCreate(object):
         self.subtool = None
         self.tool_licence = None
         self.repo_type = None
+        self.tool_licence = ""
+        self.tool_description = ""
+        self.tool_doc_url = ""
+        self.tool_dev_url = ""
         self.bioconda = None
         self.container_tag = None
         self.file_paths = {}
@@ -109,6 +113,31 @@ class ModuleCreate(object):
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
 
+        # Try to find a bioconda package for 'tool'
+        try:
+            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+            version = anaconda_response.get("latest_version")
+            if not version:
+                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
+            self.tool_description = anaconda_response.get("summary", "")
+            self.tool_doc_url = anaconda_response.get("doc_url", "")
+            self.tool_dev_url = anaconda_response.get("dev_url", "")
+            self.bioconda = "bioconda::" + self.tool + "=" + version
+            log.info(f"Using Bioconda package: '{self.bioconda}'")
+        except (ValueError, LookupError) as e:
+            log.warning(
+                f"{e}\nBuilding module without tool software and meta, you will need to enter this information manually."
+            )
+
+        # Try to get the container tag (only if bioconda package was found)
+        if self.bioconda:
+            try:
+                self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
+                log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
+            except (ValueError, LookupError) as e:
+                log.info(f"Could not find a container tag ({e})")
+
         # Prompt for GitHub username
         # Try to guess the current user if `gh` is installed
         author_default = None
@@ -149,29 +178,6 @@ class ModuleCreate(object):
             self.has_meta = rich.prompt.Confirm.ask(
                 "[violet]Will the module require a meta map of sample information? (yes/no)", default=True
             )
-
-        # Try to find a bioconda package for 'tool'
-        try:
-            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
-            version = anaconda_response.get("latest_version")
-            if not version:
-                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
-            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
-            self.tool_description = anaconda_response.get("summary", "")
-            self.tool_doc_url = anaconda_response.get("doc_url", "")
-            self.tool_dev_url = anaconda_response.get("dev_url", "")
-            self.bioconda = "bioconda::" + self.tool + "=" + version
-            log.info(f"Using Bioconda package: '{self.bioconda}'")
-        except (ValueError, LookupError) as e:
-            log.warning(e)
-
-        # Try to get the container tag (only if bioconda package was found)
-        if self.bioconda:
-            try:
-                self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
-                log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
-            except (ValueError, LookupError) as e:
-                log.info(f"Could not find a container tag ({e})")
 
         # Create module template with cokiecutter
         cookiecutter_output = self.run_cookiecutter()
