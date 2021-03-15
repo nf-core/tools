@@ -439,23 +439,43 @@ def check(ctx):
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
-@click.option("-a", "--author", type=str, metavar="<author> (GitHub username)")
-@click.option("-l", "--label", type=str, metavar="<process label>")
-@click.option("-m", "--meta", is_flag=True, default=False, help="Use meta tag")
-@click.option("-n", "--no-meta", is_flag=True, default=False, help="Do not use meta tag")
+@click.option("-a", "--author", type=str, metavar="<author>", help="GitHub username")
+@click.option(
+    "-l",
+    "--label",
+    type=str,
+    metavar="<process label>",
+    help="Standard resource label for process i.e. 'process_low', 'process_medium' or 'process_high'",
+)
+@click.option(
+    "-m",
+    "--meta",
+    is_flag=True,
+    default=False,
+    help="Sample information will be provided to module via a 'meta' Groovy map",
+)
+@click.option(
+    "-n",
+    "--no-meta",
+    is_flag=True,
+    default=False,
+    help="Sample information will not be provided to module via a 'meta' Groovy map",
+)
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     """
     Create a new DSL2 module from the nf-core template.
 
     \b
-    Tool should be nanmed <tool/subtool> or just <tool>.
-    For example: fastqc, samtools/sort, bwa/index, multiqc.
+    Tool should be named just <tool> or <tool/subtool>
+    e.g fastqc or samtools/sort, respectively.
 
-    If <directory> is a pipeline, this function creates a file in the
-    'directory/modules/local/process' dir called <tool_subtool.nf>
+    If <directory> is a pipeline, this function creates a file called:
+    '<directory>/modules/local/tool.nf'
+    OR
+    '<directory>/modules/local/tool_subtool.nf'
 
-    If <directory> is a clone of nf-core/modules, it creates / modifies the following files:
+    If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
     \b
     modules/software/tool/subtool/
@@ -465,9 +485,9 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     modules/tests/software/tool/subtool/
         * main.nf
         * test.yml
-    modules/.github/filters.yml
+    tests/config/pytest_software.yml
 
-    The function will attempt to find a Bioconda package called 'tool'
+    The function will attempt to automatically find a Bioconda package called <tool>
     and matching Docker / Singularity images from BioContainers.
     """
     # Combine two bool flags into one variable
