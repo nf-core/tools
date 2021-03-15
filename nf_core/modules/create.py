@@ -73,7 +73,8 @@ class ModuleCreate(object):
         self.repo_type = self.get_repo_type(self.directory)
 
         log.info(
-            "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+            "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
+            "ctrl+click [link=https://youtu.be/dQw4w9WgXcQ]underlined text[/link] to open links."
         )
 
         # Collect module info via prompt if empty or invalid
