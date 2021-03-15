@@ -108,7 +108,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .conda_dockerfile import conda_dockerfile
     from .pipeline_todos import pipeline_todos
     from .pipeline_name_conventions import pipeline_name_conventions
-    from .cookiecutter_strings import cookiecutter_strings
+    from .template_strings import template_strings
     from .schema_lint import schema_lint
     from .schema_params import schema_params
     from .actions_schema_validation import actions_schema_validation
@@ -140,7 +140,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "conda_dockerfile",
             "pipeline_todos",
             "pipeline_name_conventions",
-            "cookiecutter_strings",
+            "template_strings",
             "schema_lint",
             "schema_params",
             "actions_schema_validation",
