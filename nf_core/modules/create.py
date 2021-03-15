@@ -6,8 +6,7 @@ The ModuleCreate class handles generating of module templates
 from __future__ import print_function
 from packaging.version import parse as parse_version
 
-import cookiecutter.exceptions
-import cookiecutter.main
+import jinja2
 import json
 import logging
 import nf_core
@@ -16,7 +15,6 @@ import re
 import rich
 import shutil
 import subprocess
-import tempfile
 import yaml
 
 import nf_core.utils
@@ -180,19 +178,7 @@ class ModuleCreate(object):
             )
 
         # Create module template with cokiecutter
-        cookiecutter_output = self.run_cookiecutter()
-
-        # Move cookiecutter output files
-        for source_fn_base, target_fn in self.file_paths.items():
-            source_fn = os.path.join(cookiecutter_output, source_fn_base)
-            log.debug(f"Transferring new module file from '{source_fn}' to '{target_fn}'")
-            try:
-                os.makedirs(os.path.dirname(target_fn), exist_ok=True)
-                shutil.move(source_fn, target_fn)
-            except OSError as e:
-                shutil.rmtree(cookiecutter_output)
-                raise UserWarning(f"Could not create module files: {e}")
-        shutil.rmtree(cookiecutter_output)
+        self.render_template()
 
         if self.repo_type == "modules":
             # Add entry to pytest_software.yml
@@ -217,38 +203,40 @@ class ModuleCreate(object):
 
         log.info("Created module files:\n  " + "\n  ".join(self.file_paths.values()))
 
-    def run_cookiecutter(self):
+    def render_template(self):
         """
         Create new module files with cookiecutter in a temporyary directory.
 
         Returns: Path to generated files.
         """
-        # Build the template in a temporary directory
-        tmpdir = tempfile.mkdtemp()
-        template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), "module-template/")
-        cookiecutter.main.cookiecutter(
-            template,
-            extra_context={
-                "tool": self.tool,
-                "subtool": self.subtool if self.subtool else "",
-                "tool_name": self.tool_name,
-                "tool_dir": self.tool_dir,
-                "author": self.author,
-                "bioconda": self.bioconda,
-                "container_tag": self.container_tag,
-                "label": self.process_label,
-                "has_meta": self.has_meta,
-                "tool_licence": self.tool_licence,
-                "tool_description": self.tool_description,
-                "tool_doc_url": self.tool_doc_url,
-                "tool_dev_url": self.tool_dev_url,
-                "nf_core_version": nf_core.__version__,
-            },
-            no_input=True,
-            overwrite_if_exists=self.force_overwrite,
-            output_dir=tmpdir,
-        )
-        return os.path.join(tmpdir, self.tool_name)
+        # Run jinja2 for each file in the template folder
+        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "module-template"))
+        for template_fn, dest_fn in self.file_paths.items():
+            log.debug(f"Rendering template file: '{template_fn}'")
+            j_template = env.get_template(template_fn)
+            rendered_output = j_template.render(
+                tool=self.tool,
+                subtool=self.subtool if self.subtool else "",
+                tool_name=self.tool_name,
+                tool_name_upper=self.tool_name.upper(),
+                tool_dir=self.tool_dir,
+                author=self.author,
+                bioconda=self.bioconda,
+                container_tag=self.container_tag,
+                label=self.process_label,
+                has_meta=self.has_meta,
+                tool_licence=self.tool_licence,
+                tool_description=self.tool_description,
+                tool_doc_url=self.tool_doc_url,
+                tool_dev_url=self.tool_dev_url,
+                nf_core_version=nf_core.__version__,
+            )
+
+            # Write output to the target file
+            os.makedirs(os.path.dirname(dest_fn), exist_ok=True)
+            with open(dest_fn, "w") as fh:
+                log.debug(f"Writing output to: '{dest_fn}'")
+                fh.write(rendered_output)
 
     def get_repo_type(self, directory):
         """

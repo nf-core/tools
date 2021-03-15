@@ -1,17 +1,17 @@
-name: {{ cookiecutter.tool_name }}
+name: {{ tool_name }}
 ## TODO nf-core: Add a description of the module and list keywords
 description: write your description here
 keywords:
   - sort
 tools:
-  - {{ cookiecutter.tool }}:
+  - {{ tool }}:
       ## TODO nf-core: Add a description and other details for the software below
-      description: {{ cookiecutter.tool_description }}
-      homepage: {{ cookiecutter.tool_doc_url }}
-      documentation: {{ cookiecutter.tool_doc_url }}
-      tool_dev_url: {{ cookiecutter.tool_dev_url }}
+      description: {{ tool_description }}
+      homepage: {{ tool_doc_url }}
+      documentation: {{ tool_doc_url }}
+      tool_dev_url: {{ tool_dev_url }}
       doi: ""
-      licence: {{ cookiecutter.tool_licence }}
+      licence: {{ tool_licence }}
 
 ## TODO nf-core: If you are using any "params" in the main.nf script of the module add them below
 params:
@@ -38,7 +38,7 @@ params:
 
 ## TODO nf-core: Add a description of all of the variables used as input
 input:
-  {% if cookiecutter.has_meta -%}
+  {% if has_meta -%}
   - meta:
       type: map
       description: |
@@ -53,7 +53,7 @@ input:
 
 ## TODO nf-core: Add a description of all of the variables used as output
 output:
-  {% if cookiecutter.has_meta -%}
+  {% if has_meta -%}
   - meta:
       type: map
       description: |
@@ -71,4 +71,4 @@ output:
       pattern: "*.{bam,cram,sam}"
 
 authors:
-  - "{{ cookiecutter.author }}"
+  - "{{ author }}"

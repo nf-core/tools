@@ -20,22 +20,22 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 options        = initOptions(params.options)
 
-process {{ cookiecutter.tool_name_upper }} {
-    {{ 'tag "$meta.id"' if cookiecutter.has_meta else "'$bam'" }}
-    label '{{ cookiecutter.label }}'
+process {{ tool_name_upper }} {
+    {{ 'tag "$meta.id"' if has_meta else "'$bam'" }}
+    label '{{ label }}'
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), publish_id:{{ 'meta.id' if cookiecutter.has_meta else "''" }}) }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), publish_id:{{ 'meta.id' if has_meta else "''" }}) }
 
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
-    conda (params.enable_conda ? "{{ cookiecutter.bioconda if cookiecutter.bioconda else 'YOUR-TOOL-HERE' }}" : null)
+    conda (params.enable_conda ? "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}" : null)
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/{{ cookiecutter.container_tag if cookiecutter.container_tag else 'YOUR-TOOL-HERE' }}"
+        container "https://depot.galaxyproject.org/singularity/{{ container_tag if container_tag else 'YOUR-TOOL-HERE' }}"
     } else {
-        container "quay.io/biocontainers/{{ cookiecutter.container_tag if cookiecutter.container_tag else 'YOUR-TOOL-HERE' }}"
+        container "quay.io/biocontainers/{{ container_tag if container_tag else 'YOUR-TOOL-HERE' }}"
     }
 
     input:
@@ -45,17 +45,17 @@ process {{ cookiecutter.tool_name_upper }} {
     //               https://github.com/nf-core/modules/blob/master/software/bwa/index/main.nf
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    {{ 'tuple val(meta), path(bam)' if cookiecutter.has_meta else 'path bam' }}
+    {{ 'tuple val(meta), path(bam)' if has_meta else 'path bam' }}
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    {{ 'tuple val(meta), path("*.bam")' if cookiecutter.has_meta else 'path "*.bam"' }}, emit: bam
+    {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
     // TODO nf-core: List additional required output channels/values here
     path "*.version.txt"          , emit: version
 
     script:
     def software = getSoftwareName(task.process)
-    {% if cookiecutter.has_meta -%}
+    {% if has_meta -%}
     def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
     {%- endif %}
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
