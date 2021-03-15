@@ -1,8 +1,8 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema",
-    "$id": "https://raw.githubusercontent.com/{{ cookiecutter.name }}/master/nextflow_schema.json",
-    "title": "{{ cookiecutter.name }} pipeline parameters",
-    "description": "{{ cookiecutter.description }}",
+    "$id": "https://raw.githubusercontent.com/{{ name }}/master/nextflow_schema.json",
+    "title": "{{ name }} pipeline parameters",
+    "description": "{{ description }}",
     "type": "object",
     "definitions": {
         "input_output_options": {

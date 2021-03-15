@@ -12,7 +12,7 @@ jobs:
   test:
     name: Run workflow tests
     # Only run on push if this is the nf-core dev branch (merged PRs)
-    if: {% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ cookiecutter.name }}') {% raw %}}}{% endraw %}
+    if: {% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}
     runs-on: ubuntu-latest
     env:
       NXF_VER: {% raw %}${{ matrix.nxf_ver }}{% endraw %}
@@ -34,13 +34,13 @@ jobs:
 
       - name: Build new docker image
         if: env.MATCHED_FILES
-        run: docker build --no-cache . -t {{ cookiecutter.name_docker }}:dev
+        run: docker build --no-cache . -t {{ name_docker }}:dev
 
       - name: Pull docker image
         if: {% raw %}${{ !env.MATCHED_FILES }}{% endraw %}
         run: |
-          docker pull {{ cookiecutter.name_docker }}:dev
-          docker tag {{ cookiecutter.name_docker }}:dev {{ cookiecutter.name_docker }}:dev
+          docker pull {{ name_docker }}:dev
+          docker tag {{ name_docker }}:dev {{ name_docker }}:dev
 
       - name: Install Nextflow
         env:

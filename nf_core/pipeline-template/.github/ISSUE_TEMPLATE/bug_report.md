@@ -5,7 +5,7 @@ labels: bug
 ---
 
 <!--
-# {{ cookiecutter.name }} bug report
+# {{ name }} bug report
 
 Hi there!
 
@@ -18,7 +18,7 @@ Please delete this text and anything that's not relevant from the template below
 I have checked the following places for your error:
 
 - [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
-- [ ] [{{ cookiecutter.name }} pipeline documentation](https://nf-co.re/{{ cookiecutter.name }}/usage)
+- [ ] [{{ name }} pipeline documentation](https://nf-co.re/{{ name }}/usage)
 
 ## Description of the bug
 
@@ -57,7 +57,7 @@ Have you provided the following extra information/files:
 
 - Engine: <!-- [e.g. Conda, Docker, Singularity, Podman, Shifter or Charliecloud] -->
 - version: <!-- [e.g. 1.0.0] -->
-- Image tag: <!-- [e.g. {{ cookiecutter.name_docker }}:1.0.0] -->
+- Image tag: <!-- [e.g. {{ name_docker }}:1.0.0] -->
 
 ## Additional context
 

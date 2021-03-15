@@ -1,11 +1,11 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-                         {{ cookiecutter.name }}
+                         {{ name }}
 ========================================================================================
- {{ cookiecutter.name }} Analysis Pipeline.
+ {{ name }} Analysis Pipeline.
  #### Homepage / Documentation
- https://github.com/{{ cookiecutter.name }}
+ https://github.com/{{ name }}
 ----------------------------------------------------------------------------------------
 */
 
@@ -16,7 +16,7 @@ log.info Headers.nf_core(workflow, params.monochrome_logs)
 ////////////////////////////////////////////////////+
 def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
-    def command = "nextflow run {{ cookiecutter.name }} --input '*_R{1,2}.fastq.gz' -profile docker"
+    def command = "nextflow run {{ name }} --input '*_R{1,2}.fastq.gz' -profile docker"
     log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
     exit 0
 }
@@ -132,10 +132,10 @@ Channel.from(summary.collect{ [it.key, it.value] })
     .map { k,v -> "<dt>$k</dt><dd><samp>${v ?: '<span style=\"color:#999999;\">N/A</a>'}</samp></dd>" }
     .reduce { a, b -> return [a, b].join("\n            ") }
     .map { x -> """
-    id: '{{ cookiecutter.name_noslash }}-summary'
+    id: '{{ name_noslash }}-summary'
     description: " - this information is collected when the pipeline is started."
-    section_name: '{{ cookiecutter.name }} Workflow Summary'
-    section_href: 'https://github.com/{{ cookiecutter.name }}'
+    section_name: '{{ name }} Workflow Summary'
+    section_href: 'https://github.com/{{ name }}'
     plot_type: 'html'
     data: |
         <dl class=\"dl-horizontal\">
@@ -250,9 +250,9 @@ process output_documentation {
 workflow.onComplete {
 
     // Set up the e-mail variables
-    def subject = "[{{ cookiecutter.name }}] Successful: $workflow.runName"
+    def subject = "[{{ name }}] Successful: $workflow.runName"
     if (!workflow.success) {
-        subject = "[{{ cookiecutter.name }}] FAILED: $workflow.runName"
+        subject = "[{{ name }}] FAILED: $workflow.runName"
     }
     def email_fields = [:]
     email_fields['version'] = workflow.manifest.version
@@ -284,12 +284,12 @@ workflow.onComplete {
         if (workflow.success) {
             mqc_report = ch_multiqc_report.getVal()
             if (mqc_report.getClass() == ArrayList) {
-                log.warn "[{{ cookiecutter.name }}] Found multiple reports from process 'multiqc', will use only one"
+                log.warn "[{{ name }}] Found multiple reports from process 'multiqc', will use only one"
                 mqc_report = mqc_report[0]
             }
         }
     } catch (all) {
-        log.warn "[{{ cookiecutter.name }}] Could not attach MultiQC report to summary email"
+        log.warn "[{{ name }}] Could not attach MultiQC report to summary email"
     }
 
     // Check if we are only sending emails on failure
@@ -321,7 +321,7 @@ workflow.onComplete {
             if (params.plaintext_email) { throw GroovyException('Send plaintext e-mail, not HTML') }
             // Try to send HTML e-mail using sendmail
             [ 'sendmail', '-t' ].execute() << sendmail_html
-            log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $email_address (sendmail)"
+            log.info "[{{ name }}] Sent summary e-mail to $email_address (sendmail)"
         } catch (all) {
             // Catch failures and try with plaintext
             def mail_cmd = [ 'mail', '-s', subject, '--content-type=text/html', email_address ]
@@ -329,7 +329,7 @@ workflow.onComplete {
               mail_cmd += [ '-A', mqc_report ]
             }
             mail_cmd.execute() << email_html
-            log.info "[{{ cookiecutter.name }}] Sent summary e-mail to $email_address (mail)"
+            log.info "[{{ name }}] Sent summary e-mail to $email_address (mail)"
         }
     }
 
@@ -355,10 +355,10 @@ workflow.onComplete {
     }
 
     if (workflow.success) {
-        log.info "-${c_purple}[{{ cookiecutter.name }}]${c_green} Pipeline completed successfully${c_reset}-"
+        log.info "-${c_purple}[{{ name }}]${c_green} Pipeline completed successfully${c_reset}-"
     } else {
         checkHostname()
-        log.info "-${c_purple}[{{ cookiecutter.name }}]${c_red} Pipeline completed with errors${c_reset}-"
+        log.info "-${c_purple}[{{ name }}]${c_red} Pipeline completed with errors${c_reset}-"
     }
 
 }

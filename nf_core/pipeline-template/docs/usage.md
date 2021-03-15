@@ -1,6 +1,6 @@
-# {{ cookiecutter.name }}: Usage
+# {{ name }}: Usage
 
-## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/{{ cookiecutter.short_name }}/usage](https://nf-co.re/{{ cookiecutter.short_name }}/usage)
+## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/{{ short_name }}/usage](https://nf-co.re/{{ short_name }}/usage)
 
 > _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
 
@@ -13,7 +13,7 @@
 The typical command for running the pipeline is as follows:
 
 ```bash
-nextflow run {{ cookiecutter.name }} --input '*_R{1,2}.fastq.gz' -profile docker
+nextflow run {{ name }} --input '*_R{1,2}.fastq.gz' -profile docker
 ```
 
 This will launch the pipeline with the `docker` configuration profile. See below for more information about profiles.
@@ -32,14 +32,14 @@ results         # Finished results (configurable, see below)
 When you run the above command, Nextflow automatically pulls the pipeline code from GitHub and stores it as a cached version. When running the pipeline after this, it will always use the cached version if available - even if the pipeline has been updated since. To make sure that you're running the latest version of the pipeline, make sure that you regularly update the cached version of the pipeline:
 
 ```bash
-nextflow pull {{ cookiecutter.name }}
+nextflow pull {{ name }}
 ```
 
 ### Reproducibility
 
 It's a good idea to specify a pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
 
-First, go to the [{{ cookiecutter.name }} releases page](https://github.com/{{ cookiecutter.name }}/releases) and find the latest version number - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`.
+First, go to the [{{ name }} releases page](https://github.com/{{ name }}/releases) and find the latest version number - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`.
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future.
 
@@ -64,19 +64,19 @@ If `-profile` is not specified, the pipeline will run locally and expect all sof
 
 * `docker`
   * A generic configuration profile to be used with [Docker](https://docker.com/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * Pulls software from Docker Hub: [`{{ name_docker }}`](https://hub.docker.com/r/{{ name_docker }}/)
 * `singularity`
   * A generic configuration profile to be used with [Singularity](https://sylabs.io/docs/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * Pulls software from Docker Hub: [`{{ name_docker }}`](https://hub.docker.com/r/{{ name_docker }}/)
 * `podman`
   * A generic configuration profile to be used with [Podman](https://podman.io/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * Pulls software from Docker Hub: [`{{ name_docker }}`](https://hub.docker.com/r/{{ name_docker }}/)
 * `shifter`
   * A generic configuration profile to be used with [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * Pulls software from Docker Hub: [`{{ name_docker }}`](https://hub.docker.com/r/{{ name_docker }}/)
 * `charliecloud`
   * A generic configuration profile to be used with [Charliecloud](https://hpc.github.io/charliecloud/)
-  * Pulls software from Docker Hub: [`{{ cookiecutter.name_docker }}`](https://hub.docker.com/r/{{ cookiecutter.name_docker }}/)
+  * Pulls software from Docker Hub: [`{{ name_docker }}`](https://hub.docker.com/r/{{ name_docker }}/)
 * `conda`
   * Please only use Conda as a last resort i.e. when it's not possible to run the pipeline with Docker, Singularity, Podman, Shifter or Charliecloud.
   * A generic configuration profile to be used with [Conda](https://conda.io/docs/)

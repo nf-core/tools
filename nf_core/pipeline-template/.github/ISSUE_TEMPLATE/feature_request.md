@@ -1,11 +1,11 @@
 ---
 name: Feature request
-about: Suggest an idea for the {{ cookiecutter.name }} pipeline
+about: Suggest an idea for the {{ name }} pipeline
 labels: enhancement
 ---
 
 <!--
-# {{ cookiecutter.name }} feature request
+# {{ name }} feature request
 
 Hi there!
 

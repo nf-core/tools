@@ -1,4 +1,4 @@
-# {{ cookiecutter.name }}: Output
+# {{ name }}: Output
 
 ## Introduction
 

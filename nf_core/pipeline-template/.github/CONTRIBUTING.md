@@ -1,23 +1,23 @@
-# {{ cookiecutter.name }}: Contributing Guidelines
+# {{ name }}: Contributing Guidelines
 
 Hi there!
-Many thanks for taking an interest in improving {{ cookiecutter.name }}.
+Many thanks for taking an interest in improving {{ name }}.
 
-We try to manage the required tasks for {{ cookiecutter.name }} using GitHub issues, you probably came to this page when creating one.
+We try to manage the required tasks for {{ name }} using GitHub issues, you probably came to this page when creating one.
 Please use the pre-filled template to save time.
 
 However, don't be put off by this template - other more general issues and suggestions are welcome!
 Contributions to the code are even more welcome ;)
 
-> If you need help using or modifying {{ cookiecutter.name }} then the best place to ask is on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+> If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](<https://nfcore.slack.com/channels/>{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Contribution workflow
 
-If you'd like to write some code for {{ cookiecutter.name }}, the standard workflow is as follows:
+If you'd like to write some code for {{ name }}, the standard workflow is as follows:
 
-1. Check that there isn't already an issue about your idea in the [{{ cookiecutter.name }} issues](https://github.com/{{ cookiecutter.name }}/issues) to avoid duplicating work
+1. Check that there isn't already an issue about your idea in the [{{ name }} issues](<https://github.com/>{{ name }}/issues) to avoid duplicating work
     * If there isn't one already, please create one so that others know you're working on this
-2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ cookiecutter.name }} repository](https://github.com/{{ cookiecutter.name }}) to your GitHub account
+2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ name }} repository](<https://github.com/>{{ name }}) to your GitHub account
 3. Make the necessary changes / additions within your forked repository following [Pipeline conventions](#pipeline-contribution-conventions)
 4. Use `nf-core schema build .` and add any new parameters to the pipeline JSON schema (requires [nf-core tools](https://github.com/nf-core/tools) >= 1.10).
 5. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
@@ -55,11 +55,11 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 ## Getting help
 
-For further information/help, please consult the [{{ cookiecutter.name }} documentation](https://nf-co.re/{{ cookiecutter.short_name }}/usage) and don't hesitate to get in touch on the nf-core Slack [#{{ cookiecutter.short_name }}](https://nfcore.slack.com/channels/{{ cookiecutter.short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+For further information/help, please consult the [{{ name }} documentation](<https://nf-co.re/>{{ short_name }}/usage) and don't hesitate to get in touch on the nf-core Slack [#{{ short_name }}](<https://nfcore.slack.com/channels/>{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Pipeline contribution conventions
 
-To make the {{ cookiecutter.name }} code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
+To make the {{ name }} code and processing logic more understandable for new contributors and to ensure quality, we semi-standardise the way the code and other contributions are written.
 
 ### Adding a new step
 
@@ -87,7 +87,7 @@ Once there, use `nf-core schema build .` to add to `nextflow_schema.json`.
 
 ### Default processes resource requirements
 
-Sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A nf-core standard set of labels that should be followed where possible can be seen in the [nf-core pipeline template](https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/%7B%7Bcookiecutter.name_noslash%7D%7D/conf/base.config), which has the default process as a single core-process, and then different levels of multi-core configurations for increasingly large memory requirements defined with standardised labels.
+Sensible defaults for process resource requirements (CPUs / memory / time) for a process should be defined in `conf/base.config`. These should generally be specified generic with `withLabel:` selectors so they can be shared across multiple processes/steps of the pipeline. A nf-core standard set of labels that should be followed where possible can be seen in the [nf-core pipeline template](https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/conf/base.config), which has the default process as a single core-process, and then different levels of multi-core configurations for increasingly large memory requirements defined with standardised labels.
 
 The process resources can be passed on to the tool dynamically within the process with the `${task.cpu}` and `${task.memory}` variables in the `script:` block.
 

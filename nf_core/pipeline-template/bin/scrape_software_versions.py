@@ -5,13 +5,13 @@ import re
 
 # TODO nf-core: Add additional regexes for new tools in process get_software_versions
 regexes = {
-    "{{ cookiecutter.name }}": ["v_pipeline.txt", r"(\S+)"],
+    "{{ name }}": ["v_pipeline.txt", r"(\S+)"],
     "Nextflow": ["v_nextflow.txt", r"(\S+)"],
     "FastQC": ["v_fastqc.txt", r"FastQC v(\S+)"],
     "MultiQC": ["v_multiqc.txt", r"multiqc, version (\S+)"],
 }
 results = OrderedDict()
-results["{{ cookiecutter.name }}"] = '<span style="color:#999999;">N/A</span>'
+results["{{ name }}"] = '<span style="color:#999999;">N/A</span>'
 results["Nextflow"] = '<span style="color:#999999;">N/A</span>'
 results["FastQC"] = '<span style="color:#999999;">N/A</span>'
 results["MultiQC"] = '<span style="color:#999999;">N/A</span>'
@@ -36,8 +36,8 @@ for k in list(results):
 print(
     """
 id: 'software_versions'
-section_name: '{{ cookiecutter.name }} Software Versions'
-section_href: 'https://github.com/{{ cookiecutter.name }}'
+section_name: '{{ name }} Software Versions'
+section_href: 'https://github.com/{{ name }}'
 plot_type: 'html'
 description: 'are collected at run time from the software output.'
 data: |

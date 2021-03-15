@@ -9,12 +9,12 @@ Content-Type: text/html; charset=utf-8
 $email_html
 
 --nfcoremimeboundary
-Content-Type: image/png;name="{{ cookiecutter.name_noslash }}_logo.png"
+Content-Type: image/png;name="{{ name_noslash }}_logo.png"
 Content-Transfer-Encoding: base64
 Content-ID: <nfcorepipelinelogo>
-Content-Disposition: inline; filename="{{ cookiecutter.name_noslash }}_logo.png"
+Content-Disposition: inline; filename="{{ name_noslash }}_logo.png"
 
-<% out << new File("$projectDir/assets/{{ cookiecutter.name_noslash }}_logo.png").
+<% out << new File("$projectDir/assets/{{ name_noslash }}_logo.png").
   bytes.
   encodeBase64().
   toString().

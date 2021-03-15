@@ -4,16 +4,16 @@
   |\\ | |__  __ /  ` /  \\ |__) |__         }  {
   | \\| |       \\__, \\__/ |  \\ |___     \\`-._,-`-,
                                         `._,._,'
-  {{ cookiecutter.name }} v${version}
+  {{ name }} v${version}
 ----------------------------------------------------
 
 Run Name: $runName
 
 <% if (success){
-    out << "## {{ cookiecutter.name }} execution completed successfully! ##"
+    out << "## {{ name }} execution completed successfully! ##"
 } else {
     out << """####################################################
-## {{ cookiecutter.name }} execution completed unsuccessfully! ##
+## {{ name }} execution completed unsuccessfully! ##
 ####################################################
 The exit status of the task that caused the workflow execution to fail was: $exitStatus.
 The full error message was:
@@ -36,5 +36,5 @@ Pipeline Configuration:
 <% out << summary.collect{ k,v -> " - $k: $v" }.join("\n") %>
 
 --
-{{ cookiecutter.name }}
-https://github.com/{{ cookiecutter.name }}
+{{ name }}
+https://github.com/{{ name }}
