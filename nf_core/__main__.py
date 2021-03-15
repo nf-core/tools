@@ -354,15 +354,20 @@ def modules(ctx, repository, branch):
 
 @modules.command(help_priority=1)
 @click.pass_context
-def list(ctx):
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=False, metavar="(<pipeline directory>)")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+def list(ctx, pipeline_dir, json):
     """
     List available software modules.
 
-    Lists all currently available software wrappers in the nf-core/modules repository.
+    If a pipeline directory is given, lists all modules installed locally.
+
+    If no pipeline directory is given, lists all currently available
+    software wrappers in the nf-core/modules repository.
     """
     mods = nf_core.modules.PipelineModules()
     mods.modules_repo = ctx.obj["modules_repo_obj"]
-    print(mods.list_modules())
+    print(mods.list_modules(pipeline_dir, json))
 
 
 @modules.command(help_priority=2)

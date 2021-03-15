@@ -13,11 +13,13 @@ nf-core pipelines
 from __future__ import print_function
 
 import base64
+import json
 import logging
 import os
 import prompt_toolkit
 import questionary
 import requests
+import rich
 import shutil
 import sys
 
@@ -48,23 +50,33 @@ class PipelineModules(object):
         self.modules_current_hash = None
         self.modules_avail_module_names = []
 
-    def list_modules(self):
+    def list_modules(self, pipeline_dir=None, print_json=False):
         """
         Get available module names from GitHub tree for repo
         and print as list to stdout
         """
-        self.get_modules_file_tree()
-        return_str = ""
 
-        if len(self.modules_avail_module_names) > 0:
+        # Initialise rich table
+        table = rich.table.Table()
+        table.add_column("Module Name")
+
+        # No pipeline given - show all remote
+        if pipeline_dir is None:
+            # Get the list of available modules
+            self.get_modules_file_tree()
+            if len(self.modules_avail_module_names) == 0:
+                log.info(f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})")
+                return ""
+
             log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
-            # Print results to stdout
-            return_str += "\n".join(self.modules_avail_module_names)
-        else:
-            log.info(
-                "No available modules found in {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch)
-            )
-        return return_str
+            for mod in self.modules_avail_module_names:
+                table.add_row(mod)
+            if print_json:
+                return json.dumps(self.modules_avail_module_names, sort_keys=True, indent=4)
+
+        # We have a pipeline - list what's installed
+
+        return table
 
     def install(self, module=None):
 
