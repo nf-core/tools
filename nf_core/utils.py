@@ -12,6 +12,7 @@ import hashlib
 import json
 import logging
 import os
+import prompt_toolkit
 import re
 import requests
 import requests_cache
@@ -25,6 +26,24 @@ from rich.spinner import Spinner
 
 log = logging.getLogger(__name__)
 
+# Custom style for questionary
+nfcore_question_style = prompt_toolkit.styles.Style(
+    [
+        ("qmark", "fg:ansiblue bold"),  # token in front of the question
+        ("question", "bold"),  # question text
+        ("answer", "fg:ansigreen nobold"),  # submitted answer text behind the question
+        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
+        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
+        ("selected", "fg:ansigreen noreverse"),  # style for a selected item of a checkbox
+        ("separator", "fg:ansiblack"),  # separator in lists
+        ("instruction", ""),  # user instructions for select, rawselect, checkbox
+        ("text", ""),  # plain text
+        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
+        ("choice-default", "fg:ansiblack"),
+        ("choice-default-changed", "fg:ansiyellow"),
+        ("choice-required", "fg:ansired"),
+    ]
+)
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """

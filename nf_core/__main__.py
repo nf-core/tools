@@ -354,53 +354,65 @@ def modules(ctx, repository, branch):
 
 @modules.command(help_priority=1)
 @click.pass_context
-def list(ctx):
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=False, metavar="(<pipeline directory>)")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+def list(ctx, pipeline_dir, json):
     """
     List available software modules.
 
-    Lists all currently available software wrappers in the nf-core/modules repository.
+    If a pipeline directory is given, lists all modules installed locally.
+
+    If no pipeline directory is given, lists all currently available
+    software wrappers in the nf-core/modules repository.
     """
     mods = nf_core.modules.PipelineModules()
     mods.modules_repo = ctx.obj["modules_repo_obj"]
-    print(mods.list_modules())
+    print(mods.list_modules(pipeline_dir, json))
 
 
 @modules.command(help_priority=2)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
-@click.argument("tool", type=str, required=True, metavar="<tool name>")
+@click.argument("tool", type=str, required=False, metavar="(<tool name>)")
 def install(ctx, pipeline_dir, tool):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
     Given a software name, finds the relevant files in nf-core/modules
     and copies to the pipeline along with associated metadata.
+
+    If <tool name> is not supplied on the command line, an interactive fuzzy-finder
+    tool is given with available nf-core module names.
     """
-    mods = nf_core.modules.PipelineModules()
-    mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.pipeline_dir = pipeline_dir
-    mods.install(tool)
+    try:
+        mods = nf_core.modules.PipelineModules()
+        mods.modules_repo = ctx.obj["modules_repo_obj"]
+        mods.pipeline_dir = pipeline_dir
+        mods.install(tool)
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
-@modules.command(help_priority=3)
-@click.pass_context
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
-@click.argument("tool", type=str, metavar="<tool name>")
-@click.option("-f", "--force", is_flag=True, default=False, help="Force overwrite of files")
-def update(ctx, tool, pipeline_dir, force):
-    """
-    Update one or all software wrapper modules.
-
-    Compares a currently installed module against what is available in nf-core/modules.
-    Fetchs files and updates all relevant files for that software wrapper.
-
-    If no module name is specified, loops through all currently installed modules.
-    If no version is specified, looks for the latest available version on nf-core/modules.
-    """
-    mods = nf_core.modules.PipelineModules()
-    mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.pipeline_dir = pipeline_dir
-    mods.update(tool, force=force)
+# TODO: Not yet implemented
+# @modules.command(help_priority=3)
+# @click.pass_context
+# @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+# @click.argument("tool", type=str, metavar="<tool name>")
+# def update(ctx, tool, pipeline_dir):
+#     """
+#     Update one or all software wrapper modules.
+#
+#     Compares a currently installed module against what is available in nf-core/modules.
+#     Fetchs files and updates all relevant files for that software wrapper.
+#
+#     If no module name is specified, loops through all currently installed modules.
+#     If no version is specified, looks for the latest available version on nf-core/modules.
+#     """
+#     mods = nf_core.modules.PipelineModules()
+#     mods.modules_repo = ctx.obj["modules_repo_obj"]
+#     mods.pipeline_dir = pipeline_dir
+#     mods.update(tool)
 
 
 @modules.command(help_priority=4)
@@ -411,38 +423,24 @@ def remove(ctx, pipeline_dir, tool):
     """
     Remove a software wrapper from a pipeline.
     """
-    mods = nf_core.modules.PipelineModules()
-    mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.pipeline_dir = pipeline_dir
-    mods.remove(tool)
+    try:
+        mods = nf_core.modules.PipelineModules()
+        mods.modules_repo = ctx.obj["modules_repo_obj"]
+        mods.pipeline_dir = pipeline_dir
+        mods.remove(tool)
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 @modules.command("create", help_priority=5)
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
-@click.option("-a", "--author", type=str, metavar="<author>", help="GitHub username")
-@click.option(
-    "-l",
-    "--label",
-    type=str,
-    metavar="<process label>",
-    help="Standard resource label for process i.e. 'process_low', 'process_medium' or 'process_high'",
-)
-@click.option(
-    "-m",
-    "--meta",
-    is_flag=True,
-    default=False,
-    help="Sample information will be provided to module via a 'meta' Groovy map",
-)
-@click.option(
-    "-n",
-    "--no-meta",
-    is_flag=True,
-    default=False,
-    help="Sample information will not be provided to module via a 'meta' Groovy map",
-)
+@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username")
+@click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process")
+@click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
+@click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     """
@@ -452,25 +450,11 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     Tool should be named just <tool> or <tool/subtool>
     e.g fastqc or samtools/sort, respectively.
 
-    If <directory> is a pipeline, this function creates a file called:
-    '<directory>/modules/local/tool.nf'
-    OR
-    '<directory>/modules/local/tool_subtool.nf'
+    If <directory> is a pipeline, this function creates a file called
+    'modules/local/tool_subtool.nf'
 
-    If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
-
-    \b
-    modules/software/tool/subtool/
-        * main.nf
-        * meta.yml
-        * functions.nf
-    modules/tests/software/tool/subtool/
-        * main.nf
-        * test.yml
-    tests/config/pytest_software.yml
-
-    The function will attempt to automatically find a Bioconda package called <tool>
-    and matching Docker / Singularity images from BioContainers.
+    If <directory> is a clone of nf-core/modules, it creates or modifies files
+    in 'modules/software', 'modules/tests' and 'tests/config/pytest_software.yml'
     """
     # Combine two bool flags into one variable
     has_meta = None
