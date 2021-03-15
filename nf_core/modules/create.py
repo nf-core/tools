@@ -44,13 +44,15 @@ class ModuleCreate(object):
         """
         Create a new DSL2 module from the nf-core template.
 
-        Tool should be nanmed <tool/subtool> or just <tool>.
-        For example: fastqc, samtools/sort, bwa/index, multiqc.
+        Tool should be named just <tool> or <tool/subtool>
+        e.g fastqc or samtools/sort, respectively.
 
-        If <directory> is a pipeline, this function creates a file in the
-        'directory/modules/local/process' dir called <tool_subtool.nf>
+        If <directory> is a pipeline, this function creates a file called:
+        '<directory>/modules/local/tool.nf'
+        OR
+        '<directory>/modules/local/tool_subtool.nf'
 
-        If <directory> is a clone of nf-core/modules, it creates / modifies the following files:
+        If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
         modules/software/tool/subtool/
             * main.nf
@@ -59,9 +61,9 @@ class ModuleCreate(object):
         modules/tests/software/tool/subtool/
             * main.nf
             * test.yml
-        tests/config/pytest_include.yml
+        tests/config/pytest_software.yml
 
-        The function will attempt to find a Bioconda package called 'tool'
+        The function will attempt to automatically find a Bioconda package called <tool>
         and matching Docker / Singularity images from BioContainers.
         """
 
@@ -187,25 +189,25 @@ class ModuleCreate(object):
         shutil.rmtree(cookiecutter_output)
 
         if self.repo_type == "modules":
-            # Add entry to pytest_include.yml
+            # Add entry to pytest_software.yml
             try:
-                with open(os.path.join(self.directory, "tests", "config", "pytest_include.yml"), "r") as fh:
-                    pytest_include_yml = yaml.safe_load(fh)
+                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "r") as fh:
+                    pytest_software_yml = yaml.safe_load(fh)
                 if self.subtool:
-                    pytest_include_yml[self.tool_name] = [
+                    pytest_software_yml[self.tool_name] = [
                         f"software/{self.tool}/{self.subtool}/**",
                         f"tests/software/{self.tool}/{self.subtool}/**",
                     ]
                 else:
-                    pytest_include_yml[self.tool_name] = [
+                    pytest_software_yml[self.tool_name] = [
                         f"software/{self.tool}/**",
                         f"tests/software/{self.tool}/**",
                     ]
 
-                with open(os.path.join(self.directory, "tests", "config", "pytest_include.yml"), "w") as fh:
-                    yaml.dump(pytest_include_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
+                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "w") as fh:
+                    yaml.dump(pytest_software_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
-                raise UserWarning(f"Could not open 'tests/config/pytest_include.yml' file!")
+                raise UserWarning(f"Could not open 'tests/config/pytest_software.yml' file!")
 
         log.info("Created module files:\n  " + "\n  ".join(self.file_paths.values()))
 
