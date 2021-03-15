@@ -439,10 +439,10 @@ def check(ctx):
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
-@click.option("-a", "--author", type=str, metavar="<author> (GitHub username)")
-@click.option("-l", "--label", type=str, metavar="<process label>")
-@click.option("-m", "--meta", is_flag=True, default=False, help="Use meta tag")
-@click.option("-n", "--no-meta", is_flag=True, default=False, help="Do not use meta tag")
+@click.option("-a", "--author", type=str, metavar="<author>", help="GitHub username")
+@click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process i.e. 'process_low', 'process_medium' or 'process_high'")
+@click.option("-m", "--meta", is_flag=True, default=False, help="Sample information will be provided to module via a 'meta' Groovy map")
+@click.option("-n", "--no-meta", is_flag=True, default=False, help="Sample information will not be provided to module via a 'meta' Groovy map")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     """
