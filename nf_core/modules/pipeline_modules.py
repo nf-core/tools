@@ -81,7 +81,7 @@ class PipelineModules(object):
             return ""
 
         log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
-        for mod in modules:
+        for mod in sorted(modules):
             table.add_row(mod)
         if print_json:
             return json.dumps(modules, sort_keys=True, indent=4)
