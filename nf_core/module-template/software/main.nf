@@ -21,8 +21,8 @@ params.options = [:]
 options        = initOptions(params.options)
 
 process {{ tool_name|upper }} {
-    {{ 'tag "$meta.id"' if has_meta else "'$bam'" }}
-    label '{{ label }}'
+    tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
+    label '{{ process_label }}'
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), publish_id:{{ 'meta.id' if has_meta else "''" }}) }

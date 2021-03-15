@@ -78,6 +78,17 @@ def rich_force_colors():
     return None
 
 
+def github_api_auto_auth():
+    try:
+        with open(os.path.join(os.path.expanduser("~/.config/gh/hosts.yml")), "r") as fh:
+            auth = yaml.safe_load(fh)
+            log.debug("Auto-authenticating GitHub API as '@{}'".format(auth["github.com"]["user"]))
+            return requests.auth.HTTPBasicAuth(auth["github.com"]["user"], auth["github.com"]["oauth_token"])
+    except Exception as e:
+        log.debug(f"Couldn't auto-auth for GitHub: [red]{e}")
+    return None
+
+
 class Pipeline(object):
     """Object to hold information about a local pipeline.
 

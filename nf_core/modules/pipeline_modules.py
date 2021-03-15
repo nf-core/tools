@@ -52,7 +52,7 @@ class ModulesRepo(object):
              self.modules_avail_module_names
         """
         api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.name, self.branch)
-        r = requests.get(api_url)
+        r = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
         if r.status_code == 404:
             log.error("Repository / branch not found: {} ({})\n{}".format(self.name, self.branch, api_url))
             sys.exit(1)
@@ -120,7 +120,7 @@ class ModulesRepo(object):
             os.makedirs(dl_directory)
 
         # Call the GitHub API
-        r = requests.get(api_url)
+        r = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
         if r.status_code != 200:
             raise SystemError("Could not fetch {} file: {}\n {}".format(self.name, r.status_code, api_url))
         result = r.json()
