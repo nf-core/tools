@@ -18,7 +18,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, "fake files" MAY be used to work around this issue.
 
 params.options = [:]
-def options    = initOptions(params.options)
+options        = initOptions(params.options)
 
 process {{ cookiecutter.tool_name_upper }} {
     {{ 'tag "$meta.id"' if cookiecutter.has_meta else "'$bam'" }}
@@ -30,9 +30,8 @@ process {{ cookiecutter.tool_name_upper }} {
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
-    conda (params.enable_conda ? "{{ cookiecutter.bioconda if cookiecutter.bioconda else 'YOUR-TOOL-HERE' }}" : null)
-
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
+    conda (params.enable_conda ? "{{ cookiecutter.bioconda if cookiecutter.bioconda else 'YOUR-TOOL-HERE' }}" : null)
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
         container "https://depot.galaxyproject.org/singularity/{{ cookiecutter.container_tag if cookiecutter.container_tag else 'YOUR-TOOL-HERE' }}"
     } else {
@@ -53,7 +52,6 @@ process {{ cookiecutter.tool_name_upper }} {
     {{ 'tuple val(meta), path("*.bam")' if cookiecutter.has_meta else 'path "*.bam"' }}   , emit: bam
     // TODO nf-core: List additional required output channels/values here
     path "*.version.txt"          , emit: version
-
 
     script:
     def software = getSoftwareName(task.process)
@@ -76,6 +74,7 @@ process {{ cookiecutter.tool_name_upper }} {
         -o ${prefix}.bam \\
         -T $prefix \\
         $bam
+
     echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' > ${software}.version.txt
     """
 }
