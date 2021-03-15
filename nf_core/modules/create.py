@@ -78,6 +78,8 @@ class ModuleCreate(object):
         )
 
         # Collect module info via prompt if empty or invalid
+        if self.tool is None:
+            self.tool = ""
         while self.tool == "" or re.search(r"[^a-z\d/]", self.tool) or self.tool.count("/") > 0:
 
             # Check + auto-fix for invalid chacters

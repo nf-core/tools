@@ -36,7 +36,7 @@ jobs:
           nf-core --log-file log.txt sync nf-core-testpipeline/
           nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
           nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
-          nf-core --log-file log.txt modules install nf-core-testpipeline/ fastqc
+          nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
 
       - name: Upload log file artifact
         uses: actions/upload-artifact@v2
