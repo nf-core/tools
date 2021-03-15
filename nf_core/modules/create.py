@@ -33,6 +33,7 @@ class ModuleCreate(object):
         self.force_overwrite = force
 
         self.subtool = None
+        self.tool_licence = None
         self.repo_type = None
         self.bioconda = None
         self.container_tag = None
@@ -121,8 +122,14 @@ class ModuleCreate(object):
 
         # Try to find a bioconda package for 'tool'
         try:
-            response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
-            version = str(max([parse_version(v) for v in response["versions"]]))
+            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+            version = anaconda_response.get("latest_version")
+            if not version:
+                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
+            self.tool_description = anaconda_response.get("summary", "")
+            self.tool_doc_url = anaconda_response.get("doc_url", "")
+            self.tool_dev_url = anaconda_response.get("dev_url", "")
             self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using Bioconda package: '{self.bioconda}'")
         except (ValueError, LookupError) as e:
@@ -195,6 +202,10 @@ class ModuleCreate(object):
                 "container_tag": self.container_tag,
                 "label": self.process_label,
                 "has_meta": self.has_meta,
+                "tool_licence": self.tool_licence,
+                "tool_description": self.tool_description,
+                "tool_doc_url": self.tool_doc_url,
+                "tool_dev_url": self.tool_dev_url,
                 "nf_core_version": nf_core.__version__,
             },
             no_input=True,
