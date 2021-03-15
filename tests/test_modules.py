@@ -82,7 +82,7 @@ class TestModules(unittest.TestCase):
         """ Succeed at creating the FastQC module """
         module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "fastqc", "@author", "process_low", True, True)
         module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "process", "fastqc.nf"))
+        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "fastqc.nf"))
 
     def test_modules_create_fail_exists(self):
         """ Fail at creating the same module twice"""
