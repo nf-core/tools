@@ -4,12 +4,12 @@
 
 import nf_core.modules
 
-import mock
 import os
 import shutil
 import tempfile
 import unittest
 import yaml
+import pytest
 
 
 class TestModules(unittest.TestCase):
@@ -72,3 +72,19 @@ class TestModules(unittest.TestCase):
     def test_modules_remove_fastqc_uninstalled(self):
         """ Test removing FastQC module without installing it """
         assert self.mods.remove("fastqc") is False
+
+    def test_modules_create_succeed(self):
+        """ Succeed at creating the FastQC module """
+        module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "fastqc", "@author", "process_low", True, True)
+        module_create.create()
+        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "process", "fastqc.nf"))
+
+    def test_modules_create_fail_exists(self):
+        """ Fail at creating the same module twice"""
+        module_create = nf_core.modules.ModuleCreate(
+            self.pipeline_dir, "fastqc", "@author", "process_low", False, False
+        )
+        module_create.create()
+        with pytest.raises(UserWarning) as excinfo:
+            module_create.create()
+        assert "Module file exists already" in str(excinfo.value)

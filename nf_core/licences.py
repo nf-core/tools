@@ -8,14 +8,11 @@ import json
 import os
 import re
 import requests
-import sys
-import tabulate
 import yaml
 import rich.console
 import rich.table
 
 import nf_core.utils
-import nf_core.lint.conda_env_yaml
 
 log = logging.getLogger(__name__)
 
@@ -77,9 +74,10 @@ class WorkflowLicences(object):
         for dep in deps:
             try:
                 if isinstance(dep, str):
-                    deps_data[dep] = nf_core.lint.conda_env_yaml._anaconda_package(self.conda_config, dep)
+                    dep_channels = self.conda_config.get("channels", [])
+                    deps_data[dep] = nf_core.utils.anaconda_package(dep, dep_channels)
                 elif isinstance(dep, dict):
-                    deps_data[dep] = nf_core.lint.conda_env_yaml._pip_package(dep)
+                    deps_data[dep] = nf_core.utils.pip_package(dep)
             except ValueError:
                 log.error("Couldn't get licence information for {}".format(dep))
 

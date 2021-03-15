@@ -435,7 +435,60 @@ def check(ctx):
     mods.check_modules()
 
 
-@modules.command("create-test-yml", help_priority=6)
+@modules.command("create", help_priority=6)
+@click.pass_context
+@click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
+@click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
+@click.option("-a", "--author", type=str, metavar="<author> (GitHub username)")
+@click.option("-l", "--label", type=str, metavar="<process label>")
+@click.option("-m", "--meta", is_flag=True, default=False, help="Use meta tag")
+@click.option("-n", "--no-meta", is_flag=True, default=False, help="Do not use meta tag")
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
+def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
+    """
+    Create a new DSL2 module from the nf-core template.
+
+    \b
+    Tool should be nanmed <tool/subtool> or just <tool>.
+    For example: fastqc, samtools/sort, bwa/index, multiqc.
+
+    If <directory> is a pipeline, this function creates a file in the
+    'directory/modules/local/process' dir called <tool_subtool.nf>
+
+    If <directory> is a clone of nf-core/modules, it creates / modifies the following files:
+
+    \b
+    modules/software/tool/subtool/
+        * main.nf
+        * meta.yml
+        * functions.nf
+    modules/tests/software/tool/subtool/
+        * main.nf
+        * test.yml
+    modules/.github/filters.yml
+
+    The function will attempt to find a Bioconda package called 'tool'
+    and matching Docker / Singularity images from BioContainers.
+    """
+    # Combine two bool flags into one variable
+    has_meta = None
+    if meta and no_meta:
+        log.critical("Both arguments '--meta' and '--no-meta' given. Please pick one.")
+    elif meta:
+        has_meta = True
+    elif no_meta:
+        has_meta = False
+
+    # Run function
+    try:
+        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force)
+        module_create.create()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+@modules.command("create-test-yml", help_priority=7)
 @click.pass_context
 @click.argument("module", type=str, required=True, metavar="<module name>")
 @click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
