@@ -25,7 +25,7 @@ class TestSchema(unittest.TestCase):
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         # Copy the template to a temp directory so that we can use that for tests
         self.template_dir = os.path.join(tempfile.mkdtemp(), "wf")
-        template_dir = os.path.join(self.root_repo_dir, "nf_core", "pipeline-template", "{{cookiecutter.name_noslash}}")
+        template_dir = os.path.join(self.root_repo_dir, "nf_core", "pipeline-template")
         shutil.copytree(template_dir, self.template_dir)
         self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
 

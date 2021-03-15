@@ -47,10 +47,7 @@ class PipelineCreate(object):
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
     def init_pipeline(self):
-        """Creates the nf-core pipeline.
-
-        Launches cookiecutter, that will ask for required pipeline information.
-        """
+        """Creates the nf-core pipeline. """
 
         # Make the new pipeline
         self.render_template()
@@ -67,7 +64,7 @@ class PipelineCreate(object):
         )
 
     def render_template(self):
-        """Runs cookiecutter to create a new nf-core pipeline."""
+        """Runs Jinja to create a new nf-core pipeline."""
         log.info(f"Creating new nf-core pipeline: '{self.name}'")
 
         # Check if the output directory exists

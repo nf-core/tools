@@ -11,7 +11,7 @@ def template_strings(self):
     The ``nf-core create`` pipeline template uses
     `Jinja <https://jinja.palletsprojects.com/en/2.11.x/>`_ behind the scenes.
 
-    This lint test fails if any cookiecutter template variables such as
+    This lint test fails if any Jinja template variables such as
     ``{{ pipeline_name }}`` are found in your pipeline code.
 
     Finding a placeholder like this means that something was probably copied and pasted
@@ -30,7 +30,7 @@ def template_strings(self):
             lnum = 0
             for l in fh:
                 lnum += 1
-                cc_matches = re.findall(r"[^$]{{\s*cookiecutter[^}]*}}", l)
+                cc_matches = re.findall(r"[^$]{{[^}]*}}", l)
                 if len(cc_matches) > 0:
                     for cc_match in cc_matches:
                         failed.append("Found a Jinja template string in `{}` L{}: {}".format(fn, lnum, cc_match))

@@ -287,19 +287,13 @@ class PipelineSchema(object):
         """ Make a new pipeline schema from the template """
         self.schema_from_scratch = True
         # Use Jinja to render the template schema file to a variable
-        # Bit confusing sorry, but cookiecutter only works with directories etc so this saves a bunch of code
-        templateLoader = jinja2.FileSystemLoader(
-            searchpath=os.path.join(
-                os.path.dirname(os.path.realpath(__file__)), "pipeline-template", "{{cookiecutter.name_noslash}}"
-            )
-        )
-        templateEnv = jinja2.Environment(loader=templateLoader)
-        schema_template = templateEnv.get_template("nextflow_schema.json")
-        cookiecutter_vars = {
+        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "pipeline-template"))
+        schema_template = env.get_template("nextflow_schema.json")
+        template_vars = {
             "name": self.pipeline_manifest.get("name", os.path.dirname(self.schema_filename)).strip("'"),
             "description": self.pipeline_manifest.get("description", "").strip("'"),
         }
-        self.schema = json.loads(schema_template.render(cookiecutter=cookiecutter_vars))
+        self.schema = json.loads(schema_template.render(template_vars))
         self.get_schema_defaults()
 
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
