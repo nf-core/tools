@@ -48,10 +48,10 @@ class ModuleCreate(object):
         e.g fastqc or samtools/sort, respectively.
 
         If <directory> is a pipeline, this function creates a file called:
-        '<directory>/modules/local/tool.nf' 
-        OR 
+        '<directory>/modules/local/tool.nf'
+        OR
         '<directory>/modules/local/tool_subtool.nf'
-        
+
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
         modules/software/tool/subtool/

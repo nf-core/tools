@@ -440,9 +440,27 @@ def check(ctx):
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
 @click.option("-a", "--author", type=str, metavar="<author>", help="GitHub username")
-@click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process i.e. 'process_low', 'process_medium' or 'process_high'")
-@click.option("-m", "--meta", is_flag=True, default=False, help="Sample information will be provided to module via a 'meta' Groovy map")
-@click.option("-n", "--no-meta", is_flag=True, default=False, help="Sample information will not be provided to module via a 'meta' Groovy map")
+@click.option(
+    "-l",
+    "--label",
+    type=str,
+    metavar="<process label>",
+    help="Standard resource label for process i.e. 'process_low', 'process_medium' or 'process_high'",
+)
+@click.option(
+    "-m",
+    "--meta",
+    is_flag=True,
+    default=False,
+    help="Sample information will be provided to module via a 'meta' Groovy map",
+)
+@click.option(
+    "-n",
+    "--no-meta",
+    is_flag=True,
+    default=False,
+    help="Sample information will not be provided to module via a 'meta' Groovy map",
+)
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     """
@@ -453,10 +471,10 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     e.g fastqc or samtools/sort, respectively.
 
     If <directory> is a pipeline, this function creates a file called:
-    '<directory>/modules/local/tool.nf' 
-    OR 
+    '<directory>/modules/local/tool.nf'
+    OR
     '<directory>/modules/local/tool_subtool.nf'
-    
+
     If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
     \b
