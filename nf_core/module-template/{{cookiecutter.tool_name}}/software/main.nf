@@ -55,9 +55,9 @@ process {{ cookiecutter.tool_name_upper }} {
 
     script:
     def software = getSoftwareName(task.process)
-    {% if cookiecutter.has_meta %}
+    {% if cookiecutter.has_meta -%}
     def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
-    {% endif %}
+    {%- endif %}
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
     //               If the software is unable to output a version number on the command-line then it can be manually specified
     //               e.g. https://github.com/nf-core/modules/blob/master/software/homer/annotatepeaks/main.nf
