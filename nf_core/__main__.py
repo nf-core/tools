@@ -381,26 +381,25 @@ def install(ctx, pipeline_dir, tool):
     mods.pipeline_dir = pipeline_dir
     mods.install(tool)
 
-
-@modules.command(help_priority=3)
-@click.pass_context
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
-@click.argument("tool", type=str, metavar="<tool name>")
-@click.option("-f", "--force", is_flag=True, default=False, help="Force overwrite of files")
-def update(ctx, tool, pipeline_dir, force):
-    """
-    Update one or all software wrapper modules.
-
-    Compares a currently installed module against what is available in nf-core/modules.
-    Fetchs files and updates all relevant files for that software wrapper.
-
-    If no module name is specified, loops through all currently installed modules.
-    If no version is specified, looks for the latest available version on nf-core/modules.
-    """
-    mods = nf_core.modules.PipelineModules()
-    mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.pipeline_dir = pipeline_dir
-    mods.update(tool, force=force)
+# TODO: Not yet implemented
+# @modules.command(help_priority=3)
+# @click.pass_context
+# @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+# @click.argument("tool", type=str, metavar="<tool name>")
+# def update(ctx, tool, pipeline_dir):
+#     """
+#     Update one or all software wrapper modules.
+#
+#     Compares a currently installed module against what is available in nf-core/modules.
+#     Fetchs files and updates all relevant files for that software wrapper.
+#
+#     If no module name is specified, loops through all currently installed modules.
+#     If no version is specified, looks for the latest available version on nf-core/modules.
+#     """
+#     mods = nf_core.modules.PipelineModules()
+#     mods.modules_repo = ctx.obj["modules_repo_obj"]
+#     mods.pipeline_dir = pipeline_dir
+#     mods.update(tool)
 
 
 @modules.command(help_priority=4)
