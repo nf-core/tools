@@ -114,11 +114,26 @@ class ModuleCreate(object):
                 log.warning("Does not look like a value GitHub username!")
             self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:[/] (@author)")
 
+        if self.process_label is None:
+            log.info(
+                "Provide an appropriate resource label for the process, taken from the "
+                "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/%7B%7Bcookiecutter.name_noslash%7D%7D/conf/base.config#L29]nf-core pipeline template[/link].\n"
+                "For example: 'process_low', 'process_medium', 'process_high', 'process_long'"
+            )
         while self.process_label is None:
             self.process_label = rich.prompt.Prompt.ask("[violet]Process label:", default="process_low")
 
+        if self.has_meta is None:
+            log.info(
+                "Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' "
+                "MUST be provided as an input via a Groovy Map called 'meta'. "
+                "This information may [italic]not[/] be required in some instances, for example "
+                "[link=https://github.com/nf-core/modules/blob/master/software/bwa/index/main.nf]indexing reference genome files[/link]."
+            )
         while self.has_meta is None:
-            self.has_meta = rich.prompt.Confirm.ask("[violet]Use meta tag? (yes/no)")
+            self.has_meta = rich.prompt.Confirm.ask(
+                "[violet]Will the module require a meta map of sample information? (yes/no)", default=True
+            )
 
         # Try to find a bioconda package for 'tool'
         try:
