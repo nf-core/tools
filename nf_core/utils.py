@@ -45,6 +45,7 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
+
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """
     Check if the current version of nf-core is outdated
