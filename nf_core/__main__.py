@@ -437,28 +437,10 @@ def remove(ctx, pipeline_dir, tool):
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
-@click.option("-a", "--author", type=str, metavar="<author>", help="GitHub username")
-@click.option(
-    "-l",
-    "--label",
-    type=str,
-    metavar="<process label>",
-    help="Standard resource label for process i.e. 'process_low', 'process_medium' or 'process_high'",
-)
-@click.option(
-    "-m",
-    "--meta",
-    is_flag=True,
-    default=False,
-    help="Sample information will be provided to module via a 'meta' Groovy map",
-)
-@click.option(
-    "-n",
-    "--no-meta",
-    is_flag=True,
-    default=False,
-    help="Sample information will not be provided to module via a 'meta' Groovy map",
-)
+@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username")
+@click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process")
+@click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
+@click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     """
@@ -468,25 +450,11 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
     Tool should be named just <tool> or <tool/subtool>
     e.g fastqc or samtools/sort, respectively.
 
-    If <directory> is a pipeline, this function creates a file called:
-    '<directory>/modules/local/tool.nf'
-    OR
-    '<directory>/modules/local/tool_subtool.nf'
+    If <directory> is a pipeline, this function creates a file called
+    'modules/local/tool_subtool.nf'
 
-    If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
-
-    \b
-    modules/software/tool/subtool/
-        * main.nf
-        * meta.yml
-        * functions.nf
-    modules/tests/software/tool/subtool/
-        * main.nf
-        * test.yml
-    tests/config/pytest_software.yml
-
-    The function will attempt to automatically find a Bioconda package called <tool>
-    and matching Docker / Singularity images from BioContainers.
+    If <directory> is a clone of nf-core/modules, it creates or modifies files
+    in 'modules/software', 'modules/tests' and 'tests/config/pytest_software.yml'
     """
     # Combine two bool flags into one variable
     has_meta = None
