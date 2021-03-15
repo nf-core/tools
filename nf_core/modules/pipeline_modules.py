@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-Code to handle several functions in order to deal with nf-core/modules in 
+Code to handle several functions in order to deal with nf-core/modules in
 nf-core pipelines
 
 * list modules
 * install modules
 * remove modules
 * update modules (TODO)
-* 
+*
 """
 
 from __future__ import print_function
@@ -127,10 +127,6 @@ class PipelineModules(object):
         except OSError as e:
             log.error("Could not remove module: {}".format(e))
             return False
-
-    def check_modules(self):
-        log.error("This command is not yet implemented")
-        pass
 
     def get_modules_file_tree(self):
         """

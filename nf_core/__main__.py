@@ -417,25 +417,7 @@ def remove(ctx, pipeline_dir, tool):
     mods.remove(tool)
 
 
-@modules.command(help_priority=5)
-@click.pass_context
-def check(ctx):
-    """
-    Check that imported module code has not been modified.
-
-    Compares a software module against the copy on nf-core/modules.
-    If any local modifications are found, the command logs an error
-    and exits with a non-zero exit code.
-
-    Use by the lint tests and automated CI to check that centralised
-    software wrapper code is only modified in the central repository.
-    """
-    mods = nf_core.modules.PipelineModules()
-    mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.check_modules()
-
-
-@modules.command("create", help_priority=6)
+@modules.command("create", help_priority=5)
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
 @click.argument("tool", type=str, required=True, metavar="<tool/subtool>")
@@ -488,7 +470,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
         sys.exit(1)
 
 
-@modules.command("create-test-yml", help_priority=7)
+@modules.command("create-test-yml", help_priority=6)
 @click.pass_context
 @click.argument("module", type=str, required=True, metavar="<module name>")
 @click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
@@ -514,7 +496,7 @@ def create_test_yml(ctx, module, run_tests, output, force, no_prompts):
 
 
 ## nf-core schema subcommands
-@nf_core_cli.group(cls=CustomHelpOrder, help_priority=8)
+@nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
 def schema():
     """
     Suite of tools for developers to manage pipeline schema.
