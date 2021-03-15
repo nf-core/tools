@@ -81,7 +81,7 @@ class PipelineModules(object):
             return ""
 
         log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
-        for mod in modules:
+        for mod in sorted(modules):
             table.add_row(mod)
         if print_json:
             return json.dumps(modules, sort_keys=True, indent=4)
@@ -150,6 +150,15 @@ class PipelineModules(object):
         # Remove the module
         try:
             shutil.rmtree(module_dir)
+            # Try cleaning up empty parent if tool/subtool and tool/ is empty
+            if module.count("/") > 0:
+                parent_dir = os.path.dirname(module_dir)
+                try:
+                    os.rmdir(parent_dir)
+                except OSError:
+                    log.debug(f"Parent directory not empty: '{parent_dir}'")
+                else:
+                    log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
             log.info("Successfully removed {} module".format(module))
             return True
         except OSError as e:
