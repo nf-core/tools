@@ -8,8 +8,8 @@ import os
 import shutil
 import tempfile
 import unittest
-import yaml
 import pytest
+from rich.console import Console
 
 
 class TestModules(unittest.TestCase):
@@ -35,7 +35,10 @@ class TestModules(unittest.TestCase):
         """ Test listing available modules """
         self.mods.pipeline_dir = None
         listed_mods = self.mods.list_modules()
-        assert "fastqc" in listed_mods
+        console = Console(record=True)
+        console.print(listed_mods)
+        output = console.export_text()
+        assert "fastqc" in output
 
     def test_modules_install_nopipeline(self):
         """ Test installing a module - no pipeline given """
@@ -45,7 +48,9 @@ class TestModules(unittest.TestCase):
     def test_modules_install_emptypipeline(self):
         """ Test installing a module - empty dir given """
         self.mods.pipeline_dir = tempfile.mkdtemp()
-        assert self.mods.install("foo") is False
+        with pytest.raises(UserWarning) as excinfo:
+            self.mods.install("foo")
+        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
 
     def test_modules_install_nomodule(self):
         """ Test installing a module - unrecognised module given """
