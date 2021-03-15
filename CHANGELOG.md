@@ -27,7 +27,7 @@
 * added `nf-core modules remove` command to uninstall modules
 * added `nf-core modules create-test-yml` command which runs the test for a new module and automatically
   creates the `test.yml` for with md5 sums, tags, commands and names added
-* added `nf-core modules create` command to generate a new module from the module template 
+* added `nf-core modules create` command to generate a new module from the module template
 
 ### Tools helper code
 
