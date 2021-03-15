@@ -82,44 +82,8 @@ class WorkflowLicences(object):
                 log.error("Couldn't get licence information for {}".format(dep))
 
         for dep, data in deps_data.items():
-            try:
-                depname, depver = dep.split("=", 1)
-                licences = set()
-                # Licence for each version
-                for f in data["files"]:
-                    if not depver or depver == f.get("version"):
-                        try:
-                            licences.add(f["attrs"]["license"])
-                        except KeyError:
-                            pass
-                # Main licence field
-                if len(list(licences)) == 0 and isinstance(data["license"], str):
-                    licences.add(data["license"])
-                self.conda_package_licences[dep] = self.clean_licence_names(list(licences))
-            except KeyError:
-                pass
-
-    def clean_licence_names(self, licences):
-        """Normalises varying licence names.
-
-        Args:
-            licences (list): A list of licences which are basically raw string objects from
-                the licence content information.
-
-        Returns:
-            list: Cleaned licences.
-        """
-        clean_licences = []
-        for l in licences:
-            l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
-            l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
-            l = l.replace("GPL-", "GPLv")
-            l = re.sub(r"GPL(\d)", r"GPLv\1", l)
-            l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
-            l = re.sub(r"GPL\s*v", "GPLv", l)
-            l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)
-            clean_licences.append(l)
-        return clean_licences
+            depname, depver = dep.split("=", 1)
+            self.conda_package_licences[dep] = nf_core.utils.parse_anaconda_licence(data, depver)
 
     def print_licences(self):
         """Prints the fetched license information.

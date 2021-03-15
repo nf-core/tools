@@ -377,6 +377,40 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
         raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
 
 
+def parse_anaconda_licence(anaconda_response, version=None):
+    """Given a response from the anaconda API using anaconda_package, parse the software licences.
+
+    Returns: Set of licence types
+    """
+    licences = set()
+    # Licence for each version
+    for f in anaconda_response["files"]:
+        if not version or version == f.get("version"):
+            try:
+                licences.add(f["attrs"]["license"])
+            except KeyError:
+                pass
+    # Main licence field
+    if len(list(licences)) == 0 and isinstance(anaconda_response["license"], str):
+        licences.add(anaconda_response["license"])
+
+    # Clean up / standardise licence names
+    clean_licences = []
+    for l in licences:
+        l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
+        l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
+        l = l.replace("GPL-", "GPLv")
+        l = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", l)  # Add v prefix to GPL version if none found
+        l = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", l)  # Remove superflous .0 from GPL version
+        l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
+        l = re.sub(r"GPL\s*v", "GPL v", l)  # Normalise whitespace to one space between GPL and v
+        l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)  # Normalise whitespace around >= GPL versions
+        l = l.replace("Clause", "clause")  # BSD capitilisation
+        l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
+        clean_licences.append(l)
+    return clean_licences
+
+
 def pip_package(dep):
     """Query PyPI package information.
 

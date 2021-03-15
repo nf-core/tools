@@ -8,13 +8,14 @@ from packaging.version import parse as parse_version
 
 import cookiecutter.exceptions
 import cookiecutter.main
+import json
 import logging
 import nf_core
 import os
 import re
 import rich
 import shutil
-import sys
+import subprocess
 import tempfile
 import yaml
 
@@ -33,6 +34,7 @@ class ModuleCreate(object):
         self.force_overwrite = force
 
         self.subtool = None
+        self.tool_licence = None
         self.repo_type = None
         self.bioconda = None
         self.container_tag = None
@@ -105,24 +107,57 @@ class ModuleCreate(object):
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
 
-        # Prompt + validate GitHub username
-        # https://github.com/shinnn/github-username-regex
+        # Prompt for GitHub username
+        # Try to guess the current user if `gh` is installed
+        author_default = None
+        try:
+            with open(os.devnull, "w") as devnull:
+                gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=devnull))
+            author_default = "@{}".format(gh_auth_user["login"])
+        except Exception as e:
+            log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
+
+        # Regex to valid GitHub username: https://github.com/shinnn/github-username-regex
         github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a value GitHub username!")
-            self.author = rich.prompt.Prompt.ask("[violet]GitHub Username:[/] (@author)")
+            self.author = rich.prompt.Prompt.ask(
+                "[violet]GitHub Username:[/]{}".format(" (@author)" if author_default is None else ""),
+                default=author_default,
+            )
 
+        if self.process_label is None:
+            log.info(
+                "Provide an appropriate resource label for the process, taken from the "
+                "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/%7B%7Bcookiecutter.name_noslash%7D%7D/conf/base.config#L29]nf-core pipeline template[/link].\n"
+                "For example: 'process_low', 'process_medium', 'process_high', 'process_long'"
+            )
         while self.process_label is None:
             self.process_label = rich.prompt.Prompt.ask("[violet]Process label:", default="process_low")
 
+        if self.has_meta is None:
+            log.info(
+                "Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' "
+                "MUST be provided as an input via a Groovy Map called 'meta'. "
+                "This information may [italic]not[/] be required in some instances, for example "
+                "[link=https://github.com/nf-core/modules/blob/master/software/bwa/index/main.nf]indexing reference genome files[/link]."
+            )
         while self.has_meta is None:
-            self.has_meta = rich.prompt.Confirm.ask("[violet]Use meta tag? (yes/no)")
+            self.has_meta = rich.prompt.Confirm.ask(
+                "[violet]Will the module require a meta map of sample information? (yes/no)", default=True
+            )
 
         # Try to find a bioconda package for 'tool'
         try:
-            response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
-            version = str(max([parse_version(v) for v in response["versions"]]))
+            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+            version = anaconda_response.get("latest_version")
+            if not version:
+                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
+            self.tool_description = anaconda_response.get("summary", "")
+            self.tool_doc_url = anaconda_response.get("doc_url", "")
+            self.tool_dev_url = anaconda_response.get("dev_url", "")
             self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using Bioconda package: '{self.bioconda}'")
         except (ValueError, LookupError) as e:
@@ -195,6 +230,10 @@ class ModuleCreate(object):
                 "container_tag": self.container_tag,
                 "label": self.process_label,
                 "has_meta": self.has_meta,
+                "tool_licence": self.tool_licence,
+                "tool_description": self.tool_description,
+                "tool_doc_url": self.tool_doc_url,
+                "tool_dev_url": self.tool_dev_url,
                 "nf_core_version": nf_core.__version__,
             },
             no_input=True,
@@ -235,7 +274,7 @@ class ModuleCreate(object):
                 raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
 
             # Set file paths
-            file_paths[f"{self.tool_name}.nf"] = module_file
+            file_paths[os.path.join("software", "main.nf")] = module_file
 
         if self.repo_type == "modules":
             software_dir = os.path.join(self.directory, "software", self.tool_dir)
