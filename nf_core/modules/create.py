@@ -206,9 +206,7 @@ class ModuleCreate(object):
 
     def render_template(self):
         """
-        Create new module files with cookiecutter in a temporyary directory.
-
-        Returns: Path to generated files.
+        Create new module files with Jinja2.
         """
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "module-template"))
@@ -245,7 +243,7 @@ class ModuleCreate(object):
     def get_module_dirs(self):
         """Given a directory and a tool/subtool, set the file paths and check if they already exist
 
-        Returns dict: keys are file paths in cookiecutter output, vals are target paths.
+        Returns dict: keys are relative paths to template files, vals are target paths.
         """
 
         file_paths = {}
@@ -270,7 +268,7 @@ class ModuleCreate(object):
             if os.path.exists(test_dir) and not self.force_overwrite:
                 raise UserWarning(f"Module test directory exists: '{test_dir}'. Use '--force' to overwrite")
 
-            # Set file paths - can be tool/ or tool/subtool/ so can't do in cookiecutter template
+            # Set file paths - can be tool/ or tool/subtool/ so can't do in template directory structure
             file_paths[os.path.join("software", "functions.nf")] = os.path.join(software_dir, "functions.nf")
             file_paths[os.path.join("software", "main.nf")] = os.path.join(software_dir, "main.nf")
             file_paths[os.path.join("software", "meta.yml")] = os.path.join(software_dir, "meta.yml")
