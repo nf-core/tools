@@ -71,8 +71,6 @@ process {{ cookiecutter.tool_name_upper }} {
         sort \\
         $options.args \\
         -@ $task.cpus \\
-        -o ${prefix}.bam \\
-        -T $prefix \\
         $bam
 
     echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' > ${software}.version.txt
