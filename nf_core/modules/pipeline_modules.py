@@ -15,6 +15,8 @@ from __future__ import print_function
 import base64
 import logging
 import os
+import prompt_toolkit
+import questionary
 import requests
 import shutil
 import sys
@@ -64,15 +66,19 @@ class PipelineModules(object):
             )
         return return_str
 
-    def install(self, module):
-
-        log.info("Installing {}".format(module))
+    def install(self, module=None):
 
         # Check whether pipelines is valid
         self.has_valid_pipeline()
 
         # Get the available modules
         self.get_modules_file_tree()
+
+        if module is None:
+            nfcore_question_style = prompt_toolkit.styles.Style([("answer", "fg:ansigreen nobold bg:")])
+            module = questionary.autocomplete('Choose module', choices=self.modules_avail_module_names, style=nfcore_question_style).ask()
+
+        log.info("Installing {}".format(module))
 
         # Check that the supplied name is an available module
         if module not in self.modules_avail_module_names:

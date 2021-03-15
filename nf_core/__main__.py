@@ -368,13 +368,16 @@ def list(ctx):
 @modules.command(help_priority=2)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
-@click.argument("tool", type=str, required=True, metavar="<tool name>")
+@click.argument("tool", type=str, required=False, metavar="(<tool name>)")
 def install(ctx, pipeline_dir, tool):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
     Given a software name, finds the relevant files in nf-core/modules
     and copies to the pipeline along with associated metadata.
+
+    If <tool name> is not supplied on the command line, an interactive fuzzy-finder
+    tool is given with available nf-core module names.
     """
     try:
         mods = nf_core.modules.PipelineModules()
