@@ -231,5 +231,4 @@ class PipelineModules(object):
         main_nf = os.path.join(self.pipeline_dir, "main.nf")
         nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            log.error("Could not find a main.nf or nextfow.config file in: {}".format(self.pipeline_dir))
-            return False
+            raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.pipeline_dir}'")

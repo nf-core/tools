@@ -376,10 +376,14 @@ def install(ctx, pipeline_dir, tool):
     Given a software name, finds the relevant files in nf-core/modules
     and copies to the pipeline along with associated metadata.
     """
-    mods = nf_core.modules.PipelineModules()
-    mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.pipeline_dir = pipeline_dir
-    mods.install(tool)
+    try:
+        mods = nf_core.modules.PipelineModules()
+        mods.modules_repo = ctx.obj["modules_repo_obj"]
+        mods.pipeline_dir = pipeline_dir
+        mods.install(tool)
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 # TODO: Not yet implemented
 # @modules.command(help_priority=3)
@@ -410,10 +414,14 @@ def remove(ctx, pipeline_dir, tool):
     """
     Remove a software wrapper from a pipeline.
     """
-    mods = nf_core.modules.PipelineModules()
-    mods.modules_repo = ctx.obj["modules_repo_obj"]
-    mods.pipeline_dir = pipeline_dir
-    mods.remove(tool)
+    try:
+        mods = nf_core.modules.PipelineModules()
+        mods.modules_repo = ctx.obj["modules_repo_obj"]
+        mods.pipeline_dir = pipeline_dir
+        mods.remove(tool)
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 @modules.command("create", help_priority=5)
