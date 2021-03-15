@@ -135,7 +135,7 @@ class ModulesTestYmlBuilder(object):
         log.info(f"Building test meta for entry point '{entry_point}'")
 
         while ep_test["name"] == "":
-            default_val = f"Run tests for {self.module_name} - {entry_point}"
+            default_val = f"{self.module_name.replace('/', ' ')} {entry_point}"
             if self.no_prompts:
                 ep_test["name"] = default_val
             else:
@@ -156,6 +156,8 @@ class ModulesTestYmlBuilder(object):
             for idx in range(0, len(mod_name_parts)):
                 tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
             tag_defaults.append(entry_point.replace("test_", ""))
+            # Remove duplicates
+            tag_defaults = list(set(tag_defaults))
             if self.no_prompts:
                 ep_test["tags"] = tag_defaults
             else:
@@ -255,13 +257,13 @@ class ModulesTestYmlBuilder(object):
 
         if self.test_yml_output_path == "-":
             console = Console()
-            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper())
+            yaml_str = yaml.dump(self.tests, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
             console.print("\n", Syntax(yaml_str, "yaml"), "\n")
             return
 
         try:
             log.info(f"Writing to '{self.test_yml_output_path}'")
             with open(self.test_yml_output_path, "w") as fh:
-                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper())
+                yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
         except FileNotFoundError as e:
             raise UserWarning("Could not create test.yml file: '{}'".format(e))
