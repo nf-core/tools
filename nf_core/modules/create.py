@@ -218,7 +218,6 @@ class ModuleCreate(object):
                 tool=self.tool,
                 subtool=self.subtool if self.subtool else "",
                 tool_name=self.tool_name,
-                tool_name_upper=self.tool_name.upper(),
                 tool_dir=self.tool_dir,
                 author=self.author,
                 bioconda=self.bioconda,
