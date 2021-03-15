@@ -132,7 +132,7 @@ class ModuleCreate(object):
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
-                "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/%7B%7Bcookiecutter.name_noslash%7D%7D/conf/base.config#L29]nf-core pipeline template[/link].\n"
+                "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/conf/base.config#L29]nf-core pipeline template[/link].\n"
                 "For example: 'process_low', 'process_medium', 'process_high', 'process_long'"
             )
         while self.process_label is None:
