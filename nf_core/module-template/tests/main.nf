@@ -9,9 +9,9 @@ workflow test_{{ tool_name }} {
     def input = []
     input = [ [ id:'test', single_end:false ], // meta map
               file("${launchDir}/tests/data/bam/test.paired_end.sorted.bam", checkIfExists: true) ]
-    {% else %}
+    {%- else %}
     def input = file("${launchDir}/tests/data/bam/test.paired_end.sorted.bam", checkIfExists: true)
-    {% endif %}
+    {%- endif %}
 
     {{ tool_name|upper }} ( input )
 }
