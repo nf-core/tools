@@ -25,10 +25,12 @@
 ### Modules
 
 * added `nf-core modules remove` command to uninstall modules
+* added `nf-core modules create-test-yml` command which runs the test for a new module and automatically
+  creates the `test.yml` for with md5 sums, tags, commands and names added
+* added `nf-core modules create` command to generate a new module from the module template 
 
 ### Tools helper code
 
-* Added `nf-core modules md5` command to automatically generate md5 sums and a yaml file for module tests
 * Fixed some bugs in the command line interface for `nf-core launch` and improved formatting [[#829](https://github.com/nf-core/tools/pull/829)]
 * New functionality for `nf-core download` to make it compatible with DSL2 pipelines [[#832](https://github.com/nf-core/tools/pull/832)]
   * Singularity images in module files are now discovered and fetched
