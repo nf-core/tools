@@ -274,7 +274,7 @@ class ModuleCreate(object):
                 raise UserWarning(f"Module file exists already: '{module_file}'. Use '--force' to overwrite")
 
             # Set file paths
-            file_paths[f"{self.tool_name}.nf"] = module_file
+            file_paths[os.path.join("software", "main.nf")] = module_file
 
         if self.repo_type == "modules":
             software_dir = os.path.join(self.directory, "software", self.tool_dir)
