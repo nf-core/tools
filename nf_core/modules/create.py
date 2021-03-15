@@ -44,13 +44,15 @@ class ModuleCreate(object):
         """
         Create a new DSL2 module from the nf-core template.
 
-        Tool should be nanmed <tool/subtool> or just <tool>.
-        For example: fastqc, samtools/sort, bwa/index, multiqc.
+        Tool should be named just <tool> or <tool/subtool>
+        e.g fastqc or samtools/sort, respectively.
 
-        If <directory> is a pipeline, this function creates a file in the
-        'directory/modules/local/process' dir called <tool_subtool.nf>
+        If <directory> is a pipeline, this function creates a file called:
+        '<directory>/modules/local/tool.nf'
+        OR
+        '<directory>/modules/local/tool_subtool.nf'
 
-        If <directory> is a clone of nf-core/modules, it creates / modifies the following files:
+        If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
         modules/software/tool/subtool/
             * main.nf
@@ -59,9 +61,9 @@ class ModuleCreate(object):
         modules/tests/software/tool/subtool/
             * main.nf
             * test.yml
-        modules/.github/filters.yml
+        tests/config/pytest_software.yml
 
-        The function will attempt to find a Bioconda package called 'tool'
+        The function will attempt to automatically find a Bioconda package called <tool>
         and matching Docker / Singularity images from BioContainers.
         """
 
