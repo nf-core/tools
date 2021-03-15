@@ -49,7 +49,7 @@ process {{ cookiecutter.tool_name_upper }} {
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    {{ 'tuple val(meta), path("*.bam")' if cookiecutter.has_meta else 'path "*.bam"' }}   , emit: bam
+    {{ 'tuple val(meta), path("*.bam")' if cookiecutter.has_meta else 'path "*.bam"' }}, emit: bam
     // TODO nf-core: List additional required output channels/values here
     path "*.version.txt"          , emit: version
 
