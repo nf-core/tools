@@ -151,8 +151,6 @@ class ModuleLint(object):
                 "Linting nf-core modules", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
             )
             for mod in nfcore_modules:
-                if "TOOL/SUBTOOL" in mod.module_dir:
-                    continue
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
                 passed, warned, failed = mod.lint()
                 self.passed += passed
@@ -626,7 +624,8 @@ class NFCoreModule(object):
             # Check for correct version and newer versions
             try:
                 bioconda_version = bp.split("=")[1]
-                response = _bioconda_package(bp)
+                # response = _bioconda_package(bp)
+                response = nf_core.utils.anaconda_package(bp)
             except LookupError as e:
                 self.warned.append(e)
             except ValueError as e:
@@ -711,40 +710,3 @@ class NFCoreModule(object):
         if line.strip().replace(" ", "") == "":
             empty = True
         return empty
-
-
-def _bioconda_package(package):
-    """Query bioconda package information.
-
-    Sends a HTTP GET request to the Anaconda remote API.
-
-    Args:
-        package (str): A bioconda package name.
-
-    Raises:
-        A LookupError, if the connection fails or times out or gives an unexpected status code
-        A ValueError, if the package name can not be found (404)
-    """
-    dep = package.split("::")[1]
-    depname = dep.split("=")[0]
-    depver = dep.split("=")[1]
-
-    anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format("bioconda", depname)
-
-    try:
-        response = requests.get(anaconda_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
-        raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
-    except (requests.exceptions.ConnectionError):
-        raise LookupError("Could not connect to Anaconda API")
-    else:
-        if response.status_code == 200:
-            return response.json()
-        elif response.status_code != 404:
-            raise LookupError(
-                "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
-                    response.status_code, anaconda_api_url, response
-                )
-            )
-        elif response.status_code == 404:
-            raise ValueError("Could not find `{}` in bioconda channel".format(package))
