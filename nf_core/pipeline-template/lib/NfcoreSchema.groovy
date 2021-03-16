@@ -123,28 +123,7 @@ class NfcoreSchema {
         JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream))
 
         // Remove anything that's in params.schema_ignore_params
-        params.schema_ignore_params.split(',').each{ ignore_param ->
-            println("Try to remove $ignore_param")
-            if(rawSchema.keySet().contains('definitions')){
-                rawSchema.definitions.each { definition ->
-                    // if(definition.keySet().contains('properties') && definition.properties.containsKey(ignore_param)) {
-                    println(definition.keySet())
-                    if(definition.keySet().contains('properties')) {
-                        println("HEEERE")
-//                        definition['properties'].remove(ignore_param)
-                    }
-//                    if(definition.containsKey('required') && definition['required'].contains(ignore_param)) {
-//                        definition['required'].removeElement(ignore_param)
-//                    }
-                }
-            }
-            if(rawSchema.keySet().contains('properties') && rawSchema.properties.containsKey(ignore_param)) {
-                rawSchema.properties.remove(ignore_param)
-            }
-            if(rawSchema.keySet().contains('required') && rawSchema.required.contains(ignore_param)) {
-                rawSchema.required.removeElement(ignore_param)
-            }
-        }
+        rawSchema = removeIgnoredParams(rawSchema, params)
 
         Schema schema = SchemaLoader.load(rawSchema)
 
@@ -208,6 +187,46 @@ class NfcoreSchema {
         for (ex in causingExceptions) {
             printExceptions(ex, paramsJSON, log)
         }
+    }
+
+    private static JSONArray removeElement(jsonArray, element){
+        def list = []  
+        int len = jsonArray.length()
+  
+        for (int i=0;i<len;i++){ 
+            list.add(jsonArray.get(i).toString())
+        } 
+        
+        list.remove(element)
+        JSONArray jsArray = new JSONArray(list)
+        return jsArray
+    }
+
+    private static JSONObject removeIgnoredParams(rawSchema, params){
+        // Remove anything that's in params.schema_ignore_params
+        params.schema_ignore_params.split(',').each{ ignore_param ->
+            if(rawSchema.keySet().contains('definitions')){
+                rawSchema.definitions.each { definition ->
+                    for (key in definition.keySet()){
+                        if (definition[key].get("properties").keySet().contains(ignore_param)){
+                            definition[key].get("properties").remove(ignore_param)
+                            if (definition[key].has("required")) {
+                                def cleaned_required = removeElement(definition[key].required, ignore_param)
+                                definition[key].put("required", cleaned_required) 
+                            }
+                        }
+                    }
+                }
+            }
+            if(rawSchema.keySet().contains('properties') && rawSchema.get('properties').containsKey(ignore_param)) {
+                rawSchema.get("properties").remove(ignore_param)
+            }
+            if(rawSchema.keySet().contains('required') && rawSchema.required.contains(ignore_param)) {
+                def cleaned_required = removeElement(rawSchema.required, ignore_param)
+                rawSchema.pupt("required", cleaned_required)
+            }
+        }
+        return rawSchema
     }
 
     private static Map cleanParameters(params) {
