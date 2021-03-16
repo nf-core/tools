@@ -1,27 +1,18 @@
 #!/usr/bin/env python
 """
-Code to handle several functions in order to deal with nf-core/modules in
-nf-core pipelines
+Code for linting modules in the nf-core/modules repository and
+in nf-core pipelines
 
-* list modules
-* install modules
-* remove modules
-* update modules (TODO)
-*
+Command:
+nf-core modules lint
 """
 
 from __future__ import print_function
-import base64
-import glob
-import json
 import logging
 import os
 import re
-import hashlib
-import questionary
 import requests
 import rich
-import shutil
 import yaml
 from rich.console import Console
 from rich.table import Table
@@ -498,7 +489,7 @@ class NFCoreModule(object):
             return
 
         # Check that options are defined
-        initoptions_re = re.compile(r"\s*def\s+options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
+        initoptions_re = re.compile(r"\s*options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
         paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
         if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
             self.passed.append("options specified in {}".format(self.main_nf))

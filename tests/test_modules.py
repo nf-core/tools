@@ -94,6 +94,7 @@ class TestModules(unittest.TestCase):
         assert len(module_lint.passed) == 0
         assert len(module_lint.warned) == 0
         assert len(module_lint.failed) == 0
+
     def test_modules_create_succeed(self):
         """ Succeed at creating the FastQC module """
         module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "fastqc", "@author", "process_low", True, True)
