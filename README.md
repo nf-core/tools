@@ -24,6 +24,13 @@ A python package with helper tools for the nf-core community.
 * [`nf-core schema` - Work with pipeline schema files](#working-with-pipeline-schema)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+* [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
+  * [`modules list` - List available modules](#modules-list)
+  * [`modules install` - Install a module from nf-core/modules](#modules-install)
+  * [`modules create` - Create a module from the template](#modules-create)
+  * [`modules create-test-yml` - Create the `test.yml` file for a module](#modules-create-test-yml)
+  * [`modules lint` - Lint modules](#modules-lint)
+  
 * [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -803,6 +810,123 @@ $ nf-core sync --all
 INFO     Syncing nf-core/ampliseq
 [...]
 INFO     Successfully synchronised [n] pipelines
+```
+
+## Modules
+
+### modules list
+
+To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
+`nf-core modules list`, which will print all avilable modules to the terminal.
+
+```console
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Module Name                    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ bandage/image                  │
+│ bcftools/consensus             │
+│ bcftools/filter                │
+│ bcftools/isec                  │
+│ bcftools/merge                 │
+│ bcftools/mpileup               │
+│ bcftools/stats                 │
+.
+.
+.
+```
+
+### modules install
+
+You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install <pipeline_dir>`. A module installed this way will be installed to the `<pipeline_dir>/modules/nf-core/software` directory. Below is an example where we install the `star/align` module.
+
+```console
+nf-core modules install .
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 1.13
+
+
+
+? Tool name: star/align
+                  star/align           
+                  star/genomegenerate  
+```
+
+### modules create
+
+When writing a new module, it is best to start from the nf-core module template, which contains help messages and makes it easy to follow the nf-core guidlines for modules. You can create a new module using `nf-core modules create <directory>`, where `<directory>` can be both a clone of nf-core/modules or an nf-core pipeline. The `modules create` command will ask you the relevant questions and create all necessary module files.
+
+```console
+nf-core modules create .
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 1.13
+
+
+
+INFO     Press enter to use default values (shown in brackets) or type your own responses. ctrl+click underlined text to open     create.py:75
+         links.                                                                                                                               
+Name of tool/subtool: mytool/mysubtool
+```
+
+### modules create-test-yml
+
+All modules at [nf-core/modules](https://github.com/nf-core/modules) have to bring their own tests, which are run when parts of the module code changes. To help developers build new modules, the `nf-core modules create-test-yml` command automates much of the work necessary to create test. Specifically, after you have written the nextflow code for your tests in `modules/tests/software/<tool>/<subtool>/main.nf`, this command will run the tests for you and create the `modules/tests/software/<tool>/<subtool>/test.yml` file. For instance, the md5 sums of all files created by running your module will be calculated and written to the `test.yml` file.
+
+```console
+nf-core modules create-test-yml         
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 1.13.dev0
+
+
+
+INFO     Press enter to use default values (shown in brackets) or type your own responses                               test_yml_builder.py:51
+? Tool name: star/align
+                  star/align           
+                  star/genomegenerate
+```
+
+### modules lint
+
+The `nf-core modules lint` cpommand allows you to lint modules in a clone of the [nf-core/modules](https://github.com/nf-core/modules) repository or in a nf-core pipeline.  The command for linting is `nf-core modules lint <directory> <module>`, where `<module>` can be omitted, in which case all modules are linted.
+
+```console
+nf-core modules lint modules fastqc
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 1.13
+
+
+
+╭──────────────────────╮
+│ LINT RESULTS SUMMARY │
+├──────────────────────┤
+│ [✔]  24 Tests Passed │
+│ [!]   0 Test Warning │
+│ [✗]   0 Test Failed  │
+╰──────────────────────╯
+
 ```
 
 ## Citation
