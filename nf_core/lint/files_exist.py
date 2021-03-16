@@ -16,20 +16,28 @@ def files_exist(self):
 
     Files that **must** be present::
 
-        'nextflow.config',
-        'nextflow_schema.json',
-        ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
-        'CODE_OF_CONDUCT.md',
-        'README.md',
-        'CHANGELOG.md',
-        'docs/README.md',
-        'docs/output.md',
-        'docs/usage.md',
+        '.gitattributes',
+        '.github/.dockstore.yml',
+        '.github/CONTRIBUTING.md',
+        '.github/ISSUE_TEMPLATE/bug_report.md',
+        '.github/ISSUE_TEMPLATE/config.yml',
+        '.github/ISSUE_TEMPLATE/feature_request.md',
+        '.github/markdownlint.yml',
+        '.github/PULL_REQUEST_TEMPLATE.md',
         '.github/workflows/branch.yml',
-        '.github/workflows/ci.yml',
+        '.github/workflows/linting_comment.yml',
         '.github/workflows/linting.yml',
-        'lib/NfcoreSchema.groovy',
+        'assets/email_template.html',
+        'assets/email_template.txt',
+        'assets/nf-core-PIPELINE_logo.png',
+        'assets/sendmail_template.txt',
+        'bin/markdown_to_html.py',
+        'CODE_OF_CONDUCT.md',
+        'docs/images/nf-core-PIPELINE_logo.png',
+        'docs/README.md',
         'lib/nfcore_external_java_deps.jar'
+        'lib/NfcoreSchema.groovy',
+        ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
 
     Files that *should* be present::
 
