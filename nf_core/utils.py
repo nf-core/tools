@@ -146,7 +146,7 @@ class Pipeline(object):
                 if os.path.isfile(full_fn):
                     self.files.append(full_fn)
                 else:
-                    log.warning("`git ls-files` returned '{}' but could not open it!".format(full_fn))
+                    log.debug("`git ls-files` returned '{}' but could not open it!".format(full_fn))
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
             log.debug("Couldn't call 'git ls-files': {}".format(e))
