@@ -156,33 +156,6 @@ class TestModules(unittest.TestCase):
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("Could not push TEMPLATE branch")
 
-    def test_make_pull_request_missing_username(self):
-        """ Try making a PR without a repo or username """
-        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
-        psync.gh_username = None
-        psync.gh_repo = None
-        try:
-            psync.make_pull_request()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.PullRequestException as e:
-            assert e.args[0] == "Could not find GitHub username and repo name"
-
-    def test_make_pull_request_missing_auth(self):
-        """ Try making a PR without any auth """
-        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
-        psync.gh_username = "foo"
-        psync.gh_repo = "foo/bar"
-        if "GITHUB_AUTH_TOKEN" in os.environ:
-            del os.environ["GITHUB_AUTH_TOKEN"]
-        try:
-            psync.make_pull_request()
-            raise UserWarning("Should have hit an exception")
-        except nf_core.sync.PullRequestException as e:
-            assert e.args[0] == (
-                "Environment variable GITHUB_AUTH_TOKEN not set - cannot make PR\n"
-                "Make a PR at the following URL:\n  https://github.com/foo/bar/compare/None...TEMPLATE"
-            )
-
     def mocked_requests_get(**kwargs):
         """ Helper function to emulate POST requests responses from the web """
 
@@ -191,13 +164,9 @@ class TestModules(unittest.TestCase):
                 self.status_code = status_code
                 self.content = json.dumps(data)
 
-        url_template = "https://api.github.com/repos/{}/response/pulls?head=nf-core:TEMPLATE&base=None"
+        url_template = "https://api.github.com/repos/{}/response/pulls?head=TEMPLATE&base=None"
         if kwargs["url"] == url_template.format("no_existing_pr"):
             response_data = []
-            return MockResponse(response_data, 200)
-
-        if kwargs["url"] == url_template.format("existing_pr"):
-            response_data = [{"url": "url_to_update_pr"}]
             return MockResponse(response_data, 200)
 
         return MockResponse({"get_url": kwargs["url"]}, 404)
@@ -254,13 +223,3 @@ class TestModules(unittest.TestCase):
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("GitHub API returned code 404:")
-
-    @mock.patch("requests.get", side_effect=mocked_requests_get)
-    @mock.patch("requests.patch", side_effect=mocked_requests_patch)
-    def test_update_existing_pull_request(self, mock_get, mock_patch):
-        """ Try discovering a PR and updating it """
-        psync = nf_core.sync.PipelineSync(self.pipeline_dir)
-        psync.gh_username = "existing_pr"
-        psync.gh_repo = "existing_pr/response"
-        os.environ["GITHUB_AUTH_TOKEN"] = "test"
-        assert psync.update_existing_pull_request("title", "body") is True

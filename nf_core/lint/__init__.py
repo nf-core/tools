@@ -16,7 +16,6 @@ import os
 import re
 import rich
 import rich.progress
-import subprocess
 import textwrap
 import yaml
 
@@ -25,7 +24,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None, json_fn=None):
+def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_fn=None, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -40,7 +39,7 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -98,16 +97,14 @@ class PipelineLint(nf_core.utils.Pipeline):
     """
 
     from .files_exist import files_exist
-    from .licence import licence
+    from .files_unchanged import files_unchanged
     from .nextflow_config import nextflow_config
-    from .actions_branch_protection import actions_branch_protection
     from .actions_ci import actions_ci
-    from .actions_lint import actions_lint
     from .actions_awstest import actions_awstest
     from .actions_awsfulltest import actions_awsfulltest
     from .readme import readme
     from .version_consistency import version_consistency
-    from .conda_env_yaml import conda_env_yaml, _anaconda_package, _pip_package
+    from .conda_env_yaml import conda_env_yaml
     from .conda_dockerfile import conda_dockerfile
     from .pipeline_todos import pipeline_todos
     from .pipeline_name_conventions import pipeline_name_conventions
@@ -115,26 +112,27 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .schema_lint import schema_lint
     from .schema_params import schema_params
     from .actions_schema_validation import actions_schema_validation
+    from .merge_markers import merge_markers
 
-    def __init__(self, wf_path, release_mode=False):
+    def __init__(self, wf_path, release_mode=False, fix=()):
         """ Initialise linting object """
 
         # Initialise the parent object
         super().__init__(wf_path)
 
+        self.lint_config = {}
+        self.release_mode = release_mode
         self.failed = []
         self.ignored = []
-        self.lint_config = {}
+        self.fixed = []
         self.passed = []
-        self.release_mode = release_mode
         self.warned = []
+        self.could_fix = []
         self.lint_tests = [
             "files_exist",
-            "licence",
             "nextflow_config",
-            "actions_branch_protection",
+            "files_unchanged",
             "actions_ci",
-            "actions_lint",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
@@ -146,9 +144,11 @@ class PipelineLint(nf_core.utils.Pipeline):
             "schema_lint",
             "schema_params",
             "actions_schema_validation",
+            "merge_markers",
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
+        self.fix = fix
         self.progress_bar = None
 
     def _load(self):
@@ -193,9 +193,33 @@ class PipelineLint(nf_core.utils.Pipeline):
         the different linting checks in order. Collects any warnings or errors
         into object attributes: ``passed``, ``ignored``, ``warned`` and ``failed``.
         """
-        log.info("Testing pipeline: [magenta]{}".format(self.wf_path))
+        log.info(f"Testing pipeline: [magenta]{self.wf_path}")
         if self.release_mode:
             log.info("Including --release mode tests")
+
+        # Check that we recognise all --fix arguments
+        unrecognised_fixes = list(test for test in self.fix if test not in self.lint_tests)
+        if len(unrecognised_fixes):
+            raise AssertionError(
+                "Unrecognised lint test{} for '--fix': '{}'".format(
+                    "s" if len(unrecognised_fixes) > 1 else "", "', '".join(unrecognised_fixes)
+                )
+            )
+
+        # Check that the pipeline_dir is a clean git repo
+        if len(self.fix):
+            log.info("Attempting to automatically fix failing tests")
+            try:
+                repo = git.Repo(self.wf_path)
+            except git.exc.InvalidGitRepositoryError as e:
+                raise AssertionError(
+                    f"'{self.wf_path}' does not appear to be a git repository, this is required when running with '--fix'"
+                )
+            # Check that we have no uncommitted changes
+            if repo.is_dirty(untracked_files=True):
+                raise AssertionError(
+                    "Uncommitted changes found in pipeline directory!\nPlease commit these before running with '--fix'"
+                )
 
         self.progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
@@ -219,10 +243,14 @@ class PipelineLint(nf_core.utils.Pipeline):
                     self.passed.append((test_name, test))
                 for test in test_results.get("ignored", []):
                     self.ignored.append((test_name, test))
+                for test in test_results.get("fixed", []):
+                    self.fixed.append((test_name, test))
                 for test in test_results.get("warned", []):
                     self.warned.append((test_name, test))
                 for test in test_results.get("failed", []):
                     self.failed.append((test_name, test))
+                if test_results.get("could_fix", False):
+                    self.could_fix.append(test_name)
 
     def _print_results(self, show_passed=False):
         """Print linting results to the command line.
@@ -245,7 +273,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             return table
 
         def _s(some_list):
-            if len(some_list) > 1:
+            if len(some_list) != 1:
                 return "s"
             return ""
 
@@ -257,6 +285,13 @@ class PipelineLint(nf_core.utils.Pipeline):
                 no_wrap=True,
             )
             table = format_result(self.passed, table)
+            console.print(table)
+
+        # Table of fixed tests
+        if len(self.fixed) > 0:
+            table = Table(style="bright_blue", box=rich.box.ROUNDED)
+            table.add_column(r"[?] {} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), no_wrap=True)
+            table = format_result(self.fixed, table)
             console.print(table)
 
         # Table of ignored tests
@@ -290,10 +325,22 @@ class PipelineLint(nf_core.utils.Pipeline):
             r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
             style="green",
         )
+        if len(self.fix):
+            table.add_row(r"[?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), style="bright_blue")
         table.add_row(r"[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
         table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
+
+        if len(self.could_fix):
+            fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
+            console.print(
+                f"\nTip: Some of these linting errors can automatically resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+            )
+        if len(self.fix):
+            console.print(
+                "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
+            )
 
     def _get_results_md(self):
         """
@@ -334,6 +381,19 @@ class PipelineLint(nf_core.utils.Pipeline):
                 )
             )
 
+        test_fixed_count = ""
+        test_fixed = ""
+        if len(self.fixed) > 0:
+            test_fixed_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.fixed))
+            test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
+                "\n".join(
+                    [
+                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        for eid, msg in self.fixed
+                    ]
+                )
+            )
+
         test_warning_count = ""
         test_warnings = ""
         if len(self.warned) > 0:
@@ -368,12 +428,12 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         {}
 
-        ```diff{}{}{}{}
+        ```diff{}{}{}{}{}
         ```
 
         <details>
 
-        {}{}{}{}### Run details:
+        {}{}{}{}{}### Run details:
 
         * nf-core/tools version {}
         * Run at `{}`
@@ -385,11 +445,13 @@ class PipelineLint(nf_core.utils.Pipeline):
             "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
             test_passed_count,
             test_ignored_count,
+            test_fixed_count,
             test_warning_count,
             test_failure_count,
             test_failures,
             test_warnings,
             test_ignored,
+            test_fixed,
             test_passes,
             nf_core.__version__,
             now.strftime("%Y-%m-%d %H:%M:%S"),
@@ -412,14 +474,17 @@ class PipelineLint(nf_core.utils.Pipeline):
             "date_run": now.strftime("%Y-%m-%d %H:%M:%S"),
             "tests_pass": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
             "tests_ignored": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.ignored],
+            "tests_fixed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.fixed],
             "tests_warned": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
             "tests_failed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
             "num_tests_pass": len(self.passed),
             "num_tests_ignored": len(self.ignored),
+            "num_tests_fixed": len(self.fixed),
             "num_tests_warned": len(self.warned),
             "num_tests_failed": len(self.failed),
             "has_tests_pass": len(self.passed) > 0,
             "has_tests_ignored": len(self.ignored) > 0,
+            "has_tests_fixed": len(self.fixed) > 0,
             "has_tests_warned": len(self.warned) > 0,
             "has_tests_failed": len(self.failed) > 0,
             "markdown_result": self._get_results_md(),

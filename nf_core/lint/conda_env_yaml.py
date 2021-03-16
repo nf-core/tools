@@ -3,7 +3,10 @@
 import logging
 import os
 import requests
+import yaml
 import nf_core.utils
+
+from nf_core.utils import anaconda_package
 
 # Set up local caching for requests to speed up remote queries
 nf_core.utils.setup_requests_cachedir()
@@ -53,19 +56,33 @@ def conda_env_yaml(self):
     passed = []
     warned = []
     failed = []
+    fixed = []
+    could_fix = False
 
-    if os.path.join(self.wf_path, "environment.yml") not in self.files:
+    env_path = os.path.join(self.wf_path, "environment.yml")
+    if env_path not in self.files:
         return {"ignored": ["No `environment.yml` file found - skipping conda_env_yaml test"]}
+
+    with open(env_path, "r") as fh:
+        raw_environment_yml = fh.read()
 
     # Check that the environment name matches the pipeline name
     pipeline_version = self.nf_config.get("manifest.version", "").strip(" '\"")
     expected_env_name = "nf-core-{}-{}".format(self.pipeline_name.lower(), pipeline_version)
     if self.conda_config["name"] != expected_env_name:
-        failed.append(
-            "Conda environment name is incorrect ({}, should be {})".format(
-                self.conda_config["name"], expected_env_name
+        if "conda_env_yaml" in self.fix:
+            passed.append("Conda environment name was correct ({})".format(expected_env_name))
+            fixed.append(
+                "Fixed Conda environment name: '{}' to '{}'".format(self.conda_config["name"], expected_env_name)
             )
-        )
+            raw_environment_yml = raw_environment_yml.replace(self.conda_config["name"], expected_env_name)
+        else:
+            failed.append(
+                "Conda environment name is incorrect ({}, should be {})".format(
+                    self.conda_config["name"], expected_env_name
+                )
+            )
+            could_fix = True
     else:
         passed.append("Conda environment name was correct ({})".format(expected_env_name))
 
@@ -75,7 +92,7 @@ def conda_env_yaml(self):
         conda_progress = self.progress_bar.add_task(
             "Checking Conda packages", total=len(conda_deps), test_name=conda_deps[0]
         )
-    for dep in conda_deps:
+    for idx, dep in enumerate(conda_deps):
         self.progress_bar.update(conda_progress, advance=1, test_name=dep)
         if isinstance(dep, str):
             # Check that each dependency has a version number
@@ -88,7 +105,9 @@ def conda_env_yaml(self):
 
                 try:
                     depname, depver = dep.split("=")[:2]
-                    self.conda_package_info[dep] = _anaconda_package(self.conda_config, dep)
+                    self.conda_package_info[dep] = anaconda_package(
+                        dep, dep_channels=self.conda_config.get("channels", [])
+                    )
                 except LookupError as e:
                     warned.append(e)
                 except ValueError as e:
@@ -101,7 +120,13 @@ def conda_env_yaml(self):
                     # Check version is latest available
                     last_ver = self.conda_package_info[dep].get("latest_version")
                     if last_ver is not None and last_ver != depver:
-                        warned.append("Conda dep outdated: `{}`, `{}` available".format(dep, last_ver))
+                        if "conda_env_yaml" in self.fix:
+                            passed.append("Conda package is the latest available: `{}`".format(dep))
+                            fixed.append("Conda package updated: '{}' to '{}'".format(dep, last_ver))
+                            raw_environment_yml = raw_environment_yml.replace(dep, f"{depname}={last_ver}")
+                        else:
+                            warned.append("Conda dep outdated: `{}`, `{}` available".format(dep, last_ver))
+                            could_fix = True
                     else:
                         passed.append("Conda package is the latest available: `{}`".format(dep))
 
@@ -111,7 +136,7 @@ def conda_env_yaml(self):
                 pip_progress = self.progress_bar.add_task(
                     "Checking PyPI packages", total=len(pip_deps), test_name=pip_deps[0]
                 )
-            for pip_dep in pip_deps:
+            for pip_idx, pip_dep in enumerate(pip_deps):
                 self.progress_bar.update(pip_progress, advance=1, test_name=pip_dep)
                 # Check that each pip dependency has a version number
                 try:
@@ -123,100 +148,38 @@ def conda_env_yaml(self):
 
                     try:
                         pip_depname, pip_depver = pip_dep.split("==", 1)
-                        self.conda_package_info[dep] = _pip_package(pip_dep)
+                        self.conda_package_info[pip_dep] = nf_core.utils.pip_package(pip_dep)
                     except LookupError as e:
                         warned.append(e)
                     except ValueError as e:
                         failed.append(e)
                     else:
-                        # Check, if PyPi package version is available at all
+                        # Check, if PyPI package version is available at all
                         if pip_depver not in self.conda_package_info[pip_dep].get("releases").keys():
-                            failed.append("PyPi package had an unknown version: {}".format(pip_depver))
+                            failed.append("PyPI package had an unknown version: {}".format(pip_depver))
                             continue  # No need to test latest version, if not available
-                        last_ver = self.conda_package_info[pip_dep].get("info").get("version")
-                        if last_ver is not None and last_ver != pip_depver:
-                            warned.append(
-                                "PyPi package is not latest available: {}, {} available".format(pip_depver, last_ver)
-                            )
+                        pip_last_ver = self.conda_package_info[pip_dep].get("info").get("version")
+                        if pip_last_ver is not None and pip_last_ver != pip_depver:
+                            if "conda_env_yaml" in self.fix:
+                                passed.append("PyPI package is latest available: {}".format(pip_depver))
+                                fixed.append("PyPI package updated: '{}' to '{}'".format(pip_depname, pip_last_ver))
+                                raw_environment_yml = raw_environment_yml.replace(pip_depver, pip_last_ver)
+                            else:
+                                warned.append(
+                                    "PyPI package is not latest available: {}, {} available".format(
+                                        pip_depver, pip_last_ver
+                                    )
+                                )
+                                could_fix = True
                         else:
-                            passed.append("PyPi package is latest available: {}".format(pip_depver))
+                            passed.append("PyPI package is latest available: {}".format(pip_depver))
             self.progress_bar.update(pip_progress, visible=False)
     self.progress_bar.update(conda_progress, visible=False)
 
-    return {"passed": passed, "warned": warned, "failed": failed}
+    # NB: It would be a lot easier to just do a yaml.dump on the dictionary we have,
+    # but this discards all formatting and comments which is a pain.
+    if "conda_env_yaml" in self.fix and len(fixed) > 0:
+        with open(env_path, "w") as fh:
+            fh.write(raw_environment_yml)
 
-
-def _anaconda_package(conda_config, dep):
-    """Query conda package information.
-
-    Sends a HTTP GET request to the Anaconda remote API.
-
-    Args:
-        dep (str): A conda package name.
-
-    Raises:
-        A LookupError, if the connection fails or times out or gives an unexpected status code
-        A ValueError, if the package name can not be found (404)
-    """
-
-    # Check if each dependency is the latest available version
-    depname, depver = dep.split("=", 1)
-    dep_channels = conda_config.get("channels", [])
-    # 'defaults' isn't actually a channel name. See https://docs.anaconda.com/anaconda/user-guide/tasks/using-repositories/
-    if "defaults" in dep_channels:
-        dep_channels.remove("defaults")
-        dep_channels.extend(["main", "anaconda", "r", "free", "archive", "anaconda-extras"])
-    if "::" in depname:
-        dep_channels = [depname.split("::")[0]]
-        depname = depname.split("::")[1]
-    for ch in dep_channels:
-        anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format(ch, depname)
-        try:
-            response = requests.get(anaconda_api_url, timeout=10)
-        except (requests.exceptions.Timeout):
-            raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
-        except (requests.exceptions.ConnectionError):
-            raise LookupError("Could not connect to Anaconda API")
-        else:
-            if response.status_code == 200:
-                return response.json()
-            elif response.status_code != 404:
-                raise LookupError(
-                    "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
-                        response.status_code, anaconda_api_url, response
-                    )
-                )
-            elif response.status_code == 404:
-                log.debug("Could not find `{}` in conda channel `{}`".format(dep, ch))
-    else:
-        # We have looped through each channel and had a 404 response code on everything
-        raise ValueError(
-            "Could not find Conda dependency using the Anaconda API: `{}` (<{}>)".format(dep, anaconda_api_url)
-        )
-
-
-def _pip_package(dep):
-    """Query PyPi package information.
-
-    Sends a HTTP GET request to the PyPi remote API.
-
-    Args:
-        dep (str): A PyPi package name.
-
-    Raises:
-        A LookupError, if the connection fails or times out
-        A ValueError, if the package name can not be found
-    """
-    pip_depname, pip_depver = dep.split("=", 1)
-    pip_api_url = "https://pypi.python.org/pypi/{}/json".format(pip_depname)
-    try:
-        response = requests.get(pip_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
-        raise LookupError("PyPi API timed out: {}".format(pip_api_url))
-    except (requests.exceptions.ConnectionError):
-        raise LookupError("PyPi API Connection error: {}".format(pip_api_url))
-    else:
-        if response.status_code == 200:
-            return response.json()
-        else:
-            raise ValueError("Could not find pip dependency using the PyPi API: `{}`".format(dep))
+    return {"passed": passed, "warned": warned, "failed": failed, "fixed": fixed, "could_fix": could_fix}

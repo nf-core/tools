@@ -459,9 +459,11 @@ class PipelineSchema(object):
         Add anything that's found in the Nextflow params that's missing in the pipeline schema
         """
         params_added = []
+        params_ignore = self.pipeline_params.get("schema_ignore_params", "").strip("\"'").split(",")
+        params_ignore.append("schema_ignore_params")
         for p_key, p_val in self.pipeline_params.items():
             # Check if key is in schema parameters
-            if not p_key in self.schema_params:
+            if p_key not in self.schema_params and p_key not in params_ignore:
                 if (
                     self.no_prompts
                     or self.schema_from_scratch

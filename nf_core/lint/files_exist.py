@@ -1,14 +1,13 @@
 #!/usr/bin/env python
 
 import os
-import yaml
 
 
 def files_exist(self):
     """Checks a given pipeline directory for required files.
 
-    Iterates through the pipeline's directory content and checkmarks files
-    for presence.
+    Iterates through the pipeline's directory content and checks that specified
+    files are either present or absent, as required.
 
     .. note::
         This test raises an ``AssertionError`` if neither ``nextflow.config`` or ``main.nf`` are found.
@@ -20,6 +19,7 @@ def files_exist(self):
         'nextflow.config',
         'nextflow_schema.json',
         ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
+        'CODE_OF_CONDUCT.md',
         'README.md',
         'CHANGELOG.md',
         'docs/README.md',
@@ -27,7 +27,9 @@ def files_exist(self):
         'docs/usage.md',
         '.github/workflows/branch.yml',
         '.github/workflows/ci.yml',
-        '.github/workflows/linting.yml'
+        '.github/workflows/linting.yml',
+        'lib/NfcoreSchema.groovy',
+        'lib/nfcore_external_java_deps.jar'
 
     Files that *should* be present::
 
@@ -43,6 +45,7 @@ def files_exist(self):
         'Singularity',
         'parameters.settings.json',
         'bin/markdown_to_html.r',
+        'conf/aws.config',
         '.github/workflows/push_dockerhub.yml'
 
     Files that *should not* be present::
@@ -61,6 +64,7 @@ def files_exist(self):
         ["nextflow.config"],
         ["nextflow_schema.json"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
+        ["CODE_OF_CONDUCT.md"],
         ["README.md"],
         ["CHANGELOG.md"],
         [os.path.join("docs", "README.md")],
@@ -69,6 +73,8 @@ def files_exist(self):
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
         [os.path.join(".github", "workflows", "linting.yml")],
+        [os.path.join("lib", "NfcoreSchema.groovy")],
+        [os.path.join("lib", "nfcore_external_java_deps.jar")],
     ]
     files_warn = [
         ["main.nf"],
@@ -84,6 +90,7 @@ def files_exist(self):
         "Singularity",
         "parameters.settings.json",
         os.path.join("bin", "markdown_to_html.r"),
+        os.path.join("conf", "aws.config"),
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
     ]
     files_warn_ifexists = [".travis.yml"]
