@@ -52,6 +52,7 @@
 * Fixed bug in schema title and description validation
 * Added second progress bar for conda dependencies lint check, as it can be slow [[#299](https://github.com/nf-core/tools/issues/299)]
 * Added new lint test to check files that should be unchanged from the pipeline.
+* Added the possibility to ignore lint tests using a `nf-core-lint.yml` config file [[#809](https://github.com/nf-core/tools/pull/809)]
 
 ## [v1.12.1 - Silver Dolphin](https://github.com/nf-core/tools/releases/tag/1.12.1) - [2020-12-03]
 
