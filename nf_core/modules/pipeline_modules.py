@@ -36,12 +36,6 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-class ModuleLintException(Exception):
-    """Exception raised when there was an error with module linting"""
-
-    pass
-
-
 class ModulesRepo(object):
     """
     An object to store details about the repository being used for modules.

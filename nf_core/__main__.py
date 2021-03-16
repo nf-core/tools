@@ -490,7 +490,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
-@modules.command(help_priority=6)
+@modules.command(help_priority=7)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
 @click.argument(
