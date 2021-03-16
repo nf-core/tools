@@ -21,6 +21,8 @@
 * The parameters `--max_memory` and `--max_time` are now validated against a regular expression [[#793](https://github.com/nf-core/tools/issues/793)]
   * Must be written in the format `123.GB` / `456.h` with any of the prefixes listed in the [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#memory)
   * Bare numbers no longer allowed, avoiding people from trying to specify GB and actually specifying bytes.
+* Switched from cookiecutter to Jinja2 [[#880]](https://github.com/nf-core/tools/pull/880)
+
 
 ### Modules
 
@@ -28,6 +30,7 @@
 * added `nf-core modules create-test-yml` command which runs the test for a new module and automatically
   creates the `test.yml` for with md5 sums, tags, commands and names added
 * added `nf-core modules create` command to generate a new module from the module template
+* added questionary autocomplete functionality to `nf-core modules install`
 
 ### Tools helper code
 
