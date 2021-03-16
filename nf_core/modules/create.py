@@ -211,7 +211,7 @@ class ModuleCreate(object):
         Create new module files with Jinja2.
         """
         # Run jinja2 for each file in the template folder
-        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "module-template"))
+        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "module-template"), keep_trailing_newline=True)
         for template_fn, dest_fn in self.file_paths.items():
             log.debug(f"Rendering template file: '{template_fn}'")
             j_template = env.get_template(template_fn)
