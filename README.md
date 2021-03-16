@@ -859,7 +859,7 @@ nf-core modules install .
 
 ### modules create
 
-When writing a new module, it is best to start from the nf-core module template, which contains extensive `TODO` messages to make it easier for you to follow nf-core guidelines. You can create a new module using `nf-core modules create <directory>`, where `<directory>` can be either a clone of nf-core/modules or a nf-core pipeline repo. The `nf-core modules create` command will prompt you with the relevant questions in order to create all of necessary module files.
+When writing a new module, it is best to start from the nf-core module template which contains extensive `TODO` messages to make it easier for you to follow nf-core guidelines. You can create a new module using `nf-core modules create <directory>`, where `<directory>` can either be a clone of nf-core/modules or an nf-core pipeline repo. The `nf-core modules create` command will prompt you with the relevant questions in order to create all of the necessary module files.
 
 ```console
 nf-core modules create .
