@@ -24,7 +24,7 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_fn=None, json_fn=None):
+def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, fail_ignored=False, md_fn=None, json_fn=None):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -39,7 +39,7 @@ def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, fail_ignored)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -114,7 +114,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_schema_validation import actions_schema_validation
     from .merge_markers import merge_markers
 
-    def __init__(self, wf_path, release_mode=False, fix=()):
+    def __init__(self, wf_path, release_mode=False, fix=(), fail_ignored=False):
         """ Initialise linting object """
 
         # Initialise the parent object
@@ -122,6 +122,7 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         self.lint_config = {}
         self.release_mode = release_mode
+        self.fail_ignored = fail_ignored
         self.failed = []
         self.ignored = []
         self.fixed = []
@@ -242,7 +243,10 @@ class PipelineLint(nf_core.utils.Pipeline):
                 for test in test_results.get("passed", []):
                     self.passed.append((test_name, test))
                 for test in test_results.get("ignored", []):
-                    self.ignored.append((test_name, test))
+                    if self.fail_ignored:
+                        self.failed.append((test_name, test))
+                    else:
+                        self.ignored.append((test_name, test))
                 for test in test_results.get("fixed", []):
                     self.fixed.append((test_name, test))
                 for test in test_results.get("warned", []):

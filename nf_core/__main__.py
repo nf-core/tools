@@ -306,9 +306,10 @@ def create(name, description, author, version, no_git, force, outdir):
     "-f", "--fix", type=str, metavar="<test>", multiple=True, help="Attempt to automatically fix specified lint test"
 )
 @click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
+@click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(pipeline_dir, release, fix, show_passed, markdown, json):
+def lint(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -319,7 +320,7 @@ def lint(pipeline_dir, release, fix, show_passed, markdown, json):
 
     # Run the lint tests!
     try:
-        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, markdown, json)
+        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json)
         if len(lint_obj.failed) > 0:
             sys.exit(1)
     except AssertionError as e:
