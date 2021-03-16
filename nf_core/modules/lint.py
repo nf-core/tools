@@ -326,11 +326,10 @@ class ModuleLint(object):
                 )
 
                 for f in files_to_check:
-                    # open local copy - add a warning if not found (somewhat redundant because that's already checked)
+                    # open local copy, continue if file not found (a failed message has already been issued in this case)
                     try:
                         local_copy = open(os.path.join(mod.module_dir, f), "r").read()
                     except FileNotFoundError as e:
-                        self.warned.append(f"The module {mod.module_name} has no {f} file!")
                         continue
 
                     # Download remote copy and compare
@@ -368,6 +367,7 @@ class NFCoreModule(object):
         self.failed = []
         self.inputs = []
         self.outputs = []
+        self.has_meta = False
 
         if nf_core_module:
             # Initialize the important files
@@ -533,13 +533,14 @@ class NFCoreModule(object):
         if self.check_process_section(process_lines):
             self.passed.append("Matching container versions in {}".format(self.main_nf))
         else:
-            self.failed.append("Container versions are not matching: {}".format(self.main_nf))
+            self.warned.append("Container versions are not matching: {}".format(self.main_nf))
 
         # Check the script definition
         self.check_script_section(script_lines)
 
         # Check whether 'meta' is emitted when given as input
         if "meta" in inputs:
+            self.has_meta = True
             if "meta" in outputs:
                 self.passed.append("'meta' emitted in {}".format(self.main_nf))
             else:
@@ -556,7 +557,7 @@ class NFCoreModule(object):
         if "version" in outputs:
             self.passed.append("Module emits software version: {}".format(self.main_nf))
         else:
-            self.failed.append("Module doesn't emit  software version {}".format(self.main_nf))
+            self.warned.append("Module doesn't emit  software version {}".format(self.main_nf))
 
         return inputs, outputs
 
@@ -571,13 +572,14 @@ class NFCoreModule(object):
         if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
             self.passed.append("Software version specified in script section: {}".format(self.main_nf))
         else:
-            self.failed.append("Software version not specified in script section: {}".format(self.main_nf))
+            self.warned.append("Software version not specified in script section: {}".format(self.main_nf))
 
-        # check for prefix
-        if re.search("\s*def\s*prefix\s*=\s*options.suffix", script):
-            self.passed.append("prefix specified in script section: {}".format(self.main_nf))
-        else:
-            self.failed.append("prefix not specified in script section: {}".format(self.main_nf))
+        # check for prefix (only if module has a meta map as input)
+        if self.has_meta:
+            if re.search("\s*prefix\s*=\s*options.suffix", script):
+                self.passed.append("prefix specified in script section: {}".format(self.main_nf))
+            else:
+                self.failed.append("prefix not specified in script section: {}".format(self.main_nf))
 
     def check_process_section(self, lines):
         """
@@ -637,7 +639,7 @@ class NFCoreModule(object):
             else:
                 # Check that required version is available at all
                 if bioconda_version not in response.get("versions"):
-                    self.failed.append("Conda dep had unknown version: {}".format(bp))
+                    self.failed.append("Conda dep had unknown version: {} in {}".format(bp, self.main_nf))
                     continue  # No need to test for latest version, continue linting
                 # Check version is latest available
                 last_ver = response.get("latest_version")
