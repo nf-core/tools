@@ -817,7 +817,7 @@ INFO     Successfully synchronised [n] pipelines
 ### modules list
 
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
-`nf-core modules list`, which will print all avilable modules to the terminal.
+`nf-core modules list`, which will print all available modules to the terminal.
 
 ```console
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
