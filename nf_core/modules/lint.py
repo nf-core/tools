@@ -346,7 +346,9 @@ class ModuleLint(object):
 
                             if local_copy != remote_copy:
                                 all_modules_up_to_date = False
-                                self.warned.append(f"Local copy of module not up to date: {local_copy}")
+                                self.warned.append(
+                                    f"Local copy of module not up to date: {os.path.join(mod.module_dir, f)}"
+                                )
                         except UnicodeDecodeError as e:
                             self.warned.append(f"Could not decode file from {url}. Skipping comparison ({e})")
 
