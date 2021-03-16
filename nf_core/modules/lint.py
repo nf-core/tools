@@ -376,6 +376,8 @@ class NFCoreModule(object):
             self.function_nf = os.path.join(self.module_dir, "functions.nf")
             self.software = self.module_dir.split("software" + os.sep)[1]
             self.test_dir = os.path.join(self.base_dir, "tests", "software", self.software)
+            self.test_yml = os.path.join(self.test_dir, "test.yml")
+            self.test_main_nf = os.path.join(self.test_dir, "main.nf")
             self.module_name = module_dir.split("software" + os.sep)[1]
 
     def lint(self):
@@ -413,18 +415,17 @@ class NFCoreModule(object):
         # Lint the test main.nf file
         test_main_nf = os.path.join(self.test_dir, "main.nf")
         if os.path.exists(test_main_nf):
-            self.passed.append("test main.nf exists for {}".format(self.software))
+            self.passed.append("test main.nf exists: {}".format(self.test_main_nf))
         else:
-            self.failed.append("test main.nf doesn't exist for {}".format(self.software))
+            self.failed.append("test main.nf doesn't exist: {}".format(self.test_main_nf))
 
         # Lint the test.yml file
-        test_yml_file = os.path.join(self.test_dir, "test.yml")
         try:
-            with open(test_yml_file, "r") as fh:
+            with open(self.test_yml, "r") as fh:
                 test_yml = yaml.safe_load(fh)
-            self.passed.append("test.yml exists for {}".format(self.software))
+            self.passed.append("test.yml exists: {}".format(self.test_yml))
         except FileNotFoundError:
-            self.failed.append("test.yml doesn't exist for {}".format(self.software))
+            self.failed.append("test.yml doesn't exist: {}".format(self.test_yml))
 
     def lint_meta_yml(self):
         """ Lint a meta yml file """
@@ -434,7 +435,7 @@ class NFCoreModule(object):
                 meta_yaml = yaml.safe_load(fh)
             self.passed.append("meta.yml exists {}".format(self.meta_yml))
         except FileNotFoundError:
-            self.failed.append("meta.yml doesn't exist for {} ({})".format(self.module_name, self.meta_yml))
+            self.failed.append("meta.yml doesn't exist for {}: {}".format(self.module_name, self.meta_yml))
             return
 
         # Confirm that all required keys are given
@@ -455,16 +456,16 @@ class NFCoreModule(object):
             meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
             for input in self.inputs:
                 if input in meta_input:
-                    self.passed.append("{} specified for {}".format(input, self.module_name))
+                    self.passed.append("{} specified in {}".format(input, self.meta_yml))
                 else:
-                    self.failed.append("{} missing in meta.yml for {}".format(input, self.module_name))
+                    self.failed.append("{} missing in meta.yml in {}".format(input, self.meta_yml))
 
             meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
             for output in self.outputs:
                 if output in meta_output:
-                    self.passed.append("{} specified for {}".format(output, self.module_name))
+                    self.passed.append("{} specified in {}".format(output, self.meta_yml))
                 else:
-                    self.failed.append("{} missing in meta.yml for {}".format(output, self.module_name))
+                    self.failed.append("{} missing in {}".format(output, self.meta_yml))
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == self.process_name:
@@ -547,11 +548,9 @@ class NFCoreModule(object):
             # if meta is specified, it should also be used as 'saveAs ... publishId:meta.id'
             save_as = [pl for pl in process_lines if "saveAs" in pl]
             if len(save_as) > 0 and re.search("\s*publish_id\s*:\s*meta.id", save_as[0]):
-                self.passed.append("'meta.id' used in saveAs function for {}".format(self.module_name))
+                self.passed.append("'meta.id' used in saveAs function for {}".format(self.main_nf))
             else:
-                self.failed.append(
-                    "'meta.id' specified but not used in saveAs function for {}".format(self.module_name)
-                )
+                self.failed.append("'meta.id' specified but not used in saveAs function for {}".format(self.main_nf))
 
         # Check that a software version is emitted
         if "version" in outputs:
@@ -570,15 +569,15 @@ class NFCoreModule(object):
 
         # check for software
         if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
-            self.passed.append("Software version specified in script section: {}".format(self.module_name))
+            self.passed.append("Software version specified in script section: {}".format(self.main_nf))
         else:
-            self.failed.append("Software version not specified in script section: {}".format(self.module_name))
+            self.failed.append("Software version not specified in script section: {}".format(self.main_nf))
 
         # check for prefix
         if re.search("\s*def\s*prefix\s*=\s*options.suffix", script):
-            self.passed.append("prefix specified in script section: {}".format(self.module_name))
+            self.passed.append("prefix specified in script section: {}".format(self.main_nf))
         else:
-            self.failed.append("prefix not specified in script section: {}".format(self.module_name))
+            self.failed.append("prefix not specified in script section: {}".format(self.main_nf))
 
     def check_process_section(self, lines):
         """
@@ -596,9 +595,9 @@ class NFCoreModule(object):
         # Process name should be all capital letters
         self.process_name = lines[0].split()[1]
         if all([x.upper() for x in self.process_name]):
-            self.passed.append("Process name is in capital letters: {}".format(self.module_name))
+            self.passed.append("Process name is in capital letters: {}".format(self.main_nf))
         else:
-            self.failed.append("Process name is not in captial letters: {}".format(self.module_name))
+            self.failed.append("Process name is not in captial letters: {}".format(self.main_nf))
 
         # Check that process labels are correct
         correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
@@ -610,9 +609,9 @@ class NFCoreModule(object):
                     "Process label ({}) is not among standard labels: {}".format(process_label, correct_process_labels)
                 )
             else:
-                self.passed.append("Correct process label for {}".format(self.module_name))
+                self.passed.append("Correct process label for {}".format(self.main_nf))
         else:
-            self.warned.append("No process label specified for {}".format(self.module_name))
+            self.warned.append("No process label specified for {}".format(self.main_nf))
 
         for l in lines:
             if re.search("bioconda::", l):
@@ -644,7 +643,7 @@ class NFCoreModule(object):
                 last_ver = response.get("latest_version")
                 if last_ver is not None and last_ver != bioconda_version:
                     self.warned.append(
-                        "Bioconda version outdated: `{}`, `{}` available ({})".format(bp, last_ver, self.module_name)
+                        "Bioconda version outdated: `{}`, `{}` available, in {}".format(bp, last_ver, self.main_nf)
                     )
                 else:
                     self.passed.append("Bioconda package is the latest available: `{}`".format(bp))
