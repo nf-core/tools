@@ -493,12 +493,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @modules.command(help_priority=7)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
-@click.argument(
-    "tool",
-    type=str,
-    required=False,
-    metavar="<tool name>",
-)
+@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 @click.option("--local", is_flag=True, help="Additional lint local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 def lint(ctx, pipeline_dir, tool, local, passed):
