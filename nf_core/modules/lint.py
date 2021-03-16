@@ -252,7 +252,7 @@ class ModuleLint(object):
             string for the terminal with appropriate ASCII colours.
             """
             for msg in test_results:
-                table.add_row(Markdown("Module lint: {}".format(msg)))
+                table.add_row(Markdown(f"{msg}"))
             return table
 
         def _s(some_list):
@@ -337,14 +337,16 @@ class ModuleLint(object):
                     r = requests.get(url=url)
 
                     if r.status_code != 200:
-                        self.warned.append(f"Could not fetch remote copy of {mod.module_name}. Skipping comparison.")
+                        self.warned.append(
+                            f"Could not fetch remote copy of {os.path.join(mod.module_dir, f)}. Skipping comparison."
+                        )
                     else:
                         try:
                             remote_copy = r.content.decode("ascii")
 
                             if local_copy != remote_copy:
                                 all_modules_up_to_date = False
-                                self.failed.append(f"Your local copy of {mod.module_name} is not up to date!")
+                                self.failed.append(f"Local copy not up to date: {local_copy}")
                         except UnicodeDecodeError as e:
                             self.warned.append(f"Could not decode file from {url}. Skipping comparison ({e})")
 
@@ -407,9 +409,9 @@ class NFCoreModule(object):
         """ Lint module tests """
 
         if os.path.exists(self.test_dir):
-            self.passed.append("Test directory exsists for {}".format(self.software))
+            self.passed.append("Test directory exsists: {}".format(self.test_dir))
         else:
-            self.failed.append("Test directory is missing for {}: {}".format(self.software, self.test_dir))
+            self.failed.append("Test directory is missing {}".format(self.test_dir))
             return
 
         # Lint the test main.nf file
@@ -435,7 +437,7 @@ class NFCoreModule(object):
                 meta_yaml = yaml.safe_load(fh)
             self.passed.append("meta.yml exists {}".format(self.meta_yml))
         except FileNotFoundError:
-            self.failed.append("meta.yml doesn't exist for {}: {}".format(self.module_name, self.meta_yml))
+            self.failed.append("meta.yml doesn't exist {}".format(self.meta_yml))
             return
 
         # Confirm that all required keys are given
@@ -449,7 +451,7 @@ class NFCoreModule(object):
                 self.failed.append(f"{rk} doesn't have a list as child in {self.meta_yml}.")
                 all_list_children = False
         if contains_required_keys:
-            self.passed.append("{} contains all required keys".format(self.meta_yml))
+            self.passed.append("meta.yml contains all required keys: {}".format(self.meta_yml))
 
         # Confirm that all input and output channels are specified
         if contains_required_keys and all_list_children:
@@ -458,20 +460,20 @@ class NFCoreModule(object):
                 if input in meta_input:
                     self.passed.append("{} specified in {}".format(input, self.meta_yml))
                 else:
-                    self.failed.append("{} missing in meta.yml in {}".format(input, self.meta_yml))
+                    self.failed.append("{} missing in meta.yml: {}".format(input, self.meta_yml))
 
             meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
             for output in self.outputs:
                 if output in meta_output:
                     self.passed.append("{} specified in {}".format(output, self.meta_yml))
                 else:
-                    self.failed.append("{} missing in {}".format(output, self.meta_yml))
+                    self.failed.append("{} missing in meta.yml: {}".format(output, self.meta_yml))
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == self.process_name:
-            self.passed.append("Correct name specified in meta.yml: ".format(self.meta_yml))
+            self.passed.append("Correct name specified in meta.yml: {}".format(self.meta_yml))
         else:
-            self.failed.append("Name in meta.yml doesn't match process name in main.nf: ".format(self.meta_yml))
+            self.failed.append("Name in meta.yml doesn't match process name in main.nf: {}".format(self.meta_yml))
 
     def lint_main_nf(self):
         """
@@ -608,7 +610,9 @@ class NFCoreModule(object):
             process_label = process_label[0].split()[1].strip().strip("'").strip('"')
             if not process_label in correct_process_labels:
                 self.warned.append(
-                    "Process label ({}) is not among standard labels: {}".format(process_label, correct_process_labels)
+                    "Process label ({}) is not among standard labels: {}, {}".format(
+                        process_label, correct_process_labels, self.main_nf
+                    )
                 )
             else:
                 self.passed.append("Correct process label for {}".format(self.main_nf))
