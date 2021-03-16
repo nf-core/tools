@@ -377,7 +377,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_ignored_count = ""
         test_ignored = ""
         if len(self.ignored) > 0:
-            test_ignored_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.ignored))
+            test_ignored_count = "\n#| ❔ {:3d} tests were ignored |#".format(len(self.ignored))
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -428,39 +428,26 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         now = datetime.datetime.now()
 
+        comment_body_text = "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else ""
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         markdown = textwrap.dedent(
-            """
-        #### `nf-core lint` overall result: {}
+            f"""
+        #### `nf-core lint` overall result: {overall_result}
 
-        {}
+        {comment_body_text}
 
-        ```diff{}{}{}{}{}
+        ```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}
         ```
 
         <details>
 
-        {}{}{}{}{}### Run details:
+        {test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details:
 
-        * nf-core/tools version {}
-        * Run at `{}`
+        * nf-core/tools version {nf_core.__version__}
+        * Run at `{timestamp}`
 
         </details>
         """
-        ).format(
-            overall_result,
-            "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
-            test_passed_count,
-            test_ignored_count,
-            test_fixed_count,
-            test_warning_count,
-            test_failure_count,
-            test_failures,
-            test_warnings,
-            test_ignored,
-            test_fixed,
-            test_passes,
-            nf_core.__version__,
-            now.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         return markdown
