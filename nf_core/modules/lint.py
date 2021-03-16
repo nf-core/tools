@@ -342,7 +342,7 @@ class ModuleLint(object):
                         )
                     else:
                         try:
-                            remote_copy = r.content.decode("ascii")
+                            remote_copy = r.content.decode("utf-8")
 
                             if local_copy != remote_copy:
                                 all_modules_up_to_date = False
