@@ -79,7 +79,9 @@ class PipelineCreate(object):
             os.makedirs(self.outdir)
 
         # Run jinja2 for each file in the template folder
-        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True)
+        env = jinja2.Environment(
+            loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
+        )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
         copy_ftypes = ["image", "application/java-archive"]
         object_attrs = vars(self)

@@ -287,7 +287,9 @@ class PipelineSchema(object):
         """ Make a new pipeline schema from the template """
         self.schema_from_scratch = True
         # Use Jinja to render the template schema file to a variable
-        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True)
+        env = jinja2.Environment(
+            loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
+        )
         schema_template = env.get_template("nextflow_schema.json")
         template_vars = {
             "name": self.pipeline_manifest.get("name", os.path.dirname(self.schema_filename)).strip("'"),
