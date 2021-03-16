@@ -29,7 +29,6 @@ A python package with helper tools for the nf-core community.
   * [`modules install` - Install a module from nf-core/modules](#modules-install)
   * [`modules create` - Create a module from the template](#modules-create)
   * [`modules create-test-yml` - Create the `test.yml` file for a module](#modules-create-test-yml)
-  * [`modules lint` - Lint modules](#modules-lint)
   
 * [Citation](#citation)
 
@@ -830,9 +829,9 @@ To list all modules available on [nf-core/modules](https://github.com/nf-core/mo
 │ bcftools/merge                 │
 │ bcftools/mpileup               │
 │ bcftools/stats                 │
-.
-.
-.
+.                                .
+.                                .
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
 ```
 
 ### modules install
@@ -898,35 +897,6 @@ nf-core modules create-test-yml
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses                               test_yml_builder.py:51
 ? Tool name: star/align
-                  star/align           
-                  star/genomegenerate
-```
-
-### modules lint
-
-The `nf-core modules lint` cpommand allows you to lint modules in a clone of the [nf-core/modules](https://github.com/nf-core/modules) repository or in a nf-core pipeline.  The command for linting is `nf-core modules lint <directory> <module>`, where `<module>` can be omitted, in which case all modules are linted.
-
-```console
-nf-core modules lint modules fastqc
-
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 1.13
-
-
-
-╭──────────────────────╮
-│ LINT RESULTS SUMMARY │
-├──────────────────────┤
-│ [✔]  24 Tests Passed │
-│ [!]   0 Test Warning │
-│ [✗]   0 Test Failed  │
-╰──────────────────────╯
-
 ```
 
 ## Citation
@@ -938,4 +908,3 @@ If you use `nf-core tools` in your work, please cite the `nf-core` publication a
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
-> ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)
