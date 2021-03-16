@@ -347,7 +347,7 @@ class ModuleLint(object):
                             if local_copy != remote_copy:
                                 all_modules_up_to_date = False
                                 self.warned.append(
-                                    f"Local copy of module not up to date: {os.path.join(mod.module_dir, f)}"
+                                    f"Local copy of module outdated: {os.path.join(mod.module_dir, f)}"
                                 )
                         except UnicodeDecodeError as e:
                             self.warned.append(f"Could not decode file from {url}. Skipping comparison ({e})")
@@ -411,9 +411,9 @@ class NFCoreModule(object):
         """ Lint module tests """
 
         if os.path.exists(self.test_dir):
-            self.passed.append("Test directory exsists: {}".format(self.test_dir))
+            self.passed.append("Test directory exists: {}".format(self.test_dir))
         else:
-            self.failed.append("Test directory is missing {}".format(self.test_dir))
+            self.failed.append("Test directory missing {}".format(self.test_dir))
             return
 
         # Lint the test main.nf file
