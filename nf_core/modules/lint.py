@@ -240,6 +240,11 @@ class ModuleLint(object):
         log.debug("Printing final results")
         console = Console(force_terminal=rich_force_colors())
 
+        # Sort results for nicer printing
+        self.passed = sorted(self.passed)
+        self.warned = sorted(self.warned)
+        self.failed = sorted(self.failed)
+
         # Helper function to format test links nicely
         def format_result(test_results, table):
             """
