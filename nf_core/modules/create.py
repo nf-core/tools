@@ -162,7 +162,7 @@ class ModuleCreate(object):
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
-                "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/%7B%7Bcookiecutter.name_noslash%7D%7D/conf/base.config#L29]nf-core pipeline template[/link].\n"
+                "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/conf/base.config#L29]nf-core pipeline template[/link].\n"
                 "For example: 'process_low', 'process_medium', 'process_high', 'process_long'"
             )
         while self.process_label is None:
@@ -208,12 +208,10 @@ class ModuleCreate(object):
 
     def render_template(self):
         """
-        Create new module files with cookiecutter in a temporyary directory.
-
-        Returns: Path to generated files.
+        Create new module files with Jinja2.
         """
         # Run jinja2 for each file in the template folder
-        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "module-template"))
+        env = jinja2.Environment(loader=jinja2.PackageLoader("nf_core", "module-template"), keep_trailing_newline=True)
         for template_fn, dest_fn in self.file_paths.items():
             log.debug(f"Rendering template file: '{template_fn}'")
             j_template = env.get_template(template_fn)
@@ -247,7 +245,7 @@ class ModuleCreate(object):
     def get_module_dirs(self):
         """Given a directory and a tool/subtool, set the file paths and check if they already exist
 
-        Returns dict: keys are file paths in cookiecutter output, vals are target paths.
+        Returns dict: keys are relative paths to template files, vals are target paths.
         """
 
         file_paths = {}
@@ -272,7 +270,7 @@ class ModuleCreate(object):
             if os.path.exists(test_dir) and not self.force_overwrite:
                 raise UserWarning(f"Module test directory exists: '{test_dir}'. Use '--force' to overwrite")
 
-            # Set file paths - can be tool/ or tool/subtool/ so can't do in cookiecutter template
+            # Set file paths - can be tool/ or tool/subtool/ so can't do in template directory structure
             file_paths[os.path.join("software", "functions.nf")] = os.path.join(software_dir, "functions.nf")
             file_paths[os.path.join("software", "main.nf")] = os.path.join(software_dir, "main.nf")
             file_paths[os.path.join("software", "meta.yml")] = os.path.join(software_dir, "meta.yml")

@@ -219,7 +219,7 @@ class PipelineSync(object):
         nf_core.create.PipelineCreate(
             name=self.wf_config["manifest.name"].strip('"').strip("'"),
             description=self.wf_config["manifest.description"].strip('"').strip("'"),
-            new_version=self.wf_config["manifest.version"].strip('"').strip("'"),
+            version=self.wf_config["manifest.version"].strip('"').strip("'"),
             no_git=True,
             force=True,
             outdir=self.pipeline_dir,

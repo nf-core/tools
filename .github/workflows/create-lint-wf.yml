@@ -39,6 +39,7 @@ jobs:
           nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
 
       - name: Upload log file artifact
+        if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
           name: nf-core-log-file

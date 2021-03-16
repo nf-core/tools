@@ -19,7 +19,7 @@ class TestModules(unittest.TestCase):
         """ Create a new PipelineSchema and Launch objects """
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template", "{{cookiecutter.name_noslash}}")
+        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "mypipeline")
         shutil.copytree(self.template_dir, self.pipeline_dir)
         self.mods = nf_core.modules.PipelineModules()

@@ -277,18 +277,18 @@ def validate_wf_name_prompt(ctx, opts, value):
 )
 @click.option("-d", "--description", prompt=True, required=True, type=str, help="A short description of your pipeline")
 @click.option("-a", "--author", prompt=True, required=True, type=str, help="Name of the main author(s)")
-@click.option("--new-version", type=str, default="1.0dev", help="The initial version number to use")
+@click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
 @click.option("--no-git", is_flag=True, default=False, help="Do not initialise pipeline as new git repository")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
 @click.option("-o", "--outdir", type=str, help="Output directory for new pipeline (default: pipeline name)")
-def create(name, description, author, new_version, no_git, force, outdir):
+def create(name, description, author, version, no_git, force, outdir):
     """
     Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and bfest-practices.
     """
-    create_obj = nf_core.create.PipelineCreate(name, description, author, new_version, no_git, force, outdir)
+    create_obj = nf_core.create.PipelineCreate(name, description, author, version, no_git, force, outdir)
     create_obj.init_pipeline()
 
 
