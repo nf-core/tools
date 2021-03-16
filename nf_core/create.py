@@ -88,11 +88,15 @@ class PipelineCreate(object):
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
         template_files = list(pathlib.Path(template_dir).glob("**/*"))
         template_files += list(pathlib.Path(template_dir).glob("*"))
+        ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
 
         for template_fn_path_obj in template_files:
 
             template_fn_path = str(template_fn_path_obj)
             if os.path.isdir(template_fn_path):
+                continue
+            if any([s in template_fn_path for s in ignore_strs]):
+                log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
                 continue
 
             # Set up vars and directories
