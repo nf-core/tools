@@ -892,7 +892,7 @@ nf-core modules create-test-yml
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13.dev0
+    nf-core/tools version 1.13
 
 
 
