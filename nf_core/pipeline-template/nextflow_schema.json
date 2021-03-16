@@ -227,6 +227,12 @@
                     "hidden": true,
                     "fa_icon": "fas fa-users-cog"
                 },
+                "config_profile_name": {
+                    "type": "string",
+                    "description": "Institutional config name.",
+                    "hidden": true,
+                    "fa_icon": "fas fa-users-cog"
+                },
                 "config_profile_description": {
                     "type": "string",
                     "description": "Institutional config description.",
