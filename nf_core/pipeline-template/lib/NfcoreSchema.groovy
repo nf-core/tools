@@ -121,6 +121,31 @@ class NfcoreSchema {
         // Validate parameters against the schema
         InputStream inputStream = new File(jsonSchema).newInputStream()
         JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream))
+
+        // Remove anything that's in params.schema_ignore_params
+        params.schema_ignore_params.split(',').each{ ignore_param ->
+            println("Try to remove $ignore_param")
+            if(rawSchema.keySet().contains('definitions')){
+                rawSchema.definitions.each { definition ->
+                    // if(definition.keySet().contains('properties') && definition.properties.containsKey(ignore_param)) {
+                    println(definition.keySet())
+                    if(definition.keySet().contains('properties')) {
+                        println("HEEERE")
+//                        definition['properties'].remove(ignore_param)
+                    }
+//                    if(definition.containsKey('required') && definition['required'].contains(ignore_param)) {
+//                        definition['required'].removeElement(ignore_param)
+//                    }
+                }
+            }
+            if(rawSchema.keySet().contains('properties') && rawSchema.properties.containsKey(ignore_param)) {
+                rawSchema.properties.remove(ignore_param)
+            }
+            if(rawSchema.keySet().contains('required') && rawSchema.required.contains(ignore_param)) {
+                rawSchema.required.removeElement(ignore_param)
+            }
+        }
+
         Schema schema = SchemaLoader.load(rawSchema)
 
         // Clean the parameters
