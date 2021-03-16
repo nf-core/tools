@@ -189,14 +189,13 @@ class NfcoreSchema {
         }
     }
 
+    // Remove an element from a JSONArray
     private static JSONArray removeElement(jsonArray, element){
         def list = []  
         int len = jsonArray.length()
-  
         for (int i=0;i<len;i++){ 
             list.add(jsonArray.get(i).toString())
         } 
-        
         list.remove(element)
         JSONArray jsArray = new JSONArray(list)
         return jsArray
@@ -209,7 +208,9 @@ class NfcoreSchema {
                 rawSchema.definitions.each { definition ->
                     for (key in definition.keySet()){
                         if (definition[key].get("properties").keySet().contains(ignore_param)){
+                            // Remove the param to ignore
                             definition[key].get("properties").remove(ignore_param)
+                            // If the param was required, change this
                             if (definition[key].has("required")) {
                                 def cleaned_required = removeElement(definition[key].required, ignore_param)
                                 definition[key].put("required", cleaned_required) 
@@ -223,7 +224,7 @@ class NfcoreSchema {
             }
             if(rawSchema.keySet().contains('required') && rawSchema.required.contains(ignore_param)) {
                 def cleaned_required = removeElement(rawSchema.required, ignore_param)
-                rawSchema.pupt("required", cleaned_required)
+                rawSchema.put("required", cleaned_required)
             }
         }
         return rawSchema
