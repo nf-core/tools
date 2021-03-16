@@ -25,21 +25,21 @@ class PipelineCreate(object):
         name (str): Name for the pipeline.
         description (str): Description for the pipeline.
         author (str): Authors name of the pipeline.
-        new_version (str): Version flag. Semantic versioning only. Defaults to `1.0dev`.
+        version (str): Version flag. Semantic versioning only. Defaults to `1.0dev`.
         no_git (bool): Prevents the creation of a local Git repository for the pipeline. Defaults to False.
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
             May the force be with you.
         outdir (str): Path to the local output directory.
     """
 
-    def __init__(self, name, description, author, new_version="1.0dev", no_git=False, force=False, outdir=None):
+    def __init__(self, name, description, author, version="1.0dev", no_git=False, force=False, outdir=None):
         self.short_name = name.lower().replace(r"/\s+/", "-").replace("nf-core/", "").replace("/", "-")
         self.name = f"nf-core/{self.short_name}"
         self.name_noslash = self.name.replace("/", "-")
         self.name_docker = self.name.replace("nf-core", "nfcore")
         self.description = description
         self.author = author
-        self.new_version = new_version
+        self.version = version
         self.no_git = no_git
         self.force = force
         self.outdir = outdir
