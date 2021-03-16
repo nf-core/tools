@@ -9,15 +9,15 @@ Please use the pre-filled template to save time.
 However, don't be put off by this template - other more general issues and suggestions are welcome!
 Contributions to the code are even more welcome ;)
 
-> If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](<https://nfcore.slack.com/channels/>{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+> If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Contribution workflow
 
 If you'd like to write some code for {{ name }}, the standard workflow is as follows:
 
-1. Check that there isn't already an issue about your idea in the [{{ name }} issues](<https://github.com/>{{ name }}/issues) to avoid duplicating work
+1. Check that there isn't already an issue about your idea in the [{{ name }} issues](https://github.com/{{ name }}/issues) to avoid duplicating work
     * If there isn't one already, please create one so that others know you're working on this
-2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ name }} repository](<https://github.com/>{{ name }}) to your GitHub account
+2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ name }} repository](https://github.com/{{ name }}) to your GitHub account
 3. Make the necessary changes / additions within your forked repository following [Pipeline conventions](#pipeline-contribution-conventions)
 4. Use `nf-core schema build .` and add any new parameters to the pipeline JSON schema (requires [nf-core tools](https://github.com/nf-core/tools) >= 1.10).
 5. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged
@@ -55,7 +55,7 @@ These tests are run both with the latest available version of `Nextflow` and als
 
 ## Getting help
 
-For further information/help, please consult the [{{ name }} documentation](<https://nf-co.re/>{{ short_name }}/usage) and don't hesitate to get in touch on the nf-core Slack [#{{ short_name }}](<https://nfcore.slack.com/channels/>{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+For further information/help, please consult the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) and don't hesitate to get in touch on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
 
 ## Pipeline contribution conventions
 
