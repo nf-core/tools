@@ -853,8 +853,8 @@ nf-core modules install .
 
 
 ? Tool name: star/align
-                  star/align           
-                  star/genomegenerate  
+             star/align           
+             star/genomegenerate  
 ```
 
 ### modules create
