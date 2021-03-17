@@ -1,0 +1,29 @@
+name: nf-core Docker push (release)
+# This builds the docker image and pushes it to DockerHub
+# Runs on nf-core repo releases and push event to 'dev' branch (PR merges)
+on:
+  release:
+    types: [published]
+
+jobs:
+  push_dockerhub:
+    name: Push new Docker image to Docker Hub (release)
+    runs-on: ubuntu-latest
+    # Only run for the nf-core repo, for releases and merged PRs
+    if: {% raw %}${{{% endraw %} github.repository == '{{ name }}' {% raw %}}}{% endraw %}
+    env:
+      DOCKERHUB_USERNAME: {% raw %}${{ secrets.DOCKERHUB_USERNAME }}{% endraw %}
+      DOCKERHUB_PASS: {% raw %}${{ secrets.DOCKERHUB_PASS }}{% endraw %}
+    steps:
+      - name: Check out pipeline code
+        uses: actions/checkout@v2
+
+      - name: Build new docker image
+        run: docker build --no-cache . -t {{ name_docker }}:latest
+
+      - name: Push Docker image to DockerHub (release)
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push {{ name_docker }}:latest
+          docker tag {{ name_docker }}:latest {{ name_docker }}:{% raw %}${{ github.event.release.tag_name }}{% endraw %}
+          docker push {{ name_docker }}:{% raw %}${{ github.event.release.tag_name }}{% endraw %}

@@ -24,7 +24,11 @@ A python package with helper tools for the nf-core community.
 * [`nf-core schema` - Work with pipeline schema files](#working-with-pipeline-schema)
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
-* [`nf-core modules` - List, install, remove, create and lint module](#modules)
+* [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
+  * [`modules list` - List available modules](#modules-list)
+  * [`modules install` - Install a module from nf-core/modules](#modules-install)
+  * [`modules create` - Create a module from the template](#modules-create)
+  * [`modules create-test-yml` - Create the `test.yml` file for a module](#modules-create-test-yml)
 * [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -808,14 +812,33 @@ INFO     Successfully synchronised [n] pipelines
 
 ## Modules
 
-The [nf-core/modules](https://github.com/nf-core/modules) repository was created to help building DSL2 pipelines by offering a repository of ready-to-use code modules. The `nf-core modules` helper tool allows to list, install or remove modules from the [nf-core/modules](https://github.com/nf-core/modules) repository. It can also help you to create new modules from a template, and lint existing ones to make sure they are build according to the [nf-core/modules](https://github.com/nf-core/modules) guidelines.
+### modules list
 
-To list all available modules, use `nf-core modules list`. To install a module in a DSL2 pipeline, you can run the command `nf-core modules install <pipeline_dir> <module_name>`. Removing a module works similarly: `nf-core modules remove <pipeline_dir> <module_name>`.
-
-You can also lint a clone of the [nf-core/modules](https://github.com/nf-core/modules), which we recommend when you want to add new modules there. The command for linting is `nf-core modules lint <directory> <module>`, where `<module>` can be omitted, in which case all modules are linted.
+To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
+`nf-core modules list`, which will print all available modules to the terminal.
 
 ```console
-nf-core modules lint modules fastqc
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ Module Name                    ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+│ bandage/image                  │
+│ bcftools/consensus             │
+│ bcftools/filter                │
+│ bcftools/isec                  │
+│ bcftools/merge                 │
+│ bcftools/mpileup               │
+│ bcftools/stats                 │
+.                                .
+.                                .
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
+```
+
+### modules install
+
+You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install <pipeline_dir>`. A module installed this way will be installed to the `<pipeline_dir>/modules/nf-core/software` directory. Below is an example where we install the `star/align` module.
+
+```console
+nf-core modules install .
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -827,17 +850,53 @@ nf-core modules lint modules fastqc
 
 
 
-╭──────────────────────╮
-│ LINT RESULTS SUMMARY │
-├──────────────────────┤
-│ [✔]  24 Tests Passed │
-│ [!]   0 Test Warning │
-│ [✗]   0 Test Failed  │
-╰──────────────────────╯
-
+? Tool name: star/align
+             star/align           
+             star/genomegenerate  
 ```
 
-This command can also be used for DSL2 pipelines. When additonal using the `--local` flag, warnings for your local modules are printed out as well.
+### modules create
+
+When writing a new module, it is best to start from the nf-core module template which contains extensive `TODO` messages to make it easier for you to follow nf-core guidelines. You can create a new module using `nf-core modules create <directory>`, where `<directory>` can either be a clone of nf-core/modules or an nf-core pipeline repo. The `nf-core modules create` command will prompt you with the relevant questions in order to create all of the necessary module files.
+
+```console
+nf-core modules create .
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 1.13
+
+
+
+INFO     Press enter to use default values (shown in brackets) or type your own responses. ctrl+click underlined text to open     create.py:75
+         links.                                                                                                                               
+Name of tool/subtool: mytool/mysubtool
+```
+
+### modules create-test-yml
+
+All modules on [nf-core/modules](https://github.com/nf-core/modules) have a strict requirement of being unit tested using minimal test data. To help developers build new modules, the `nf-core modules create-test-yml` command automates the creation of the yaml file required to document the output file `md5sum` and other information generated by the testing. After you have written a minimal Nextflow script to test your module `modules/tests/software/<tool>/<subtool>/main.nf`, this command will run the tests for you and create the `modules/tests/software/<tool>/<subtool>/test.yml` file.
+
+```console
+nf-core modules create-test-yml         
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 1.13
+
+
+
+INFO     Press enter to use default values (shown in brackets) or type your own responses                               test_yml_builder.py:51
+? Tool name: star/align
+```
 
 ## Citation
 
@@ -848,4 +907,3 @@ If you use `nf-core tools` in your work, please cite the `nf-core` publication a
 > Philip Ewels, Alexander Peltzer, Sven Fillinger, Harshil Patel, Johannes Alneberg, Andreas Wilm, Maxime Ulysse Garcia, Paolo Di Tommaso & Sven Nahnsen.
 >
 > _Nat Biotechnol._ 2020 Feb 13. doi: [10.1038/s41587-020-0439-x](https://dx.doi.org/10.1038/s41587-020-0439-x).
-> ReadCube: [Full Access Link](https://rdcu.be/b1GjZ)

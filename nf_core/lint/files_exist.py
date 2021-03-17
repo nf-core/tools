@@ -16,20 +16,37 @@ def files_exist(self):
 
     Files that **must** be present::
 
-        'nextflow.config',
-        'nextflow_schema.json',
-        ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
-        'CODE_OF_CONDUCT.md',
-        'README.md',
-        'CHANGELOG.md',
-        'docs/README.md',
-        'docs/output.md',
-        'docs/usage.md',
-        '.github/workflows/branch.yml',
-        '.github/workflows/ci.yml',
-        '.github/workflows/linting.yml',
-        'lib/NfcoreSchema.groovy',
-        'lib/nfcore_external_java_deps.jar'
+        .gitattributes
+        .github/.dockstore.yml
+        .github/CONTRIBUTING.md
+        .github/ISSUE_TEMPLATE/bug_report.md
+        .github/ISSUE_TEMPLATE/config.yml
+        .github/ISSUE_TEMPLATE/feature_request.md
+        .github/markdownlint.yml
+        .github/PULL_REQUEST_TEMPLATE.md
+        .github/workflows/branch.yml
+        .github/workflows/ci.yml
+        .github/workflows/linting_comment.yml
+        .github/workflows/linting.yml
+        [LICENSE, LICENSE.md, LICENCE, LICENCE.md]  # NB: British / American spelling
+        assets/email_template.html
+        assets/email_template.txt
+        assets/nf-core-PIPELINE_logo.png
+        assets/sendmail_template.txt
+        bin/markdown_to_html.py
+        CHANGELOG.md
+        CODE_OF_CONDUCT.md
+        CODE_OF_CONDUCT.md
+        docs/images/nf-core-PIPELINE_logo.png
+        docs/output.md
+        docs/README.md
+        docs/README.md
+        docs/usage.md
+        lib/nfcore_external_java_deps.jar
+        lib/NfcoreSchema.groovy
+        nextflow_schema.json
+        nextflow.config
+        README.md
 
     Files that *should* be present::
 
@@ -60,21 +77,39 @@ def files_exist(self):
 
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
+    short_name = self.nf_config["manifest.name"].strip("\"'").replace("nf-core/", "")
     files_fail = [
-        ["nextflow.config"],
-        ["nextflow_schema.json"],
-        ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
-        ["CODE_OF_CONDUCT.md"],
-        ["README.md"],
+        [".gitattributes"],
         ["CHANGELOG.md"],
-        [os.path.join("docs", "README.md")],
-        [os.path.join("docs", "output.md")],
-        [os.path.join("docs", "usage.md")],
+        ["CODE_OF_CONDUCT.md"],
+        ["CODE_OF_CONDUCT.md"],
+        ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
+        ["nextflow_schema.json"],
+        ["nextflow.config"],
+        ["README.md"],
+        [os.path.join(".github", ".dockstore.yml")],
+        [os.path.join(".github", "CONTRIBUTING.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
+        [os.path.join(".github", "markdownlint.yml")],
+        [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
+        [os.path.join(".github", "workflows", "linting_comment.yml")],
         [os.path.join(".github", "workflows", "linting.yml")],
-        [os.path.join("lib", "NfcoreSchema.groovy")],
+        [os.path.join("assets", "email_template.html")],
+        [os.path.join("assets", "email_template.txt")],
+        [os.path.join("assets", "sendmail_template.txt")],
+        [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
+        [os.path.join("bin", "markdown_to_html.py")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
+        [os.path.join("docs", "output.md")],
+        [os.path.join("docs", "README.md")],
+        [os.path.join("docs", "README.md")],
+        [os.path.join("docs", "usage.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
+        [os.path.join("lib", "NfcoreSchema.groovy")],
     ]
     files_warn = [
         ["main.nf"],

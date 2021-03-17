@@ -18,36 +18,35 @@ def files_unchanged(self):
 
     Files that must be unchanged::
 
-        'CODE_OF_CONDUCT.md',
-        ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
         '.gitattributes',
         '.github/.dockstore.yml',
         '.github/CONTRIBUTING.md',
-        '.github/PULL_REQUEST_TEMPLATE.md',
-        '.github/markdownlint.yml',
         '.github/ISSUE_TEMPLATE/bug_report.md',
         '.github/ISSUE_TEMPLATE/config.yml',
         '.github/ISSUE_TEMPLATE/feature_request.md',
+        '.github/markdownlint.yml',
+        '.github/PULL_REQUEST_TEMPLATE.md',
         '.github/workflows/branch.yml',
-        '.github/workflows/linting.yml',
         '.github/workflows/linting_comment.yml',
+        '.github/workflows/linting.yml',
         'assets/email_template.html',
         'assets/email_template.txt',
-        'assets/nf-core-test_logo.png',
+        'assets/nf-core-PIPELINE_logo.png',
         'assets/sendmail_template.txt',
         'bin/markdown_to_html.py',
-        'conf/charliecloud.config',
-        'docs/README.md',
+        'CODE_OF_CONDUCT.md',
         'docs/images/nf-core-PIPELINE_logo.png',
-        'lib/NfcoreSchema.groovy',
+        'docs/README.md',
         'lib/nfcore_external_java_deps.jar'
+        'lib/NfcoreSchema.groovy',
+        ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
 
     Files that can have additional content but must include the template contents::
 
-        '.gitignore',
-        'assets/multiqc_config.yaml',
         '.github/workflows/push_dockerhub_dev.yml',
         '.github/workflows/push_dockerhub_release.yml',
+        '.gitignore',
+        'assets/multiqc_config.yaml',
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your linting config file. For example:
@@ -78,35 +77,34 @@ def files_unchanged(self):
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
     files_exact = [
+        [".gitattributes"],
         ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
-        [".gitattributes"],
         [os.path.join(".github", ".dockstore.yml")],
         [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
-        [os.path.join(".github", "markdownlint.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
+        [os.path.join(".github", "markdownlint.yml")],
+        [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
-        [os.path.join(".github", "workflows", "linting.yml")],
         [os.path.join(".github", "workflows", "linting_comment.yml")],
+        [os.path.join(".github", "workflows", "linting.yml")],
         [os.path.join("assets", "email_template.html")],
         [os.path.join("assets", "email_template.txt")],
-        [os.path.join("assets", "nf-core-test_logo.png")],
         [os.path.join("assets", "sendmail_template.txt")],
+        [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
         [os.path.join("bin", "markdown_to_html.py")],
-        [os.path.join("conf", "charliecloud.config")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
         [os.path.join("docs", "README.md")],
-        [os.path.join("docs", "images", "nf-core-{}_logo.png".format(short_name))],
-        [os.path.join("lib", "NfcoreSchema.groovy")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
+        [os.path.join("lib", "NfcoreSchema.groovy")],
     ]
     files_partial = [
         [".gitignore", "foo"],
-        [os.path.join("assets", "multiqc_config.yaml")],
         [os.path.join(".github", "workflows", "push_dockerhub_dev.yml")],
         [os.path.join(".github", "workflows", "push_dockerhub_release.yml")],
+        [os.path.join("assets", "multiqc_config.yaml")],
     ]
 
     # Only show error messages from pipeline creation

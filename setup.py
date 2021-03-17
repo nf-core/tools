@@ -32,7 +32,6 @@ setup(
     entry_points={"console_scripts": ["nf-core=nf_core.__main__:run_nf_core"]},
     install_requires=[
         "click",
-        "cookiecutter",
         "GitPython",
         "jinja2",
         "jsonschema",

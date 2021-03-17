@@ -24,7 +24,9 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_fn=None, json_fn=None):
+def run_linting(
+    pipeline_dir, release_mode=False, fix=(), show_passed=False, fail_ignored=False, md_fn=None, json_fn=None
+):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -39,7 +41,7 @@ def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, fail_ignored)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -108,13 +110,13 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .conda_dockerfile import conda_dockerfile
     from .pipeline_todos import pipeline_todos
     from .pipeline_name_conventions import pipeline_name_conventions
-    from .cookiecutter_strings import cookiecutter_strings
+    from .template_strings import template_strings
     from .schema_lint import schema_lint
     from .schema_params import schema_params
     from .actions_schema_validation import actions_schema_validation
     from .merge_markers import merge_markers
 
-    def __init__(self, wf_path, release_mode=False, fix=()):
+    def __init__(self, wf_path, release_mode=False, fix=(), fail_ignored=False):
         """ Initialise linting object """
 
         # Initialise the parent object
@@ -122,6 +124,7 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         self.lint_config = {}
         self.release_mode = release_mode
+        self.fail_ignored = fail_ignored
         self.failed = []
         self.ignored = []
         self.fixed = []
@@ -140,7 +143,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "conda_dockerfile",
             "pipeline_todos",
             "pipeline_name_conventions",
-            "cookiecutter_strings",
+            "template_strings",
             "schema_lint",
             "schema_params",
             "actions_schema_validation",
@@ -242,7 +245,10 @@ class PipelineLint(nf_core.utils.Pipeline):
                 for test in test_results.get("passed", []):
                     self.passed.append((test_name, test))
                 for test in test_results.get("ignored", []):
-                    self.ignored.append((test_name, test))
+                    if self.fail_ignored:
+                        self.failed.append((test_name, test))
+                    else:
+                        self.ignored.append((test_name, test))
                 for test in test_results.get("fixed", []):
                     self.fixed.append((test_name, test))
                 for test in test_results.get("warned", []):
@@ -371,7 +377,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_ignored_count = ""
         test_ignored = ""
         if len(self.ignored) > 0:
-            test_ignored_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.ignored))
+            test_ignored_count = "\n#| ❔ {:3d} tests were ignored |#".format(len(self.ignored))
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
@@ -422,39 +428,26 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         now = datetime.datetime.now()
 
+        comment_body_text = "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else ""
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         markdown = textwrap.dedent(
-            """
-        #### `nf-core lint` overall result: {}
+            f"""
+        #### `nf-core lint` overall result: {overall_result}
 
-        {}
+        {comment_body_text}
 
-        ```diff{}{}{}{}{}
+        ```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}
         ```
 
         <details>
 
-        {}{}{}{}{}### Run details:
+        {test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details:
 
-        * nf-core/tools version {}
-        * Run at `{}`
+        * nf-core/tools version {nf_core.__version__}
+        * Run at `{timestamp}`
 
         </details>
         """
-        ).format(
-            overall_result,
-            "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
-            test_passed_count,
-            test_ignored_count,
-            test_fixed_count,
-            test_warning_count,
-            test_failure_count,
-            test_failures,
-            test_warnings,
-            test_ignored,
-            test_fixed,
-            test_passes,
-            nf_core.__version__,
-            now.strftime("%Y-%m-%d %H:%M:%S"),
         )
 
         return markdown
