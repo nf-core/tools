@@ -249,7 +249,6 @@ class ModuleLint(object):
                     max_mod_name_len = max(len(mod.module_name), max_mod_name_len)
             except:
                 pass
-        max_mod_name_len += 15  # Found 15 by trial and error, don't really understand why we need to add so many chars?
 
         # Helper function to format test links nicely
         def format_result(test_results, table):
@@ -257,8 +256,23 @@ class ModuleLint(object):
             Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
             """
-            for mod, msg in test_results:
-                table.add_row(Markdown(f"{mod.module_name}"), Markdown(f"{msg}"))
+            # TODO: Row styles don't work current as table-level style overrides.
+            # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
+            last_modname = False
+            row_style = None
+            for mod, result in test_results:
+                if last_modname and mod.module_name != last_modname:
+                    if row_style:
+                        row_style = None
+                    else:
+                        row_style = "magenta"
+                last_modname = mod.module_name
+                table.add_row(
+                    Markdown(f"{mod.module_name}"),
+                    Markdown(f"{result[1]}"),
+                    os.path.relpath(result[2], self.dir),
+                    style=row_style,
+                )
             return table
 
         def _s(some_list):
@@ -269,24 +283,32 @@ class ModuleLint(object):
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
-            table.add_column("Module name", no_wrap=True, width=max_mod_name_len)
-            table.add_column(r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Test message")
+            table.add_column("File path")
+            # table.add_column(r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
             table = format_result(self.passed, table)
             console.print(table)
 
         # Table of warning tests
         if len(self.warned) > 0:
             table = Table(style="yellow", box=rich.box.ROUNDED)
-            table.add_column("Module name", no_wrap=True, width=max_mod_name_len)
-            table.add_column(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            # table.add_column("Module name", no_wrap=True, width=max_mod_name_len)
+            # table.add_column(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Test message")
+            table.add_column("File path")
             table = format_result(self.warned, table)
             console.print(table)
 
         # Table of failing tests
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
-            table.add_column("Module name", no_wrap=True, width=max_mod_name_len)
-            table.add_column(r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
+            # table.add_column("Module name", no_wrap=True, width=max_mod_name_len)
+            # table.add_column(r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Test message")
+            table.add_column("File path")
             table = format_result(self.failed, table)
             console.print(table)
 
@@ -412,25 +434,25 @@ class NFCoreModule(object):
         """ Lint module tests """
 
         if os.path.exists(self.test_dir):
-            self.passed.append("Test directory exists: `{}`".format(self.test_dir))
+            self.passed.append(("test_dir_exists", "Test directory exists", self.test_dir))
         else:
-            self.failed.append("Test directory missing `{}`".format(self.test_dir))
+            self.failed.append(("test_dir_exists", "Test directory is missing", self.test_dir))
             return
 
         # Lint the test main.nf file
         test_main_nf = os.path.join(self.test_dir, "main.nf")
         if os.path.exists(test_main_nf):
-            self.passed.append("test `main.nf` exists: `{}`".format(self.test_main_nf))
+            self.passed.append(("test_main_exists", "test `main.nf` exists", self.test_main_nf))
         else:
-            self.failed.append("test `main.nf` does not exist: `{}`".format(self.test_main_nf))
+            self.failed.append(("test_main_exists", "test `main.nf` does not exist", self.test_main_nf))
 
         # Lint the test.yml file
         try:
             with open(self.test_yml, "r") as fh:
                 test_yml = yaml.safe_load(fh)
-            self.passed.append("`test.yml` exists: `{}`".format(self.test_yml))
+            self.passed.append(("test_yml_exists", "Test `test.yml` exists", self.test_yml))
         except FileNotFoundError:
-            self.failed.append("`test.yml` does not exist: `{}`".format(self.test_yml))
+            self.failed.append(("test_yml_exists", "Test `test.yml` does not exist", self.test_yml))
 
     def lint_meta_yml(self):
         """ Lint a meta yml file """
@@ -438,9 +460,9 @@ class NFCoreModule(object):
         try:
             with open(self.meta_yml, "r") as fh:
                 meta_yaml = yaml.safe_load(fh)
-            self.passed.append("`meta.yml` exists: `{}`".format(self.meta_yml))
+            self.passed.append(("meta_yml_exists", "Module `meta.yml` exists", self.meta_yml))
         except FileNotFoundError:
-            self.failed.append("`meta.yml` does not exist: `{}`".format(self.meta_yml))
+            self.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", self.meta_yml))
             return
 
         # Confirm that all required keys are given
@@ -448,35 +470,37 @@ class NFCoreModule(object):
         all_list_children = True
         for rk in required_keys:
             if not rk in meta_yaml.keys():
-                self.failed.append(f"`{rk}` not specified in {self.meta_yml}")
+                self.failed.append(("meta_required_keys", f"`{rk}` not specified", self.meta_yml))
                 contains_required_keys = False
             elif not isinstance(meta_yaml[rk], list):
-                self.failed.append(f"`{rk}` does not have a list as child in {self.meta_yml}.")
+                self.failed.append(("meta_required_keys", f"`{rk}` is not a list", self.meta_yml))
                 all_list_children = False
         if contains_required_keys:
-            self.passed.append("`meta.yml` contains all required keys: `{}`".format(self.meta_yml))
+            self.passed.append(("meta_required_keys", "`meta.yml` contains all required keys", self.meta_yml))
 
         # Confirm that all input and output channels are specified
         if contains_required_keys and all_list_children:
             meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
             for input in self.inputs:
                 if input in meta_input:
-                    self.passed.append("`{}` specified in `{}`".format(input, self.meta_yml))
+                    self.passed.append(("meta_input", f"`{input}` specified", self.meta_yml))
                 else:
-                    self.failed.append("`{}` missing in `meta.yml`: `{}`".format(input, self.meta_yml))
+                    self.failed.append(("meta_input", f"`{input}` missing in `meta.yml`", self.meta_yml))
 
             meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
             for output in self.outputs:
                 if output in meta_output:
-                    self.passed.append("`{}` specified in `{}`".format(output, self.meta_yml))
+                    self.passed.append(("meta_output", "`{output}` specified", self.meta_yml))
                 else:
-                    self.failed.append("`{}` missing in meta.yml: `{}`".format(output, self.meta_yml))
+                    self.failed.append(("meta_output", "`{output}` missing in `meta.yml`", self.meta_yml))
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == self.process_name:
-            self.passed.append("Correct name specified in meta.yml: `{}`".format(self.meta_yml))
+            self.passed.append(("meta_name", "Correct name specified in `meta.yml`", self.meta_yml))
         else:
-            self.failed.append("Conflicting process name between meta.yml and main.nf: `{}`".format(self.meta_yml))
+            self.failed.append(
+                ("meta_name", "Conflicting process name between `meta.yml` and `main.nf`", self.meta_yml)
+            )
 
     def lint_main_nf(self):
         """
@@ -492,18 +516,18 @@ class NFCoreModule(object):
         try:
             with open(self.main_nf, "r") as fh:
                 lines = fh.readlines()
-            self.passed.append("Module file exists: {}".format(self.main_nf))
+            self.passed.append(("main_nf_exists", "Module file exists", self.main_nf))
         except FileNotFoundError as e:
-            self.failed.append("Module file does not exist: {}".format(self.main_nf))
+            self.failed.append(("main_nf_exists", "Module file does not exist", self.main_nf))
             return
 
         # Check that options are defined
         initoptions_re = re.compile(r"\s*options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
         paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
         if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
-            self.passed.append("'options' variable specified: `{}`".format(self.main_nf))
+            self.passed.append(("main_nf_options", "'options' variable specified", self.main_nf))
         else:
-            self.warned.append("'options' variable not specified: `{}`".format(self.main_nf))
+            self.warned.append(("main_nf_options", "'options' variable not specified", self.main_nf))
 
         # Go through module main.nf file and switch state according to current section
         # Perform section-specific linting
@@ -536,9 +560,9 @@ class NFCoreModule(object):
 
         # Check the process definitions
         if self.check_process_section(process_lines):
-            self.passed.append("Container versions match: `{}`".format(self.main_nf))
+            self.passed.append(("main_nf_container", "Container versions match", self.main_nf))
         else:
-            self.warned.append("Container versions do not match: `{}`".format(self.main_nf))
+            self.warned.append(("main_nf_container", "Container versions do not match", self.main_nf))
 
         # Check the script definition
         self.check_script_section(script_lines)
@@ -547,22 +571,22 @@ class NFCoreModule(object):
         if "meta" in inputs:
             self.has_meta = True
             if "meta" in outputs:
-                self.passed.append("'meta' map emitted in output channel(s): `{}`".format(self.main_nf))
+                self.passed.append(("main_nf_meta_output", "'meta' map emitted in output channel(s)", self.main_nf))
             else:
-                self.failed.append("'meta' map not emitted in output channel(s): `{}`".format(self.main_nf))
+                self.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", self.main_nf))
 
             # if meta is specified, it should also be used as 'saveAs ... publishId:meta.id'
             save_as = [pl for pl in process_lines if "saveAs" in pl]
             if len(save_as) > 0 and re.search("\s*publish_id\s*:\s*meta.id", save_as[0]):
-                self.passed.append("'meta.id' specified in saveAs function: `{}`".format(self.main_nf))
+                self.passed.append(("main_nf_meta_saveas", "'meta.id' specified in saveAs function", self.main_nf))
             else:
-                self.failed.append("'meta.id' unspecificed in saveAs function: `{}`".format(self.main_nf))
+                self.failed.append(("main_nf_meta_saveas", "'meta.id' unspecificed in saveAs function", self.main_nf))
 
         # Check that a software version is emitted
         if "version" in outputs:
-            self.passed.append("Module emits software version: `{}`".format(self.main_nf))
+            self.passed.append(("main_nf_version_emitted", "Module emits software version", self.main_nf))
         else:
-            self.warned.append("Module does not emit software version: `{}`".format(self.main_nf))
+            self.warned.append(("main_nf_version_emitted", "Module does not emit software version", self.main_nf))
 
         return inputs, outputs
 
@@ -575,16 +599,18 @@ class NFCoreModule(object):
 
         # check for software
         if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
-            self.passed.append("Software version specified in script section: `{}`".format(self.main_nf))
+            self.passed.append(("main_nf_version_script", "Software version specified in script section", self.main_nf))
         else:
-            self.warned.append("Software version unspecified in script section: `{}`".format(self.main_nf))
+            self.warned.append(
+                ("main_nf_version_script", "Software version unspecified in script section", self.main_nf)
+            )
 
         # check for prefix (only if module has a meta map as input)
         if self.has_meta:
             if re.search("\s*prefix\s*=\s*options.suffix", script):
-                self.passed.append("'prefix' specified in script section: `{}`".format(self.main_nf))
+                self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
             else:
-                self.failed.append("'prefix' unspecified in script section: `{}`".format(self.main_nf))
+                self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
 
     def check_process_section(self, lines):
         """
@@ -602,9 +628,9 @@ class NFCoreModule(object):
         # Process name should be all capital letters
         self.process_name = lines[0].split()[1]
         if all([x.upper() for x in self.process_name]):
-            self.passed.append("Process name is in capital letters: {}".format(self.main_nf))
+            self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
         else:
-            self.failed.append("Process name is not in captial letters: {}".format(self.main_nf))
+            self.failed.append(("process_capitals", "Process name is not in captial letters", self.main_nf))
 
         # Check that process labels are correct
         correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
@@ -613,14 +639,16 @@ class NFCoreModule(object):
             process_label = process_label[0].split()[1].strip().strip("'").strip('"')
             if not process_label in correct_process_labels:
                 self.warned.append(
-                    "Process label ({}) is not among standard labels: {}, {}".format(
-                        process_label, correct_process_labels, self.main_nf
+                    (
+                        "process_standard_label",
+                        f"Process label ({process_label}) is not among standard labels: `{'`,`'.join(correct_process_labels)}`",
+                        self.main_nf,
                     )
                 )
             else:
-                self.passed.append("Correct process label: {}".format(self.main_nf))
+                self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
         else:
-            self.warned.append("Process label unspecified: {}".format(self.main_nf))
+            self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
 
         for l in lines:
             if re.search("bioconda::", l):
@@ -646,14 +674,19 @@ class NFCoreModule(object):
             else:
                 # Check that required version is available at all
                 if bioconda_version not in response.get("versions"):
-                    self.failed.append("Conda package had unknown version - {}: {}".format(bp, self.main_nf))
+                    self.failed.append(("bioconda_version", "Conda package had unknown version: `{}`", self.main_nf))
                     continue  # No need to test for latest version, continue linting
                 # Check version is latest available
                 last_ver = response.get("latest_version")
                 if last_ver is not None and last_ver != bioconda_version:
-                    self.warned.append(f"Bioconda version outdated - `{bp}`; `{last_ver}` available")
+                    package, ver = bp.split("=", 1)
+                    self.warned.append(
+                        ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                    )
                 else:
-                    self.passed.append("Bioconda package is the latest available: `{}`".format(bp))
+                    self.passed.append(
+                        ("bioconda_latest", "Conda package is the latest available: `{bp}`", self.main_nf)
+                    )
 
         if docker_tag == singularity_tag:
             return True
@@ -668,9 +701,9 @@ class NFCoreModule(object):
         try:
             with open(self.function_nf, "r") as fh:
                 lines = fh.readlines()
-            self.passed.append("'functions.nf' exists: {}".format(self.function_nf))
+            self.passed.append(("functions_nf_exists", "'functions.nf' exists", self.function_nf))
         except FileNotFoundError as e:
-            self.failed.append("'functions.nf' does not exist: {}".format(self.function_nf))
+            self.failed.append(("functions_nf_exists", "'functions.nf' does not exist", self.function_nf))
             return
 
         # Test whether all required functions are present
@@ -679,10 +712,10 @@ class NFCoreModule(object):
         contains_all_functions = True
         for f in required_functions:
             if not "def " + f in lines:
-                self.failed.append("Function is missing - '{}': {}".format(f, self.function_nf))
+                self.failed.append(("functions_nf_func_exist", "Function is missing: `{f}`", self.function_nf))
                 contains_all_functions = False
         if contains_all_functions:
-            self.passed.append("All functions present: {}".format(self.function_nf))
+            self.passed.append(("functions_nf_func_exist", "All functions present", self.function_nf))
 
     def _parse_input(self, line):
         input = []
