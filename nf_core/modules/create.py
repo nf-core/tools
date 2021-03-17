@@ -159,7 +159,7 @@ class ModuleCreate(object):
                 default=author_default,
             )
 
-        process_label_defaults = ['process_low', 'process_medium', 'process_high', 'process_long']
+        process_label_defaults = ["process_low", "process_medium", "process_high", "process_long"]
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
@@ -171,7 +171,7 @@ class ModuleCreate(object):
                 "[violet]Process resource label:",
                 choices=process_label_defaults,
                 style=nf_core.utils.nfcore_question_style,
-                default="process_low"
+                default="process_low",
             ).ask()
 
         if self.has_meta is None:
