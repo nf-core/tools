@@ -498,11 +498,10 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("--passed", is_flag=True, help="Show passed tests")
 def lint(ctx, pipeline_dir, tool, local, passed):
     """
-    Lint all modules or a specified one in a pipeline directory.
+    Lint one or all modules in a directory.
 
-    Looks for important code that should be part of all modules used in nf-core,
-    e.g. specification of a Docker and Singularity container or
-    that the module emits a software version.
+    Check module code against nf-core guidelines to ensure
+    that all modules follow the same standards
     """
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
