@@ -11,9 +11,9 @@ import json
 import logging
 import nf_core
 import os
+import questionary
 import re
 import rich
-import shutil
 import subprocess
 import yaml
 
@@ -159,14 +159,20 @@ class ModuleCreate(object):
                 default=author_default,
             )
 
+        process_label_defaults = ["process_low", "process_medium", "process_high", "process_long"]
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
                 "[link=https://github.com/nf-core/tools/blob/master/nf_core/pipeline-template/conf/base.config#L29]nf-core pipeline template[/link].\n"
-                "For example: 'process_low', 'process_medium', 'process_high', 'process_long'"
+                "For example: {}".format(", ".join(process_label_defaults))
             )
         while self.process_label is None:
-            self.process_label = rich.prompt.Prompt.ask("[violet]Process label:", default="process_low")
+            self.process_label = questionary.autocomplete(
+                "[violet]Process resource label:",
+                choices=process_label_defaults,
+                style=nf_core.utils.nfcore_question_style,
+                default="process_low",
+            ).ask()
 
         if self.has_meta is None:
             log.info(
@@ -204,7 +210,9 @@ class ModuleCreate(object):
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open 'tests/config/pytest_software.yml' file!")
 
-        log.info("Created module files:\n  " + "\n  ".join(self.file_paths.values()))
+        new_files = list(self.file_paths.values())
+        new_files.append(os.path.join(self.directory, "tests", "config", "pytest_software.yml"))
+        log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
     def render_template(self):
         """
