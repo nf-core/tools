@@ -210,7 +210,9 @@ class ModuleCreate(object):
             except FileNotFoundError as e:
                 raise UserWarning(f"Could not open 'tests/config/pytest_software.yml' file!")
 
-        log.info("Created module files:\n  " + "\n  ".join(self.file_paths.values()))
+        new_files = list(self.file_paths.values())
+        new_files.append(os.path.join(self.directory, "tests", "config", "pytest_software.yml"))
+        log.info("Created module files:\n  " + "\n  ".join(new_files))
 
     def render_template(self):
         """
