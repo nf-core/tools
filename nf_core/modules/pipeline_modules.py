@@ -11,16 +11,24 @@ nf-core pipelines
 """
 
 from __future__ import print_function
-
 import base64
 import glob
 import json
 import logging
 import os
+import re
+import hashlib
 import questionary
 import requests
 import rich
 import shutil
+import yaml
+from rich.console import Console
+from rich.table import Table
+from rich.markdown import Markdown
+import rich
+from nf_core.utils import rich_force_colors
+from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
 
 import nf_core.utils

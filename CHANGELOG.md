@@ -27,6 +27,7 @@
 
 ### Modules
 
+* added `nf-core modules lint` command to enable linting of nf-core and local modules
 * added `nf-core modules remove` command to uninstall modules
 * added `nf-core modules create-test-yml` command which runs the test for a new module and automatically
   creates the `test.yml` for with md5 sums, tags, commands and names added

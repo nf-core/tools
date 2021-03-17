@@ -491,6 +491,31 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
+@modules.command(help_priority=7)
+@click.pass_context
+@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
+@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
+@click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
+@click.option("--passed", is_flag=True, help="Show passed tests")
+def lint(ctx, pipeline_dir, tool, all, local, passed):
+    """
+    Lint one or more modules in a directory.
+
+    Checks DSL2 module code against nf-core guidelines to ensure
+    that all modules follow the same standards.
+
+    Test modules within a pipeline or with your clone of the
+    nf-core/modules repository.
+    """
+    try:
+        module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
+        module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
+    except nf_core.modules.lint.ModuleLintException as e:
+        log.error(e)
+        sys.exit(1)
+
+
 ## nf-core schema subcommands
 @nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
 def schema():

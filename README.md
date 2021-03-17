@@ -29,7 +29,6 @@ A python package with helper tools for the nf-core community.
   * [`modules install` - Install a module from nf-core/modules](#modules-install)
   * [`modules create` - Create a module from the template](#modules-create)
   * [`modules create-test-yml` - Create the `test.yml` file for a module](#modules-create-test-yml)
-  
 * [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
