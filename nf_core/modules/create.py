@@ -198,7 +198,7 @@ class ModuleCreate(object):
                         f"software/{self.tool}/**",
                         f"tests/software/{self.tool}/**",
                     ]
-
+                pytest_software_yml = dict(sorted(pytest_software_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "w") as fh:
                     yaml.dump(pytest_software_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
