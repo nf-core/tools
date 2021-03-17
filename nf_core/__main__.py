@@ -495,9 +495,10 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
-def lint(ctx, pipeline_dir, tool, local, passed):
+def lint(ctx, pipeline_dir, tool, all, local, passed):
     """
     Lint one or more modules in a directory.
 
@@ -509,7 +510,7 @@ def lint(ctx, pipeline_dir, tool, local, passed):
     """
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
-        module_lint.lint(module=tool, print_results=True, local=local, show_passed=passed)
+        module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
     except nf_core.modules.lint.ModuleLintException as e:
         log.error(e)
         sys.exit(1)

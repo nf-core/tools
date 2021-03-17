@@ -10,6 +10,7 @@ nf-core modules lint
 from __future__ import print_function
 import logging
 import os
+import questionary
 import re
 import requests
 import rich
@@ -46,7 +47,7 @@ class ModuleLint(object):
         self.warned = []
         self.failed = []
 
-    def lint(self, module=None, print_results=True, show_passed=False, local=False):
+    def lint(self, module=None, all_modules=False, print_results=True, show_passed=False, local=False):
         """
         Lint all or one specific module
 
@@ -70,15 +71,32 @@ class ModuleLint(object):
         # Get list of all modules in a pipeline
         local_modules, nfcore_modules = self.get_installed_modules()
 
+        # Prompt for module or all
+        if module is None and not all_modules:
+            question = {
+                "type": "list",
+                "name": "all_modules",
+                "message": "Lint all modules or a single named module?",
+                "choices": ["All modules", "Named module"],
+            }
+            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
+            if answer["all_modules"] == "All modules":
+                all_modules = True
+            else:
+                module = questionary.autocomplete(
+                    "Tool name:",
+                    choices=[m.module_name for m in nfcore_modules],
+                    style=nf_core.utils.nfcore_question_style,
+                ).ask()
+
         # Only lint the given module
         if module:
+            if all_modules:
+                raise ModuleLintException("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            nfcore_modules_names = [m.module_name for m in nfcore_modules]
-            try:
-                idx = nfcore_modules_names.index(module)
-                nfcore_modules = [nfcore_modules[idx]]
-            except ValueError as e:
-                raise ModuleLintException("Could not find the specified module: {}".format(module))
+            nfcore_modules = [m for m in nfcore_modules if m.module_name == module]
+            if len(nfcore_modules) == 0:
+                raise ModuleLintException(f"Could not find the specified module: '{module}'")
 
         log.info(f"Linting pipeline: [magenta]{self.dir}")
         if module:
