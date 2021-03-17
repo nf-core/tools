@@ -212,7 +212,7 @@ class ModuleCreate(object):
 
         new_files = list(self.file_paths.values())
         new_files.append(os.path.join(self.directory, "tests", "config", "pytest_software.yml"))
-        log.info("Created module files:\n  " + "\n  ".join(new_files))
+        log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
     def render_template(self):
         """
