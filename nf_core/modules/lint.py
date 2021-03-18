@@ -470,8 +470,8 @@ class NFCoreModule(object):
         # Check for TODOs
         self.wf_path = self.module_dir
         module_todos = pipeline_todos(self)
-        for i in range(len(module_todos["warned"])):
-            self.warned.append(("module_todo", module_todos["warned"][i], module_todos["file_paths"][i]))
+        for i, warning in enumerate(module_todos["warned"]):
+            self.warned.append(("module_todo", warning, module_todos["file_paths"][i]))
 
         return self.passed, self.warned, self.failed
 
