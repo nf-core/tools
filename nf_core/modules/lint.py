@@ -381,7 +381,14 @@ class ModuleLint(object):
 
                     if r.status_code != 200:
                         self.warned.append(
-                            f"Could not fetch remote copy of {os.path.join(mod.module_dir, f)}. Skipping comparison."
+                            (
+                                mod,
+                                (
+                                    "check_local_copy",
+                                    f"Could not fetch remote copy, skippping comparison.",
+                                    f"{os.path.join(mod.module_dir, f)}",
+                                ),
+                            )
                         )
                     else:
                         try:
@@ -389,9 +396,27 @@ class ModuleLint(object):
 
                             if local_copy != remote_copy:
                                 all_modules_up_to_date = False
-                                self.warned.append(f"Local copy of module outdated: {os.path.join(mod.module_dir, f)}")
+                                self.warned.append(
+                                    (
+                                        mod,
+                                        (
+                                            "check_local_copy",
+                                            "Local copy of module outdated",
+                                            f"{os.path.join(mod.module_dir, f)}",
+                                        ),
+                                    )
+                                )
                         except UnicodeDecodeError as e:
-                            self.warned.append(f"Could not decode file from {url}. Skipping comparison ({e})")
+                            self.warned.append(
+                                (
+                                    mod,
+                                    (
+                                        "check_local_copy",
+                                        f"Could not decode file from {url}. Skipping comparison ({e})",
+                                        f"{os.path.join(mod.module_dir, f)}",
+                                    ),
+                                )
+                            )
 
         if all_modules_up_to_date:
             self.passed.append("All modules are up to date!")
