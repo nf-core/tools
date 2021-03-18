@@ -347,6 +347,8 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         # Overall header
         overall_result = "Passed :white_check_mark:"
+        if len(self.warned) > 0:
+            overall_result += " :warning:"
         if len(self.failed) > 0:
             overall_result = "Failed :x:"
 
