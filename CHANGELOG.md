@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v1.13 - Copper Crocodile](https://github.com/nf-core/tools/releases/tag/1.13) - [2021-03-16]
+## [v1.13 - Copper Crocodile](https://github.com/nf-core/tools/releases/tag/1.13) - [2021-03-18]
 
 ### Template
 
