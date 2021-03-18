@@ -385,7 +385,7 @@ class ModuleLint(object):
                                 mod,
                                 (
                                     "check_local_copy",
-                                    f"Could not fetch remote copy, skippping comparison.",
+                                    f"Could not fetch remote copy, skipping comparison.",
                                     f"{os.path.join(mod.module_dir, f)}",
                                 ),
                             )
