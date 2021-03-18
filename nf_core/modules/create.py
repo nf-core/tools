@@ -111,7 +111,6 @@ class ModuleCreate(object):
         if self.subtool:
             self.tool_name = f"{self.tool}_{self.subtool}"
             self.tool_dir = os.path.join(self.tool, self.subtool)
-            self.tool_test_name = f"{self.tool} {self.subtool}"
 
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
