@@ -42,11 +42,12 @@ def pipeline_todos(self):
         with io.open(os.path.join(self.wf_path, ".gitignore"), "rt", encoding="latin1") as fh:
             for l in fh:
                 ignore.append(os.path.basename(l.strip().rstrip("/")))
-    for root, dirs, files in os.walk(self.wf_path):
+    for root, dirs, files in os.walk(self.wf_path, topdown=True):
         # Ignore files
-        for i in ignore:
-            dirs = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
-            files = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
+        for i_base in ignore:
+            i = os.path.join(root, i_base)
+            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
+            files[:] = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
         for fname in files:
             try:
                 with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:

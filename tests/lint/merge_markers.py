@@ -21,4 +21,4 @@ def test_merge_markers_found(self):
     results = lint_obj.merge_markers()
     assert len(results["failed"]) > 0
     assert len(results["passed"]) == 0
-    assert "Merge marker in `main.nf`: >>>>>>>\n" == results["failed"][0]
+    assert "Merge marker '>>>>>>>' in " in results["failed"][0]

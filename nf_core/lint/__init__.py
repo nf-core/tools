@@ -275,7 +275,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             string for the terminal with appropriate ASCII colours.
             """
             for eid, msg in test_results:
-                table.add_row(Markdown("[{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg)))
+                table.add_row(Markdown("[{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html): {1}".format(eid, msg)))
             return table
 
         def _s(some_list):
@@ -332,7 +332,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(self.could_fix):
             fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
             console.print(
-                f"\nTip: Some of these linting errors can automatically resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+                f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
             )
         if len(self.fix):
             console.print(
@@ -359,7 +359,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.failed
                     ]
                 )
@@ -372,7 +374,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.ignored
                     ]
                 )
@@ -385,7 +389,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.fixed
                     ]
                 )
@@ -398,7 +404,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.warned
                     ]
                 )
@@ -411,7 +419,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.passed
                     ]
                 )

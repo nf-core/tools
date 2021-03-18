@@ -161,6 +161,8 @@ class PipelineModules(object):
 
         # No pipeline given - show all remote
         if self.pipeline_dir is None:
+            log.info(f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch}):\n")
+
             # Get the list of available modules
             self.modules_repo.get_modules_file_tree()
             modules = self.modules_repo.modules_avail_module_names
@@ -171,6 +173,8 @@ class PipelineModules(object):
 
         # We have a pipeline - list what's installed
         else:
+            log.info(f"Modules installed in '{self.pipeline_dir}':\n")
+
             # Check whether pipelines is valid
             try:
                 self.has_valid_pipeline()
@@ -185,7 +189,6 @@ class PipelineModules(object):
                 log.info(f"No nf-core modules found in '{self.pipeline_dir}'")
                 return ""
 
-        log.info("Modules available from {} ({}):\n".format(self.modules_repo.name, self.modules_repo.branch))
         for mod in sorted(modules):
             table.add_row(mod)
         if print_json:

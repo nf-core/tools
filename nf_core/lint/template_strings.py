@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import io
-import os
+import mimetypes
 import re
 
 
@@ -26,11 +26,18 @@ def template_strings(self):
     # Loop through files, searching for string
     num_matches = 0
     for fn in self.files:
+
+        # Skip binary files
+        binary_ftypes = ["image", "application/java-archive"]
+        (ftype, encoding) = mimetypes.guess_type(fn)
+        if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+            continue
+
         with io.open(fn, "r", encoding="latin1") as fh:
             lnum = 0
             for l in fh:
                 lnum += 1
-                cc_matches = re.findall(r"[^$]{{[^}]*}}", l)
+                cc_matches = re.findall(r"[^$]{{[^:}]*}}", l)
                 if len(cc_matches) > 0:
                     for cc_match in cc_matches:
                         failed.append("Found a Jinja template string in `{}` L{}: {}".format(fn, lnum, cc_match))
