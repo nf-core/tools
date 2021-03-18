@@ -341,7 +341,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(self.could_fix):
             fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
             console.print(
-                f"\nTip: Some of these linting errors can automatically resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+                f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
             )
         if len(self.fix):
             console.print(

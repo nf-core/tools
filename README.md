@@ -549,7 +549,7 @@ $ nf-core lint .
 │ [✗]   0 Tests Failed  │
 ╰───────────────────────╯
 
-Tip: Some of these linting errors can automatically resolved with the following command:
+Tip: Some of these linting errors can automatically be resolved with the following command:
 
     nf-core lint . --fix conda_env_yaml
 ```
