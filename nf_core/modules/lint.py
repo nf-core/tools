@@ -98,7 +98,10 @@ class ModuleLint(object):
             if len(nfcore_modules) == 0:
                 raise ModuleLintException(f"Could not find the specified module: '{module}'")
 
-        log.info(f"Linting pipeline: [magenta]{self.dir}")
+        if self.repo_type == "modules":
+            log.info(f"Linting modules repo: [magenta]{self.dir}")
+        else:
+            log.info(f"Linting pipeline: [magenta]{self.dir}")
         if module:
             log.info(f"Linting module: [magenta]{module}")
 
