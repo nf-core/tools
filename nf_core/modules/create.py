@@ -170,7 +170,7 @@ class ModuleCreate(object):
             )
         while self.process_label is None:
             self.process_label = questionary.autocomplete(
-                "[violet]Process resource label:",
+                "Process resource label:",
                 choices=process_label_defaults,
                 style=nf_core.utils.nfcore_question_style,
                 default="process_low",
