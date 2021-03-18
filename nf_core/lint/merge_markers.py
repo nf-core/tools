@@ -34,11 +34,11 @@ def merge_markers(self):
                 with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
                     for l in fh:
                         if ">>>>>>>" in l:
-                            failed.append(f"Merge marker in `{fname}`: {l}")
+                            failed.append(f"Merge marker in `{os.path.join(root, fname)}`: {l}")
                         if "<<<<<<<" in l:
-                            failed.append(f"Merge marker in `{fname}`: {l}")
+                            failed.append(f"Merge marker in `{os.path.join(root, fname)}`: {l}")
             except FileNotFoundError:
-                log.debug(f"Could not open file {fname} in merge_markers lint test")
+                log.debug(f"Could not open file {os.path.join(root, fname)} in merge_markers lint test")
     if len(failed) == 0:
         passed.append("No merge markers found in pipeline files")
     return {"passed": passed, "failed": failed}

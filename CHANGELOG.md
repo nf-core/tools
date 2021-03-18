@@ -27,12 +27,16 @@
 
 ### Modules
 
-* added `nf-core modules lint` command to enable linting of nf-core and local modules
-* added `nf-core modules remove` command to uninstall modules
-* added `nf-core modules create-test-yml` command which runs the test for a new module and automatically
-  creates the `test.yml` for with md5 sums, tags, commands and names added
-* added `nf-core modules create` command to generate a new module from the module template
-* added questionary autocomplete functionality to `nf-core modules install`
+Initial addition of a number of new helper commands for working with DSL2 modules:
+
+* `modules list` - List available modules
+* `modules install` - Install a module from nf-core/modules
+* `modules remove` - Remove a module from a pipeline
+* `modules create` - Create a module from the template
+* `modules create-test-yml` - Create the `test.yml` file for a module with md5 sums, tags, commands and names added
+* `modules lint` - Check a module against nf-core guidelines
+
+You can read more about each of these commands in the main tools documentation (see `README.md` or <https://nf-co.re/tools>)
 
 ### Tools helper code
 
@@ -47,6 +51,10 @@
 
 ### Linting
 
+* Major refactor and rewrite of pipieline linting code
+  * Much better code organisation and maintainability
+  * New automatically generated documentation using Sphinx
+  * Numerous new tests and functions, removal of some unnecessary tests
 * Added lint check for merge markers [[#321]](https://github.com/nf-core/tools/issues/321)
 * Added new option `--fix` to automatically correct some problems detected by linting
 * Added validation of default params to `nf-core schema lint` [[#823](https://github.com/nf-core/tools/issues/823)]
