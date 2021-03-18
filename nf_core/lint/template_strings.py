@@ -37,7 +37,7 @@ def template_strings(self):
             lnum = 0
             for l in fh:
                 lnum += 1
-                cc_matches = re.findall(r"[^$]{{[^}]*}}", l)
+                cc_matches = re.findall(r"[^$]{{[^:}]*}}", l)
                 if len(cc_matches) > 0:
                     for cc_match in cc_matches:
                         failed.append("Found a Jinja template string in `{}` L{}: {}".format(fn, lnum, cc_match))
