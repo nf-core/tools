@@ -523,7 +523,7 @@ $ nf-core lint .
 │ actions_awsfulltest: .github/workflows/awsfulltest.yml should test full datasets, not -profile test      │
 │ conda_env_yaml: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                            │
 │ conda_env_yaml: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╰──────────────────────────────────────────M────────────────────────────────────────────────────────────────╯
 ╭───────────────────────╮
 │ LINT RESULTS SUMMARY  │
 ├───────────────────────┤
@@ -532,9 +532,21 @@ $ nf-core lint .
 │ [!]   3 Test Warnings │
 │ [✗]   0 Tests Failed  │
 ╰───────────────────────╯
+
+Tip: Some of these linting errors can automatically resolved with the following command:
+
+    nf-core lint . --fix conda_env_yaml
 ```
 
 You can find extensive documentation about each of the lint tests in the [lint errors documentation](https://nf-co.re/errors).
+
+### Linting documentation
+
+Each test result name on the left is a terminal hyperlink.
+In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd>  ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
+links to open documentation specific to this test in your browser.
+
+Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find your test to read more.
 
 ### Linting config
 
