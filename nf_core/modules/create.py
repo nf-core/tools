@@ -107,7 +107,6 @@ class ModuleCreate(object):
         # Determine the tool name
         self.tool_name = self.tool
         self.tool_dir = self.tool
-        self.tool_test_name = self.tool
 
         if self.subtool:
             self.tool_name = f"{self.tool}_{self.subtool}"
