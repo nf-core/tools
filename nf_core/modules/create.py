@@ -108,7 +108,7 @@ class ModuleCreate(object):
         self.tool_name = self.tool
         self.tool_dir = self.tool
         self.tool_test_name = self.tool
-        
+
         if self.subtool:
             self.tool_name = f"{self.tool}_{self.subtool}"
             self.tool_dir = os.path.join(self.tool, self.subtool)
