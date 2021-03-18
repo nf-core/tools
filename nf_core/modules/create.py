@@ -213,7 +213,8 @@ class ModuleCreate(object):
                 raise UserWarning(f"Could not open 'tests/config/pytest_software.yml' file!")
 
         new_files = list(self.file_paths.values())
-        new_files.append(os.path.join(self.directory, "tests", "config", "pytest_software.yml"))
+        if self.repo_type == "modules":
+            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_software.yml"))
         log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
     def render_template(self):
