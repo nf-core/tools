@@ -69,21 +69,13 @@ def get_local_wf(workflow, revision=None):
 
     # Wasn't local, fetch it
     log.info("Downloading workflow: {} ({})".format(workflow, revision))
-    try:
-        with open(os.devnull, "w") as devnull:
-            cmd = ["nextflow", "pull", workflow]
-            if revision is not None:
-                cmd.extend(["-r", revision])
-            subprocess.check_output(cmd, stderr=devnull)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
-    except subprocess.CalledProcessError as e:
-        raise AssertionError("`nextflow pull` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
-    else:
-        local_wf = LocalWorkflow(workflow)
-        local_wf.get_local_nf_workflow_details()
-        return local_wf.local_path
+    pull_cmd = f"nextflow pull {workflow}"
+    if revision is not None:
+        pull_cmd += f"-r {revision}"
+    nf_pull_output = nf_core.utils.nextflow_cmd(pull_cmd)
+    local_wf = LocalWorkflow(workflow)
+    local_wf.get_local_nf_workflow_details()
+    return local_wf.local_path
 
 
 class Workflows(object):
@@ -141,22 +133,12 @@ class Workflows(object):
         # Fetch details about local cached pipelines with `nextflow list`
         else:
             log.debug("Getting list of local nextflow workflows")
-            try:
-                with open(os.devnull, "w") as devnull:
-                    nflist_raw = subprocess.check_output(["nextflow", "list"], stderr=devnull)
-            except OSError as e:
-                if e.errno == errno.ENOENT:
-                    raise AssertionError(
-                        "It looks like Nextflow is not installed. It is required for most nf-core functions."
-                    )
-            except subprocess.CalledProcessError as e:
-                raise AssertionError("`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
-            else:
-                for wf_name in nflist_raw.splitlines():
-                    if not str(wf_name).startswith("nf-core/"):
-                        self.local_unmatched.append(wf_name)
-                    else:
-                        self.local_workflows.append(LocalWorkflow(wf_name))
+            nflist_raw = nf_core.utils.nextflow_cmd("nextflow list")
+            for wf_name in nflist_raw.splitlines():
+                if not str(wf_name).startswith("nf-core/"):
+                    self.local_unmatched.append(wf_name)
+                else:
+                    self.local_workflows.append(LocalWorkflow(wf_name))
 
         # Find additional information about each workflow by checking its git history
         log.debug("Fetching extra info about {} local workflows".format(len(self.local_workflows)))
@@ -276,7 +258,6 @@ class Workflows(object):
                 table.add_row(*rowdata, style="dim")
             else:
                 table.add_row(*rowdata)
-        t_headers = ["Name", "Latest Release", "Released", "Last Pulled", "Have latest release?"]
 
         # Print summary table
         return table
@@ -360,25 +341,12 @@ class LocalWorkflow(object):
 
             # Use `nextflow info` to get more details about the workflow
             else:
-                try:
-                    with open(os.devnull, "w") as devnull:
-                        nfinfo_raw = subprocess.check_output(["nextflow", "info", "-d", self.full_name], stderr=devnull)
-                        nfinfo_raw = str(nfinfo_raw)
-                except OSError as e:
-                    if e.errno == errno.ENOENT:
-                        raise AssertionError(
-                            "It looks like Nextflow is not installed. It is required for most nf-core functions."
-                        )
-                except subprocess.CalledProcessError as e:
-                    raise AssertionError(
-                        "`nextflow list` returned non-zero error code: %s,\n   %s", e.returncode, e.output
-                    )
-                else:
-                    re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
-                    for key, pattern in re_patterns.items():
-                        m = re.search(pattern, nfinfo_raw)
-                        if m:
-                            setattr(self, key, m.group(1))
+                nfinfo_raw = str(nf_core.utils.nextflow_cmd(f"nextflow info -d {self.full_name}"))
+                re_patterns = {"repository": r"repository\s*: (.*)", "local_path": r"local path\s*: (.*)"}
+                for key, pattern in re_patterns.items():
+                    m = re.search(pattern, nfinfo_raw)
+                    if m:
+                        setattr(self, key, m.group(1))
 
         # Pull information from the local git repository
         if self.local_path is not None:

@@ -19,7 +19,7 @@ class TestLaunch(unittest.TestCase):
         """ Create a new PipelineSchema and Launch objects """
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template", "{{cookiecutter.name_noslash}}")
+        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.nf_params_fn = os.path.join(tempfile.mkdtemp(), "nf-params.json")
         self.launcher = nf_core.launch.Launch(self.template_dir, params_out=self.nf_params_fn)
 
@@ -100,7 +100,7 @@ class TestLaunch(unittest.TestCase):
             "default": "data/*{1,2}.fastq.gz",
         }
         result = self.launcher.single_param_to_questionary("input", sc_obj)
-        assert result == {"type": "input", "name": "input", "message": "input", "default": "data/*{1,2}.fastq.gz"}
+        assert result == {"type": "input", "name": "input", "message": "", "default": "data/*{1,2}.fastq.gz"}
 
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
@@ -207,7 +207,7 @@ class TestLaunch(unittest.TestCase):
         result = self.launcher.single_param_to_questionary("single_end", sc_obj)
         assert result["type"] == "list"
         assert result["name"] == "single_end"
-        assert result["message"] == "single_end"
+        assert result["message"] == ""
         assert result["choices"] == ["True", "False"]
         assert result["default"] == "True"
         print(type(True))

@@ -2,16 +2,16 @@
 """Creates a nf-core pipeline matching the current
 organization's specification based on a template.
 """
-import click
-import cookiecutter.main, cookiecutter.exceptions
+from genericpath import exists
 import git
+import jinja2
 import logging
+import mimetypes
 import os
+import pathlib
 import requests
 import shutil
 import sys
-import tempfile
-import textwrap
 
 import nf_core
 
@@ -25,21 +25,21 @@ class PipelineCreate(object):
         name (str): Name for the pipeline.
         description (str): Description for the pipeline.
         author (str): Authors name of the pipeline.
-        new_version (str): Version flag. Semantic versioning only. Defaults to `1.0dev`.
+        version (str): Version flag. Semantic versioning only. Defaults to `1.0dev`.
         no_git (bool): Prevents the creation of a local Git repository for the pipeline. Defaults to False.
         force (bool): Overwrites a given workflow directory with the same name. Defaults to False.
             May the force be with you.
         outdir (str): Path to the local output directory.
     """
 
-    def __init__(self, name, description, author, new_version="1.0dev", no_git=False, force=False, outdir=None):
+    def __init__(self, name, description, author, version="1.0dev", no_git=False, force=False, outdir=None):
         self.short_name = name.lower().replace(r"/\s+/", "-").replace("nf-core/", "").replace("/", "-")
-        self.name = "nf-core/{}".format(self.short_name)
+        self.name = f"nf-core/{self.short_name}"
         self.name_noslash = self.name.replace("/", "-")
         self.name_docker = self.name.replace("nf-core", "nfcore")
         self.description = description
         self.author = author
-        self.new_version = new_version
+        self.version = version
         self.no_git = no_git
         self.force = force
         self.outdir = outdir
@@ -47,13 +47,10 @@ class PipelineCreate(object):
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
     def init_pipeline(self):
-        """Creates the nf-core pipeline.
-
-        Launches cookiecutter, that will ask for required pipeline information.
-        """
+        """Creates the nf-core pipeline. """
 
         # Make the new pipeline
-        self.run_cookiecutter()
+        self.render_template()
 
         # Init the git repository and make the first commit
         if not self.no_git:
@@ -66,69 +63,87 @@ class PipelineCreate(object):
             + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
         )
 
-    def run_cookiecutter(self):
-        """Runs cookiecutter to create a new nf-core pipeline."""
-        log.info("Creating new nf-core pipeline: {}".format(self.name))
+    def render_template(self):
+        """Runs Jinja to create a new nf-core pipeline."""
+        log.info(f"Creating new nf-core pipeline: '{self.name}'")
 
         # Check if the output directory exists
         if os.path.exists(self.outdir):
             if self.force:
-                log.warning("Output directory '{}' exists - continuing as --force specified".format(self.outdir))
+                log.warning(f"Output directory '{self.outdir}' exists - continuing as --force specified")
             else:
-                log.error("Output directory '{}' exists!".format(self.outdir))
+                log.error(f"Output directory '{self.outdir}' exists!")
                 log.info("Use -f / --force to overwrite existing files")
                 sys.exit(1)
         else:
             os.makedirs(self.outdir)
 
-        # Build the template in a temporary directory
-        self.tmpdir = tempfile.mkdtemp()
-        template = os.path.join(os.path.dirname(os.path.realpath(nf_core.__file__)), "pipeline-template/")
-        cookiecutter.main.cookiecutter(
-            template,
-            extra_context={
-                "name": self.name,
-                "description": self.description,
-                "author": self.author,
-                "name_noslash": self.name_noslash,
-                "name_docker": self.name_docker,
-                "short_name": self.short_name,
-                "version": self.new_version,
-                "nf_core_version": nf_core.__version__,
-            },
-            no_input=True,
-            overwrite_if_exists=self.force,
-            output_dir=self.tmpdir,
+        # Run jinja2 for each file in the template folder
+        env = jinja2.Environment(
+            loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
+        template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
+        binary_ftypes = ["image", "application/java-archive"]
+        object_attrs = vars(self)
+        object_attrs["nf_core_version"] = nf_core.__version__
+
+        # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
+        template_files = list(pathlib.Path(template_dir).glob("**/*"))
+        template_files += list(pathlib.Path(template_dir).glob("*"))
+        ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
+
+        for template_fn_path_obj in template_files:
+
+            template_fn_path = str(template_fn_path_obj)
+            if os.path.isdir(template_fn_path):
+                continue
+            if any([s in template_fn_path for s in ignore_strs]):
+                log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
+                continue
+
+            # Set up vars and directories
+            template_fn = os.path.relpath(template_fn_path, template_dir)
+            output_path = os.path.join(self.outdir, template_fn)
+            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+
+            # Just copy binary files
+            (ftype, encoding) = mimetypes.guess_type(template_fn_path)
+            if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+                log.debug(f"Copying binary file: '{output_path}'")
+                shutil.copy(template_fn_path, output_path)
+                continue
+
+            # Render the template
+            log.debug(f"Rendering template file: '{template_fn}'")
+            j_template = env.get_template(template_fn)
+            rendered_output = j_template.render(object_attrs)
+
+            # Write to the pipeline output file
+            with open(output_path, "w") as fh:
+                log.debug(f"Writing to output file: '{output_path}'")
+                fh.write(rendered_output)
 
         # Make a logo and save it
         self.make_pipeline_logo()
 
-        # Move the template to the output directory
-        for f in os.listdir(os.path.join(self.tmpdir, self.name_noslash)):
-            shutil.move(os.path.join(self.tmpdir, self.name_noslash, f), self.outdir)
-
-        # Delete the temporary directory
-        shutil.rmtree(self.tmpdir)
-
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
 
-        logo_url = "https://nf-co.re/logo/{}".format(self.short_name)
-        log.debug("Fetching logo from {}".format(logo_url))
+        logo_url = f"https://nf-co.re/logo/{self.short_name}"
+        log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = "{}/{}/assets/{}_logo.png".format(self.tmpdir, self.name_noslash, self.name_noslash)
-        log.debug("Writing logo to {}".format(email_logo_path))
-        r = requests.get("{}?w=400".format(logo_url))
+        email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo.png"
+        os.makedirs(os.path.dirname(email_logo_path), exist_ok=True)
+        log.debug(f"Writing logo to '{email_logo_path}'")
+        r = requests.get(f"{logo_url}?w=400")
         with open(email_logo_path, "wb") as fh:
             fh.write(r.content)
 
-        readme_logo_path = "{}/{}/docs/images/{}_logo.png".format(self.tmpdir, self.name_noslash, self.name_noslash)
+        readme_logo_path = f"{self.outdir}/docs/images/{self.name_noslash}_logo.png"
 
-        log.debug("Writing logo to {}".format(readme_logo_path))
-        if not os.path.exists(os.path.dirname(readme_logo_path)):
-            os.makedirs(os.path.dirname(readme_logo_path))
-        r = requests.get("{}?w=600".format(logo_url))
+        log.debug(f"Writing logo to '{readme_logo_path}'")
+        os.makedirs(os.path.dirname(readme_logo_path), exist_ok=True)
+        r = requests.get(f"{logo_url}?w=600")
         with open(readme_logo_path, "wb") as fh:
             fh.write(r.content)
 
@@ -137,14 +152,14 @@ class PipelineCreate(object):
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
-        repo.index.commit("initial template build from nf-core/tools, version {}".format(nf_core.__version__))
+        repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         # Add TEMPLATE branch to git repository
         repo.git.branch("TEMPLATE")
         repo.git.branch("dev")
         log.info(
             "Done. Remember to add a remote and push to GitHub:\n"
-            + "[white on grey23] cd {} \n".format(self.outdir)
-            + " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
-            + " git push --all origin                                       "
+            f"[white on grey23] cd {self.outdir} \n"
+            " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
+            " git push --all origin                                       "
         )
         log.info("This will also push your newly created dev branch and the TEMPLATE branch for syncing.")
