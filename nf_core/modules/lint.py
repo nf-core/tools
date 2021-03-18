@@ -469,7 +469,9 @@ class NFCoreModule(object):
 
         # Check for TODOs
         self.wf_path = self.module_dir
-        self.warned += pipeline_todos(self)["warned"]
+        module_todos = pipeline_todos(self, return_file_paths=True)
+        for i in range(len(module_todos["warned"])):
+            self.warned.append(("module_todo", module_todos["warned"][i], module_todos["file_paths"][i]))
 
         return self.passed, self.warned, self.failed
 
@@ -499,7 +501,7 @@ class NFCoreModule(object):
 
     def lint_meta_yml(self):
         """ Lint a meta yml file """
-        required_keys = ["params", "input", "output"]
+        required_keys = ["input", "output"]
         try:
             with open(self.meta_yml, "r") as fh:
                 meta_yaml = yaml.safe_load(fh)

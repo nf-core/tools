@@ -8,7 +8,7 @@ import fnmatch
 log = logging.getLogger(__name__)
 
 
-def pipeline_todos(self):
+def pipeline_todos(self, return_file_paths=False):
     """Check for nf-core *TODO* lines.
 
     The nf-core workflow template contains a number of comment lines to help developers
@@ -35,6 +35,7 @@ def pipeline_todos(self):
     passed = []
     warned = []
     failed = []
+    file_paths = []
 
     ignore = [".git"]
     if os.path.isfile(os.path.join(self.wf_path, ".gitignore")):
@@ -60,6 +61,10 @@ def pipeline_todos(self):
                                 .strip()
                             )
                             warned.append("TODO string in `{}`: _{}_".format(fname, l))
+                            file_paths.append(os.path.join(root, fname))
             except FileNotFoundError:
                 log.debug(f"Could not open file {fname} in pipeline_todos lint test")
-    return {"passed": passed, "warned": warned, "failed": failed}
+    if return_file_paths:
+        return {"passed": passed, "warned": warned, "failed": failed, "file_paths": file_paths}
+    else:
+        return {"passed": passed, "warned": warned, "failed": failed}
