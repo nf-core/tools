@@ -4,7 +4,9 @@
   command: nextflow run ./tests/software/{{ tool_dir }} -entry test_{{ tool_name }} -c tests/config/nextflow.config
   tags:
     - {{ tool }}
+    {%- if subtool %}
     - {{ tool_name }}
+    {%- endif %}
   files:
     - path: output/{{ tool }}/test.bam
       md5sum: e667c7caad0bc4b7ac383fd023c654fc
