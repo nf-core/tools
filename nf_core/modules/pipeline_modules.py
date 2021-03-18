@@ -220,7 +220,8 @@ class PipelineModules(object):
         module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
         if os.path.exists(module_dir):
             log.error("Module directory already exists: {}".format(module_dir))
-            log.info("To update an existing module, use the commands 'nf-core update'")
+            # TODO: uncomment next line once update is implemented
+            # log.info("To update an existing module, use the commands 'nf-core update'")
             return False
 
         # Download module files
@@ -260,8 +261,8 @@ class PipelineModules(object):
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
-            log.error("Module directory does not installed: {}".format(module_dir))
-            log.info("The module you want to remove seems not to be installed. Is it a local module?")
+            log.error("Module directory is not installed: {}".format(module_dir))
+            log.info("The module you want to remove does not seem to be installed")
             return False
 
         log.info("Removing {}".format(module))
