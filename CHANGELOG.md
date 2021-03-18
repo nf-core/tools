@@ -1,8 +1,10 @@
 # nf-core/tools: Changelog
 
-## v1.14dev
+## v1.13.1dev
 
-_..nothing yet.._
+### Bugs fixed
+
+* Fixed bug in pipeline linting markdown output that gets posted to PR comments [[#914]](https://github.com/nf-core/tools/issues/914)
 
 ## [v1.13 - Copper Crocodile](https://github.com/nf-core/tools/releases/tag/1.13) - [2021-03-18]
 
