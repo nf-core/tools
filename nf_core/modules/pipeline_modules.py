@@ -220,7 +220,7 @@ class PipelineModules(object):
         module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
         if os.path.exists(module_dir):
             log.error("Module directory already exists: {}".format(module_dir))
-            # todo: uncomment next line once update is implemented
+            # TODO: uncomment next line once update is implemented
             # log.info("To update an existing module, use the commands 'nf-core update'")
             return False
 
