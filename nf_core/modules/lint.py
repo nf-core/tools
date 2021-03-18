@@ -301,7 +301,7 @@ class ModuleLint(object):
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             console.print(
-                rich.panel.Panel(r"[!] {} Test{} Passed".format(len(self.passed), _s(self.passed)), style="green")
+                rich.panel.Panel(r"[!] {} Test{} Passed".format(len(self.passed), _s(self.passed)), style="bold green")
             )
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
@@ -313,7 +313,9 @@ class ModuleLint(object):
         # Table of warning tests
         if len(self.warned) > 0:
             console.print(
-                rich.panel.Panel(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
+                rich.panel.Panel(
+                    r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), style="bold yellow"
+                )
             )
             table = Table(style="yellow", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
@@ -325,7 +327,7 @@ class ModuleLint(object):
         # Table of failing tests
         if len(self.failed) > 0:
             console.print(
-                rich.panel.Panel(r"[!] {} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+                rich.panel.Panel(r"[!] {} Test{} Failed".format(len(self.failed), _s(self.failed)), style="bold red")
             )
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
