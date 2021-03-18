@@ -145,8 +145,8 @@ class ModuleLint(object):
                 passed = []
                 warned += mod_object.warned + mod_object.failed
                 passed += mod_object.passed
-                passed = [(mod, m) for m in passed]
-                warned = [(mod, m) for m in warned]
+                self.passed = [(mod_object, m) for m in passed]
+                self.warned = [(mod_object, m) for m in warned]
 
     def lint_nfcore_modules(self, nfcore_modules):
         """
