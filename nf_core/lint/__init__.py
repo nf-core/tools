@@ -431,7 +431,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         comment_body_text = "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else ""
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         markdown = (
-            f"#### `nf-core lint` overall result: {overall_result}\n\n"
+            f"## `nf-core lint` overall result: {overall_result}\n\n"
             f"{comment_body_text}\n\n"
             f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}\n"
             "```\n\n"
