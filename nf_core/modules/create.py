@@ -6,6 +6,7 @@ The ModuleCreate class handles generating of module templates
 from __future__ import print_function
 from packaging.version import parse as parse_version
 
+import glob
 import jinja2
 import json
 import logging
@@ -270,6 +271,13 @@ class ModuleCreate(object):
             if self.subtool and os.path.exists(os.path.join(local_modules_dir, f"{self.tool}.nf")):
                 raise UserWarning(f"Module '{self.tool}' exists already, cannot make subtool '{self.tool_name}'")
 
+            # If no subtool, check that there isn't already a tool/subtool
+            tool_glob = glob.glob(f"{local_modules_dir}/{self.tool}_*.nf")
+            if not self.subtool and tool_glob:
+                raise UserWarning(
+                    f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.tool_name}'"
+                )
+
             # Set file paths
             file_paths[os.path.join("software", "main.nf")] = module_file
 
@@ -294,6 +302,13 @@ class ModuleCreate(object):
             if self.subtool and os.path.exists(parent_tool_test_nf):
                 raise UserWarning(
                     f"Module '{parent_tool_test_nf}' exists already, cannot make subtool '{self.tool_name}'"
+                )
+
+            # If no subtool, check that there isn't already a tool/subtool
+            tool_glob = glob.glob("{}/*/main.nf".format(os.path.join(self.directory, "software", self.tool)))
+            if not self.subtool and tool_glob:
+                raise UserWarning(
+                    f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.tool_name}'"
                 )
 
             # Set file paths - can be tool/ or tool/subtool/ so can't do in template directory structure
