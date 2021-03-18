@@ -141,8 +141,12 @@ class ModuleLint(object):
                 mod_object.main_nf = mod
                 mod_object.module_name = os.path.basename(mod)
                 mod_object.lint_main_nf()
-                self.warned += mod_object.warned + mod_object.failed
-                self.passed += mod_object.passed
+                warned = []
+                passed = []
+                warned += mod_object.warned + mod_object.failed
+                passed += mod_object.passed
+                passed = [(mod, m) for m in passed]
+                warned = [(mod, m) for m in warned]
 
     def lint_nfcore_modules(self, nfcore_modules):
         """
