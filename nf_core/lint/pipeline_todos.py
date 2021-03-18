@@ -35,6 +35,7 @@ def pipeline_todos(self):
     passed = []
     warned = []
     failed = []
+    file_paths = []
 
     ignore = [".git"]
     if os.path.isfile(os.path.join(self.wf_path, ".gitignore")):
@@ -60,6 +61,9 @@ def pipeline_todos(self):
                                 .strip()
                             )
                             warned.append("TODO string in `{}`: _{}_".format(fname, l))
+                            file_paths.append(os.path.join(root, fname))
             except FileNotFoundError:
                 log.debug(f"Could not open file {fname} in pipeline_todos lint test")
-    return {"passed": passed, "warned": warned, "failed": failed}
+    # HACK file paths are returned to allow usage of this function in modules/lint.py
+    # Needs to be refactored!
+    return {"passed": passed, "warned": warned, "failed": failed, "file_paths": file_paths}
