@@ -286,10 +286,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
-            table.add_column(
-                r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
-                no_wrap=True,
-            )
+            table.add_column(r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
             table = format_result(self.passed, table)
             console.print(table)
 
@@ -317,20 +314,14 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of failing tests
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
-            table.add_column(
-                r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
-                no_wrap=True,
-            )
+            table.add_column(r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
             table = format_result(self.failed, table)
             console.print(table)
 
         # Summary table
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
-        table.add_row(
-            r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
-            style="green",
-        )
+        table.add_row(r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)), style="green")
         if len(self.fix):
             table.add_row(r"[?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), style="bright_blue")
         table.add_row(r"[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
