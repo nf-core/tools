@@ -9,6 +9,7 @@ nf-core modules lint
 
 from __future__ import print_function
 import logging
+import operator
 import os
 import questionary
 import re
@@ -32,6 +33,17 @@ class ModuleLintException(Exception):
     """Exception raised when there was an error with module linting"""
 
     pass
+
+
+class LintResult(object):
+    """ An object to hold the results of a lint test """
+
+    def __init__(self, mod, lint_test, message, file_path):
+        self.mod = mod
+        self.lint_test = lint_test
+        self.message = message
+        self.file_path = file_path
+        self.module_name = mod.module_name
 
 
 class ModuleLint(object):
@@ -144,8 +156,8 @@ class ModuleLint(object):
                 mod_object.main_nf = mod
                 mod_object.module_name = os.path.basename(mod)
                 mod_object.lint_main_nf()
-                self.passed = [(mod_object, m) for m in mod_object.passed]
-                self.warned = [(mod_object, m) for m in mod_object.warned + mod_object.failed]
+                self.passed += [LintResult(mod_object, m[0], m[1], m[2]) for m in mod_object.passed]
+                self.warned += [LintResult(mod_object, m[0], m[1], m[2]) for m in mod_object.warned + mod_object.failed]
 
     def lint_nfcore_modules(self, nfcore_modules):
         """
@@ -174,12 +186,9 @@ class ModuleLint(object):
             for mod in nfcore_modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
                 passed, warned, failed = mod.lint()
-                passed = [(mod, m) for m in passed]
-                warned = [(mod, m) for m in warned]
-                failed = [(mod, m) for m in failed]
-                self.passed += passed
-                self.warned += warned
-                self.failed += failed
+                self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in passed]
+                self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in warned]
+                self.failed += [LintResult(mod, m[0], m[1], m[2]) for m in failed]
 
     def get_repo_type(self):
         """
@@ -235,6 +244,10 @@ class ModuleLint(object):
         # Get nf-core modules
         if os.path.exists(nfcore_modules_dir):
             for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
+                if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
+                    raise ModuleLintException(
+                        f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
+                    )
                 m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
                 # Not a module, but contains sub-modules
                 if not "main.nf" in m_content:
@@ -262,12 +275,17 @@ class ModuleLint(object):
         log.debug("Printing final results")
         console = Console(force_terminal=rich_force_colors())
 
+        # Sort the results
+        self.passed.sort(key=operator.attrgetter("message", "module_name"))
+        self.warned.sort(key=operator.attrgetter("message", "module_name"))
+        self.failed.sort(key=operator.attrgetter("message", "module_name"))
+
         # Find maximum module name length
         max_mod_name_len = 40
         for idx, tests in enumerate([self.passed, self.warned, self.failed]):
             try:
-                for mod, msg in tests:
-                    max_mod_name_len = max(len(mod.module_name), max_mod_name_len)
+                for lint_result in tests:
+                    max_mod_name_len = max(len(lint_result.module_name), max_mod_name_len)
             except:
                 pass
 
@@ -281,17 +299,17 @@ class ModuleLint(object):
             # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
             last_modname = False
             row_style = None
-            for mod, result in test_results:
-                if last_modname and mod.module_name != last_modname:
+            for lint_result in test_results:
+                if last_modname and lint_result.module_name != last_modname:
                     if row_style:
                         row_style = None
                     else:
                         row_style = "magenta"
-                last_modname = mod.module_name
+                last_modname = lint_result.module_name
                 table.add_row(
-                    Markdown(f"{mod.module_name}"),
-                    Markdown(f"{result[1]}"),
-                    os.path.relpath(result[2], self.dir),
+                    Markdown(f"{lint_result.module_name}"),
+                    os.path.relpath(lint_result.file_path, self.dir),
+                    Markdown(f"{lint_result.message}"),
                     style=row_style,
                 )
             return table
@@ -308,8 +326,8 @@ class ModuleLint(object):
             )
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
+            table.add_column("Test message")
             table = format_result(self.passed, table)
             console.print(table)
 
@@ -322,8 +340,8 @@ class ModuleLint(object):
             )
             table = Table(style="yellow", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
+            table.add_column("Test message")
             table = format_result(self.warned, table)
             console.print(table)
 
@@ -334,8 +352,8 @@ class ModuleLint(object):
             )
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
+            table.add_column("Test message")
             table = format_result(self.failed, table)
             console.print(table)
 
@@ -390,13 +408,11 @@ class ModuleLint(object):
 
                     if r.status_code != 200:
                         self.warned.append(
-                            (
+                            LintResult(
                                 mod,
-                                (
-                                    "check_local_copy",
-                                    f"Could not fetch remote copy, skipping comparison.",
-                                    f"{os.path.join(mod.module_dir, f)}",
-                                ),
+                                "check_local_copy",
+                                f"Could not fetch remote copy, skipping comparison.",
+                                f"{os.path.join(mod.module_dir, f)}",
                             )
                         )
                     else:
@@ -406,24 +422,20 @@ class ModuleLint(object):
                             if local_copy != remote_copy:
                                 all_modules_up_to_date = False
                                 self.warned.append(
-                                    (
+                                    LintResult(
                                         mod,
-                                        (
-                                            "check_local_copy",
-                                            "Local copy of module outdated",
-                                            f"{os.path.join(mod.module_dir, f)}",
-                                        ),
+                                        "check_local_copy",
+                                        "Local copy of module outdated",
+                                        f"{os.path.join(mod.module_dir, f)}",
                                     )
                                 )
                         except UnicodeDecodeError as e:
                             self.warned.append(
-                                (
+                                LintResult(
                                     mod,
-                                    (
-                                        "check_local_copy",
-                                        f"Could not decode file from {url}. Skipping comparison ({e})",
-                                        f"{os.path.join(mod.module_dir, f)}",
-                                    ),
+                                    "check_local_copy",
+                                    f"Could not decode file from {url}. Skipping comparison ({e})",
+                                    f"{os.path.join(mod.module_dir, f)}",
                                 )
                             )
 
@@ -510,7 +522,8 @@ class NFCoreModule(object):
 
     def lint_meta_yml(self):
         """ Lint a meta yml file """
-        required_keys = ["input", "output"]
+        required_keys = ["name", "input", "output"]
+        required_keys_lists = ["intput", "output"]
         try:
             with open(self.meta_yml, "r") as fh:
                 meta_yaml = yaml.safe_load(fh)
@@ -526,7 +539,7 @@ class NFCoreModule(object):
             if not rk in meta_yaml.keys():
                 self.failed.append(("meta_required_keys", f"`{rk}` not specified", self.meta_yml))
                 contains_required_keys = False
-            elif not isinstance(meta_yaml[rk], list):
+            elif not isinstance(meta_yaml[rk], list) and rk in required_keys_lists:
                 self.failed.append(("meta_required_keys", f"`{rk}` is not a list", self.meta_yml))
                 all_list_children = False
         if contains_required_keys:
@@ -548,13 +561,13 @@ class NFCoreModule(object):
                 else:
                     self.failed.append(("meta_output", "`{output}` missing in `meta.yml`", self.meta_yml))
 
-        # confirm that the name matches the process name in main.nf
-        if meta_yaml["name"].upper() == self.process_name:
-            self.passed.append(("meta_name", "Correct name specified in `meta.yml`", self.meta_yml))
-        else:
-            self.failed.append(
-                ("meta_name", "Conflicting process name between `meta.yml` and `main.nf`", self.meta_yml)
-            )
+            # confirm that the name matches the process name in main.nf
+            if meta_yaml["name"].upper() == self.process_name:
+                self.passed.append(("meta_name", "Correct name specified in `meta.yml`", self.meta_yml))
+            else:
+                self.failed.append(
+                    ("meta_name", "Conflicting process name between `meta.yml` and `main.nf`", self.meta_yml)
+                )
 
     def lint_main_nf(self):
         """
@@ -722,9 +735,9 @@ class NFCoreModule(object):
                 # response = _bioconda_package(bp)
                 response = nf_core.utils.anaconda_package(bp)
             except LookupError as e:
-                self.warned.append(e)
+                self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
             except ValueError as e:
-                self.failed.append(e)
+                self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
             else:
                 # Check that required version is available at all
                 if bioconda_version not in response.get("versions"):
@@ -794,7 +807,8 @@ class NFCoreModule(object):
         output = []
         if "meta" in line:
             output.append("meta")
-        # TODO: should we ignore outputs without emit statement?
+        if not "emit" in line:
+            self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
         if "emit" in line:
             output.append(line.split("emit:")[1].strip())
 
