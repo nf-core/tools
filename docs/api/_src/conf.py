@@ -14,7 +14,8 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../../nf_core'))
+
+sys.path.insert(0, os.path.abspath("../../../nf_core"))
 import nf_core
 
 # -- Project information -----------------------------------------------------
@@ -90,7 +91,7 @@ html_static_path = ["./_static"]
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
 html_css_files = [
-    'css/custom.css',
+    "css/custom.css",
 ]
 
 #
