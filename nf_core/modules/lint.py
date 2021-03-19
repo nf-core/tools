@@ -290,8 +290,8 @@ class ModuleLint(object):
                 last_modname = mod.module_name
                 table.add_row(
                     Markdown(f"{mod.module_name}"),
-                    Markdown(f"{result[1]}"),
                     os.path.relpath(result[2], self.dir),
+                    Markdown(f"{result[1]}"),
                     style=row_style,
                 )
             return table
@@ -308,8 +308,8 @@ class ModuleLint(object):
             )
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
             table.add_column("File path", no_wrap=True)
+            table.add_column("Test message")
             table = format_result(self.passed, table)
             console.print(table)
 
@@ -322,8 +322,8 @@ class ModuleLint(object):
             )
             table = Table(style="yellow", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
             table.add_column("File path", no_wrap=True)
+            table.add_column("Test message")
             table = format_result(self.warned, table)
             console.print(table)
 
@@ -334,8 +334,8 @@ class ModuleLint(object):
             )
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
             table.add_column("File path", no_wrap=True)
+            table.add_column("Test message")
             table = format_result(self.failed, table)
             console.print(table)
 
