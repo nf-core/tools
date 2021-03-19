@@ -261,7 +261,6 @@ class ModuleLint(object):
 
         log.debug("Printing final results")
         console = Console(force_terminal=rich_force_colors())
-
         # Find maximum module name length
         max_mod_name_len = 40
         for idx, tests in enumerate([self.passed, self.warned, self.failed]):
@@ -722,9 +721,9 @@ class NFCoreModule(object):
                 # response = _bioconda_package(bp)
                 response = nf_core.utils.anaconda_package(bp)
             except LookupError as e:
-                self.warned.append(e)
+                self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
             except ValueError as e:
-                self.failed.append(e)
+                self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
             else:
                 # Check that required version is available at all
                 if bioconda_version not in response.get("versions"):
@@ -794,7 +793,8 @@ class NFCoreModule(object):
         output = []
         if "meta" in line:
             output.append("meta")
-        # TODO: should we ignore outputs without emit statement?
+        if not "emit" in line:
+            self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
         if "emit" in line:
             output.append(line.split("emit:")[1].strip())
 
