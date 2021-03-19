@@ -16,7 +16,6 @@ import os
 import re
 import rich
 import rich.progress
-import textwrap
 import yaml
 
 import nf_core.utils
@@ -348,6 +347,8 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         # Overall header
         overall_result = "Passed :white_check_mark:"
+        if len(self.warned) > 0:
+            overall_result += " :warning:"
         if len(self.failed) > 0:
             overall_result = "Failed :x:"
 
@@ -431,24 +432,16 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         comment_body_text = "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else ""
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
-        markdown = textwrap.dedent(
-            f"""
-        #### `nf-core lint` overall result: {overall_result}
-
-        {comment_body_text}
-
-        ```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}
-        ```
-
-        <details>
-
-        {test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details:
-
-        * nf-core/tools version {nf_core.__version__}
-        * Run at `{timestamp}`
-
-        </details>
-        """
+        markdown = (
+            f"## `nf-core lint` overall result: {overall_result}\n\n"
+            f"{comment_body_text}\n\n"
+            f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}\n"
+            "```\n\n"
+            "<details>\n"
+            f"{test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details\n\n"
+            f"* nf-core/tools version {nf_core.__version__}\n"
+            f"* Run at `{timestamp}`\n\n"
+            "</details>\n"
         )
 
         return markdown
