@@ -794,7 +794,7 @@ class NFCoreModule(object):
         if "meta" in line:
             output.append("meta")
         if not "emit" in line:
-            self.failed.append(("missing_emit", f"Missing emit statement: {line}", self.main_nf))
+            self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
         if "emit" in line:
             output.append(line.split("emit:")[1].strip())
 
