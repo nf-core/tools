@@ -34,6 +34,17 @@ class ModuleLintException(Exception):
     pass
 
 
+class LintResult(object):
+    """ An object to hold the results of a lint test """
+
+    def __init__(self, mod, lint_test, message, file_path):
+        self.mod = mod
+        self.lint_test = lint_test
+        self.message = message
+        self.file_path = file_path
+        self.module_name = mod.module_name
+
+
 class ModuleLint(object):
     """
     An object for linting modules either in a clone of the 'nf-core/modules'
@@ -144,8 +155,8 @@ class ModuleLint(object):
                 mod_object.main_nf = mod
                 mod_object.module_name = os.path.basename(mod)
                 mod_object.lint_main_nf()
-                self.passed = [(mod_object, m) for m in mod_object.passed]
-                self.warned = [(mod_object, m) for m in mod_object.warned + mod_object.failed]
+                self.passed += [LintResult(mod_object, m[0], m[1], m[2]) for m in mod_object.passed]
+                self.warned += [LintResult(mod_object, m[0], m[1], m[2]) for m in mod_object.warned + mod_object.failed]
 
     def lint_nfcore_modules(self, nfcore_modules):
         """
@@ -174,9 +185,9 @@ class ModuleLint(object):
             for mod in nfcore_modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
                 passed, warned, failed = mod.lint()
-                passed = [(mod, m) for m in passed]
-                warned = [(mod, m) for m in warned]
-                failed = [(mod, m) for m in failed]
+                passed = [LintResult(mod, m[0], m[1], m[2]) for m in passed]
+                warned = [LintResult(mod, m[0], m[1], m[2]) for m in warned]
+                failed = [LintResult(mod, m[0], m[1], m[2]) for m in failed]
                 self.passed += passed
                 self.warned += warned
                 self.failed += failed
@@ -266,8 +277,8 @@ class ModuleLint(object):
         max_mod_name_len = 40
         for idx, tests in enumerate([self.passed, self.warned, self.failed]):
             try:
-                for mod, msg in tests:
-                    max_mod_name_len = max(len(mod.module_name), max_mod_name_len)
+                for lint_result in tests:
+                    max_mod_name_len = max(len(lint_result.module_name), max_mod_name_len)
             except:
                 pass
 
@@ -281,17 +292,17 @@ class ModuleLint(object):
             # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
             last_modname = False
             row_style = None
-            for mod, result in test_results:
-                if last_modname and mod.module_name != last_modname:
+            for lint_result in test_results:
+                if last_modname and lint_result.module_name != last_modname:
                     if row_style:
                         row_style = None
                     else:
                         row_style = "magenta"
-                last_modname = mod.module_name
+                last_modname = lint_result.module_name
                 table.add_row(
-                    Markdown(f"{mod.module_name}"),
-                    Markdown(f"{result[1]}"),
-                    os.path.relpath(result[2], self.dir),
+                    Markdown(f"{lint_result.module_name}"),
+                    Markdown(f"{lint_result.file_path}"),
+                    os.path.relpath(lint_result.message, self.dir),
                     style=row_style,
                 )
             return table
@@ -390,13 +401,11 @@ class ModuleLint(object):
 
                     if r.status_code != 200:
                         self.warned.append(
-                            (
+                            LintResult(
                                 mod,
-                                (
-                                    "check_local_copy",
-                                    f"Could not fetch remote copy, skipping comparison.",
-                                    f"{os.path.join(mod.module_dir, f)}",
-                                ),
+                                "check_local_copy",
+                                f"Could not fetch remote copy, skipping comparison.",
+                                f"{os.path.join(mod.module_dir, f)}",
                             )
                         )
                     else:
@@ -406,24 +415,20 @@ class ModuleLint(object):
                             if local_copy != remote_copy:
                                 all_modules_up_to_date = False
                                 self.warned.append(
-                                    (
+                                    LintResult(
                                         mod,
-                                        (
-                                            "check_local_copy",
-                                            "Local copy of module outdated",
-                                            f"{os.path.join(mod.module_dir, f)}",
-                                        ),
+                                        "check_local_copy",
+                                        "Local copy of module outdated",
+                                        f"{os.path.join(mod.module_dir, f)}",
                                     )
                                 )
                         except UnicodeDecodeError as e:
                             self.warned.append(
-                                (
+                                LintResult(
                                     mod,
-                                    (
-                                        "check_local_copy",
-                                        f"Could not decode file from {url}. Skipping comparison ({e})",
-                                        f"{os.path.join(mod.module_dir, f)}",
-                                    ),
+                                    "check_local_copy",
+                                    f"Could not decode file from {url}. Skipping comparison ({e})",
+                                    f"{os.path.join(mod.module_dir, f)}",
                                 )
                             )
 
