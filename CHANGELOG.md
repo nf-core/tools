@@ -1,10 +1,10 @@
 # nf-core/tools: Changelog
 
-## v1.13.1dev
-
-### Bugs fixed
+## [v1.13.1 - Copper Crocodile Meltdown](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
 
 * Fixed bug in pipeline linting markdown output that gets posted to PR comments [[#914]](https://github.com/nf-core/tools/issues/914)
+* Made text for the PR branch CI check less verbose with a TLDR in bold at the top
+* A number of minor tweaks to the new `nf-core modules lint` code
 
 ## [v1.13 - Copper Crocodile](https://github.com/nf-core/tools/releases/tag/1.13) - [2021-03-18]
 
