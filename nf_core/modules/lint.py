@@ -246,7 +246,7 @@ class ModuleLint(object):
             for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
                 if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
                     raise ModuleLintException(
-                        f"File found in '{nfcore_modules_dir}': '{m}'! This directly should only contain module directories."
+                        f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
                     )
                 m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
                 # Not a module, but contains sub-modules
@@ -326,7 +326,7 @@ class ModuleLint(object):
             )
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
             table.add_column("Test message")
             table = format_result(self.passed, table)
             console.print(table)
@@ -340,7 +340,7 @@ class ModuleLint(object):
             )
             table = Table(style="yellow", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
             table.add_column("Test message")
             table = format_result(self.warned, table)
             console.print(table)
@@ -352,7 +352,7 @@ class ModuleLint(object):
             )
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
             table.add_column("Test message")
             table = format_result(self.failed, table)
             console.print(table)
