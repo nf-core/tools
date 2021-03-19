@@ -261,7 +261,6 @@ class ModuleLint(object):
 
         log.debug("Printing final results")
         console = Console(force_terminal=rich_force_colors())
-
         # Find maximum module name length
         max_mod_name_len = 40
         for idx, tests in enumerate([self.passed, self.warned, self.failed]):
@@ -794,7 +793,8 @@ class NFCoreModule(object):
         output = []
         if "meta" in line:
             output.append("meta")
-        # TODO: should we ignore outputs without emit statement?
+        if not "emit" in line:
+            self.failed.append(("missing_emit", f"Missing emit statement: {line}", self.main_nf))
         if "emit" in line:
             output.append(line.split("emit:")[1].strip())
 
