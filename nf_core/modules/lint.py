@@ -721,9 +721,9 @@ class NFCoreModule(object):
                 # response = _bioconda_package(bp)
                 response = nf_core.utils.anaconda_package(bp)
             except LookupError as e:
-                self.warned.append(e)
+                self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
             except ValueError as e:
-                self.failed.append(e)
+                self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
             else:
                 # Check that required version is available at all
                 if bioconda_version not in response.get("versions"):
