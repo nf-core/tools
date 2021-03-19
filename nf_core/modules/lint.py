@@ -510,7 +510,7 @@ class NFCoreModule(object):
 
     def lint_meta_yml(self):
         """ Lint a meta yml file """
-        required_keys = ["input", "output"]
+        required_keys = ["name", "input", "output"]
         try:
             with open(self.meta_yml, "r") as fh:
                 meta_yaml = yaml.safe_load(fh)
@@ -548,13 +548,13 @@ class NFCoreModule(object):
                 else:
                     self.failed.append(("meta_output", "`{output}` missing in `meta.yml`", self.meta_yml))
 
-        # confirm that the name matches the process name in main.nf
-        if meta_yaml["name"].upper() == self.process_name:
-            self.passed.append(("meta_name", "Correct name specified in `meta.yml`", self.meta_yml))
-        else:
-            self.failed.append(
-                ("meta_name", "Conflicting process name between `meta.yml` and `main.nf`", self.meta_yml)
-            )
+            # confirm that the name matches the process name in main.nf
+            if meta_yaml["name"].upper() == self.process_name:
+                self.passed.append(("meta_name", "Correct name specified in `meta.yml`", self.meta_yml))
+            else:
+                self.failed.append(
+                    ("meta_name", "Conflicting process name between `meta.yml` and `main.nf`", self.meta_yml)
+                )
 
     def lint_main_nf(self):
         """
