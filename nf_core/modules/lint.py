@@ -236,7 +236,9 @@ class ModuleLint(object):
         if os.path.exists(nfcore_modules_dir):
             for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
                 if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
-                    raise ModuleLintException(f"File found in {nfcore_modules_dir} ({m})! This directly should only contain module directories.")
+                    raise ModuleLintException(
+                        f"File found in {nfcore_modules_dir} ({m})! This directly should only contain module directories."
+                    )
                 m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
                 # Not a module, but contains sub-modules
                 if not "main.nf" in m_content:
