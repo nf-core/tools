@@ -511,6 +511,7 @@ class NFCoreModule(object):
     def lint_meta_yml(self):
         """ Lint a meta yml file """
         required_keys = ["name", "input", "output"]
+        required_keys_lists = ["intput", "output"]
         try:
             with open(self.meta_yml, "r") as fh:
                 meta_yaml = yaml.safe_load(fh)
@@ -526,7 +527,7 @@ class NFCoreModule(object):
             if not rk in meta_yaml.keys():
                 self.failed.append(("meta_required_keys", f"`{rk}` not specified", self.meta_yml))
                 contains_required_keys = False
-            elif not isinstance(meta_yaml[rk], list):
+            elif not isinstance(meta_yaml[rk], list) and rk in required_keys_lists:
                 self.failed.append(("meta_required_keys", f"`{rk}` is not a list", self.meta_yml))
                 all_list_children = False
         if contains_required_keys:
