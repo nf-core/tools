@@ -308,8 +308,8 @@ class ModuleLint(object):
                 last_modname = lint_result.module_name
                 table.add_row(
                     Markdown(f"{lint_result.module_name}"),
-                    Markdown(f"{lint_result.file_path}"),
-                    os.path.relpath(lint_result.message, self.dir),
+                    os.path.relpath(lint_result.file_path, self.dir),
+                    Markdown(f"{lint_result.message}"),
                     style=row_style,
                 )
             return table
