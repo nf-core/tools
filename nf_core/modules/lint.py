@@ -186,12 +186,9 @@ class ModuleLint(object):
             for mod in nfcore_modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
                 passed, warned, failed = mod.lint()
-                passed = [LintResult(mod, m[0], m[1], m[2]) for m in passed]
-                warned = [LintResult(mod, m[0], m[1], m[2]) for m in warned]
-                failed = [LintResult(mod, m[0], m[1], m[2]) for m in failed]
-                self.passed += passed
-                self.warned += warned
-                self.failed += failed
+                self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in passed]
+                self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in warned]
+                self.failed += [LintResult(mod, m[0], m[1], m[2]) for m in failed]
 
     def get_repo_type(self):
         """
