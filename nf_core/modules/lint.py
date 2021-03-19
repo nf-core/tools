@@ -9,6 +9,7 @@ nf-core modules lint
 
 from __future__ import print_function
 import logging
+import operator
 import os
 import questionary
 import re
@@ -273,6 +274,11 @@ class ModuleLint(object):
         log.debug("Printing final results")
         console = Console(force_terminal=rich_force_colors())
 
+        # Sort the results
+        self.passed.sort(key=operator.attrgetter("message", "module_name"))
+        self.warned.sort(key=operator.attrgetter("message", "module_name"))
+        self.failed.sort(key=operator.attrgetter("message", "module_name"))
+
         # Find maximum module name length
         max_mod_name_len = 40
         for idx, tests in enumerate([self.passed, self.warned, self.failed]):
@@ -319,8 +325,8 @@ class ModuleLint(object):
             )
             table = Table(style="green", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
+            table.add_column("Test message")
             table = format_result(self.passed, table)
             console.print(table)
 
@@ -333,8 +339,8 @@ class ModuleLint(object):
             )
             table = Table(style="yellow", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
+            table.add_column("Test message")
             table = format_result(self.warned, table)
             console.print(table)
 
@@ -345,8 +351,8 @@ class ModuleLint(object):
             )
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("Test message", no_wrap=True)
-            table.add_column("File path", no_wrap=True)
+            table.add_column("File path")
+            table.add_column("Test message")
             table = format_result(self.failed, table)
             console.print(table)
 
