@@ -11,6 +11,7 @@ import unittest
 import pytest
 from rich.console import Console
 
+
 class TestModules(unittest.TestCase):
     """Class for modules tests"""
 

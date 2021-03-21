@@ -8,6 +8,7 @@ import sys
 import errno
 import argparse
 
+
 def parse_args(args=None):
     Description = "Reformat {{ name }} samplesheet file and check its contents."
     Epilog = "Example usage: python check_samplesheet.py <FILE_IN> <FILE_OUT>"
@@ -17,6 +18,7 @@ def parse_args(args=None):
     parser.add_argument("FILE_OUT", help="Output file.")
     return parser.parse_args(args)
 
+
 def make_dir(path):
     if len(path) > 0:
         try:
@@ -24,6 +26,7 @@ def make_dir(path):
         except OSError as exception:
             if exception.errno != errno.EEXIST:
                 raise exception
+
 
 def print_error(error, context="Line", context_str=""):
     error_str = "ERROR: Please check samplesheet -> {}".format(error)
@@ -33,6 +36,7 @@ def print_error(error, context="Line", context_str=""):
         )
     print(error_str)
     sys.exit(1)
+
 
 # TODO nf-core: Update the check_samplesheet function
 def check_samplesheet(file_in, file_out):
@@ -54,7 +58,7 @@ def check_samplesheet(file_in, file_out):
         ## Check header
         MIN_COLS = 2
         # TODO nf-core: Update the column names for the input samplesheet
-        HEADER = ['sample', 'fastq_1', 'fastq_2']
+        HEADER = ["sample", "fastq_1", "fastq_2"]
         header = [x.strip('"') for x in fin.readline().strip().split(",")]
         if header[: len(HEADER)] != HEADER:
             print("ERROR: Please check samplesheet header -> {} != {}".format(",".join(header), ",".join(HEADER)))
@@ -102,9 +106,9 @@ def check_samplesheet(file_in, file_out):
             ## Auto-detect paired-end/single-end
             sample_info = []  ## [single_end, fastq_1, fastq_2]
             if sample and fastq_1 and fastq_2:  ## Paired-end short reads
-                sample_info = ['0', fastq_1, fastq_2]
+                sample_info = ["0", fastq_1, fastq_2]
             elif sample and fastq_1 and not fastq_2:  ## Single-end short reads
-                sample_info = ['1', fastq_1, fastq_2]
+                sample_info = ["1", fastq_1, fastq_2]
             else:
                 print_error("Invalid combination of columns provided!", "Line", line)
 
@@ -127,16 +131,18 @@ def check_samplesheet(file_in, file_out):
 
                 ## Check that multiple runs of the same sample are of the same datatype
                 if not all(x[0] == sample_mapping_dict[sample][0][0] for x in sample_mapping_dict[sample]):
-                    print_error("Multiple runs of a sample must be of the same datatype!","Sample: {}".format(sample))
+                    print_error("Multiple runs of a sample must be of the same datatype!", "Sample: {}".format(sample))
 
-                for idx,val in enumerate(sample_mapping_dict[sample]):
-                    fout.write(','.join(["{}_T{}".format(sample,idx+1)] + val) + '\n')
+                for idx, val in enumerate(sample_mapping_dict[sample]):
+                    fout.write(",".join(["{}_T{}".format(sample, idx + 1)] + val) + "\n")
     else:
-        print_error("No entries to process!","Samplesheet: {}".format(file_in))
+        print_error("No entries to process!", "Samplesheet: {}".format(file_in))
+
 
 def main(args=None):
     args = parse_args(args)
     check_samplesheet(args.FILE_IN, args.FILE_OUT)
-    
+
+
 if __name__ == "__main__":
     sys.exit(main())
