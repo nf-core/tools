@@ -3,7 +3,7 @@
 from setuptools import setup, find_packages
 import sys
 
-version = "1.13dev"
+version = "1.14dev"
 
 with open("README.md") as f:
     readme = f.read()
@@ -31,17 +31,17 @@ setup(
     license="MIT",
     entry_points={"console_scripts": ["nf-core=nf_core.__main__:run_nf_core"]},
     install_requires=[
-        "cookiecutter",
         "click",
         "GitPython",
         "jinja2",
         "jsonschema",
-        "questionary>=1.8.0",
+        "packaging",
         "prompt_toolkit>=3.0.3",
         "pyyaml",
-        "requests",
+        "questionary>=1.8.0",
         "requests_cache",
-        "rich>=9",
+        "requests",
+        "rich>=9.8.2",
         "tabulate",
     ],
     setup_requires=["twine>=1.11.0", "setuptools>=38.6."],

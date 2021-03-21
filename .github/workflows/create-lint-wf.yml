@@ -30,14 +30,15 @@ jobs:
       - name: Run nf-core/tools
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
-          nf-core --log-file log.txt lint nf-core-testpipeline
+          nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored
           nf-core --log-file log.txt list
           nf-core --log-file log.txt sync nf-core-testpipeline/
           nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
           nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
-          nf-core --log-file log.txt modules install nf-core-testpipeline/ fastqc
+          nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
 
       - name: Upload log file artifact
+        if: ${{ always() }}
         uses: actions/upload-artifact@v2
         with:
           name: nf-core-log-file

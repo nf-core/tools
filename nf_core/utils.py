@@ -12,15 +12,38 @@ import hashlib
 import json
 import logging
 import os
+import prompt_toolkit
 import re
 import requests
 import requests_cache
+import shlex
 import subprocess
 import sys
 import time
 import yaml
+from rich.live import Live
+from rich.spinner import Spinner
 
 log = logging.getLogger(__name__)
+
+# Custom style for questionary
+nfcore_question_style = prompt_toolkit.styles.Style(
+    [
+        ("qmark", "fg:ansiblue bold"),  # token in front of the question
+        ("question", "bold"),  # question text
+        ("answer", "fg:ansigreen nobold bg:"),  # submitted answer text behind the question
+        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
+        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
+        ("selected", "fg:ansiyellow noreverse bold"),  # style for a selected item of a checkbox
+        ("separator", "fg:ansiblack"),  # separator in lists
+        ("instruction", ""),  # user instructions for select, rawselect, checkbox
+        ("text", ""),  # plain text
+        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
+        ("choice-default", "fg:ansiblack"),
+        ("choice-default-changed", "fg:ansiyellow"),
+        ("choice-required", "fg:ansired"),
+    ]
+)
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
@@ -52,6 +75,17 @@ def rich_force_colors():
     """
     if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
         return True
+    return None
+
+
+def github_api_auto_auth():
+    try:
+        with open(os.path.join(os.path.expanduser("~/.config/gh/hosts.yml")), "r") as fh:
+            auth = yaml.safe_load(fh)
+            log.debug("Auto-authenticating GitHub API as '@{}'".format(auth["github.com"]["user"]))
+            return requests.auth.HTTPBasicAuth(auth["github.com"]["user"], auth["github.com"]["oauth_token"])
+    except Exception as e:
+        log.debug(f"Couldn't auto-auth for GitHub: [red]{e}")
     return None
 
 
@@ -112,7 +146,7 @@ class Pipeline(object):
                 if os.path.isfile(full_fn):
                     self.files.append(full_fn)
                 else:
-                    log.warning("`git ls-files` returned '{}' but could not open it!".format(full_fn))
+                    log.debug("`git ls-files` returned '{}' but could not open it!".format(full_fn))
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
             log.debug("Couldn't call 'git ls-files': {}".format(e))
@@ -196,23 +230,15 @@ def fetch_wf_config(wf_path):
             return config
     log.debug("No config cache found")
 
-    # Call `nextflow config` and pipe stderr to /dev/null
-    try:
-        with open(os.devnull, "w") as devnull:
-            nfconfig_raw = subprocess.check_output(["nextflow", "config", "-flat", wf_path], stderr=devnull)
-    except OSError as e:
-        if e.errno == errno.ENOENT:
-            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
-    except subprocess.CalledProcessError as e:
-        raise AssertionError("`nextflow config` returned non-zero error code: %s,\n   %s", e.returncode, e.output)
-    else:
-        for l in nfconfig_raw.splitlines():
-            ul = l.decode("utf-8")
-            try:
-                k, v = ul.split(" = ", 1)
-                config[k] = v
-            except ValueError:
-                log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
+    # Call `nextflow config`
+    nfconfig_raw = nextflow_cmd(f"nextflow config -flat {wf_path}")
+    for l in nfconfig_raw.splitlines():
+        ul = l.decode("utf-8")
+        try:
+            k, v = ul.split(" = ", 1)
+            config[k] = v
+        except ValueError:
+            log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -235,15 +261,26 @@ def fetch_wf_config(wf_path):
     return config
 
 
+def nextflow_cmd(cmd):
+    """Run a Nextflow command and capture the output. Handle errors nicely"""
+    try:
+        nf_proc = subprocess.run(shlex.split(cmd), stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
+        return nf_proc.stdout
+    except OSError as e:
+        if e.errno == errno.ENOENT:
+            raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
+    except subprocess.CalledProcessError as e:
+        raise AssertionError(
+            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}"
+        )
+
+
 def setup_requests_cachedir():
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
     a .nfcore_cache subdir.
     """
-    # Only import it if we need it
-    import requests_cache
-
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
     if not os.path.exists(cachedir):
@@ -269,30 +306,12 @@ def wait_cli_function(poll_func, poll_every=20):
        None. Just sits in an infite loop until the function returns True.
     """
     try:
-        is_finished = False
-        check_count = 0
-
-        def spinning_cursor():
+        spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
+        with Live(spinner, refresh_per_second=20) as live:
             while True:
-                for cursor in "⠋⠙⠹⠸⠼⠴⠦⠧⠇⠏":
-                    yield "{} Use ctrl+c to stop waiting and force exit. ".format(cursor)
-
-        spinner = spinning_cursor()
-        while not is_finished:
-            # Write a new loading text
-            loading_text = next(spinner)
-            sys.stdout.write(loading_text)
-            sys.stdout.flush()
-            # Show the loading spinner every 0.1s
-            time.sleep(0.1)
-            # Wipe the previous loading text
-            sys.stdout.write("\b" * len(loading_text))
-            sys.stdout.flush()
-            # Only check every 2 seconds, but update the spinner every 0.1s
-            check_count += 1
-            if check_count > poll_every:
-                is_finished = poll_func()
-                check_count = 0
+                if poll_func():
+                    break
+                time.sleep(2)
     except KeyboardInterrupt:
         raise AssertionError("Cancelled!")
 
@@ -335,3 +354,195 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 )
             else:
                 return web_response
+
+
+def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
+    """Query conda package information.
+
+    Sends a HTTP GET request to the Anaconda remote API.
+
+    Args:
+        dep (str): A conda package name.
+        dep_channels (list): list of conda channels to use
+
+    Raises:
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
+    """
+
+    # Check if each dependency is the latest available version
+    if "=" in dep:
+        depname, depver = dep.split("=", 1)
+    else:
+        depname = dep
+
+    # 'defaults' isn't actually a channel name. See https://docs.anaconda.com/anaconda/user-guide/tasks/using-repositories/
+    if "defaults" in dep_channels:
+        dep_channels.remove("defaults")
+        dep_channels.extend(["main", "anaconda", "r", "free", "archive", "anaconda-extras"])
+    if "::" in depname:
+        dep_channels = [depname.split("::")[0]]
+        depname = depname.split("::")[1]
+
+    for ch in dep_channels:
+        anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format(ch, depname)
+        try:
+            response = requests.get(anaconda_api_url, timeout=10)
+        except (requests.exceptions.Timeout):
+            raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
+        except (requests.exceptions.ConnectionError):
+            raise LookupError("Could not connect to Anaconda API")
+        else:
+            if response.status_code == 200:
+                return response.json()
+            elif response.status_code != 404:
+                raise LookupError(
+                    "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
+                        response.status_code, anaconda_api_url, response
+                    )
+                )
+            elif response.status_code == 404:
+                log.debug("Could not find `{}` in conda channel `{}`".format(dep, ch))
+    else:
+        # We have looped through each channel and had a 404 response code on everything
+        raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
+
+
+def parse_anaconda_licence(anaconda_response, version=None):
+    """Given a response from the anaconda API using anaconda_package, parse the software licences.
+
+    Returns: Set of licence types
+    """
+    licences = set()
+    # Licence for each version
+    for f in anaconda_response["files"]:
+        if not version or version == f.get("version"):
+            try:
+                licences.add(f["attrs"]["license"])
+            except KeyError:
+                pass
+    # Main licence field
+    if len(list(licences)) == 0 and isinstance(anaconda_response["license"], str):
+        licences.add(anaconda_response["license"])
+
+    # Clean up / standardise licence names
+    clean_licences = []
+    for l in licences:
+        l = re.sub(r"GNU General Public License v\d \(([^\)]+)\)", r"\1", l)
+        l = re.sub(r"GNU GENERAL PUBLIC LICENSE", "GPL", l, flags=re.IGNORECASE)
+        l = l.replace("GPL-", "GPLv")
+        l = re.sub(r"GPL\s*([\d\.]+)", r"GPL v\1", l)  # Add v prefix to GPL version if none found
+        l = re.sub(r"GPL\s*v(\d).0", r"GPL v\1", l)  # Remove superflous .0 from GPL version
+        l = re.sub(r"GPL \(([^\)]+)\)", r"GPL \1", l)
+        l = re.sub(r"GPL\s*v", "GPL v", l)  # Normalise whitespace to one space between GPL and v
+        l = re.sub(r"\s*(>=?)\s*(\d)", r" \1\2", l)  # Normalise whitespace around >= GPL versions
+        l = l.replace("Clause", "clause")  # BSD capitilisation
+        l = re.sub(r"-only$", "", l)  # Remove superflous GPL "only" version suffixes
+        clean_licences.append(l)
+    return clean_licences
+
+
+def pip_package(dep):
+    """Query PyPI package information.
+
+    Sends a HTTP GET request to the PyPI remote API.
+
+    Args:
+        dep (str): A PyPI package name.
+
+    Raises:
+        A LookupError, if the connection fails or times out
+        A ValueError, if the package name can not be found
+    """
+    pip_depname, pip_depver = dep.split("=", 1)
+    pip_api_url = "https://pypi.python.org/pypi/{}/json".format(pip_depname)
+    try:
+        response = requests.get(pip_api_url, timeout=10)
+    except (requests.exceptions.Timeout):
+        raise LookupError("PyPI API timed out: {}".format(pip_api_url))
+    except (requests.exceptions.ConnectionError):
+        raise LookupError("PyPI API Connection error: {}".format(pip_api_url))
+    else:
+        if response.status_code == 200:
+            return response.json()
+        else:
+            raise ValueError("Could not find pip dependency using the PyPI API: `{}`".format(dep))
+
+
+def get_biocontainer_tag(package, version):
+    """
+    Given a bioconda package and version, look for a container
+    at quay.io and returns the tag of the most recent image
+    that matches the package version
+    Sends a HTTP GET request to the quay.io API.
+    Args:
+        package (str): A bioconda package name.
+        version (str): Version of the bioconda package
+    Raises:
+        A LookupError, if the connection fails or times out or gives an unexpected status code
+        A ValueError, if the package name can not be found (404)
+    """
+
+    def get_tag_date(tag_date):
+        # Reformat a date given by quay.io to  datetime
+        return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
+
+    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
+
+    try:
+        response = requests.get(quay_api_url)
+    except requests.exceptions.ConnectionError:
+        raise LookupError("Could not connect to quay.io API")
+    else:
+        if response.status_code == 200:
+            # Get the container tag
+            tags = response.json()["tags"]
+            matching_tags = [t for t in tags if t["name"].startswith(version)]
+            # If version matches several images, get the most recent one, else return tag
+            if len(matching_tags) > 0:
+                tag = matching_tags[0]
+                tag_date = get_tag_date(tag["last_modified"])
+                for t in matching_tags:
+                    if get_tag_date(t["last_modified"]) > tag_date:
+                        tag = t
+                return package + ":" + tag["name"]
+            else:
+                return matching_tags[0]["name"]
+        elif response.status_code != 404:
+            raise LookupError(
+                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
+            )
+        elif response.status_code == 404:
+            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
+
+
+def custom_yaml_dumper():
+    """ Overwrite default PyYAML output to make Prettier YAML linting happy """
+
+    class CustomDumper(yaml.Dumper):
+        def represent_dict_preserve_order(self, data):
+            """Add custom dumper class to prevent overwriting the global state
+            This prevents yaml from changing the output order
+
+            See https://stackoverflow.com/a/52621703/1497385
+            """
+            return self.represent_dict(data.items())
+
+        def increase_indent(self, flow=False, *args, **kwargs):
+            """Indent YAML lists so that YAML validates with Prettier
+
+            See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
+            """
+            return super().increase_indent(flow=flow, indentless=False)
+
+        # HACK: insert blank lines between top-level objects
+        # inspired by https://stackoverflow.com/a/44284819/3786245
+        # and https://github.com/yaml/pyyaml/issues/127
+        def write_line_break(self, data=None):
+            super().write_line_break(data)
+
+            if len(self.indents) == 1:
+                super().write_line_break()
+
+    CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
+    return CustomDumper

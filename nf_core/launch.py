@@ -10,32 +10,14 @@ import copy
 import json
 import logging
 import os
-import prompt_toolkit
 import questionary
 import re
 import subprocess
-import textwrap
 import webbrowser
 
 import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
-
-# Custom style for questionary
-nfcore_question_style = prompt_toolkit.styles.Style(
-    [
-        ("qmark", "fg:ansiblue bold"),  # token in front of the question
-        ("question", "bold"),  # question text
-        ("answer", "fg:ansigreen nobold"),  # submitted answer text behind the question
-        ("pointer", "fg:ansiyellow bold"),  # pointer used in select and checkbox prompts
-        ("highlighted", "fg:ansiblue bold"),  # pointed-at choice in select and checkbox prompts
-        ("selected", "fg:ansigreen noreverse"),  # style for a selected item of a checkbox
-        ("separator", "fg:ansiblack"),  # separator in lists
-        ("instruction", ""),  # user instructions for select, rawselect, checkbox
-        ("text", ""),  # plain text
-        ("disabled", "fg:gray italic"),  # disabled choices for select and checkbox prompts
-    ]
-)
 
 
 class Launch(object):
@@ -265,7 +247,7 @@ class Launch(object):
             "choices": ["Web based", "Command line"],
             "default": "Web based",
         }
-        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+        answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
@@ -385,7 +367,7 @@ class Launch(object):
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
             if not param_obj.get("hidden", False) or self.show_hidden:
                 is_required = param_id in self.schema_obj.schema.get("required", [])
-                answers.update(self.prompt_param(param_id, param_obj, is_required, answers))
+                answers = self.prompt_param(param_id, param_obj, is_required, answers)
 
         # Split answers into core nextflow options and params
         for key, answer in answers.items():
@@ -402,17 +384,25 @@ class Launch(object):
 
         # Print the question
         question = self.single_param_to_questionary(param_id, param_obj, answers)
-        answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+        answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
             log.error("'–-{}' is required".format(param_id))
-            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
-        # Don't return empty answers
+        # Ignore if empty
         if answer[param_id] == "":
-            return {}
-        return answer
+            answer = {}
+
+        # Previously entered something but this time we deleted it
+        if param_id not in answer and param_id in answers:
+            answers.pop(param_id)
+        # Everything else (first time answer no response or normal response)
+        else:
+            answers.update(answer)
+
+        return answers
 
     def prompt_group(self, group_id, group_obj):
         """
@@ -427,29 +417,49 @@ class Launch(object):
         """
         while_break = False
         answers = {}
+        error_msgs = []
         while not while_break:
+
+            if len(error_msgs) == 0:
+                self.print_param_header(group_id, group_obj, True)
+
             question = {
                 "type": "list",
                 "name": group_id,
-                "message": group_obj.get("title", group_id),
+                "qmark": "",
+                "message": "",
+                "instruction": " ",
                 "choices": ["Continue >>", questionary.Separator()],
             }
 
+            # Show error messages if we have any
+            for msg in error_msgs:
+                question["choices"].append(
+                    questionary.Choice(
+                        [("bg:ansiblack fg:ansired bold", " error "), ("fg:ansired", f" - {msg}")], disabled=True
+                    )
+                )
+            error_msgs = []
+
             for param_id, param in group_obj["properties"].items():
                 if not param.get("hidden", False) or self.show_hidden:
-                    q_title = param_id
-                    if param_id in answers:
-                        q_title += "  [{}]".format(answers[param_id])
+                    q_title = [("", "{}  ".format(param_id))]
+                    # If already filled in, show value
+                    if param_id in answers and answers.get(param_id) != param.get("default"):
+                        q_title.append(("class:choice-default-changed", "[{}]".format(answers[param_id])))
+                    # If the schema has a default, show default
                     elif "default" in param:
-                        q_title += "  [{}]".format(param["default"])
+                        q_title.append(("class:choice-default", "[{}]".format(param["default"])))
+                    # Show that it's required if not filled in and no default
+                    elif param_id in group_obj.get("required", []):
+                        q_title.append(("class:choice-required", "(required)"))
                     question["choices"].append(questionary.Choice(title=q_title, value=param_id))
 
             # Skip if all questions hidden
             if len(question["choices"]) == 2:
                 return {}
 
-            self.print_param_header(group_id, group_obj)
-            answer = questionary.unsafe_prompt([question], style=nfcore_question_style)
+            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
             if answer[group_id] == "Continue >>":
                 while_break = True
                 # Check if there are any required parameters that don't have answers
@@ -457,12 +467,12 @@ class Launch(object):
                     req_default = self.schema_obj.input_params.get(p_required, "")
                     req_answer = answers.get(p_required, "")
                     if req_default == "" and req_answer == "":
-                        log.error("'--{}' is required.".format(p_required))
+                        error_msgs.append(f"`{p_required}` is required")
                         while_break = False
             else:
                 param_id = answer[group_id]
                 is_required = param_id in group_obj.get("required", [])
-                answers.update(self.prompt_param(param_id, group_obj["properties"][param_id], is_required, answers))
+                answers = self.prompt_param(param_id, group_obj["properties"][param_id], is_required, answers)
 
         return answers
 
@@ -481,7 +491,7 @@ class Launch(object):
         if answers is None:
             answers = {}
 
-        question = {"type": "input", "name": param_id, "message": param_id}
+        question = {"type": "input", "name": param_id, "message": ""}
 
         # Print the name, description & help text
         if print_help:
@@ -592,19 +602,20 @@ class Launch(object):
 
         return question
 
-    def print_param_header(self, param_id, param_obj):
+    def print_param_header(self, param_id, param_obj, is_group=False):
         if "description" not in param_obj and "help_text" not in param_obj:
             return
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         console.print("\n")
-        console.print(param_obj.get("title", param_id), style="bold")
+        console.print("[bold blue]?[/] [bold on black] {} [/]".format(param_obj.get("title", param_id)))
         if "description" in param_obj:
             md = Markdown(param_obj["description"])
             console.print(md)
         if "help_text" in param_obj:
             help_md = Markdown(param_obj["help_text"].strip())
             console.print(help_md, style="dim")
-            console.print("\n")
+        if is_group:
+            console.print("(Use arrow keys)", style="italic", highlight=False)
 
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """

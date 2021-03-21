@@ -16,8 +16,6 @@ import os
 import re
 import rich
 import rich.progress
-import subprocess
-import textwrap
 import yaml
 
 import nf_core.utils
@@ -25,7 +23,9 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None, json_fn=None):
+def run_linting(
+    pipeline_dir, release_mode=False, fix=(), show_passed=False, fail_ignored=False, md_fn=None, json_fn=None
+):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -40,7 +40,7 @@ def run_linting(pipeline_dir, release_mode=False, show_passed=False, md_fn=None,
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, fail_ignored)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -98,42 +98,43 @@ class PipelineLint(nf_core.utils.Pipeline):
     """
 
     from .files_exist import files_exist
-    from .licence import licence
+    from .files_unchanged import files_unchanged
     from .nextflow_config import nextflow_config
-    from .actions_branch_protection import actions_branch_protection
     from .actions_ci import actions_ci
-    from .actions_lint import actions_lint
     from .actions_awstest import actions_awstest
     from .actions_awsfulltest import actions_awsfulltest
     from .readme import readme
     from .version_consistency import version_consistency
-    from .conda_env_yaml import conda_env_yaml, _anaconda_package, _pip_package
+    from .conda_env_yaml import conda_env_yaml
     from .conda_dockerfile import conda_dockerfile
     from .pipeline_todos import pipeline_todos
     from .pipeline_name_conventions import pipeline_name_conventions
-    from .cookiecutter_strings import cookiecutter_strings
+    from .template_strings import template_strings
     from .schema_lint import schema_lint
     from .schema_params import schema_params
+    from .actions_schema_validation import actions_schema_validation
+    from .merge_markers import merge_markers
 
-    def __init__(self, wf_path, release_mode=False):
+    def __init__(self, wf_path, release_mode=False, fix=(), fail_ignored=False):
         """ Initialise linting object """
 
         # Initialise the parent object
         super().__init__(wf_path)
 
+        self.lint_config = {}
+        self.release_mode = release_mode
+        self.fail_ignored = fail_ignored
         self.failed = []
         self.ignored = []
-        self.lint_config = {}
+        self.fixed = []
         self.passed = []
-        self.release_mode = release_mode
         self.warned = []
+        self.could_fix = []
         self.lint_tests = [
             "files_exist",
-            "licence",
             "nextflow_config",
-            "actions_branch_protection",
+            "files_unchanged",
             "actions_ci",
-            "actions_lint",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
@@ -141,12 +142,16 @@ class PipelineLint(nf_core.utils.Pipeline):
             "conda_dockerfile",
             "pipeline_todos",
             "pipeline_name_conventions",
-            "cookiecutter_strings",
+            "template_strings",
             "schema_lint",
             "schema_params",
+            "actions_schema_validation",
+            "merge_markers",
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
+        self.fix = fix
+        self.progress_bar = None
 
     def _load(self):
         """Load information about the pipeline into the PipelineLint object"""
@@ -190,36 +195,67 @@ class PipelineLint(nf_core.utils.Pipeline):
         the different linting checks in order. Collects any warnings or errors
         into object attributes: ``passed``, ``ignored``, ``warned`` and ``failed``.
         """
-        log.info("Testing pipeline: [magenta]{}".format(self.wf_path))
+        log.info(f"Testing pipeline: [magenta]{self.wf_path}")
         if self.release_mode:
             log.info("Including --release mode tests")
 
-        progress = rich.progress.Progress(
+        # Check that we recognise all --fix arguments
+        unrecognised_fixes = list(test for test in self.fix if test not in self.lint_tests)
+        if len(unrecognised_fixes):
+            raise AssertionError(
+                "Unrecognised lint test{} for '--fix': '{}'".format(
+                    "s" if len(unrecognised_fixes) > 1 else "", "', '".join(unrecognised_fixes)
+                )
+            )
+
+        # Check that the pipeline_dir is a clean git repo
+        if len(self.fix):
+            log.info("Attempting to automatically fix failing tests")
+            try:
+                repo = git.Repo(self.wf_path)
+            except git.exc.InvalidGitRepositoryError as e:
+                raise AssertionError(
+                    f"'{self.wf_path}' does not appear to be a git repository, this is required when running with '--fix'"
+                )
+            # Check that we have no uncommitted changes
+            if repo.is_dirty(untracked_files=True):
+                raise AssertionError(
+                    "Uncommitted changes found in pipeline directory!\nPlease commit these before running with '--fix'"
+                )
+
+        self.progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
             rich.progress.BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[func_name]}",
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
         )
-        with progress:
-            lint_progress = progress.add_task(
-                "Running lint checks", total=len(self.lint_tests), func_name=self.lint_tests[0]
+        with self.progress_bar:
+            lint_progress = self.progress_bar.add_task(
+                "Running lint checks", total=len(self.lint_tests), test_name=self.lint_tests[0]
             )
-            for fun_name in self.lint_tests:
-                if self.lint_config.get(fun_name, {}) is False:
-                    log.debug("Skipping lint test '{}'".format(fun_name))
-                    self.ignored.append((fun_name, fun_name))
+            for test_name in self.lint_tests:
+                if self.lint_config.get(test_name, {}) is False:
+                    log.debug("Skipping lint test '{}'".format(test_name))
+                    self.ignored.append((test_name, test_name))
                     continue
-                progress.update(lint_progress, advance=1, func_name=fun_name)
-                log.debug("Running lint test: {}".format(fun_name))
-                test_results = getattr(self, fun_name)()
+                self.progress_bar.update(lint_progress, advance=1, test_name=test_name)
+                log.debug("Running lint test: {}".format(test_name))
+                test_results = getattr(self, test_name)()
                 for test in test_results.get("passed", []):
-                    self.passed.append((fun_name, test))
+                    self.passed.append((test_name, test))
                 for test in test_results.get("ignored", []):
-                    self.ignored.append((fun_name, test))
+                    if self.fail_ignored:
+                        self.failed.append((test_name, test))
+                    else:
+                        self.ignored.append((test_name, test))
+                for test in test_results.get("fixed", []):
+                    self.fixed.append((test_name, test))
                 for test in test_results.get("warned", []):
-                    self.warned.append((fun_name, test))
+                    self.warned.append((test_name, test))
                 for test in test_results.get("failed", []):
-                    self.failed.append((fun_name, test))
+                    self.failed.append((test_name, test))
+                if test_results.get("could_fix", False):
+                    self.could_fix.append(test_name)
 
     def _print_results(self, show_passed=False):
         """Print linting results to the command line.
@@ -238,59 +274,69 @@ class PipelineLint(nf_core.utils.Pipeline):
             string for the terminal with appropriate ASCII colours.
             """
             for eid, msg in test_results:
-                table.add_row(Markdown("[{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg)))
+                table.add_row(Markdown("[{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html): {1}".format(eid, msg)))
             return table
 
         def _s(some_list):
-            if len(some_list) > 1:
+            if len(some_list) != 1:
                 return "s"
             return ""
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
-            table.add_column(
-                r"\[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
-                no_wrap=True,
-            )
+            table.add_column(r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
             table = format_result(self.passed, table)
+            console.print(table)
+
+        # Table of fixed tests
+        if len(self.fixed) > 0:
+            table = Table(style="bright_blue", box=rich.box.ROUNDED)
+            table.add_column(r"[?] {} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), no_wrap=True)
+            table = format_result(self.fixed, table)
             console.print(table)
 
         # Table of ignored tests
         if len(self.ignored) > 0:
             table = Table(style="grey58", box=rich.box.ROUNDED)
-            table.add_column(r"\[?] {} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True)
+            table.add_column(r"[?] {} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True)
             table = format_result(self.ignored, table)
             console.print(table)
 
         # Table of warning tests
         if len(self.warned) > 0:
             table = Table(style="yellow", box=rich.box.ROUNDED)
-            table.add_column(r"\[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            table.add_column(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
             table = format_result(self.warned, table)
             console.print(table)
 
         # Table of failing tests
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
-            table.add_column(
-                r"\[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
-                no_wrap=True,
-            )
+            table.add_column(r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
             table = format_result(self.failed, table)
             console.print(table)
 
         # Summary table
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
-        table.add_row(
-            r"\[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
-            style="green",
-        )
-        table.add_row(r"\[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
-        table.add_row(r"\[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row(r"\[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        table.add_row(r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)), style="green")
+        if len(self.fix):
+            table.add_row(r"[?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), style="bright_blue")
+        table.add_row(r"[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
+        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
+        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
+
+        if len(self.could_fix):
+            fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
+            console.print(
+                f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+            )
+        if len(self.fix):
+            console.print(
+                "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
+            )
 
     def _get_results_md(self):
         """
@@ -301,6 +347,8 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         # Overall header
         overall_result = "Passed :white_check_mark:"
+        if len(self.warned) > 0:
+            overall_result += " :warning:"
         if len(self.failed) > 0:
             overall_result = "Failed :x:"
 
@@ -312,7 +360,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.failed
                     ]
                 )
@@ -321,12 +371,29 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_ignored_count = ""
         test_ignored = ""
         if len(self.ignored) > 0:
-            test_ignored_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.ignored))
+            test_ignored_count = "\n#| ❔ {:3d} tests were ignored |#".format(len(self.ignored))
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.ignored
+                    ]
+                )
+            )
+
+        test_fixed_count = ""
+        test_fixed = ""
+        if len(self.fixed) > 0:
+            test_fixed_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.fixed))
+            test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
+                "\n".join(
+                    [
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
+                        for eid, msg in self.fixed
                     ]
                 )
             )
@@ -338,7 +405,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.warned
                     ]
                 )
@@ -351,7 +420,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.passed
                     ]
                 )
@@ -359,37 +430,18 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         now = datetime.datetime.now()
 
-        markdown = textwrap.dedent(
-            """
-        #### `nf-core lint` overall result: {}
-
-        {}
-
-        ```diff{}{}{}{}
-        ```
-
-        <details>
-
-        {}{}{}{}### Run details:
-
-        * nf-core/tools version {}
-        * Run at `{}`
-
-        </details>
-        """
-        ).format(
-            overall_result,
-            "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
-            test_passed_count,
-            test_ignored_count,
-            test_warning_count,
-            test_failure_count,
-            test_failures,
-            test_warnings,
-            test_ignored,
-            test_passes,
-            nf_core.__version__,
-            now.strftime("%Y-%m-%d %H:%M:%S"),
+        comment_body_text = "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else ""
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        markdown = (
+            f"## `nf-core lint` overall result: {overall_result}\n\n"
+            f"{comment_body_text}\n\n"
+            f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}\n"
+            "```\n\n"
+            "<details>\n"
+            f"{test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details\n\n"
+            f"* nf-core/tools version {nf_core.__version__}\n"
+            f"* Run at `{timestamp}`\n\n"
+            "</details>\n"
         )
 
         return markdown
@@ -409,14 +461,17 @@ class PipelineLint(nf_core.utils.Pipeline):
             "date_run": now.strftime("%Y-%m-%d %H:%M:%S"),
             "tests_pass": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
             "tests_ignored": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.ignored],
+            "tests_fixed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.fixed],
             "tests_warned": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
             "tests_failed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
             "num_tests_pass": len(self.passed),
             "num_tests_ignored": len(self.ignored),
+            "num_tests_fixed": len(self.fixed),
             "num_tests_warned": len(self.warned),
             "num_tests_failed": len(self.failed),
             "has_tests_pass": len(self.passed) > 0,
             "has_tests_ignored": len(self.ignored) > 0,
+            "has_tests_fixed": len(self.fixed) > 0,
             "has_tests_warned": len(self.warned) > 0,
             "has_tests_failed": len(self.failed) > 0,
             "markdown_result": self._get_results_md(),

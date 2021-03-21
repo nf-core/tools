@@ -10,6 +10,7 @@ no-inline-html:
         - kbd
         - details
         - summary
+        - kbd
 # tools only - the {{ jinja variables }} break URLs and cause this to error
 no-bare-urls: false
 # tools only - suppresses error messages for usage of $ in main README
