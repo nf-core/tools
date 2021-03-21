@@ -73,7 +73,7 @@ class Utils {
         return "-${colors.dim}----------------------------------------------------${colors.reset}-"
     }
 
-    static String nfcore(workflow, monochrome_logs) {
+    static String logo(workflow, monochrome_logs) {
         Map colors = logColours(monochrome_logs)
         String.format(
             """\n

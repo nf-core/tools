@@ -15,7 +15,7 @@ nextflow.enable.dsl = 2
 /* --               PRINT HELP                 -- */
 ////////////////////////////////////////////////////
 
-log.info Utils.nfcore(workflow, params.monochrome_logs)
+log.info Utils.logo(workflow, params.monochrome_logs)
 
 def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {

@@ -47,7 +47,7 @@ class Checks {
     }
 
     static void hostName(workflow, params, log) {
-        Map colors = Headers.log_colours(params.monochrome_logs)
+        Map colors = Utils.logColours(params.monochrome_logs)
         if (params.hostnames) {
             def hostname = "hostname".execute().text.trim()
             params.hostnames.each { prof, hnames ->

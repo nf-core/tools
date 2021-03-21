@@ -82,7 +82,7 @@ class Completion {
         def sendmail_html          = sendmail_template.toString()
 
         // Send the HTML e-mail
-        Map colors = Headers.log_colours(params.monochrome_logs)
+        Map colors = Utils.logColours(params.monochrome_logs)
         if (email_address) {
             try {
                 if (params.plaintext_email) { throw GroovyException('Send plaintext e-mail, not HTML') }
@@ -112,7 +112,7 @@ class Completion {
     }
 
     static void summary(workflow, params, log) {
-        Map colors = Headers.log_colours(params.monochrome_logs)
+        Map colors = Utils.logColours(params.monochrome_logs)
         if (workflow.success) {
             if (workflow.stats.ignoredCount == 0) {
                 log.info "-${colors.purple}[$workflow.manifest.name]${colors.green} Pipeline completed successfully${colors.reset}-"
@@ -120,7 +120,7 @@ class Completion {
                 log.info "-${colors.purple}[$workflow.manifest.name]${colors.red} Pipeline completed successfully, but with errored process(es) ${colors.reset}-"
             }
         } else {
-            Checks.hostname(workflow, params, log)
+            Checks.hostName(workflow, params, log)
             log.info "-${colors.purple}[$workflow.manifest.name]${colors.red} Pipeline completed with errors${colors.reset}-"
         }
     }
