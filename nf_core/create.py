@@ -83,7 +83,7 @@ class PipelineCreate(object):
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
-        binary_ftypes = ["image", "application/java-archive"]
+        binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
         object_attrs = vars(self)
         object_attrs["nf_core_version"] = nf_core.__version__
 
