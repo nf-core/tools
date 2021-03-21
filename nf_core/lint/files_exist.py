@@ -33,7 +33,6 @@ def files_exist(self):
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo.png
         assets/sendmail_template.txt
-        bin/markdown_to_html.py
         CHANGELOG.md
         CODE_OF_CONDUCT.md
         CODE_OF_CONDUCT.md
@@ -102,7 +101,6 @@ def files_exist(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("bin", "markdown_to_html.py")],
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
         [os.path.join("docs", "output.md")],
         [os.path.join("docs", "README.md")],
