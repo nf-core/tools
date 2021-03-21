@@ -40,7 +40,7 @@ params.fasta = Workflow.getGenomeAttribute(params, 'fasta')
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params, json_schema)
 log.info NfcoreSchema.paramsSummaryLog(workflow, params, json_schema)
 log.info Workflow.citation(workflow)
-log.info NfcoreSchema.dashedLine(params.monochrome_logs)
+log.info Utils.dashedLine(params.monochrome_logs)
 
 ////////////////////////////////////////////////////
 /* --         VALIDATE PARAMETERS              -- */
