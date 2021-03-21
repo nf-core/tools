@@ -16,25 +16,25 @@ class Workflow {
                "  https://github.com/${workflow.manifest.name}/blob/master/CITATIONS.md"
     }
 
-    static void validate_main_params(workflow, params, json_schema, log) {
+    static void validateMainParams(workflow, params, json_schema, log) {
         if (params.validate_params) {
             NfcoreSchema.validateParameters(params, json_schema, log)
         }
 
         // Check that conda channels are set-up correctly
         if (params.enable_conda) {
-            Checks.check_conda_channels(log)
+            Checks.checkCondaChannels(log)
         }
 
         // Check AWS batch settings
-        Checks.aws_batch(workflow, params)
+        Checks.awsBatch(workflow, params)
 
         // Check the hostnames against configured profiles
-        Checks.hostname(workflow, params, log)
+        Checks.hostName(workflow, params, log)
     }
 
-    static void validate_workflow_params(params, log) {
-        genome_exists(params, log)
+    static void validateWorkflowParams(params, log) {
+        genomeExists(params, log)
 
         if (!params.fasta) { 
             log.error "Genome fasta file not specified with e.g. '--fasta genome.fa' or via a detectable config file."
@@ -43,7 +43,7 @@ class Workflow {
     }
 
     // Exit pipeline if incorrect --genome key provided
-    static void genome_exists(params, log) {
+    static void genomeExists(params, log) {
         if (params.genomes && params.genome && !params.genomes.containsKey(params.genome)) {
             log.error "=============================================================================\n" +
                       "  Genome '${params.genome}' not found in any config files provided to the pipeline.\n" +
@@ -55,7 +55,7 @@ class Workflow {
     }
 
     // Get attribute from genome config file e.g. fasta
-    static String get_genome_attribute(params, attribute) {
+    static String getGenomeAttribute(params, attribute) {
         def val = ''
         if (params.genomes && params.genome && params.genomes.containsKey(params.genome)) {
             if (params.genomes[ params.genome ].containsKey(attribute)) {

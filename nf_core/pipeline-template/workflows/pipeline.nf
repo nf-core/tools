@@ -9,7 +9,7 @@ params.summary_params = [:]
 ////////////////////////////////////////////////////
 
 // Validate input parameters
-Workflow.validate_workflow_params(params, log)
+Workflow.validateWorkflowParams(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist

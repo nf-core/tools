@@ -15,15 +15,15 @@ nextflow.enable.dsl = 2
 /* --               PRINT HELP                 -- */
 ////////////////////////////////////////////////////
 
-log.info Headers.nf_core(workflow, params.monochrome_logs)
+log.info Utils.nfcore(workflow, params.monochrome_logs)
 
 def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
     // TODO nf-core: Update typical command used to run pipeline
     def command = "nextflow run {{ name }} --input samplesheet.csv --genome GRCh37 -profile docker"
-    log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
+    log.info NfcoreSchema.paramsHelp(workflow, params, json_schema, command)
     log.info Workflow.citation(workflow)
-    log.info NfcoreSchema.dashed_line(params.monochrome_logs)
+    log.info Utils.dashedLine(params.monochrome_logs)
     exit 0
 }
 
@@ -31,22 +31,22 @@ if (params.help) {
 /* --        GENOME PARAMETER VALUES           -- */
 ////////////////////////////////////////////////////
 
-params.fasta = Workflow.get_genome_attribute(params, 'fasta')
+params.fasta = Workflow.getGenomeAttribute(params, 'fasta')
 
 ////////////////////////////////////////////////////
 /* --         PRINT PARAMETER SUMMARY          -- */
 ////////////////////////////////////////////////////
 
-def summary_params = NfcoreSchema.params_summary_map(workflow, params, json_schema)
-log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
+def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params, json_schema)
+log.info NfcoreSchema.paramsSummaryLog(workflow, params, json_schema)
 log.info Workflow.citation(workflow)
-log.info NfcoreSchema.dashed_line(params.monochrome_logs)
+log.info NfcoreSchema.dashedLine(params.monochrome_logs)
 
 ////////////////////////////////////////////////////
 /* --         VALIDATE PARAMETERS              -- */
 ////////////////////////////////////////////////////
 
-Workflow.validate_main_params(workflow, params, json_schema, log)
+Workflow.validateMainParams(workflow, params, json_schema, log)
 
 ////////////////////////////////////////////////////
 /* --            RUN WORKFLOW(S)               -- */
