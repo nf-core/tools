@@ -463,11 +463,10 @@ class NfcoreSchema {
                 output += group_output
             }
         }
-        output += dashed_line(params.monochrome_logs)
         if (num_hidden > 0){
-            output += colors.dim + "\n Hiding $num_hidden params, use --show_hidden_params to show.\n" + colors.reset
-            output += dashed_line(params.monochrome_logs)
+            output += colors.dim + "\n  [Hiding $num_hidden params, use --show_hidden_params to show.]\n" + colors.reset
         }
+        output += dashed_line(params.monochrome_logs)
         return output
     }
 

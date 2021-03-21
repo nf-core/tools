@@ -22,7 +22,7 @@ if (params.help) {
     // TODO nf-core: Update typical command used to run pipeline
     def command = "nextflow run {{ name }} --input samplesheet.csv --genome GRCh37 -profile docker"
     log.info NfcoreSchema.params_help(workflow, params, json_schema, command)
-    log.info Worflow.citation(workflow)
+    log.info Workflow.citation(workflow)
     log.info NfcoreSchema.dashed_line(params.monochrome_logs)
     exit 0
 }
@@ -39,7 +39,7 @@ params.fasta = Workflow.get_genome_attribute(params, 'fasta')
 
 def summary_params = NfcoreSchema.params_summary_map(workflow, params, json_schema)
 log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
-log.info Worflow.citation(workflow)
+log.info Workflow.citation(workflow)
 log.info NfcoreSchema.dashed_line(params.monochrome_logs)
 
 ////////////////////////////////////////////////////
