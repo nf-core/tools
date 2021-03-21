@@ -97,7 +97,9 @@ class TestModules(unittest.TestCase):
 
     def test_modules_create_succeed(self):
         """ Succeed at creating the TrimGalore! module """
-        module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "trimgalore", "@author", "process_low", True, True)
+        module_create = nf_core.modules.ModuleCreate(
+            self.pipeline_dir, "trimgalore", "@author", "process_low", True, True
+        )
         module_create.create()
         assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
 
