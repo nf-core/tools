@@ -16,6 +16,7 @@ nextflow.enable.dsl = 2
 ////////////////////////////////////////////////////
 
 // log.info Headers.nf_core(workflow, params.monochrome_logs)
+
 def json_schema = "$projectDir/nextflow_schema.json"
 if (params.help) {
     // TODO nf-core: Update typical command used to run pipeline
@@ -38,9 +39,10 @@ params.fasta = Checks.get_genome_attribute(params, 'fasta')
 def summary_params = Schema.params_summary_map(workflow, params, json_schema)
 log.info Schema.params_summary_log(workflow, params, json_schema)
 
-// ////////////////////////////////////////////////////
-// /* --         PRINT PARAMETER SUMMARY          -- */
-// ////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+/* --         PRINT PARAMETER SUMMARY          -- */
+////////////////////////////////////////////////////
+
 // log.info NfcoreSchema.params_summary_log(workflow, params, json_schema)
 
 ////////////////////////////////////////////////////
@@ -140,25 +142,23 @@ workflow {
     )
 
     /*
-     * MultiQC
-     */  
-    if (!params.skip_multiqc) {
-        workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
-        ch_workflow_summary = Channel.value(workflow_summary)
+     * MODULE: MultiQC
+     */
+    workflow_summary    = Schema.params_summary_multiqc(workflow, summary_params)
+    ch_workflow_summary = Channel.value(workflow_summary)
 
-        ch_multiqc_files = Channel.empty()
-        ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
-        ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
-        ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-        ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
-        ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
-        
-        MULTIQC (
-            ch_multiqc_files.collect()
-        )
-        multiqc_report       = MULTIQC.out.report.toList()
-        ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
-    }
+    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
+    ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
+    ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+    
+    MULTIQC (
+        ch_multiqc_files.collect()
+    )
+    multiqc_report       = MULTIQC.out.report.toList()
+    ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
 }
 
 ////////////////////////////////////////////////////
@@ -170,10 +170,10 @@ workflow.onComplete {
     Completion.summary(workflow, params, log)
 }
 
-workflow.onError {
-    // Print unexpected parameters - easiest is to just rerun validation
-    NfcoreSchema.validateParameters(params, json_schema, log)
-}
+// workflow.onError {
+//     // Print unexpected parameters - easiest is to just rerun validation
+//     NfcoreSchema.validateParameters(params, json_schema, log)
+// }
 
 ////////////////////////////////////////////////////
 /* --                  THE END                 -- */
