@@ -464,7 +464,7 @@ class NfcoreSchema {
             }
         }
         if (num_hidden > 0){
-            output += colors.dim + "\n  [Hiding $num_hidden params, use --show_hidden_params to show.]\n" + colors.reset
+            output += colors.dim + "[ Hiding $num_hidden params, use --show_hidden_params to show them ]\n" + colors.reset
         }
         output += dashed_line(params.monochrome_logs)
         return output
@@ -561,7 +561,7 @@ class NfcoreSchema {
                 output += '\n'
             }
         }
-        output += "[Only displaying parameters that differ from the pipeline defaults]\n"
+        output += "[ Only displaying parameters that differ from the pipeline defaults ]\n"
         output += dashed_line(params.monochrome_logs)
         return output
     }
