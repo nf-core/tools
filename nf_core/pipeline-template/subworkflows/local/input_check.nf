@@ -14,10 +14,10 @@ workflow INPUT_CHECK {
     SAMPLESHEET_CHECK ( samplesheet )
         .splitCsv ( header:true, sep:',' )
         .map { get_sample_info(it) }
-        .set { sample_info }
+        .set { reads }
 
     emit:
-    sample_info // channel: [ val(meta), [ reads ] ]
+    reads // channel: [ val(meta), [ reads ] ]
 }
 
 // Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
