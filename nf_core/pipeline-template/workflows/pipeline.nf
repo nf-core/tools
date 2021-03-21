@@ -3,6 +3,7 @@
 ////////////////////////////////////////////////////
 
 params.summary_params = [:]
+params.json_schema    = ''
 
 ////////////////////////////////////////////////////
 /* --          VALIDATE INPUTS                 -- */
@@ -91,7 +92,7 @@ workflow {{ short_name|upper }} {
     /*
      * MODULE: MultiQC
      */
-    workflow_summary    = NfcoreSchema.params_summary_multiqc(workflow, summary_params)
+    workflow_summary    = NfcoreSchema.params_summary_multiqc(workflow, params.summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
     ch_multiqc_files = Channel.empty()
@@ -113,13 +114,15 @@ workflow {{ short_name|upper }} {
 ////////////////////////////////////////////////////
 
 workflow.onComplete {
-    Completion.email(workflow, params, summary_params, projectDir, log, multiqc_report)
+    Completion.email(workflow, params, params.summary_params, projectDir, log, multiqc_report)
     Completion.summary(workflow, params, log)
 }
 
 // Print unexpected parameters - easiest is to just rerun validation
-workflow.onError {
-    NfcoreSchema.validateParameters(params, json_schema, log)
+if (params.json_schema) {}
+    workflow.onError {
+        NfcoreSchema.validateParameters(params, params.json_schema, log)
+    }
 }
 
 ////////////////////////////////////////////////////
