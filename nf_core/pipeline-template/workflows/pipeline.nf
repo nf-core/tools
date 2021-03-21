@@ -37,15 +37,15 @@ def modules = params.modules.clone()
 def multiqc_options   = modules['multiqc']
 multiqc_options.args += params.multiqc_title ? " --title \"$params.multiqc_title\"" : ''
 
-// Local: Modules
+// Modules: local
 include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions'   addParams( options: [publish_files : ['csv':'']] )
 
-// Local: Sub-workflows
-include { INPUT_CHECK           } from '../subworkflows/local/input_check'        addParams( options: [:]                          )
-
-// nf-core/modules: Modules
+// Modules: nf-core/modules
 include { FASTQC                } from '../modules/nf-core/software/fastqc/main'  addParams( options: modules['fastqc']            )
 include { MULTIQC               } from '../modules/nf-core/software/multiqc/main' addParams( options: multiqc_options              )
+
+// Subworkflows: local
+include { INPUT_CHECK           } from '../subworkflows/local/input_check'        addParams( options: [:]                          )
 
 ////////////////////////////////////////////////////
 /* --           RUN MAIN WORKFLOW              -- */
@@ -119,7 +119,7 @@ workflow.onComplete {
 }
 
 // Print unexpected parameters - easiest is to just rerun validation
-if (params.json_schema) {}
+if (params.json_schema) {
     workflow.onError {
         NfcoreSchema.validateParameters(params, params.json_schema, log)
     }
