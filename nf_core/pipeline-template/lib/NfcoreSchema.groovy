@@ -562,7 +562,7 @@ class NfcoreSchema {
                 output += '\n'
             }
         }
-        output += "[Only displaying parameters that differ from pipeline default]\n"
+        output += "[Only displaying parameters that differ from the pipeline defaults]\n"
         output += dashed_line(params.monochrome_logs)
         output += '\n\n' + dashed_line(params.monochrome_logs)
         return output
