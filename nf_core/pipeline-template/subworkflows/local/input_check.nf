@@ -4,9 +4,7 @@
 
 params.options = [:]
 
-include {
-    SAMPLESHEET_CHECK;
-    get_samplesheet_paths } from '../process/samplesheet_check' addParams( options: params.options )
+include { SAMPLESHEET_CHECK } from '../../modules/local/samplesheet_check' addParams( options: params.options )
 
 workflow INPUT_CHECK {
     take:
@@ -15,9 +13,30 @@ workflow INPUT_CHECK {
     main:
     SAMPLESHEET_CHECK ( samplesheet )
         .splitCsv ( header:true, sep:',' )
-        .map { get_samplesheet_paths(it) }
-        .set { reads }
+        .map { get_sample_info(it) }
+        .set { sample_info }
 
     emit:
-    reads // channel: [ val(meta), [ reads ] ]
+    sample_info // channel: [ val(meta), [ reads ] ]
+}
+
+// Function to get list of [ meta, [ fastq_1, fastq_2 ] ]
+def get_sample_info(LinkedHashMap row) {
+    def meta = [:]
+    meta.id           = row.sample
+    meta.single_end   = row.single_end.toBoolean()
+
+    def array = []
+    if (!file(row.fastq_1).exists()) {
+        exit 1, "ERROR: Please check input samplesheet -> Read 1 FastQ file does not exist!\n${row.fastq_1}"
+    }
+    if (meta.single_end) {
+        array = [ meta, [ file(row.fastq_1) ] ]
+    } else {
+        if (!file(row.fastq_2).exists()) {
+            exit 1, "ERROR: Please check input samplesheet -> Read 2 FastQ file does not exist!\n${row.fastq_2}"
+        }
+        array = [ meta, [ file(row.fastq_1), file(row.fastq_2) ] ]
+    }
+    return array    
 }
