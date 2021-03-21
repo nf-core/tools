@@ -29,7 +29,7 @@ if (params.help) {
 /* --        GENOME PARAMETER VALUES           -- */
 ////////////////////////////////////////////////////
 
-params.fasta = Checks.get_genome_attribute(params, 'fasta')
+params.fasta = Workflow.get_genome_attribute(params, 'fasta')
 
 ////////////////////////////////////////////////////
 /* --         PRINT PARAMETER SUMMARY          -- */
