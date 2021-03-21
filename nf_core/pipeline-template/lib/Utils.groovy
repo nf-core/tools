@@ -69,7 +69,7 @@ class Utils {
     }
 
     static String dashedLine(monochrome_logs) {
-        Map colors = log_colours(monochrome_logs)
+        Map colors = logColours(monochrome_logs)
         return "-${colors.dim}----------------------------------------------------${colors.reset}-"
     }
 
