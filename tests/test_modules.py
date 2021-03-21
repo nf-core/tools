@@ -56,31 +56,31 @@ class TestModules(unittest.TestCase):
         """ Test installing a module - unrecognised module given """
         assert self.mods.install("foo") is False
 
-    def test_modules_install_fastqc(self):
-        """ Test installing a module - FastQC """
-        assert self.mods.install("fastqc") is not False
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
+    def test_modules_install_trimgalore(self):
+        """ Test installing a module - TrimGalore! """
+        assert self.mods.install("trimgalore") is not False
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
         assert os.path.exists(module_path)
 
-    def test_modules_install_fastqc_twice(self):
-        """ Test installing a module - FastQC already there """
-        self.mods.install("fastqc")
-        assert self.mods.install("fastqc") is False
+    def test_modules_install_trimgalore_twice(self):
+        """ Test installing a module - TrimGalore! already there """
+        self.mods.install("trimgalore")
+        assert self.mods.install("trimgalore") is False
 
-    def test_modules_remove_fastqc(self):
-        """ Test removing FastQC module after installing it"""
-        self.mods.install("fastqc")
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
-        assert self.mods.remove("fastqc")
+    def test_modules_remove_trimgalore(self):
+        """ Test removing TrimGalore! module after installing it"""
+        self.mods.install("trimgalore")
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
+        assert self.mods.remove("trimgalore")
         assert os.path.exists(module_path) is False
 
-    def test_modules_remove_fastqc_uninstalled(self):
-        """ Test removing FastQC module without installing it """
-        assert self.mods.remove("fastqc") is False
+    def test_modules_remove_trimgalore_uninstalled(self):
+        """ Test removing TrimGalore! module without installing it """
+        assert self.mods.remove("trimgalore") is False
 
-    def test_modules_lint_fastqc(self):
-        """ Test linting the fastqc module """
-        self.mods.install("fastqc")
+    def test_modules_lint_trimgalore(self):
+        """ Test linting the TrimGalore! module """
+        self.mods.install("trimgalore")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.passed) == 16
@@ -96,15 +96,15 @@ class TestModules(unittest.TestCase):
         assert len(module_lint.failed) == 0
 
     def test_modules_create_succeed(self):
-        """ Succeed at creating the FastQC module """
-        module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "fastqc", "@author", "process_low", True, True)
+        """ Succeed at creating the TrimGalore! module """
+        module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "trimgalore", "@author", "process_low", True, True)
         module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "fastqc.nf"))
+        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
 
     def test_modules_create_fail_exists(self):
         """ Fail at creating the same module twice"""
         module_create = nf_core.modules.ModuleCreate(
-            self.pipeline_dir, "fastqc", "@author", "process_low", False, False
+            self.pipeline_dir, "trimgalore", "@author", "process_low", False, False
         )
         module_create.create()
         with pytest.raises(UserWarning) as excinfo:
