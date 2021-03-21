@@ -22,7 +22,7 @@ process SAMPLESHEET_CHECK {
     path '*.csv'
 
 
-    script:  // This script is bundled with the pipeline, in {{ cookiecutter.name }}/bin/
+    script:  // This script is bundled with the pipeline, in {{ name }}/bin/
     """
     check_samplesheet.py $samplesheet samplesheet.valid.csv
     """
