@@ -22,7 +22,7 @@
                 },
                 "outdir": {
                     "type": "string",
-                    "description": "The output directory where the results will be saved.",
+                    "description": "Path to the output directory where the results will be saved.",
                     "default": "./results",
                     "fa_icon": "fas fa-folder-open"
                 },
