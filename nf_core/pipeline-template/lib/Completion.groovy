@@ -44,7 +44,7 @@ class Completion {
         // On success try attach the multiqc report
         def mqc_report = null
         try {
-            if (workflow.success && !params.skip_multiqc) {
+            if (workflow.success) {
                 mqc_report = multiqc_report.getVal()
                 if (mqc_report.getClass() == ArrayList && mqc_report.size() >= 1) {
                     if (mqc_report.size() > 1) {
