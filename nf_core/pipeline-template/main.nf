@@ -52,7 +52,7 @@ workflow {
     /*
      * WORKFLOW: Main pipeline workflow for {{ name }}
      */
-    include { {{ short_name|upper }} } from './workflows/pipeline' addParams( summary_params: summary_params, json_schema: json_schema )
+    include { {{ short_name|upper }} } from './workflows/pipeline' addParams( summary_params: summary_params )
     {{ short_name|upper }} ()
 }
 

@@ -3,7 +3,6 @@
 ////////////////////////////////////////////////////
 
 params.summary_params = [:]
-params.json_schema    = ''
 
 ////////////////////////////////////////////////////
 /* --          VALIDATE INPUTS                 -- */
@@ -116,13 +115,6 @@ workflow {{ short_name|upper }} {
 workflow.onComplete {
     Completion.email(workflow, params, params.summary_params, projectDir, log, multiqc_report)
     Completion.summary(workflow, params, log)
-}
-
-// Print unexpected parameters - easiest is to just rerun validation
-if (params.json_schema) {
-    workflow.onError {
-        NfcoreSchema.validateParameters(params, params.json_schema, log)
-    }
 }
 
 ////////////////////////////////////////////////////
