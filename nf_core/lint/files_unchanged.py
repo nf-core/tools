@@ -33,7 +33,6 @@ def files_unchanged(self):
         'assets/email_template.txt',
         'assets/nf-core-PIPELINE_logo.png',
         'assets/sendmail_template.txt',
-        'bin/markdown_to_html.py',
         'CODE_OF_CONDUCT.md',
         'docs/images/nf-core-PIPELINE_logo.png',
         'docs/README.md',
@@ -43,8 +42,6 @@ def files_unchanged(self):
 
     Files that can have additional content but must include the template contents::
 
-        '.github/workflows/push_dockerhub_dev.yml',
-        '.github/workflows/push_dockerhub_release.yml',
         '.gitignore',
         'assets/multiqc_config.yaml',
 
@@ -94,7 +91,6 @@ def files_unchanged(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("bin", "markdown_to_html.py")],
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
         [os.path.join("docs", "README.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
@@ -102,8 +98,6 @@ def files_unchanged(self):
     ]
     files_partial = [
         [".gitignore", "foo"],
-        [os.path.join(".github", "workflows", "push_dockerhub_dev.yml")],
-        [os.path.join(".github", "workflows", "push_dockerhub_release.yml")],
         [os.path.join("assets", "multiqc_config.yaml")],
     ]
 
