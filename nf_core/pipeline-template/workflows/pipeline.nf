@@ -91,7 +91,7 @@ workflow {{ short_name|upper }} {
     /*
      * MODULE: MultiQC
      */
-    workflow_summary    = NfcoreSchema.paramsSummaryMultiqc(workflow, params.summary_params)
+    workflow_summary    = Workflow.paramsSummaryMultiqc(workflow, params.summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
     ch_multiqc_files = Channel.empty()
