@@ -83,7 +83,7 @@ class PipelineCreate(object):
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
-        binary_ftypes = ["image", "application/java-archive"]
+        binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
         object_attrs = vars(self)
         object_attrs["nf_core_version"] = nf_core.__version__
 
@@ -107,16 +107,20 @@ class PipelineCreate(object):
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             # Just copy binary files
-            (ftype, encoding) = mimetypes.guess_type(template_fn_path)
+            (ftype, encoding) = mimetypes.guess_type(template_fn_path, strict=False)
             if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
                 log.debug(f"Copying binary file: '{output_path}'")
                 shutil.copy(template_fn_path, output_path)
                 continue
 
             # Render the template
-            log.debug(f"Rendering template file: '{template_fn}'")
-            j_template = env.get_template(template_fn)
-            rendered_output = j_template.render(object_attrs)
+            try:
+                log.debug(f"Rendering template file: '{template_fn}'")
+                j_template = env.get_template(template_fn)
+                rendered_output = j_template.render(object_attrs)
+            except UnicodeDecodeError as e:
+                log.error(f"Could not decode file {template_fn_path} {e}")
+                sys.exit(1)
 
             # Write to the pipeline output file
             with open(output_path, "w") as fh:
