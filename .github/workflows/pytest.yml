@@ -33,6 +33,7 @@ jobs:
 
     - name: Install Nextflow
       env:
+          NXF_VER: 21.03.0-edge
           CAPSULE_LOG: none
       run: |
         mkdir /tmp/nextflow
