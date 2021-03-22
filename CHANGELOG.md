@@ -4,6 +4,7 @@
 
 ### Tools code
 
+* Fix `UnicodeDecodeError` with `nf-core create` on some systems [[#931]](https://github.com/nf-core/tools/issues/931)
 * Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
 * Added automated PR comments to the Markdownlint and Python Black lint CI tests to explain failures
 
