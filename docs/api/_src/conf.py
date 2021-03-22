@@ -14,9 +14,9 @@
 #
 import os
 import sys
-import nf_core
 
 sys.path.insert(0, os.path.abspath("../../../nf_core"))
+import nf_core
 
 # -- Project information -----------------------------------------------------
 
@@ -90,6 +90,10 @@ html_static_path = ["./_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
+html_css_files = [
+    "css/custom.css",
+]
+
 #
 # The default sidebars (for documents that don't match any pattern) are
 # defined by theme itself.  Builtin themes are using these templates by
