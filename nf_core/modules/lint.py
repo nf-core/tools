@@ -424,7 +424,7 @@ class ModuleLint(object):
                                         mod,
                                         "check_local_copy",
                                         "Local copy of module outdated",
-                                        f"{os.path.join(mod.module_dir, f)}"
+                                        f"{os.path.join(mod.module_dir, f)}",
                                     )
                                 )
                             else:
@@ -433,7 +433,7 @@ class ModuleLint(object):
                                         mod,
                                         "check_local_copy",
                                         "Local copy of module up to date",
-                                        f"{os.path.join(mod.module_dir, f)}"
+                                        f"{os.path.join(mod.module_dir, f)}",
                                     )
                                 )
                         except UnicodeDecodeError as e:
@@ -442,10 +442,9 @@ class ModuleLint(object):
                                     mod,
                                     "check_local_copy",
                                     f"Could not decode file from {url}. Skipping comparison ({e})",
-                                    f"{os.path.join(mod.module_dir, f)}"
+                                    f"{os.path.join(mod.module_dir, f)}",
                                 )
                             )
-
 
 
 class NFCoreModule(object):
