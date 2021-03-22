@@ -31,19 +31,18 @@ jobs:
         python -m pip install --upgrade pip -r requirements-dev.txt
         pip install -e .
 
-
     - name: Install Nextflow
       env:
-          #NXF_VER: "21.03.0-edge"
           CAPSULE_LOG: none
       run: |
-        export NXF_VER="21.03.0-edge"
         mkdir /tmp/nextflow
         cd /tmp/nextflow
         wget -qO- get.nextflow.io | bash
         sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
 
     - name: Test with pytest
+      env:
+          NXF_VER: "21.03.0-edge"
       run: python3 -m pytest --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
 
     - uses: codecov/codecov-action@v1
