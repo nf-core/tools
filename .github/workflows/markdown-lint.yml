@@ -16,3 +16,28 @@ jobs:
 
       - name: Run Markdownlint
         run: markdownlint ${GITHUB_WORKSPACE} -c ${GITHUB_WORKSPACE}/.github/markdownlint.yml
+
+      # If the above check failed, post a comment on the PR explaining the failure
+      - name: Post PR comment
+        if: failure()
+        uses: mshick/add-pr-comment@v1
+        with:
+          message: |
+            ## Markdown linting is failing
+
+            To keep the code consistent with lots of contributors, we run automated code consistency checks.
+            To fix this CI test, please run:
+
+            * Install `markdownlint-cli`
+                * On Mac: `brew install markdownlint-cli`
+                * Everything else: [Install `npm`](https://www.npmjs.com/get-npm) then [install `markdownlint-cli`](https://www.npmjs.com/package/markdownlint-cli): `npm install -g markdownlint-cli`
+            * Try to automatically fix errors in your pipeline: `markdownlint . --config .github/markdownlint.yml --fix`
+            * Check that there are no remaining problems: `markdownlint . --config .github/markdownlint.yml`
+
+            Once you push these changes the test should pass, and you can hide this comment :+1:
+
+            We highly recommend setting up Black in your code editor so that this formatting is done automatically on save. Ask about it on Slack for help!
+
+            Thanks again for your contribution!
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-repeats: false

@@ -1,8 +1,11 @@
 # nf-core/tools: Changelog
 
-## v1.14dev
+## v1.13.2dev
 
-_..nothing yet.._
+### Tools code
+
+* Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
+* Added automated PR comments to the Markdownlint and Python Black lint CI tests to explain failures
 
 ## [v1.13.1 - Copper Crocodile Patch :crocodile: :pirate_flag:](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
 
