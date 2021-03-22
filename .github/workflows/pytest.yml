@@ -31,11 +31,13 @@ jobs:
         python -m pip install --upgrade pip -r requirements-dev.txt
         pip install -e .
 
+
     - name: Install Nextflow
       env:
-          NXF_VER: 21.03.0-edge
+          #NXF_VER: "21.03.0-edge"
           CAPSULE_LOG: none
       run: |
+        export NXF_VER="21.03.0-edge"
         mkdir /tmp/nextflow
         cd /tmp/nextflow
         wget -qO- get.nextflow.io | bash
