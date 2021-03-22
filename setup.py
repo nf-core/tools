@@ -38,6 +38,7 @@ setup(
         "packaging",
         "prompt_toolkit>=3.0.3",
         "pyyaml",
+        "pytest-workflow",
         "questionary>=1.8.0",
         "requests_cache",
         "requests",
