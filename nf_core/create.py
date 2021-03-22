@@ -3,6 +3,7 @@
 organization's specification based on a template.
 """
 from genericpath import exists
+from pathlib import Path
 import git
 import jinja2
 import logging
@@ -84,6 +85,7 @@ class PipelineCreate(object):
         )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
         binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
+        binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
         object_attrs = vars(self)
         object_attrs["nf_core_version"] = nf_core.__version__
 
@@ -109,6 +111,11 @@ class PipelineCreate(object):
             # Just copy binary files
             (ftype, encoding) = mimetypes.guess_type(template_fn_path, strict=False)
             if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+                log.debug(f"Copying binary file: '{output_path}'")
+                shutil.copy(template_fn_path, output_path)
+                continue
+
+            if Path(template_fn_path).suffix in binary_extensions:
                 log.debug(f"Copying binary file: '{output_path}'")
                 shutil.copy(template_fn_path, output_path)
                 continue
