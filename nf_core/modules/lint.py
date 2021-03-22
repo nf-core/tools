@@ -375,7 +375,6 @@ class ModuleLint(object):
         Downloads the 'main.nf', 'functions.nf' and 'meta.yml' files for every module
         and compare them to the local copies
         """
-        all_modules_up_to_date = True
         files_to_check = ["main.nf", "functions.nf", "meta.yml"]
 
         progress_bar = rich.progress.Progress(
@@ -420,12 +419,20 @@ class ModuleLint(object):
                             remote_copy = r.content.decode("utf-8")
 
                             if local_copy != remote_copy:
-                                all_modules_up_to_date = False
                                 self.warned.append(
                                     LintResult(
                                         mod,
                                         "check_local_copy",
                                         "Local copy of module outdated",
+                                        f"{os.path.join(mod.module_dir, f)}",
+                                    )
+                                )
+                            else:
+                                self.passed.append(
+                                    LintResult(
+                                        mod,
+                                        "check_local_copy",
+                                        "Local copy of module up to date",
                                         f"{os.path.join(mod.module_dir, f)}",
                                     )
                                 )
@@ -438,9 +445,6 @@ class ModuleLint(object):
                                     f"{os.path.join(mod.module_dir, f)}",
                                 )
                             )
-
-        if all_modules_up_to_date:
-            self.passed.append("All modules are up to date!")
 
 
 class NFCoreModule(object):
