@@ -66,7 +66,7 @@ def files_exist(self):
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
-        
+
     Files that *must not* be present::
 
         Singularity
