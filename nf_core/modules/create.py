@@ -236,6 +236,10 @@ class ModuleCreate(object):
                 log.debug(f"Writing output to: '{dest_fn}'")
                 fh.write(rendered_output)
 
+            # Mirror file permissions
+            template_stat = os.stat(template_fn)
+            os.chmod(dest_fn, template_stat.st_mode)
+
     def get_repo_type(self, directory):
         """
         Determine whether this is a pipeline repository or a clone of
