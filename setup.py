@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-import sys
 
-version = "1.13.1"
+version = "1.13.2"
 
 with open("README.md") as f:
     readme = f.read()
@@ -38,6 +37,7 @@ setup(
         "packaging",
         "prompt_toolkit>=3.0.3",
         "pyyaml",
+        "pytest-workflow",
         "questionary>=1.8.0",
         "requests_cache",
         "requests",
