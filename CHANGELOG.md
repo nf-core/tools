@@ -1,5 +1,9 @@
 # nf-core/tools: Changelog
 
+## v1.14dev
+
+* Fix sync error again where the Nextflow edge release needs to be used for some pipelines
+
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 
 * Make module template pass the EC linter [[#953](https://github.com/nf-core/tools/pull/953)]
