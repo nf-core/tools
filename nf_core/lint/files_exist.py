@@ -129,7 +129,7 @@ def files_exist(self):
         [os.path.join("lib", "NfcoreSchema.groovy")],
         [os.path.join("lib", "Utils.groovy")],
         [os.path.join("lib", "Workflow.groovy")],
-        [os.path.join("modules", "local" "get_software_versions.nf")],
+        [os.path.join("modules", "local", "get_software_versions.nf")],
     ]
 
     files_warn = [
