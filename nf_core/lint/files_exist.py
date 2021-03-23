@@ -35,10 +35,8 @@ def files_exist(self):
         assets/sendmail_template.txt
         CHANGELOG.md
         CODE_OF_CONDUCT.md
-        CODE_OF_CONDUCT.md
         docs/images/nf-core-PIPELINE_logo.png
         docs/output.md
-        docs/README.md
         docs/README.md
         docs/usage.md
         lib/nfcore_external_java_deps.jar
