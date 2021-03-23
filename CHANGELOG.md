@@ -9,6 +9,17 @@
 * Adding TODOs and MultiQC process in DSL2 template
 * [#522](https://github.com/nf-core/tools/issues/522) - Unify iGenomes index usage
 
+## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
+
+* Make module template pass the EC linter [[#953](https://github.com/nf-core/tools/pull/953)]
+* Added better logging message if a user doesn't specificy the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
+* Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
+* Fixed template creation error regarding file permissions [[#932](https://github.com/nf-core/tools/issues/932)]
+* Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
+* Added automated PR comments to the Markdown, YAML and Python lint CI tests to explain failures (tools and pipeline template)
+* Make `nf-core lint` summary table borders coloured according to overall pass / fail status
+* Attempted a fix for the automated sync when we submit too many PRs at once [[#911](https://github.com/nf-core/tools/issues/911)]
+
 ## [v1.13.1 - Copper Crocodile Patch :crocodile: :pirate_flag:](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
 
 * Fixed bug in pipeline linting markdown output that gets posted to PR comments [[#914]](https://github.com/nf-core/tools/issues/914)

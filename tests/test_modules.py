@@ -83,8 +83,8 @@ class TestModules(unittest.TestCase):
         self.mods.install("trimgalore")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False, all_modules=True)
-        assert len(module_lint.passed) == 43
-        assert len(module_lint.warned) == 1
+        assert len(module_lint.passed) == 18
+        assert len(module_lint.warned) == 0
         assert len(module_lint.failed) == 0
 
     def test_modules_lint_empty(self):

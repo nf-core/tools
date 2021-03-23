@@ -2,13 +2,14 @@
 
 1. Check issue milestones to see outstanding issues to resolve if possible or transfer to the milestones for the next release e.g. [`v1.9`](https://github.com/nf-core/tools/issues?q=is%3Aopen+is%3Aissue+milestone%3A1.9)
 2. Most importantly, pick an undeniably outstanding [name](http://www.codenamegenerator.com/) for the release where *Prefix* = *Metal* and *Dictionary* = *Animal*.
-3. Create a PR to `dev` to bump the version in  `CHANGELOG.md` and `setup.py`.
-4. Make sure all CI tests are passing!
-5. Create a PR from `dev` to `master`
-6. Make sure all CI tests are passing again (additional tests are run on PRs to `master`)
-7. Request review (2 approvals required)
-8. Merge the PR into `master`
-9. Once CI tests on commit have passed, create a new release copying the `CHANGELOG` for that release into the description section.
+3. Check whether the GitHub Actions workflow scripts need updating of the Nextflow versions
+4. Create a PR to `dev` to bump the version in  `CHANGELOG.md` and `setup.py`.
+5. Make sure all CI tests are passing!
+6. Create a PR from `dev` to `master`
+7. Make sure all CI tests are passing again (additional tests are run on PRs to `master`)
+8. Request review (2 approvals required)
+9. Merge the PR into `master`
+10. Once CI tests on commit have passed, create a new release copying the `CHANGELOG` for that release into the description section.
 
 ## After release
 

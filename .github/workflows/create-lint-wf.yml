@@ -27,15 +27,29 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      - name: Run nf-core/tools
-        run: |
-          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
-          nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored
-          nf-core --log-file log.txt list
-          nf-core --log-file log.txt sync nf-core-testpipeline/
-          nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
-          nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
-          nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
+      - name: nf-core create
+        run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+
+      - name: nf-core lint
+        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored
+
+      - name: nf-core list
+        run: nf-core --log-file log.txt list
+
+      - name: nf-core licences
+        run: nf-core --log-file log.txt licences nf-core-testpipeline
+
+      - name: nf-core sync
+        run: nf-core --log-file log.txt sync nf-core-testpipeline/
+
+      - name: nf-core schema
+        run: nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
+
+      - name: nf-core bump-version
+        run: nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
+
+      - name: nf-core modules install
+        run: nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
 
       - name: Upload log file artifact
         if: ${{ always() }}

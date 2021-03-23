@@ -7,6 +7,8 @@ on:
 jobs:
   get-pipelines:
     runs-on: ubuntu-latest
+    env:
+      NXF_VER: 21.03.0-edge
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
