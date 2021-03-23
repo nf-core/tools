@@ -36,8 +36,8 @@ jobs:
       - name: nf-core list
         run: nf-core --log-file log.txt list
 
-      - name: nf-core licences
-        run: nf-core --log-file log.txt licences nf-core-testpipeline
+      # - name: nf-core licences
+      #   run: nf-core --log-file log.txt licences nf-core-testpipeline
 
       - name: nf-core sync
         run: nf-core --log-file log.txt sync nf-core-testpipeline/
