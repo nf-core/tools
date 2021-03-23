@@ -134,6 +134,10 @@ class PipelineCreate(object):
                 shutil.copy(template_fn_path, output_path)
                 continue
 
+            # Mirror file permissions
+            template_stat = os.stat(template_fn_path)
+            os.chmod(output_path, template_stat.st_mode)
+
         # Make a logo and save it
         self.make_pipeline_logo()
 
