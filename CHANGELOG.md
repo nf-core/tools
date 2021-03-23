@@ -8,6 +8,7 @@
 * Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
 * Added automated PR comments to the Markdown, YAML and Python lint CI tests to explain failures (tools and pipeline template)
 * Make `nf-core lint` summary table borders coloured according to overall pass / fail status
+* Attempted a fix for the automated sync when we submit too many PRs at once [[#911](https://github.com/nf-core/tools/issues/911)]
 
 ## [v1.13.1 - Copper Crocodile Patch :crocodile: :pirate_flag:](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
 
