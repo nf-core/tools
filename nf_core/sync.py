@@ -340,7 +340,9 @@ class PipelineSync(object):
 
         # Something went wrong
         else:
-            raise PullRequestException(f"GitHub API returned code {r.status_code}: \n{returned_data_prettyprint}")
+            raise PullRequestException(
+                f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r.headers}"
+            )
 
     def close_open_template_merge_prs(self):
         """Get all template merging branches (starting with 'nf-core-template-merge-')
