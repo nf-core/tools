@@ -6,7 +6,7 @@
 * Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
 * Fixed template creation error regarding file permissions [[#932](https://github.com/nf-core/tools/issues/932)]
 * Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
-* Added automated PR comments to the Markdownlint and Python Black lint CI tests to explain failures
+* Added automated PR comments to the Markdown, YAML and Python lint CI tests to explain failures (tools and pipeline template)
 
 ## [v1.13.1 - Copper Crocodile Patch :crocodile: :pirate_flag:](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
 
