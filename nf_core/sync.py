@@ -339,17 +339,16 @@ class PipelineSync(object):
             if r.status_code == 201:
                 self.pr_url = self.gh_pr_returned_data["html_url"]
                 log.debug(f"GitHub API PR worked:\n{returned_data_prettyprint}")
-                log.info(f"GitHub PR created: {self.gh_pr_returned_data["html_url"]}")
+                log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
                 break
 
             # Returned 403 error - too many simultaneous requests
             # https://github.com/nf-core/tools/issues/911
             if r.status_code == 403:
                 log.debug(f"GitHub API PR failed with 403 error:\n{returned_data_prettyprint}\n\n{r.headers}")
-                wait_time = float(re.sub('[^0-9]','', r.headers.get('Retry-After', 30)))
+                wait_time = float(re.sub("[^0-9]", "", r.headers.get("Retry-After", 30)))
                 log.warning(f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds..")
                 time.sleep(wait_time)
-
 
             # Something went wrong
             else:
