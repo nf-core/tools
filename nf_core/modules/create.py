@@ -237,7 +237,7 @@ class ModuleCreate(object):
                 fh.write(rendered_output)
 
             # Mirror file permissions
-            template_stat = os.stat(template_fn)
+            template_stat = os.stat(os.path.join("nf_core", "module-template", template_fn))
             os.chmod(dest_fn, template_stat.st_mode)
 
     def get_repo_type(self, directory):
