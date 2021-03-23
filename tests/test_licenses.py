@@ -28,7 +28,7 @@ import nf_core.licences
 #         console = Console(record=True)
 #         console.print(self.license_obj.run_licences())
 #         output = console.export_text()
-#         assert "GPLv3" in output
+#         assert "GPL v3" in output
 
 #     def test_run_licences_successful_json(self):
 #         self.license_obj.as_json = True
@@ -37,7 +37,7 @@ import nf_core.licences
 #         output = json.loads(console.export_text())
 #         for package in output:
 #             if "multiqc" in package:
-#                 assert output[package][0] == "GPLv3"
+#                 assert output[package][0] == "GPL v3"
 #                 break
 #         else:
 #             raise LookupError("Could not find MultiQC")

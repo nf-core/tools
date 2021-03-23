@@ -116,6 +116,7 @@ def nextflow_config(self):
         "params.container",
         "params.singleEnd",
         "params.igenomesIgnore",
+        "params.name",
     ]
 
     # Remove field that should be ignored according to the linting config

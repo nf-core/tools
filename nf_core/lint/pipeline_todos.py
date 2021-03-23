@@ -1,8 +1,11 @@
 #!/usr/bin/env python
 
+import logging
 import os
 import io
 import fnmatch
+
+log = logging.getLogger(__name__)
 
 
 def pipeline_todos(self):
@@ -32,29 +35,36 @@ def pipeline_todos(self):
     passed = []
     warned = []
     failed = []
+    file_paths = []
 
     ignore = [".git"]
     if os.path.isfile(os.path.join(self.wf_path, ".gitignore")):
         with io.open(os.path.join(self.wf_path, ".gitignore"), "rt", encoding="latin1") as fh:
             for l in fh:
                 ignore.append(os.path.basename(l.strip().rstrip("/")))
-    for root, dirs, files in os.walk(self.wf_path):
+    for root, dirs, files in os.walk(self.wf_path, topdown=True):
         # Ignore files
-        for i in ignore:
-            dirs = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
-            files = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
+        for i_base in ignore:
+            i = os.path.join(root, i_base)
+            dirs[:] = [d for d in dirs if not fnmatch.fnmatch(os.path.join(root, d), i)]
+            files[:] = [f for f in files if not fnmatch.fnmatch(os.path.join(root, f), i)]
         for fname in files:
-            with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
-                for l in fh:
-                    if "TODO nf-core" in l:
-                        l = (
-                            l.replace("<!--", "")
-                            .replace("-->", "")
-                            .replace("# TODO nf-core: ", "")
-                            .replace("// TODO nf-core: ", "")
-                            .replace("TODO nf-core: ", "")
-                            .strip()
-                        )
-                        warned.append("TODO string in `{}`: _{}_".format(fname, l))
-
-    return {"passed": passed, "warned": warned, "failed": failed}
+            try:
+                with io.open(os.path.join(root, fname), "rt", encoding="latin1") as fh:
+                    for l in fh:
+                        if "TODO nf-core" in l:
+                            l = (
+                                l.replace("<!--", "")
+                                .replace("-->", "")
+                                .replace("# TODO nf-core: ", "")
+                                .replace("// TODO nf-core: ", "")
+                                .replace("TODO nf-core: ", "")
+                                .strip()
+                            )
+                            warned.append("TODO string in `{}`: _{}_".format(fname, l))
+                            file_paths.append(os.path.join(root, fname))
+            except FileNotFoundError:
+                log.debug(f"Could not open file {fname} in pipeline_todos lint test")
+    # HACK file paths are returned to allow usage of this function in modules/lint.py
+    # Needs to be refactored!
+    return {"passed": passed, "warned": warned, "failed": failed, "file_paths": file_paths}
