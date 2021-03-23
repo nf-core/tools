@@ -251,7 +251,10 @@ class ModuleCreate(object):
         elif os.path.exists(os.path.join(directory, "software")):
             return "modules"
         else:
-            raise UserWarning(f"Could not determine repository type: '{directory}'")
+            raise UserWarning(
+                f"This directory does not look like a clone of nf-core/modules or an nf-core pipeline: '{directory}'"
+                " Please point to a valid directory."
+            )
 
     def get_module_dirs(self):
         """Given a directory and a tool/subtool, set the file paths and check if they already exist
