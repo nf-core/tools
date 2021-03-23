@@ -1,9 +1,11 @@
 # nf-core/tools: Changelog
 
-## v1.13.2
+## v1.13.2dev
 
 * Added better logging message if a user doesn't specificy the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
 * Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
+* Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
+* Added automated PR comments to the Markdownlint and Python Black lint CI tests to explain failures
 
 ## [v1.13.1 - Copper Crocodile Patch :crocodile: :pirate_flag:](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
 
