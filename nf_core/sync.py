@@ -313,16 +313,16 @@ class PipelineSync(object):
             "please see the `v{tag}` [release page](https://github.com/nf-core/tools/releases/tag/{tag})."
         ).format(tag=nf_core.__version__)
 
-        while True:
-            # Make new pull-request
-            pr_content = {
-                "title": pr_title,
-                "body": pr_body_text,
-                "maintainer_can_modify": True,
-                "head": self.merge_branch,
-                "base": self.from_branch,
-            }
+        # Make new pull-request
+        pr_content = {
+            "title": pr_title,
+            "body": pr_body_text,
+            "maintainer_can_modify": True,
+            "head": self.merge_branch,
+            "base": self.from_branch,
+        }
 
+        while True:
             r = requests.post(
                 url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
                 data=json.dumps(pr_content),
