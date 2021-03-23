@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-* Make module template pass the EC linter
+* Make module template pass the EC linter [#953]
 
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 
