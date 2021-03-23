@@ -2,6 +2,7 @@
 
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 
+* Make module template pass the EC linter [[#953](https://github.com/nf-core/tools/pull/953)]
 * Added better logging message if a user doesn't specificy the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
 * Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
 * Fixed template creation error regarding file permissions [[#932](https://github.com/nf-core/tools/issues/932)]
