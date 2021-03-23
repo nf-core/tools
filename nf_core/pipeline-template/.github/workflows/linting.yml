@@ -1,4 +1,4 @@
-name: nf-core linting
+{% raw %}name: nf-core linting
 # This workflow is triggered on pushes and PRs to the repository.
 # It runs the `nf-core lint` and markdown lint tests to ensure that the code meets the nf-core guidelines
 on:
@@ -108,7 +108,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install nf-core
-{% raw %}
+
       - name: Run nf-core lint
         env:
           GITHUB_COMMENTS_URL: ${{ github.event.pull_request.comments_url }}
