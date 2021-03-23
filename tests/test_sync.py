@@ -192,6 +192,7 @@ class TestModules(unittest.TestCase):
             def __init__(self, data, status_code):
                 self.status_code = status_code
                 self.content = json.dumps(data)
+                self.headers = {"content-encoding": "test", "connection": "fake"}
 
         if kwargs["url"] == "https://api.github.com/repos/no_existing_pr/response/pulls":
             response_data = {"html_url": "great_success"}
