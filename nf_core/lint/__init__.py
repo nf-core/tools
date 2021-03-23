@@ -318,14 +318,15 @@ class PipelineLint(nf_core.utils.Pipeline):
             console.print(table)
 
         # Summary table
-        table = Table(box=rich.box.ROUNDED)
-        table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
-        table.add_row(r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)), style="green")
+        summary_colour = "red" if len(self.failed) > 0 else "green"
+        table = Table(box=rich.box.ROUNDED, style=summary_colour)
+        table.add_column(f"LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        table.add_row(r"[green][✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)))
         if len(self.fix):
-            table.add_row(r"[?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), style="bright_blue")
-        table.add_row(r"[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
-        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+            table.add_row(r"[bright blue][?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)))
+        table.add_row(r"[grey58][?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)))
+        table.add_row(r"[yellow][!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)))
+        table.add_row(r"[red][✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)))
         console.print(table)
 
         if len(self.could_fix):
