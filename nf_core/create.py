@@ -132,7 +132,11 @@ class PipelineCreate(object):
             except (AttributeError, UnicodeDecodeError) as e:
                 log.debug(f"Copying file without Jinja: '{output_path}' - {e}")
                 shutil.copy(template_fn_path, output_path)
-                continue
+
+            # Something else went wrong
+            except Exception as e:
+                log.error(f"Copying raw file as error rendering with Jinja: '{output_path}' - {e}")
+                shutil.copy(template_fn_path, output_path)
 
             # Mirror file permissions
             template_stat = os.stat(template_fn_path)
