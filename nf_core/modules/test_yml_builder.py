@@ -240,8 +240,10 @@ class ModulesTestYmlBuilder(object):
         # Compare both test.yml files
         for i in range(len(test_files)):
             if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
-                log.info(f"Deleting md5 sums of '{test_files[i]['path']}' as it is not reproducible")
                 test_files[i].pop("md5sum")
+                test_files[i][
+                    "contains"
+                ] = "# TODO nf-core: md5sum test not possible, please replace this comment with a string in the file"
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")
