@@ -2,6 +2,7 @@
 
 ## v1.14dev
 
+* Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
 * Fix sync error again where the Nextflow edge release needs to be used for some pipelines
 * Fix bug with `nf-core lint --release` (`NameError: name 'os' is not defined`)
 
