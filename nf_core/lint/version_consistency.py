@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+import os
+
 
 def version_consistency(self):
     """Pipeline and container version number consistency.

@@ -1,11 +1,14 @@
 # nf-core/tools: Changelog
 
-## 2.0.0dev
+## v1.14dev
 
 * Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
+* Fix sync error again where the Nextflow edge release needs to be used for some pipelines
+* Fix bug with `nf-core lint --release` (`NameError: name 'os' is not defined`)
 
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 
+* Make module template pass the EC linter [[#953](https://github.com/nf-core/tools/pull/953)]
 * Added better logging message if a user doesn't specificy the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
 * Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
 * Fixed template creation error regarding file permissions [[#932](https://github.com/nf-core/tools/issues/932)]
