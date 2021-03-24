@@ -18,6 +18,7 @@ import shlex
 import subprocess
 import tempfile
 import yaml
+import operator
 
 import nf_core.utils
 import nf_core.modules.pipeline_modules
@@ -195,6 +196,21 @@ class ModulesTestYmlBuilder(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
+    def create_test_file_dict(self, results_dir):
+        """ Walk through directory and collect md5 sums """
+        test_files = []
+        for root, dir, file in os.walk(results_dir):
+            for elem in file:
+                elem = os.path.join(root, elem)
+                elem_md5 = self._md5(elem)
+                # Switch out the results directory path with the expected 'output' directory
+                elem = elem.replace(results_dir, "output")
+                test_files.append({"path": elem, "md5sum": elem_md5})
+
+        test_files = sorted(test_files, key=operator.itemgetter("path"))
+
+        return test_files
+
     def get_md5_sums(self, entry_point, command):
         """
         Recursively go through directories and subdirectories
@@ -218,29 +234,13 @@ class ModulesTestYmlBuilder(object):
                     log.error(f"Directory '{results_dir}' does not exist")
                     results_dir = None
 
-        test_files = []
-        for root, dir, file in os.walk(results_dir):
-            for elem in file:
-                elem = os.path.join(root, elem)
-                elem_md5 = self._md5(elem)
-                # Switch out the results directory path with the expected 'output' directory
-                elem = elem.replace(results_dir, "output")
-                test_files.append({"path": elem, "md5sum": elem_md5})
-
-        # Generate md5 sums for repeat test
-        test_files_repeat = []
-        for root, _, file in os.walk(results_dir_repeat):
-            for elem in file:
-                elem = os.path.join(root, elem)
-                elem_md5 = self._md5(elem)
-                elem = elem.replace(results_dir_repeat, "output")
-                test_files_repeat.append({"path": elem, "md5sum": elem_md5})
+        test_files = self.create_test_file_dict(results_dir=results_dir)
+        test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
 
         # Compare both test.yml files
-        test_files.sort()
-        test_files_repeat.sort()
         for i in range(len(test_files)):
             if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
+                log.info(f"Deleting md5 sums of '{test_files[i]['path']}' as it is not reproducible")
                 test_files[i].pop("md5sum")
 
         if len(test_files) == 0:
@@ -281,6 +281,7 @@ class ModulesTestYmlBuilder(object):
         log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
+            log.info(f"Repeating test ...")
             nfconfig_raw = subprocess.check_output(shlex.split(command_repeat))
 
         except OSError as e:
