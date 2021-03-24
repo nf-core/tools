@@ -32,6 +32,7 @@ class ModuleCreate(object):
         self.has_meta = has_meta
         self.force_overwrite = force
 
+        self.tool_conda_name = None
         self.subtool = None
         self.tool_licence = None
         self.repo_type = None
@@ -89,6 +90,12 @@ class ModuleCreate(object):
                 tool_clean = re.sub(r"[^a-z\d/]", "", self.tool.lower())
                 if rich.prompt.Confirm.ask(f"[violet]Change '{self.tool}' to '{tool_clean}'?"):
                     self.tool = tool_clean
+                # Allow characters for use in finding conda package
+                elif rich.prompt.Confirm.ask(
+                    f"[violet]Does '{self.tool}' have the same capitalizations/punctuations in Bioconda?"
+                ):
+                    self.tool_conda_name = self.tool
+                    self.tool = tool_clean
                 else:
                     self.tool = ""
 
@@ -118,7 +125,10 @@ class ModuleCreate(object):
 
         # Try to find a bioconda package for 'tool'
         try:
-            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+            if self.tool_conda_name:
+                anaconda_response = nf_core.utils.anaconda_package(self.tool_conda_name, ["bioconda"])
+            else:
+                anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
             version = anaconda_response.get("latest_version")
             if not version:
                 version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
@@ -126,7 +136,10 @@ class ModuleCreate(object):
             self.tool_description = anaconda_response.get("summary", "")
             self.tool_doc_url = anaconda_response.get("doc_url", "")
             self.tool_dev_url = anaconda_response.get("dev_url", "")
-            self.bioconda = "bioconda::" + self.tool + "=" + version
+            if self.tool_conda_name:
+                self.bioconda = "bioconda::" + self.tool_conda_name + "=" + version
+            else:
+                self.bioconda = "bioconda::" + self.tool + "=" + version
             log.info(f"Using Bioconda package: '{self.bioconda}'")
         except (ValueError, LookupError) as e:
             log.warning(
@@ -136,7 +149,10 @@ class ModuleCreate(object):
         # Try to get the container tag (only if bioconda package was found)
         if self.bioconda:
             try:
-                self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
+                if self.tool_conda_name:
+                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool_conda_name, version)
+                else:
+                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
                 log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
