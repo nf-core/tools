@@ -6,7 +6,7 @@
 * Fix sync error again where the Nextflow edge release needs to be used for some pipelines
 * Fix bug with `nf-core lint --release` (`NameError: name 'os' is not defined`)
 * Added linebreak to linting comment so that markdown header renders on PR comment properly
-* In moule create command - if no bioconda package is found, prompt user for a different bioconda package name
+* `nf-core modules create` command - if no bioconda package is found, prompt user for a different bioconda package name
 
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 
