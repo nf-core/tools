@@ -90,12 +90,6 @@ class ModuleCreate(object):
                 tool_clean = re.sub(r"[^a-z\d/]", "", self.tool.lower())
                 if rich.prompt.Confirm.ask(f"[violet]Change '{self.tool}' to '{tool_clean}'?"):
                     self.tool = tool_clean
-                # Allow characters for use in finding conda package
-                elif rich.prompt.Confirm.ask(
-                    f"[violet]Does '{self.tool}' have the same capitalizations/punctuations in Bioconda?"
-                ):
-                    self.tool_conda_name = self.tool
-                    self.tool = tool_clean
                 else:
                     self.tool = ""
 
@@ -124,27 +118,36 @@ class ModuleCreate(object):
         self.file_paths = self.get_module_dirs()
 
         # Try to find a bioconda package for 'tool'
-        try:
-            if self.tool_conda_name:
-                anaconda_response = nf_core.utils.anaconda_package(self.tool_conda_name, ["bioconda"])
-            else:
-                anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
-            version = anaconda_response.get("latest_version")
-            if not version:
-                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
-            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
-            self.tool_description = anaconda_response.get("summary", "")
-            self.tool_doc_url = anaconda_response.get("doc_url", "")
-            self.tool_dev_url = anaconda_response.get("dev_url", "")
-            if self.tool_conda_name:
-                self.bioconda = "bioconda::" + self.tool_conda_name + "=" + version
-            else:
-                self.bioconda = "bioconda::" + self.tool + "=" + version
-            log.info(f"Using Bioconda package: '{self.bioconda}'")
-        except (ValueError, LookupError) as e:
-            log.warning(
-                f"{e}\nBuilding module without tool software and meta, you will need to enter this information manually."
-            )
+        while True:
+            try:
+                if self.tool_conda_name:
+                    anaconda_response = nf_core.utils.anaconda_package(self.tool_conda_name, ["bioconda"])
+                else:
+                    anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+                version = anaconda_response.get("latest_version")
+                if not version:
+                    version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+                self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
+                self.tool_description = anaconda_response.get("summary", "")
+                self.tool_doc_url = anaconda_response.get("doc_url", "")
+                self.tool_dev_url = anaconda_response.get("dev_url", "")
+                if self.tool_conda_name:
+                    self.bioconda = "bioconda::" + self.tool_conda_name + "=" + version
+                else:
+                    self.bioconda = "bioconda::" + self.tool + "=" + version
+                log.info(f"Using Bioconda package: '{self.bioconda}'")
+                break
+            except (ValueError, LookupError) as e:
+                if rich.prompt.Confirm.ask(
+                    f"[violet]Could not find Conda dependency using the Anaconda API: '{self.tool}'. Do you want to enter a different bioconda package name?"
+                ):
+                    self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of tool/subtool").strip()
+                    continue
+                else:
+                    log.warning(
+                        f"{e}\nBuilding module without tool software and meta, you will need to enter this information manually."
+                    )
+                    break
 
         # Try to get the container tag (only if bioconda package was found)
         if self.bioconda:
