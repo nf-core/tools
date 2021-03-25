@@ -7,6 +7,7 @@
 * Fix bug with `nf-core lint --release` (`NameError: name 'os' is not defined`)
 * Added linebreak to linting comment so that markdown header renders on PR comment properly
 * `nf-core modules create` command - if no bioconda package is found, prompt user for a different bioconda package name
+* Updated module template `main.nf` with new test data paths
 
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 
