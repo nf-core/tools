@@ -18,6 +18,7 @@ import shlex
 import subprocess
 import tempfile
 import yaml
+import operator
 
 import nf_core.utils
 import nf_core.modules.pipeline_modules
@@ -134,7 +135,7 @@ class ModulesTestYmlBuilder(object):
     def build_single_test(self, entry_point):
         """Given the supplied cli flags, prompt for any that are missing.
 
-        Returns: False if failure, None if success.
+        Returns: Test command
         """
         ep_test = {
             "name": "",
@@ -195,6 +196,21 @@ class ModulesTestYmlBuilder(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
+    def create_test_file_dict(self, results_dir):
+        """ Walk through directory and collect md5 sums """
+        test_files = []
+        for root, dir, file in os.walk(results_dir):
+            for elem in file:
+                elem = os.path.join(root, elem)
+                elem_md5 = self._md5(elem)
+                # Switch out the results directory path with the expected 'output' directory
+                elem = elem.replace(results_dir, "output")
+                test_files.append({"path": elem, "md5sum": elem_md5})
+
+        test_files = sorted(test_files, key=operator.itemgetter("path"))
+
+        return test_files
+
     def get_md5_sums(self, entry_point, command):
         """
         Recursively go through directories and subdirectories
@@ -206,7 +222,7 @@ class ModulesTestYmlBuilder(object):
         run_this_test = False
         while results_dir is None:
             if self.run_tests or run_this_test:
-                results_dir = self.run_tests_workflow(command)
+                results_dir, results_dir_repeat = self.run_tests_workflow(command)
             else:
                 results_dir = rich.prompt.Prompt.ask(
                     f"[violet]Test output folder with results[/] (leave blank to run test)"
@@ -218,14 +234,16 @@ class ModulesTestYmlBuilder(object):
                     log.error(f"Directory '{results_dir}' does not exist")
                     results_dir = None
 
-        test_files = []
-        for root, dir, file in os.walk(results_dir):
-            for elem in file:
-                elem = os.path.join(root, elem)
-                elem_md5 = self._md5(elem)
-                # Switch out the results directory path with the expected 'output' directory
-                elem = elem.replace(results_dir, "output")
-                test_files.append({"path": elem, "md5sum": elem_md5})
+        test_files = self.create_test_file_dict(results_dir=results_dir)
+        test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
+
+        # Compare both test.yml files
+        for i in range(len(test_files)):
+            if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
+                test_files[i].pop("md5sum")
+                test_files[i][
+                    "contains"
+                ] = "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead"
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")
@@ -258,11 +276,16 @@ class ModulesTestYmlBuilder(object):
                     log.info(f"Setting env var '$PROFILE' to '{profile}'")
 
         tmp_dir = tempfile.mkdtemp()
+        tmp_dir_repeat = tempfile.mkdtemp()
         command += f" --outdir {tmp_dir}"
+        command_repeat = command + f" --outdir {tmp_dir_repeat}"
 
         log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
+            log.info(f"Repeating test ...")
+            nfconfig_raw = subprocess.check_output(shlex.split(command_repeat))
+
         except OSError as e:
             if e.errno == errno.ENOENT and command.strip().startswith("nextflow "):
                 raise AssertionError(
@@ -276,7 +299,7 @@ class ModulesTestYmlBuilder(object):
             log.info("Test workflow finished!")
             log.debug(nfconfig_raw)
 
-        return tmp_dir
+        return tmp_dir, tmp_dir_repeat
 
     def print_test_yml(self):
         """

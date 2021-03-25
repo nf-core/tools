@@ -48,6 +48,9 @@ jobs:
       - name: nf-core bump-version
         run: nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
 
+      - name: nf-core lint in release mode
+        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored --release
+
       - name: nf-core modules install
         run: nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
 

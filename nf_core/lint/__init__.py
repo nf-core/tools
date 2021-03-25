@@ -438,7 +438,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             f"{comment_body_text}\n\n"
             f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}\n"
             "```\n\n"
-            "<details>\n"
+            "<details>\n\n"
             f"{test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details\n\n"
             f"* nf-core/tools version {nf_core.__version__}\n"
             f"* Run at `{timestamp}`\n\n"
