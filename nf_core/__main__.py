@@ -32,7 +32,7 @@ log = logging.getLogger()
 
 def run_nf_core():
     # Set up the rich traceback
-    rich.traceback.install(width=200, word_wrap=True)
+    rich.traceback.install(width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
