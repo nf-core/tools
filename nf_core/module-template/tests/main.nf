@@ -6,11 +6,10 @@ include { {{ tool_name|upper }} } from '../../../{{ "../" if subtool else "" }}s
 
 workflow test_{{ tool_name }} {
     {% if has_meta %}
-    def input = []
     input = [ [ id:'test', single_end:false ], // meta map
               file(params.test_data['sarscov2']['illumina']['test_paired_end_bam'], checkIfExists: true) ]
     {%- else %}
-    def input = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)
+    input = file(params.test_data['sarscov2']['illumina']['test_single_end_bam'], checkIfExists: true)
     {%- endif %}
 
     {{ tool_name|upper }} ( input )
