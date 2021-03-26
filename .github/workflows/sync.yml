@@ -4,6 +4,9 @@ on:
     types: [published]
   workflow_dispatch:
 
+env:
+  NXF_VER: 21.03.0-edge
+
 jobs:
   get-pipelines:
     runs-on: ubuntu-latest

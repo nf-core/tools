@@ -14,9 +14,9 @@
 #
 import os
 import sys
-import nf_core
 
 sys.path.insert(0, os.path.abspath("../../../nf_core"))
+import nf_core
 
 # -- Project information -----------------------------------------------------
 
@@ -74,7 +74,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "nature"
+# html_theme = "nature"
+html_theme = "sphinx_rtd_theme"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -89,6 +90,10 @@ html_static_path = ["./_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
+html_css_files = [
+    "css/custom.css",
+]
+
 #
 # The default sidebars (for documents that don't match any pattern) are
 # defined by theme itself.  Builtin themes are using these templates by

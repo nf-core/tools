@@ -6,3 +6,4 @@ target_version = ['py36','py37','py38']
 markers = [
     "datafiles: load datafiles"
 ]
+testpaths = ["tests"]
