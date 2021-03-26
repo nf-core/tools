@@ -2,7 +2,7 @@
 
 ## 1.14dev
 
-_..nothing yet.._
+* Fix overly strict `--max_time` formatting regex [[#973](https://github.com/nf-core/tools/issues/973)]
 
 ## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
 
