@@ -19,7 +19,7 @@ class TestLaunch(unittest.TestCase):
         """ Create a new PipelineSchema and Launch objects """
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template", "{{cookiecutter.name_noslash}}")
+        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.nf_params_fn = os.path.join(tempfile.mkdtemp(), "nf-params.json")
         self.launcher = nf_core.launch.Launch(self.template_dir, params_out=self.nf_params_fn)
 

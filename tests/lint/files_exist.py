@@ -9,13 +9,14 @@ def test_files_exist_missing_config(self):
     """Lint test: critical files missing FAIL"""
     new_pipeline = self._make_pipeline_copy()
 
-    os.remove(os.path.join(new_pipeline, "nextflow.config"))
+    os.remove(os.path.join(new_pipeline, "CHANGELOG.md"))
 
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
+    lint_obj.nf_config["manifest.name"] = "testpipeline"
 
     results = lint_obj.files_exist()
-    assert results["failed"] == ["File not found: `nextflow.config`"]
+    assert results["failed"] == ["File not found: `CHANGELOG.md`"]
 
 
 def test_files_exist_missing_main(self):

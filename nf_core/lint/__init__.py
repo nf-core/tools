@@ -16,8 +16,6 @@ import os
 import re
 import rich
 import rich.progress
-import subprocess
-import textwrap
 import yaml
 
 import nf_core.utils
@@ -25,7 +23,9 @@ import nf_core.utils
 log = logging.getLogger(__name__)
 
 
-def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_fn=None, json_fn=None):
+def run_linting(
+    pipeline_dir, release_mode=False, fix=(), show_passed=False, fail_ignored=False, md_fn=None, json_fn=None
+):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
     of type :class:`PipelineLint` after finished.
@@ -40,7 +40,7 @@ def run_linting(pipeline_dir, release_mode=False, fix=(), show_passed=False, md_
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, fail_ignored)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -105,16 +105,17 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_awsfulltest import actions_awsfulltest
     from .readme import readme
     from .version_consistency import version_consistency
-    from .conda_env_yaml import conda_env_yaml, _anaconda_package, _pip_package
+    from .conda_env_yaml import conda_env_yaml
     from .conda_dockerfile import conda_dockerfile
     from .pipeline_todos import pipeline_todos
     from .pipeline_name_conventions import pipeline_name_conventions
-    from .cookiecutter_strings import cookiecutter_strings
+    from .template_strings import template_strings
     from .schema_lint import schema_lint
     from .schema_params import schema_params
     from .actions_schema_validation import actions_schema_validation
+    from .merge_markers import merge_markers
 
-    def __init__(self, wf_path, release_mode=False, fix=()):
+    def __init__(self, wf_path, release_mode=False, fix=(), fail_ignored=False):
         """ Initialise linting object """
 
         # Initialise the parent object
@@ -122,6 +123,7 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         self.lint_config = {}
         self.release_mode = release_mode
+        self.fail_ignored = fail_ignored
         self.failed = []
         self.ignored = []
         self.fixed = []
@@ -140,10 +142,11 @@ class PipelineLint(nf_core.utils.Pipeline):
             "conda_dockerfile",
             "pipeline_todos",
             "pipeline_name_conventions",
-            "cookiecutter_strings",
+            "template_strings",
             "schema_lint",
             "schema_params",
             "actions_schema_validation",
+            "merge_markers",
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
@@ -241,7 +244,10 @@ class PipelineLint(nf_core.utils.Pipeline):
                 for test in test_results.get("passed", []):
                     self.passed.append((test_name, test))
                 for test in test_results.get("ignored", []):
-                    self.ignored.append((test_name, test))
+                    if self.fail_ignored:
+                        self.failed.append((test_name, test))
+                    else:
+                        self.ignored.append((test_name, test))
                 for test in test_results.get("fixed", []):
                     self.fixed.append((test_name, test))
                 for test in test_results.get("warned", []):
@@ -268,7 +274,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             string for the terminal with appropriate ASCII colours.
             """
             for eid, msg in test_results:
-                table.add_row(Markdown("[{0}](https://nf-co.re/errors#{0}): {1}".format(eid, msg)))
+                table.add_row(Markdown("[{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html): {1}".format(eid, msg)))
             return table
 
         def _s(some_list):
@@ -279,10 +285,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
-            table.add_column(
-                r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)),
-                no_wrap=True,
-            )
+            table.add_column(r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
             table = format_result(self.passed, table)
             console.print(table)
 
@@ -310,31 +313,26 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Table of failing tests
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
-            table.add_column(
-                r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)),
-                no_wrap=True,
-            )
+            table.add_column(r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
             table = format_result(self.failed, table)
             console.print(table)
 
         # Summary table
-        table = Table(box=rich.box.ROUNDED)
-        table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
-        table.add_row(
-            r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
-            style="green",
-        )
+        summary_colour = "red" if len(self.failed) > 0 else "green"
+        table = Table(box=rich.box.ROUNDED, style=summary_colour)
+        table.add_column(f"LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        table.add_row(r"[green][✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)))
         if len(self.fix):
-            table.add_row(r"[?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), style="bright_blue")
-        table.add_row(r"[?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), style="grey58")
-        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+            table.add_row(r"[bright blue][?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)))
+        table.add_row(r"[grey58][?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)))
+        table.add_row(r"[yellow][!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)))
+        table.add_row(r"[red][✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)))
         console.print(table)
 
         if len(self.could_fix):
             fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
             console.print(
-                f"\nTip: Some of these linting errors can automatically resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+                f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
             )
         if len(self.fix):
             console.print(
@@ -350,6 +348,8 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         # Overall header
         overall_result = "Passed :white_check_mark:"
+        if len(self.warned) > 0:
+            overall_result += " :warning:"
         if len(self.failed) > 0:
             overall_result = "Failed :x:"
 
@@ -361,7 +361,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.failed
                     ]
                 )
@@ -370,11 +372,13 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_ignored_count = ""
         test_ignored = ""
         if len(self.ignored) > 0:
-            test_ignored_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.ignored))
+            test_ignored_count = "\n#| ❔ {:3d} tests were ignored |#".format(len(self.ignored))
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.ignored
                     ]
                 )
@@ -387,7 +391,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.fixed
                     ]
                 )
@@ -400,7 +406,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.warned
                     ]
                 )
@@ -413,7 +421,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/errors#{0}) - {1}".format(eid, self._strip_ansi_codes(msg, "`"))
+                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
+                            eid, self._strip_ansi_codes(msg, "`")
+                        )
                         for eid, msg in self.passed
                     ]
                 )
@@ -421,39 +431,18 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         now = datetime.datetime.now()
 
-        markdown = textwrap.dedent(
-            """
-        #### `nf-core lint` overall result: {}
-
-        {}
-
-        ```diff{}{}{}{}{}
-        ```
-
-        <details>
-
-        {}{}{}{}{}### Run details:
-
-        * nf-core/tools version {}
-        * Run at `{}`
-
-        </details>
-        """
-        ).format(
-            overall_result,
-            "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else "",
-            test_passed_count,
-            test_ignored_count,
-            test_fixed_count,
-            test_warning_count,
-            test_failure_count,
-            test_failures,
-            test_warnings,
-            test_ignored,
-            test_fixed,
-            test_passes,
-            nf_core.__version__,
-            now.strftime("%Y-%m-%d %H:%M:%S"),
+        comment_body_text = "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else ""
+        timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
+        markdown = (
+            f"## `nf-core lint` overall result: {overall_result}\n\n"
+            f"{comment_body_text}\n\n"
+            f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}\n"
+            "```\n\n"
+            "<details>\n\n"
+            f"{test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details\n\n"
+            f"* nf-core/tools version {nf_core.__version__}\n"
+            f"* Run at `{timestamp}`\n\n"
+            "</details>\n"
         )
 
         return markdown

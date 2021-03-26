@@ -1,6 +1,36 @@
 # nf-core/tools: Changelog
 
-## v1.13dev
+## 1.14dev
+
+_..nothing yet.._
+
+## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
+
+* Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
+* Fix sync error again where the Nextflow edge release needs to be used for some pipelines
+* Fix bug with `nf-core lint --release` (`NameError: name 'os' is not defined`)
+* Added linebreak to linting comment so that markdown header renders on PR comment properly
+* `nf-core modules create` command - if no bioconda package is found, prompt user for a different bioconda package name
+* Updated module template `main.nf` with new test data paths
+
+## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
+
+* Make module template pass the EC linter [[#953](https://github.com/nf-core/tools/pull/953)]
+* Added better logging message if a user doesn't specificy the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
+* Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
+* Fixed template creation error regarding file permissions [[#932](https://github.com/nf-core/tools/issues/932)]
+* Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
+* Added automated PR comments to the Markdown, YAML and Python lint CI tests to explain failures (tools and pipeline template)
+* Make `nf-core lint` summary table borders coloured according to overall pass / fail status
+* Attempted a fix for the automated sync when we submit too many PRs at once [[#911](https://github.com/nf-core/tools/issues/911)]
+
+## [v1.13.1 - Copper Crocodile Patch :crocodile: :pirate_flag:](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
+
+* Fixed bug in pipeline linting markdown output that gets posted to PR comments [[#914]](https://github.com/nf-core/tools/issues/914)
+* Made text for the PR branch CI check less verbose with a TLDR in bold at the top
+* A number of minor tweaks to the new `nf-core modules lint` code
+
+## [v1.13 - Copper Crocodile](https://github.com/nf-core/tools/releases/tag/1.13) - [2021-03-18]
 
 ### Template
 
@@ -11,6 +41,8 @@
   * If either parameter validation fails or the pipeline has errors, a warning is given about any unexpected parameters found which are not described in the pipeline schema.
   * This behaviour can be disabled by using `--validate_params false`
 * Added profiles to support the [Charliecloud](https://hpc.github.io/charliecloud/) and [Shifter](https://nersc.gitlab.io/development/shifter/how-to-use/) container engines [[#824](https://github.com/nf-core/tools/issues/824)]
+  * Note that Charliecloud requires Nextflow version `v21.03.0-edge` or later.
+* Profiles for container engines now explicitly _disable_ all other engines [[#867](https://github.com/nf-core/tools/issues/867)]
 * Fixed typo in nf-core-lint CI that prevented the markdown summary from being automatically posted on PRs as a comment.
 * Changed default for `--input` from `data/*{1,2}.fastq.gz` to `null`, as this is now validated by the schema as a required value.
 * Removed support for `--name` parameter for custom run names.
@@ -19,10 +51,22 @@
 * The parameters `--max_memory` and `--max_time` are now validated against a regular expression [[#793](https://github.com/nf-core/tools/issues/793)]
   * Must be written in the format `123.GB` / `456.h` with any of the prefixes listed in the [Nextflow docs](https://www.nextflow.io/docs/latest/process.html#memory)
   * Bare numbers no longer allowed, avoiding people from trying to specify GB and actually specifying bytes.
+* Switched from cookiecutter to Jinja2 [[#880]](https://github.com/nf-core/tools/pull/880)
+* Finally dropped the wonderful [cookiecutter](https://github.com/cookiecutter/cookiecutter) library that was behind the first pipeline template that led to nf-core [[#880](https://github.com/nf-core/tools/pull/880)]
+  * Now rendering templates directly using [Jinja](https://jinja.palletsprojects.com/), which is what cookiecutter was doing anyway
 
 ### Modules
 
-* added `nf-core modules remove` command to uninstall modules
+Initial addition of a number of new helper commands for working with DSL2 modules:
+
+* `modules list` - List available modules
+* `modules install` - Install a module from nf-core/modules
+* `modules remove` - Remove a module from a pipeline
+* `modules create` - Create a module from the template
+* `modules create-test-yml` - Create the `test.yml` file for a module with md5 sums, tags, commands and names added
+* `modules lint` - Check a module against nf-core guidelines
+
+You can read more about each of these commands in the main tools documentation (see `README.md` or <https://nf-co.re/tools>)
 
 ### Tools helper code
 
@@ -37,12 +81,18 @@
 
 ### Linting
 
+* Major refactor and rewrite of pipieline linting code
+  * Much better code organisation and maintainability
+  * New automatically generated documentation using Sphinx
+  * Numerous new tests and functions, removal of some unnecessary tests
+* Added lint check for merge markers [[#321]](https://github.com/nf-core/tools/issues/321)
 * Added new option `--fix` to automatically correct some problems detected by linting
 * Added validation of default params to `nf-core schema lint` [[#823](https://github.com/nf-core/tools/issues/823)]
 * Added schema validation of GitHub action workflows to lint function [[#795](https://github.com/nf-core/tools/issues/795)]
 * Fixed bug in schema title and description validation
 * Added second progress bar for conda dependencies lint check, as it can be slow [[#299](https://github.com/nf-core/tools/issues/299)]
 * Added new lint test to check files that should be unchanged from the pipeline.
+* Added the possibility to ignore lint tests using a `nf-core-lint.yml` config file [[#809](https://github.com/nf-core/tools/pull/809)]
 
 ## [v1.12.1 - Silver Dolphin](https://github.com/nf-core/tools/releases/tag/1.12.1) - [2020-12-03]
 
