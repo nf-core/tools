@@ -1,5 +1,9 @@
 # nf-core/tools: Changelog
 
+## 1.14dev
+
+_..nothing yet.._
+
 ## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
 
 * Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
