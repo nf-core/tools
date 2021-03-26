@@ -4,6 +4,7 @@
 
 * Fixed an issue in the pipeline template regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
 * Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+* Try to fix the fix for the automated sync when we submit too many PRs at once [[#970](https://github.com/nf-core/tools/issues/970)]
 
 ### Template
 
