@@ -4,6 +4,7 @@
 
 * Fixed an issue in the pipeline template regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
 * Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+* Rewrite the `params_summary_log()` function to properly ignore unset params and have nicer formatting [[#971](https://github.com/nf-core/tools/issues/971)]
 
 ### Template
 
