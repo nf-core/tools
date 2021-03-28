@@ -8,6 +8,7 @@
 ### Template
 
 * Removed trailing slash from `params.igenomes_base` to yield valid s3 paths (previous paths work with Nextflow but not aws cli)
+* Added nf-amazon plugin in `igenomes.config`.
 
 ## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
 
