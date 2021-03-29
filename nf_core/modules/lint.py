@@ -519,6 +519,7 @@ class NFCoreModule(object):
         # Lint the test.yml file
         try:
             with open(self.test_yml, "r") as fh:
+                # TODO: verify that the tags are correct
                 test_yml = yaml.safe_load(fh)
             self.passed.append(("test_yml_exists", "Test `test.yml` exists", self.test_yml))
         except FileNotFoundError:
