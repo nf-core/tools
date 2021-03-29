@@ -101,7 +101,7 @@ class PipelineSchema(object):
 
     def sanitise_param_default(self, param):
         """
-        Given a param, ensure that the default value it is the correct variable type
+        Given a param, ensure that the default value is the correct variable type
         """
         if "type" not in param or "default" not in param:
             return param
