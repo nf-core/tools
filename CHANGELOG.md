@@ -4,6 +4,7 @@
 
 * Fixed an issue in the pipeline template regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
 * Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+* Strip values from `nf-core launch` web response which are False and have no default in the schema [[#976](https://github.com/nf-core/tools/issues/976)]
 
 ### Template
 
