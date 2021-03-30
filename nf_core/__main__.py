@@ -315,7 +315,10 @@ def lint(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json):
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: https://nf-co.re/errors
+    on the nf-core website: https://nf-co.re/tools-docs/
+
+    You can ignore tests using a file called .nf-core-lint.yaml (if you have a good reason!).
+    See the documentation for details.
     """
 
     # Run the lint tests!
