@@ -345,7 +345,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
             try:
                 web_response = json.loads(response.content)
                 assert "status" in web_response
-            except (json.decoder.JSONDecodeError, AssertionError) as e:
+            except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
                 log.debug("Response content:\n{}".format(response.content))
                 raise AssertionError(
                     "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
