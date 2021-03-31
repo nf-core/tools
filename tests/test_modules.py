@@ -110,3 +110,23 @@ class TestModules(unittest.TestCase):
         with pytest.raises(UserWarning) as excinfo:
             module_create.create()
         assert "Module file exists already" in str(excinfo.value)
+
+    def test_modules_custom_yml_dumper(self):
+        """ Try to create a yml file with the custom yml dumper """
+        out_dir = tempfile.mkdtemp()
+        yml_output_path = os.path.join(out_dir, "test.yml")
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
+        meta_builder.test_yml_output_path = yml_output_path
+        meta_builder.tests = [{"testname": "myname"}]
+        meta_builder.print_test_yml()
+        assert os.path.isfile(yml_output_path)
+
+    def test_modules_test_file_dict(self):
+        """ Creat dict of test files and create md5 sums """
+        test_file_dir = tempfile.mkdtemp()
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
+        with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
+            fh.write("this line is just for testing")
+        test_files = meta_builder.create_test_file_dict(test_file_dir)
+        assert len(test_files) == 1
+        assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
