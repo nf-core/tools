@@ -117,7 +117,7 @@ class TestModules(unittest.TestCase):
     def test_modules_lint_new_modules(self):
         """ lint all modules in nf-core/modules repo clone """
         module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
-        module_lint.lint(print_results=False, all_modules=True)
+        module_lint.lint(print_results=True, all_modules=True)
         assert len(module_lint.passed) == 16
         assert len(module_lint.warned) == 24
         assert len(module_lint.failed) == 0
@@ -168,6 +168,28 @@ class TestModules(unittest.TestCase):
             entry_point="dummy", command="dummy", results_dir=test_file_dir, results_dir_repeat=test_file_dir
         )
         assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
+
+    def test_modules_create_test_yml_entry_points(self):
+        """ Test extracting test entry points from a main.nf file"""
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
+        meta_builder.module_test_main = os.path.join(
+            self.nfcore_modules, "tests", "software", "star", "align", "main.nf"
+        )
+        meta_builder.scrape_workflow_entry_points()
+        assert meta_builder.entry_points[0] == "test_star_align"
+
+    def test_modules_create_test_yml_check_inputs(self):
+        """ Test the check_inputs() function - raise UserWarning because test.yml exists """
+        cwd = os.getcwd()
+        os.chdir(self.nfcore_modules)
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
+        meta_builder.module_test_main = os.path.join(
+            self.nfcore_modules, "tests", "software", "star", "align", "main.nf"
+        )
+        with pytest.raises(UserWarning) as excinfo:
+            meta_builder.check_inputs()
+        os.chdir(cwd)
+        assert "Test YAML file already exists!" in str(excinfo.value)
 
     def test_modules_create_nfcore_modules(self):
         """ Create a module in nf-core/modules clone """
