@@ -158,6 +158,17 @@ class TestModules(unittest.TestCase):
         assert len(test_files) == 1
         assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
 
+    def test_modules_create_test_yml_get_md5(self):
+        """ Get md5 sums from a dummy output """
+        test_file_dir = tempfile.mkdtemp()
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
+        with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
+            fh.write("this line is just for testing")
+        test_files = meta_builder.get_md5_sums(
+            entry_point="dummy", command="dummy", results_dir=test_file_dir, results_dir_repeat=test_file_dir
+        )
+        assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
+
     def test_modules_create_nfcore_modules(self):
         """ Create a module in nf-core/modules clone """
         module_create = nf_core.modules.ModuleCreate(
