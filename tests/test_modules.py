@@ -2,6 +2,7 @@
 """ Tests covering the modules commands
 """
 
+from nf_core.modules import create
 import nf_core.modules
 
 import os
@@ -10,6 +11,21 @@ import tempfile
 import unittest
 import pytest
 from rich.console import Console
+
+
+def create_modules_repo_dummy():
+    """ Create a dummy copy of the nf-core/modules repo """
+    root_dir = tempfile.mkdtemp()
+    os.mkdir(os.path.join(root_dir, "software"))
+    os.makedirs(os.path.join(root_dir, "tests", "software"))
+    os.makedirs(os.path.join(root_dir, "tests", "config"))
+    with open(os.path.join(root_dir, "tests", "config", "pytest_software.yml"), "w") as fh:
+        fh.writelines(["test:", "\n  - software/test/**", "\n  - tests/software/test/**"])
+
+    module_create = nf_core.modules.ModuleCreate(root_dir, "star/align", "@author", "process_medium", False, False)
+    module_create.create()
+
+    return root_dir
 
 
 class TestModules(unittest.TestCase):
@@ -24,6 +40,9 @@ class TestModules(unittest.TestCase):
         shutil.copytree(self.template_dir, self.pipeline_dir)
         self.mods = nf_core.modules.PipelineModules()
         self.mods.pipeline_dir = self.pipeline_dir
+
+        # Set up the nf-core/modules repo dummy
+        self.nfcore_modules = create_modules_repo_dummy()
 
     def test_modulesrepo_class(self):
         """ Initialise a modules repo object """
@@ -95,6 +114,14 @@ class TestModules(unittest.TestCase):
         assert len(module_lint.warned) == 0
         assert len(module_lint.failed) == 0
 
+    def test_modules_lint_new_modules(self):
+        """ lint all modules in nf-core/modules repo clone """
+        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
+        module_lint.lint(print_results=False, all_modules=True)
+        assert len(module_lint.passed) == 16
+        assert len(module_lint.warned) == 24
+        assert len(module_lint.failed) == 0
+
     def test_modules_create_succeed(self):
         """ Succeed at creating the FastQC module """
         module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "fastqc", "@author", "process_low", True, True)
@@ -130,3 +157,21 @@ class TestModules(unittest.TestCase):
         test_files = meta_builder.create_test_file_dict(test_file_dir)
         assert len(test_files) == 1
         assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
+
+    def test_modules_create_nfcore_modules(self):
+        """ Create a module in nf-core/modules clone """
+        module_create = nf_core.modules.ModuleCreate(
+            self.nfcore_modules, "fastqc", "@author", "process_low", False, False
+        )
+        module_create.create()
+        assert os.path.exists(os.path.join(self.nfcore_modules, "software", "fastqc", "main.nf"))
+        assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "fastqc", "main.nf"))
+
+    def test_modules_create_nfcore_modules_subtool(self):
+        """ Create a tool/subtool module in a nf-core/modules clone """
+        module_create = nf_core.modules.ModuleCreate(
+            self.nfcore_modules, "star/index", "@author", "process_medium", False, False
+        )
+        module_create.create()
+        assert os.path.exists(os.path.join(self.nfcore_modules, "software", "star", "index", "main.nf"))
+        assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "star", "index", "main.nf"))
