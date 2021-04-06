@@ -24,13 +24,10 @@ def files_unchanged(self):
         .github/ISSUE_TEMPLATE/bug_report.md
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.md
-        .github/markdownlint.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/linting_comment.yml
         .github/workflows/linting.yml
-        assets/email_template.html
-        assets/email_template.txt
         assets/nf-core-PIPELINE_logo.png
         assets/sendmail_template.txt
         CODE_OF_CONDUCT.md
@@ -82,13 +79,10 @@ def files_unchanged(self):
         [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
-        [os.path.join(".github", "markdownlint.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "linting_comment.yml")],
         [os.path.join(".github", "workflows", "linting.yml")],
-        [os.path.join("assets", "email_template.html")],
-        [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
         [os.path.join("bin", "scrape_software_versions.py")],
