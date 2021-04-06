@@ -99,6 +99,37 @@ class PipelineSchema(object):
         self.schema_params = []
         log.debug("JSON file loaded: {}".format(self.schema_filename))
 
+    def sanitise_param_default(self, param):
+        """
+        Given a param, ensure that the default value is the correct variable type
+        """
+        if "type" not in param or "default" not in param:
+            return param
+
+        # Bools
+        if param["type"] == "boolean":
+            if not isinstance(param["default"], bool):
+                param["default"] = param["default"] == "true"
+            return param
+
+        # For everything else, an empty string is an empty string
+        if isinstance(param["default"], str) and param["default"].strip() == "":
+            return ""
+
+        # Integers
+        if param["type"] == "integer":
+            param["default"] = int(param["default"])
+            return param
+
+        # Numbers
+        if param["type"] == "number":
+            param["default"] = float(param["default"])
+            return param
+
+        # Strings
+        param["default"] = str(param["default"])
+        return param
+
     def get_schema_defaults(self):
         """
         Generate set of default input parameters from schema.
@@ -110,6 +141,7 @@ class PipelineSchema(object):
         for p_key, param in self.schema.get("properties", {}).items():
             self.schema_params.append(p_key)
             if "default" in param:
+                param = self.sanitise_param_default(param)
                 self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
@@ -117,6 +149,7 @@ class PipelineSchema(object):
             for p_key, param in definition.get("properties", {}).items():
                 self.schema_params.append(p_key)
                 if "default" in param:
+                    param = self.sanitise_param_default(param)
                     self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self):

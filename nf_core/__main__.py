@@ -32,7 +32,7 @@ log = logging.getLogger()
 
 def run_nf_core():
     # Set up the rich traceback
-    rich.traceback.install(width=200, word_wrap=True)
+    rich.traceback.install(width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
@@ -315,7 +315,10 @@ def lint(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json):
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: https://nf-co.re/errors
+    on the nf-core website: https://nf-co.re/tools-docs/
+
+    You can ignore tests using a file called .nf-core-lint.yaml (if you have a good reason!).
+    See the documentation for details.
     """
 
     # Run the lint tests!
