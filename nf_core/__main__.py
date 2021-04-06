@@ -444,7 +444,8 @@ def remove(ctx, pipeline_dir, tool):
 @click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
 @click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
+@click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
+def create_module(ctx, directory, tool, author, label, meta, no_meta, force, conda_name):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -465,7 +466,9 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
 
     # Run function
     try:
-        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force)
+        module_create = nf_core.modules.ModuleCreate(
+            directory, tool, author, label, has_meta, force, conda_name=conda_name
+        )
         module_create.create()
     except UserWarning as e:
         log.critical(e)
