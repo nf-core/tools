@@ -473,6 +473,7 @@ class NfcoreSchema {
      * Beautify parameters for summary and return as string
      */
     private static String paramsSummaryLog(workflow, params, json_schema) {
+        Map colors = Utils.logColours(params.monochrome_logs)
         String output  = ''
         def params_map = paramsSummaryMap(workflow, params, json_schema)
         def max_chars  = paramsMaxChars(params_map)
