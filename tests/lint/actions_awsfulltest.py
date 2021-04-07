@@ -47,7 +47,7 @@ def test_actions_awsfulltest_fail(self):
     new_pipeline = self._make_pipeline_copy()
     with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "r") as fh:
         awsfulltest_yml = yaml.safe_load(fh)
-    del awsfulltest_yml[True]["workflow_run"]
+    del awsfulltest_yml[True]["release"]
     with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "w") as fh:
         yaml.dump(awsfulltest_yml, fh)
 
