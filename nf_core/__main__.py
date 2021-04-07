@@ -201,7 +201,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 # nf-core download
 @nf_core_cli.command(help_priority=3)
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.argument("pipeline", metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
