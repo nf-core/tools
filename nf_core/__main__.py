@@ -466,9 +466,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force, con
 
     # Run function
     try:
-        module_create = nf_core.modules.ModuleCreate(
-            directory, tool, author, label, has_meta, force, conda_name
-        )
+        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force, conda_name)
         module_create.create()
     except UserWarning as e:
         log.critical(e)
