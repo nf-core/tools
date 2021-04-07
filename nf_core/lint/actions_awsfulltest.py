@@ -42,7 +42,6 @@ def actions_awsfulltest(self):
 
         # Check that the action is only turned on for published releases
         try:
-            assert "workflow_run" in wf[True]
             assert wf[True]["release"]["types"] == ["published"]
             assert "workflow_dispatch" in wf[True]
         except (AssertionError, KeyError, TypeError):
