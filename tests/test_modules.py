@@ -101,14 +101,6 @@ class TestModules(unittest.TestCase):
         module_create.create()
         assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "fastqc.nf"))
 
-    def test_modules_create_different_conda_name(self):
-        """ Test creating a new module using a different conda package name """
-        module_create = nf_core.modules.ModuleCreate(
-            self.pipeline_dir, "trimgalore", "@author", "process_low", True, True, conda_name="trim-galore"
-        )
-        module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
-
     def test_modules_create_fail_exists(self):
         """ Fail at creating the same module twice"""
         module_create = nf_core.modules.ModuleCreate(
