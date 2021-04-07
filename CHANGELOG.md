@@ -1,13 +1,29 @@
 # nf-core/tools: Changelog
 
-## v1.14dev
+## 1.14dev
+
+### Tools
+
+* Strip values from `nf-core launch` web response which are False and have no default in the schema [[#976](https://github.com/nf-core/tools/issues/976)]
+* Try to fix the fix for the automated sync when we submit too many PRs at once [[#970](https://github.com/nf-core/tools/issues/970)]
+* Added `--conda-name` flag to `nf-core modules create` command to allow sidestepping questionary [[#988](https://github.com/nf-core/tools/issues/988)]
 
 ### Template
 
-* Move, modularise and import boilerplate code via Groovy `lib/` directory
-* Implement DSL2 syntax for pipeline template
-* Adding TODOs and MultiQC process in DSL2 template
-* [#522](https://github.com/nf-core/tools/issues/522) - Unify iGenomes index usage
+* Fixed an issue regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
+* Removed trailing slash from `params.igenomes_base` to yield valid s3 paths (previous paths work with Nextflow but not aws cli)
+* Added a timestamp to the trace + timetime + report + dag filenames to fix overwrite issue on AWS
+* Rewrite the `params_summary_log()` function to properly ignore unset params and have nicer formatting [[#971](https://github.com/nf-core/tools/issues/971)]
+* Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+
+## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
+
+* Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
+* Fix sync error again where the Nextflow edge release needs to be used for some pipelines
+* Fix bug with `nf-core lint --release` (`NameError: name 'os' is not defined`)
+* Added linebreak to linting comment so that markdown header renders on PR comment properly
+* `nf-core modules create` command - if no bioconda package is found, prompt user for a different bioconda package name
+* Updated module template `main.nf` with new test data paths
 
 ## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
 

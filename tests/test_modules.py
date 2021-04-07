@@ -100,7 +100,7 @@ class TestModules(unittest.TestCase):
     def test_modules_create_succeed(self):
         """ Succeed at creating the TrimGalore! module """
         module_create = nf_core.modules.ModuleCreate(
-            self.pipeline_dir, "trimgalore", "@author", "process_low", True, True
+            self.pipeline_dir, "trimgalore", "@author", "process_low", True, True, conda_name="trim-galore"
         )
         module_create.create()
         assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
@@ -108,7 +108,7 @@ class TestModules(unittest.TestCase):
     def test_modules_create_fail_exists(self):
         """ Fail at creating the same module twice"""
         module_create = nf_core.modules.ModuleCreate(
-            self.pipeline_dir, "trimgalore", "@author", "process_low", False, False
+            self.pipeline_dir, "trimgalore", "@author", "process_low", False, False, conda_name="trim-galore"
         )
         module_create.create()
         with pytest.raises(UserWarning) as excinfo:
