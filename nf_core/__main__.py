@@ -515,6 +515,8 @@ def lint(ctx, pipeline_dir, tool, all, local, passed):
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
         module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
+        if len(module_lint.failed) > 0:
+            sys.exit(1)
     except nf_core.modules.lint.ModuleLintException as e:
         log.error(e)
         sys.exit(1)
