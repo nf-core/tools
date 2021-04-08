@@ -2,7 +2,6 @@
 
 ## 1.14dev
 
-
 ### Tools
 
 * Strip values from `nf-core launch` web response which are False and have no default in the schema [[#976](https://github.com/nf-core/tools/issues/976)]
