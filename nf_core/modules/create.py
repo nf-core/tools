@@ -113,7 +113,7 @@ class ModuleCreate(object):
         self.tool_dir = self.tool
 
         if self.subtool:
-            self.tool_name = f"{self.tool}_{self.subtool}"
+            self.tool_name = f"{self.tool}/{self.subtool}"
             self.tool_dir = os.path.join(self.tool, self.subtool)
 
         # Check existance of directories early for fast-fail
