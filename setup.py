@@ -7,7 +7,7 @@ version = "1.13.3"
 with open("README.md") as f:
     readme = f.read()
 
-with open('requirements.txt') as f:
+with open("requirements.txt") as f:
     required = f.read().splitlines()
 
 setup(
