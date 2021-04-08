@@ -201,7 +201,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 # nf-core download
 @nf_core_cli.command(help_priority=3)
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.argument("pipeline", metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
@@ -315,7 +315,10 @@ def lint(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json):
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: https://nf-co.re/errors
+    on the nf-core website: https://nf-co.re/tools-docs/
+
+    You can ignore tests using a file called .nf-core-lint.yaml (if you have a good reason!).
+    See the documentation for details.
     """
 
     # Run the lint tests!
@@ -441,7 +444,8 @@ def remove(ctx, pipeline_dir, tool):
 @click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
 @click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
+@click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
+def create_module(ctx, directory, tool, author, label, meta, no_meta, force, conda_name):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -462,7 +466,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
 
     # Run function
     try:
-        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force)
+        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force, conda_name)
         module_create.create()
     except UserWarning as e:
         log.critical(e)
