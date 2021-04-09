@@ -7,6 +7,7 @@
 * Strip values from `nf-core launch` web response which are False and have no default in the schema [[#976](https://github.com/nf-core/tools/issues/976)]
 * Try to fix the fix for the automated sync when we submit too many PRs at once [[#970](https://github.com/nf-core/tools/issues/970)]
 * Added `--conda-name` flag to `nf-core modules create` command to allow sidestepping questionary [[#988](https://github.com/nf-core/tools/issues/988)]
+* Extended `nf-core modules lint` functionality to check `test.yml` tags and look for a entry in the `pytest_software.yml` file
 
 ### Template
 
