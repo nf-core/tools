@@ -681,9 +681,9 @@ class NFCoreModule(object):
                 self.failed.append(("main_nf_meta_saveas", "'meta:meta' unspecified in saveAs function", self.main_nf))
 
             if len(save_as) > 0 and re.search("\s*publish_by_meta\s*:\s*['id']", save_as[0]):
-                self.passed.append(("main_nf_publish_meta_saveas", '"publish_by_meta:['id']" specified in saveAs function', self.main_nf))
+                self.passed.append(("main_nf_publish_meta_saveas", """"publish_by_meta:['id']" specified in saveAs function""", self.main_nf))
             else:
-                self.failed.append(("main_nf_publish_meta_saveas", '"publish_by_meta:['id']" unspecified in saveAs function', self.main_nf))
+                self.failed.append(("main_nf_publish_meta_saveas", """"publish_by_meta:['id']" unspecified in saveAs function""", self.main_nf))
 
         # Check that a software version is emitted
         if "version" in outputs:
