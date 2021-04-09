@@ -83,7 +83,7 @@ class TestModules(unittest.TestCase):
         self.mods.install("fastqc")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False, all_modules=True)
-        assert len(module_lint.passed) == 18
+        assert len(module_lint.passed) == 17
         assert len(module_lint.warned) == 0
         assert len(module_lint.failed) == 0
 
