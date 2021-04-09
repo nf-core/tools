@@ -3,6 +3,7 @@
 import re
 import os
 import logging
+
 log = logging.getLogger(__name__)
 
 
@@ -102,6 +103,8 @@ def nextflow_config(self):
         ["process.time"],
         ["params.outdir"],
         ["params.input"],
+        ["params.show_hidden_params"],
+        ["params.schema_ignore_params"],
     ]
     # Throw a warning if these are missing
     config_warn = [
@@ -277,12 +280,12 @@ def nextflow_config(self):
     if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
         passed.append("Config ``params.custom_config_base`` is set to ``{}``".format(custom_config_base))
     else:
-        failed.append("Config ``params.custom_config_base`` is not set to ``{}`` {}".format(custom_config_base))
+        failed.append("Config ``params.custom_config_base`` is not set to ``{}``".format(custom_config_base))
 
     # Check that lines for loading custom profiles exist
     lines = [
-        r'// Load nf-core custom profiles from different Institutions',
-        r'try {',
+        r"// Load nf-core custom profiles from different Institutions",
+        r"try {",
         r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
         r"} catch (Exception e) {",
         r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
