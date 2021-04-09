@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import re
+import os
+import logging
+log = logging.getLogger(__name__)
 
 
 def nextflow_config(self):
@@ -261,6 +264,44 @@ def nextflow_config(self):
                     self.nf_config["manifest.version"]
                 )
             )
+
+    # Check if custom profile params are set correctly
+    if self.nf_config.get("params.custom_config_version", "").strip("'") == "master":
+        passed.append("Config ``params.custom_config_version`` is set to ``master``")
+    else:
+        failed.append("Config ``params.custom_config_version`` is not set to ``master``")
+
+    custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/" + self.nf_config.get(
+        "params.custom_config_version", ""
+    ).strip("'")
+    if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
+        passed.append("Config ``params.custom_config_base`` is set to ``{}``".format(custom_config_base))
+    else:
+        failed.append("Config ``params.custom_config_base`` is not set to ``{}`` {}".format(custom_config_base))
+
+    # Check that lines for loading custom profiles exist
+    lines = [
+        r'// Load nf-core custom profiles from different Institutions',
+        r'try {',
+        r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
+        r"} catch (Exception e) {",
+        r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
+        r"}",
+    ]
+    path = os.path.join(self.wf_path, "nextflow.config")
+    i = 0
+    with open(path, "r") as f:
+        for line in f:
+            if lines[i] in line:
+                i += 1
+                if i == len(lines):
+                    break
+            else:
+                i = 0
+    if i == len(lines):
+        passed.append("Lines for loading custom profiles found")
+    else:
+        failed.append("Unable to find lines for loading custom profiles")
 
     for config in ignore_configs:
         ignored.append("Config ignored: {}".format(self._wrap_quotes(config)))
