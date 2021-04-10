@@ -202,6 +202,18 @@ class TestLint(unittest.TestCase):
 
     from lint.merge_markers import test_merge_markers_found
 
+    from lint.nextflow_config import (
+        test_nextflow_config_example_pass,
+        test_nextflow_config_bad_name_fail,
+        test_nextflow_config_bad_container_name_failed,
+        test_nextflow_config_dev_in_release_mode_failed,
+    )
+
+    from lint.files_unchanged import (
+        test_files_unchanged_pass,
+        test_files_unchanged_fail,
+    )
+
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""

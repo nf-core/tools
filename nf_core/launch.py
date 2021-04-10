@@ -620,10 +620,21 @@ class Launch(object):
     def strip_default_params(self):
         """ Strip parameters if they have not changed from the default """
 
-        # Schema defaults
-        for param_id, val in self.schema_obj.schema_defaults.items():
-            if self.schema_obj.input_params.get(param_id) == val:
-                del self.schema_obj.input_params[param_id]
+        # Go through each supplied parameter (force list so we can delete in the loop)
+        for param_id in list(self.schema_obj.input_params.keys()):
+            val = self.schema_obj.input_params[param_id]
+
+            # Params with a schema default
+            if param_id in self.schema_obj.schema_defaults:
+                # Strip if param is same as the schema default
+                if val == self.schema_obj.schema_defaults[param_id]:
+                    del self.schema_obj.input_params[param_id]
+
+            # Params with no schema default
+            else:
+                # Strip if param is empty
+                if val is False or val is None or val == "":
+                    del self.schema_obj.input_params[param_id]
 
         # Nextflow flag defaults
         for param_id, val in self.nxf_flag_schema["coreNextflow"]["properties"].items():
@@ -657,6 +668,9 @@ class Launch(object):
                     # Boolean flags like --saveTrimmed
                     if isinstance(val, bool) and val:
                         self.nextflow_cmd += " --{}".format(param)
+                    # No quotes for numbers
+                    elif (isinstance(val, int) or isinstance(val, float)) and val:
+                        self.nextflow_cmd += " --{} {}".format(param, str(val).replace('"', '\\"'))
                     # everything else
                     else:
                         self.nextflow_cmd += ' --{} "{}"'.format(param, str(val).replace('"', '\\"'))

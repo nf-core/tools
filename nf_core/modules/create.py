@@ -24,7 +24,9 @@ log = logging.getLogger(__name__)
 
 
 class ModuleCreate(object):
-    def __init__(self, directory=".", tool="", author=None, process_label=None, has_meta=None, force=False):
+    def __init__(
+        self, directory=".", tool="", author=None, process_label=None, has_meta=None, force=False, conda_name=None
+    ):
         self.directory = directory
         self.tool = tool
         self.author = author
@@ -32,7 +34,7 @@ class ModuleCreate(object):
         self.has_meta = has_meta
         self.force_overwrite = force
 
-        self.tool_conda_name = None
+        self.tool_conda_name = conda_name
         self.subtool = None
         self.tool_licence = None
         self.repo_type = None
@@ -111,7 +113,7 @@ class ModuleCreate(object):
         self.tool_dir = self.tool
 
         if self.subtool:
-            self.tool_name = f"{self.tool}_{self.subtool}"
+            self.tool_name = f"{self.tool}/{self.subtool}"
             self.tool_dir = os.path.join(self.tool, self.subtool)
 
         # Check existance of directories early for fast-fail

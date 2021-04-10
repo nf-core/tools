@@ -1,5 +1,23 @@
 # nf-core/tools: Changelog
 
+## 1.14dev
+
+### Tools
+
+* Strip values from `nf-core launch` web response which are False and have no default in the schema [[#976](https://github.com/nf-core/tools/issues/976)]
+* Try to fix the fix for the automated sync when we submit too many PRs at once [[#970](https://github.com/nf-core/tools/issues/970)]
+* Added `--conda-name` flag to `nf-core modules create` command to allow sidestepping questionary [[#988](https://github.com/nf-core/tools/issues/988)]
+* Extended `nf-core modules lint` functionality to check tags in `test.yml` and to look for a entry in the `pytest_software.yml` file
+* Update `modules` commands to use new test tag format `tool/subtool`
+
+### Template
+
+* Fixed an issue regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
+* Removed trailing slash from `params.igenomes_base` to yield valid s3 paths (previous paths work with Nextflow but not aws cli)
+* Added a timestamp to the trace + timetime + report + dag filenames to fix overwrite issue on AWS
+* Rewrite the `params_summary_log()` function to properly ignore unset params and have nicer formatting [[#971](https://github.com/nf-core/tools/issues/971)]
+* Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+
 ## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
 
 * Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
