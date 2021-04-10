@@ -18,12 +18,22 @@ jobs:
       - name: Check out tools code
         uses: actions/checkout@v2
 
-      - name: Build new docker image
+      - name: Build new docker image for tools
         run: docker build --no-cache . -t nf-core/tools:latest -f tools.Dockerfile
 
-      - name: Push Docker image to DockerHub (release)
+      - name: Push tools Docker image to DockerHub (release)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push nf-core/tools:latest
           docker tag nf-core/tools:latest nf-core/tools:${{ github.event.release.tag_name }}
           docker push nf-core/tools:${{ github.event.release.tag_name }}
+
+      - name: Build new base docker image for templates
+        run: docker build --no-cache . -t nf-core/base:latest -f base.Dockerfile
+
+      - name: Push base Docker image to DockerHub (release)
+        run: |
+          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+          docker push nf-core/base:latest
+          docker tag nf-core/base:latest nf-core/base:${{ github.event.release.tag_name }}
+          docker push nf-core/base:${{ github.event.release.tag_name }}
