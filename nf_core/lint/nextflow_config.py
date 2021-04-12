@@ -304,8 +304,8 @@ def nextflow_config(self):
     if i == len(lines):
         passed.append("Lines for loading custom profiles found")
     else:
-        lines[2] = "\t" + lines[2]
-        lines[4] = "\t" + lines[4]
+        lines[2] = f"\t{lines[2]}"
+        lines[4] = f"\t{lines[4]}"
         failed.append(
             "Lines for loading custom profiles not found. File should contain: ```groovy\n{}".format("\n".join(lines))
         )
