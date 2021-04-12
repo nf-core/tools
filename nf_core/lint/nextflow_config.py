@@ -270,17 +270,17 @@ def nextflow_config(self):
 
     # Check if custom profile params are set correctly
     if self.nf_config.get("params.custom_config_version", "").strip("'") == "master":
-        passed.append("Config ``params.custom_config_version`` is set to ``master``")
+        passed.append("Config `params.custom_config_version` is set to `master`")
     else:
-        failed.append("Config ``params.custom_config_version`` is not set to ``master``")
+        failed.append("Config `params.custom_config_version` is not set to `master`")
 
     custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/" + self.nf_config.get(
         "params.custom_config_version", ""
     ).strip("'")
     if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
-        passed.append("Config ``params.custom_config_base`` is set to ``{}``".format(custom_config_base))
+        passed.append("Config `params.custom_config_base` is set to `{}`".format(custom_config_base))
     else:
-        failed.append("Config ``params.custom_config_base`` is not set to ``{}``".format(custom_config_base))
+        failed.append("Config `params.custom_config_base` is not set to `{}`".format(custom_config_base))
 
     # Check that lines for loading custom profiles exist
     lines = [
@@ -304,7 +304,11 @@ def nextflow_config(self):
     if i == len(lines):
         passed.append("Lines for loading custom profiles found")
     else:
-        failed.append("Unable to find lines for loading custom profiles")
+        lines[2] = "\t" + lines[2]
+        lines[4] = "\t" + lines[4]
+        failed.append(
+            "Lines for loading custom profiles not found. File should contain: ```groovy\n{}".format("\n".join(lines))
+        )
 
     for config in ignore_configs:
         ignored.append("Config ignored: {}".format(self._wrap_quotes(config)))
