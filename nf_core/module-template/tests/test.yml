@@ -5,7 +5,7 @@
   tags:
     - {{ tool }}
     {%- if subtool %}
-    - {{ tool_name }}
+    - {{ tool }}/{{ subtool }}
     {%- endif %}
   files:
     - path: output/{{ tool }}/test.bam

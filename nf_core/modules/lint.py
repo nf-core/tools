@@ -532,6 +532,7 @@ class NFCoreModule(object):
         # Lint the test.yml file
         try:
             with open(self.test_yml, "r") as fh:
+                # TODO: verify that the tags are correct
                 test_yml = yaml.safe_load(fh)
 
                 # Verify that tags are correct
