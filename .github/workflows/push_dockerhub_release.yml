@@ -14,26 +14,19 @@ jobs:
     env:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
+    strategy:
+      matrix:
+        image: [base, tools]
     steps:
-      - name: Check out tools code
+      - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Build new docker image for tools
-        run: docker build --no-cache . -t nf-core/tools:latest -f tools.Dockerfile
+      - name: Build new docker image
+        run: docker build --no-cache . -t nf-core/${{ matrix.image }}:latest -f ${{ matrix.image }}.Dockerfile
 
-      - name: Push tools Docker image to DockerHub (release)
+      - name: Push Docker image to DockerHub (release)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push nf-core/tools:latest
-          docker tag nf-core/tools:latest nf-core/tools:${{ github.event.release.tag_name }}
-          docker push nf-core/tools:${{ github.event.release.tag_name }}
-
-      - name: Build new base docker image for templates
-        run: docker build --no-cache . -t nf-core/base:latest -f base.Dockerfile
-
-      - name: Push base Docker image to DockerHub (release)
-        run: |
-          echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push nf-core/base:latest
-          docker tag nf-core/base:latest nf-core/base:${{ github.event.release.tag_name }}
-          docker push nf-core/base:${{ github.event.release.tag_name }}
+          docker push nf-core/${{ matrix.image }}:latest
+          docker tag nf-core/${{ matrix.image }}:latest nf-core/${{ matrix.image }}:${{ github.event.release.tag_name }}
+          docker push nf-core/${{ matrix.image }}:${{ github.event.release.tag_name }}
