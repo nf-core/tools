@@ -674,10 +674,10 @@ class NFCoreModule(object):
 
             # if meta is specified, it should also be used as 'saveAs ... publishId:meta.id'
             save_as = [pl for pl in process_lines if "saveAs" in pl]
-            if len(save_as) > 0 and re.search("\s*publish_id\s*:\s*meta.id", save_as[0]):
-                self.passed.append(("main_nf_meta_saveas", "'meta.id' specified in saveAs function", self.main_nf))
+            if len(save_as) > 0 and re.search("\s*meta\s*:\s*meta", save_as[0]):
+                self.passed.append(("main_nf_meta_saveas", "'meta' specified in saveAs function", self.main_nf))
             else:
-                self.failed.append(("main_nf_meta_saveas", "'meta.id' unspecificed in saveAs function", self.main_nf))
+                self.failed.append(("main_nf_meta_saveas", "'meta' unspecificed in saveAs function", self.main_nf))
 
         # Check that a software version is emitted
         if "version" in outputs:
