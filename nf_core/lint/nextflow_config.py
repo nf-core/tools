@@ -55,6 +55,23 @@ def nextflow_config(self):
 
         * ``params.input``: Input data that is not NGS sequencing data
 
+    * ``params.custom_config_version``
+
+        * Should always be set to default value ``master``
+
+    * ``params.custom_config_base``
+
+        * Should always be set to default value:
+        ``https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}``
+
+    * ``params.show_hidden_params``
+
+        * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
+
+    * ``params.schema_ignore_params``
+
+        * A comma separated string of inputs the schema validation should ignore.
+
     **The following variables throw warnings if missing:**
 
     * ``manifest.mainScript``: The filename of the main pipeline script (should be ``main.nf``)
