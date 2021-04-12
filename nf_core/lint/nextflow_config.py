@@ -274,9 +274,9 @@ def nextflow_config(self):
     else:
         failed.append("Config `params.custom_config_version` is not set to `master`")
 
-    custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/{}".format(self.nf_config.get(
-        "params.custom_config_version", ""
-    ).strip("'"))
+    custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/{}".format(
+        self.nf_config.get("params.custom_config_version", "").strip("'")
+    )
     if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
         passed.append("Config `params.custom_config_base` is set to `{}`".format(custom_config_base))
     else:
