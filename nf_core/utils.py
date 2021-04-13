@@ -26,6 +26,9 @@ from rich.spinner import Spinner
 
 log = logging.getLogger(__name__)
 
+# Only show error messages from pipeline creation
+logging.getLogger("requests_cache").setLevel(logging.WARNING)
+
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
     [
