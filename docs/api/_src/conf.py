@@ -102,6 +102,8 @@ html_css_files = [
 #
 # html_sidebars = {}
 
+# Don't copy the .rst output into the build
+html_copy_source = False
 
 # -- Options for HTMLHelp output ---------------------------------------------
 
