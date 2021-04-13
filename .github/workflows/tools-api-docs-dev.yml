@@ -37,4 +37,3 @@ jobs:
           server-dir: ${{ secrets.ftp_server_dir }}/dev/
           protocol: ${{ secrets.ftp_protocol }}
           port: ${{ secrets.ftp_port }}
-          dangerous-clean-slate: true
