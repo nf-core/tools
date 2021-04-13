@@ -1,10 +1,5 @@
-.. nf-core documentation master file, created by
-   sphinx-quickstart on Thu Jan  3 16:24:03 2019.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
-Welcome to nf-core tools API documentation!
-===========================================
+nf-core/tools documentation
+===========================
 
 .. toctree::
    :hidden:
@@ -12,7 +7,7 @@ Welcome to nf-core tools API documentation!
    :caption: Contents:
    :glob:
 
-   lint_tests/index.rst
+   pipeline_lint_tests/index.rst
    api/index.rst
 
 This documentation is for the ``nf-core/tools`` package.
