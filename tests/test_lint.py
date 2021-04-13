@@ -154,7 +154,7 @@ class TestLint(unittest.TestCase):
         and that there are no unexpected files (eg. deleted lint tests)"""
 
         docs_basedir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "lint_tests"
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "pipeline_lint_tests"
         )
 
         # Get list of existing .rst files
