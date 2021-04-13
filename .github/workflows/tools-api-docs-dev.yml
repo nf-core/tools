@@ -33,7 +33,8 @@ jobs:
           server: ${{ secrets.ftp_server }}
           username: ${{ secrets.ftp_username}}
           password: ${{ secrets.ftp_password }}
-          local-dir: docs
+          local-dir: './docs/'
           server-dir: ${{ secrets.ftp_server_dir }}/dev/
           protocol: ${{ secrets.ftp_protocol }}
           port: ${{ secrets.ftp_port }}
+          dangerous-clean-slate: true
