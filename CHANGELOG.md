@@ -9,6 +9,7 @@
 * Added `--conda-name` flag to `nf-core modules create` command to allow sidestepping questionary [[#988](https://github.com/nf-core/tools/issues/988)]
 * Extended `nf-core modules lint` functionality to check tags in `test.yml` and to look for a entry in the `pytest_software.yml` file
 * Update `modules` commands to use new test tag format `tool/subtool`
+* Rewrite how the tools documentation is deployed to the website, to allow multiple versions
 
 ### Template
 
