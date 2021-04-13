@@ -1,7 +1,7 @@
-name: nf-core/tools API docs
+name: nf-core/tools dev API docs
 on:
   push:
-    branches: [master, dev]
+    branches: [dev]
 
 jobs:
   api-docs:
@@ -26,18 +26,15 @@ jobs:
       - name: Build HTML docs
         run: make --directory ./docs/api html
 
-      - name: Push docs to api-doc branch
+      - name: Sync dev docs
         if: github.repository == 'nf-core/tools'
-        run: |
-          git checkout --orphan api-doc
-          git rm -r --cache .
-          rm .gitignore
-          git config user.email "core@nf-co.re"
-          git config user.name "nf-core-bot"
-          git add docs
-          git commit --message "nf-core/tools docs build
-
-          $GITHUB_REF - $GITHUB_SHA
-          "
-          git remote add nf-core https://github.com/nf-core/tools.git
-          git push --force --set-upstream nf-core api-doc
+        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_username}}
+          password: ${{ secrets.ftp_password }}
+          local-dir: './docs/'
+          server-dir: ${{ secrets.ftp_server_dir }}/dev/
+          protocol: ${{ secrets.ftp_protocol }}
+          port: ${{ secrets.ftp_port }}
+          dangerous-clean-slate: true
