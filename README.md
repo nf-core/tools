@@ -72,35 +72,37 @@ There is a docker image that you can use to run `nf-core/tools` that has all of 
 You can use this container on the command line as follows:
 
 ```bash
-docker run -itv `pwd`:`pwd` -w `pwd` nfcore/tools
+docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools
 ```
 
 * `-i` and `-t` are needed for the interactive cli prompts to work (this tells Docker to use a pseudo-tty with stdin attached)
 * The `-v` argument tells Docker to bind your current working directory (`pwd`) to the same path inside the container, so that files created there will be saved to your local file system outside of the container.
 * `-w` sets the working directory in the container to this path, so that it's the same as your working directory outside of the container.
+* `-u` sets your local user account as the user inside the container, so that any files created have the correct ownership permissions
 
 After the above base command, you can use the regular command line flags that you would use with other types of installation.
 For example, to launch the `viralrecon` pipeline:
 
 ```bash
-docker run -itv `pwd`:`pwd` -w `pwd` nfcore/tools launch viralrecon -r 1.1.0
+docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools launch viralrecon -r 1.1.0
 ```
 
 If you use `$NXF_SINGULARITY_CACHEDIR` for downloads, you'll also need to make this folder and environment variable available to the continer:
 
 ```bash
-docker run -itv `pwd`:`pwd` -v $NXF_SINGULARITY_CACHEDIR:$NXF_SINGULARITY_CACHEDIR -e NXF_SINGULARITY_CACHEDIR -w `pwd` nfcore/tools launch viralrecon -r 1.1.0
+docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) -v $NXF_SINGULARITY_CACHEDIR:$NXF_SINGULARITY_CACHEDIR -e NXF_SINGULARITY_CACHEDIR nfcore/tools launch viralrecon -r 1.1.0
 ```
 
 #### Docker bash alias
 
-The above base command is a little verbose, so if you are using this a lot it may be worth adding the following bash alias to your `~/.bashrc` file:
+The above base command is a bit of a mouthful to type, to say the least.
+To make it easier to use, we highly recommend adding the following bash alias to your `~/.bashrc` file:
 
 ```bash
-alias nf-core="docker run -itv `pwd`:`pwd` -w `pwd` nfcore/tools"
+alias nf-core="docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools"
 ```
 
-Once applied (you may need to reload your shell if added to your `.bashrc`) you can just use `nf-core` instead:
+Once applied (you may need to reload your shell) you can just use the `nf-core` command instead:
 
 ```bash
 nf-core list
