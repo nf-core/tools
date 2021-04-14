@@ -602,7 +602,7 @@ Tip: Some of these linting errors can automatically be resolved with the followi
     nf-core lint . --fix conda_env_yaml
 ```
 
-You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint . --key files_unchanged`
+You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint . -k files_exist -k files_unchanged`
 
 ### Linting documentation
 
