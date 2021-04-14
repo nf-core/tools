@@ -20,9 +20,9 @@ import nf_core
 
 # -- Project information -----------------------------------------------------
 
-project = "nf-core tools API"
-copyright = "2019, Phil Ewels, Sven Fillinger"
-author = "Phil Ewels, Sven Fillinger"
+project = "nf-core/tools"
+copyright = "2021, nf-core community"
+author = "Numerous nf-core contributors"
 
 # The short X.Y version
 version = nf_core.__version__
