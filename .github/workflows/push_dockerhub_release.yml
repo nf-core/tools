@@ -22,11 +22,11 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build new docker image
-        run: docker build --no-cache . -t nf-core/${{ matrix.image }}:latest -f ${{ matrix.image }}.Dockerfile
+        run: docker build --no-cache . -t nfcore/${{ matrix.image }}:latest -f ${{ matrix.image }}.Dockerfile
 
       - name: Push Docker image to DockerHub (release)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push nf-core/${{ matrix.image }}:latest
-          docker tag nf-core/${{ matrix.image }}:latest nf-core/${{ matrix.image }}:${{ github.event.release.tag_name }}
-          docker push nf-core/${{ matrix.image }}:${{ github.event.release.tag_name }}
+          docker push nfcore/${{ matrix.image }}:latest
+          docker tag nfcore/${{ matrix.image }}:latest nf-core/${{ matrix.image }}:${{ github.event.release.tag_name }}
+          docker push nfcore/${{ matrix.image }}:${{ github.event.release.tag_name }}
