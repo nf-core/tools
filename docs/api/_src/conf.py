@@ -21,7 +21,7 @@ import nf_core
 # -- Project information -----------------------------------------------------
 
 project = "nf-core/tools"
-copyright = "2019, nf-core community"
+copyright = "2021, nf-core community"
 author = "Numerous nf-core contributors"
 
 # The short X.Y version
