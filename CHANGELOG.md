@@ -11,6 +11,7 @@
 * Update `modules` commands to use new test tag format `tool/subtool`
 * Rewrite how the tools documentation is deployed to the website, to allow multiple versions
 * Created new Docker image for the tools cli package - see installation docs for details [[#917](https://github.com/nf-core/tools/issues/917)]
+* Fix bug in nf-core lint config skipping for the `nextflow_config` test [[#1019](https://github.com/nf-core/tools/issues/1019)]
 
 ### Template
 
