@@ -10,6 +10,7 @@
 * Extended `nf-core modules lint` functionality to check tags in `test.yml` and to look for a entry in the `pytest_software.yml` file
 * Update `modules` commands to use new test tag format `tool/subtool`
 * Rewrite how the tools documentation is deployed to the website, to allow multiple versions
+* Created new Docker image for the tools cli package - see installation docs for details [[#917](https://github.com/nf-core/tools/issues/917)]
 
 ### Template
 
