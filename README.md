@@ -86,10 +86,10 @@ For example, to launch the `viralrecon` pipeline:
 docker run -itv `pwd`:`pwd` -w `pwd` nfcore/tools launch viralrecon -r 1.1.0
 ```
 
-If you use `$NXF_SINGULARITY_CACHE` for downloads, you'll also need to make this folder and environment variable available to the continer:
+If you use `$NXF_SINGULARITY_CACHEDIR` for downloads, you'll also need to make this folder and environment variable available to the continer:
 
 ```bash
-docker run -itv `pwd`:`pwd` -v $NXF_SINGULARITY_CACHE:$NXF_SINGULARITY_CACHE -e NXF_SINGULARITY_CACHE -w `pwd` nfcore/tools launch viralrecon -r 1.1.0
+docker run -itv `pwd`:`pwd` -v $NXF_SINGULARITY_CACHEDIR:$NXF_SINGULARITY_CACHEDIR -e NXF_SINGULARITY_CACHEDIR -w `pwd` nfcore/tools launch viralrecon -r 1.1.0
 ```
 
 #### Docker bash alias
