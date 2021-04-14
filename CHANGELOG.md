@@ -11,6 +11,7 @@
 * Update `modules` commands to use new test tag format `tool/subtool`
 * Rewrite how the tools documentation is deployed to the website, to allow multiple versions
 * Created new Docker image for the tools cli package - see installation docs for details [[#917](https://github.com/nf-core/tools/issues/917)]
+* New `-k`/`--key` cli option for `nf-core lint` to allow you to run only named lint tests, for faster local debugging
 
 ### Template
 
