@@ -23,7 +23,8 @@ RUN mkdir -p /usr/share/man/man1 \
 
 # Install Nextflow
 RUN curl -s https://get.nextflow.io | bash \
-      && mv nextflow /usr/local/bin
+      && mv nextflow /usr/local/bin \
+      && chmod a+rx /usr/local/bin/nextflow
 # Add the nf-core source files to the image
 COPY . /usr/src/nf_core
 WORKDIR /usr/src/nf_core
