@@ -80,7 +80,7 @@ class DownloadWorkflow(object):
         outdir=None,
         compress_type="tar.gz",
         force=False,
-        singularity=False,
+        container='none',
         singularity_cache_only=False,
         parallel_downloads=4,
     ):
@@ -93,13 +93,13 @@ class DownloadWorkflow(object):
         if self.compress_type == "none":
             self.compress_type = None
         self.force = force
-        self.singularity = singularity
+        self.singularity = container == "singularity"
         self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
 
         # Sanity checks
         if self.singularity_cache_only and not self.singularity:
-            log.error("Command has '--singularity-cache' set, but not '--singularity'")
+            log.error("Command has '--singularity-cache' set, but '--container' is 'none'")
             sys.exit(1)
 
         self.wf_name = None
@@ -110,11 +110,11 @@ class DownloadWorkflow(object):
 
     def download_workflow(self):
         """Starts a nf-core workflow download."""
-        # Fetches remote workflows
+        # Fetch remote workflows
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
 
-        # Prompts user if pipeline name was not specified
+        # Prompt user if pipeline name was not specified
         if self.pipeline is None:
             self.pipeline = questionary.autocomplete(
                 "Pipeline name:",
@@ -122,10 +122,13 @@ class DownloadWorkflow(object):
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
 
-        # Prompts user for release tag if '-r' was set
+        # Prompt user for release tag if '--release' was set
         if self.release_flag:
-            release_tags = self.fetch_release_tags()
-            self.release = questionary.select("Select release:", release_tags).ask()
+            try:
+                release_tags = self.fetch_release_tags()
+            except LookupError:
+                sys.exit(1)
+            self.release = questionary.select("Select release:", choices=release_tags).ask()
 
         # Get workflow details
         try:
@@ -186,6 +189,14 @@ class DownloadWorkflow(object):
             self.compress_download()
 
     def fetch_release_tags(self):
+        """Fetches tag names of pipeline releases from github
+
+        Returns:
+            release_tags (list[str]): Returns list of release tags
+
+        Raises:
+            LookupError, if no releases were found
+        """
         # Fetch releases from github api
         releases_url = "https://api.github.com/repos/nf-core/{}/releases".format(self.pipeline)
         response = requests.get(releases_url)
@@ -196,7 +207,7 @@ class DownloadWorkflow(object):
         release_tags = list(release_tags)
         if len(release_tags) == 0:
             log.error("Unable to find any releases!")
-            sys.exit(1)
+            raise LookupError
         release_tags = sorted(release_tags, key=lambda tag: tuple(tag.split(".")), reverse=True)
         return release_tags
 

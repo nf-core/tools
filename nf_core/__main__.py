@@ -3,6 +3,7 @@
 
 from click.types import File
 from rich import print
+from rich.prompt import Confirm
 import click
 import logging
 import os
@@ -200,6 +201,15 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 
 # nf-core download
+def confirm_container_download(ctx, opts, value):
+    """Confirm choice of container"""
+    if value != "none":
+        is_satisfied = Confirm.ask(f"Should {value} image be downloaded?")
+        if not is_satisfied:
+            value = 'none'
+    return value
+
+
 @nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--release", is_flag=True, help="Pipeline release")
@@ -212,16 +222,23 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity images")
 @click.option(
-    "-c",
+    "-C",
+    "--container",
+    type=click.Choice(['none', 'singularity']),
+    default="none",
+    callback=confirm_container_download,
+    help="Download images",
+)
+@click.option(
+    "-s",
     "--singularity-cache",
     is_flag=True,
     default=False,
     help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
-def download(pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads):
+def download(pipeline, release, outdir, compress, force, container, singularity_cache, parallel_downloads):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
 
@@ -229,7 +246,7 @@ def download(pipeline, release, outdir, compress, force, singularity, singularit
     workflow to use relative paths to the configs and singularity images.
     """
     dl = nf_core.download.DownloadWorkflow(
-        pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads
+        pipeline, release, outdir, compress, force, container, singularity_cache, parallel_downloads
     )
     dl.download_workflow()
 
