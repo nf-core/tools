@@ -203,12 +203,19 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 # nf-core download
 def confirm_container_download(ctx, opts, value):
     """Confirm choice of container"""
-    if value != "none":
-        is_satisfied = Confirm.ask(f"Should {value} image be downloaded?")
-        if not is_satisfied:
-            value = 'none'
+    if value == None:
+        should_download = Confirm.ask(f"Should singularity image be downloaded?")
+        if should_download:
+            value = "singularity"
+        else:
+            value = "none"
     return value
 
+def confirm_singularity_cache(ctx, opts, value):
+    """Confirm that singularity image should be cached"""
+    if not value:
+        return Confirm.ask(f"Should singularity image be cached?")
+    return value
 
 @nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
@@ -226,7 +233,7 @@ def confirm_container_download(ctx, opts, value):
     "-C",
     "--container",
     type=click.Choice(['none', 'singularity']),
-    default="none",
+    default=None,
     callback=confirm_container_download,
     help="Download images",
 )
@@ -234,6 +241,7 @@ def confirm_container_download(ctx, opts, value):
     "-s",
     "--singularity-cache",
     is_flag=True,
+    callback=confirm_singularity_cache,
     default=False,
     help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
 )
