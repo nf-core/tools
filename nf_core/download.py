@@ -18,6 +18,7 @@ import sys
 import tarfile
 import concurrent.futures
 from rich.progress import BarColumn, DownloadColumn, TransferSpeedColumn, Progress
+from rich.prompt import Confirm
 from zipfile import ZipFile
 
 import nf_core
@@ -80,7 +81,7 @@ class DownloadWorkflow(object):
         outdir=None,
         compress=False,
         force=False,
-        container='none',
+        container="none",
         singularity_cache_only=False,
         parallel_downloads=4,
     ):
@@ -139,8 +140,18 @@ class DownloadWorkflow(object):
             "Pipeline release: '{}'".format(self.release),
             "Pull singularity containers: '{}'".format("Yes" if self.singularity else "No"),
         ]
-        if self.singularity and os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-            summary_log.append("Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"]))
+        if self.singularity:
+            export_in_file = (
+                os.popen('grep -c "export NXF_SINGULARITY_CACHEDIR" ~/.bashrc').read().strip("\n") != "0"
+            )
+            if not export_in_file:
+                append_to_file = Confirm.ask("Add 'export NXF_SINGULARITY_CACHEDIR' to .bashrc?")
+                if append_to_file:
+                    os.system('echo "export NXF_SINGULARITY_CACHEDIR" >> ~/.bashrc')
+            if os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
+                summary_log.append(
+                    "Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
+                )
 
         # Set an output filename now that we have the outdir
         if self.compress_type is not None:
@@ -186,7 +197,12 @@ class DownloadWorkflow(object):
         if self.compress:
             self.compress_type = questionary.select(
                 "Choose compression type:",
-                choices=["none", "tar.gz", "tar.bz2", "zip",]
+                choices=[
+                    "none",
+                    "tar.gz",
+                    "tar.bz2",
+                    "zip",
+                ],
             ).ask()
             if self.compress_type == "none":
                 self.compress_type = None

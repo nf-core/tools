@@ -211,11 +211,13 @@ def confirm_container_download(ctx, opts, value):
             value = "none"
     return value
 
+
 def confirm_singularity_cache(ctx, opts, value):
     """Confirm that singularity image should be cached"""
     if not value:
         return Confirm.ask(f"Should singularity image be cached?")
     return value
+
 
 @nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
@@ -231,7 +233,7 @@ def confirm_singularity_cache(ctx, opts, value):
 @click.option(
     "-C",
     "--container",
-    type=click.Choice(['none', 'singularity']),
+    type=click.Choice(["none", "singularity"]),
     default=None,
     callback=confirm_container_download,
     help="Download images",
