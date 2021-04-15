@@ -224,8 +224,7 @@ def confirm_singularity_cache(ctx, opts, value):
 @click.option(
     "-c",
     "--compress",
-    type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
-    default="tar.gz",
+    is_flag=True,
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")

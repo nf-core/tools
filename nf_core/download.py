@@ -78,7 +78,7 @@ class DownloadWorkflow(object):
         pipeline=None,
         release_flag=False,
         outdir=None,
-        compress_type="tar.gz",
+        compress=False,
         force=False,
         container='none',
         singularity_cache_only=False,
@@ -89,9 +89,8 @@ class DownloadWorkflow(object):
         self.release = None
         self.outdir = outdir
         self.output_filename = None
-        self.compress_type = compress_type
-        if self.compress_type == "none":
-            self.compress_type = None
+        self.compress = compress
+        self.compress_type = None
         self.force = force
         self.singularity = container == "singularity"
         self.singularity_cache_only = singularity_cache_only
@@ -182,6 +181,15 @@ class DownloadWorkflow(object):
         if self.singularity:
             self.find_container_images()
             self.get_singularity_images()
+
+        # If '--compress' flag was set, ask user what compression type to be used
+        if self.compress:
+            self.compress_type = questionary.select(
+                "Choose compression type:",
+                choices=["none", "tar.gz", "tar.bz2", "zip",]
+            ).ask()
+            if self.compress_type == "none":
+                self.compress_type = None
 
         # Compress into an archive
         if self.compress_type is not None:
