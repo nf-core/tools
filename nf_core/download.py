@@ -76,7 +76,7 @@ class DownloadWorkflow(object):
     def __init__(
         self,
         pipeline=None,
-        release=None,
+        release_flag=False,
         outdir=None,
         compress_type="tar.gz",
         force=False,
@@ -85,7 +85,8 @@ class DownloadWorkflow(object):
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
-        self.release = release
+        self.release_flag = release_flag
+        self.release = None
         self.outdir = outdir
         self.output_filename = None
         self.compress_type = compress_type
@@ -120,6 +121,11 @@ class DownloadWorkflow(object):
                 choices=[wf.name for wf in wfs.remote_workflows],
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
+
+        # Prompts user for release tag if '-r' was set
+        if self.release_flag:
+            release_tags = self.fetch_release_tags()
+            self.release = questionary.select("Select release:", release_tags).ask()
 
         # Get workflow details
         try:
@@ -178,6 +184,21 @@ class DownloadWorkflow(object):
         if self.compress_type is not None:
             log.info("Compressing download..")
             self.compress_download()
+
+    def fetch_release_tags(self):
+        # Fetch releases from github api
+        releases_url = "https://api.github.com/repos/nf-core/{}/releases".format(self.pipeline)
+        response = requests.get(releases_url)
+
+        # Filter out the release tags and sort them
+        release_tags = map(lambda release: release.get("tag_name", None), response.json())
+        release_tags = filter(lambda tag: tag != None, release_tags)
+        release_tags = list(release_tags)
+        if len(release_tags) == 0:
+            log.error("Unable to find any releases!")
+            sys.exit(1)
+        release_tags = sorted(release_tags, key=lambda tag: tuple(tag.split(".")), reverse=True)
+        return release_tags
 
     def fetch_workflow_details(self, wfs):
         """Fetches details of a nf-core workflow to download.
