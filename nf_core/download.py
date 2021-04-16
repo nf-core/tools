@@ -141,9 +141,7 @@ class DownloadWorkflow(object):
             "Pull singularity containers: '{}'".format("Yes" if self.singularity else "No"),
         ]
         if self.singularity:
-            export_in_file = (
-                os.popen('grep -c "export NXF_SINGULARITY_CACHEDIR" ~/.bashrc').read().strip("\n") != "0"
-            )
+            export_in_file = os.popen('grep -c "export NXF_SINGULARITY_CACHEDIR" ~/.bashrc').read().strip("\n") != "0"
             if not export_in_file:
                 append_to_file = Confirm.ask("Add 'export NXF_SINGULARITY_CACHEDIR' to .bashrc?")
                 if append_to_file:

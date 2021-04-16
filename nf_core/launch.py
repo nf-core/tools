@@ -14,8 +14,9 @@ import questionary
 import re
 import subprocess
 import webbrowser
+import requests
 
-import nf_core.schema, nf_core.utils
+import nf_core.schema, nf_core.utils, nf_core.download
 
 log = logging.getLogger(__name__)
 
@@ -176,6 +177,18 @@ class Launch(object):
             # Assume nf-core if no org given
             if self.pipeline.count("/") == 0:
                 self.nextflow_cmd = "nextflow run nf-core/{}".format(self.pipeline)
+
+            if not self.pipeline_revision:
+                check_for_releases = Confirm.ask("Would you like to select a specific release?")
+                if check_for_releases:
+                    try:
+                        release_tags = self.try_fetch_release_tags()
+                        self.pipeline_revision = questionary.select(
+                            "Please select a release:", choices=release_tags
+                        ).ask()
+                    except LookupError:
+                        pass
+
             # Add revision flag to commands if set
             if self.pipeline_revision:
                 self.nextflow_cmd += " -r {}".format(self.pipeline_revision)
@@ -184,10 +197,11 @@ class Launch(object):
         try:
             self.schema_obj.get_schema_path(self.pipeline, revision=self.pipeline_revision)
             self.schema_obj.load_lint_schema()
-        except AssertionError:
+        except AssertionError as a:
             # No schema found
             # Check that this was actually a pipeline
             if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
+                log.info(f"dir: {a}")
                 log.error("Could not find pipeline: {} ({})".format(self.pipeline, self.schema_obj.pipeline_dir))
                 return False
             if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
@@ -207,6 +221,32 @@ class Launch(object):
             except AssertionError as e:
                 log.error("Could not build pipeline schema: {}".format(e))
                 return False
+
+    def try_fetch_release_tags(self):
+        """Tries to fetch tag names of pipeline releases from github
+
+        Returns:
+            release_tags (list[str]): Returns list of release tags
+
+        Raises:
+            LookupError, if no releases were found
+        """
+        # Fetch releases from github api
+        releases_url = "https://api.github.com/repos/nf-core/{}/releases".format(self.pipeline)
+        response = requests.get(releases_url)
+        if not response.ok:
+            log.error(f"Unable to find any release tags for {self.pipeline}. Will try to continue launch.")
+            raise LookupError
+
+        # Filter out the release tags and sort them
+        release_tags = map(lambda release: release.get("tag_name", None), response.json())
+        release_tags = filter(lambda tag: tag != None, release_tags)
+        release_tags = list(release_tags)
+        if len(release_tags) == 0:
+            log.error(f"Unable to find any release tags for {self.pipeline}. Will try to continue launch.")
+            raise LookupError
+        release_tags = sorted(release_tags, key=lambda tag: tuple(tag.split(".")), reverse=True)
+        return release_tags
 
     def set_schema_inputs(self):
         """
