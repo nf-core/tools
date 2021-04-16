@@ -16,7 +16,7 @@ import subprocess
 import webbrowser
 import requests
 
-import nf_core.schema, nf_core.utils, nf_core.download
+import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
 
@@ -197,11 +197,10 @@ class Launch(object):
         try:
             self.schema_obj.get_schema_path(self.pipeline, revision=self.pipeline_revision)
             self.schema_obj.load_lint_schema()
-        except AssertionError as a:
+        except AssertionError:
             # No schema found
             # Check that this was actually a pipeline
             if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
-                log.info(f"dir: {a}")
                 log.error("Could not find pipeline: {} ({})".format(self.pipeline, self.schema_obj.pipeline_dir))
                 return False
             if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(

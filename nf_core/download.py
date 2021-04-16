@@ -227,8 +227,6 @@ class DownloadWorkflow(object):
             self.find_container_images()
             self.get_singularity_images()
 
-        # If '--compress' flag was set, ask user what compression type to be used
-
         # Compress into an archive
         if self.compress_type is not None:
             log.info("Compressing download..")
