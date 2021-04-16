@@ -18,7 +18,7 @@ import sys
 import tarfile
 import concurrent.futures
 from rich.progress import BarColumn, DownloadColumn, TransferSpeedColumn, Progress
-from rich.prompt import Confirm
+from rich.prompt import Confirm, Prompt
 from zipfile import ZipFile
 
 import nf_core
@@ -145,7 +145,14 @@ class DownloadWorkflow(object):
             if not export_in_file:
                 append_to_file = Confirm.ask("Add 'export NXF_SINGULARITY_CACHEDIR' to .bashrc?")
                 if append_to_file:
-                    os.system('echo "export NXF_SINGULARITY_CACHEDIR" >> ~/.bashrc')
+                    path = Prompt.ask("Specify the path: ")
+                    try:
+                        with open(os.path.expanduser("~/.bashrc"), "a") as f:
+                            f.write(f'export NXF_SINGULARITY_CACHEDIR={path}\n')
+                        log.info("Successfully wrote to ~/.bashrc")
+                    except FileNotFoundError:
+                        log.error("Unable to find ~/.bashrc")
+                        sys.exit(1)
             if os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
                 summary_log.append(
                     "Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
