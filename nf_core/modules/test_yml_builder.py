@@ -171,7 +171,6 @@ class ModulesTestYmlBuilder(object):
             tag_defaults = []
             for idx in range(0, len(mod_name_parts)):
                 tag_defaults.append("/".join(mod_name_parts[: idx + 1]))
-            tag_defaults.append(entry_point.replace("test_", ""))
             # Remove duplicates
             tag_defaults = list(set(tag_defaults))
             if self.no_prompts:
