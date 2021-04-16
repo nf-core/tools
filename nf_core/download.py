@@ -77,24 +77,32 @@ class DownloadWorkflow(object):
     def __init__(
         self,
         pipeline=None,
-        release_flag=False,
+        release=None,
         outdir=None,
-        compress=False,
+        compress_type=None,
         force=False,
         container="none",
         singularity_cache_only=False,
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
-        self.release_flag = release_flag
-        self.release = None
+        self.release = release
         self.outdir = outdir
         self.output_filename = None
-        self.compress = compress
-        self.compress_type = None
+        self.compress_type = compress_type
+        if self.compress_type is None:
+            self.compress_type = self._confirm_compression()
+        if self.compress_type == "none":
+            self.compress_type = None
+
         self.force = force
+
+        if container is None:
+            container = self._confirm_container_download()
         self.singularity = container == "singularity"
         self.singularity_cache_only = singularity_cache_only
+        if self.singularity_cache_only is None and self.singularity:
+            self.singularity_cache_only = self._confirm_singularity_cache()
         self.parallel_downloads = parallel_downloads
 
         # Sanity checks
@@ -107,6 +115,27 @@ class DownloadWorkflow(object):
         self.wf_download_url = None
         self.nf_config = dict()
         self.containers = list()
+
+    def _confirm_compression(self):
+        return questionary.select(
+            "Choose compression type:",
+            choices=[
+                "none",
+                "tar.gz",
+                "tar.bz2",
+                "zip",
+            ],
+        ).ask()
+
+    def _confirm_container_download(self):
+        should_download = Confirm.ask(f"Should singularity image be downloaded?")
+        if should_download:
+            return "singularity"
+        else:
+            return "none"
+
+    def _confirm_singularity_cache(self):
+        return Confirm.ask(f"Should singularity image be cached?")
 
     def download_workflow(self):
         """Starts a nf-core workflow download."""
@@ -123,7 +152,7 @@ class DownloadWorkflow(object):
             ).ask()
 
         # Prompt user for release tag if '--release' was set
-        if self.release_flag:
+        if self.release is None:
             try:
                 release_tags = self.fetch_release_tags()
             except LookupError:
@@ -148,7 +177,7 @@ class DownloadWorkflow(object):
                     path = Prompt.ask("Specify the path: ")
                     try:
                         with open(os.path.expanduser("~/.bashrc"), "a") as f:
-                            f.write(f'export NXF_SINGULARITY_CACHEDIR={path}\n')
+                            f.write(f"export NXF_SINGULARITY_CACHEDIR={path}\n")
                         log.info("Successfully wrote to ~/.bashrc")
                     except FileNotFoundError:
                         log.error("Unable to find ~/.bashrc")
@@ -199,18 +228,6 @@ class DownloadWorkflow(object):
             self.get_singularity_images()
 
         # If '--compress' flag was set, ask user what compression type to be used
-        if self.compress:
-            self.compress_type = questionary.select(
-                "Choose compression type:",
-                choices=[
-                    "none",
-                    "tar.gz",
-                    "tar.bz2",
-                    "zip",
-                ],
-            ).ask()
-            if self.compress_type == "none":
-                self.compress_type = None
 
         # Compress into an archive
         if self.compress_type is not None:

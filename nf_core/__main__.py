@@ -201,32 +201,16 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 
 # nf-core download
-def confirm_container_download(ctx, opts, value):
-    """Confirm choice of container"""
-    if value == None:
-        should_download = Confirm.ask(f"Should singularity image be downloaded?")
-        if should_download:
-            value = "singularity"
-        else:
-            value = "none"
-    return value
-
-
-def confirm_singularity_cache(ctx, opts, value):
-    """Confirm that singularity image should be cached"""
-    if not value:
-        return Confirm.ask(f"Should singularity image be cached?")
-    return value
 
 
 @nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
-@click.option("-r", "--release", is_flag=True, help="Pipeline release")
+@click.option("-r", "--release", help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
     "-c",
     "--compress",
-    is_flag=True,
+    type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
     help="Archive compression type",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
@@ -234,16 +218,12 @@ def confirm_singularity_cache(ctx, opts, value):
     "-C",
     "--container",
     type=click.Choice(["none", "singularity"]),
-    default=None,
-    callback=confirm_container_download,
     help="Download images",
 )
 @click.option(
     "-s",
     "--singularity-cache",
-    is_flag=True,
-    callback=confirm_singularity_cache,
-    default=False,
+    type=click.Choice(["yes", "no"]),
     help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
