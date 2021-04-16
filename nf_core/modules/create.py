@@ -33,9 +33,8 @@ class ModuleCreate(object):
         self.process_label = process_label
         self.has_meta = has_meta
         self.force_overwrite = force
-
-        self.tool_conda_name = conda_name
         self.subtool = None
+        self.tool_conda_name = conda_name
         self.tool_licence = None
         self.repo_type = None
         self.tool_licence = ""
@@ -115,6 +114,8 @@ class ModuleCreate(object):
         if self.subtool:
             self.tool_name = f"{self.tool}/{self.subtool}"
             self.tool_dir = os.path.join(self.tool, self.subtool)
+
+        self.tool_name_underscore = self.tool_name.replace("/", "_")
 
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()

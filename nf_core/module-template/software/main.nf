@@ -20,7 +20,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 params.options = [:]
 options        = initOptions(params.options)
 
-process {{ tool_name|upper }} {
+process {{ tool_name_underscore|upper }} {
     tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
     label '{{ process_label }}'
     publishDir "${params.outdir}",
