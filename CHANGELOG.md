@@ -11,6 +11,7 @@
 * Update `modules` commands to use new test tag format `tool/subtool`
 * Rewrite how the tools documentation is deployed to the website, to allow multiple versions
 * Created new Docker image for the tools cli package - see installation docs for details [[#917](https://github.com/nf-core/tools/issues/917)]
+* Ignore permission errors for setting up requests cache directories to allow starting with an invalid or read-only HOME directory
 
 ### Template
 
