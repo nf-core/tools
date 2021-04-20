@@ -2,6 +2,9 @@ FROM python:3.8.9-slim
 LABEL authors="phil.ewels@scilifelab.se,erik.danielsson@scilifelab.se" \
       description="Docker image containing requirements for the nfcore tools"
 
+# Do not pick up python packages from $HOME
+ENV PYTHONNUSERSITE=1
+
 # Update pip to latest version
 RUN python -m pip install --upgrade pip
 
