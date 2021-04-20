@@ -96,6 +96,14 @@ class TestUtils(unittest.TestCase):
         pipeline_obj._list_files()
         assert tmp_fn in pipeline_obj.files
 
+    @mock.patch("os.path.exists")
+    @mock.patch("os.makedirs")
+    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+        """Test that we don't get an error when we can't create cachedirs"""
+        mock_mkd.side_effect = PermissionError()
+        mock_exists.return_value = False
+        nf_core.utils.setup_requests_cachedir()
+
     def test_pip_package_pass(self):
         result = nf_core.utils.pip_package("multiqc=1.10")
         assert type(result) == dict

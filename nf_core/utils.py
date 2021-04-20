@@ -283,13 +283,17 @@ def setup_requests_cachedir():
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
-    if not os.path.exists(cachedir):
-        os.makedirs(cachedir)
-    requests_cache.install_cache(
-        os.path.join(cachedir, "github_info"),
-        expire_after=datetime.timedelta(hours=1),
-        backend="sqlite",
-    )
+
+    try:
+        if not os.path.exists(cachedir):
+            os.makedirs(cachedir)
+        requests_cache.install_cache(
+            os.path.join(cachedir, "github_info"),
+            expire_after=datetime.timedelta(hours=1),
+            backend="sqlite",
+        )
+    except PermissionError:
+        pass
 
 
 def wait_cli_function(poll_func, poll_every=20):
