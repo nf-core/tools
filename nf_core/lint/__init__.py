@@ -24,7 +24,7 @@ log = logging.getLogger(__name__)
 
 
 def run_linting(
-    pipeline_dir, release_mode=False, fix=(), show_passed=False, fail_ignored=False, md_fn=None, json_fn=None
+    pipeline_dir, release_mode=False, fix=(), key=(), show_passed=False, fail_ignored=False, md_fn=None, json_fn=None
 ):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
@@ -40,7 +40,7 @@ def run_linting(
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, fail_ignored)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, key, fail_ignored)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -115,7 +115,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_schema_validation import actions_schema_validation
     from .merge_markers import merge_markers
 
-    def __init__(self, wf_path, release_mode=False, fix=(), fail_ignored=False):
+    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False):
         """ Initialise linting object """
 
         # Initialise the parent object
@@ -151,6 +151,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
         self.fix = fix
+        self.key = key
         self.progress_bar = None
 
     def _load(self):
@@ -207,6 +208,21 @@ class PipelineLint(nf_core.utils.Pipeline):
                     "s" if len(unrecognised_fixes) > 1 else "", "', '".join(unrecognised_fixes)
                 )
             )
+
+        # Check that supplied test keys exist
+        bad_keys = [k for k in self.key if k not in self.lint_tests]
+        if len(bad_keys) > 0:
+            raise AssertionError(
+                "Test name{} not recognised: '{}'".format(
+                    "s" if len(bad_keys) > 1 else "",
+                    "', '".join(bad_keys),
+                )
+            )
+
+        # If -k supplied, only run these tests
+        if self.key:
+            log.info("Only running tests: '{}'".format("', '".join(self.key)))
+            self.lint_tests = [k for k in self.lint_tests if k in self.key]
 
         # Check that the pipeline_dir is a clean git repo
         if len(self.fix):
