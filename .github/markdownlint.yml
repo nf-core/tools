@@ -1,10 +1,17 @@
 # Markdownlint configuration file
-default: true,
+default: true
 line-length: false
-no-multiple-blanks: 0
-blanks-around-headers: false
-blanks-around-lists: false
-header-increment: false
 no-duplicate-header:
     siblings_only: true
-no-bare-urls: false # tools only - the {{ jinja variables }} break URLs and cause this to error
+no-inline-html:
+    allowed_elements:
+        - img
+        - p
+        - kbd
+        - details
+        - summary
+        - kbd
+# tools only - the {{ jinja variables }} break URLs and cause this to error
+no-bare-urls: false
+# tools only - suppresses error messages for usage of $ in main README
+commands-show-output: false
