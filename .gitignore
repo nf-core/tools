@@ -2,6 +2,7 @@
 
 .coverage
 .pytest_cache
+docs/api/_build
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
@@ -20,7 +21,6 @@ dist/
 downloads/
 eggs/
 .eggs/
-lib/
 lib64/
 parts/
 sdist/
@@ -41,6 +41,7 @@ pip-log.txt
 pip-delete-this-directory.txt
 
 # Unit test / coverage reports
+testing*
 htmlcov/
 .tox/
 .coverage
@@ -107,3 +108,9 @@ ENV/
 
 # backup files
 *~
+*\?
+
+# Jetbrains IDEs
+.idea
+pip-wheel-metadata
+.vscode

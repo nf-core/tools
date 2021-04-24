@@ -1,0 +1,39 @@
+name: Lint Python
+on:
+  push:
+    paths:
+      - '**.py'
+  pull_request:
+    paths:
+      - '**.py'
+
+jobs:
+  PythonLint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Check code lints with Black
+        uses: jpetrucciani/black-check@master
+
+      # If the above check failed, post a comment on the PR explaining the failure
+      - name: Post PR comment
+        if: failure()
+        uses: mshick/add-pr-comment@v1
+        with:
+          message: |
+            ## Python linting (`black`) is failing
+
+            To keep the code consistent with lots of contributors, we run automated code consistency checks.
+            To fix this CI test, please run:
+
+            * Install [`black`](https://black.readthedocs.io/en/stable/): `pip install black`
+            * Fix formatting errors in your pipeline: `black .`
+
+            Once you push these changes the test should pass, and you can hide this comment :+1:
+
+            We highly recommend setting up Black in your code editor so that this formatting is done automatically on save. Ask about it on Slack for help!
+
+            Thanks again for your contribution!
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          allow-repeats: false

@@ -1,0 +1,62 @@
+name: Create a pipeline and lint it
+on: [push, pull_request]
+
+jobs:
+  MakeTestWorkflow:
+    runs-on: ubuntu-latest
+    env:
+      NXF_VER: 21.03.0-edge
+    steps:
+      - uses: actions/checkout@v2
+        name: Check out source-code repository
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: nf-core create
+        run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+
+      - name: nf-core lint
+        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored
+
+      - name: nf-core list
+        run: nf-core --log-file log.txt list
+
+      - name: nf-core licences
+        run: nf-core --log-file log.txt licences nf-core-testpipeline
+
+      - name: nf-core sync
+        run: nf-core --log-file log.txt sync nf-core-testpipeline/
+
+      - name: nf-core schema
+        run: nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
+
+      - name: nf-core bump-version
+        run: nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
+
+      - name: nf-core lint in release mode
+        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored --release
+
+      - name: nf-core modules install
+        run: nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
+
+      - name: Upload log file artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: nf-core-log-file
+          path: log.txt
