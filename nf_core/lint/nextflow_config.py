@@ -138,8 +138,8 @@ def nextflow_config(self):
             if cf in self.nf_config.keys():
                 passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
                 break
-        else:
-            warned.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
+            else:
+                 warned.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
     for cf in config_fail_ifdefined:
         if cf in ignore_configs:
             continue
