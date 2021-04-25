@@ -77,6 +77,22 @@ def nextflow_config(self):
     **The following Nextflow syntax is depreciated and fails the test if present:**
 
     * Process-level configuration syntax still using the old Nextflow syntax, for example: ``process.$fastqc`` instead of ``process withName:'fastqc'``.
+
+    .. tip:: You can choose to ignore tests for the presence or absence of specific config variables
+             by creating a file called ``.nf-core-lint.yml`` in the root of your pipeline and creating
+             a list the config variables that should be ignored. For example:
+
+             .. code-block:: yaml
+
+                nextflow_config:
+                    - params.input
+
+             The other checks in this test (depreciated syntax etc) can not be individually identified,
+             but you can skip the entire test block if you wish:
+
+             .. code-block:: yaml
+
+                nextflow_config: False
     """
     passed = []
     warned = []
@@ -125,7 +141,8 @@ def nextflow_config(self):
     for cfs in config_fail:
         for cf in cfs:
             if cf in ignore_configs:
-                continue
+                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                break
             if cf in self.nf_config.keys():
                 passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
                 break
@@ -134,7 +151,8 @@ def nextflow_config(self):
     for cfs in config_warn:
         for cf in cfs:
             if cf in ignore_configs:
-                continue
+                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                break
             if cf in self.nf_config.keys():
                 passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
                 break
@@ -142,7 +160,8 @@ def nextflow_config(self):
             warned.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
     for cf in config_fail_ifdefined:
         if cf in ignore_configs:
-            continue
+            ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+            break
         if cf not in self.nf_config.keys():
             passed.append("Config variable (correctly) not found: {}".format(self._wrap_quotes(cf)))
         else:
@@ -262,6 +281,4 @@ def nextflow_config(self):
                 )
             )
 
-    for config in ignore_configs:
-        ignored.append("Config ignored: {}".format(self._wrap_quotes(config)))
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
