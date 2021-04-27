@@ -9,6 +9,12 @@
 * Added `--conda-name` flag to `nf-core modules create` command to allow sidestepping questionary [[#988](https://github.com/nf-core/tools/issues/988)]
 * Extended `nf-core modules lint` functionality to check tags in `test.yml` and to look for a entry in the `pytest_software.yml` file
 * Update `modules` commands to use new test tag format `tool/subtool`
+* Rewrite how the tools documentation is deployed to the website, to allow multiple versions
+* Created new Docker image for the tools cli package - see installation docs for details [[#917](https://github.com/nf-core/tools/issues/917)]
+* Fix bug in nf-core lint config skipping for the `nextflow_config` test [[#1019](https://github.com/nf-core/tools/issues/1019)]
+* New `-k`/`--key` cli option for `nf-core lint` to allow you to run only named lint tests, for faster local debugging
+* Ignore permission errors for setting up requests cache directories to allow starting with an invalid or read-only HOME directory
+* New lint test to check if params in `nextflow config` are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
 
 ### Template
 
@@ -17,6 +23,8 @@
 * Added a timestamp to the trace + timetime + report + dag filenames to fix overwrite issue on AWS
 * Rewrite the `params_summary_log()` function to properly ignore unset params and have nicer formatting [[#971](https://github.com/nf-core/tools/issues/971)]
 * Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+* Added `tool_name_underscore` to the module template to allow TOOL_SUBTOOL in `main.nf` [[#1011](https://github.com/nf-core/tools/issues/1011)]
+* Convert `d` to `day` in the `cleanParameters` function to make Duration objects like `2d` pass the validation [[#858](https://github.com/nf-core/tools/issues/858)]
 
 ## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
 

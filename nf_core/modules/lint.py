@@ -25,6 +25,7 @@ from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
 
 import nf_core.utils
+from .pipeline_modules import ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -58,6 +59,7 @@ class ModuleLint(object):
         self.passed = []
         self.warned = []
         self.failed = []
+        self.modules_repo = ModulesRepo()
 
     def lint(self, module=None, all_modules=False, print_results=True, show_passed=False, local=False):
         """
@@ -390,9 +392,7 @@ class ModuleLint(object):
             # Loop over nf-core modules
             for mod in nfcore_modules:
                 progress_bar.update(comparison_progress, advance=1, test_name=mod.module_name)
-                module_base_url = (
-                    f"https://raw.githubusercontent.com/nf-core/modules/master/software/{mod.module_name}/"
-                )
+                module_base_url = f"https://raw.githubusercontent.com/{self.modules_repo.name}/{self.modules_repo.branch}/software/{mod.module_name}/"
 
                 for f in files_to_check:
                     # open local copy, continue if file not found (a failed message has already been issued in this case)
