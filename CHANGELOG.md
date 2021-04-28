@@ -15,6 +15,7 @@
 * New `-k`/`--key` cli option for `nf-core lint` to allow you to run only named lint tests, for faster local debugging
 * Ignore permission errors for setting up requests cache directories to allow starting with an invalid or read-only HOME directory
 * New lint test to check if params in `nextflow config` are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
+* Modules installed from alternative sources are put in folders based on the name of the source repository
 
 ### Template
 
