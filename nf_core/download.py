@@ -92,14 +92,8 @@ class DownloadWorkflow(object):
         self.compress_type = compress_type
         self.force = force
         self.container = container
-        self.singularity = container == "singularity"
         self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
-
-        # Sanity checks
-        if self.singularity_cache_only and not self.singularity:
-            log.error("Command has '--singularity-cache' set, but '--container' is 'none'")
-            sys.exit(1)
 
         self.wf_name = None
         self.wf_sha = None
@@ -125,11 +119,14 @@ class DownloadWorkflow(object):
         ).ask()
 
     def _confirm_container_download(self):
-        should_download = Confirm.ask(f"Should singularity image be downloaded?")
-        if should_download:
-            return "singularity"
-        else:
-            return "none"
+        return questionary.select(
+            "Download software container images:",
+            choices=[
+                "none",
+                "singularity",
+            ],
+            style=nf_core.utils.nfcore_question_style,
+        ).ask()
 
     def _confirm_singularity_cache(self):
         return Confirm.ask(f"Should singularity image be cached?")
@@ -145,11 +142,8 @@ class DownloadWorkflow(object):
             log.critical(e)
             sys.exit(1)
 
-        summary_log = [
-            "Pipeline release: '{}'".format(self.release),
-            "Pull singularity containers: '{}'".format("Yes" if self.singularity else "No"),
-        ]
-        if self.singularity:
+        summary_log = [f"Pipeline release: '{self.release}'", f"Pull containers: '{self.container}'"]
+        if self.container == "singularity":
             export_in_file = os.popen('grep -c "export NXF_SINGULARITY_CACHEDIR" ~/.bashrc').read().strip("\n") != "0"
             if not export_in_file:
                 append_to_file = Confirm.ask("Add 'export NXF_SINGULARITY_CACHEDIR' to .bashrc?")
@@ -203,7 +197,7 @@ class DownloadWorkflow(object):
         self.wf_use_local_configs()
 
         # Download the singularity images
-        if self.singularity:
+        if self.container == "singularity":
             self.find_container_images()
             self.get_singularity_images()
 
@@ -256,8 +250,13 @@ class DownloadWorkflow(object):
             self.container = self._confirm_container_download()
 
         # Use $NXF_SINGULARITY_CACHEDIR ?
-        if self.singularity_cache_only is None and self.singularity:
+        if self.singularity_cache_only is None and self.container == "singularity":
             self.singularity_cache_only = self._confirm_singularity_cache()
+
+        # Sanity checks (for cli flags)
+        if self.singularity_cache_only and self.container != "singularity":
+            log.error("Command has '--singularity-cache' set, but '--container' is 'none'")
+            sys.exit(1)
 
         # Compress the downloaded files?
         if self.compress_type is None:
@@ -427,7 +426,7 @@ class DownloadWorkflow(object):
         nfconfig = nfconfig.replace(find_str, repl_str)
 
         # Append the singularity.cacheDir to the end if we need it
-        if self.singularity and not self.singularity_cache_only:
+        if self.container == "singularity" and not self.singularity_cache_only:
             nfconfig += (
                 f"\n\n// Added by `nf-core download` v{nf_core.__version__} //\n"
                 + 'singularity.cacheDir = "${projectDir}/../singularity-images/"'
@@ -780,11 +779,7 @@ class DownloadWorkflow(object):
             with tarfile.open(self.output_filename, "w:{}".format(ctype)) as tar:
                 tar.add(self.outdir, arcname=os.path.basename(self.outdir))
             tar_flags = "xzf" if ctype == "gz" else "xjf"
-            log.info(
-                "Command to extract files: [bright_magenta on grey0] tar -{} {} [/]".format(
-                    tar_flags, self.output_filename
-                )
-            )
+            log.info(f"Command to extract files: [bright_magenta]tar -{tar_flags} {self.output_filename}[/]")
 
         # .zip files
         if self.compress_type == "zip":
@@ -825,7 +820,7 @@ class DownloadWorkflow(object):
         file_hash = hash_md5.hexdigest()
 
         if expected is None:
-            log.info("MD5 checksum for '{}': '{}'".format(fname, file_hash))
+            log.info("MD5 checksum for '{}': [blue]{}[/]".format(fname, file_hash))
         else:
             if file_hash == expected:
                 log.debug("md5 sum of image matches expected: {}".format(expected))

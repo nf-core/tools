@@ -215,10 +215,10 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
 @click.option(
-    "-C",
+    "-i",
     "--container",
     type=click.Choice(["none", "singularity"]),
-    help="Download images",
+    help="Download software container images",
 )
 @click.option(
     "-s",
