@@ -63,7 +63,7 @@ class PipelineSync(object):
         gh_repo=None,
         gh_username=None,
     ):
-        """ Initialise syncing object """
+        """Initialise syncing object"""
 
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch

@@ -257,7 +257,7 @@ def licences(pipeline, json):
 
 # nf-core create
 def validate_wf_name_prompt(ctx, opts, value):
-    """ Force the workflow name to meet the nf-core requirements """
+    """Force the workflow name to meet the nf-core requirements"""
     if not re.match(r"^[a-z]+$", value):
         click.echo("Invalid workflow name: must be lowercase without punctuation.")
         value = click.prompt(opts.prompt)

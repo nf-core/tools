@@ -129,6 +129,6 @@ class TestUtils(unittest.TestCase):
             nf_core.utils.pip_package("multiqc=1.10")
 
     def test_pip_erroneous_package(self):
-        """ Tests the PyPi API package information query """
+        """Tests the PyPi API package information query"""
         with pytest.raises(ValueError):
             nf_core.utils.pip_package("not_a_package=1.0")

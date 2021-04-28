@@ -220,7 +220,7 @@ class PipelineModules(object):
         log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
 
         # Extract origin repository to use as install folder
-        install_folder = self.modules_repo.name.split('/')[0]
+        install_folder = self.modules_repo.name.split("/")[0]
 
         # Check that we don't already have a folder for this module
         module_dir = os.path.join(self.pipeline_dir, "modules", install_folder, "software", module)
@@ -263,7 +263,7 @@ class PipelineModules(object):
             ).ask()
 
         # Extract origin repository to use as install folder
-        install_folder = self.modules_repo.name.split('/')[0]
+        install_folder = self.modules_repo.name.split("/")[0]
 
         # Get the module directory
         module_dir = os.path.join(self.pipeline_dir, "modules", install_folder, "software", module)
@@ -295,7 +295,7 @@ class PipelineModules(object):
             return False
 
     def get_pipeline_modules(self):
-        """ Get list of modules installed in the current pipeline """
+        """Get list of modules installed in the current pipeline"""
         self.pipeline_module_names = []
         module_mains = glob.glob(f"{self.pipeline_dir}/modules/nf-core/software/**/main.nf", recursive=True)
         for mod in module_mains:

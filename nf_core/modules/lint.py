@@ -37,7 +37,7 @@ class ModuleLintException(Exception):
 
 
 class LintResult(object):
-    """ An object to hold the results of a lint test """
+    """An object to hold the results of a lint test"""
 
     def __init__(self, mod, lint_test, message, file_path):
         self.mod = mod
@@ -476,7 +476,7 @@ class NFCoreModule(object):
             self.module_name = module_dir.split("software" + os.sep)[1]
 
     def lint(self):
-        """ Perform linting on this module """
+        """Perform linting on this module"""
         # Iterate over modules and run all checks on them
 
         # Lint the main.nf file
@@ -501,7 +501,7 @@ class NFCoreModule(object):
         return self.passed, self.warned, self.failed
 
     def lint_module_tests(self):
-        """ Lint module tests """
+        """Lint module tests"""
 
         if os.path.exists(self.test_dir):
             self.passed.append(("test_dir_exists", "Test directory exists", self.test_dir))
@@ -552,7 +552,7 @@ class NFCoreModule(object):
             self.failed.append(("test_yml_exists", "Test `test.yml` does not exist", self.test_yml))
 
     def lint_meta_yml(self):
-        """ Lint a meta yml file """
+        """Lint a meta yml file"""
         required_keys = ["name", "input", "output"]
         required_keys_lists = ["intput", "output"]
         try:
@@ -863,7 +863,7 @@ class NFCoreModule(object):
         return output
 
     def _is_empty(self, line):
-        """ Check whether a line is empty or a comment """
+        """Check whether a line is empty or a comment"""
         empty = False
         if line.strip().startswith("//"):
             empty = True
