@@ -8,6 +8,7 @@ from io import BytesIO
 import logging
 import hashlib
 import os
+import questionary
 import re
 import requests
 import requests_cache
@@ -74,7 +75,7 @@ class DownloadWorkflow(object):
 
     def __init__(
         self,
-        pipeline,
+        pipeline=None,
         release=None,
         outdir=None,
         compress_type="tar.gz",
@@ -108,9 +109,21 @@ class DownloadWorkflow(object):
 
     def download_workflow(self):
         """Starts a nf-core workflow download."""
+        # Fetches remote workflows
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+
+        # Prompts user if pipeline name was not specified
+        if self.pipeline is None:
+            self.pipeline = questionary.autocomplete(
+                "Pipeline name:",
+                choices=[wf.name for wf in wfs.remote_workflows],
+                style=nf_core.utils.nfcore_question_style,
+            ).ask()
+
         # Get workflow details
         try:
-            self.fetch_workflow_details(nf_core.list.Workflows())
+            self.fetch_workflow_details(wfs)
         except LookupError:
             sys.exit(1)
 
@@ -175,7 +188,6 @@ class DownloadWorkflow(object):
         Raises:
             LockupError, if the pipeline can not be found.
         """
-        wfs.get_remote_workflows()
 
         # Get workflow download details
         for wf in wfs.remote_workflows:

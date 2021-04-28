@@ -4,7 +4,7 @@ import fnmatch
 import os
 import nf_core.lint
 
-docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "lint_tests")
+docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "pipeline_lint_tests")
 
 # Get list of existing .rst files
 existing_docs = []

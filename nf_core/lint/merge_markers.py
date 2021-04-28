@@ -14,7 +14,6 @@ def merge_markers(self):
     This test looks for remaining merge markers in the code, e.g.:
     >>>>>>> or <<<<<<<
 
-
     """
     passed = []
     failed = []
