@@ -97,23 +97,24 @@ class PipelineLint(nf_core.utils.Pipeline):
         warned (list): A list of tuples of the form: ``(<warned no>, <reason>)``
     """
 
+    from .actions_awsfulltest import actions_awsfulltest
+    from .actions_awstest import actions_awstest
+    from .actions_ci import actions_ci
+    from .actions_schema_validation import actions_schema_validation
+    from .conda_dockerfile import conda_dockerfile
+    from .conda_env_yaml import conda_env_yaml
     from .files_exist import files_exist
     from .files_unchanged import files_unchanged
+    from .merge_markers import merge_markers
     from .nextflow_config import nextflow_config
-    from .actions_ci import actions_ci
-    from .actions_awstest import actions_awstest
-    from .actions_awsfulltest import actions_awsfulltest
-    from .readme import readme
-    from .version_consistency import version_consistency
-    from .conda_env_yaml import conda_env_yaml
-    from .conda_dockerfile import conda_dockerfile
-    from .pipeline_todos import pipeline_todos
+    from .params_used import params_used
     from .pipeline_name_conventions import pipeline_name_conventions
-    from .template_strings import template_strings
+    from .pipeline_todos import pipeline_todos
+    from .readme import readme
     from .schema_lint import schema_lint
     from .schema_params import schema_params
-    from .actions_schema_validation import actions_schema_validation
-    from .merge_markers import merge_markers
+    from .template_strings import template_strings
+    from .version_consistency import version_consistency
 
     def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False):
         """ Initialise linting object """
@@ -133,6 +134,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         self.lint_tests = [
             "files_exist",
             "nextflow_config",
+            "params_used",
             "files_unchanged",
             "actions_ci",
             "actions_awstest",
