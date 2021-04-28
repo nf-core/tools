@@ -196,7 +196,7 @@ process fastqc {
  * STEP 2 - MultiQC
  */
 process multiqc {
-    publishDir "${params.outdir}/MultiQC", mode: params.publish_dir_mode
+    publishDir "${params.outdir}", mode: params.publish_dir_mode
 
     input:
     file (multiqc_config) from ch_multiqc_config
