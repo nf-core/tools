@@ -137,12 +137,12 @@ class DownloadWorkflow(object):
     def download_workflow(self):
         """Starts a nf-core workflow download."""
 
-        self.prompt_inputs()
-
         # Get workflow details
         try:
+            self.prompt_inputs()
             self.fetch_workflow_details()
-        except LookupError:
+        except LookupError as e:
+            log.critical(e)
             sys.exit(1)
 
         summary_log = [
@@ -222,6 +222,26 @@ class DownloadWorkflow(object):
                 choices=[wf.name for wf in self.wfs.remote_workflows],
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
+
+        # Fast-fail for unrecognised pipelines (we check again at the end)
+        for wf in self.wfs.remote_workflows:
+            if wf.full_name == self.pipeline or wf.name == self.pipeline:
+                break
+        else:
+            # Non nf-core GitHub repo
+            if self.pipeline.count("/") == 1:
+                gh_response = requests.get(f"https://api.github.com/repos/{self.pipeline}")
+                try:
+                    assert gh_response.json()["message"] == "Not Found"
+                except AssertionError:
+                    pass
+                else:
+                    raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
+            else:
+                log.info(
+                    "Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows]))
+                )
+                raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
         # Prompt user for release tag if '--release' was not set
         if self.release is None:
