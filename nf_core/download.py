@@ -224,11 +224,9 @@ class DownloadWorkflow(object):
 
         # Prompt user for release tag if '--release' was not set
         if self.release is None:
-            try:
-                release_tags = self.fetch_release_tags()
-            except LookupError:
-                sys.exit(1)
-            self.release = questionary.select("Select release / branch:", choices=release_tags).ask()
+            release_tags = self.fetch_release_tags()
+            if len(release_tags) > 0:
+                self.release = questionary.select("Select release / branch:", choices=release_tags).ask()
 
         # Download singularity container?
         if self.container is None:
@@ -263,22 +261,26 @@ class DownloadWorkflow(object):
             if wf.full_name == self.pipeline or wf.name == self.pipeline:
                 if len(wf.releases) > 0:
                     releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
-                    release_tags = list(map(lambda release: release.get("tag_name", None), releases))
+                    release_tags = list(map(lambda release: release.get("tag_name"), releases))
 
-        # Fetch branches from github api
-        branches_url = "https://api.github.com/repos/nf-core/{}/branches".format(self.pipeline)
-        branch_response = requests.get(branches_url)
+        try:
+            # Fetch branches from github api
+            branches_url = f"https://api.github.com/repos/nf-core/{self.pipeline}/branches"
+            branch_response = requests.get(branches_url)
 
-        # Filter out the release tags and sort them
-        for branch in branch_response.json():
-            self.wf_branches[branch["name"]] = branch["commit"]["sha"]
-        release_tags.extend(
-            [
-                b
-                for b in self.wf_branches.keys()
-                if b != "TEMPLATE" and b != "initial_commit" and not b.startswith("nf-core-template-merge")
-            ]
-        )
+            # Filter out the release tags and sort them
+            for branch in branch_response.json():
+                self.wf_branches[branch["name"]] = branch["commit"]["sha"]
+            release_tags.extend(
+                [
+                    b
+                    for b in self.wf_branches.keys()
+                    if b != "TEMPLATE" and b != "initial_commit" and not b.startswith("nf-core-template-merge")
+                ]
+            )
+        except TypeError:
+            # This will be picked up later if not a repo, just log for now
+            log.debug("Couldn't fetch branches - invalid repo?")
 
         return release_tags
 
@@ -345,7 +347,7 @@ class DownloadWorkflow(object):
             self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.release)
         else:
             log.error("Not able to find pipeline '{}'".format(self.pipeline))
-            log.info("Available pipelines: {}".format(", ".join([w.name for w in self.wfs.remote_workflows])))
+            log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows])))
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
