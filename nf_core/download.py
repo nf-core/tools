@@ -191,7 +191,7 @@ class DownloadWorkflow(object):
             os.remove(self.output_filename)
 
         # Summary log
-        log.info("Saving {}\n {}".format(self.pipeline, "\n ".join(summary_log)))
+        log.info("Saving '{}'\n {}".format(self.pipeline, "\n ".join(summary_log)))
 
         # Download the pipeline files
         log.info("Downloading workflow files from GitHub")
@@ -232,7 +232,7 @@ class DownloadWorkflow(object):
             if self.pipeline.count("/") == 1:
                 gh_response = requests.get(f"https://api.github.com/repos/{self.pipeline}")
                 try:
-                    assert gh_response.json()["message"] == "Not Found"
+                    assert gh_response.json().get("message") == "Not Found"
                 except AssertionError:
                     pass
                 else:
@@ -357,7 +357,7 @@ class DownloadWorkflow(object):
         if self.pipeline.count("/") == 1:
             # Looks like a GitHub address - try working with this repo
             log.warning("Pipeline name doesn't match any nf-core workflows")
-            log.info("Pipeline name looks like a GitHub address - attempting to download anyway")
+            log.info("Pipeline name looks like a GitHub address - attempting to download")
             self.wf_name = self.pipeline
             if not self.release:
                 self.release = "master"
