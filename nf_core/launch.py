@@ -184,7 +184,9 @@ class Launch(object):
                     try:
                         release_tags = self.try_fetch_release_tags()
                         self.pipeline_revision = questionary.select(
-                            "Please select a release:", choices=release_tags
+                            "Please select a release:",
+                            choices=release_tags,
+                            style=nf_core.utils.nfcore_question_style,
                         ).ask()
                     except LookupError:
                         pass

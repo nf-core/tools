@@ -121,6 +121,7 @@ class DownloadWorkflow(object):
                 "tar.bz2",
                 "zip",
             ],
+            style=nf_core.utils.nfcore_question_style,
         ).ask()
 
     def _confirm_container_download(self):
@@ -226,7 +227,9 @@ class DownloadWorkflow(object):
         if self.release is None:
             release_tags = self.fetch_release_tags()
             if len(release_tags) > 0:
-                self.release = questionary.select("Select release / branch:", choices=release_tags).ask()
+                self.release = questionary.select(
+                    "Select release / branch:", choices=release_tags, style=nf_core.utils.nfcore_question_style
+                ).ask()
 
         # Download singularity container?
         if self.container is None:
@@ -347,7 +350,9 @@ class DownloadWorkflow(object):
             self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.release)
         else:
             log.error("Not able to find pipeline '{}'".format(self.pipeline))
-            log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows])))
+            log.info(
+                "Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows]))
+            )
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
@@ -755,7 +760,11 @@ class DownloadWorkflow(object):
             with tarfile.open(self.output_filename, "w:{}".format(ctype)) as tar:
                 tar.add(self.outdir, arcname=os.path.basename(self.outdir))
             tar_flags = "xzf" if ctype == "gz" else "xjf"
-            log.info("Command to extract files: tar -{} {}".format(tar_flags, self.output_filename))
+            log.info(
+                "Command to extract files: [bright_magenta on grey0] tar -{} {} [/]".format(
+                    tar_flags, self.output_filename
+                )
+            )
 
         # .zip files
         if self.compress_type == "zip":
@@ -796,7 +805,7 @@ class DownloadWorkflow(object):
         file_hash = hash_md5.hexdigest()
 
         if expected is None:
-            log.info("MD5 checksum for {}: {}".format(fname, file_hash))
+            log.info("MD5 checksum for '{}': '{}'".format(fname, file_hash))
         else:
             if file_hash == expected:
                 log.debug("md5 sum of image matches expected: {}".format(expected))
