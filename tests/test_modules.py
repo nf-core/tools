@@ -62,6 +62,15 @@ class TestModules(unittest.TestCase):
         module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
         assert os.path.exists(module_path)
 
+    def test_modules_install_fastqc_alternative_source(self):
+        """ Test installing a module from a different source repository - FastQC """
+        mods = nf_core.modules.PipelineModules()
+        mods.modules_repo = nf_core.modules.ModulesRepo(repo='ewels/nf-core-modules', branch='master')
+        mods.pipeline_dir = self.pipeline_dir
+        assert mods.install("fastqc") is not False
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "ewels", "software", "fastqc")
+        assert os.path.exists(module_path)
+
     def test_modules_install_fastqc_twice(self):
         """ Test installing a module - FastQC already there """
         self.mods.install("fastqc")

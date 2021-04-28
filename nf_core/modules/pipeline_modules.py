@@ -219,8 +219,11 @@ class PipelineModules(object):
             return False
         log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
 
+        # Extract origin repository to use as install folder
+        install_folder = self.modules_repo.name.split('/')[0]
+
         # Check that we don't already have a folder for this module
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", install_folder, "software", module)
         if os.path.exists(module_dir):
             log.error("Module directory already exists: {}".format(module_dir))
             # TODO: uncomment next line once update is implemented
@@ -231,7 +234,7 @@ class PipelineModules(object):
         files = self.modules_repo.get_module_file_urls(module)
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
-            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
+            dl_filename = os.path.join(self.pipeline_dir, "modules", install_folder, filename)
             self.modules_repo.download_gh_file(dl_filename, api_url)
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
@@ -259,8 +262,11 @@ class PipelineModules(object):
                 "Tool name:", choices=self.pipeline_module_names, style=nf_core.utils.nfcore_question_style
             ).ask()
 
+        # Extract origin repository to use as install folder
+        install_folder = self.modules_repo.name.split('/')[0]
+
         # Get the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", install_folder, "software", module)
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
