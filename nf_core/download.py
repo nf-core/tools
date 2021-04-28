@@ -81,7 +81,7 @@ class DownloadWorkflow(object):
         outdir=None,
         compress_type=None,
         force=False,
-        container="none",
+        container=None,
         singularity_cache_only=False,
         parallel_downloads=4,
     ):
@@ -90,19 +90,10 @@ class DownloadWorkflow(object):
         self.outdir = outdir
         self.output_filename = None
         self.compress_type = compress_type
-        if self.compress_type is None:
-            self.compress_type = self._confirm_compression()
-        if self.compress_type == "none":
-            self.compress_type = None
-
         self.force = force
-
-        if container is None:
-            container = self._confirm_container_download()
+        self.container = container
         self.singularity = container == "singularity"
         self.singularity_cache_only = singularity_cache_only
-        if self.singularity_cache_only is None and self.singularity:
-            self.singularity_cache_only = self._confirm_singularity_cache()
         self.parallel_downloads = parallel_downloads
 
         # Sanity checks
@@ -115,6 +106,11 @@ class DownloadWorkflow(object):
         self.wf_download_url = None
         self.nf_config = dict()
         self.containers = list()
+
+        # Fetch remote workflows
+        self.wfs = nf_core.list.Workflows()
+        self.wfs.get_remote_workflows()
+        self.wf_branches = {}
 
     def _confirm_compression(self):
         return questionary.select(
@@ -139,29 +135,12 @@ class DownloadWorkflow(object):
 
     def download_workflow(self):
         """Starts a nf-core workflow download."""
-        # Fetch remote workflows
-        wfs = nf_core.list.Workflows()
-        wfs.get_remote_workflows()
 
-        # Prompt user if pipeline name was not specified
-        if self.pipeline is None:
-            self.pipeline = questionary.autocomplete(
-                "Pipeline name:",
-                choices=[wf.name for wf in wfs.remote_workflows],
-                style=nf_core.utils.nfcore_question_style,
-            ).ask()
-
-        # Prompt user for release tag if '--release' was set
-        if self.release is None:
-            try:
-                release_tags = self.fetch_release_tags()
-            except LookupError:
-                sys.exit(1)
-            self.release = questionary.select("Select release:", choices=release_tags).ask()
+        self.prompt_inputs()
 
         # Get workflow details
         try:
-            self.fetch_workflow_details(wfs)
+            self.fetch_workflow_details()
         except LookupError:
             sys.exit(1)
 
@@ -232,6 +211,41 @@ class DownloadWorkflow(object):
             log.info("Compressing download..")
             self.compress_download()
 
+    def prompt_inputs(self):
+        """Interactively prompt the user for any missing flags"""
+
+        # Prompt user if pipeline name was not specified
+        if self.pipeline is None:
+            self.pipeline = questionary.autocomplete(
+                "Pipeline name:",
+                choices=[wf.name for wf in self.wfs.remote_workflows],
+                style=nf_core.utils.nfcore_question_style,
+            ).ask()
+
+        # Prompt user for release tag if '--release' was not set
+        if self.release is None:
+            try:
+                release_tags = self.fetch_release_tags()
+            except LookupError:
+                sys.exit(1)
+            self.release = questionary.select("Select release / branch:", choices=release_tags).ask()
+
+        # Download singularity container?
+        if self.container is None:
+            self.container = self._confirm_container_download()
+
+        # Use $NXF_SINGULARITY_CACHEDIR ?
+        if self.singularity_cache_only is None and self.singularity:
+            self.singularity_cache_only = self._confirm_singularity_cache()
+
+        # Compress the downloaded files?
+        if self.compress_type is None:
+            self.compress_type = self._confirm_compression()
+
+        # Correct type for no-compression
+        if self.compress_type == "none":
+            self.compress_type = None
+
     def fetch_release_tags(self):
         """Fetches tag names of pipeline releases from github
 
@@ -241,67 +255,68 @@ class DownloadWorkflow(object):
         Raises:
             LookupError, if no releases were found
         """
-        # Fetch releases from github api
-        releases_url = "https://api.github.com/repos/nf-core/{}/releases".format(self.pipeline)
-        response = requests.get(releases_url)
+
+        release_tags = []
+
+        # We get releases from https://nf-co.re/pipelines.json
+        for wf in self.wfs.remote_workflows:
+            if wf.full_name == self.pipeline or wf.name == self.pipeline:
+                if len(wf.releases) > 0:
+                    releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
+                    release_tags = list(map(lambda release: release.get("tag_name", None), releases))
+
+        # Fetch branches from github api
+        branches_url = "https://api.github.com/repos/nf-core/{}/branches".format(self.pipeline)
+        branch_response = requests.get(branches_url)
 
         # Filter out the release tags and sort them
-        release_tags = map(lambda release: release.get("tag_name", None), response.json())
-        release_tags = filter(lambda tag: tag != None, release_tags)
-        release_tags = list(release_tags)
-        if len(release_tags) == 0:
-            log.error("Unable to find any releases!")
-            raise LookupError
-        release_tags = sorted(release_tags, key=lambda tag: tuple(tag.split(".")), reverse=True)
+        for branch in branch_response.json():
+            self.wf_branches[branch["name"]] = branch["commit"]["sha"]
+        release_tags.extend(
+            [
+                b
+                for b in self.wf_branches.keys()
+                if b != "TEMPLATE" and b != "initial_commit" and not b.startswith("nf-core-template-merge")
+            ]
+        )
+
         return release_tags
 
-    def fetch_workflow_details(self, wfs):
+    def fetch_workflow_details(self):
         """Fetches details of a nf-core workflow to download.
-
-        Args:
-            wfs (nf_core.list.Workflows): A nf_core.list.Workflows object
 
         Raises:
             LockupError, if the pipeline can not be found.
         """
 
         # Get workflow download details
-        for wf in wfs.remote_workflows:
+        for wf in self.wfs.remote_workflows:
             if wf.full_name == self.pipeline or wf.name == self.pipeline:
 
                 # Set pipeline name
                 self.wf_name = wf.name
 
-                # Find latest release hash
-                if self.release is None and len(wf.releases) > 0:
-                    # Sort list of releases so that most recent is first
-                    wf.releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
-                    self.release = wf.releases[0]["tag_name"]
-                    self.wf_sha = wf.releases[0]["tag_sha"]
-                    log.debug("No release specified. Using latest release: {}".format(self.release))
-                # Find specified release hash
-                elif self.release is not None:
-                    for r in wf.releases:
-                        if r["tag_name"] == self.release.lstrip("v"):
-                            self.wf_sha = r["tag_sha"]
-                            break
-                    else:
-                        log.error("Not able to find release '{}' for {}".format(self.release, wf.full_name))
-                        log.info(
-                            "Available {} releases: {}".format(
-                                wf.full_name, ", ".join([r["tag_name"] for r in wf.releases])
-                            )
-                        )
-                        raise LookupError("Not able to find release '{}' for {}".format(self.release, wf.full_name))
+                # Find specified release / branch hash
+                if self.release is not None:
 
-                # Must be a dev-only pipeline
-                elif not self.release:
-                    self.release = "dev"
-                    self.wf_sha = "master"  # Cheating a little, but GitHub download link works
-                    log.warning(
-                        "Pipeline is in development - downloading current code on master branch.\n"
-                        + "This is likely to change soon should not be considered fully reproducible."
-                    )
+                    # Branch
+                    if self.release in self.wf_branches.keys():
+                        self.wf_sha = self.wf_branches[self.release]
+
+                    # Release
+                    else:
+                        for r in wf.releases:
+                            if r["tag_name"] == self.release.lstrip("v"):
+                                self.wf_sha = r["tag_sha"]
+                                break
+                        else:
+                            log.error("Not able to find release '{}' for {}".format(self.release, wf.full_name))
+                            log.info(
+                                "Available {} releases: {}".format(
+                                    wf.full_name, ", ".join([r["tag_name"] for r in wf.releases])
+                                )
+                            )
+                            raise LookupError("Not able to find release '{}' for {}".format(self.release, wf.full_name))
 
                 # Set outdir name if not defined
                 if not self.outdir:
@@ -330,7 +345,7 @@ class DownloadWorkflow(object):
             self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.release)
         else:
             log.error("Not able to find pipeline '{}'".format(self.pipeline))
-            log.info("Available pipelines: {}".format(", ".join([w.name for w in wfs.remote_workflows])))
+            log.info("Available pipelines: {}".format(", ".join([w.name for w in self.wfs.remote_workflows])))
             raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
     def download_wf_files(self):
