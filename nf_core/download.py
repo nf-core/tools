@@ -23,6 +23,7 @@ from zipfile import ZipFile
 import nf_core
 
 log = logging.getLogger(__name__)
+stderr = rich.console.Console(stderr=True, highlight=False, force_terminal=nf_core.utils.rich_force_colors())
 
 
 class DownloadProgress(rich.progress.Progress):
@@ -178,11 +179,12 @@ class DownloadWorkflow(object):
         """Prompt for the pipeline name if not set with a flag"""
 
         if self.pipeline is None:
+            stderr.print("Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).")
             self.pipeline = questionary.autocomplete(
                 "Pipeline name:",
                 choices=[wf.name for wf in self.wfs.remote_workflows],
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
 
         # Fast-fail for unrecognised pipelines (we check again at the end)
         for wf in self.wfs.remote_workflows:
@@ -208,14 +210,16 @@ class DownloadWorkflow(object):
         """Prompt for pipeline release / branch"""
         # Prompt user for release tag if '--release' was not set
         if self.release is None:
-            release_tags = []
+            choices = []
 
             # We get releases from https://nf-co.re/pipelines.json
             for wf in self.wfs.remote_workflows:
                 if wf.full_name == self.pipeline or wf.name == self.pipeline:
                     if len(wf.releases) > 0:
                         releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
-                        release_tags = list(map(lambda release: release.get("tag_name"), releases))
+                        for tag in map(lambda release: release.get("tag_name"), releases):
+                            tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
+                            choices.append(questionary.Choice(title=tag_display, value=tag))
 
             try:
                 # Fetch branches from github api
@@ -225,21 +229,25 @@ class DownloadWorkflow(object):
                 # Filter out the release tags and sort them
                 for branch in branch_response.json():
                     self.wf_branches[branch["name"]] = branch["commit"]["sha"]
-                release_tags.extend(
-                    [
-                        b
-                        for b in self.wf_branches.keys()
-                        if b != "TEMPLATE" and b != "initial_commit" and not b.startswith("nf-core-template-merge")
-                    ]
-                )
+
+                for branch in self.wf_branches.keys():
+                    if (
+                        branch != "TEMPLATE"
+                        and branch != "initial_commit"
+                        and not branch.startswith("nf-core-template-merge")
+                    ):
+                        branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
+                        choices.append(questionary.Choice(title=branch_display, value=branch))
+
             except TypeError:
                 # This will be picked up later if not a repo, just log for now
                 log.debug("Couldn't fetch branches - invalid repo?")
 
-            if len(release_tags) > 0:
+            if len(choices) > 0:
+                stderr.print("\nChoose the release or branch that should be downloaded.")
                 self.release = questionary.select(
-                    "Select release / branch:", choices=release_tags, style=nf_core.utils.nfcore_question_style
-                ).ask()
+                    "Select release / branch:", choices=choices, style=nf_core.utils.nfcore_question_style
+                ).unsafe_ask()
 
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
@@ -252,7 +260,7 @@ class DownloadWorkflow(object):
                     "singularity",
                 ],
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
 
     def prompt_use_singularity_cachedir(self):
         """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
@@ -327,7 +335,7 @@ class DownloadWorkflow(object):
                     "zip",
                 ],
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
 
         # Correct type for no-compression
         if self.compress_type == "none":
