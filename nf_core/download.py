@@ -128,9 +128,6 @@ class DownloadWorkflow(object):
             style=nf_core.utils.nfcore_question_style,
         ).ask()
 
-    def _confirm_singularity_cache(self):
-        return Confirm.ask(f"[blue bold]?[/] [white bold]Should singularity image be cached?[/]")
-
     def download_workflow(self):
         """Starts a nf-core workflow download."""
 
@@ -144,21 +141,9 @@ class DownloadWorkflow(object):
 
         summary_log = [f"Pipeline release: '{self.release}'", f"Pull containers: '{self.container}'"]
         if self.container == "singularity":
-            export_in_file = os.popen('grep -c "export NXF_SINGULARITY_CACHEDIR" ~/.bashrc').read().strip("\n") != "0"
-            if not export_in_file:
-                append_to_file = Confirm.ask("Add 'export NXF_SINGULARITY_CACHEDIR' to .bashrc?")
-                if append_to_file:
-                    path = Prompt.ask("Specify the path: ")
-                    try:
-                        with open(os.path.expanduser("~/.bashrc"), "a") as f:
-                            f.write(f"export NXF_SINGULARITY_CACHEDIR={path}\n")
-                        log.info("Successfully wrote to ~/.bashrc")
-                    except FileNotFoundError:
-                        log.error("Unable to find ~/.bashrc")
-                        sys.exit(1)
             if os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
                 summary_log.append(
-                    "Using '$NXF_SINGULARITY_CACHEDIR': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
+                    "Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
                 )
 
         # Set an output filename now that we have the outdir
@@ -254,12 +239,22 @@ class DownloadWorkflow(object):
             self.container = self._confirm_container_download()
 
         # Use $NXF_SINGULARITY_CACHEDIR ?
-        if self.singularity_cache_only is None and self.container == "singularity":
-            self.singularity_cache_only = self._confirm_singularity_cache()
+        if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None:
+            self.set_nxf_singularity_cachedir()
+
+        # Use *only* $NXF_SINGULARITY_CACHEDIR without copying into target?
+        if (
+            self.singularity_cache_only is None
+            and self.container == "singularity"
+            and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None
+        ):
+            self.singularity_cache_only = Confirm.ask(
+                f"[blue bold]?[/] [white bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the download folder?[/]"
+            )
 
         # Sanity checks (for cli flags)
         if self.singularity_cache_only and self.container != "singularity":
-            log.error("Command has '--singularity-cache' set, but '--container' is 'none'")
+            log.error("Command has '--singularity-cache' set, but '--container' is not 'singularity'")
             sys.exit(1)
 
         # Compress the downloaded files?
@@ -269,6 +264,45 @@ class DownloadWorkflow(object):
         # Correct type for no-compression
         if self.compress_type == "none":
             self.compress_type = None
+
+    def set_nxf_singularity_cachedir(self):
+        """Ask if the user wants to set a Singularity cache"""
+
+        if Confirm.ask(
+            f"[blue bold]?[/] [white bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
+        ):
+            cachedir_path = None
+            while cachedir_path is None:
+                cachedir_path = os.path.abspath(
+                    Prompt.ask("[blue bold]?[/] [white bold]Specify the path:[/] (leave blank to cancel)")
+                )
+                if cachedir_path == "":
+                    cachedir_path = False
+                elif not os.path.isdir(cachedir_path):
+                    log.error(f"'{cachedir_path}' is not a directory.")
+                    cachedir_path = None
+            if cachedir_path:
+                os.environ["NXF_SINGULARITY_CACHEDIR"] = cachedir_path
+
+                # Ask if user wants this set in their .bashrc
+                bashrc_path = os.path.expanduser("~/.bashrc")
+                if not os.path.isfile(bashrc_path):
+                    bashrc_path = os.path.expanduser("~/.bash_profile")
+                    if not os.path.isfile(bashrc_path):
+                        bashrc_path = False
+                if bashrc_path:
+                    append_to_file = Confirm.ask(
+                        f"[blue bold]?[/] [white bold]Add [green not bold]'export NXF_SINGULARITY_CACHEDIR=\"{cachedir_path}\"'[/] to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
+                    )
+                    if append_to_file:
+                        with open(os.path.expanduser(bashrc_path), "a") as f:
+                            f.write(
+                                "\n\n#######################################\n"
+                                f"## Added by `nf-core download` v{nf_core.__version__} ##\n"
+                                + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
+                                + "\n#######################################\n"
+                            )
+                        log.info(f"Successfully wrote to {bashrc_path}")
 
     def fetch_release_tags(self):
         """Fetches tag names of pipeline releases from github
