@@ -106,34 +106,17 @@ class DownloadWorkflow(object):
         self.wfs.get_remote_workflows()
         self.wf_branches = {}
 
-    def _confirm_compression(self):
-        return questionary.select(
-            "Choose compression type:",
-            choices=[
-                "none",
-                "tar.gz",
-                "tar.bz2",
-                "zip",
-            ],
-            style=nf_core.utils.nfcore_question_style,
-        ).ask()
-
-    def _confirm_container_download(self):
-        return questionary.select(
-            "Download software container images:",
-            choices=[
-                "none",
-                "singularity",
-            ],
-            style=nf_core.utils.nfcore_question_style,
-        ).ask()
-
     def download_workflow(self):
         """Starts a nf-core workflow download."""
 
         # Get workflow details
         try:
-            self.prompt_inputs()
+            self.prompt_pipeline_name()
+            self.prompt_release()
+            self.prompt_container_download()
+            self.prompt_use_singularity_cachedir()
+            self.prompt_singularity_cachedir_only()
+            self.prompt_compression_type()
             self.fetch_workflow_details()
         except LookupError as e:
             log.critical(e)
@@ -195,10 +178,9 @@ class DownloadWorkflow(object):
             log.info("Compressing download..")
             self.compress_download()
 
-    def prompt_inputs(self):
-        """Interactively prompt the user for any missing flags"""
+    def prompt_pipeline_name(self):
+        """Prompt for the pipeline name if not set with a flag"""
 
-        # Prompt user if pipeline name was not specified
         if self.pipeline is None:
             self.pipeline = questionary.autocomplete(
                 "Pipeline name:",
@@ -226,23 +208,99 @@ class DownloadWorkflow(object):
                 )
                 raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
 
+    def prompt_release(self):
+        """Prompt for pipeline release / branch"""
         # Prompt user for release tag if '--release' was not set
         if self.release is None:
-            release_tags = self.fetch_release_tags()
+            release_tags = []
+
+            # We get releases from https://nf-co.re/pipelines.json
+            for wf in self.wfs.remote_workflows:
+                if wf.full_name == self.pipeline or wf.name == self.pipeline:
+                    if len(wf.releases) > 0:
+                        releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
+                        release_tags = list(map(lambda release: release.get("tag_name"), releases))
+
+            try:
+                # Fetch branches from github api
+                branches_url = f"https://api.github.com/repos/nf-core/{self.pipeline}/branches"
+                branch_response = requests.get(branches_url)
+
+                # Filter out the release tags and sort them
+                for branch in branch_response.json():
+                    self.wf_branches[branch["name"]] = branch["commit"]["sha"]
+                release_tags.extend(
+                    [
+                        b
+                        for b in self.wf_branches.keys()
+                        if b != "TEMPLATE" and b != "initial_commit" and not b.startswith("nf-core-template-merge")
+                    ]
+                )
+            except TypeError:
+                # This will be picked up later if not a repo, just log for now
+                log.debug("Couldn't fetch branches - invalid repo?")
+
             if len(release_tags) > 0:
                 self.release = questionary.select(
                     "Select release / branch:", choices=release_tags, style=nf_core.utils.nfcore_question_style
                 ).ask()
 
-        # Download singularity container?
+    def prompt_container_download(self):
+        """Prompt whether to download container images or not"""
+
         if self.container is None:
-            self.container = self._confirm_container_download()
+            self.container = questionary.select(
+                "Download software container images:",
+                choices=[
+                    "none",
+                    "singularity",
+                ],
+                style=nf_core.utils.nfcore_question_style,
+            ).ask()
 
-        # Use $NXF_SINGULARITY_CACHEDIR ?
+    def prompt_use_singularity_cachedir(self):
+        """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None:
-            self.set_nxf_singularity_cachedir()
+            if Confirm.ask(
+                f"[blue bold]?[/] [white bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
+            ):
+                # Prompt user for a cache directory path
+                cachedir_path = None
+                while cachedir_path is None:
+                    cachedir_path = os.path.abspath(
+                        Prompt.ask("[blue bold]?[/] [white bold]Specify the path:[/] (leave blank to cancel)")
+                    )
+                    if cachedir_path == os.path.abspath(""):
+                        log.error(f"Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
+                        cachedir_path = False
+                    elif not os.path.isdir(cachedir_path):
+                        log.error(f"'{cachedir_path}' is not a directory.")
+                        cachedir_path = None
+                if cachedir_path:
+                    os.environ["NXF_SINGULARITY_CACHEDIR"] = cachedir_path
 
-        # Use *only* $NXF_SINGULARITY_CACHEDIR without copying into target?
+                    # Ask if user wants this set in their .bashrc
+                    bashrc_path = os.path.expanduser("~/.bashrc")
+                    if not os.path.isfile(bashrc_path):
+                        bashrc_path = os.path.expanduser("~/.bash_profile")
+                        if not os.path.isfile(bashrc_path):
+                            bashrc_path = False
+                    if bashrc_path:
+                        append_to_file = Confirm.ask(
+                            f"[blue bold]?[/] [white bold]Add [green not bold]'export NXF_SINGULARITY_CACHEDIR=\"{cachedir_path}\"'[/] to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
+                        )
+                        if append_to_file:
+                            with open(os.path.expanduser(bashrc_path), "a") as f:
+                                f.write(
+                                    "\n\n#######################################\n"
+                                    f"## Added by `nf-core download` v{nf_core.__version__} ##\n"
+                                    + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
+                                    + "\n#######################################\n"
+                                )
+                            log.info(f"Successfully wrote to {bashrc_path}")
+
+    def prompt_singularity_cachedir_only(self):
+        """Ask if we should *only* use $NXF_SINGULARITY_CACHEDIR without copying into target"""
         if (
             self.singularity_cache_only is None
             and self.container == "singularity"
@@ -252,97 +310,27 @@ class DownloadWorkflow(object):
                 f"[blue bold]?[/] [white bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the download folder?[/]"
             )
 
-        # Sanity checks (for cli flags)
+        # Sanity check
         if self.singularity_cache_only and self.container != "singularity":
-            log.error("Command has '--singularity-cache' set, but '--container' is not 'singularity'")
-            sys.exit(1)
+            raise LookupError("Command has '--singularity-cache' set, but '--container' is not 'singularity'")
 
-        # Compress the downloaded files?
+    def prompt_compression_type(self):
+        """Ask user if we should compress the downloaded files"""
         if self.compress_type is None:
-            self.compress_type = self._confirm_compression()
+            self.compress_type = questionary.select(
+                "Choose compression type:",
+                choices=[
+                    "none",
+                    "tar.gz",
+                    "tar.bz2",
+                    "zip",
+                ],
+                style=nf_core.utils.nfcore_question_style,
+            ).ask()
 
         # Correct type for no-compression
         if self.compress_type == "none":
             self.compress_type = None
-
-    def set_nxf_singularity_cachedir(self):
-        """Ask if the user wants to set a Singularity cache"""
-
-        if Confirm.ask(
-            f"[blue bold]?[/] [white bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
-        ):
-            cachedir_path = None
-            while cachedir_path is None:
-                cachedir_path = os.path.abspath(
-                    Prompt.ask("[blue bold]?[/] [white bold]Specify the path:[/] (leave blank to cancel)")
-                )
-                if cachedir_path == "":
-                    cachedir_path = False
-                elif not os.path.isdir(cachedir_path):
-                    log.error(f"'{cachedir_path}' is not a directory.")
-                    cachedir_path = None
-            if cachedir_path:
-                os.environ["NXF_SINGULARITY_CACHEDIR"] = cachedir_path
-
-                # Ask if user wants this set in their .bashrc
-                bashrc_path = os.path.expanduser("~/.bashrc")
-                if not os.path.isfile(bashrc_path):
-                    bashrc_path = os.path.expanduser("~/.bash_profile")
-                    if not os.path.isfile(bashrc_path):
-                        bashrc_path = False
-                if bashrc_path:
-                    append_to_file = Confirm.ask(
-                        f"[blue bold]?[/] [white bold]Add [green not bold]'export NXF_SINGULARITY_CACHEDIR=\"{cachedir_path}\"'[/] to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
-                    )
-                    if append_to_file:
-                        with open(os.path.expanduser(bashrc_path), "a") as f:
-                            f.write(
-                                "\n\n#######################################\n"
-                                f"## Added by `nf-core download` v{nf_core.__version__} ##\n"
-                                + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
-                                + "\n#######################################\n"
-                            )
-                        log.info(f"Successfully wrote to {bashrc_path}")
-
-    def fetch_release_tags(self):
-        """Fetches tag names of pipeline releases from github
-
-        Returns:
-            release_tags (list[str]): Returns list of release tags
-
-        Raises:
-            LookupError, if no releases were found
-        """
-
-        release_tags = []
-
-        # We get releases from https://nf-co.re/pipelines.json
-        for wf in self.wfs.remote_workflows:
-            if wf.full_name == self.pipeline or wf.name == self.pipeline:
-                if len(wf.releases) > 0:
-                    releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
-                    release_tags = list(map(lambda release: release.get("tag_name"), releases))
-
-        try:
-            # Fetch branches from github api
-            branches_url = f"https://api.github.com/repos/nf-core/{self.pipeline}/branches"
-            branch_response = requests.get(branches_url)
-
-            # Filter out the release tags and sort them
-            for branch in branch_response.json():
-                self.wf_branches[branch["name"]] = branch["commit"]["sha"]
-            release_tags.extend(
-                [
-                    b
-                    for b in self.wf_branches.keys()
-                    if b != "TEMPLATE" and b != "initial_commit" and not b.startswith("nf-core-template-merge")
-                ]
-            )
-        except TypeError:
-            # This will be picked up later if not a repo, just log for now
-            log.debug("Couldn't fetch branches - invalid repo?")
-
-        return release_tags
 
     def fetch_workflow_details(self):
         """Fetches details of a nf-core workflow to download.
