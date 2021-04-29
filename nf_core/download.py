@@ -129,7 +129,7 @@ class DownloadWorkflow(object):
         ).ask()
 
     def _confirm_singularity_cache(self):
-        return Confirm.ask(f"Should singularity image be cached?")
+        return Confirm.ask(f"[blue bold]?[/] [white bold]Should singularity image be cached?[/]")
 
     def download_workflow(self):
         """Starts a nf-core workflow download."""
@@ -199,7 +199,11 @@ class DownloadWorkflow(object):
         # Download the singularity images
         if self.container == "singularity":
             self.find_container_images()
-            self.get_singularity_images()
+            try:
+                self.get_singularity_images()
+            except OSError as e:
+                log.critical(f"[red]{e}[/]")
+                sys.exit(1)
 
         # Compress into an archive
         if self.compress_type is not None:
@@ -447,7 +451,7 @@ class DownloadWorkflow(object):
         `nextflow config` at the time of writing, so we scrape the pipeline files.
         """
 
-        log.info("Fetching container names for workflow")
+        log.debug("Fetching container names for workflow")
 
         # Use linting code to parse the pipeline nextflow config
         self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))
@@ -490,11 +494,6 @@ class DownloadWorkflow(object):
         if len(self.containers) == 0:
             log.info("No container names found in workflow")
         else:
-            if not os.environ.get("NXF_SINGULARITY_CACHEDIR"):
-                log.info(
-                    "[magenta]Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads"
-                )
-
             with DownloadProgress() as progress:
                 task = progress.add_task("all_containers", total=len(self.containers), progress_type="summary")
 
@@ -536,6 +535,10 @@ class DownloadWorkflow(object):
 
                     # Pull using singularity
                     containers_pull.append([container, out_path, cache_path])
+
+                # Exit if we need to pull images and Singularity is not installed
+                if len(containers_pull) > 0 and shutil.which("singularity") is None:
+                    raise OSError("Images need to be pulled from Docker, but Singularity is not installed")
 
                 # Go through each method of fetching containers in order
                 for container in containers_exist:
@@ -739,35 +742,25 @@ class DownloadWorkflow(object):
         # Progress bar to show that something is happening
         task = progress.add_task(container, start=False, total=False, progress_type="singularity_pull", current_log="")
 
-        # Try to use singularity to pull image
-        try:
-            # Run the singularity pull command
-            proc = subprocess.Popen(
-                singularity_command,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                universal_newlines=True,
-                bufsize=1,
-            )
-            for line in proc.stdout:
-                log.debug(line.strip())
-                progress.update(task, current_log=line.strip())
+        # Run the singularity pull command
+        proc = subprocess.Popen(
+            singularity_command,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            universal_newlines=True,
+            bufsize=1,
+        )
+        for line in proc.stdout:
+            log.debug(line.strip())
+            progress.update(task, current_log=line.strip())
 
-            # Copy cached download if we are using the cache
-            if cache_path:
-                log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
-                progress.update(task, current_log="Copying from cache to target directory")
-                shutil.copyfile(cache_path, out_path)
+        # Copy cached download if we are using the cache
+        if cache_path:
+            log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+            progress.update(task, current_log="Copying from cache to target directory")
+            shutil.copyfile(cache_path, out_path)
 
-            progress.remove_task(task)
-
-        except OSError as e:
-            if e.errno == errno.ENOENT:
-                # Singularity is not installed
-                log.error("Singularity is not installed!")
-            else:
-                # Something else went wrong with singularity command
-                raise e
+        progress.remove_task(task)
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
