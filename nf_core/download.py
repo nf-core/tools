@@ -23,7 +23,9 @@ from zipfile import ZipFile
 import nf_core
 
 log = logging.getLogger(__name__)
-stderr = rich.console.Console(stderr=True, highlight=False, force_terminal=nf_core.utils.rich_force_colors())
+stderr = rich.console.Console(
+    stderr=True, style="dim", highlight=False, force_terminal=nf_core.utils.rich_force_colors()
+)
 
 
 class DownloadProgress(rich.progress.Progress):
@@ -253,6 +255,7 @@ class DownloadWorkflow(object):
         """Prompt whether to download container images or not"""
 
         if self.container is None:
+            stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container = questionary.select(
                 "Download software container images:",
                 choices=[
@@ -265,6 +268,10 @@ class DownloadWorkflow(object):
     def prompt_use_singularity_cachedir(self):
         """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None:
+            stderr.print(
+                "\nNextflow and nf-core can use an environment variable called [blue]$NXF_SINGULARITY_CACHEDIR[/] that is a path to a directory where remote Singularity images are stored. "
+                "This allows downloaded images to be cached in a central location."
+            )
             if rich.prompt.Confirm.ask(
                 f"[blue bold]?[/] [white bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
@@ -292,8 +299,13 @@ class DownloadWorkflow(object):
                         if not os.path.isfile(bashrc_path):
                             bashrc_path = False
                     if bashrc_path:
+                        stderr.print(
+                            f"\nSo that [blue]$NXF_SINGULARITY_CACHEDIR[/] is always defined, you can add it to your [blue not bold]~/{os.path.basename(bashrc_path)}[/] file ."
+                            "This will then be autmoatically set every time you open a new terminal. We can add the following line to this file for you: \n"
+                            f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
+                        )
                         append_to_file = rich.prompt.Confirm.ask(
-                            f"[blue bold]?[/] [white bold]Add [green not bold]'export NXF_SINGULARITY_CACHEDIR=\"{cachedir_path}\"'[/] to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
+                            f"[blue bold]?[/] [white bold]Add to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
                         )
                         if append_to_file:
                             with open(os.path.expanduser(bashrc_path), "a") as f:
@@ -315,8 +327,13 @@ class DownloadWorkflow(object):
             and self.container == "singularity"
             and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None
         ):
+            stderr.print(
+                "\nIf you are working on the same system where you will run Nextflow, you can leave the downloaded images in the "
+                "[blue not bold]$NXF_SINGULARITY_CACHEDIR[/] folder, Nextflow will automatically find them. "
+                "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
+            )
             self.singularity_cache_only = rich.prompt.Confirm.ask(
-                f"[blue bold]?[/] [white bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the download folder?[/]"
+                f"[blue bold]?[/] [white bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
             )
 
         # Sanity check
@@ -326,6 +343,13 @@ class DownloadWorkflow(object):
     def prompt_compression_type(self):
         """Ask user if we should compress the downloaded files"""
         if self.compress_type is None:
+            stderr.print(
+                "\nIf transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file."
+            )
+            if self.container == "singularity":
+                stderr.print(
+                    "[bold]This is [italic]not[/] recommended when downloading Singularity images, as it can take a long time and saves very little space."
+                )
             self.compress_type = questionary.select(
                 "Choose compression type:",
                 choices=[
