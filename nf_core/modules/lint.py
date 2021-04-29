@@ -832,6 +832,26 @@ class NFCoreModule(object):
         if contains_all_functions:
             self.passed.append(("functions_nf_func_exist", "All functions present", self.function_nf))
 
+        # Compare functions.nf file to the most recent template
+        # Get file content of the module functions.nf
+        try:
+            local_copy = open(self.function_nf, "r").read()
+        except FileNotFoundError as e:
+            log.error(f"Could not open {self.function_nf}")
+
+        # Get the template file
+        template_copy_path = os.path.join(os.path.dirname(nf_core.__file__), "module-template/software/functions.nf")
+        try:
+            template_copy = open(template_copy_path, "r").read()
+        except FileNotFoundError as e:
+            log.error(f"Could not open {template_copy_path}")
+
+        # Compare the files
+        if local_copy != template_copy:
+            self.warned.append(("function_nf_comparison", "New version of functions.nf available", self.function_nf))
+        else:
+            self.passed.append(("function_nf_comparison", "functions.nf is up to date", self.function_nf))
+
     def _parse_input(self, line):
         input = []
         # more than one input
