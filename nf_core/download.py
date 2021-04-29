@@ -123,11 +123,10 @@ class DownloadWorkflow(object):
             sys.exit(1)
 
         summary_log = [f"Pipeline release: '{self.release}'", f"Pull containers: '{self.container}'"]
-        if self.container == "singularity":
-            if os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
-                summary_log.append(
-                    "Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
-                )
+        if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
+            summary_log.append(
+                "Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
+            )
 
         # Set an output filename now that we have the outdir
         if self.compress_type is not None:
@@ -297,7 +296,10 @@ class DownloadWorkflow(object):
                                     + f'export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"'
                                     + "\n#######################################\n"
                                 )
-                            log.info(f"Successfully wrote to {bashrc_path}")
+                            log.info(f"Successfully wrote to [blue]{bashrc_path}[/]")
+                            log.warning(
+                                "You will need reload your terminal after the download completes for this to take effect."
+                            )
 
     def prompt_singularity_cachedir_only(self):
         """Ask if we should *only* use $NXF_SINGULARITY_CACHEDIR without copying into target"""
@@ -381,8 +383,7 @@ class DownloadWorkflow(object):
         # If we got this far, must not be a nf-core pipeline
         if self.pipeline.count("/") == 1:
             # Looks like a GitHub address - try working with this repo
-            log.warning("Pipeline name doesn't match any nf-core workflows")
-            log.info("Pipeline name looks like a GitHub address - attempting to download")
+            log.debug("Pipeline name looks like a GitHub address - attempting to download")
             self.wf_name = self.pipeline
             if not self.release:
                 self.release = "master"
@@ -560,7 +561,7 @@ class DownloadWorkflow(object):
 
                 # Exit if we need to pull images and Singularity is not installed
                 if len(containers_pull) > 0 and shutil.which("singularity") is None:
-                    raise OSError("Images need to be pulled from Docker, but Singularity is not installed")
+                    raise OSError("Singularity is needed to pull images, but it is not installed")
 
                 # Go through each method of fetching containers in order
                 for container in containers_exist:
@@ -806,10 +807,10 @@ class DownloadWorkflow(object):
                         filePath = os.path.join(folderName, filename)
                         # Add file to zip
                         zipObj.write(filePath)
-            log.info("Command to extract files: unzip {}".format(self.output_filename))
+            log.info(f"Command to extract files: [bright_magenta]unzip {self.output_filename}[/]")
 
         # Delete original files
-        log.debug("Deleting uncompressed files: {}".format(self.outdir))
+        log.debug(f"Deleting uncompressed files: '{self.outdir}'")
         shutil.rmtree(self.outdir)
 
         # Caclualte md5sum for output file
