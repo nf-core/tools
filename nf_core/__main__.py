@@ -36,7 +36,7 @@ def run_nf_core():
     rich.traceback.install(width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header to STDERR
-    stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
+    stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
     stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
@@ -116,7 +116,7 @@ def nf_core_cli(verbose, log_file):
     log.addHandler(
         rich.logging.RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors()),
+            console=rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors()),
             show_time=False,
             markup=True,
         )
@@ -263,7 +263,7 @@ def licences(pipeline, json):
 
 # nf-core create
 def validate_wf_name_prompt(ctx, opts, value):
-    """ Force the workflow name to meet the nf-core requirements """
+    """Force the workflow name to meet the nf-core requirements"""
     if not re.match(r"^[a-z]+$", value):
         click.echo("Invalid workflow name: must be lowercase without punctuation.")
         value = click.prompt(opts.prompt)

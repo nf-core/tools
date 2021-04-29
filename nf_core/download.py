@@ -3,7 +3,6 @@
 
 from __future__ import print_function
 
-import errno
 from io import BytesIO
 import logging
 import hashlib
@@ -17,18 +16,16 @@ import subprocess
 import sys
 import tarfile
 import concurrent.futures
-from rich.progress import BarColumn, DownloadColumn, TransferSpeedColumn, Progress
-from rich.prompt import Confirm, Prompt
+import rich
+import rich.progress
 from zipfile import ZipFile
 
 import nf_core
-import nf_core.list
-import nf_core.utils
 
 log = logging.getLogger(__name__)
 
 
-class DownloadProgress(Progress):
+class DownloadProgress(rich.progress.Progress):
     """Custom Progress bar class, allowing us to have two progress
     bars with different columns / layouts.
     """
@@ -38,7 +35,7 @@ class DownloadProgress(Progress):
             if task.fields.get("progress_type") == "summary":
                 self.columns = (
                     "[magenta]{task.description}",
-                    BarColumn(bar_width=None),
+                    rich.progress.BarColumn(bar_width=None),
                     "[progress.percentage]{task.percentage:>3.0f}%",
                     "•",
                     "[green]{task.completed}/{task.total} completed",
@@ -46,18 +43,18 @@ class DownloadProgress(Progress):
             if task.fields.get("progress_type") == "download":
                 self.columns = (
                     "[blue]{task.description}",
-                    BarColumn(bar_width=None),
+                    rich.progress.BarColumn(bar_width=None),
                     "[progress.percentage]{task.percentage:>3.1f}%",
                     "•",
-                    DownloadColumn(),
+                    rich.progress.DownloadColumn(),
                     "•",
-                    TransferSpeedColumn(),
+                    rich.progress.TransferSpeedColumn(),
                 )
             if task.fields.get("progress_type") == "singularity_pull":
                 self.columns = (
                     "[magenta]{task.description}",
                     "[blue]{task.fields[current_log]}",
-                    BarColumn(bar_width=None),
+                    rich.progress.BarColumn(bar_width=None),
                 )
             yield self.make_tasks_table([task])
 
@@ -260,14 +257,16 @@ class DownloadWorkflow(object):
     def prompt_use_singularity_cachedir(self):
         """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None:
-            if Confirm.ask(
+            if rich.prompt.Confirm.ask(
                 f"[blue bold]?[/] [white bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
                 # Prompt user for a cache directory path
                 cachedir_path = None
                 while cachedir_path is None:
                     cachedir_path = os.path.abspath(
-                        Prompt.ask("[blue bold]?[/] [white bold]Specify the path:[/] (leave blank to cancel)")
+                        rich.prompt.Prompt.ask(
+                            "[blue bold]?[/] [white bold]Specify the path:[/] (leave blank to cancel)"
+                        )
                     )
                     if cachedir_path == os.path.abspath(""):
                         log.error(f"Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
@@ -285,7 +284,7 @@ class DownloadWorkflow(object):
                         if not os.path.isfile(bashrc_path):
                             bashrc_path = False
                     if bashrc_path:
-                        append_to_file = Confirm.ask(
+                        append_to_file = rich.prompt.Confirm.ask(
                             f"[blue bold]?[/] [white bold]Add [green not bold]'export NXF_SINGULARITY_CACHEDIR=\"{cachedir_path}\"'[/] to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
                         )
                         if append_to_file:
@@ -308,7 +307,7 @@ class DownloadWorkflow(object):
             and self.container == "singularity"
             and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None
         ):
-            self.singularity_cache_only = Confirm.ask(
+            self.singularity_cache_only = rich.prompt.Confirm.ask(
                 f"[blue bold]?[/] [white bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the download folder?[/]"
             )
 

@@ -3,7 +3,6 @@
 a nf-core pipeline.
 """
 
-import click
 import logging
 import os
 import re
@@ -12,7 +11,7 @@ import sys
 import nf_core.utils
 
 log = logging.getLogger(__name__)
-stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
+stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
 
 
 def bump_pipeline_version(pipeline_obj, new_version):
