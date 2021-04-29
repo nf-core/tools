@@ -846,6 +846,7 @@ class NFCoreModule(object):
         except FileNotFoundError as e:
             log.error(f"Could not open {template_copy_path}")
 
+        # Compare the files
         if local_copy != template_copy:
             self.warned.append(("function_nf_comparison", "New version of functions.nf available", self.function_nf))
         else:
