@@ -17,7 +17,7 @@ class WorkflowLicensesTest(unittest.TestCase):
     retrieval functionality of nf-core tools."""
 
     def setUp(self):
-        """ Create a new pipeline, then make a Licence object """
+        """Create a new pipeline, then make a Licence object"""
         # Set up the schema
         self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "test_pipeline")
         self.create_obj = nf_core.create.PipelineCreate("testing", "test pipeline", "tester", outdir=self.pipeline_dir)

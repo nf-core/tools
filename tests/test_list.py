@@ -20,7 +20,7 @@ class TestLint(unittest.TestCase):
 
     @mock.patch("subprocess.check_output")
     def test_working_listcall(self, mock_subprocess):
-        """ Test that listing pipelines works """
+        """Test that listing pipelines works"""
         wf_table = nf_core.list.list_workflows()
         console = Console(record=True)
         console.print(wf_table)
@@ -30,7 +30,7 @@ class TestLint(unittest.TestCase):
 
     @mock.patch("subprocess.check_output")
     def test_working_listcall_archived(self, mock_subprocess):
-        """ Test that listing pipelines works, showing archived pipelines """
+        """Test that listing pipelines works, showing archived pipelines"""
         wf_table = nf_core.list.list_workflows(show_archived=True)
         console = Console(record=True)
         console.print(wf_table)
@@ -39,7 +39,7 @@ class TestLint(unittest.TestCase):
 
     @mock.patch("subprocess.check_output")
     def test_working_listcall_json(self, mock_subprocess):
-        """ Test that listing pipelines with JSON works """
+        """Test that listing pipelines with JSON works"""
         wf_json_str = nf_core.list.list_workflows(as_json=True)
         wf_json = json.loads(wf_json_str)
         for wf in wf_json["remote_workflows"]:
@@ -49,7 +49,7 @@ class TestLint(unittest.TestCase):
             raise AssertionError("Could not find ampliseq in JSON")
 
     def test_pretty_datetime(self):
-        """ Test that the pretty datetime function works """
+        """Test that the pretty datetime function works"""
         now = datetime.now()
         nf_core.list.pretty_date(now)
         now_ts = time.mktime(now.timetuple())
