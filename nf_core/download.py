@@ -295,7 +295,9 @@ class DownloadWorkflow(object):
                 cachedir_path = None
                 while cachedir_path is None:
                     cachedir_path = os.path.abspath(
-                        rich.prompt.Prompt.ask("[blue bold]?[/] [bold]Specify the path:[/] (leave blank to cancel)")
+                        questionary.path(
+                            "Specify the path:", only_directories=True, style=nf_core.utils.nfcore_question_style
+                        ).unsafe_ask()
                     )
                     if cachedir_path == os.path.abspath(""):
                         log.error(f"Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
