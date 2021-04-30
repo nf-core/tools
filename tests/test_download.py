@@ -195,7 +195,11 @@ class DownloadTest(unittest.TestCase):
         tmp_dir = tempfile.mkdtemp()
 
         download_obj = DownloadWorkflow(
-            pipeline="nf-core/methylseq", outdir=os.path.join(tmp_dir, "new"), singularity=True
+            pipeline="nf-core/methylseq",
+            outdir=os.path.join(tmp_dir, "new"),
+            container="singularity",
+            release="dev",
+            compress="none",
         )
 
         download_obj.download_workflow()

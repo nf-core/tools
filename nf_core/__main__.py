@@ -221,10 +221,9 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     help="Download software container images",
 )
 @click.option(
-    "-s",
-    "--singularity-cache",
-    type=click.Choice(["yes", "no"]),
-    help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
+    "-s/-x",
+    "--singularity-cache/--no-singularity-cache",
+    help="Do / don't copy images to the output directory and set 'singularity.cacheDir' in workflow",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
 def download(pipeline, release, outdir, compress, force, container, singularity_cache, parallel_downloads):

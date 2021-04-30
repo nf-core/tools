@@ -21,6 +21,8 @@ import rich.progress
 from zipfile import ZipFile
 
 import nf_core
+import nf_core.list
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 stderr = rich.console.Console(
@@ -104,6 +106,7 @@ class DownloadWorkflow(object):
         # Fetch remote workflows
         self.wfs = nf_core.list.Workflows()
         self.wfs.get_remote_workflows()
+        self.wf_releases = {}
         self.wf_branches = {}
 
     def download_workflow(self):
@@ -112,12 +115,13 @@ class DownloadWorkflow(object):
         # Get workflow details
         try:
             self.prompt_pipeline_name()
+            self.fetch_workflow_details()
             self.prompt_release()
+            self.get_release_hash()
             self.prompt_container_download()
             self.prompt_use_singularity_cachedir()
             self.prompt_singularity_cachedir_only()
             self.prompt_compression_type()
-            self.fetch_workflow_details()
         except LookupError as e:
             log.critical(e)
             sys.exit(1)
@@ -214,42 +218,54 @@ class DownloadWorkflow(object):
         if self.release is None:
             choices = []
 
-            # We get releases from https://nf-co.re/pipelines.json
-            for wf in self.wfs.remote_workflows:
-                if wf.full_name == self.pipeline or wf.name == self.pipeline:
-                    if len(wf.releases) > 0:
-                        releases = sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
-                        for tag in map(lambda release: release.get("tag_name"), releases):
-                            tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
-                            choices.append(questionary.Choice(title=tag_display, value=tag))
+            # Releases
+            if len(self.wf_releases) > 0:
+                for tag in map(lambda release: release.get("tag_name"), self.wf_releases):
+                    tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
+                    choices.append(questionary.Choice(title=tag_display, value=tag))
 
-            try:
-                # Fetch branches from github api
-                branches_url = f"https://api.github.com/repos/nf-core/{self.pipeline}/branches"
-                branch_response = requests.get(branches_url)
-
-                # Filter out the release tags and sort them
-                for branch in branch_response.json():
-                    self.wf_branches[branch["name"]] = branch["commit"]["sha"]
-
-                for branch in self.wf_branches.keys():
-                    if (
-                        branch != "TEMPLATE"
-                        and branch != "initial_commit"
-                        and not branch.startswith("nf-core-template-merge")
-                    ):
-                        branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
-                        choices.append(questionary.Choice(title=branch_display, value=branch))
-
-            except TypeError:
-                # This will be picked up later if not a repo, just log for now
-                log.debug("Couldn't fetch branches - invalid repo?")
+            # Branches
+            for branch in self.wf_branches.keys():
+                branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
+                choices.append(questionary.Choice(title=branch_display, value=branch))
 
             if len(choices) > 0:
                 stderr.print("\nChoose the release or branch that should be downloaded.")
                 self.release = questionary.select(
                     "Select release / branch:", choices=choices, style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
+
+    def get_release_hash(self):
+        """Find specified release / branch hash"""
+
+        # Branch
+        if self.release in self.wf_branches.keys():
+            self.wf_sha = self.wf_branches[self.release]
+
+        # Release
+        else:
+            for r in self.wf_releases:
+                if r["tag_name"] == self.release.lstrip("v"):
+                    self.wf_sha = r["tag_sha"]
+                    break
+
+            # Can't find the release or branch - throw an error
+            else:
+                log.error("Not able to find release '{}' for {}".format(self.release, self.wf_name))
+                log.info(
+                    "Available {} releases: {}".format(
+                        self.wf_name, ", ".join([r["tag_name"] for r in self.wf_releases])
+                    )
+                )
+                log.info("Available {} branches: '{}'".format(self.wf_name, "', '".join(self.wf_branches.keys())))
+                raise LookupError("Not able to find release / branch '{}' for {}".format(self.release, self.wf_name))
+
+        # Set the outdir
+        if not self.outdir:
+            self.outdir = "{}-{}".format(self.wf_name.replace("/", "-").lower(), self.release)
+
+        # Set the download URL and return
+        self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.wf_name, self.wf_sha)
 
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
@@ -379,58 +395,47 @@ class DownloadWorkflow(object):
                 # Set pipeline name
                 self.wf_name = wf.name
 
-                # Find specified release / branch hash
-                if self.release is not None:
+                # Store releases
+                self.wf_releases = list(
+                    sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
+                )
 
-                    # Branch
-                    if self.release in self.wf_branches.keys():
-                        self.wf_sha = self.wf_branches[self.release]
+                break
 
-                    # Release
-                    else:
-                        for r in wf.releases:
-                            if r["tag_name"] == self.release.lstrip("v"):
-                                self.wf_sha = r["tag_sha"]
-                                break
-                        else:
-                            log.error("Not able to find release '{}' for {}".format(self.release, wf.full_name))
-                            log.info(
-                                "Available {} releases: {}".format(
-                                    wf.full_name, ", ".join([r["tag_name"] for r in wf.releases])
-                                )
-                            )
-                            raise LookupError("Not able to find release '{}' for {}".format(self.release, wf.full_name))
-
-                # Set outdir name if not defined
-                if not self.outdir:
-                    self.outdir = "nf-core-{}".format(wf.name)
-                    if self.release is not None:
-                        self.outdir += "-{}".format(self.release)
-
-                # Set the download URL and return
-                self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(wf.full_name, self.wf_sha)
-                return
-
-        # If we got this far, must not be a nf-core pipeline
-        if self.pipeline.count("/") == 1:
-            # Looks like a GitHub address - try working with this repo
-            log.debug("Pipeline name looks like a GitHub address - attempting to download")
-            self.wf_name = self.pipeline
-            if not self.release:
-                self.release = "master"
-            self.wf_sha = self.release
-            if not self.outdir:
-                self.outdir = self.pipeline.replace("/", "-").lower()
-                if self.release is not None:
-                    self.outdir += "-{}".format(self.release)
-            # Set the download URL and return
-            self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.release)
+        # Must not be a nf-core pipeline
         else:
-            log.error("Not able to find pipeline '{}'".format(self.pipeline))
-            log.info(
-                "Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows]))
-            )
-            raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
+            if self.pipeline.count("/") == 1:
+
+                # Looks like a GitHub address - try working with this repo
+                self.wf_name = self.pipeline
+                log.info(
+                    f"Pipeline '{self.wf_name}' not in nf-core, but looks like a GitHub address - attempting anyway"
+                )
+
+                # Get releases from GitHub API
+                releases_url = f"https://api.github.com/repos/{self.wf_name}/releases"
+                releases_response = requests.get(releases_url)
+                self.wf_releases = list(
+                    sorted(releases_response.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
+                )
+
+            else:
+                log.error("Not able to find pipeline '{}'".format(self.pipeline))
+                log.info(
+                    "Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows]))
+                )
+                raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
+
+        # Get branch information from github api
+        branches_url = f"https://api.github.com/repos/{self.wf_name}/branches"
+        branch_response = requests.get(branches_url)
+        for branch in branch_response.json():
+            if (
+                branch["name"] != "TEMPLATE"
+                and branch["name"] != "initial_commit"
+                and not branch["name"].startswith("nf-core-template-merge")
+            ):
+                self.wf_branches[branch["name"]] = branch["commit"]["sha"]
 
     def download_wf_files(self):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
