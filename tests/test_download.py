@@ -20,70 +20,37 @@ class DownloadTest(unittest.TestCase):
     #
     # Tests for 'fetch_workflow_details()'
     #
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_release(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.0.0")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
-        mock_workflows.remote_workflows = [mock_workflow]
+    def test_fetch_workflow_details_for_nf_core(self):
+        download_obj = DownloadWorkflow(pipeline="methylseq")
+        download_obj.fetch_workflow_details()
+        assert download_obj.wf_name == "nf-core/methylseq"
+        for r in download_obj.wf_releases:
+            if r.get("tag_name") == "1.6":
+                break
+        else:
+            raise AssertionError("Release 1.6 not found")
+        assert "dev" in download_obj.wf_branches.keys()
 
-        download_obj.fetch_workflow_details(mock_workflows)
+    def test_fetch_workflow_details_for_not_nf_core(self):
+        download_obj = DownloadWorkflow(pipeline="ewels/MultiQC")
+        download_obj.fetch_workflow_details()
+        assert download_obj.wf_name == "ewels/MultiQC"
+        for r in download_obj.wf_releases:
+            if r.get("tag_name") == "v1.10":
+                break
+        else:
+            raise AssertionError("MultiQC release v1.10 not found")
+        assert "master" in download_obj.wf_branches.keys()
 
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_dev_version(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = []
-        mock_workflows.remote_workflows = [mock_workflow]
-
-        download_obj.fetch_workflow_details(mock_workflows)
-
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_and_autoset_release(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
-        mock_workflows.remote_workflows = [mock_workflow]
-
-        download_obj.fetch_workflow_details(mock_workflows)
-        assert download_obj.release == "1.0.0"
-
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
     @pytest.mark.xfail(raises=LookupError, strict=True)
-    def test_fetch_workflow_details_for_unknown_release(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
-        mock_workflows.remote_workflows = [mock_workflow]
+    def test_fetch_workflow_details_not_exists(self):
+        download_obj = DownloadWorkflow(pipeline="made_up_pipeline")
+        download_obj.fetch_workflow_details()
 
-        download_obj.fetch_workflow_details(mock_workflows)
-
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_github_ressource(self, mock_workflows):
-        download_obj = DownloadWorkflow(pipeline="myorg/dummy", release="1.2.0")
-        mock_workflows.remote_workflows = []
-
-        download_obj.fetch_workflow_details(mock_workflows)
-
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_github_ressource_take_master(self, mock_workflows):
-        download_obj = DownloadWorkflow(pipeline="myorg/dummy")
-        mock_workflows.remote_workflows = []
-
-        download_obj.fetch_workflow_details(mock_workflows)
-        assert download_obj.release == "master"
-
-    @mock.patch("nf_core.list.Workflows")
     @pytest.mark.xfail(raises=LookupError, strict=True)
-    def test_fetch_workflow_details_no_search_result(self, mock_workflows):
-        download_obj = DownloadWorkflow(pipeline="http://my-server.org/dummy", release="1.2.0")
-        mock_workflows.remote_workflows = []
-
-        download_obj.fetch_workflow_details(mock_workflows)
+    def test_fetch_workflow_details_not_exists_slash(self):
+        download_obj = DownloadWorkflow(pipeline="made-up/pipeline")
+        download_obj.fetch_workflow_details()
 
     #
     # Tests for 'download_wf_files'
@@ -190,7 +157,8 @@ class DownloadTest(unittest.TestCase):
     # Tests for the main entry method 'download_workflow'
     #
     @mock.patch("nf_core.download.DownloadWorkflow.singularity_pull_image")
-    def test_download_workflow_with_success(self, mock_download_image):
+    @mock.patch("shutil.which")
+    def test_download_workflow_with_success(self, mock_download_image, mock_singularity_installed):
 
         tmp_dir = tempfile.mkdtemp()
 
@@ -198,8 +166,8 @@ class DownloadTest(unittest.TestCase):
             pipeline="nf-core/methylseq",
             outdir=os.path.join(tmp_dir, "new"),
             container="singularity",
-            release="dev",
-            compress="none",
+            release="1.6",
+            compress_type="none",
         )
 
         download_obj.download_workflow()

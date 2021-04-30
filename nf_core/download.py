@@ -201,11 +201,11 @@ class DownloadWorkflow(object):
             if self.pipeline.count("/") == 1:
                 gh_response = requests.get(f"https://api.github.com/repos/{self.pipeline}")
                 try:
-                    assert gh_response.json().get("message") == "Not Found"
+                    assert gh_response.json().get("message") != "Not Found"
                 except AssertionError:
-                    pass
-                else:
                     raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
+                except AttributeError:
+                    pass  # When things are working we get a list, which doesn't work with .get()
             else:
                 log.info(
                     "Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows]))
@@ -419,16 +419,24 @@ class DownloadWorkflow(object):
                 # Get releases from GitHub API
                 releases_url = f"https://api.github.com/repos/{self.wf_name}/releases"
                 releases_response = requests.get(releases_url)
+
+                # Check that this repo existed
+                try:
+                    assert releases_response.json().get("message") != "Not Found"
+                except AssertionError:
+                    raise LookupError(f"Not able to find pipeline '{self.pipeline}'")
+                except AttributeError:
+                    pass  # When things are working we get a list, which doesn't work with .get()
                 self.wf_releases = list(
                     sorted(releases_response.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True)
                 )
 
             else:
-                log.error("Not able to find pipeline '{}'".format(self.pipeline))
+                log.error(f"Not able to find pipeline '{self.pipeline}'")
                 log.info(
                     "Available nf-core pipelines: '{}'".format("', '".join([w.name for w in self.wfs.remote_workflows]))
                 )
-                raise LookupError("Not able to find pipeline '{}'".format(self.pipeline))
+                raise LookupError(f"Not able to find pipeline '{self.pipeline}'")
 
         # Get branch information from github api
         branches_url = f"https://api.github.com/repos/{self.wf_name}/branches"
