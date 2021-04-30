@@ -187,7 +187,7 @@ class Launch(object):
                             "Please select a release:",
                             choices=release_tags,
                             style=nf_core.utils.nfcore_question_style,
-                        ).ask()
+                        ).unsafe_ask()
                     except LookupError:
                         pass
 
