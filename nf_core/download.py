@@ -289,15 +289,13 @@ class DownloadWorkflow(object):
                 "This allows downloaded images to be cached in a central location."
             )
             if rich.prompt.Confirm.ask(
-                f"[blue bold]?[/] [white bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
+                f"[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
                 # Prompt user for a cache directory path
                 cachedir_path = None
                 while cachedir_path is None:
                     cachedir_path = os.path.abspath(
-                        rich.prompt.Prompt.ask(
-                            "[blue bold]?[/] [white bold]Specify the path:[/] (leave blank to cancel)"
-                        )
+                        rich.prompt.Prompt.ask("[blue bold]?[/] [bold]Specify the path:[/] (leave blank to cancel)")
                     )
                     if cachedir_path == os.path.abspath(""):
                         log.error(f"Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
@@ -321,7 +319,7 @@ class DownloadWorkflow(object):
                             f'[blue]export NXF_SINGULARITY_CACHEDIR="{cachedir_path}"[/]'
                         )
                         append_to_file = rich.prompt.Confirm.ask(
-                            f"[blue bold]?[/] [white bold]Add to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
+                            f"[blue bold]?[/] [bold]Add to [blue not bold]~/{os.path.basename(bashrc_path)}[/] ?[/]"
                         )
                         if append_to_file:
                             with open(os.path.expanduser(bashrc_path), "a") as f:
@@ -349,7 +347,7 @@ class DownloadWorkflow(object):
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
             self.singularity_cache_only = rich.prompt.Confirm.ask(
-                f"[blue bold]?[/] [white bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
+                f"[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
             )
 
         # Sanity check
