@@ -11,7 +11,7 @@ import nf_core.utils
 
 
 def test_bump_pipeline_version(datafiles):
-    """ Test that making a release with the working example files works """
+    """Test that making a release with the working example files works"""
     # Get a workflow and configs
     test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
     create_obj = nf_core.create.PipelineCreate(
@@ -49,7 +49,7 @@ def test_bump_pipeline_version(datafiles):
 
 
 def test_dev_bump_pipeline_version(datafiles):
-    """ Test that making a release works with a dev name and a leading v """
+    """Test that making a release works with a dev name and a leading v"""
     # Get a workflow and configs
     test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
     create_obj = nf_core.create.PipelineCreate(
