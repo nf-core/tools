@@ -554,7 +554,9 @@ class DownloadWorkflow(object):
         self.containers = []
         for container in containers_raw:
             if "{" in container and "}" in container:
-                log.error(f"Container name '{container}' has dynamic Nextflow logic in name - skipping")
+                log.error(
+                    f"[red]Container name [green]'{container}'[/] has dynamic Nextflow logic in name - skipping![/]"
+                )
                 log.info("Please use a 'nextflow run' command to fetch this container. Ask on Slack if you need help.")
             else:
                 self.containers.append(container)
