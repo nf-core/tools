@@ -352,9 +352,9 @@ class DownloadWorkflow(object):
                 f"[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
             )
 
-        # Sanity check
+        # Sanity check, for when passed as a cli flag
         if self.singularity_cache_only and self.container != "singularity":
-            raise LookupError("Command has '--singularity-cache' set, but '--container' is not 'singularity'")
+            raise LookupError("Command has '--singularity-cache-only' set, but '--container' is not 'singularity'")
 
     def prompt_compression_type(self):
         """Ask user if we should compress the downloaded files"""
