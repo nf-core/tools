@@ -47,7 +47,7 @@ class PipelineCreate(object):
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
     def init_pipeline(self):
-        """Creates the nf-core pipeline. """
+        """Creates the nf-core pipeline."""
 
         # Make the new pipeline
         self.render_template()

@@ -117,7 +117,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .version_consistency import version_consistency
 
     def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False):
-        """ Initialise linting object """
+        """Initialise linting object"""
 
         # Initialise the parent object
         super().__init__(wf_path)

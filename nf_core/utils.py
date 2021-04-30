@@ -108,7 +108,7 @@ class Pipeline(object):
     """
 
     def __init__(self, wf_path):
-        """ Initialise pipeline object """
+        """Initialise pipeline object"""
         self.conda_config = {}
         self.conda_package_info = {}
         self.nf_config = {}
@@ -521,7 +521,7 @@ def get_biocontainer_tag(package, version):
 
 
 def custom_yaml_dumper():
-    """ Overwrite default PyYAML output to make Prettier YAML linting happy """
+    """Overwrite default PyYAML output to make Prettier YAML linting happy"""
 
     class CustomDumper(yaml.Dumper):
         def represent_dict_preserve_order(self, data):
