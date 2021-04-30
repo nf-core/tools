@@ -393,7 +393,7 @@ class DownloadWorkflow(object):
             if wf.full_name == self.pipeline or wf.name == self.pipeline:
 
                 # Set pipeline name
-                self.wf_name = wf.name
+                self.wf_name = wf.full_name
 
                 # Store releases
                 self.wf_releases = list(
