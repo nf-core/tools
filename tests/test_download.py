@@ -161,10 +161,7 @@ class DownloadTest(unittest.TestCase):
     def test_download_workflow_with_success(self, mock_download_image, mock_singularity_installed):
 
         tmp_dir = tempfile.mkdtemp()
-        try:
-            del os.environ["GITHUB_ACTIONS"]
-        except KeyError:
-            pass
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = "foo"
 
         download_obj = DownloadWorkflow(
             pipeline="nf-core/methylseq",
