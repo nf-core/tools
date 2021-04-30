@@ -98,6 +98,8 @@ class DownloadWorkflow(object):
         self.parallel_downloads = parallel_downloads
 
         self.wf_name = None
+        self.wf_releases = {}
+        self.wf_branches = {}
         self.wf_sha = None
         self.wf_download_url = None
         self.nf_config = dict()
@@ -106,8 +108,6 @@ class DownloadWorkflow(object):
         # Fetch remote workflows
         self.wfs = nf_core.list.Workflows()
         self.wfs.get_remote_workflows()
-        self.wf_releases = {}
-        self.wf_branches = {}
 
     def download_workflow(self):
         """Starts a nf-core workflow download."""
@@ -283,7 +283,11 @@ class DownloadWorkflow(object):
 
     def prompt_use_singularity_cachedir(self):
         """Prompt about using $NXF_SINGULARITY_CACHEDIR if not already set"""
-        if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None:
+        if (
+            self.container == "singularity"
+            and os.environ.get("NXF_SINGULARITY_CACHEDIR") is None
+            and stderr.is_interactive  # Use rich auto-detection of interactive shells
+        ):
             stderr.print(
                 "\nNextflow and nf-core can use an environment variable called [blue]$NXF_SINGULARITY_CACHEDIR[/] that is a path to a directory where remote Singularity images are stored. "
                 "This allows downloaded images to be cached in a central location."
