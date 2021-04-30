@@ -210,14 +210,13 @@ class ModulesTestYmlBuilder(object):
 
         return test_files
 
-    def get_md5_sums(self, entry_point, command):
+    def get_md5_sums(self, entry_point, command, results_dir=None, results_dir_repeat=None):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
         returns: list of tuples
         """
 
-        results_dir = None
         run_this_test = False
         while results_dir is None:
             if self.run_tests or run_this_test:
