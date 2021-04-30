@@ -515,6 +515,7 @@ class DownloadWorkflow(object):
         """
 
         log.debug("Fetching container names for workflow")
+        containers_raw = []
 
         # Use linting code to parse the pipeline nextflow config
         self.nf_config = nf_core.utils.fetch_wf_config(os.path.join(self.outdir, "workflow"))
@@ -522,7 +523,7 @@ class DownloadWorkflow(object):
         # Find any config variables that look like a container
         for k, v in self.nf_config.items():
             if k.startswith("process.") and k.endswith(".container"):
-                self.containers.append(v.strip('"').strip("'"))
+                containers_raw.append(v.strip('"').strip("'"))
 
         # Recursive search through any DSL2 module files for container spec lines.
         for subdir, dirs, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
@@ -539,15 +540,24 @@ class DownloadWorkflow(object):
                         # If we have matches, save the first one that starts with http
                         for m in matches:
                             if m.startswith("http"):
-                                self.containers.append(m.strip('"').strip("'"))
+                                containers_raw.append(m.strip('"').strip("'"))
                                 break
                         # If we get here then we didn't call break - just save the first match
                         else:
                             if len(matches) > 0:
-                                self.containers.append(matches[0].strip('"').strip("'"))
+                                containers_raw.append(matches[0].strip('"').strip("'"))
 
         # Remove duplicates and sort
-        self.containers = sorted(list(set(self.containers)))
+        containers_raw = sorted(list(set(containers_raw)))
+
+        # Strip any container names that have dynamic names - eg. {params.foo}
+        self.containers = []
+        for container in containers_raw:
+            if "{" in container and "}" in container:
+                log.error(f"Container name '{container}' has dynamic Nextflow logic in name - skipping")
+                log.info("Please use a 'nextflow run' command to fetch this container. Ask on Slack if you need help.")
+            else:
+                self.containers.append(container)
 
         log.info("Found {} container{}".format(len(self.containers), "s" if len(self.containers) > 1 else ""))
 
