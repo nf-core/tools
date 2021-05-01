@@ -13,6 +13,7 @@ import json
 import logging
 import os
 import prompt_toolkit
+import questionary
 import re
 import requests
 import requests_cache
@@ -550,3 +551,147 @@ def custom_yaml_dumper():
 
     CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
     return CustomDumper
+
+
+def prompt_remote_pipeline_name(wfs):
+    """Prompt for the pipeline name with questionary
+
+    Args:
+        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+
+    Returns:
+        pipeline (str): GitHub repo - username/repo
+
+    Raises:
+        AssertionError, if pipeline cannot be found
+    """
+
+    pipeline = questionary.autocomplete(
+        "Pipeline name:",
+        choices=[wf.name for wf in wfs.remote_workflows],
+        style=nfcore_question_style,
+    ).unsafe_ask()
+
+    # Check nf-core repos
+    for wf in wfs.remote_workflows:
+        if wf.full_name == pipeline or wf.name == pipeline:
+            return wf.full_name
+
+    # Non nf-core repo on GitHub
+    else:
+        if pipeline.count("/") == 1:
+            try:
+                gh_response = requests.get(f"https://api.github.com/repos/{pipeline}")
+                assert gh_response.json().get("message") != "Not Found"
+            except AssertionError:
+                pass
+            else:
+                return pipeline
+
+    log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in wfs.remote_workflows])))
+    raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+
+
+def prompt_pipeline_release_branch(wf_releases, wf_branches):
+    """Prompt for pipeline release / branch
+
+    Args:
+        wf_releases (array): Array of repo releases as returned by the GitHub API
+        wf_branches (array): Array of repo branches, as returned by the GitHub API
+
+    Returns:
+        choice (str): Selected release / branch name
+    """
+    # Prompt user for release tag
+    choices = []
+
+    # Releases
+    if len(wf_releases) > 0:
+        for tag in map(lambda release: release.get("tag_name"), wf_releases):
+            tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
+            choices.append(questionary.Choice(title=tag_display, value=tag))
+
+    # Branches
+    for branch in wf_branches.keys():
+        branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
+        choices.append(questionary.Choice(title=branch_display, value=branch))
+
+    if len(choices) == 0:
+        return False
+
+    return questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask()
+
+
+def get_repo_releases_branches(pipeline, wfs):
+    """Fetches details of a nf-core workflow to download.
+
+    Args:
+        pipeline (str): GitHub repo username/repo
+        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+
+    Returns:
+        wf_releases, wf_branches (tuple): Array of releases, Array of branches
+
+    Raises:
+        LockupError, if the pipeline can not be found.
+    """
+
+    wf_releases = []
+    wf_branches = {}
+
+    # Repo is a nf-core pipeline
+    for wf in wfs.remote_workflows:
+        if wf.full_name == pipeline or wf.name == pipeline:
+
+            # Set to full name just in case it didn't have the nf-core/ prefix
+            pipeline = wf.full_name
+
+            # Store releases and stop loop
+            wf_releases = list(sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+            break
+
+    # Arbitrary GitHub repo
+    else:
+        if pipeline.count("/") == 1:
+
+            # Looks like a GitHub address - try working with this repo
+            log.debug(
+                f"Pipeline '{pipeline}' not in nf-core, but looks like a GitHub address - fetching releases from API"
+            )
+
+            # Get releases from GitHub API
+            rel_r = requests.get(f"https://api.github.com/repos/{pipeline}/releases")
+
+            # Check that this repo existed
+            try:
+                assert rel_r.json().get("message") != "Not Found"
+            except AssertionError:
+                raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+            except AttributeError:
+                # When things are working we get a list, which doesn't work with .get()
+                wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+
+                # Get release tag commit hashes
+                if len(wf_releases) > 0:
+                    # Get commit hash information for each release
+                    tags_r = requests.get(f"https://api.github.com/repos/{pipeline}/tags")
+                    for tag in tags_r.json():
+                        for release in wf_releases:
+                            if tag["name"] == release["tag_name"]:
+                                release["tag_sha"] = tag["commit"]["sha"]
+
+        else:
+            log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in wfs.remote_workflows])))
+            raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+
+    # Get branch information from github api - should be no need to check if the repo exists again
+    branch_response = requests.get(f"https://api.github.com/repos/{pipeline}/branches")
+    for branch in branch_response.json():
+        if (
+            branch["name"] != "TEMPLATE"
+            and branch["name"] != "initial_commit"
+            and not branch["name"].startswith("nf-core-template-merge")
+        ):
+            wf_branches[branch["name"]] = branch["commit"]["sha"]
+
+    return wf_releases, wf_branches
