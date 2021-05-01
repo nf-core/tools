@@ -238,10 +238,7 @@ class DownloadWorkflow(object):
             stderr.print("\nIn addition to the pipeline code, this tool can download software containers.")
             self.container = questionary.select(
                 "Download software container images:",
-                choices=[
-                    "none",
-                    "singularity",
-                ],
+                choices=["none", "singularity"],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 

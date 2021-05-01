@@ -57,7 +57,11 @@ class Launch(object):
         if self.web_id:
             self.web_schema_launch_web_url = "{}?id={}".format(self.web_schema_launch_url, web_id)
             self.web_schema_launch_api_url = "{}?id={}&api=true".format(self.web_schema_launch_url, web_id)
-        self.nextflow_cmd = "nextflow run {}".format(self.pipeline)
+        self.nextflow_cmd = None
+
+        # Fetch remote workflows
+        self.wfs = nf_core.list.Workflows()
+        self.wfs.get_remote_workflows()
 
         # Prepend property names with a single hyphen in case we have parameters with the same ID
         self.nxf_flag_schema = {
@@ -94,12 +98,24 @@ class Launch(object):
 
     def launch_pipeline(self):
 
-        # Check that we have everything we need
+        # Prompt for pipeline if not supplied and no web launch ID
         if self.pipeline is None and self.web_id is None:
-            log.error(
-                "Either a pipeline name or web cache ID is required. Please see nf-core launch --help for more information."
-            )
-            return False
+            launch_type = questionary.select(
+                "Launch local pipeline or remote GitHub pipeline?",
+                choices=["Remote pipeline", "Local path"],
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+
+            if launch_type == "Remote pipeline":
+                try:
+                    self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
+                except AssertionError as e:
+                    log.error(e.args[0])
+                    return False
+            else:
+                self.pipeline = questionary.path(
+                    "Path to workflow:", style=nf_core.utils.nfcore_question_style
+                ).unsafe_ask()
 
         # Check if the output file exists already
         if os.path.exists(self.params_out):
@@ -111,7 +127,9 @@ class Launch(object):
                 log.info("Exiting. Use --params-out to specify a custom filename.")
                 return False
 
-        log.info("This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n")
+        log.info(
+            "NOTE: This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles\n"
+        )
 
         # Check if we have a web ID
         if self.web_id is not None:
@@ -170,29 +188,25 @@ class Launch(object):
         self.schema_obj = nf_core.schema.PipelineSchema()
 
         # Check if this is a local directory
-        if os.path.exists(self.pipeline):
+        localpath = os.path.abspath(os.path.expanduser(self.pipeline))
+        if os.path.exists(localpath):
             # Set the nextflow launch command to use full paths
-            self.nextflow_cmd = "nextflow run {}".format(os.path.abspath(self.pipeline))
+            self.pipeline = localpath
+            self.nextflow_cmd = f"nextflow run {localpath}"
         else:
             # Assume nf-core if no org given
             if self.pipeline.count("/") == 0:
-                self.nextflow_cmd = "nextflow run nf-core/{}".format(self.pipeline)
+                self.pipeline = f"nf-core/{self.pipeline}"
+            self.nextflow_cmd = "nextflow run {}".format(self.pipeline)
 
             if not self.pipeline_revision:
-                check_for_releases = Confirm.ask("Would you like to select a specific release?")
-                if check_for_releases:
-                    try:
-                        release_tags = self.try_fetch_release_tags()
-                        self.pipeline_revision = questionary.select(
-                            "Please select a release:",
-                            choices=release_tags,
-                            style=nf_core.utils.nfcore_question_style,
-                        ).unsafe_ask()
-                    except LookupError:
-                        pass
+                try:
+                    wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches(self.pipeline, self.wfs)
+                except AssertionError as e:
+                    log.error(e)
+                    return False
 
-            # Add revision flag to commands if set
-            if self.pipeline_revision:
+                self.pipeline_revision = nf_core.utils.prompt_pipeline_release_branch(wf_releases, wf_branches)
                 self.nextflow_cmd += " -r {}".format(self.pipeline_revision)
 
         # Get schema from name, load it and lint it
@@ -208,7 +222,7 @@ class Launch(object):
             if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
                 os.path.join(self.schema_obj.pipeline_dir, "main.nf")
             ):
-                log.error("Could not find a main.nf or nextfow.config file, are you sure this is a pipeline?")
+                log.error("Could not find a 'main.nf' or 'nextflow.config' file, are you sure this is a pipeline?")
                 return False
 
             # Build a schema for this pipeline
@@ -222,32 +236,6 @@ class Launch(object):
             except AssertionError as e:
                 log.error("Could not build pipeline schema: {}".format(e))
                 return False
-
-    def try_fetch_release_tags(self):
-        """Tries to fetch tag names of pipeline releases from github
-
-        Returns:
-            release_tags (list[str]): Returns list of release tags
-
-        Raises:
-            LookupError, if no releases were found
-        """
-        # Fetch releases from github api
-        releases_url = "https://api.github.com/repos/nf-core/{}/releases".format(self.pipeline)
-        response = requests.get(releases_url)
-        if not response.ok:
-            log.error(f"Unable to find any release tags for {self.pipeline}. Will try to continue launch.")
-            raise LookupError
-
-        # Filter out the release tags and sort them
-        release_tags = map(lambda release: release.get("tag_name", None), response.json())
-        release_tags = filter(lambda tag: tag != None, release_tags)
-        release_tags = list(release_tags)
-        if len(release_tags) == 0:
-            log.error(f"Unable to find any release tags for {self.pipeline}. Will try to continue launch.")
-            raise LookupError
-        release_tags = sorted(release_tags, key=lambda tag: tag.get("published_at_timestamp", 0), reverse=True)
-        return release_tags
 
     def set_schema_inputs(self):
         """
