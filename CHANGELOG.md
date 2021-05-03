@@ -16,6 +16,7 @@
 * Ignore permission errors for setting up requests cache directories to allow starting with an invalid or read-only HOME directory
 * New lint test to check if params in `nextflow config` are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
 * New modules lint test comparing the `functions.nf` file to the template version
+* Added lint checks for missing parameter description and parameters outside of groups [[#1017](https://github.com/nf-core/tools/issues/1017)]
 
 ### Template
 
