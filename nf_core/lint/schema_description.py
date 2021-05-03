@@ -5,13 +5,13 @@ import nf_core.schema
 
 
 def schema_description(self):
-    """Check that the schema describes all flat params in the pipeline.
+    """Check that every parameter in the schema has a description
 
     The ``nextflow_schema.json`` pipeline schema should describe every flat parameter
-    returned from the ``nextflow config`` command (params that are objects or more complex structures are ignored).
+    Furthermore warns about parameters outside of groups
 
-    * Failure: If parameters are found in ``nextflow_schema.json`` that are not in ``nextflow_schema.json``
-    * Warning: If parameters are found in ``nextflow_schema.json`` that are not in ``nextflow_schema.json``
+    * Warning: Parameters in ``nextflow_schema.json`` without a description
+    * Warning: Parameters in ``nextflow_schema.json`` that are defined outside of a group
     """
     passed = []
     warned = []
@@ -26,9 +26,10 @@ def schema_description(self):
     self.schema_obj.load_lint_schema()
 
     # Get ungrouped params
-    ungrouped_params = self.schema_obj.schema["properties"].keys()
-    for up in ungrouped_params:
-        warned.append(f"Ungrouped param in schema {up}")
+    if "properties" in self.schema_obj.schema.keys():
+        ungrouped_params = self.schema_obj.schema["properties"].keys()
+        for up in ungrouped_params:
+            warned.append(f"Ungrouped param in schema {up}")
 
     # Iterate over groups and add warning for parameters without a description
     for group_key in self.schema_obj.schema["definitions"].keys():
