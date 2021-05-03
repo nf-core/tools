@@ -47,7 +47,7 @@ class ModulesTestYmlBuilder(object):
         self.tests = []
 
     def run(self):
-        """ Run build steps """
+        """Run build steps"""
         if not self.no_prompts:
             log.info(
                 "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
@@ -58,7 +58,7 @@ class ModulesTestYmlBuilder(object):
         self.print_test_yml()
 
     def check_inputs(self):
-        """ Do more complex checks about supplied flags. """
+        """Do more complex checks about supplied flags."""
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -113,7 +113,7 @@ class ModulesTestYmlBuilder(object):
             )
 
     def scrape_workflow_entry_points(self):
-        """ Find the test workflow entry points from main.nf """
+        """Find the test workflow entry points from main.nf"""
         log.info(f"Looking for test workflow entry points: '{self.module_test_main}'")
         with open(self.module_test_main, "r") as fh:
             for line in fh:
@@ -196,7 +196,7 @@ class ModulesTestYmlBuilder(object):
         return md5sum
 
     def create_test_file_dict(self, results_dir):
-        """ Walk through directory and collect md5 sums """
+        """Walk through directory and collect md5 sums"""
         test_files = []
         for root, dir, file in os.walk(results_dir):
             for elem in file:
@@ -249,7 +249,7 @@ class ModulesTestYmlBuilder(object):
         return test_files
 
     def run_tests_workflow(self, command):
-        """ Given a test workflow and an entry point, run the test workflow """
+        """Given a test workflow and an entry point, run the test workflow"""
 
         # The config expects $PROFILE and Nextflow fails if it's not set
         if os.environ.get("PROFILE") is None:

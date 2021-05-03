@@ -11,6 +11,7 @@ import git
 import hashlib
 import json
 import logging
+import mimetypes
 import os
 import prompt_toolkit
 import re
@@ -108,7 +109,7 @@ class Pipeline(object):
     """
 
     def __init__(self, wf_path):
-        """ Initialise pipeline object """
+        """Initialise pipeline object"""
         self.conda_config = {}
         self.conda_package_info = {}
         self.nf_config = {}
@@ -521,7 +522,7 @@ def get_biocontainer_tag(package, version):
 
 
 def custom_yaml_dumper():
-    """ Overwrite default PyYAML output to make Prettier YAML linting happy """
+    """Overwrite default PyYAML output to make Prettier YAML linting happy"""
 
     class CustomDumper(yaml.Dumper):
         def represent_dict_preserve_order(self, data):
@@ -550,3 +551,19 @@ def custom_yaml_dumper():
 
     CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
     return CustomDumper
+
+
+def is_file_binary(path):
+    """ Check file path to see if it is a binary file """
+    binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
+    binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
+
+    # Check common file extensions
+    filename, file_extension = os.path.splitext(path)
+    if file_extension in binary_extensions:
+        return True
+
+    # Try to detect binary files
+    (ftype, encoding) = mimetypes.guess_type(path, strict=False)
+    if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+        return True
