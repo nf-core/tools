@@ -113,6 +113,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .readme import readme
     from .schema_lint import schema_lint
     from .schema_params import schema_params
+    from .schema_description import schema_description
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 
@@ -147,6 +148,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "template_strings",
             "schema_lint",
             "schema_params",
+            "schema_description",
             "actions_schema_validation",
             "merge_markers",
         ]
