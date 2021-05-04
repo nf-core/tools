@@ -14,7 +14,7 @@ from rich.console import Console
 
 
 def create_modules_repo_dummy():
-    """ Create a dummy copy of the nf-core/modules repo """
+    """Create a dummy copy of the nf-core/modules repo"""
     root_dir = tempfile.mkdtemp()
     os.mkdir(os.path.join(root_dir, "software"))
     os.makedirs(os.path.join(root_dir, "tests", "software"))
@@ -131,7 +131,7 @@ class TestModules(unittest.TestCase):
         assert len(module_lint.failed) == 0
 
     def test_modules_lint_new_modules(self):
-        """ lint all modules in nf-core/modules repo clone """
+        """lint all modules in nf-core/modules repo clone"""
         module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
         module_lint.lint(print_results=True, all_modules=True)
         assert len(module_lint.passed) == 20
@@ -155,7 +155,7 @@ class TestModules(unittest.TestCase):
         assert "Module file exists already" in str(excinfo.value)
 
     def test_modules_custom_yml_dumper(self):
-        """ Try to create a yml file with the custom yml dumper """
+        """Try to create a yml file with the custom yml dumper"""
         out_dir = tempfile.mkdtemp()
         yml_output_path = os.path.join(out_dir, "test.yml")
         meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
@@ -165,7 +165,7 @@ class TestModules(unittest.TestCase):
         assert os.path.isfile(yml_output_path)
 
     def test_modules_test_file_dict(self):
-        """ Creat dict of test files and create md5 sums """
+        """Creat dict of test files and create md5 sums"""
         test_file_dir = tempfile.mkdtemp()
         meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
         with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
@@ -175,7 +175,7 @@ class TestModules(unittest.TestCase):
         assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
 
     def test_modules_create_test_yml_get_md5(self):
-        """ Get md5 sums from a dummy output """
+        """Get md5 sums from a dummy output"""
         test_file_dir = tempfile.mkdtemp()
         meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
         with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
@@ -186,7 +186,7 @@ class TestModules(unittest.TestCase):
         assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
 
     def test_modules_create_test_yml_entry_points(self):
-        """ Test extracting test entry points from a main.nf file"""
+        """Test extracting test entry points from a main.nf file"""
         meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
         meta_builder.module_test_main = os.path.join(
             self.nfcore_modules, "tests", "software", "star", "align", "main.nf"
@@ -195,7 +195,7 @@ class TestModules(unittest.TestCase):
         assert meta_builder.entry_points[0] == "test_star_align"
 
     def test_modules_create_test_yml_check_inputs(self):
-        """ Test the check_inputs() function - raise UserWarning because test.yml exists """
+        """Test the check_inputs() function - raise UserWarning because test.yml exists"""
         cwd = os.getcwd()
         os.chdir(self.nfcore_modules)
         meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
@@ -208,7 +208,7 @@ class TestModules(unittest.TestCase):
         assert "Test YAML file already exists!" in str(excinfo.value)
 
     def test_modules_create_nfcore_modules(self):
-        """ Create a module in nf-core/modules clone """
+        """Create a module in nf-core/modules clone"""
         module_create = nf_core.modules.ModuleCreate(
             self.nfcore_modules, "fastqc", "@author", "process_low", False, False
         )
@@ -217,7 +217,7 @@ class TestModules(unittest.TestCase):
         assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "fastqc", "main.nf"))
 
     def test_modules_create_nfcore_modules_subtool(self):
-        """ Create a tool/subtool module in a nf-core/modules clone """
+        """Create a tool/subtool module in a nf-core/modules clone"""
         module_create = nf_core.modules.ModuleCreate(
             self.nfcore_modules, "star/index", "@author", "process_medium", False, False
         )
