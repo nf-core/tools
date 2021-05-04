@@ -17,6 +17,7 @@
 * Merge markers lint test - ignore binary files, allow config to ignore specific files [[#1040](https://github.com/nf-core/tools/pull/1040)]
 * New lint test to check if params in `nextflow config` are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
 * New modules lint test comparing the `functions.nf` file to the template version
+* Use latest stable Nextflow version `21.04.0` for CI tests instead of the `-edge` release
 
 ### Template
 
