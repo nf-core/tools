@@ -29,14 +29,13 @@ def schema_description(self):
     if "properties" in self.schema_obj.schema.keys():
         ungrouped_params = self.schema_obj.schema["properties"].keys()
         for up in ungrouped_params:
-            warned.append(f"Ungrouped param in schema {up}")
+            warned.append(f"Ungrouped param in schema: `{up}`")
 
     # Iterate over groups and add warning for parameters without a description
     for group_key in self.schema_obj.schema["definitions"].keys():
         group = self.schema_obj.schema["definitions"][group_key]
-        for param_key in group["properties"].keys():
-            param = group["properties"][param_key]
-            if not "description" in param.keys():
-                warned.append(f"No description provided in schema for parameter '{param_key}'")
+        for param_key, param in group["properties"].items():
+            if "description" not in param.keys():
+                warned.append(f"No description provided in schema for parameter: `{param_key}`")
 
     return {"passed": passed, "warned": warned, "failed": failed}
