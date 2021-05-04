@@ -12,8 +12,6 @@ on:
 jobs:
   pytest:
     runs-on: ubuntu-latest
-    env:
-      NXF_VER: 21.03.0-edge
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8, 3.9]
