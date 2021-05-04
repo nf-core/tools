@@ -16,6 +16,7 @@ def schema_description(self):
     passed = []
     warned = []
     failed = []
+    ignored = []
 
     # First, get the top-level config options for the pipeline
     # Schema object already created in the `schema_lint` test
@@ -25,17 +26,27 @@ def schema_description(self):
     self.schema_obj.no_prompts = True
     self.schema_obj.load_lint_schema()
 
+    # Get parameters that should be ignored according to the linting config
+    ignore_params = self.lint_config.get("schema_description", [])
+
     # Get ungrouped params
     if "properties" in self.schema_obj.schema.keys():
         ungrouped_params = self.schema_obj.schema["properties"].keys()
         for up in ungrouped_params:
+            if up in ignore_params:
+                continue
             warned.append(f"Ungrouped param in schema: `{up}`")
 
     # Iterate over groups and add warning for parameters without a description
     for group_key in self.schema_obj.schema["definitions"].keys():
         group = self.schema_obj.schema["definitions"][group_key]
         for param_key, param in group["properties"].items():
+            if param_key in ignore_params:
+                continue
             if "description" not in param.keys():
                 warned.append(f"No description provided in schema for parameter: `{param_key}`")
+
+    for ip in ignore_params:
+        ignored.append(f"Parameter is ignored: `{ip}`")
 
     return {"passed": passed, "warned": warned, "failed": failed}
