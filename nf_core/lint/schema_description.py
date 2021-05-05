@@ -15,7 +15,6 @@ def schema_description(self):
     """
     passed = []
     warned = []
-    failed = []
     ignored = []
 
     # First, get the top-level config options for the pipeline
@@ -34,14 +33,16 @@ def schema_description(self):
         ungrouped_params = self.schema_obj.schema["properties"].keys()
         for up in ungrouped_params:
             if up in ignore_params:
-                continue
-            warned.append(f"Ungrouped param in schema: `{up}`")
+                ignored.append(f"Ignored ungrouped param in schema: `{up}`")
+            else:
+                warned.append(f"Ungrouped param in schema: `{up}`")
 
     # Iterate over groups and add warning for parameters without a description
     for group_key in self.schema_obj.schema["definitions"].keys():
         group = self.schema_obj.schema["definitions"][group_key]
         for param_key, param in group["properties"].items():
             if param_key in ignore_params:
+                ignored.append(f"Ignoring description check for param in schema: `{param_key}`")
                 continue
             if "description" not in param.keys():
                 warned.append(f"No description provided in schema for parameter: `{param_key}`")
@@ -49,4 +50,4 @@ def schema_description(self):
     for ip in ignore_params:
         ignored.append(f"Parameter is ignored: `{ip}`")
 
-    return {"passed": passed, "warned": warned, "failed": failed}
+    return {"passed": passed, "warned": warned, "ignored": ignored}
