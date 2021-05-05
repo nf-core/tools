@@ -1,4 +1,4 @@
-Lint tests
+Pipline lint tests
 ============================================
 
 .. toctree::

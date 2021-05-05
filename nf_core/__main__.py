@@ -32,7 +32,7 @@ log = logging.getLogger()
 
 def run_nf_core():
     # Set up the rich traceback
-    rich.traceback.install(width=200, word_wrap=True)
+    rich.traceback.install(width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header to STDERR
     stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
@@ -201,7 +201,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 # nf-core download
 @nf_core_cli.command(help_priority=3)
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.argument("pipeline", metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
@@ -257,7 +257,7 @@ def licences(pipeline, json):
 
 # nf-core create
 def validate_wf_name_prompt(ctx, opts, value):
-    """ Force the workflow name to meet the nf-core requirements """
+    """Force the workflow name to meet the nf-core requirements"""
     if not re.match(r"^[a-z]+$", value):
         click.echo("Invalid workflow name: must be lowercase without punctuation.")
         value = click.prompt(opts.prompt)
@@ -305,22 +305,26 @@ def create(name, description, author, version, no_git, force, outdir):
 @click.option(
     "-f", "--fix", type=str, metavar="<test>", multiple=True, help="Attempt to automatically fix specified lint test"
 )
+@click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json):
+def lint(pipeline_dir, release, fix, key, show_passed, fail_ignored, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: https://nf-co.re/errors
+    on the nf-core website: https://nf-co.re/tools-docs/
+
+    You can ignore tests using a file called .nf-core-lint.yaml (if you have a good reason!).
+    See the documentation for details.
     """
 
     # Run the lint tests!
     try:
-        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json)
+        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, key, show_passed, fail_ignored, markdown, json)
         if len(lint_obj.failed) > 0:
             sys.exit(1)
     except AssertionError as e:
@@ -441,7 +445,8 @@ def remove(ctx, pipeline_dir, tool):
 @click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
 @click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
+@click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
+def create_module(ctx, directory, tool, author, label, meta, no_meta, force, conda_name):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -462,7 +467,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
 
     # Run function
     try:
-        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force)
+        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force, conda_name)
         module_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -510,7 +515,10 @@ def lint(ctx, pipeline_dir, tool, all, local, passed):
     """
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
+        module_lint.modules_repo = ctx.obj["modules_repo_obj"]
         module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
+        if len(module_lint.failed) > 0:
+            sys.exit(1)
     except nf_core.modules.lint.ModuleLintException as e:
         log.error(e)
         sys.exit(1)

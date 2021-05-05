@@ -14,15 +14,15 @@
 #
 import os
 import sys
-import nf_core
 
 sys.path.insert(0, os.path.abspath("../../../nf_core"))
+import nf_core
 
 # -- Project information -----------------------------------------------------
 
-project = "nf-core tools API"
-copyright = "2019, Phil Ewels, Sven Fillinger"
-author = "Phil Ewels, Sven Fillinger"
+project = "nf-core/tools"
+copyright = "2021, nf-core community"
+author = "Numerous nf-core contributors"
 
 # The short X.Y version
 version = nf_core.__version__
@@ -90,6 +90,10 @@ html_static_path = ["./_static"]
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.
+html_css_files = [
+    "css/custom.css",
+]
+
 #
 # The default sidebars (for documents that don't match any pattern) are
 # defined by theme itself.  Builtin themes are using these templates by
@@ -98,6 +102,8 @@ html_static_path = ["./_static"]
 #
 # html_sidebars = {}
 
+# Don't copy the .rst output into the build
+html_copy_source = False
 
 # -- Options for HTMLHelp output ---------------------------------------------
 

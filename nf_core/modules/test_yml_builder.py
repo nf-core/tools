@@ -18,6 +18,7 @@ import shlex
 import subprocess
 import tempfile
 import yaml
+import operator
 
 import nf_core.utils
 import nf_core.modules.pipeline_modules
@@ -46,7 +47,7 @@ class ModulesTestYmlBuilder(object):
         self.tests = []
 
     def run(self):
-        """ Run build steps """
+        """Run build steps"""
         if not self.no_prompts:
             log.info(
                 "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
@@ -57,7 +58,7 @@ class ModulesTestYmlBuilder(object):
         self.print_test_yml()
 
     def check_inputs(self):
-        """ Do more complex checks about supplied flags. """
+        """Do more complex checks about supplied flags."""
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -112,7 +113,7 @@ class ModulesTestYmlBuilder(object):
             )
 
     def scrape_workflow_entry_points(self):
-        """ Find the test workflow entry points from main.nf """
+        """Find the test workflow entry points from main.nf"""
         log.info(f"Looking for test workflow entry points: '{self.module_test_main}'")
         with open(self.module_test_main, "r") as fh:
             for line in fh:
@@ -134,7 +135,7 @@ class ModulesTestYmlBuilder(object):
     def build_single_test(self, entry_point):
         """Given the supplied cli flags, prompt for any that are missing.
 
-        Returns: False if failure, None if success.
+        Returns: Test command
         """
         ep_test = {
             "name": "",
@@ -169,8 +170,7 @@ class ModulesTestYmlBuilder(object):
             mod_name_parts = self.module_name.split("/")
             tag_defaults = []
             for idx in range(0, len(mod_name_parts)):
-                tag_defaults.append("_".join(mod_name_parts[: idx + 1]))
-            tag_defaults.append(entry_point.replace("test_", ""))
+                tag_defaults.append("/".join(mod_name_parts[: idx + 1]))
             # Remove duplicates
             tag_defaults = list(set(tag_defaults))
             if self.no_prompts:
@@ -195,18 +195,32 @@ class ModulesTestYmlBuilder(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def get_md5_sums(self, entry_point, command):
+    def create_test_file_dict(self, results_dir):
+        """Walk through directory and collect md5 sums"""
+        test_files = []
+        for root, dir, file in os.walk(results_dir):
+            for elem in file:
+                elem = os.path.join(root, elem)
+                elem_md5 = self._md5(elem)
+                # Switch out the results directory path with the expected 'output' directory
+                elem = elem.replace(results_dir, "output")
+                test_files.append({"path": elem, "md5sum": elem_md5})
+
+        test_files = sorted(test_files, key=operator.itemgetter("path"))
+
+        return test_files
+
+    def get_md5_sums(self, entry_point, command, results_dir=None, results_dir_repeat=None):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
         returns: list of tuples
         """
 
-        results_dir = None
         run_this_test = False
         while results_dir is None:
             if self.run_tests or run_this_test:
-                results_dir = self.run_tests_workflow(command)
+                results_dir, results_dir_repeat = self.run_tests_workflow(command)
             else:
                 results_dir = rich.prompt.Prompt.ask(
                     f"[violet]Test output folder with results[/] (leave blank to run test)"
@@ -218,14 +232,16 @@ class ModulesTestYmlBuilder(object):
                     log.error(f"Directory '{results_dir}' does not exist")
                     results_dir = None
 
-        test_files = []
-        for root, dir, file in os.walk(results_dir):
-            for elem in file:
-                elem = os.path.join(root, elem)
-                elem_md5 = self._md5(elem)
-                # Switch out the results directory path with the expected 'output' directory
-                elem = elem.replace(results_dir, "output")
-                test_files.append({"path": elem, "md5sum": elem_md5})
+        test_files = self.create_test_file_dict(results_dir=results_dir)
+        test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
+
+        # Compare both test.yml files
+        for i in range(len(test_files)):
+            if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
+                test_files[i].pop("md5sum")
+                test_files[i][
+                    "contains"
+                ] = "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead"
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")
@@ -233,7 +249,7 @@ class ModulesTestYmlBuilder(object):
         return test_files
 
     def run_tests_workflow(self, command):
-        """ Given a test workflow and an entry point, run the test workflow """
+        """Given a test workflow and an entry point, run the test workflow"""
 
         # The config expects $PROFILE and Nextflow fails if it's not set
         if os.environ.get("PROFILE") is None:
@@ -258,11 +274,16 @@ class ModulesTestYmlBuilder(object):
                     log.info(f"Setting env var '$PROFILE' to '{profile}'")
 
         tmp_dir = tempfile.mkdtemp()
+        tmp_dir_repeat = tempfile.mkdtemp()
         command += f" --outdir {tmp_dir}"
+        command_repeat = command + f" --outdir {tmp_dir_repeat}"
 
         log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
+            log.info(f"Repeating test ...")
+            nfconfig_raw = subprocess.check_output(shlex.split(command_repeat))
+
         except OSError as e:
             if e.errno == errno.ENOENT and command.strip().startswith("nextflow "):
                 raise AssertionError(
@@ -276,7 +297,7 @@ class ModulesTestYmlBuilder(object):
             log.info("Test workflow finished!")
             log.debug(nfconfig_raw)
 
-        return tmp_dir
+        return tmp_dir, tmp_dir_repeat
 
     def print_test_yml(self):
         """

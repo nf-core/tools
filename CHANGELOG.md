@@ -1,8 +1,59 @@
 # nf-core/tools: Changelog
 
-## v1.14dev
+## 1.14dev
 
-_..nothing yet.._
+### Tools
+
+* Strip values from `nf-core launch` web response which are False and have no default in the schema [[#976](https://github.com/nf-core/tools/issues/976)]
+* Try to fix the fix for the automated sync when we submit too many PRs at once [[#970](https://github.com/nf-core/tools/issues/970)]
+* Added `--conda-name` flag to `nf-core modules create` command to allow sidestepping questionary [[#988](https://github.com/nf-core/tools/issues/988)]
+* Extended `nf-core modules lint` functionality to check tags in `test.yml` and to look for a entry in the `pytest_software.yml` file
+* Update `modules` commands to use new test tag format `tool/subtool`
+* Rewrite how the tools documentation is deployed to the website, to allow multiple versions
+* Created new Docker image for the tools cli package - see installation docs for details [[#917](https://github.com/nf-core/tools/issues/917)]
+* Fix bug in nf-core lint config skipping for the `nextflow_config` test [[#1019](https://github.com/nf-core/tools/issues/1019)]
+* New `-k`/`--key` cli option for `nf-core lint` to allow you to run only named lint tests, for faster local debugging
+* Ignore permission errors for setting up requests cache directories to allow starting with an invalid or read-only HOME directory
+* Merge markers lint test - ignore binary files, allow config to ignore specific files [[#1040](https://github.com/nf-core/tools/pull/1040)]
+* New lint test to check if params in `nextflow config` are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
+* New modules lint test comparing the `functions.nf` file to the template version
+* Added temporary fix to remove warnings about params that get converted from camelCase to camel-case [[#1035](https://github.com/nf-core/tools/issues/1035)]
+
+### Template
+
+* Fixed an issue regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
+* Removed trailing slash from `params.igenomes_base` to yield valid s3 paths (previous paths work with Nextflow but not aws cli)
+* Added a timestamp to the trace + timetime + report + dag filenames to fix overwrite issue on AWS
+* Rewrite the `params_summary_log()` function to properly ignore unset params and have nicer formatting [[#971](https://github.com/nf-core/tools/issues/971)]
+* Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+* Added `tool_name_underscore` to the module template to allow TOOL_SUBTOOL in `main.nf` [[#1011](https://github.com/nf-core/tools/issues/1011)]
+* Convert `d` to `day` in the `cleanParameters` function to make Duration objects like `2d` pass the validation [[#858](https://github.com/nf-core/tools/issues/858)]
+
+## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
+
+* Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
+* Fix sync error again where the Nextflow edge release needs to be used for some pipelines
+* Fix bug with `nf-core lint --release` (`NameError: name 'os' is not defined`)
+* Added linebreak to linting comment so that markdown header renders on PR comment properly
+* `nf-core modules create` command - if no bioconda package is found, prompt user for a different bioconda package name
+* Updated module template `main.nf` with new test data paths
+
+## [v1.13.2 - Copper Crocodile CPR :crocodile: :face_with_head_bandage:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-23]
+
+* Make module template pass the EC linter [[#953](https://github.com/nf-core/tools/pull/953)]
+* Added better logging message if a user doesn't specificy the directory correctly with `nf-core modules` commands [[#942](https://github.com/nf-core/tools/pull/942)]
+* Fixed parameter validation bug caused by JSONObject [[#937](https://github.com/nf-core/tools/issues/937)]
+* Fixed template creation error regarding file permissions [[#932](https://github.com/nf-core/tools/issues/932)]
+* Split the `create-lint-wf` tests up into separate steps in GitHub Actions to make the CI results easier to read
+* Added automated PR comments to the Markdown, YAML and Python lint CI tests to explain failures (tools and pipeline template)
+* Make `nf-core lint` summary table borders coloured according to overall pass / fail status
+* Attempted a fix for the automated sync when we submit too many PRs at once [[#911](https://github.com/nf-core/tools/issues/911)]
+
+## [v1.13.1 - Copper Crocodile Patch :crocodile: :pirate_flag:](https://github.com/nf-core/tools/releases/tag/1.13.1) - [2021-03-19]
+
+* Fixed bug in pipeline linting markdown output that gets posted to PR comments [[#914]](https://github.com/nf-core/tools/issues/914)
+* Made text for the PR branch CI check less verbose with a TLDR in bold at the top
+* A number of minor tweaks to the new `nf-core modules lint` code
 
 ## [v1.13 - Copper Crocodile](https://github.com/nf-core/tools/releases/tag/1.13) - [2021-03-18]
 

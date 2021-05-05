@@ -114,3 +114,4 @@ ENV/
 .idea
 pip-wheel-metadata
 .vscode
+.*.sw?

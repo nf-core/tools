@@ -71,7 +71,7 @@ def get_local_wf(workflow, revision=None):
     log.info("Downloading workflow: {} ({})".format(workflow, revision))
     pull_cmd = f"nextflow pull {workflow}"
     if revision is not None:
-        pull_cmd += f"-r {revision}"
+        pull_cmd += f" -r {revision}"
     nf_pull_output = nf_core.utils.nextflow_cmd(pull_cmd)
     local_wf = LocalWorkflow(workflow)
     local_wf.get_local_nf_workflow_details()
@@ -263,7 +263,7 @@ class Workflows(object):
         return table
 
     def print_json(self):
-        """ Dump JSON of all parsed information """
+        """Dump JSON of all parsed information"""
         return json.dumps(
             {"local_workflows": self.local_workflows, "remote_workflows": self.remote_workflows},
             default=lambda o: o.__dict__,
@@ -308,10 +308,10 @@ class RemoteWorkflow(object):
 
 
 class LocalWorkflow(object):
-    """ Class to handle local workflows pulled by nextflow """
+    """Class to handle local workflows pulled by nextflow"""
 
     def __init__(self, name):
-        """ Initialise the LocalWorkflow object """
+        """Initialise the LocalWorkflow object"""
         self.full_name = name
         self.repository = None
         self.local_path = None
@@ -324,7 +324,7 @@ class LocalWorkflow(object):
         self.last_pull_pretty = None
 
     def get_local_nf_workflow_details(self):
-        """ Get full details about a local cached workflow """
+        """Get full details about a local cached workflow"""
 
         if self.local_path is None:
 

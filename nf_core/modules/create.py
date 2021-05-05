@@ -24,15 +24,17 @@ log = logging.getLogger(__name__)
 
 
 class ModuleCreate(object):
-    def __init__(self, directory=".", tool="", author=None, process_label=None, has_meta=None, force=False):
+    def __init__(
+        self, directory=".", tool="", author=None, process_label=None, has_meta=None, force=False, conda_name=None
+    ):
         self.directory = directory
         self.tool = tool
         self.author = author
         self.process_label = process_label
         self.has_meta = has_meta
         self.force_overwrite = force
-
         self.subtool = None
+        self.tool_conda_name = conda_name
         self.tool_licence = None
         self.repo_type = None
         self.tool_licence = ""
@@ -110,33 +112,52 @@ class ModuleCreate(object):
         self.tool_dir = self.tool
 
         if self.subtool:
-            self.tool_name = f"{self.tool}_{self.subtool}"
+            self.tool_name = f"{self.tool}/{self.subtool}"
             self.tool_dir = os.path.join(self.tool, self.subtool)
+
+        self.tool_name_underscore = self.tool_name.replace("/", "_")
 
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
 
         # Try to find a bioconda package for 'tool'
-        try:
-            anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
-            version = anaconda_response.get("latest_version")
-            if not version:
-                version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
-            self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
-            self.tool_description = anaconda_response.get("summary", "")
-            self.tool_doc_url = anaconda_response.get("doc_url", "")
-            self.tool_dev_url = anaconda_response.get("dev_url", "")
-            self.bioconda = "bioconda::" + self.tool + "=" + version
-            log.info(f"Using Bioconda package: '{self.bioconda}'")
-        except (ValueError, LookupError) as e:
-            log.warning(
-                f"{e}\nBuilding module without tool software and meta, you will need to enter this information manually."
-            )
+        while True:
+            try:
+                if self.tool_conda_name:
+                    anaconda_response = nf_core.utils.anaconda_package(self.tool_conda_name, ["bioconda"])
+                else:
+                    anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+                version = anaconda_response.get("latest_version")
+                if not version:
+                    version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+                self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
+                self.tool_description = anaconda_response.get("summary", "")
+                self.tool_doc_url = anaconda_response.get("doc_url", "")
+                self.tool_dev_url = anaconda_response.get("dev_url", "")
+                if self.tool_conda_name:
+                    self.bioconda = "bioconda::" + self.tool_conda_name + "=" + version
+                else:
+                    self.bioconda = "bioconda::" + self.tool + "=" + version
+                log.info(f"Using Bioconda package: '{self.bioconda}'")
+                break
+            except (ValueError, LookupError) as e:
+                log.warning(f"Could not find Conda dependency using the Anaconda API: '{self.tool}'")
+                if rich.prompt.Confirm.ask(f"[violet]Do you want to enter a different Bioconda package name?"):
+                    self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
+                    continue
+                else:
+                    log.warning(
+                        f"{e}\nBuilding module without tool software and meta, you will need to enter this information manually."
+                    )
+                    break
 
         # Try to get the container tag (only if bioconda package was found)
         if self.bioconda:
             try:
-                self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
+                if self.tool_conda_name:
+                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool_conda_name, version)
+                else:
+                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
                 log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
             except (ValueError, LookupError) as e:
                 log.info(f"Could not find a container tag ({e})")
@@ -155,7 +176,7 @@ class ModuleCreate(object):
         github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
-                log.warning("Does not look like a value GitHub username!")
+                log.warning("Does not look like a valid GitHub username (must start with an '@')!")
             self.author = rich.prompt.Prompt.ask(
                 "[violet]GitHub Username:[/]{}".format(" (@author)" if author_default is None else ""),
                 default=author_default,
@@ -236,6 +257,10 @@ class ModuleCreate(object):
                 log.debug(f"Writing output to: '{dest_fn}'")
                 fh.write(rendered_output)
 
+            # Mirror file permissions
+            template_stat = os.stat(os.path.join(os.path.dirname(nf_core.__file__), "module-template", template_fn))
+            os.chmod(dest_fn, template_stat.st_mode)
+
     def get_repo_type(self, directory):
         """
         Determine whether this is a pipeline repository or a clone of
@@ -251,7 +276,10 @@ class ModuleCreate(object):
         elif os.path.exists(os.path.join(directory, "software")):
             return "modules"
         else:
-            raise UserWarning(f"Could not determine repository type: '{directory}'")
+            raise UserWarning(
+                f"This directory does not look like a clone of nf-core/modules or an nf-core pipeline: '{directory}'"
+                " Please point to a valid directory."
+            )
 
     def get_module_dirs(self):
         """Given a directory and a tool/subtool, set the file paths and check if they already exist

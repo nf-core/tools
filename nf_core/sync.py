@@ -6,9 +6,12 @@ import git
 import json
 import logging
 import os
+import random
+import re
 import requests
 import requests_cache
 import shutil
+import time
 
 import nf_core
 import nf_core.create
@@ -60,7 +63,7 @@ class PipelineSync(object):
         gh_repo=None,
         gh_username=None,
     ):
-        """ Initialise syncing object """
+        """Initialise syncing object"""
 
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
@@ -320,27 +323,44 @@ class PipelineSync(object):
             "base": self.from_branch,
         }
 
-        r = requests.post(
-            url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-            data=json.dumps(pr_content),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
-        try:
-            self.gh_pr_returned_data = json.loads(r.content)
-            returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
-        except:
-            self.gh_pr_returned_data = r.content
-            returned_data_prettyprint = r.content
+        while True:
+            r = requests.post(
+                url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
+                data=json.dumps(pr_content),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
+            try:
+                self.gh_pr_returned_data = json.loads(r.content)
+                returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
+                r_headers_pp = json.dumps(r.headers, indent=4)
+            except:
+                self.gh_pr_returned_data = r.content
+                returned_data_prettyprint = r.content
+                r_headers_pp = r.headers
 
-        # PR worked
-        if r.status_code == 201:
-            self.pr_url = self.gh_pr_returned_data["html_url"]
-            log.debug("GitHub API PR worked:\n{}".format(returned_data_prettyprint))
-            log.info("GitHub PR created: {}".format(self.gh_pr_returned_data["html_url"]))
+            # PR worked
+            if r.status_code == 201:
+                self.pr_url = self.gh_pr_returned_data["html_url"]
+                log.debug(f"GitHub API PR worked:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
+                log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
+                break
 
-        # Something went wrong
-        else:
-            raise PullRequestException(f"GitHub API returned code {r.status_code}: \n{returned_data_prettyprint}")
+            # Returned 403 error - too many simultaneous requests
+            # https://github.com/nf-core/tools/issues/911
+            if r.status_code == 403:
+                log.debug(f"GitHub API PR failed with 403 error:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
+                wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
+                if wait_time == 0:
+                    log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
+                    wait_time = random.randrange(10, 60)
+                log.warning(f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds..")
+                time.sleep(wait_time)
+
+            # Something went wrong
+            else:
+                raise PullRequestException(
+                    f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
+                )
 
     def close_open_template_merge_prs(self):
         """Get all template merging branches (starting with 'nf-core-template-merge-')

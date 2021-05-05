@@ -6,7 +6,6 @@ from genericpath import exists
 import git
 import jinja2
 import logging
-import mimetypes
 import os
 import pathlib
 import requests
@@ -47,7 +46,7 @@ class PipelineCreate(object):
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
     def init_pipeline(self):
-        """Creates the nf-core pipeline. """
+        """Creates the nf-core pipeline."""
 
         # Make the new pipeline
         self.render_template()
@@ -83,7 +82,6 @@ class PipelineCreate(object):
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
-        binary_ftypes = ["image", "application/java-archive"]
         object_attrs = vars(self)
         object_attrs["nf_core_version"] = nf_core.__version__
 
@@ -106,22 +104,34 @@ class PipelineCreate(object):
             output_path = os.path.join(self.outdir, template_fn)
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-            # Just copy binary files
-            (ftype, encoding) = mimetypes.guess_type(template_fn_path)
-            if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
-                log.debug(f"Copying binary file: '{output_path}'")
+            try:
+                # Just copy binary files
+                if nf_core.utils.is_file_binary(template_fn_path):
+                    raise AttributeError(f"Binary file: {template_fn_path}")
+
+                # Got this far - render the template
+                log.debug(f"Rendering template file: '{template_fn}'")
+                j_template = env.get_template(template_fn)
+                rendered_output = j_template.render(object_attrs)
+
+                # Write to the pipeline output file
+                with open(output_path, "w") as fh:
+                    log.debug(f"Writing to output file: '{output_path}'")
+                    fh.write(rendered_output)
+
+            # Copy the file directly instead of using Jinja
+            except (AttributeError, UnicodeDecodeError) as e:
+                log.debug(f"Copying file without Jinja: '{output_path}' - {e}")
                 shutil.copy(template_fn_path, output_path)
-                continue
 
-            # Render the template
-            log.debug(f"Rendering template file: '{template_fn}'")
-            j_template = env.get_template(template_fn)
-            rendered_output = j_template.render(object_attrs)
+            # Something else went wrong
+            except Exception as e:
+                log.error(f"Copying raw file as error rendering with Jinja: '{output_path}' - {e}")
+                shutil.copy(template_fn_path, output_path)
 
-            # Write to the pipeline output file
-            with open(output_path, "w") as fh:
-                log.debug(f"Writing to output file: '{output_path}'")
-                fh.write(rendered_output)
+            # Mirror file permissions
+            template_stat = os.stat(template_fn_path)
+            os.chmod(output_path, template_stat.st_mode)
 
         # Make a logo and save it
         self.make_pipeline_logo()

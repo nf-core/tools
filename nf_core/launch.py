@@ -20,7 +20,7 @@ import nf_core.schema, nf_core.utils
 log = logging.getLogger(__name__)
 
 class Launch(object):
-    """ Class to hold config option to launch a pipeline """
+    """Class to hold config option to launch a pipeline"""
 
     def __init__(
         self,
@@ -162,7 +162,7 @@ class Launch(object):
         self.launch_workflow()
 
     def get_pipeline_schema(self):
-        """ Load and validate the schema from the supplied pipeline """
+        """Load and validate the schema from the supplied pipeline"""
 
         # Set up the schema
         self.schema_obj = nf_core.schema.PipelineSchema()
@@ -223,7 +223,7 @@ class Launch(object):
             self.schema_obj.validate_params()
 
     def merge_nxf_flag_schema(self):
-        """ Take the Nextflow flag schema and merge it with the pipeline schema """
+        """Take the Nextflow flag schema and merge it with the pipeline schema"""
         # Add the coreNextflow subschema to the schema definitions
         if "definitions" not in self.schema_obj.schema:
             self.schema_obj.schema["definitions"] = {}
@@ -235,7 +235,7 @@ class Launch(object):
         self.schema_obj.schema["allOf"].insert(0, {"$ref": "#/definitions/coreNextflow"})
 
     def prompt_web_gui(self):
-        """ Ask whether to use the web-based or cli wizard to collect params """
+        """Ask whether to use the web-based or cli wizard to collect params"""
         log.info(
             "[magenta]Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?"
         )
@@ -250,7 +250,7 @@ class Launch(object):
         return answer["use_web_gui"] == "Web based"
 
     def launch_web_gui(self):
-        """ Send schema to nf-core website and launch input GUI """
+        """Send schema to nf-core website and launch input GUI"""
 
         content = {
             "post_content": "json_schema_launcher",
@@ -355,7 +355,7 @@ class Launch(object):
                     params[param_id] = filter_func(params[param_id])
 
     def prompt_schema(self):
-        """ Go through the pipeline schema and prompt user to change defaults """
+        """Go through the pipeline schema and prompt user to change defaults"""
         answers = {}
         # Start with the subschema in the definitions - use order of allOf
         for allOf in self.schema_obj.schema.get("allOf", []):
@@ -617,12 +617,23 @@ class Launch(object):
             console.print("(Use arrow keys)", style="italic", highlight=False)
 
     def strip_default_params(self):
-        """ Strip parameters if they have not changed from the default """
+        """Strip parameters if they have not changed from the default"""
 
-        # Schema defaults
-        for param_id, val in self.schema_obj.schema_defaults.items():
-            if self.schema_obj.input_params.get(param_id) == val:
-                del self.schema_obj.input_params[param_id]
+        # Go through each supplied parameter (force list so we can delete in the loop)
+        for param_id in list(self.schema_obj.input_params.keys()):
+            val = self.schema_obj.input_params[param_id]
+
+            # Params with a schema default
+            if param_id in self.schema_obj.schema_defaults:
+                # Strip if param is same as the schema default
+                if val == self.schema_obj.schema_defaults[param_id]:
+                    del self.schema_obj.input_params[param_id]
+
+            # Params with no schema default
+            else:
+                # Strip if param is empty
+                if val is False or val is None or val == "":
+                    del self.schema_obj.input_params[param_id]
 
         # Nextflow flag defaults
         for param_id, val in self.nxf_flag_schema["coreNextflow"]["properties"].items():
@@ -630,7 +641,7 @@ class Launch(object):
                 del self.nxf_flags[param_id]
 
     def build_command(self):
-        """ Build the nextflow run command based on what we know """
+        """Build the nextflow run command based on what we know"""
 
         # Core nextflow options
         for flag, val in self.nxf_flags.items():
@@ -656,12 +667,15 @@ class Launch(object):
                     # Boolean flags like --saveTrimmed
                     if isinstance(val, bool) and val:
                         self.nextflow_cmd += " --{}".format(param)
+                    # No quotes for numbers
+                    elif (isinstance(val, int) or isinstance(val, float)) and val:
+                        self.nextflow_cmd += " --{} {}".format(param, str(val).replace('"', '\\"'))
                     # everything else
                     else:
                         self.nextflow_cmd += ' --{} "{}"'.format(param, str(val).replace('"', '\\"'))
 
     def launch_workflow(self):
-        """ Launch nextflow if required  """
+        """Launch nextflow if required"""
         log.info("[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd))
 
         if Confirm.ask("Do you want to run this command now? "):

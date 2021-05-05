@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 
 from setuptools import setup, find_packages
-import sys
 
 version = "1.14dev"
 
 with open("README.md") as f:
     readme = f.read()
+
+with open("requirements.txt") as f:
+    required = f.read().splitlines()
 
 setup(
     name="nf-core",
@@ -30,20 +32,7 @@ setup(
     url="https://github.com/nf-core/tools",
     license="MIT",
     entry_points={"console_scripts": ["nf-core=nf_core.__main__:run_nf_core"]},
-    install_requires=[
-        "click",
-        "GitPython",
-        "jinja2",
-        "jsonschema",
-        "packaging",
-        "prompt_toolkit>=3.0.3",
-        "pyyaml",
-        "questionary>=1.8.0",
-        "requests_cache",
-        "requests",
-        "rich>=9.8.2",
-        "tabulate",
-    ],
+    install_requires=required,
     setup_requires=["twine>=1.11.0", "setuptools>=38.6."],
     packages=find_packages(exclude=("docs")),
     include_package_data=True,

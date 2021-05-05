@@ -20,13 +20,13 @@ class TestModules(unittest.TestCase):
         self.make_new_pipeline()
 
     def make_new_pipeline(self):
-        """ Create a new pipeline to test """
+        """Create a new pipeline to test"""
         self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "test_pipeline")
         self.create_obj = nf_core.create.PipelineCreate("testing", "test pipeline", "tester", outdir=self.pipeline_dir)
         self.create_obj.init_pipeline()
 
     def test_inspect_sync_dir_notgit(self):
-        """ Try syncing an empty directory """
+        """Try syncing an empty directory"""
         psync = nf_core.sync.PipelineSync(tempfile.mkdtemp())
         try:
             psync.inspect_sync_dir()
@@ -35,7 +35,7 @@ class TestModules(unittest.TestCase):
             assert "does not appear to be a git repository" in e.args[0]
 
     def test_inspect_sync_dir_dirty(self):
-        """ Try syncing a pipeline with uncommitted changes """
+        """Try syncing a pipeline with uncommitted changes"""
         # Add an empty file, uncommitted
         test_fn = os.path.join(self.pipeline_dir, "uncommitted")
         open(test_fn, "a").close()
@@ -52,7 +52,7 @@ class TestModules(unittest.TestCase):
             raise e
 
     def test_get_wf_config_no_branch(self):
-        """ Try getting a workflow config when the branch doesn't exist """
+        """Try getting a workflow config when the branch doesn't exist"""
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir, from_branch="foo")
         try:
@@ -63,7 +63,7 @@ class TestModules(unittest.TestCase):
             assert e.args[0] == "Branch `foo` not found!"
 
     def test_get_wf_config_missing_required_config(self):
-        """ Try getting a workflow config, then make it miss a required config option """
+        """Try getting a workflow config, then make it miss a required config option"""
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.required_config_vars = ["fakethisdoesnotexist"]
@@ -78,14 +78,14 @@ class TestModules(unittest.TestCase):
             assert e.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
 
     def test_checkout_template_branch(self):
-        """ Try checking out the TEMPLATE branch of the pipeline """
+        """Try checking out the TEMPLATE branch of the pipeline"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
         psync.checkout_template_branch()
 
     def test_delete_template_branch_files(self):
-        """ Confirm that we can delete all files in the TEMPLATE branch """
+        """Confirm that we can delete all files in the TEMPLATE branch"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
         psync.get_wf_config()
@@ -94,7 +94,7 @@ class TestModules(unittest.TestCase):
         assert os.listdir(self.pipeline_dir) == [".git"]
 
     def test_create_template_pipeline(self):
-        """ Confirm that we can delete all files in the TEMPLATE branch """
+        """Confirm that we can delete all files in the TEMPLATE branch"""
         # First, delete all the files
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
@@ -108,7 +108,7 @@ class TestModules(unittest.TestCase):
         assert "nextflow.config" in os.listdir(self.pipeline_dir)
 
     def test_commit_template_changes_nochanges(self):
-        """ Try to commit the TEMPLATE branch, but no changes were made """
+        """Try to commit the TEMPLATE branch, but no changes were made"""
         # Check out the TEMPLATE branch but skip making the new template etc.
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
@@ -118,7 +118,7 @@ class TestModules(unittest.TestCase):
         assert psync.commit_template_changes() is False
 
     def test_commit_template_changes_changes(self):
-        """ Try to commit the TEMPLATE branch, but no changes were made """
+        """Try to commit the TEMPLATE branch, but no changes were made"""
         # Check out the TEMPLATE branch but skip making the new template etc.
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
@@ -135,11 +135,11 @@ class TestModules(unittest.TestCase):
         assert psync.repo.is_dirty(untracked_files=True) is False
 
     def raise_git_exception(self):
-        """ Raise an exception from GitPython"""
+        """Raise an exception from GitPython"""
         raise git.exc.GitCommandError("Test")
 
     def test_push_template_branch_error(self):
-        """ Try pushing the changes, but without a remote (should fail) """
+        """Try pushing the changes, but without a remote (should fail)"""
         # Check out the TEMPLATE branch but skip making the new template etc.
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.inspect_sync_dir()
@@ -157,7 +157,7 @@ class TestModules(unittest.TestCase):
             assert e.args[0].startswith("Could not push TEMPLATE branch")
 
     def mocked_requests_get(**kwargs):
-        """ Helper function to emulate POST requests responses from the web """
+        """Helper function to emulate POST requests responses from the web"""
 
         class MockResponse:
             def __init__(self, data, status_code):
@@ -172,7 +172,7 @@ class TestModules(unittest.TestCase):
         return MockResponse({"get_url": kwargs["url"]}, 404)
 
     def mocked_requests_patch(**kwargs):
-        """ Helper function to emulate POST requests responses from the web """
+        """Helper function to emulate POST requests responses from the web"""
 
         class MockResponse:
             def __init__(self, data, status_code):
@@ -186,12 +186,13 @@ class TestModules(unittest.TestCase):
         return MockResponse({"patch_url": kwargs["url"]}, 404)
 
     def mocked_requests_post(**kwargs):
-        """ Helper function to emulate POST requests responses from the web """
+        """Helper function to emulate POST requests responses from the web"""
 
         class MockResponse:
             def __init__(self, data, status_code):
                 self.status_code = status_code
                 self.content = json.dumps(data)
+                self.headers = {"content-encoding": "test", "connection": "fake"}
 
         if kwargs["url"] == "https://api.github.com/repos/no_existing_pr/response/pulls":
             response_data = {"html_url": "great_success"}
@@ -202,7 +203,7 @@ class TestModules(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     def test_make_pull_request_success(self, mock_get, mock_post):
-        """ Try making a PR - successful response """
+        """Try making a PR - successful response"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "no_existing_pr"
         psync.gh_repo = "no_existing_pr/response"
@@ -213,7 +214,7 @@ class TestModules(unittest.TestCase):
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     def test_make_pull_request_bad_response(self, mock_get, mock_post):
-        """ Try making a PR and getting a 404 error """
+        """Try making a PR and getting a 404 error"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_username = "bad_url"
         psync.gh_repo = "bad_url/response"

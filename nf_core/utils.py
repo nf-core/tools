@@ -11,6 +11,7 @@ import git
 import hashlib
 import json
 import logging
+import mimetypes
 import os
 import prompt_toolkit
 import re
@@ -110,7 +111,7 @@ class Pipeline(object):
     """
 
     def __init__(self, wf_path):
-        """ Initialise pipeline object """
+        """Initialise pipeline object"""
         self.conda_config = {}
         self.conda_package_info = {}
         self.nf_config = {}
@@ -285,13 +286,17 @@ def setup_requests_cachedir():
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
-    if not os.path.exists(cachedir):
-        os.makedirs(cachedir)
-    requests_cache.install_cache(
-        os.path.join(cachedir, "github_info"),
-        expire_after=datetime.timedelta(hours=1),
-        backend="sqlite",
-    )
+
+    try:
+        if not os.path.exists(cachedir):
+            os.makedirs(cachedir)
+        requests_cache.install_cache(
+            os.path.join(cachedir, "github_info"),
+            expire_after=datetime.timedelta(hours=1),
+            backend="sqlite",
+        )
+    except PermissionError:
+        pass
 
 
 def wait_cli_function(poll_func, poll_every=20):
@@ -347,7 +352,7 @@ def poll_nfcore_web_api(api_url, post_data=None):
             try:
                 web_response = json.loads(response.content)
                 assert "status" in web_response
-            except (json.decoder.JSONDecodeError, AssertionError) as e:
+            except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
                 log.debug("Response content:\n{}".format(response.content))
                 raise AssertionError(
                     "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
@@ -519,7 +524,7 @@ def get_biocontainer_tag(package, version):
 
 
 def custom_yaml_dumper():
-    """ Overwrite default PyYAML output to make Prettier YAML linting happy """
+    """Overwrite default PyYAML output to make Prettier YAML linting happy"""
 
     class CustomDumper(yaml.Dumper):
         def represent_dict_preserve_order(self, data):
@@ -548,3 +553,19 @@ def custom_yaml_dumper():
 
     CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
     return CustomDumper
+
+
+def is_file_binary(path):
+    """ Check file path to see if it is a binary file """
+    binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
+    binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
+
+    # Check common file extensions
+    filename, file_extension = os.path.splitext(path)
+    if file_extension in binary_extensions:
+        return True
+
+    # Try to detect binary files
+    (ftype, encoding) = mimetypes.guess_type(path, strict=False)
+    if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+        return True
