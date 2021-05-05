@@ -52,9 +52,13 @@ Workflow.validateMainParams(workflow, params, json_schema, log)
 /* --            RUN WORKFLOW(S)               -- */
 ////////////////////////////////////////////////////
 
-workflow {
+workflow  NFCORE_{{ short_name|upper }} {
     include { {{ short_name|upper }} } from './workflows/pipeline' addParams( summary_params: summary_params )
     {{ short_name|upper }} ()
+}
+
+workflow {
+  NFCORE_{{ short_name|upper }} ()
 }
 
 ////////////////////////////////////////////////////
