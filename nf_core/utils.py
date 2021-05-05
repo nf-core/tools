@@ -25,6 +25,8 @@ from rich.live import Live
 from rich.spinner import Spinner
 
 log = logging.getLogger(__name__)
+# Set the base logger to output DEBUG
+log.setLevel(logging.DEBUG)
 
 # Custom style for questionary
 nfcore_question_style = prompt_toolkit.styles.Style(
