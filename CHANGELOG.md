@@ -10,6 +10,7 @@
 
 ### Template
 
+* Add the implicit workflow declaration to `main.nf` DSL2 template [[#1056](https://github.com/nf-core/tools/issues/1056)]
 * Fixed an issue regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
 * Removed trailing slash from `params.igenomes_base` to yield valid s3 paths (previous paths work with Nextflow but not aws cli)
 * Added a timestamp to the trace + timetime + report + dag filenames to fix overwrite issue on AWS
