@@ -17,10 +17,11 @@ def schema_params(self):
     failed = []
 
     # First, get the top-level config options for the pipeline
-    # Schema object already created in the `schema_lint` test
+    self.schema_obj = nf_core.schema.PipelineSchema()
     self.schema_obj.get_schema_path(self.wf_path)
     self.schema_obj.get_wf_params()
     self.schema_obj.no_prompts = True
+    self.schema_obj.load_lint_schema()
 
     # Remove any schema params not found in the config
     removed_params = self.schema_obj.remove_schema_notfound_configs()

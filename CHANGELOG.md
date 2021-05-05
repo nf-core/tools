@@ -17,8 +17,9 @@
 * Merge markers lint test - ignore binary files, allow config to ignore specific files [[#1040](https://github.com/nf-core/tools/pull/1040)]
 * New lint test to check if params in `nextflow config` are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
 * New modules lint test comparing the `functions.nf` file to the template version
+* Added lint checks for missing parameter description and parameters outside of groups [[#1017](https://github.com/nf-core/tools/issues/1017)]
+* Added fix to remove warnings about params that get converted from camelCase to camel-case [[#1035](https://github.com/nf-core/tools/issues/1035)]
 * Use latest stable Nextflow version `21.04.0` for CI tests instead of the `-edge` release
-* Added temporary fix to remove warnings about params that get converted from camelCase to camel-case [[#1035](https://github.com/nf-core/tools/issues/1035)]
 * Fix bug in `nf-core download` where image names were getting a hyphen in `nf-core` which was breaking things.
 
 ### Template
