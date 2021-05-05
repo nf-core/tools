@@ -503,8 +503,6 @@ class DownloadWorkflow(object):
             out_name = out_name[:-4]
         # Strip : and / characters
         out_name = out_name.replace("/", "-").replace(":", "-")
-        # Stupid Docker Hub not allowing hyphens
-        out_name = out_name.replace("nfcore", "nf-core")
         # Add file extension
         out_name = out_name + extension
 

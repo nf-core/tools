@@ -20,6 +20,7 @@
 * Added lint checks for missing parameter description and parameters outside of groups [[#1017](https://github.com/nf-core/tools/issues/1017)]
 * Added fix to remove warnings about params that get converted from camelCase to camel-case [[#1035](https://github.com/nf-core/tools/issues/1035)]
 * Use latest stable Nextflow version `21.04.0` for CI tests instead of the `-edge` release
+* Fix bug in `nf-core download` where image names were getting a hyphen in `nf-core` which was breaking things.
 
 ### Template
 
