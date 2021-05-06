@@ -389,10 +389,7 @@ INFO     Saving 'nf-core/rnaseq
 INFO     Downloading workflow files from GitHub
 INFO     Downloading centralised configs from GitHub
 INFO     Found 29 containers
-Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
-INFO     Compressing download..
-INFO     Command to extract files: tar -xzf nf-core-rnaseq-3.0.tar.gz
-INFO     MD5 checksum for nf-core-rnaseq-3.0.tar.gz: 9789a9e0bda50f444ab0ee69cc8a95ce
+Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
 ```
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
