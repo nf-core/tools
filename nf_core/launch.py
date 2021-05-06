@@ -201,7 +201,9 @@ class Launch(object):
 
             if not self.pipeline_revision:
                 try:
-                    wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches(self.pipeline, self.wfs)
+                    self.pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches(
+                        self.pipeline, self.wfs
+                    )
                 except AssertionError as e:
                     log.error(e)
                     return False

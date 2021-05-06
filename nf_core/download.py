@@ -114,7 +114,9 @@ class DownloadWorkflow(object):
         # Get workflow details
         try:
             self.prompt_pipeline_name()
-            self.wf_releases, self.wf_branches = nf_core.utils.get_repo_releases_branches(self.pipeline, self.wfs)
+            self.pipeline, self.wf_releases, self.wf_branches = nf_core.utils.get_repo_releases_branches(
+                self.pipeline, self.wfs
+            )
             self.prompt_release()
             self.get_release_hash()
             self.prompt_container_download()

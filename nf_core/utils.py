@@ -711,4 +711,5 @@ def get_repo_releases_branches(pipeline, wfs):
         ):
             wf_branches[branch["name"]] = branch["commit"]["sha"]
 
-    return wf_releases, wf_branches
+    # Return pipeline again in case we added the nf-core/ prefix
+    return pipeline, wf_releases, wf_branches
