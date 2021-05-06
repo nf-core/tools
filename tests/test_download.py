@@ -18,56 +18,81 @@ import unittest
 class DownloadTest(unittest.TestCase):
 
     #
-    # Tests for 'fetch_workflow_details()'
+    # Tests for 'get_release_hash'
     #
-    def test_fetch_workflow_details_for_nf_core(self):
-        download_obj = DownloadWorkflow(pipeline="methylseq")
-        download_obj.fetch_workflow_details()
-        assert download_obj.wf_name == "nf-core/methylseq"
-        for r in download_obj.wf_releases:
-            if r.get("tag_name") == "1.6":
-                break
-        else:
-            raise AssertionError("Release 1.6 not found")
-        assert "dev" in download_obj.wf_branches.keys()
+    def test_get_release_hash_release(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline = "methylseq"
+        download_obj = DownloadWorkflow(pipeline=pipeline, release="1.6")
+        (
+            download_obj.pipeline,
+            download_obj.wf_releases,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_release_hash()
+        assert download_obj.wf_sha == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+        assert download_obj.outdir == "nf-core-methylseq-1.6"
+        assert (
+            download_obj.wf_download_url
+            == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+        )
 
-    def test_fetch_workflow_details_for_not_nf_core(self):
-        download_obj = DownloadWorkflow(pipeline="ewels/MultiQC")
-        download_obj.fetch_workflow_details()
-        assert download_obj.wf_name == "ewels/MultiQC"
-        for r in download_obj.wf_releases:
-            if r.get("tag_name") == "v1.10":
-                break
-        else:
-            raise AssertionError("MultiQC release v1.10 not found")
-        assert "master" in download_obj.wf_branches.keys()
+    def test_get_release_hash_branch(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        # Exoseq pipeline is archived, so `dev` branch should be stable
+        pipeline = "exoseq"
+        download_obj = DownloadWorkflow(pipeline=pipeline, release="dev")
+        (
+            download_obj.pipeline,
+            download_obj.wf_releases,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_release_hash()
+        assert download_obj.wf_sha == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
+        assert download_obj.outdir == "nf-core-exoseq-dev"
+        assert (
+            download_obj.wf_download_url
+            == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
+        )
 
-    @pytest.mark.xfail(raises=LookupError, strict=True)
-    def test_fetch_workflow_details_not_exists(self):
-        download_obj = DownloadWorkflow(pipeline="made_up_pipeline")
-        download_obj.fetch_workflow_details()
-
-    @pytest.mark.xfail(raises=LookupError, strict=True)
-    def test_fetch_workflow_details_not_exists_slash(self):
-        download_obj = DownloadWorkflow(pipeline="made-up/pipeline")
-        download_obj.fetch_workflow_details()
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_get_release_hash_non_existent_release(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline = "methylseq"
+        download_obj = DownloadWorkflow(pipeline=pipeline, release="thisisfake")
+        (
+            download_obj.pipeline,
+            download_obj.wf_releases,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_release_hash()
 
     #
     # Tests for 'download_wf_files'
     #
     def test_download_wf_files(self):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0", outdir=tempfile.mkdtemp())
-        download_obj.wf_name = "nf-core/methylseq"
-        download_obj.wf_sha = "1.0"
-        download_obj.wf_download_url = "https://github.com/nf-core/methylseq/archive/1.0.zip"
+        outdir = tempfile.mkdtemp()
+        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", release="1.6")
+        download_obj.outdir = outdir
+        download_obj.wf_sha = "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+        download_obj.wf_download_url = (
+            "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+        )
         download_obj.download_wf_files()
+        assert os.path.exists(os.path.join(outdir, "workflow", "main.nf"))
 
     #
     # Tests for 'download_configs'
     #
     def test_download_configs(self):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0", outdir=tempfile.mkdtemp())
+        outdir = tempfile.mkdtemp()
+        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", release="1.6")
+        download_obj.outdir = outdir
         download_obj.download_configs()
+        assert os.path.exists(os.path.join(outdir, "configs", "nfcore_custom.config"))
 
     #
     # Tests for 'wf_use_local_configs'
