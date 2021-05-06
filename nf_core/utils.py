@@ -554,7 +554,7 @@ def custom_yaml_dumper():
 
 
 def is_file_binary(path):
-    """ Check file path to see if it is a binary file """
+    """Check file path to see if it is a binary file"""
     binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
