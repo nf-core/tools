@@ -196,18 +196,31 @@ def update_file_version(filename, pipeline_obj, patterns):
     replacements = []
     for pattern in patterns:
 
-        # Check that we have a match
-        matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), content, re.MULTILINE)
-        if len(matches_pattern) == 0:
+        found_match = False
+
+        newcontent = []
+        for line in content.splitlines():
+
+            # Match the pattern
+            matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
+            if matches_pattern:
+                found_match = True
+
+                # Replace the match
+                newline = re.sub(pattern[0], pattern[1], line)
+                newcontent.append(newline)
+
+                # Save for logging
+                replacements.append((line, newline))
+
+            # No match, keep line as it is
+            else:
+                newcontent.append(line)
+
+        if found_match:
+            content = "\n".join(newcontent)
+        else:
             log.error("Could not find version number in {}: '{}'".format(filename, pattern))
-            continue
-
-        # Replace the match
-        content = re.sub(pattern[0], pattern[1], content)
-        matches_newstr = re.findall("^.*{}.*$".format(pattern[1]), content, re.MULTILINE)
-
-        # Save for logging
-        replacements.append((matches_pattern, matches_newstr))
 
     log.info("Updated version in '{}'".format(filename))
     for replacement in replacements:
