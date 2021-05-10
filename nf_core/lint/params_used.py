@@ -28,6 +28,8 @@ def params_used(self):
         if cf in ignore_params:
             ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
             continue
+        if cf.count(".") > 1:
+            continue
         if cf in main_nf:
             passed.append("Config variable found in `main.nf`: {}".format(self._wrap_quotes(cf)))
         else:
