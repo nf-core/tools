@@ -224,9 +224,8 @@ def update_file_version(filename, pipeline_obj, patterns):
 
     log.info("Updated version in '{}'".format(filename))
     for replacement in replacements:
-        for idx, matched in enumerate(replacement[0]):
-            stderr.print("          [red] - {}".format(matched.strip()), highlight=False)
-            stderr.print("          [green] + {}".format(replacement[1][idx].strip()), highlight=False)
+        stderr.print("          [red] - {}".format(replacement[0].strip()), highlight=False)
+        stderr.print("          [green] + {}".format(replacement[1].strip()), highlight=False)
     stderr.print("\n")
 
     with open(fn, "w") as fh:
