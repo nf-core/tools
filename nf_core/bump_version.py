@@ -159,7 +159,13 @@ def bump_nextflow_version(pipeline_obj, new_version):
             (
                 r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace(".", r"\.")),
                 "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version),
-            )
+            ),
+            (
+                r"1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>={}`)".format(
+                    current_version.replace(".", r"\.")
+                ),
+                "1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>={}`)".format(new_version),
+            ),
         ],
     )
 
