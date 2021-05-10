@@ -15,6 +15,8 @@ def params_used(self):
         "params.config_profile_name",
         "params.show_hidden_params",
         "params.schema_ignore_params",
+        "params.igenomes_base",
+        "params.igenomes_ignore",
     ]
     ignore_params = self.lint_config.get("params_used", [])
 
