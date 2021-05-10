@@ -219,8 +219,10 @@ class PipelineModules(object):
             return False
         log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
 
-        # Extract origin repository to use as install folder
-        install_folder = self.modules_repo.name.split("/")[0]
+        # Set the install folder based on the repository name
+        install_folder = "nf-core"
+        if not self.modules_repo.name == "nf-core/modules":
+            install_folder = "external"
 
         # Check that we don't already have a folder for this module
         module_dir = os.path.join(self.pipeline_dir, "modules", install_folder, "software", module)
@@ -262,8 +264,10 @@ class PipelineModules(object):
                 "Tool name:", choices=self.pipeline_module_names, style=nf_core.utils.nfcore_question_style
             ).ask()
 
-        # Extract origin repository to use as install folder
-        install_folder = self.modules_repo.name.split("/")[0]
+        # Set the install folder based on the repository name
+        install_folder = "nf-core"
+        if not self.modules_repo.name == "nf-core/modules":
+            install_folder = "external"
 
         # Get the module directory
         module_dir = os.path.join(self.pipeline_dir, "modules", install_folder, "software", module)

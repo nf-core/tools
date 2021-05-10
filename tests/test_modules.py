@@ -87,7 +87,7 @@ class TestModules(unittest.TestCase):
     def test_modules_install_fastqc_alternative_source(self):
         """Test installing a module from a different source repository - FastQC"""
         assert self.mods_alt.install("fastqc") is not False
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "ewels", "software", "fastqc")
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "software", "fastqc")
         assert os.path.exists(module_path)
 
     def test_modules_install_fastqc_twice(self):
@@ -105,7 +105,7 @@ class TestModules(unittest.TestCase):
     def test_modules_remove_fastqc_alternative_source(self):
         """Test removing FastQC module after installing it from an alternative source"""
         self.mods_alt.install("fastqc")
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "ewels", "software", "fastqc")
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "software", "fastqc")
         assert self.mods_alt.remove("fastqc")
         assert os.path.exists(module_path) is False
 
