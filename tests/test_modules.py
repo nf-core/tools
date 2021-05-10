@@ -40,6 +40,9 @@ class TestModules(unittest.TestCase):
         shutil.copytree(self.template_dir, self.pipeline_dir)
         self.mods = nf_core.modules.PipelineModules()
         self.mods.pipeline_dir = self.pipeline_dir
+        self.mods_alt = nf_core.modules.PipelineModules()
+        self.mods_alt.pipeline_dir = self.pipeline_dir
+        self.mods_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy()
@@ -81,6 +84,12 @@ class TestModules(unittest.TestCase):
         module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
         assert os.path.exists(module_path)
 
+    def test_modules_install_fastqc_alternative_source(self):
+        """Test installing a module from a different source repository - FastQC"""
+        assert self.mods_alt.install("fastqc") is not False
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "fastqc")
+        assert os.path.exists(module_path)
+
     def test_modules_install_fastqc_twice(self):
         """Test installing a module - FastQC already there"""
         self.mods.install("fastqc")
@@ -91,6 +100,13 @@ class TestModules(unittest.TestCase):
         self.mods.install("fastqc")
         module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
         assert self.mods.remove("fastqc")
+        assert os.path.exists(module_path) is False
+
+    def test_modules_remove_fastqc_alternative_source(self):
+        """Test removing FastQC module after installing it from an alternative source"""
+        self.mods_alt.install("fastqc")
+        module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "fastqc")
+        assert self.mods_alt.remove("fastqc")
         assert os.path.exists(module_path) is False
 
     def test_modules_remove_fastqc_uninstalled(self):
