@@ -146,7 +146,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
         [
             (
                 # example: nxf_ver: ['20.04.0', '']
-                r"nxf_ver: \[[\'\"]?{}[\'\"]?, [\'\"]?[\'\"]?\]".format(current_version.replace(".", r"\.")),
+                r"nxf_ver: \[[\'\"]{}[\'\"], [\'\"][\'\"]\]".format(current_version.replace(".", r"\.")),
                 "nxf_ver: ['{}', '']".format(new_version),
             )
         ],
