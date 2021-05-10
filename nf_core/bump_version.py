@@ -145,7 +145,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nxf_ver: \[[\'\"]?{}[\'\"]?, ''\]".format(current_version.replace(".", r"\.")),
+                r"nxf_ver: \[[\'\"]?{}[\'\"]?, [\'\"]?[\'\"]?\]".format(current_version.replace(".", r"\.")),
                 "nxf_ver: ['{}', '']".format(new_version),
             )
         ],
@@ -161,7 +161,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
                 "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version),
             ),
             (
-                r"1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>={}`)".format(
+                r"1.\s*Install\s*\[[\'\"]?nextflow[\'\"]?\]\(https://nf-co.re/usage/installation\)\s*\([\'\"]?>={}[\'\"]?\)".format(
                     current_version.replace(".", r"\.")
                 ),
                 "1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>={}`)".format(new_version),
