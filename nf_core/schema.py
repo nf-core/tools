@@ -476,7 +476,7 @@ class PipelineSchema(object):
             if self.no_prompts or self.schema_from_scratch:
                 return True
             if Confirm.ask(
-                ":question: Unrecognised [white bold]'params.{}'[/] found in the schema but not in the pipeline config! [yellow]Remove it?".format(
+                ":question: Unrecognised [bold]'params.{}'[/] found in the schema but not in the pipeline config! [yellow]Remove it?".format(
                     p_key
                 )
             ):
@@ -497,7 +497,7 @@ class PipelineSchema(object):
                     self.no_prompts
                     or self.schema_from_scratch
                     or Confirm.ask(
-                        ":sparkles: Found [white bold]'params.{}'[/] in the pipeline config, but not in the schema. [blue]Add to pipeline schema?".format(
+                        ":sparkles: Found [bold]'params.{}'[/] in the pipeline config, but not in the schema. [blue]Add to pipeline schema?".format(
                             p_key
                         )
                     )

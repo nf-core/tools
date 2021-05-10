@@ -3,6 +3,7 @@
 """
 
 import nf_core.create
+import nf_core.list
 import nf_core.utils
 
 import mock
@@ -132,3 +133,37 @@ class TestUtils(unittest.TestCase):
         """Tests the PyPi API package information query"""
         with pytest.raises(ValueError):
             nf_core.utils.pip_package("not_a_package=1.0")
+
+    def test_get_repo_releases_branches_nf_core(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("methylseq", wfs)
+        for r in wf_releases:
+            if r.get("tag_name") == "1.6":
+                break
+        else:
+            raise AssertionError("Release 1.6 not found")
+        assert "dev" in wf_branches.keys()
+
+    def test_get_repo_releases_branches_not_nf_core(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("ewels/MultiQC", wfs)
+        for r in wf_releases:
+            if r.get("tag_name") == "v1.10":
+                break
+        else:
+            raise AssertionError("MultiQC release v1.10 not found")
+        assert "master" in wf_branches.keys()
+
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_get_repo_releases_branches_not_exists(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
+
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_get_repo_releases_branches_not_exists_slash(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
