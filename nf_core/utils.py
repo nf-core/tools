@@ -329,36 +329,36 @@ def poll_nfcore_web_api(api_url, post_data=None):
 
     Expects API reponse to be valid JSON and contain a top-level 'status' key.
     """
-    # Clear requests_cache so that we get the updated statuses
-    requests_cache.clear()
-    try:
-        if post_data is None:
-            response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
+    # Run without requests_cache so that we get the updated statuses
+    with requests_cache.disabled():
+        try:
+            if post_data is None:
+                response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
+            else:
+                response = requests.post(url=api_url, data=post_data)
+        except (requests.exceptions.Timeout):
+            raise AssertionError("URL timed out: {}".format(api_url))
+        except (requests.exceptions.ConnectionError):
+            raise AssertionError("Could not connect to URL: {}".format(api_url))
         else:
-            response = requests.post(url=api_url, data=post_data)
-    except (requests.exceptions.Timeout):
-        raise AssertionError("URL timed out: {}".format(api_url))
-    except (requests.exceptions.ConnectionError):
-        raise AssertionError("Could not connect to URL: {}".format(api_url))
-    else:
-        if response.status_code != 200:
-            log.debug("Response content:\n{}".format(response.content))
-            raise AssertionError(
-                "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
-            )
-        else:
-            try:
-                web_response = json.loads(response.content)
-                assert "status" in web_response
-            except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
+            if response.status_code != 200:
                 log.debug("Response content:\n{}".format(response.content))
                 raise AssertionError(
-                    "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
-                        api_url
-                    )
+                    "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
                 )
             else:
-                return web_response
+                try:
+                    web_response = json.loads(response.content)
+                    assert "status" in web_response
+                except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
+                    log.debug("Response content:\n{}".format(response.content))
+                    raise AssertionError(
+                        "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
+                            api_url
+                        )
+                    )
+                else:
+                    return web_response
 
 
 def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
@@ -554,7 +554,7 @@ def custom_yaml_dumper():
 
 
 def is_file_binary(path):
-    """ Check file path to see if it is a binary file """
+    """Check file path to see if it is a binary file"""
     binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
