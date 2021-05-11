@@ -327,11 +327,12 @@ class PipelineSync(object):
             try:
                 returned_data_prettyprint = ""
                 r_headers_pp = ""
-                r = requests.post(
-                    url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-                    data=json.dumps(pr_content),
-                    auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-                )
+                with requests_cache.disabled():
+                    r = requests.post(
+                        url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
+                        data=json.dumps(pr_content),
+                        auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+                    )
                 try:
                     self.gh_pr_returned_data = json.loads(r.content)
                     returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
@@ -380,10 +381,11 @@ class PipelineSync(object):
 
         # Look for existing pull-requests
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
-        list_prs_request = requests.get(
-            url=list_prs_url,
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
+        with requests_cache.disabled():
+            list_prs_request = requests.get(
+                url=list_prs_url,
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
         try:
             list_prs_json = json.loads(list_prs_request.content)
             list_prs_pp = json.dumps(list_prs_json, indent=4)
@@ -421,18 +423,20 @@ class PipelineSync(object):
             f"This pull-request is now outdated and has been closed in favour of {self.pr_url}\n\n"
             f"Please use {self.pr_url} to merge in the new changes from the nf-core template as soon as possible."
         )
-        comment_request = requests.post(
-            url=pr["comments_url"],
-            data=json.dumps({"body": comment_text}),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
+        with requests_cache.disabled():
+            comment_request = requests.post(
+                url=pr["comments_url"],
+                data=json.dumps({"body": comment_text}),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
 
         # Update the PR status to be closed
-        pr_request = requests.patch(
-            url=pr["url"],
-            data=json.dumps({"state": "closed"}),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
+        with requests_cache.disabled():
+            pr_request = requests.patch(
+                url=pr["url"],
+                data=json.dumps({"state": "closed"}),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
         try:
             pr_request_json = json.loads(pr_request.content)
             pr_request_pp = json.dumps(pr_request_json, indent=4)
