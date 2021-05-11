@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## 1.14.1dev
+
+### General
+
+* Fixed a bug in the Docker image build for tools that failed due to an extra hyphen.
+
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 
 ### Template
