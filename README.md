@@ -113,6 +113,14 @@ nf-core list
 You can use docker image tags to specify the version you would like to use. For example, `nfcore/tools:dev` for the latest development version of the code, or `nfcore/tools:1.14` for version `1.14` of tools.
 If you omit this, it will default to `:latest`, which should be the latest stable release.
 
+If you need a specific version of Nextflow inside the container, you can build an image yourself.
+Clone the repo locally and check out whatever version of nf-core/tools that you need.
+Then build using the `--build-arg NXF_VER` flag as follows:
+
+```bash
+docker build -t nfcore/tools:dev . --build-arg NXF_VER=20.04.0
+```
+
 ### Development version
 
 If you would like the latest development version of tools, the command is:

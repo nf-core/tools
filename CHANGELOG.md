@@ -40,7 +40,7 @@
 * Fix bug in nf-core lint config skipping for the `nextflow_config` test [[#1019](https://github.com/nf-core/tools/issues/1019)]
 * New `-k`/`--key` cli option for `nf-core lint` to allow you to run only named lint tests, for faster local debugging
 * Merge markers lint test - ignore binary files, allow config to ignore specific files [[#1040](https://github.com/nf-core/tools/pull/1040)]
-* New lint test to check if params in `nextflow config` are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
+* New lint test to check if all defined pipeline parameters are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
 * Added fix to remove warnings about params that get converted from camelCase to camel-case [[#1035](https://github.com/nf-core/tools/issues/1035)]
 * Added pipeline schema lint checks for missing parameter description and parameters outside of groups [[#1017](https://github.com/nf-core/tools/issues/1017)]
 
