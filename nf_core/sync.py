@@ -325,6 +325,7 @@ class PipelineSync(object):
 
         while True:
             try:
+                log.debug("Submitting PR to GitHub API")
                 returned_data_prettyprint = ""
                 r_headers_pp = ""
                 with requests_cache.disabled():
@@ -342,17 +343,20 @@ class PipelineSync(object):
                     returned_data_prettyprint = r.content
                     r_headers_pp = r.headers
 
+                # Dump the responses to the log just in case..
+                log.debug(f"PR response from GitHub. Data:\n{returned_data_prettyprint}\n\nHeaders:\n{r_headers_pp}")
+
                 # PR worked
                 if r.status_code == 201:
                     self.pr_url = self.gh_pr_returned_data["html_url"]
-                    log.debug(f"GitHub API PR worked:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
+                    log.debug(f"GitHub API PR worked, return code 201")
                     log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
                     break
 
                 # Returned 403 error - too many simultaneous requests
                 # https://github.com/nf-core/tools/issues/911
                 if r.status_code == 403:
-                    log.debug(f"GitHub API PR failed with 403 error:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
+                    log.debug(f"GitHub API PR failed with 403 error")
                     wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
                     if wait_time == 0:
                         log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
