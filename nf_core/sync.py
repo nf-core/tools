@@ -10,6 +10,7 @@ import random
 import re
 import requests
 import requests_cache
+import rich
 import shutil
 import time
 
@@ -323,6 +324,8 @@ class PipelineSync(object):
             "base": self.from_branch,
         }
 
+        stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
+
         while True:
             try:
                 log.debug("Submitting PR to GitHub API")
@@ -336,12 +339,14 @@ class PipelineSync(object):
                     )
                 try:
                     self.gh_pr_returned_data = json.loads(r.content)
-                    returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
-                    r_headers_pp = json.dumps(r.headers, indent=4)
+                    returned_data_prettyprint = json.dumps(dict(self.gh_pr_returned_data), indent=4)
+                    r_headers_pp = json.dumps(dict(r.headers), indent=4)
                 except:
                     self.gh_pr_returned_data = r.content
                     returned_data_prettyprint = r.content
                     r_headers_pp = r.headers
+                    log.error("Could not parse JSON response from GitHub API!")
+                    stderr.print_exception()
 
                 # Dump the responses to the log just in case..
                 log.debug(f"PR response from GitHub. Data:\n{returned_data_prettyprint}\n\nHeaders:\n{r_headers_pp}")
@@ -372,6 +377,7 @@ class PipelineSync(object):
                         f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
                     )
             except Exception as e:
+                stderr.print_exception()
                 raise PullRequestException(
                     f"Something went badly wrong - {e}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
                 )
