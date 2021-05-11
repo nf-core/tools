@@ -324,42 +324,51 @@ class PipelineSync(object):
         }
 
         while True:
-            r = requests.post(
-                url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-                data=json.dumps(pr_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
             try:
-                self.gh_pr_returned_data = json.loads(r.content)
-                returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
-                r_headers_pp = json.dumps(r.headers, indent=4)
-            except:
-                self.gh_pr_returned_data = r.content
-                returned_data_prettyprint = r.content
-                r_headers_pp = r.headers
+                returned_data_prettyprint = ""
+                r_headers_pp = ""
+                r = requests.post(
+                    url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
+                    data=json.dumps(pr_content),
+                    auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+                )
+                try:
+                    self.gh_pr_returned_data = json.loads(r.content)
+                    returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
+                    r_headers_pp = json.dumps(r.headers, indent=4)
+                except:
+                    self.gh_pr_returned_data = r.content
+                    returned_data_prettyprint = r.content
+                    r_headers_pp = r.headers
 
-            # PR worked
-            if r.status_code == 201:
-                self.pr_url = self.gh_pr_returned_data["html_url"]
-                log.debug(f"GitHub API PR worked:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
-                log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
-                break
+                # PR worked
+                if r.status_code == 201:
+                    self.pr_url = self.gh_pr_returned_data["html_url"]
+                    log.debug(f"GitHub API PR worked:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
+                    log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
+                    break
 
-            # Returned 403 error - too many simultaneous requests
-            # https://github.com/nf-core/tools/issues/911
-            if r.status_code == 403:
-                log.debug(f"GitHub API PR failed with 403 error:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
-                wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
-                if wait_time == 0:
-                    log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
-                    wait_time = random.randrange(10, 60)
-                log.warning(f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds..")
-                time.sleep(wait_time)
+                # Returned 403 error - too many simultaneous requests
+                # https://github.com/nf-core/tools/issues/911
+                if r.status_code == 403:
+                    log.debug(f"GitHub API PR failed with 403 error:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
+                    wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
+                    if wait_time == 0:
+                        log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
+                        wait_time = random.randrange(10, 60)
+                    log.warning(
+                        f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds.."
+                    )
+                    time.sleep(wait_time)
 
-            # Something went wrong
-            else:
+                # Something went wrong
+                else:
+                    raise PullRequestException(
+                        f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
+                    )
+            except Exception as e:
                 raise PullRequestException(
-                    f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
+                    f"Something went badly wrong - {e}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
                 )
 
     def close_open_template_merge_prs(self):
