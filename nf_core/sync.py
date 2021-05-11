@@ -376,6 +376,10 @@ class PipelineSync(object):
                     raise PullRequestException(
                         f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
                     )
+            # Don't catch the PullRequestException that we raised inside
+            except PullRequestException:
+                raise
+            # Do catch any other exceptions that we hit
             except Exception as e:
                 stderr.print_exception()
                 raise PullRequestException(
