@@ -3,6 +3,7 @@
 
 from click.types import File
 from rich import print
+from rich.prompt import Confirm
 import click
 import logging
 import os
@@ -35,7 +36,7 @@ def run_nf_core():
     rich.traceback.install(width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header to STDERR
-    stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
+    stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
     stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
@@ -115,7 +116,7 @@ def nf_core_cli(verbose, log_file):
     log.addHandler(
         rich.logging.RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors()),
+            console=rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors()),
             show_time=False,
             markup=True,
         )
@@ -200,28 +201,25 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 
 # nf-core download
+
+
 @nf_core_cli.command(help_priority=3)
-@click.argument("pipeline", required=True, metavar="<pipeline name>")
+@click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
-    "-c",
-    "--compress",
-    type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
-    default="tar.gz",
-    help="Archive compression type",
+    "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity images")
 @click.option(
-    "-c",
-    "--singularity-cache",
-    is_flag=True,
-    default=False,
-    help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
+    "-c", "--container", type=click.Choice(["none", "singularity"]), help="Download software container images"
+)
+@click.option(
+    "--singularity-cache-only/--singularity-cache-copy",
+    help="Don't / do copy images to the output directory and set 'singularity.cacheDir' in workflow",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
-def download(pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads):
+def download(pipeline, release, outdir, compress, force, container, singularity_cache_only, parallel_downloads):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
 
@@ -229,7 +227,7 @@ def download(pipeline, release, outdir, compress, force, singularity, singularit
     workflow to use relative paths to the configs and singularity images.
     """
     dl = nf_core.download.DownloadWorkflow(
-        pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads
+        pipeline, release, outdir, compress, force, container, singularity_cache_only, parallel_downloads
     )
     dl.download_workflow()
 
@@ -257,7 +255,7 @@ def licences(pipeline, json):
 
 # nf-core create
 def validate_wf_name_prompt(ctx, opts, value):
-    """ Force the workflow name to meet the nf-core requirements """
+    """Force the workflow name to meet the nf-core requirements"""
     if not re.match(r"^[a-z]+$", value):
         click.echo("Invalid workflow name: must be lowercase without punctuation.")
         value = click.prompt(opts.prompt)
@@ -305,22 +303,26 @@ def create(name, description, author, version, no_git, force, outdir):
 @click.option(
     "-f", "--fix", type=str, metavar="<test>", multiple=True, help="Attempt to automatically fix specified lint test"
 )
+@click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json):
+def lint(pipeline_dir, release, fix, key, show_passed, fail_ignored, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: https://nf-co.re/errors
+    on the nf-core website: https://nf-co.re/tools-docs/
+
+    You can ignore tests using a file called .nf-core-lint.yaml (if you have a good reason!).
+    See the documentation for details.
     """
 
     # Run the lint tests!
     try:
-        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, show_passed, fail_ignored, markdown, json)
+        lint_obj = nf_core.lint.run_linting(pipeline_dir, release, fix, key, show_passed, fail_ignored, markdown, json)
         if len(lint_obj.failed) > 0:
             sys.exit(1)
     except AssertionError as e:
@@ -441,7 +443,8 @@ def remove(ctx, pipeline_dir, tool):
 @click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
 @click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
-def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
+@click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
+def create_module(ctx, directory, tool, author, label, meta, no_meta, force, conda_name):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -462,7 +465,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force):
 
     # Run function
     try:
-        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force)
+        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force, conda_name)
         module_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -510,7 +513,10 @@ def lint(ctx, pipeline_dir, tool, all, local, passed):
     """
     try:
         module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
+        module_lint.modules_repo = ctx.obj["modules_repo_obj"]
         module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
+        if len(module_lint.failed) > 0:
+            sys.exit(1)
     except nf_core.modules.lint.ModuleLintException as e:
         log.error(e)
         sys.exit(1)

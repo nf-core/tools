@@ -219,8 +219,13 @@ class PipelineModules(object):
             return False
         log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
 
+        # Set the install folder based on the repository name
+        install_folder = ["nf-core", "software"]
+        if not self.modules_repo.name == "nf-core/modules":
+            install_folder = ["external"]
+
         # Check that we don't already have a folder for this module
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
         if os.path.exists(module_dir):
             log.error("Module directory already exists: {}".format(module_dir))
             # TODO: uncomment next line once update is implemented
@@ -231,7 +236,8 @@ class PipelineModules(object):
         files = self.modules_repo.get_module_file_urls(module)
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
-            dl_filename = os.path.join(self.pipeline_dir, "modules", "nf-core", filename)
+            split_filename = filename.split("/")
+            dl_filename = os.path.join(self.pipeline_dir, "modules", *install_folder, *split_filename[1:])
             self.modules_repo.download_gh_file(dl_filename, api_url)
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
@@ -259,8 +265,13 @@ class PipelineModules(object):
                 "Tool name:", choices=self.pipeline_module_names, style=nf_core.utils.nfcore_question_style
             ).ask()
 
+        # Set the install folder based on the repository name
+        install_folder = ["nf-core", "software"]
+        if not self.modules_repo.name == "nf-core/modules":
+            install_folder = ["external"]
+
         # Get the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", "nf-core", "software", module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
@@ -289,7 +300,7 @@ class PipelineModules(object):
             return False
 
     def get_pipeline_modules(self):
-        """ Get list of modules installed in the current pipeline """
+        """Get list of modules installed in the current pipeline"""
         self.pipeline_module_names = []
         module_mains = glob.glob(f"{self.pipeline_dir}/modules/nf-core/software/**/main.nf", recursive=True)
         for mod in module_mains:

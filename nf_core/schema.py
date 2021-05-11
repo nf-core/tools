@@ -28,7 +28,7 @@ class PipelineSchema(object):
     functions to handle pipeline JSON Schema"""
 
     def __init__(self):
-        """ Initialise the object """
+        """Initialise the object"""
 
         self.schema = None
         self.pipeline_dir = None
@@ -46,7 +46,7 @@ class PipelineSchema(object):
         self.web_schema_build_api_url = None
 
     def get_schema_path(self, path, local_only=False, revision=None):
-        """ Given a pipeline name, directory, or path, set self.schema_filename """
+        """Given a pipeline name, directory, or path, set self.schema_filename"""
 
         # Supplied path exists - assume a local pipeline directory or schema
         if os.path.exists(path):
@@ -75,7 +75,7 @@ class PipelineSchema(object):
             raise AssertionError(error)
 
     def load_lint_schema(self):
-        """ Load and lint a given schema to see if it looks valid """
+        """Load and lint a given schema to see if it looks valid"""
         try:
             self.load_schema()
             num_params = self.validate_schema()
@@ -92,12 +92,43 @@ class PipelineSchema(object):
             raise AssertionError(error_msg)
 
     def load_schema(self):
-        """ Load a pipeline schema from a file """
+        """Load a pipeline schema from a file"""
         with open(self.schema_filename, "r") as fh:
             self.schema = json.load(fh)
         self.schema_defaults = {}
         self.schema_params = []
         log.debug("JSON file loaded: {}".format(self.schema_filename))
+
+    def sanitise_param_default(self, param):
+        """
+        Given a param, ensure that the default value is the correct variable type
+        """
+        if "type" not in param or "default" not in param:
+            return param
+
+        # Bools
+        if param["type"] == "boolean":
+            if not isinstance(param["default"], bool):
+                param["default"] = param["default"] == "true"
+            return param
+
+        # For everything else, an empty string is an empty string
+        if isinstance(param["default"], str) and param["default"].strip() == "":
+            return ""
+
+        # Integers
+        if param["type"] == "integer":
+            param["default"] = int(param["default"])
+            return param
+
+        # Numbers
+        if param["type"] == "number":
+            param["default"] = float(param["default"])
+            return param
+
+        # Strings
+        param["default"] = str(param["default"])
+        return param
 
     def get_schema_defaults(self):
         """
@@ -110,6 +141,7 @@ class PipelineSchema(object):
         for p_key, param in self.schema.get("properties", {}).items():
             self.schema_params.append(p_key)
             if "default" in param:
+                param = self.sanitise_param_default(param)
                 self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
@@ -117,10 +149,11 @@ class PipelineSchema(object):
             for p_key, param in definition.get("properties", {}).items():
                 self.schema_params.append(p_key)
                 if "default" in param:
+                    param = self.sanitise_param_default(param)
                     self.schema_defaults[p_key] = param["default"]
 
     def save_schema(self):
-        """ Save a pipeline schema to a file """
+        """Save a pipeline schema to a file"""
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
         num_params += sum([len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values()])
@@ -156,7 +189,7 @@ class PipelineSchema(object):
                 raise AssertionError(error_msg)
 
     def validate_params(self):
-        """ Check given parameters against a schema and validate """
+        """Check given parameters against a schema and validate"""
         try:
             assert self.schema is not None
             jsonschema.validate(self.input_params, self.schema)
@@ -284,7 +317,7 @@ class PipelineSchema(object):
             )
 
     def make_skeleton_schema(self):
-        """ Make a new pipeline schema from the template """
+        """Make a new pipeline schema from the template"""
         self.schema_from_scratch = True
         # Use Jinja to render the template schema file to a variable
         env = jinja2.Environment(
@@ -299,7 +332,7 @@ class PipelineSchema(object):
         self.get_schema_defaults()
 
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
-        """ Interactively build a new pipeline schema for a pipeline """
+        """Interactively build a new pipeline schema for a pipeline"""
 
         if no_prompts:
             self.no_prompts = True
@@ -443,7 +476,7 @@ class PipelineSchema(object):
             if self.no_prompts or self.schema_from_scratch:
                 return True
             if Confirm.ask(
-                ":question: Unrecognised [white bold]'params.{}'[/] found in the schema but not in the pipeline config! [yellow]Remove it?".format(
+                ":question: Unrecognised [bold]'params.{}'[/] found in the schema but not in the pipeline config! [yellow]Remove it?".format(
                     p_key
                 )
             ):
@@ -464,7 +497,7 @@ class PipelineSchema(object):
                     self.no_prompts
                     or self.schema_from_scratch
                     or Confirm.ask(
-                        ":sparkles: Found [white bold]'params.{}'[/] in the pipeline config, but not in the schema. [blue]Add to pipeline schema?".format(
+                        ":sparkles: Found [bold]'params.{}'[/] in the pipeline config, but not in the schema. [blue]Add to pipeline schema?".format(
                             p_key
                         )
                     )

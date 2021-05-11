@@ -3,9 +3,13 @@
 """
 
 import nf_core.create
+import nf_core.list
 import nf_core.utils
 
+import mock
 import os
+import pytest
+import requests
 import tempfile
 import unittest
 
@@ -92,3 +96,74 @@ class TestUtils(unittest.TestCase):
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
         pipeline_obj._list_files()
         assert tmp_fn in pipeline_obj.files
+
+    @mock.patch("os.path.exists")
+    @mock.patch("os.makedirs")
+    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+        """Test that we don't get an error when we can't create cachedirs"""
+        mock_mkd.side_effect = PermissionError()
+        mock_exists.return_value = False
+        nf_core.utils.setup_requests_cachedir()
+
+    def test_pip_package_pass(self):
+        result = nf_core.utils.pip_package("multiqc=1.10")
+        assert type(result) == dict
+
+    @mock.patch("requests.get")
+    def test_pip_package_timeout(self, mock_get):
+        """Tests the PyPi connection and simulates a request timeout, which should
+        return in an addiional warning in the linting"""
+        # Define the behaviour of the request get mock
+        mock_get.side_effect = requests.exceptions.Timeout()
+        # Now do the test
+        with pytest.raises(LookupError):
+            nf_core.utils.pip_package("multiqc=1.10")
+
+    @mock.patch("requests.get")
+    def test_pip_package_connection_error(self, mock_get):
+        """Tests the PyPi connection and simulates a connection error, which should
+        result in an additional warning, as we cannot test if dependent module is latest"""
+        # Define the behaviour of the request get mock
+        mock_get.side_effect = requests.exceptions.ConnectionError()
+        # Now do the test
+        with pytest.raises(LookupError):
+            nf_core.utils.pip_package("multiqc=1.10")
+
+    def test_pip_erroneous_package(self):
+        """Tests the PyPi API package information query"""
+        with pytest.raises(ValueError):
+            nf_core.utils.pip_package("not_a_package=1.0")
+
+    def test_get_repo_releases_branches_nf_core(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("methylseq", wfs)
+        for r in wf_releases:
+            if r.get("tag_name") == "1.6":
+                break
+        else:
+            raise AssertionError("Release 1.6 not found")
+        assert "dev" in wf_branches.keys()
+
+    def test_get_repo_releases_branches_not_nf_core(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("ewels/MultiQC", wfs)
+        for r in wf_releases:
+            if r.get("tag_name") == "v1.10":
+                break
+        else:
+            raise AssertionError("MultiQC release v1.10 not found")
+        assert "master" in wf_branches.keys()
+
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_get_repo_releases_branches_not_exists(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
+
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_get_repo_releases_branches_not_exists_slash(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)

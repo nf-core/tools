@@ -3,7 +3,6 @@
 a nf-core pipeline.
 """
 
-import click
 import logging
 import os
 import re
@@ -12,7 +11,7 @@ import sys
 import nf_core.utils
 
 log = logging.getLogger(__name__)
-stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
+stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
 
 
 def bump_pipeline_version(pipeline_obj, new_version):
@@ -145,8 +144,9 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nxf_ver: \[[\'\"]?{}[\'\"]?, '21.03.0-edge'\]".format(current_version.replace(".", r"\.")),
-                "nxf_ver: ['{}', '21.03.0-edge']".format(new_version),
+                # example: nxf_ver: ['20.04.0', '']
+                r"nxf_ver: \[[\'\"]{}[\'\"], [\'\"][\'\"]\]".format(current_version.replace(".", r"\.")),
+                "nxf_ver: ['{}', '']".format(new_version),
             )
         ],
     )
@@ -159,7 +159,14 @@ def bump_nextflow_version(pipeline_obj, new_version):
             (
                 r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace(".", r"\.")),
                 "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version),
-            )
+            ),
+            (
+                # example: 1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>=20.04.0`)
+                r"1\.\s*Install\s*\[`nextflow`\]\(https://nf-co\.re/usage/installation\)\s*\(`>={}`\)".format(
+                    current_version.replace(".", r"\.")
+                ),
+                "1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>={}`)".format(new_version),
+            ),
         ],
     )
 
@@ -190,24 +197,36 @@ def update_file_version(filename, pipeline_obj, patterns):
     replacements = []
     for pattern in patterns:
 
-        # Check that we have a match
-        matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), content, re.MULTILINE)
-        if len(matches_pattern) == 0:
+        found_match = False
+
+        newcontent = []
+        for line in content.splitlines():
+
+            # Match the pattern
+            matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
+            if matches_pattern:
+                found_match = True
+
+                # Replace the match
+                newline = re.sub(pattern[0], pattern[1], line)
+                newcontent.append(newline)
+
+                # Save for logging
+                replacements.append((line, newline))
+
+            # No match, keep line as it is
+            else:
+                newcontent.append(line)
+
+        if found_match:
+            content = "\n".join(newcontent)
+        else:
             log.error("Could not find version number in {}: '{}'".format(filename, pattern))
-            continue
-
-        # Replace the match
-        content = re.sub(pattern[0], pattern[1], content)
-        matches_newstr = re.findall("^.*{}.*$".format(pattern[1]), content, re.MULTILINE)
-
-        # Save for logging
-        replacements.append((matches_pattern, matches_newstr))
 
     log.info("Updated version in '{}'".format(filename))
     for replacement in replacements:
-        for idx, matched in enumerate(replacement[0]):
-            stderr.print("          [red] - {}".format(matched.strip()), highlight=False)
-            stderr.print("          [green] + {}".format(replacement[1][idx].strip()), highlight=False)
+        stderr.print("          [red] - {}".format(replacement[0].strip()), highlight=False)
+        stderr.print("          [green] + {}".format(replacement[1].strip()), highlight=False)
     stderr.print("\n")
 
     with open(fn, "w") as fh:

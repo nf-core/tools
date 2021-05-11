@@ -1,5 +1,56 @@
 # nf-core/tools: Changelog
 
+## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
+
+### Template
+
+* Fixed an issue regarding explicit disabling of unused container engines [[#972](https://github.com/nf-core/tools/pull/972)]
+* Removed trailing slash from `params.igenomes_base` to yield valid s3 paths (previous paths work with Nextflow but not aws cli)
+* Added a timestamp to the trace + timetime + report + dag filenames to fix overwrite issue on AWS
+* Rewrite the `params_summary_log()` function to properly ignore unset params and have nicer formatting [[#971](https://github.com/nf-core/tools/issues/971)]
+* Fix overly strict `--max_time` formatting regex in template schema [[#973](https://github.com/nf-core/tools/issues/973)]
+* Convert `d` to `day` in the `cleanParameters` function to make Duration objects like `2d` pass the validation [[#858](https://github.com/nf-core/tools/issues/858)]
+* Added nextflow version to quick start section and adjusted `nf-core bump-version` [[#1032](https://github.com/nf-core/tools/issues/1032)]
+* Use latest stable Nextflow version `21.04.0` for CI tests instead of the `-edge` release
+
+### Download
+
+* Fix bug in `nf-core download` where image names were getting a hyphen in `nf-core` which was breaking things.
+* Extensive new interactive prompts for all command line flags [[#1027](https://github.com/nf-core/tools/issues/1027)]
+  * It is now recommended to run `nf-core download` without any cli options and follow prompts (though flags can be used to run non-interactively if you wish)
+* New helper code to set `$NXF_SINGULARITY_CACHEDIR` and add to `.bashrc` if desired [[#1027](https://github.com/nf-core/tools/issues/1027)]
+
+### Launch
+
+* Strip values from `nf-core launch` web response which are `False` and have no default in the schema [[#976](https://github.com/nf-core/tools/issues/976)]
+* Improve API caching code when polling the website, fixes noisy log message when waiting for a response [[#1029](https://github.com/nf-core/tools/issues/1029)]
+* New interactive prompts for pipeline name [[#1027](https://github.com/nf-core/tools/issues/1027)]
+
+### Modules
+
+* Added `tool_name_underscore` to the module template to allow TOOL_SUBTOOL in `main.nf` [[#1011](https://github.com/nf-core/tools/issues/1011)]
+* Added `--conda-name` flag to `nf-core modules create` command to allow sidestepping questionary [[#988](https://github.com/nf-core/tools/issues/988)]
+* Extended `nf-core modules lint` functionality to check tags in `test.yml` and to look for a entry in the `pytest_software.yml` file
+* Update `modules` commands to use new test tag format `tool/subtool`
+* New modules lint test comparing the `functions.nf` file to the template version
+* Modules installed from alternative sources are put in folders based on the name of the source repository
+
+### Linting
+
+* Fix bug in nf-core lint config skipping for the `nextflow_config` test [[#1019](https://github.com/nf-core/tools/issues/1019)]
+* New `-k`/`--key` cli option for `nf-core lint` to allow you to run only named lint tests, for faster local debugging
+* Merge markers lint test - ignore binary files, allow config to ignore specific files [[#1040](https://github.com/nf-core/tools/pull/1040)]
+* New lint test to check if all defined pipeline parameters are mentioned in `main.nf` [[#1038](https://github.com/nf-core/tools/issues/1038)]
+* Added fix to remove warnings about params that get converted from camelCase to camel-case [[#1035](https://github.com/nf-core/tools/issues/1035)]
+* Added pipeline schema lint checks for missing parameter description and parameters outside of groups [[#1017](https://github.com/nf-core/tools/issues/1017)]
+
+### General
+
+* Try to fix the fix for the automated sync when we submit too many PRs at once [[#970](https://github.com/nf-core/tools/issues/970)]
+* Rewrite how the tools documentation is deployed to the website, to allow multiple versions
+* Created new Docker image for the tools cli package - see installation docs for details [[#917](https://github.com/nf-core/tools/issues/917)]
+* Ignore permission errors for setting up requests cache directories to allow starting with an invalid or read-only `HOME` directory
+
 ## [v1.13.3 - Copper Crocodile Resurrection :crocodile:](https://github.com/nf-core/tools/releases/tag/1.13.2) - [2021-03-24]
 
 * Running tests twice with `nf-core modules create-test-yml` to catch unreproducible md5 sums [[#890](https://github.com/nf-core/tools/issues/890)]
