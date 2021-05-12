@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 import os
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def params_used(self):
@@ -12,6 +15,8 @@ def params_used(self):
         "params.config_profile_name",
         "params.show_hidden_params",
         "params.schema_ignore_params",
+        "params.igenomes_base",
+        "params.igenomes_ignore",
     ]
     ignore_params = self.lint_config.get("params_used", [])
 
@@ -27,6 +32,9 @@ def params_used(self):
             continue
         if cf in ignore_params:
             ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+            continue
+        if cf.count(".") > 1:
+            log.debug(f"Ignoring nested param: {cf}")
             continue
         if cf in main_nf:
             passed.append("Config variable found in `main.nf`: {}".format(self._wrap_quotes(cf)))

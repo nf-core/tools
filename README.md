@@ -113,6 +113,14 @@ nf-core list
 You can use docker image tags to specify the version you would like to use. For example, `nfcore/tools:dev` for the latest development version of the code, or `nfcore/tools:1.14` for version `1.14` of tools.
 If you omit this, it will default to `:latest`, which should be the latest stable release.
 
+If you need a specific version of Nextflow inside the container, you can build an image yourself.
+Clone the repo locally and check out whatever version of nf-core/tools that you need.
+Then build using the `--build-arg NXF_VER` flag as follows:
+
+```bash
+docker build -t nfcore/tools:dev . --build-arg NXF_VER=20.04.0
+```
+
 ### Development version
 
 If you would like the latest development version of tools, the command is:
@@ -344,15 +352,14 @@ Sometimes you may need to run an nf-core pipeline on a server or HPC system that
 In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
 
 To make this process easier and ensure accurate retrieval of correctly versioned code and software containers, we have written a download helper tool.
-Simply specify the name of the nf-core pipeline and it will be downloaded to your current working directory.
 
-By default, the pipeline will download the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files.
-If you specify the flag `--singularity`, it will also download any singularity image files that are required.
+The `nf-core download` command will download both the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files. It can also optionally download any singularity image files that are required.
 
-Use `-r`/`--release` to download a specific release of the pipeline. If not specified, the tool will automatically fetch the latest release.
+If run without any arguments, the download tool will interactively prompt you for the required information.
+Each option has a flag, if all are supplied then it will run without any user input needed.
 
 ```console
-$ nf-core download rnaseq -r 3.0 --singularity
+$ nf-core download
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -360,33 +367,43 @@ $ nf-core download rnaseq -r 3.0 --singularity
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 1.14
 
 
+Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
+? Pipeline name: rnaseq
+? Select release / branch: 3.0  [release]
 
-INFO     Saving rnaseq
+In addition to the pipeline code, this tool can download software containers.
+? Download software container images: singularity
+
+Nextflow and nf-core can use an environment variable called $NXF_SINGULARITY_CACHEDIR that is a path to a directory where remote Singularity
+images are stored. This allows downloaded images to be cached in a central location.
+? Define $NXF_SINGULARITY_CACHEDIR for a shared Singularity image download folder? [y/n]: y
+? Specify the path: cachedir/
+
+So that $NXF_SINGULARITY_CACHEDIR is always defined, you can add it to your ~/.bashrc file. This will then be autmoatically set every time you open a new terminal. We can add the following line to this file for you:
+export NXF_SINGULARITY_CACHEDIR="/path/to/demo/cachedir"
+? Add to ~/.bashrc ? [y/n]: n
+
+If transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file.
+This is not recommended when downloading Singularity images, as it can take a long time and saves very little space.
+? Choose compression type: none
+INFO     Saving 'nf-core/rnaseq
           Pipeline release: '3.0'
-          Pull singularity containers: 'Yes'
-          Output file: 'nf-core-rnaseq-3.0.tar.gz'
+          Pull containers: 'singularity'
+          Using $NXF_SINGULARITY_CACHEDIR': /path/to/demo/cachedir
+          Output directory: 'nf-core-rnaseq-3.0'
 INFO     Downloading workflow files from GitHub
 INFO     Downloading centralised configs from GitHub
-INFO     Fetching container names for workflow
 INFO     Found 29 containers
-INFO     Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads
-Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
-INFO     Compressing download..
-INFO     Command to extract files: tar -xzf nf-core-rnaseq-3.0.tar.gz
-INFO     MD5 checksum for nf-core-rnaseq-3.0.tar.gz: 9789a9e0bda50f444ab0ee69cc8a95ce
+Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
 ```
 
-The tool automatically compresses all of the resulting file in to a `.tar.gz` archive.
-You can choose other formats (`.tar.bz2`, `zip`) or to not compress (`none`) with the `-c`/`--compress` flag.
-The console output provides the command you need to extract the files.
-
-Once uncompressed, you will see something like the following file structure for the downloaded pipeline:
+Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
 ```console
-$ tree -L 2 nf-core-methylseq-1.4/
+$ tree -L 2 nf-core-rnaseq-3.0/
 
 nf-core-rnaseq-3.0
 ├── configs
@@ -404,7 +421,11 @@ nf-core-rnaseq-3.0
     └── main.nf
 ```
 
-You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command.
+You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
+
+```bash
+nextflow run /path/to/download/nf-core-rnaseq-3.0/workflow/ --input mydata.csv   # usual parameters here
+```
 
 ### Downloaded nf-core configs
 
@@ -414,7 +435,7 @@ So using `-profile <NAME>` should work if available within [nf-core/configs](htt
 ### Downloading singularity containers
 
 If you're using Singularity, the `nf-core download` command can also fetch the required Singularity container images for you.
-To do this, specify the `--singularity` option.
+To do this, select `singularity` in the prompt or specify `--container singularity` in the command.
 Your archive / target output directory will then include three folders: `workflow`, `configs` and also `singularity-containers`.
 
 The downloaded workflow files are again edited to add the following line to the end of the pipeline's `nextflow.config` file:
@@ -433,7 +454,8 @@ We highly recommend setting the `$NXF_SINGULARITY_CACHEDIR` environment variable
 If found, the tool will fetch the Singularity images to this directory first before copying to the target output archive / directory.
 Any images previously fetched will be found there and copied directly - this includes images that may be shared with other pipelines or previous pipeline version downloads or download attempts.
 
-If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose specify `--singularity-cache`.
+If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose to _only_ use the cache via a prompt or cli options `--singularity-cache-only` / `--singularity-cache-copy`.
+
 This instructs `nf-core download` to fetch all Singularity images to the `$NXF_SINGULARITY_CACHEDIR` directory but does _not_ copy them to the workflow archive / directory.
 The workflow config file is _not_ edited. This means that when you later run the workflow, Nextflow will just use the cache folder directly.
 
@@ -451,15 +473,15 @@ Where both are found, the download URL is preferred.
 
 Once a full list of containers is found, they are processed in the following order:
 
-1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache` specified)
-2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache` is _not_ specified, they are copied to the output directory
+1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` specified)
+2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` is _not_ specified, they are copied to the output directory
 3. If they start with `http` they are downloaded directly within Python (default 4 at a time, you can customise this with `--parallel-downloads`)
 4. If they look like a Docker image name, they are fetched using a `singularity pull` command
     * This requires Singularity to be installed on the system and is substantially slower
 
 Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
 
-If you really like hammering your internet connection, you can set `--parallel-downloads` to a large number to download loads of images at once.
+If the download speeds are much slower than your internet connection is capable of, you can set `--parallel-downloads` to a large number to download loads of images at once.
 
 ## Pipeline software licences
 

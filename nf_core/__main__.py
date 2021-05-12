@@ -3,6 +3,7 @@
 
 from click.types import File
 from rich import print
+from rich.prompt import Confirm
 import click
 import logging
 import os
@@ -35,7 +36,7 @@ def run_nf_core():
     rich.traceback.install(width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header to STDERR
-    stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
+    stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
     stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
@@ -115,7 +116,7 @@ def nf_core_cli(verbose, log_file):
     log.addHandler(
         rich.logging.RichHandler(
             level=logging.DEBUG if verbose else logging.INFO,
-            console=rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors()),
+            console=rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors()),
             show_time=False,
             markup=True,
         )
@@ -200,28 +201,25 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 
 # nf-core download
+
+
 @nf_core_cli.command(help_priority=3)
-@click.argument("pipeline", metavar="<pipeline name>")
+@click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--release", type=str, help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
 @click.option(
-    "-c",
-    "--compress",
-    type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]),
-    default="tar.gz",
-    help="Archive compression type",
+    "-x", "--compress", type=click.Choice(["tar.gz", "tar.bz2", "zip", "none"]), help="Archive compression type"
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
-@click.option("-s", "--singularity", is_flag=True, default=False, help="Download singularity images")
 @click.option(
-    "-c",
-    "--singularity-cache",
-    is_flag=True,
-    default=False,
-    help="Don't copy images to the output directory, don't set 'singularity.cacheDir' in workflow",
+    "-c", "--container", type=click.Choice(["none", "singularity"]), help="Download software container images"
+)
+@click.option(
+    "--singularity-cache-only/--singularity-cache-copy",
+    help="Don't / do copy images to the output directory and set 'singularity.cacheDir' in workflow",
 )
 @click.option("-p", "--parallel-downloads", type=int, default=4, help="Number of parallel image downloads")
-def download(pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads):
+def download(pipeline, release, outdir, compress, force, container, singularity_cache_only, parallel_downloads):
     """
     Download a pipeline, nf-core/configs and pipeline singularity images.
 
@@ -229,7 +227,7 @@ def download(pipeline, release, outdir, compress, force, singularity, singularit
     workflow to use relative paths to the configs and singularity images.
     """
     dl = nf_core.download.DownloadWorkflow(
-        pipeline, release, outdir, compress, force, singularity, singularity_cache, parallel_downloads
+        pipeline, release, outdir, compress, force, container, singularity_cache_only, parallel_downloads
     )
     dl.download_workflow()
 
