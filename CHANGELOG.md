@@ -7,6 +7,10 @@
 * Fixed a bug in the Docker image build for tools that failed due to an extra hyphen. [[#1069](https://github.com/nf-core/tools/pull/1069)]
 * Regular release sync fix - this time it was to do with JSON serialisation [[#1072](https://github.com/nf-core/tools/pull/1072)]
 
+### Modules
+
+* Update comment style of modules `function.nf` template file [[#1076](https://github.com/nf-core/tools/issues/1076)]
+
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 
 ### Template
