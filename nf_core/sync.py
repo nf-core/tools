@@ -10,6 +10,7 @@ import random
 import re
 import requests
 import requests_cache
+import rich
 import shutil
 import time
 
@@ -323,43 +324,66 @@ class PipelineSync(object):
             "base": self.from_branch,
         }
 
+        stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
+
         while True:
-            r = requests.post(
-                url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-                data=json.dumps(pr_content),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
             try:
-                self.gh_pr_returned_data = json.loads(r.content)
-                returned_data_prettyprint = json.dumps(self.gh_pr_returned_data, indent=4)
-                r_headers_pp = json.dumps(r.headers, indent=4)
-            except:
-                self.gh_pr_returned_data = r.content
-                returned_data_prettyprint = r.content
-                r_headers_pp = r.headers
+                log.debug("Submitting PR to GitHub API")
+                returned_data_prettyprint = ""
+                r_headers_pp = ""
+                with requests_cache.disabled():
+                    r = requests.post(
+                        url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
+                        data=json.dumps(pr_content),
+                        auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+                    )
+                try:
+                    self.gh_pr_returned_data = json.loads(r.content)
+                    returned_data_prettyprint = json.dumps(dict(self.gh_pr_returned_data), indent=4)
+                    r_headers_pp = json.dumps(dict(r.headers), indent=4)
+                except:
+                    self.gh_pr_returned_data = r.content
+                    returned_data_prettyprint = r.content
+                    r_headers_pp = r.headers
+                    log.error("Could not parse JSON response from GitHub API!")
+                    stderr.print_exception()
 
-            # PR worked
-            if r.status_code == 201:
-                self.pr_url = self.gh_pr_returned_data["html_url"]
-                log.debug(f"GitHub API PR worked:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
-                log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
-                break
+                # Dump the responses to the log just in case..
+                log.debug(f"PR response from GitHub. Data:\n{returned_data_prettyprint}\n\nHeaders:\n{r_headers_pp}")
 
-            # Returned 403 error - too many simultaneous requests
-            # https://github.com/nf-core/tools/issues/911
-            if r.status_code == 403:
-                log.debug(f"GitHub API PR failed with 403 error:\n{returned_data_prettyprint}\n\n{r_headers_pp}")
-                wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
-                if wait_time == 0:
-                    log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
-                    wait_time = random.randrange(10, 60)
-                log.warning(f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds..")
-                time.sleep(wait_time)
+                # PR worked
+                if r.status_code == 201:
+                    self.pr_url = self.gh_pr_returned_data["html_url"]
+                    log.debug(f"GitHub API PR worked, return code 201")
+                    log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
+                    break
 
-            # Something went wrong
-            else:
+                # Returned 403 error - too many simultaneous requests
+                # https://github.com/nf-core/tools/issues/911
+                if r.status_code == 403:
+                    log.debug(f"GitHub API PR failed with 403 error")
+                    wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
+                    if wait_time == 0:
+                        log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
+                        wait_time = random.randrange(10, 60)
+                    log.warning(
+                        f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds.."
+                    )
+                    time.sleep(wait_time)
+
+                # Something went wrong
+                else:
+                    raise PullRequestException(
+                        f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
+                    )
+            # Don't catch the PullRequestException that we raised inside
+            except PullRequestException:
+                raise
+            # Do catch any other exceptions that we hit
+            except Exception as e:
+                stderr.print_exception()
                 raise PullRequestException(
-                    f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
+                    f"Something went badly wrong - {e}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
                 )
 
     def close_open_template_merge_prs(self):
@@ -371,10 +395,11 @@ class PipelineSync(object):
 
         # Look for existing pull-requests
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
-        list_prs_request = requests.get(
-            url=list_prs_url,
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
+        with requests_cache.disabled():
+            list_prs_request = requests.get(
+                url=list_prs_url,
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
         try:
             list_prs_json = json.loads(list_prs_request.content)
             list_prs_pp = json.dumps(list_prs_json, indent=4)
@@ -412,18 +437,20 @@ class PipelineSync(object):
             f"This pull-request is now outdated and has been closed in favour of {self.pr_url}\n\n"
             f"Please use {self.pr_url} to merge in the new changes from the nf-core template as soon as possible."
         )
-        comment_request = requests.post(
-            url=pr["comments_url"],
-            data=json.dumps({"body": comment_text}),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
+        with requests_cache.disabled():
+            comment_request = requests.post(
+                url=pr["comments_url"],
+                data=json.dumps({"body": comment_text}),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
 
         # Update the PR status to be closed
-        pr_request = requests.patch(
-            url=pr["url"],
-            data=json.dumps({"state": "closed"}),
-            auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-        )
+        with requests_cache.disabled():
+            pr_request = requests.patch(
+                url=pr["url"],
+                data=json.dumps({"state": "closed"}),
+                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+            )
         try:
             pr_request_json = json.loads(pr_request.content)
             pr_request_pp = json.dumps(pr_request_json, indent=4)
