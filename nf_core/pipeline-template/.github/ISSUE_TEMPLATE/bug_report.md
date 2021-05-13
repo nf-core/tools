@@ -18,7 +18,7 @@ Please delete this text and anything that's not relevant from the template below
 I have checked the following places for your error:
 
 - [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
-- [ ] [{{ name }} pipeline documentation](https://nf-co.re/{{ name }}/usage)
+- [ ] [{{ name }} pipeline documentation](https://nf-co.re/{{ short_name }}/usage)
 
 ## Description of the bug
 
