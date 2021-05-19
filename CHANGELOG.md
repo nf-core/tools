@@ -1,5 +1,11 @@
 # nf-core/tools: Changelog
 
+## v1.14.1dev
+
+### Template
+
+* Move TODO item of `contains:` map in a YAML string [[#1082](https://github.com/nf-core/tools/issues/1082)]
+
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 
 ### Template
