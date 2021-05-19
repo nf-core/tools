@@ -241,7 +241,7 @@ class ModulesTestYmlBuilder(object):
                 test_files[i].pop("md5sum")
                 test_files[i][
                     "contains"
-                ] = "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead"
+                ] = "[ # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead ]"
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")
