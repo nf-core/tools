@@ -6,10 +6,12 @@ Update a nextflow.config file with refgenie genomes
 import logging
 import os
 import re
+import rich
 import refgenconf
 from warnings import warn
 
 log = logging.getLogger(__name__)
+
 
 NF_CFG_TEMPLATE = """
 params {{
@@ -97,7 +99,7 @@ def update_config(rgc):
         refgenie_genomes_config_file = os.path.join(nxf_home, "nf-core/refgenie_genomes.config")
     else:
         log.info("Could not determine path to 'refgenie_genomes.config' file.")
-        return 
+        return
 
     # Save the udated genome config
     try:
