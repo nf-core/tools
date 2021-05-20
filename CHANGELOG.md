@@ -1,6 +1,10 @@
 # nf-core/tools: Changelog
 
-## 1.14.1dev
+## v1.14.1dev
+
+### Template
+
+* Move TODO item of `contains:` map in a YAML string [[#1082](https://github.com/nf-core/tools/issues/1082)]
 
 ### General
 
