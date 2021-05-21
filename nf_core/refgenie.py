@@ -9,11 +9,21 @@ import re
 import rich
 import refgenconf
 from warnings import warn
+from rich.logging import RichHandler
+import nf_core.utils
 
+# Set up logging
 log = logging.getLogger(__name__)
+log.setLevel(logging.INFO)
+
+# # Setup rich traceback
+stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
+rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 
 
 NF_CFG_TEMPLATE = """
+// This is a read-only config file managed by refgenie. Manual changes to this file will be overwritten
+// To make changes here, use refgenie to update the reference genome data
 params {{
   genomes {{
 {content}
@@ -22,7 +32,7 @@ params {{
 """
 
 
-def print_nf_config(rgc):
+def _print_nf_config(rgc):
     """
     Generate a nextflow config file with the genomes
     from the refgenie config file
@@ -45,7 +55,11 @@ def print_nf_config(rgc):
     return NF_CFG_TEMPLATE.format(content=genomes_str)
 
 
-def update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
+def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
+    """
+    Update the $NXF_HOME/config file by adding a includeConfig statement to it
+    for the 'refgenie_genomes_config_file' if not already defined
+    """
     # Check if NXF_HOME/config exists and has a
     include_config_string = f"includeConfig '{os.path.abspath(refgenie_genomes_config_file)}'\n"
     nxf_home_config = os.path.join(nxf_home, "config")
@@ -76,10 +90,21 @@ def update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
 def update_config(rgc):
     """
     Update the genomes.config file after a local refgenie database has been updated
+
+    This function is executed after running 'refgenie pull <genome>/<asset>'
+    The refgenie config file is transformed into a nextflow.config file, which is used to
+    overwrited the 'refgenie_genomes.config' file.
+    The path to the target  config file is inferred from the following options, in order:
+
+    - the 'nextflow_config' attribute in the refgenie config file
+    - the NXF_REFGENIE_PATH environment variable
+    - otherwise defaults to: $NXF_HOME/nf-core/refgenie_genomes.config
+
+    Additionaly, a 'includeConfig' statement is added to the file $NXF_HOME/config
     """
 
     # Compile nextflow refgenie_genomes.config from refgenie config
-    refgenie_genomes = print_nf_config(rgc)
+    refgenie_genomes = _print_nf_config(rgc)
 
     # Get the path to NXF_HOME
     # If NXF_HOME is not set, create it at $HOME/.nextflow
@@ -111,4 +136,4 @@ def update_config(rgc):
 
     # Add include statement to NXF_HOME/config
     if nxf_home:
-        update_nextflow_home_config(refgenie_genomes_config_file, nxf_home)
+        _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home)
