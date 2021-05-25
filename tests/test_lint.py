@@ -205,7 +205,6 @@ class TestLint(unittest.TestCase):
     from lint.nextflow_config import (
         test_nextflow_config_example_pass,
         test_nextflow_config_bad_name_fail,
-        test_nextflow_config_bad_container_name_failed,
         test_nextflow_config_dev_in_release_mode_failed,
     )
 

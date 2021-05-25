@@ -27,6 +27,7 @@ def test_nextflow_config_bad_name_fail(self):
     assert len(result["failed"]) == 1
     assert len(result["warned"]) == 0
 
+
 def test_nextflow_config_dev_in_release_mode_failed(self):
     """Tests that config variable existence test fails with dev version in release mode"""
     new_pipeline = self._make_pipeline_copy()
