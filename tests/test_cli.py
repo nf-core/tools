@@ -5,7 +5,7 @@
 import nf_core.__main__
 
 from click.testing import CliRunner
-import mock
+from unittest import mock
 import unittest
 
 

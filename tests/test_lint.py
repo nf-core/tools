@@ -3,7 +3,7 @@
 """
 import fnmatch
 import json
-import mock
+from unittest import mock
 import os
 import pytest
 import requests

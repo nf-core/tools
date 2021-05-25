@@ -113,6 +113,7 @@ def update_config(rgc):
     if not nxf_home and "HOME" in os.environ:
         nxf_home = os.path.join(os.environ.get("HOME"), ".nextflow")
         if not os.path.exists(nxf_home):
+            log.info(f"Creating NXF_HOME directory at {nxf_home}")
             os.makedirs(nxf_home, exist_ok=True)
 
     # Get the path for storing the updated refgenie_genomes.config
@@ -124,7 +125,7 @@ def update_config(rgc):
         refgenie_genomes_config_file = os.path.join(nxf_home, "nf-core/refgenie_genomes.config")
     else:
         log.info("Could not determine path to 'refgenie_genomes.config' file.")
-        return
+        return False
 
     # Save the udated genome config
     try:
@@ -133,7 +134,10 @@ def update_config(rgc):
         log.info(f"Updated nf-core genomes config: {refgenie_genomes_config_file}")
     except FileNotFoundError as e:
         log.warn(f"Could not write to {refgenie_genomes_config_file}")
+        return False
 
     # Add include statement to NXF_HOME/config
     if nxf_home:
         _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home)
+
+    return True

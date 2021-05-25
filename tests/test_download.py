@@ -7,7 +7,7 @@ import nf_core.utils
 from nf_core.download import DownloadWorkflow
 
 import hashlib
-import mock
+from unittest import mock
 import os
 import pytest
 import shutil

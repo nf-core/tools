@@ -6,7 +6,7 @@ import nf_core.create
 import nf_core.sync
 
 import json
-import mock
+from unittest import mock
 import os
 import shutil
 import tempfile

@@ -5,7 +5,7 @@
 import nf_core.list
 
 import json
-import mock
+from unittest import mock
 import os
 import pytest
 import time

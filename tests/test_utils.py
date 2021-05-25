@@ -6,7 +6,7 @@ import nf_core.create
 import nf_core.list
 import nf_core.utils
 
-import mock
+from unittest import mock
 import os
 import pytest
 import requests
