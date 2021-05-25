@@ -119,7 +119,7 @@ class TestModules(unittest.TestCase):
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.passed) == 47
-        assert len(module_lint.warned) == 1
+        assert len(module_lint.warned) == 8
         assert len(module_lint.failed) == 0
 
     def test_modules_lint_empty(self):
