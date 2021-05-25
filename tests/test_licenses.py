@@ -11,7 +11,6 @@ from rich.console import Console
 import nf_core.create
 import nf_core.licences
 
-
 # class WorkflowLicensesTest(unittest.TestCase):
 #     """A class that performs tests on the workflow license
 #     retrieval functionality of nf-core tools."""

@@ -33,9 +33,8 @@ class ModuleCreate(object):
         self.process_label = process_label
         self.has_meta = has_meta
         self.force_overwrite = force
-
-        self.tool_conda_name = conda_name
         self.subtool = None
+        self.tool_conda_name = conda_name
         self.tool_licence = None
         self.repo_type = None
         self.tool_licence = ""
@@ -113,8 +112,10 @@ class ModuleCreate(object):
         self.tool_dir = self.tool
 
         if self.subtool:
-            self.tool_name = f"{self.tool}_{self.subtool}"
+            self.tool_name = f"{self.tool}/{self.subtool}"
             self.tool_dir = os.path.join(self.tool, self.subtool)
+
+        self.tool_name_underscore = self.tool_name.replace("/", "_")
 
         # Check existance of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
@@ -175,7 +176,7 @@ class ModuleCreate(object):
         github_username_regex = re.compile(r"^@[a-zA-Z\d](?:[a-zA-Z\d]|-(?=[a-zA-Z\d])){0,38}$")
         while self.author is None or not github_username_regex.match(self.author):
             if self.author is not None and not github_username_regex.match(self.author):
-                log.warning("Does not look like a value GitHub username!")
+                log.warning("Does not look like a valid GitHub username (must start with an '@')!")
             self.author = rich.prompt.Prompt.ask(
                 "[violet]GitHub Username:[/]{}".format(" (@author)" if author_default is None else ""),
                 default=author_default,
