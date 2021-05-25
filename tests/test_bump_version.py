@@ -61,7 +61,7 @@ def test_bump_nextflow_version(datafiles):
     pipeline_obj._load()
 
     # Bump the version number
-    nf_core.bump_version.bump_nextflow_version(pipeline_obj, "19.10.3-edge")
+    nf_core.bump_version.bump_nextflow_version(pipeline_obj, "21.04.0")
     new_pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
 
     # Check nextflow.config
@@ -71,14 +71,14 @@ def test_bump_nextflow_version(datafiles):
     # Check .github/workflows/ci.yml
     with open(new_pipeline_obj._fp(".github/workflows/ci.yml")) as fh:
         ci_yaml = yaml.safe_load(fh)
-    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"][0] == "19.10.3-edge"
+    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"][0] == "21.04.0"
 
     # Check README.md
     with open(new_pipeline_obj._fp("README.md")) as fh:
         readme = fh.read().splitlines()
     assert (
         "[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A5{}-brightgreen.svg)](https://www.nextflow.io/)".format(
-            "19.10.3-edge"
+            "21.04.0"
         )
         in readme
     )
