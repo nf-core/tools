@@ -2,17 +2,13 @@
 """ Tests covering the refgenie integration code
 """
 
-import nf_core.refgenie
-import refgenconf
-import json
 import os
-import pytest
-import time
 import unittest
 import tempfile
-from unittest import mock
 import subprocess
-from rich.console import Console
+import shlex
+
+import nf_core.refgenie
 
 
 class TestRefgenie(unittest.TestCase):
@@ -33,11 +29,9 @@ class TestRefgenie(unittest.TestCase):
         # Initialize a refgenie config
         os.system(f"refgenie init -c {self.REFGENIE}")
 
-        # Populate the config with a genome
-        os.system(f"refgenie pull t7/fasta -c {self.REFGENIE}")
-
+        # Add NXF_REFGENIE_PATH to refgenie config
         with open(self.REFGENIE, "a") as fh:
-            fh.write(f"nextflow_config: {os.path.join(self.NXF_REFGENIE_PATH)}")
+            fh.write(f"nextflow_config: {os.path.join(self.NXF_REFGENIE_PATH)}\n")
 
     def tearDown(self) -> None:
         # Remove the tempdir again
@@ -45,6 +39,8 @@ class TestRefgenie(unittest.TestCase):
 
     def test_update_refgenie_genomes_config(self):
         """Test that listing pipelines works"""
-        rgc = refgenconf.RefGenConf(self.REFGENIE)
+        # Populate the config with a genome
+        cmd = f"refgenie pull t7/fasta -c {self.REFGENIE}"
+        out = subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT)
 
-        assert nf_core.refgenie.update_config(rgc) == True
+        assert "Updated nf-core genomes config" in str(out)

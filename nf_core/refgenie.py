@@ -7,7 +7,8 @@ import logging
 import os
 import re
 import rich
-import refgenconf
+
+# import refgenconf
 from warnings import warn
 from rich.logging import RichHandler
 import nf_core.utils
@@ -47,7 +48,8 @@ def _print_nf_config(rgc):
         for asset in asset_list:
             try:
                 pth = rgc.seek(genome, asset)
-            except refgenconf.exceptions.MissingSeekKeyError:
+            # Catch general exception instead of refgencof exception --> no refgenconf import needed
+            except Exception as e:
                 log.warn(f"{genome}/{asset} is incomplete, ignoring...")
             else:
                 genomes_str += '      {} = "{}"\n'.format(asset.ljust(20, " "), pth)
