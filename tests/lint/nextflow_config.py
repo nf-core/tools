@@ -12,6 +12,7 @@ def test_nextflow_config_example_pass(self):
     """Tests that config variable existence test works with good pipeline example"""
     self.lint_obj._load_pipeline_config()
     result = self.lint_obj.nextflow_config()
+    print(result)
     assert len(result["failed"]) == 0
     assert len(result["warned"]) == 0
 
@@ -24,6 +25,7 @@ def test_nextflow_config_bad_name_fail(self):
 
     lint_obj.nf_config["manifest.name"] = "bad_name"
     result = lint_obj.nextflow_config()
+    print(result)
     assert len(result["failed"]) == 1
     assert len(result["warned"]) == 0
 
@@ -37,5 +39,6 @@ def test_nextflow_config_dev_in_release_mode_failed(self):
     lint_obj.release_mode = True
     lint_obj.nf_config["manifest.version"] = "dev_is_bad_name"
     result = lint_obj.nextflow_config()
+    print(result)
     assert len(result["failed"]) == 1
     assert len(result["warned"]) == 0
