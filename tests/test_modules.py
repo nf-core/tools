@@ -117,10 +117,10 @@ class TestModules(unittest.TestCase):
         """Test linting the TrimGalore! module"""
         self.mods.install("trimgalore")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-        module_lint.lint(print_results=False, all_modules=True)
+        module_lint.lint(print_results=False, module='trimgalore')
         assert len(module_lint.passed) == 47
         assert len(module_lint.warned) == 8
-        assert len(module_lint.failed) == 0
+        assert len(module_lint.failed) == 2
 
     def test_modules_lint_empty(self):
         """Test linting a pipeline with no modules installed"""
