@@ -7,7 +7,6 @@ prompt_toolkit>=3.0.3
 pyyaml
 pytest-workflow
 questionary>=1.8.0
-refgenie
 requests_cache
 requests
 rich>=10.0.0
