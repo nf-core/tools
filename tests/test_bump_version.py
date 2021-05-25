@@ -77,7 +77,7 @@ def test_bump_nextflow_version(datafiles):
     with open(new_pipeline_obj._fp("README.md")) as fh:
         readme = fh.read().splitlines()
     assert (
-        "[![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A5{}-brightgreen.svg)](https://www.nextflow.io/)".format(
+        "[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A5{}-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)".format(
             "21.04.0"
         )
         in readme
