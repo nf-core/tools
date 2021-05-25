@@ -29,12 +29,6 @@ def test_bump_pipeline_version(datafiles):
     new_pipeline_obj._load_pipeline_config()
     assert new_pipeline_obj.nf_config["manifest.version"].strip("'\"") == "1.1"
 
-    # Check .github/workflows/ci.yml
-    with open(new_pipeline_obj._fp(".github/workflows/ci.yml")) as fh:
-        ci_yaml = yaml.safe_load(fh)
-    assert ci_yaml["jobs"]["test"]["steps"][2]["run"] == "docker build --no-cache . -t nfcore/testpipeline:1.1"
-    assert "docker tag nfcore/testpipeline:dev nfcore/testpipeline:1.1" in ci_yaml["jobs"]["test"]["steps"][3]["run"]
-
 
 def test_dev_bump_pipeline_version(datafiles):
     """Test that making a release works with a dev name and a leading v"""
