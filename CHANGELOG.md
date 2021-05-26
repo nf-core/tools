@@ -11,6 +11,7 @@
 * Fixed a bug in the Docker image build for tools that failed due to an extra hyphen. [[#1069](https://github.com/nf-core/tools/pull/1069)]
 * Regular release sync fix - this time it was to do with JSON serialisation [[#1072](https://github.com/nf-core/tools/pull/1072)]
 * Fixed bug in schema validation that ignores upper/lower-case typos in parameters [[#1087](https://github.com/nf-core/tools/issues/1087)]
+* Bugfix: Download should use path relative to workflow for configs
 
 ### Modules
 
