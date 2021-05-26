@@ -76,7 +76,7 @@ workflow {{ short_name|upper }} {
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
     //
-    INPUT_CHECK ( 
+    INPUT_CHECK (
         ch_input
     )
 
