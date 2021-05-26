@@ -38,7 +38,7 @@ workflow NFCORE_{{ short_name|upper }} {
     //
     // WORKFLOW: Run main {{ name }} analysis pipeline
     //
-    include { {{ short_name|upper }} } from './workflows/pipeline'
+    include { {{ short_name|upper }} } from './workflows/{{ short_name }}'
     {{ short_name|upper }} ()
 }
 
