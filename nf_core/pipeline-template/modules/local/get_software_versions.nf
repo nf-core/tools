@@ -3,13 +3,10 @@ include { saveFiles } from './functions'
 
 params.options = [:]
 
-/*
- * Parse software version numbers
- */
 process GET_SOFTWARE_VERSIONS {
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:'pipeline_info', publish_id:'') }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:'pipeline_info', meta:[:], publish_by_meta:[]) }
 
     conda (params.enable_conda ? "conda-forge::python=3.8.3" : null)
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
@@ -22,12 +19,12 @@ process GET_SOFTWARE_VERSIONS {
 
     input:
     path versions
-    
+
     output:
     path "software_versions.csv"     , emit: csv
     path 'software_versions_mqc.yaml', emit: yaml
 
-    script:
+    script: // This script is bundled with the pipeline, in {{ name }}/bin/
     """
     echo $workflow.manifest.version > pipeline.version.txt
     echo $workflow.nextflow.version > nextflow.version.txt
