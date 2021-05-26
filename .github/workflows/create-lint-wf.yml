@@ -1,19 +1,20 @@
 name: Create a pipeline and lint it
 on: [push, pull_request]
 
+# Uncomment if we need an edge release of Nextflow again
+# env: NXF_EDGE: 1
+
 jobs:
   MakeTestWorkflow:
     runs-on: ubuntu-latest
-    env:
-      NXF_VER: 21.03.0-edge
     steps:
       - uses: actions/checkout@v2
         name: Check out source-code repository
 
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.8
 
       - name: Install python dependencies
         run: |

@@ -14,7 +14,9 @@ def files_exist(self):
         If these files are not found then this cannot be a Nextflow pipeline and something has gone badly wrong.
         All lint tests are stopped immediately with a critical error message.
 
-    Files that **must** be present::
+    Files that *must* be present:
+
+    .. code-block:: bash
 
         .gitattributes
         .gitignore
@@ -56,7 +58,9 @@ def files_exist(self):
         nextflow.config
         README.md
 
-    Files that *should* be present::
+    Files that *should* be present:
+
+    .. code-block:: bash
 
         main.nf
         environment.yml
@@ -67,15 +71,19 @@ def files_exist(self):
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
 
-    Files that *must not* be present::
+    Files that *must not* be present:
+
+    .. code-block:: bash
 
         Singularity
         parameters.settings.json
         bin/markdown_to_html.r
         conf/aws.config
-        github/workflows/push_dockerhub.yml
+        .github/workflows/push_dockerhub.yml
 
-    Files that *should not* be present::
+    Files that *should not* be present:
+
+    .. code-block:: bash
 
         .travis.yml
     """
@@ -87,6 +95,7 @@ def files_exist(self):
 
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
+    #: test autodoc
     short_name = self.nf_config["manifest.name"].strip("\"'").replace("nf-core/", "")
     files_fail = [
         [".gitattributes"],

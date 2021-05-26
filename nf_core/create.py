@@ -6,7 +6,6 @@ from genericpath import exists
 import git
 import jinja2
 import logging
-import mimetypes
 import os
 import pathlib
 import requests
@@ -47,7 +46,7 @@ class PipelineCreate(object):
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
     def init_pipeline(self):
-        """Creates the nf-core pipeline. """
+        """Creates the nf-core pipeline."""
 
         # Make the new pipeline
         self.render_template()
@@ -83,9 +82,6 @@ class PipelineCreate(object):
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
-        binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
-        binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
-
         object_attrs = vars(self)
         object_attrs["nf_core_version"] = nf_core.__version__
 
@@ -109,15 +105,9 @@ class PipelineCreate(object):
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             try:
-                # Just copy certain file extensions
-                filename, file_extension = os.path.splitext(template_fn_path)
-                if file_extension in binary_extensions:
-                    raise AttributeError(f"File extension: {file_extension}")
-
-                # Try to detect binary files
-                (ftype, encoding) = mimetypes.guess_type(template_fn_path, strict=False)
-                if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
-                    raise AttributeError(f"Encoding: {encoding}")
+                # Just copy binary files
+                if nf_core.utils.is_file_binary(template_fn_path):
+                    raise AttributeError(f"Binary file: {template_fn_path}")
 
                 # Got this far - render the template
                 log.debug(f"Rendering template file: '{template_fn}'")

@@ -1,0 +1,13 @@
+click
+GitPython
+jinja2
+jsonschema
+packaging
+prompt_toolkit>=3.0.3
+pyyaml
+pytest-workflow
+questionary>=1.8.0
+requests_cache
+requests
+rich>=10.0.0
+tabulate

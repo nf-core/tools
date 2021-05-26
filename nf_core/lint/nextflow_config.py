@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
 import re
+import os
+import logging
+
+log = logging.getLogger(__name__)
 
 
 def nextflow_config(self):
@@ -51,6 +55,23 @@ def nextflow_config(self):
 
         * ``params.input``: Input data that is not NGS sequencing data
 
+    * ``params.custom_config_version``
+
+        * Should always be set to default value ``master``
+
+    * ``params.custom_config_base``
+
+        * Should always be set to default value:
+        ``https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}``
+
+    * ``params.show_hidden_params``
+
+        * Determines whether boilerplate params are showed by schema. Set to ``false`` by default
+
+    * ``params.schema_ignore_params``
+
+        * A comma separated string of inputs the schema validation should ignore.
+
     **The following variables throw warnings if missing:**
 
     * ``manifest.mainScript``: The filename of the main pipeline script (should be ``main.nf``)
@@ -58,12 +79,6 @@ def nextflow_config(self):
 
       * Default filenames for the timeline, trace and report
       * The DAG file path should end with ``.svg`` (If Graphviz is not installed, Nextflow will generate a ``.dot`` file instead)
-
-    * ``process.container``
-
-      * Docker Hub handle for a single default container for use by all processes.
-      * Must specify a tag that matches the pipeline version number if set.
-      * If the pipeline version number contains the string ``dev``, the DockerHub tag must be ``:dev``
 
     **The following variables are depreciated and fail the test if they are still present:**
 
@@ -77,6 +92,22 @@ def nextflow_config(self):
     **The following Nextflow syntax is depreciated and fails the test if present:**
 
     * Process-level configuration syntax still using the old Nextflow syntax, for example: ``process.$fastqc`` instead of ``process withName:'fastqc'``.
+
+    .. tip:: You can choose to ignore tests for the presence or absence of specific config variables
+             by creating a file called ``.nf-core-lint.yml`` in the root of your pipeline and creating
+             a list the config variables that should be ignored. For example:
+
+             .. code-block:: yaml
+
+                nextflow_config:
+                    - params.input
+
+             The other checks in this test (depreciated syntax etc) can not be individually identified,
+             but you can skip the entire test block if you wish:
+
+             .. code-block:: yaml
+
+                nextflow_config: False
     """
     passed = []
     warned = []
@@ -99,6 +130,8 @@ def nextflow_config(self):
         ["process.time"],
         ["params.outdir"],
         ["params.input"],
+        ["params.show_hidden_params"],
+        ["params.schema_ignore_params"],
     ]
     # Throw a warning if these are missing
     config_warn = [
@@ -107,7 +140,6 @@ def nextflow_config(self):
         ["trace.file"],
         ["report.file"],
         ["dag.file"],
-        ["process.container"],
     ]
     # Old depreciated vars - fail if present
     config_fail_ifdefined = [
@@ -125,7 +157,8 @@ def nextflow_config(self):
     for cfs in config_fail:
         for cf in cfs:
             if cf in ignore_configs:
-                continue
+                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                break
             if cf in self.nf_config.keys():
                 passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
                 break
@@ -134,7 +167,8 @@ def nextflow_config(self):
     for cfs in config_warn:
         for cf in cfs:
             if cf in ignore_configs:
-                continue
+                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                break
             if cf in self.nf_config.keys():
                 passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
                 break
@@ -142,7 +176,8 @@ def nextflow_config(self):
             warned.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
     for cf in config_fail_ifdefined:
         if cf in ignore_configs:
-            continue
+            ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+            break
         if cf not in self.nf_config.keys():
             passed.append("Config variable (correctly) not found: {}".format(self._wrap_quotes(cf)))
         else:
@@ -210,34 +245,6 @@ def nextflow_config(self):
                 ).strip("\"'")
             )
 
-    # Check that the process.container name is pulling the version tag or :dev
-    if self.nf_config.get("process.container"):
-        container_name = "{}:{}".format(
-            self.nf_config.get("manifest.name").replace("nf-core", "nfcore").strip("'"),
-            self.nf_config.get("manifest.version", "").strip("'"),
-        )
-        if "dev" in self.nf_config.get("manifest.version", "") or not self.nf_config.get("manifest.version"):
-            container_name = "{}:dev".format(
-                self.nf_config.get("manifest.name").replace("nf-core", "nfcore").strip("'")
-            )
-        try:
-            assert self.nf_config.get("process.container", "").strip("'") == container_name
-        except AssertionError:
-            if self.release_mode:
-                failed.append(
-                    "Config ``process.container`` looks wrong. Should be ``{}`` but is ``{}``".format(
-                        container_name, self.nf_config.get("process.container", "").strip("'")
-                    )
-                )
-            else:
-                warned.append(
-                    "Config ``process.container`` looks wrong. Should be ``{}`` but is ``{}``".format(
-                        container_name, self.nf_config.get("process.container", "").strip("'")
-                    )
-                )
-        else:
-            passed.append("Config ``process.container`` looks correct: ``{}``".format(container_name))
-
     # Check that the pipeline version contains ``dev``
     if not self.release_mode and "manifest.version" in self.nf_config:
         if self.nf_config["manifest.version"].strip(" '\"").endswith("dev"):
@@ -262,6 +269,46 @@ def nextflow_config(self):
                 )
             )
 
-    for config in ignore_configs:
-        ignored.append("Config ignored: {}".format(self._wrap_quotes(config)))
+    # Check if custom profile params are set correctly
+    if self.nf_config.get("params.custom_config_version", "").strip("'") == "master":
+        passed.append("Config `params.custom_config_version` is set to `master`")
+    else:
+        failed.append("Config `params.custom_config_version` is not set to `master`")
+
+    custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/{}".format(
+        self.nf_config.get("params.custom_config_version", "").strip("'")
+    )
+    if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
+        passed.append("Config `params.custom_config_base` is set to `{}`".format(custom_config_base))
+    else:
+        failed.append("Config `params.custom_config_base` is not set to `{}`".format(custom_config_base))
+
+    # Check that lines for loading custom profiles exist
+    lines = [
+        r"// Load nf-core custom profiles from different Institutions",
+        r"try {",
+        r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
+        r"} catch (Exception e) {",
+        r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
+        r"}",
+    ]
+    path = os.path.join(self.wf_path, "nextflow.config")
+    i = 0
+    with open(path, "r") as f:
+        for line in f:
+            if lines[i] in line:
+                i += 1
+                if i == len(lines):
+                    break
+            else:
+                i = 0
+    if i == len(lines):
+        passed.append("Lines for loading custom profiles found")
+    else:
+        lines[2] = f"\t{lines[2]}"
+        lines[4] = f"\t{lines[4]}"
+        failed.append(
+            "Lines for loading custom profiles not found. File should contain: ```groovy\n{}".format("\n".join(lines))
+        )
+
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}
