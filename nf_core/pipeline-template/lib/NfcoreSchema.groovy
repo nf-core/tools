@@ -1,6 +1,6 @@
-/*
- * This file holds several functions used to perform JSON parameter validation, help and summary rendering for the nf-core pipeline template.
- */
+//
+// This file holds several functions used to perform JSON parameter validation, help and summary rendering for the nf-core pipeline template.
+//
 
 import org.everit.json.schema.Schema
 import org.everit.json.schema.loader.SchemaLoader
@@ -13,16 +13,23 @@ import groovy.json.JsonBuilder
 
 class NfcoreSchema {
 
-    /*
-    * Function to loop over all parameters defined in schema and check
-    * whether the given paremeters adhere to the specificiations
-    */
+    //
+    // Resolve Schema path relative to main workflow directory
+    //
+    public static String getSchemaPath(workflow, schema_filename='nextflow_schema.json') {
+        return "${workflow.projectDir}/${schema_filename}"
+    }
+
+    //
+    // Function to loop over all parameters defined in schema and check
+    // whether the given parameters adhere to the specifications
+    //
     /* groovylint-disable-next-line UnusedPrivateMethodParameter */
-    private static void validateParameters(params, jsonSchema, log) {
+    public static void validateParameters(workflow, params, log, schema_filename='nextflow_schema.json') {
         def has_error = false
         //=====================================================================//
         // Check for nextflow core params and unexpected params
-        def json = new File(jsonSchema).text
+        def json = new File(getSchemaPath(workflow, schema_filename=schema_filename)).text
         def Map schemaParams = (Map) new JsonSlurper().parseText(json).get('definitions')
         def nf_params = [
             // Options for base `nextflow` command
@@ -114,8 +121,7 @@ class NfcoreSchema {
             def params_ignore = params.schema_ignore_params.split(',') + 'schema_ignore_params'
             def expectedParamsLowerCase = expectedParams.collect{ it.replace("-", "").toLowerCase() }
             def specifiedParamLowerCase = specifiedParam.replace("-", "").toLowerCase()
-            def isCamelCaseBug = (specifiedParam.contains("-") && !expectedParams.contains(specifiedParam) && expectedParamsLowerCase.contains(specifiedParamLowerCase))
-            if (!expectedParams.contains(specifiedParam) && !params_ignore.contains(specifiedParam) && !isCamelCaseBug) {
+            if (!expectedParams.contains(specifiedParam) && !params_ignore.contains(specifiedParam) && !expectedParamsLowerCase.contains(specifiedParamLowerCase)) {
                 // Temporarily remove camelCase/camel-case params #1035
                 def unexpectedParamsLowerCase = unexpectedParams.collect{ it.replace("-", "").toLowerCase()}
                 if (!unexpectedParamsLowerCase.contains(specifiedParamLowerCase)){
@@ -126,36 +132,36 @@ class NfcoreSchema {
 
         //=====================================================================//
         // Validate parameters against the schema
-        InputStream inputStream = new File(jsonSchema).newInputStream()
-        JSONObject rawSchema = new JSONObject(new JSONTokener(inputStream))
+        InputStream input_stream = new File(getSchemaPath(workflow, schema_filename=schema_filename)).newInputStream()
+        JSONObject raw_schema = new JSONObject(new JSONTokener(input_stream))
 
         // Remove anything that's in params.schema_ignore_params
-        rawSchema = removeIgnoredParams(rawSchema, params)
+        raw_schema = removeIgnoredParams(raw_schema, params)
 
-        Schema schema = SchemaLoader.load(rawSchema)
+        Schema schema = SchemaLoader.load(raw_schema)
 
         // Clean the parameters
         def cleanedParams = cleanParameters(params)
 
         // Convert to JSONObject
         def jsonParams = new JsonBuilder(cleanedParams)
-        JSONObject paramsJSON = new JSONObject(jsonParams.toString())
+        JSONObject params_json = new JSONObject(jsonParams.toString())
 
         // Validate
         try {
-            schema.validate(paramsJSON)
+            schema.validate(params_json)
         } catch (ValidationException e) {
             println ''
             log.error 'ERROR: Validation of pipeline parameters failed!'
             JSONObject exceptionJSON = e.toJSON()
-            printExceptions(exceptionJSON, paramsJSON, log)
+            printExceptions(exceptionJSON, params_json, log)
             println ''
             has_error = true
         }
 
         // Check for unexpected parameters
         if (unexpectedParams.size() > 0) {
-            Map colors = Utils.logColours(params.monochrome_logs)
+            Map colors = NfcoreTemplate.logColours(params.monochrome_logs)
             println ''
             def warn_msg = 'Found unexpected parameters:'
             for (unexpectedParam in unexpectedParams) {
@@ -171,195 +177,16 @@ class NfcoreSchema {
         }
     }
 
-    // Loop over nested exceptions and print the causingException
-    private static void printExceptions(exJSON, paramsJSON, log) {
-        def causingExceptions = exJSON['causingExceptions']
-        if (causingExceptions.length() == 0) {
-            def m = exJSON['message'] =~ /required key \[([^\]]+)\] not found/
-            // Missing required param
-            if (m.matches()) {
-                log.error "* Missing required parameter: --${m[0][1]}"
-            }
-            // Other base-level error
-            else if (exJSON['pointerToViolation'] == '#') {
-                log.error "* ${exJSON['message']}"
-            }
-            // Error with specific param
-            else {
-                def param = exJSON['pointerToViolation'] - ~/^#\//
-                def param_val = paramsJSON[param].toString()
-                log.error "* --${param}: ${exJSON['message']} (${param_val})"
-            }
-        }
-        for (ex in causingExceptions) {
-            printExceptions(ex, paramsJSON, log)
-        }
-    }
-
-    // Remove an element from a JSONArray
-    private static JSONArray removeElement(jsonArray, element){
-        def list = []
-        int len = jsonArray.length()
-        for (int i=0;i<len;i++){
-            list.add(jsonArray.get(i).toString())
-        }
-        list.remove(element)
-        JSONArray jsArray = new JSONArray(list)
-        return jsArray
-    }
-
-    private static JSONObject removeIgnoredParams(rawSchema, params){
-        // Remove anything that's in params.schema_ignore_params
-        params.schema_ignore_params.split(',').each{ ignore_param ->
-            if(rawSchema.keySet().contains('definitions')){
-                rawSchema.definitions.each { definition ->
-                    for (key in definition.keySet()){
-                        if (definition[key].get("properties").keySet().contains(ignore_param)){
-                            // Remove the param to ignore
-                            definition[key].get("properties").remove(ignore_param)
-                            // If the param was required, change this
-                            if (definition[key].has("required")) {
-                                def cleaned_required = removeElement(definition[key].required, ignore_param)
-                                definition[key].put("required", cleaned_required)
-                            }
-                        }
-                    }
-                }
-            }
-            if(rawSchema.keySet().contains('properties') && rawSchema.get('properties').keySet().contains(ignore_param)) {
-                rawSchema.get("properties").remove(ignore_param)
-            }
-            if(rawSchema.keySet().contains('required') && rawSchema.required.contains(ignore_param)) {
-                def cleaned_required = removeElement(rawSchema.required, ignore_param)
-                rawSchema.put("required", cleaned_required)
-            }
-        }
-        return rawSchema
-    }
-
-    private static Map cleanParameters(params) {
-        def new_params = params.getClass().newInstance(params)
-        for (p in params) {
-            // remove anything evaluating to false
-            if (!p['value']) {
-                new_params.remove(p.key)
-            }
-            // Cast MemoryUnit to String
-            if (p['value'].getClass() == nextflow.util.MemoryUnit) {
-                new_params.replace(p.key, p['value'].toString())
-            }
-            // Cast Duration to String
-            if (p['value'].getClass() == nextflow.util.Duration) {
-                new_params.replace(p.key, p['value'].toString().replaceFirst(/d(?!\S)/, "day"))
-            }
-            // Cast LinkedHashMap to String
-            if (p['value'].getClass() == LinkedHashMap) {
-                new_params.replace(p.key, p['value'].toString())
-            }
-        }
-        return new_params
-    }
-
-     /*
-     * This method tries to read a JSON params file
-     */
-    private static LinkedHashMap paramsLoad(String json_schema) {
-        def params_map = new LinkedHashMap()
-        try {
-            params_map = paramsRead(json_schema)
-        } catch (Exception e) {
-            println "Could not read parameters settings from JSON. $e"
-            params_map = new LinkedHashMap()
-        }
-        return params_map
-    }
-
-    /*
-    Method to actually read in JSON file using Groovy.
-    Group (as Key), values are all parameters
-        - Parameter1 as Key, Description as Value
-        - Parameter2 as Key, Description as Value
-        ....
-    Group
-        -
-    */
-    private static LinkedHashMap paramsRead(String json_schema) throws Exception {
-        def json = new File(json_schema).text
-        def Map schema_definitions = (Map) new JsonSlurper().parseText(json).get('definitions')
-        def Map schema_properties = (Map) new JsonSlurper().parseText(json).get('properties')
-        /* Tree looks like this in nf-core schema
-         * definitions <- this is what the first get('definitions') gets us
-             group 1
-               title
-               description
-                 properties
-                   parameter 1
-                     type
-                     description
-                   parameter 2
-                     type
-                     description
-             group 2
-               title
-               description
-                 properties
-                   parameter 1
-                     type
-                     description
-         * properties <- parameters can also be ungrouped, outside of definitions
-            parameter 1
-             type
-             description
-        */
-
-        // Grouped params
-        def params_map = new LinkedHashMap()
-        schema_definitions.each { key, val ->
-            def Map group = schema_definitions."$key".properties // Gets the property object of the group
-            def title = schema_definitions."$key".title
-            def sub_params = new LinkedHashMap()
-            group.each { innerkey, value ->
-                sub_params.put(innerkey, value)
-            }
-            params_map.put(title, sub_params)
-        }
-
-        // Ungrouped params
-        def ungrouped_params = new LinkedHashMap()
-        schema_properties.each { innerkey, value ->
-            ungrouped_params.put(innerkey, value)
-        }
-        params_map.put("Other parameters", ungrouped_params)
-
-        return params_map
-    }
-
-    /*
-     * Get maximum number of characters across all parameter names
-     */
-    private static Integer paramsMaxChars(params_map) {
-        Integer max_chars = 0
-        for (group in params_map.keySet()) {
-            def group_params = params_map.get(group)  // This gets the parameters of that particular group
-            for (param in group_params.keySet()) {
-                if (param.size() > max_chars) {
-                    max_chars = param.size()
-                }
-            }
-        }
-        return max_chars
-    }
-
-    /*
-     * Beautify parameters for --help
-     */
-    private static String paramsHelp(workflow, params, json_schema, command) {
-        Map colors = Utils.logColours(params.monochrome_logs)
+    //
+    // Beautify parameters for --help
+    //
+    public static String paramsHelp(workflow, params, command, schema_filename='nextflow_schema.json') {
+        Map colors = NfcoreTemplate.logColours(params.monochrome_logs)
         Integer num_hidden = 0
         String output  = ''
         output        += 'Typical pipeline command:\n\n'
         output        += "  ${colors.cyan}${command}${colors.reset}\n\n"
-        Map params_map = paramsLoad(json_schema)
+        Map params_map = paramsLoad(getSchemaPath(workflow, schema_filename=schema_filename))
         Integer max_chars  = paramsMaxChars(params_map) + 1
         Integer desc_indent = max_chars + 14
         Integer dec_linewidth = 160 - desc_indent
@@ -403,14 +230,14 @@ class NfcoreSchema {
         if (num_hidden > 0){
             output += colors.dim + "!! Hiding $num_hidden params, use --show_hidden_params to show them !!\n" + colors.reset
         }
-        output += Utils.dashedLine(params.monochrome_logs)
+        output += NfcoreTemplate.dashedLine(params.monochrome_logs)
         return output
     }
 
-    /*
-     * Groovy Map summarising parameters/workflow options used by the pipeline
-     */
-    private static LinkedHashMap paramsSummaryMap(workflow, params, json_schema) {
+    //
+    // Groovy Map summarising parameters/workflow options used by the pipeline
+    //
+    public static LinkedHashMap paramsSummaryMap(workflow, params, schema_filename='nextflow_schema.json') {
         // Get a selection of core Nextflow workflow options
         def Map workflow_summary = [:]
         if (workflow.revision) {
@@ -433,7 +260,7 @@ class NfcoreSchema {
         // Get pipeline parameters defined in JSON Schema
         def Map params_summary = [:]
         def blacklist  = ['hostnames']
-        def params_map = paramsLoad(json_schema)
+        def params_map = paramsLoad(getSchemaPath(workflow, schema_filename=schema_filename))
         for (group in params_map.keySet()) {
             def sub_params = new LinkedHashMap()
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
@@ -476,13 +303,13 @@ class NfcoreSchema {
         return [ 'Core Nextflow options' : workflow_summary ] << params_summary
     }
 
-    /*
-     * Beautify parameters for summary and return as string
-     */
-    private static String paramsSummaryLog(workflow, params, json_schema) {
-        Map colors = Utils.logColours(params.monochrome_logs)
+    //
+    // Beautify parameters for summary and return as string
+    //
+    public static String paramsSummaryLog(workflow, params) {
+        Map colors = NfcoreTemplate.logColours(params.monochrome_logs)
         String output  = ''
-        def params_map = paramsSummaryMap(workflow, params, json_schema)
+        def params_map = paramsSummaryMap(workflow, params)
         def max_chars  = paramsMaxChars(params_map)
         for (group in params_map.keySet()) {
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
@@ -495,7 +322,195 @@ class NfcoreSchema {
             }
         }
         output += "!! Only displaying parameters that differ from the pipeline defaults !!\n"
-        output += Utils.dashedLine(params.monochrome_logs)
+        output += NfcoreTemplate.dashedLine(params.monochrome_logs)
         return output
+    }
+
+    //
+    // Loop over nested exceptions and print the causingException
+    //
+    private static void printExceptions(ex_json, params_json, log) {
+        def causingExceptions = ex_json['causingExceptions']
+        if (causingExceptions.length() == 0) {
+            def m = ex_json['message'] =~ /required key \[([^\]]+)\] not found/
+            // Missing required param
+            if (m.matches()) {
+                log.error "* Missing required parameter: --${m[0][1]}"
+            }
+            // Other base-level error
+            else if (ex_json['pointerToViolation'] == '#') {
+                log.error "* ${ex_json['message']}"
+            }
+            // Error with specific param
+            else {
+                def param = ex_json['pointerToViolation'] - ~/^#\//
+                def param_val = params_json[param].toString()
+                log.error "* --${param}: ${ex_json['message']} (${param_val})"
+            }
+        }
+        for (ex in causingExceptions) {
+            printExceptions(ex, params_json, log)
+        }
+    }
+
+    //
+    // Remove an element from a JSONArray
+    //
+    private static JSONArray removeElement(json_array, element) {
+        def list = []
+        int len = json_array.length()
+        for (int i=0;i<len;i++){
+            list.add(json_array.get(i).toString())
+        }
+        list.remove(element)
+        JSONArray jsArray = new JSONArray(list)
+        return jsArray
+    }
+
+    //
+    // Remove ignored parameters
+    //
+    private static JSONObject removeIgnoredParams(raw_schema, params) {
+        // Remove anything that's in params.schema_ignore_params
+        params.schema_ignore_params.split(',').each{ ignore_param ->
+            if(raw_schema.keySet().contains('definitions')){
+                raw_schema.definitions.each { definition ->
+                    for (key in definition.keySet()){
+                        if (definition[key].get("properties").keySet().contains(ignore_param)){
+                            // Remove the param to ignore
+                            definition[key].get("properties").remove(ignore_param)
+                            // If the param was required, change this
+                            if (definition[key].has("required")) {
+                                def cleaned_required = removeElement(definition[key].required, ignore_param)
+                                definition[key].put("required", cleaned_required)
+                            }
+                        }
+                    }
+                }
+            }
+            if(raw_schema.keySet().contains('properties') && raw_schema.get('properties').keySet().contains(ignore_param)) {
+                raw_schema.get("properties").remove(ignore_param)
+            }
+            if(raw_schema.keySet().contains('required') && raw_schema.required.contains(ignore_param)) {
+                def cleaned_required = removeElement(raw_schema.required, ignore_param)
+                raw_schema.put("required", cleaned_required)
+            }
+        }
+        return raw_schema
+    }
+
+    //
+    // Clean and check parameters relative to Nextflow native classes
+    //
+    private static Map cleanParameters(params) {
+        def new_params = params.getClass().newInstance(params)
+        for (p in params) {
+            // remove anything evaluating to false
+            if (!p['value']) {
+                new_params.remove(p.key)
+            }
+            // Cast MemoryUnit to String
+            if (p['value'].getClass() == nextflow.util.MemoryUnit) {
+                new_params.replace(p.key, p['value'].toString())
+            }
+            // Cast Duration to String
+            if (p['value'].getClass() == nextflow.util.Duration) {
+                new_params.replace(p.key, p['value'].toString().replaceFirst(/d(?!\S)/, "day"))
+            }
+            // Cast LinkedHashMap to String
+            if (p['value'].getClass() == LinkedHashMap) {
+                new_params.replace(p.key, p['value'].toString())
+            }
+        }
+        return new_params
+    }
+
+    //
+    // This function tries to read a JSON params file
+    //
+    private static LinkedHashMap paramsLoad(String json_schema) {
+        def params_map = new LinkedHashMap()
+        try {
+            params_map = paramsRead(json_schema)
+        } catch (Exception e) {
+            println "Could not read parameters settings from JSON. $e"
+            params_map = new LinkedHashMap()
+        }
+        return params_map
+    }
+
+    //
+    // Method to actually read in JSON file using Groovy.
+    // Group (as Key), values are all parameters
+    //    - Parameter1 as Key, Description as Value
+    //    - Parameter2 as Key, Description as Value
+    //    ....
+    // Group
+    //    -
+    private static LinkedHashMap paramsRead(String json_schema) throws Exception {
+        def json = new File(json_schema).text
+        def Map schema_definitions = (Map) new JsonSlurper().parseText(json).get('definitions')
+        def Map schema_properties = (Map) new JsonSlurper().parseText(json).get('properties')
+        /* Tree looks like this in nf-core schema
+        * definitions <- this is what the first get('definitions') gets us
+                group 1
+                    title
+                    description
+                        properties
+                        parameter 1
+                            type
+                            description
+                        parameter 2
+                            type
+                            description
+                group 2
+                    title
+                    description
+                        properties
+                        parameter 1
+                            type
+                            description
+        * properties <- parameters can also be ungrouped, outside of definitions
+                parameter 1
+                    type
+                    description
+        */
+
+        // Grouped params
+        def params_map = new LinkedHashMap()
+        schema_definitions.each { key, val ->
+            def Map group = schema_definitions."$key".properties // Gets the property object of the group
+            def title = schema_definitions."$key".title
+            def sub_params = new LinkedHashMap()
+            group.each { innerkey, value ->
+                sub_params.put(innerkey, value)
+            }
+            params_map.put(title, sub_params)
+        }
+
+        // Ungrouped params
+        def ungrouped_params = new LinkedHashMap()
+        schema_properties.each { innerkey, value ->
+            ungrouped_params.put(innerkey, value)
+        }
+        params_map.put("Other parameters", ungrouped_params)
+
+        return params_map
+    }
+
+    //
+    // Get maximum number of characters across all parameter names
+    //
+    private static Integer paramsMaxChars(params_map) {
+        Integer max_chars = 0
+        for (group in params_map.keySet()) {
+            def group_params = params_map.get(group)  // This gets the parameters of that particular group
+            for (param in group_params.keySet()) {
+                if (param.size() > max_chars) {
+                    max_chars = param.size()
+                }
+            }
+        }
+        return max_chars
     }
 }
