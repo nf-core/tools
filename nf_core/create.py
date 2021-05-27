@@ -16,6 +16,7 @@ import nf_core
 
 log = logging.getLogger(__name__)
 
+
 class PipelineCreate(object):
     """Creates a nf-core pipeline a la carte from the nf-core best-practice template.
 
@@ -89,10 +90,10 @@ class PipelineCreate(object):
         template_files += list(pathlib.Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         rename_files = {
-            'workflows/pipeline.nf': f"workflows/{self.short_name}.nf",
-            'lib/WorkflowPipeline.groovy': f"lib/Workflow{self.short_name[0].upper()}{self.short_name[1:]}.groovy"
+            "workflows/pipeline.nf": f"workflows/{self.short_name}.nf",
+            "lib/WorkflowPipeline.groovy": f"lib/Workflow{self.short_name[0].upper()}{self.short_name[1:]}.groovy",
         }
-        
+
         for template_fn_path_obj in template_files:
 
             template_fn_path = str(template_fn_path_obj)

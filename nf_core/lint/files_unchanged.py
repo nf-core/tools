@@ -76,7 +76,7 @@ def files_unchanged(self):
     # List of lists. Passes if any of the files in the sublist are found.
     files_exact = [
         [".gitattributes"],
-        [".markdownlint.yml")],
+        [".markdownlint.yml"],
         ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
         [os.path.join(".github", ".dockstore.yml")],
