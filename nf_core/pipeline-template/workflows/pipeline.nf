@@ -7,7 +7,7 @@
 def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Validate input parameters
-Workflow{{ name[0]|upper }}{{ name[1:] }}.initialise(params, log)
+Workflow{{ short_name[0]|upper }}{{ short_name[1:] }}.initialise(params, log)
 
 // TODO nf-core: Add all file path parameters for the pipeline to the list below
 // Check input path parameters to see if they exist
@@ -106,7 +106,7 @@ workflow {{ short_name|upper }} {
     //
     // MODULE: MultiQC
     //
-    workflow_summary    = Workflow{{ name[0]|upper }}{{ name[1:] }}.paramsSummaryMultiqc(workflow, summary_params)
+    workflow_summary    = Workflow{{ short_name[0]|upper }}{{ short_name[1:] }}.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
     ch_multiqc_files = Channel.empty()
