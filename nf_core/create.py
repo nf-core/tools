@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 
 class PipelineCreate(object):
-    """Creates a nf-core pipeline a la carte from the nf-core best-practise template.
+    """Creates a nf-core pipeline a la carte from the nf-core best-practice template.
 
     Args:
         name (str): Name for the pipeline.
