@@ -55,11 +55,9 @@ On release, automated continuous integration tests run the pipeline on a full-si
     nextflow run {{ name }} -profile <docker/singularity/podman/shifter/charliecloud/conda/institute> --input samplesheet.csv --genome GRCh37
     ```
 
-See [usage](https://nf-co.re/rnaseq/usage) and [parameter](https://nf-co.re/rnaseq/parameters) docs for all of the available options when running the pipeline.
-
 ## Documentation
 
-The {{ name }} pipeline comes with documentation about the pipeline: [usage](https://nf-co.re/{{ short_name }}/usage) and [output](https://nf-co.re/{{ short_name }}/output).
+The {{ name }} pipeline comes with documentation about the pipeline [usage](https://nf-co.re/{{ short_name }}/usage), [parameters](https://nf-co.re/{{ short_name }}/parameters) and [output](https://nf-co.re/{{ short_name }}/output).
 
 ## Credits
 
