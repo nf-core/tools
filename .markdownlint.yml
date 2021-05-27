@@ -1,6 +1,8 @@
 # Markdownlint configuration file
 default: true
 line-length: false
+ul-indent:
+    indent: 4
 no-duplicate-header:
     siblings_only: true
 no-inline-html:
@@ -10,7 +12,6 @@ no-inline-html:
         - kbd
         - details
         - summary
-        - kbd
 # tools only - the {{ jinja variables }} break URLs and cause this to error
 no-bare-urls: false
 # tools only - suppresses error messages for usage of $ in main README
