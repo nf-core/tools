@@ -2,12 +2,12 @@
 // This file holds several functions specific to the workflow/{{ short_name }}.nf in the {{ name }} pipeline
 //
 
-class Workflow{{ name[0]|upper }}{{ name[1:] }} {
+class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
 
     //
     // Check and validate parameters
     //
-    public static void initialise(params, log, valid_params) {
+    public static void initialise(params, log) {
         genomeExistsError(params, log)
 
         if (!params.fasta) {
