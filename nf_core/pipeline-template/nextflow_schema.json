@@ -2,7 +2,7 @@
     "$schema": "http://json-schema.org/draft-07/schema",
     "$id": "https://raw.githubusercontent.com/{{ name }}/master/nextflow_schema.json",
     "title": "{{ name }} pipeline parameters",
-    "description": "Nextflow RNA-Seq analysis pipeline, part of the nf-core community.",
+    "description": "{{ description }}",
     "type": "object",
     "definitions": {
         "input_output_options": {
@@ -10,6 +10,9 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "input"
+            ],
             "properties": {
                 "input": {
                     "type": "string",
