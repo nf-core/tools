@@ -214,6 +214,8 @@ class TestLint(unittest.TestCase):
         test_files_unchanged_fail,
     )
 
+    from lint.version_consistency import test_version_consistency_pass
+
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""
