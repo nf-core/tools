@@ -16,6 +16,7 @@
 ### Modules
 
 * Update comment style of modules `functions.nf` template file [[#1076](https://github.com/nf-core/tools/issues/1076)]
+* Changed working directory to temporary directory for `nf-core modules create-test-yml` [[#908](https://github.com/nf-core/tools/issues/908)]
 
 #### Sync
 
