@@ -134,7 +134,6 @@ class TestSchema(unittest.TestCase):
             "properties": {"foo": {"type": "string"}, "bar": {"type": "string", "default": ""}},
             "required": ["foo"]
         }
-        self.schema_obj.params
         assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):
