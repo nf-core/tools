@@ -114,7 +114,8 @@ class PipelineSchema(object):
 
         # For everything else, an empty string is an empty string
         if isinstance(param["default"], str) and param["default"].strip() == "":
-            return ""
+            param["default"] = ""
+            return param
 
         # Integers
         if param["type"] == "integer":
