@@ -848,7 +848,7 @@ class NFCoreModule(object):
 
         # Compare the files
         if local_copy != template_copy:
-            self.warned.append(("function_nf_comparison", "New version of functions.nf available", self.function_nf))
+            self.failed.append(("function_nf_comparison", "New version of functions.nf available", self.function_nf))
         else:
             self.passed.append(("function_nf_comparison", "functions.nf is up to date", self.function_nf))
 
