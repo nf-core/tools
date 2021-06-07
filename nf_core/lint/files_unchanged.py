@@ -19,12 +19,12 @@ def files_unchanged(self):
     Files that must be unchanged::
 
         .gitattributes
+        .markdownlint.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.md
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.md
-        .github/markdownlint.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/linting_comment.yml
@@ -38,6 +38,7 @@ def files_unchanged(self):
         docs/README.md'
         lib/nfcore_external_java_deps.jar
         lib/NfcoreSchema.groovy
+        lib/NfcoreTemplate.groovy
         ['LICENSE', 'LICENSE.md', 'LICENCE', 'LICENCE.md'], # NB: British / American spelling
 
     Files that can have additional content but must include the template contents::
@@ -75,6 +76,7 @@ def files_unchanged(self):
     # List of lists. Passes if any of the files in the sublist are found.
     files_exact = [
         [".gitattributes"],
+        [".markdownlint.yml"],
         ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
         [os.path.join(".github", ".dockstore.yml")],
@@ -82,7 +84,6 @@ def files_unchanged(self):
         [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
-        [os.path.join(".github", "markdownlint.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "linting_comment.yml")],
@@ -96,8 +97,7 @@ def files_unchanged(self):
         [os.path.join("docs", "README.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
         [os.path.join("lib", "NfcoreSchema.groovy")],
-        [os.path.join("lib", "Checks.groovy")],
-        [os.path.join("lib", "Utils.groovy")],
+        [os.path.join("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
         [".gitignore", "foo"],

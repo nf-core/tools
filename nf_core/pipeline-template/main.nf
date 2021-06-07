@@ -1,66 +1,63 @@
 #!/usr/bin/env nextflow
 /*
 ========================================================================================
-                         {{ name }}
+    {{ name }}
 ========================================================================================
- {{ name }} Analysis Pipeline.
- #### Homepage / Documentation
- https://github.com/{{ name }}
+    Github : https://github.com/{{ name }}
+    Website: https://nf-co.re/{{ short_name }}
+    Slack  : https://nfcore.slack.com/channels/{{ short_name }}
 ----------------------------------------------------------------------------------------
 */
 
 nextflow.enable.dsl = 2
 
-////////////////////////////////////////////////////
-/* --               PRINT HELP                 -- */
-////////////////////////////////////////////////////
+/*
+========================================================================================
+    GENOME PARAMETER VALUES
+========================================================================================
+*/
 
-log.info Utils.logo(workflow, params.monochrome_logs)
+params.fasta = WorkflowMain.getGenomeAttribute(params, 'fasta')
 
-def json_schema = "$projectDir/nextflow_schema.json"
-if (params.help) {
-    // TODO nf-core: Update typical command used to run pipeline
-    def command = "nextflow run {{ name }} --input samplesheet.csv --genome GRCh37 -profile docker"
-    log.info NfcoreSchema.paramsHelp(workflow, params, json_schema, command)
-    log.info Workflow.citation(workflow)
-    log.info Utils.dashedLine(params.monochrome_logs)
-    exit 0
-}
+/*
+========================================================================================
+    VALIDATE & PRINT PARAMETER SUMMARY
+========================================================================================
+*/
 
-////////////////////////////////////////////////////
-/* --        GENOME PARAMETER VALUES           -- */
-////////////////////////////////////////////////////
+WorkflowMain.initialise(workflow, params, log)
 
-params.fasta = Workflow.getGenomeAttribute(params, 'fasta')
+/*
+========================================================================================
+    NAMED WORKFLOW FOR PIPELINE
+========================================================================================
+*/
 
-////////////////////////////////////////////////////
-/* --         PRINT PARAMETER SUMMARY          -- */
-////////////////////////////////////////////////////
+workflow NFCORE_{{ short_name|upper }} {
 
-def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params, json_schema)
-log.info NfcoreSchema.paramsSummaryLog(workflow, params, json_schema)
-log.info Workflow.citation(workflow)
-log.info Utils.dashedLine(params.monochrome_logs)
-
-////////////////////////////////////////////////////
-/* --         VALIDATE PARAMETERS              -- */
-////////////////////////////////////////////////////
-
-Workflow.validateMainParams(workflow, params, json_schema, log)
-
-////////////////////////////////////////////////////
-/* --            RUN WORKFLOW(S)               -- */
-////////////////////////////////////////////////////
-
-workflow  NFCORE_{{ short_name|upper }} {
-    include { {{ short_name|upper }} } from './workflows/pipeline' addParams( summary_params: summary_params )
+    //
+    // WORKFLOW: Run main {{ name }} analysis pipeline
+    //
+    include { {{ short_name|upper }} } from './workflows/{{ short_name }}'
     {{ short_name|upper }} ()
 }
 
+/*
+========================================================================================
+    RUN ALL WORKFLOWS
+========================================================================================
+*/
+
+//
+// WORKFLOW: Execute a single named workflow for the pipeline
+// See: https://github.com/nf-core/rnaseq/issues/619
+//
 workflow {
-  NFCORE_{{ short_name|upper }} ()
+    NFCORE_{{ short_name|upper }} ()
 }
 
-////////////////////////////////////////////////////
-/* --                  THE END                 -- */
-////////////////////////////////////////////////////
+/*
+========================================================================================
+    THE END
+========================================================================================
+*/

@@ -25,12 +25,12 @@ A python package with helper tools for the nf-core community.
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 * [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
-  * [`modules list` - List available modules](#list-modules)
-  * [`modules install` - Install a module from nf-core/modules](#install-a-module-into-a-pipeline)
-  * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
-  * [`modules create` - Create a module from the template](#create-a-new-module)
-  * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
-  * [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
+    * [`modules list` - List available modules](#list-modules)
+    * [`modules install` - Install a module from nf-core/modules](#install-a-module-into-a-pipeline)
+    * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
+    * [`modules create` - Create a module from the template](#create-a-new-module)
+    * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
+    * [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
 * [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -327,24 +327,24 @@ Do you want to run this command now?  [y/n]:
 ### Launch tool options
 
 * `-r`, `--revision`
-  * Specify a pipeline release (or branch / git commit sha) of the project to run
+    * Specify a pipeline release (or branch / git commit sha) of the project to run
 * `-i`, `--id`
-  * You can use the web GUI for nf-core pipelines by clicking _"Launch"_ on the website. Once filled in you will be given an ID to use with this command which is used to retrieve your inputs.
+    * You can use the web GUI for nf-core pipelines by clicking _"Launch"_ on the website. Once filled in you will be given an ID to use with this command which is used to retrieve your inputs.
 * `-c`, `--command-only`
-  * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
+    * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
 * `-p`, `--params-in PATH`
-  * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
-  * This will overwrite the pipeline schema defaults before the wizard is launched.
+    * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
+    * This will overwrite the pipeline schema defaults before the wizard is launched.
 * `-o`, `--params-out PATH`
-  * Path to save parameters JSON file to. (Default: `nf-params.json`)
+    * Path to save parameters JSON file to. (Default: `nf-params.json`)
 * `-a`, `--save-all`
-  * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
-  * This option saves _all_ parameters found to the JSON file.
+    * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
+    * This option saves _all_ parameters found to the JSON file.
 * `-h`, `--show-hidden`
-  * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
-  * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
+    * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
+    * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
 * `--url`
-  * Change the URL used for the graphical interface, useful for development work on the website.
+    * Change the URL used for the graphical interface, useful for development work on the website.
 
 ## Downloading pipelines for offline use
 

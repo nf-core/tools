@@ -20,12 +20,12 @@ def files_exist(self):
 
         .gitattributes
         .gitignore
+        .markdownlint.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.md
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.md
-        .github/markdownlint.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/ci.yml
@@ -47,12 +47,11 @@ def files_exist(self):
         docs/output.md
         docs/README.md
         docs/usage.md
-        lib/Checks.groovy
-        lib/Completion.groovy
         lib/nfcore_external_java_deps.jar
         lib/NfcoreSchema.groovy
+        lib/NfcoreTemplate.groovy
         lib/Utils.groovy
-        lib/Workflow.groovy
+        lib/WorkflowMain.groovy
         modules/local/get_software_versions.nf
         nextflow_schema.json
         nextflow.config
@@ -70,6 +69,7 @@ def files_exist(self):
         conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
+        lib/WorkflowPIPELINE.groovy
 
     Files that *must not* be present:
 
@@ -100,6 +100,7 @@ def files_exist(self):
     files_fail = [
         [".gitattributes"],
         [".gitignore"],
+        [".markdownlint.yml"],
         ["CHANGELOG.md"],
         ["CITATIONS.md"],
         ["CODE_OF_CONDUCT.md"],
@@ -113,7 +114,6 @@ def files_exist(self):
         [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
-        [os.path.join(".github", "markdownlint.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
@@ -132,12 +132,11 @@ def files_exist(self):
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "usage.md")],
-        [os.path.join("lib", "Checks.groovy")],
-        [os.path.join("lib", "Completion.groovy")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
         [os.path.join("lib", "NfcoreSchema.groovy")],
+        [os.path.join("lib", "NfcoreTemplate.groovy")],
         [os.path.join("lib", "Utils.groovy")],
-        [os.path.join("lib", "Workflow.groovy")],
+        [os.path.join("lib", "WorkflowMain.groovy")],
         [os.path.join("modules", "local", "get_software_versions.nf")],
     ]
 
@@ -150,6 +149,7 @@ def files_exist(self):
         [os.path.join("conf", "igenomes.config")],
         [os.path.join(".github", "workflows", "awstest.yml")],
         [os.path.join(".github", "workflows", "awsfulltest.yml")],
+        [os.path.join("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
