@@ -124,7 +124,7 @@ class TestLaunch(unittest.TestCase):
             assert e.args[0].startswith("Web launch response not recognised:")
 
     @mock.patch(
-        "nf_core.utils.poll_nfcore_web_api", side_effect=[{"api_url": "foo", "web_url": "bar", "status": "recieved"}]
+        "nf_core.utils.poll_nfcore_web_api", side_effect=[{"api_url": "foo", "web_url": "bar", "status": "received"}]
     )
     @mock.patch("webbrowser.open")
     @mock.patch("nf_core.utils.wait_cli_function")
