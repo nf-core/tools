@@ -559,7 +559,7 @@ class PipelineSchema(object):
         try:
             assert "api_url" in web_response
             assert "web_url" in web_response
-            assert web_response["status"] == "recieved"
+            assert web_response["status"] == "received"
         except (AssertionError) as e:
             log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
