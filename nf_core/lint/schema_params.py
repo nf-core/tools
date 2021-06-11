@@ -45,6 +45,6 @@ def schema_params(self):
 
     if len(invalid_config_default_params) > 0:
         for param in invalid_config_default_params:
-            warned.append(f"Invalid default value for param `{param}` in nextflow config")
+            warned.append(f"Default value for param `{param}` invalid or missing in nextflow config")
 
     return {"passed": passed, "warned": warned, "failed": failed}
