@@ -354,7 +354,7 @@ class TestSchema(unittest.TestCase):
             return MockResponse(response_data, 200)
 
         if kwargs["url"] == "valid_url_success":
-            response_data = {"status": "received", "api_url": "https://nf-co.re", "web_url": "https://nf-co.re"}
+            response_data = {"status": "recieved", "api_url": "https://nf-co.re", "web_url": "https://nf-co.re"}
             return MockResponse(response_data, 200)
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
