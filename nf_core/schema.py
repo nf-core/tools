@@ -37,6 +37,7 @@ class PipelineSchema(object):
         self.schema_params = []
         self.input_params = {}
         self.pipeline_params = {}
+        self.invalid_nextflow_config_default_parameters = []
         self.pipeline_manifest = {}
         self.schema_from_scratch = False
         self.no_prompts = False
@@ -223,6 +224,48 @@ class PipelineSchema(object):
             raise AssertionError("Default parameters are invalid: {}".format(e.message))
         log.info("[green][✓] Default parameters look valid")
 
+        # Make sure every default parameter exists in the nextflow.config and is of correc type
+        if self.pipeline_manifest == {}:
+            self.get_wf_params()
+
+        # Go over group keys
+        for group_key, group in schema_no_required["definitions"].items():
+            group_properties = group.get("properties")
+            for param in group_properties:
+                if param in self.pipeline_params:
+                    self.validate_config_default_parameter(param, group_properties[param]["type"], self.pipeline_params[param])
+    
+        # Go over ungrouped params
+        ungrouped_properties = self.schema.get("properties")
+        for param in ungrouped_properties:
+            if param in self.pipeline_params:
+                self.validate_config_default_parameter(param, ungrouped_properties[param]["type"], self.pipeline_params[param])
+            else:
+                self.invalid_nextflow_config_default_parameters.append(param)
+
+    def validate_config_default_parameter(self, param, schema_default_type, config_default):
+        """
+        Assure that default parameters in the nextflow.config are correctly set
+        by comparing them to their type in the schema
+        """
+        if schema_default_type == "string":
+            if config_default in ["false", "true", "''"]:
+                self.invalid_nextflow_config_default_parameters.append(param)
+        if schema_default_type == "boolean":
+            if not config_default in ["false", "true"]:
+                self.invalid_nextflow_config_default_parameters.append(param)
+        if schema_default_type == "integer":
+            try:
+                int(config_default)
+            except ValueError:
+                self.invalid_nextflow_config_default_parameters.append(param)
+        if schema_default_type == "number":
+            try:
+                float(config_default)
+            except ValueError:
+                self.invalid_nextflow_config_default_parameters.append(param)
+
+        
     def validate_schema(self, schema=None):
         """
         Check that the Schema is valid

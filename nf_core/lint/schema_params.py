@@ -29,6 +29,9 @@ def schema_params(self):
     # Add schema params found in the config but not the schema
     added_params = self.schema_obj.add_schema_found_configs()
 
+    # Invalid default parameters in nextflow.config
+    invalid_config_default_params = self.schema_obj.invalid_nextflow_config_default_parameters
+
     if len(removed_params) > 0:
         for param in removed_params:
             warned.append("Schema param `{}` not found from nextflow config".format(param))
@@ -39,5 +42,9 @@ def schema_params(self):
 
     if len(removed_params) == 0 and len(added_params) == 0:
         passed.append("Schema matched params returned from nextflow config")
+
+    if len(invalid_config_default_params) > 0:
+        for param in invalid_config_default_params:
+            warned.append(f"Invalid default value for param `{param}` in nextflow config")
 
     return {"passed": passed, "warned": warned, "failed": failed}
