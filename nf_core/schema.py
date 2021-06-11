@@ -208,6 +208,9 @@ class PipelineSchema(object):
         """
         Check that all default parameters in the schema are valid
         Ignores 'required' flag, as required parameters might have no defaults
+
+        Additional check that all parameters have defaults in nextflow.config and that
+        these are valid and adhere to guidelines
         """
         try:
             assert self.schema is not None
@@ -225,7 +228,7 @@ class PipelineSchema(object):
             raise AssertionError("Default parameters are invalid: {}".format(e.message))
         log.info("[green][✓] Default parameters look valid")
 
-        # Make sure every default parameter exists in the nextflow.config and is of correc type
+        # Make sure every default parameter exists in the nextflow.config and is of correct type
         if self.pipeline_manifest == {}:
             self.get_wf_params()
         
@@ -235,7 +238,7 @@ class PipelineSchema(object):
         else:
             params_ignore = []
 
-        # Scrape main.nf for additional parameter declarations and ignore them, too
+        # Scrape main.nf for additional parameter declarations and add to params_ignore
         try:
             main_nf = os.path.join(self.pipeline_dir, "main.nf")
             with open(main_nf, "r") as fh:
@@ -254,6 +257,8 @@ class PipelineSchema(object):
                     continue
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param]["type"], self.pipeline_params[param])
+                else:
+                    self.invalid_nextflow_config_default_parameters.append(param)
     
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -274,6 +279,7 @@ class PipelineSchema(object):
         # if default is null, we're good
         if config_default == "null":
             return
+        # else check for allowed defaults
         if schema_default_type == "string":
             if config_default in ["false", "true", "''"]:
                 self.invalid_nextflow_config_default_parameters.append(param)
