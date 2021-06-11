@@ -229,7 +229,7 @@ class PipelineSchema(object):
         log.info("[green][✓] Default parameters look valid")
 
         # Make sure every default parameter exists in the nextflow.config and is of correct type
-        if self.pipeline_manifest == {}:
+        if self.pipeline_params == {}:
             self.get_wf_params()
 
         # Collect parameters to ignore
@@ -237,17 +237,6 @@ class PipelineSchema(object):
             params_ignore = self.pipeline_params.get("schema_ignore_params", "").strip("\"'").split(",")
         else:
             params_ignore = []
-
-        # Scrape main.nf for additional parameter declarations and add to params_ignore
-        try:
-            main_nf = os.path.join(self.pipeline_dir, "main.nf")
-            with open(main_nf, "r") as fh:
-                for l in fh:
-                    match = re.match(r"^\s*(params\.[a-zA-Z0-9_]+)\s*=", l)
-                    if match:
-                        params_ignore.append(match.group(1).split(".")[1])
-        except FileNotFoundError as e:
-            log.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
 
         # Go over group keys
         for group_key, group in schema_no_required["definitions"].items():
