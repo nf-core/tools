@@ -301,7 +301,8 @@ class Launch(object):
         try:
             assert "api_url" in web_response
             assert "web_url" in web_response
-            assert web_response["status"] == "received"
+            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
+            assert web_response["status"] == "recieved"
         except AssertionError:
             log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
             raise AssertionError(
