@@ -231,7 +231,7 @@ class PipelineSchema(object):
         # Make sure every default parameter exists in the nextflow.config and is of correct type
         if self.pipeline_manifest == {}:
             self.get_wf_params()
-        
+
         # Collect parameters to ignore
         if "schema_ignore_params" in self.pipeline_params:
             params_ignore = self.pipeline_params.get("schema_ignore_params", "").strip("\"'").split(",")
@@ -256,10 +256,12 @@ class PipelineSchema(object):
                 if param in params_ignore:
                     continue
                 if param in self.pipeline_params:
-                    self.validate_config_default_parameter(param, group_properties[param]["type"], self.pipeline_params[param])
+                    self.validate_config_default_parameter(
+                        param, group_properties[param]["type"], self.pipeline_params[param]
+                    )
                 else:
                     self.invalid_nextflow_config_default_parameters.append(param)
-    
+
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
         if ungrouped_properties:
@@ -267,7 +269,9 @@ class PipelineSchema(object):
                 if param in params_ignore:
                     continue
                 if param in self.pipeline_params:
-                    self.validate_config_default_parameter(param, ungrouped_properties[param]["type"], self.pipeline_params[param])
+                    self.validate_config_default_parameter(
+                        param, ungrouped_properties[param]["type"], self.pipeline_params[param]
+                    )
                 else:
                     self.invalid_nextflow_config_default_parameters.append(param)
 
@@ -297,7 +301,6 @@ class PipelineSchema(object):
             except ValueError:
                 self.invalid_nextflow_config_default_parameters.append(param)
 
-        
     def validate_schema(self, schema=None):
         """
         Check that the Schema is valid
