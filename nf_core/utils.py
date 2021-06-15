@@ -477,7 +477,7 @@ def pip_package(dep):
 
 def get_biocontainer_tag(package, version):
     """
-    Given a bioconda package and verion, looks for Docker and Singularity containers
+    Given a bioconda package and version, looks for Docker and Singularity containers
     using the biocontaineres API, e.g.:
     https://api.biocontainers.pro/ga4gh/trs/v2/tools/{tool}/versions/{tool}-{version}
     Returns the most recent container versions by default.
