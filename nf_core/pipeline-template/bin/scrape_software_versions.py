@@ -31,6 +31,6 @@ for k, v in sorted(results.items()):
 print("    </dl>")
 
 # Write out regexes as csv file:
-with open("software_versions.csv", "w") as f:
+with open("software_versions.tsv", "w") as f:
     for k, v in sorted(results.items()):
         f.write("{}\t{}\n".format(k, v))
