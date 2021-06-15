@@ -474,12 +474,13 @@ def pip_package(dep):
         else:
             raise ValueError("Could not find pip dependency using the PyPI API: `{}`".format(dep))
 
+
 def get_biocontainer_tag(package, version):
     """
     Given a bioconda package and verion, looks for Docker and Singularity containers
     using the biocontaineres API, e.g.:
     https://api.biocontainers.pro/ga4gh/trs/v2/tools/{tool}/versions/{tool}-{version}
-    Returns the most recent container versions by default.  
+    Returns the most recent container versions by default.
     Args:
         package (str): A bioconda package name.
         version (str): Version of the bioconda package
@@ -497,7 +498,7 @@ def get_biocontainer_tag(package, version):
         """
         tag_date = tag_date.split("T")[0].split("-")
         return datetime.date(year=int(tag_date[0]), month=int(tag_date[1]), day=int(tag_date[2]))
-        
+
     try:
         response = requests.get(biocontainers_api_url)
     except requests.exceptions.ConnectionError:
@@ -526,6 +527,7 @@ def get_biocontainer_tag(package, version):
             raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
             raise ValueError(f"Could not fine `{package}` on api.biocontainers.pro")
+
 
 def custom_yaml_dumper():
     """Overwrite default PyYAML output to make Prettier YAML linting happy"""

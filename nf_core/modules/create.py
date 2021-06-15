@@ -156,9 +156,13 @@ class ModuleCreate(object):
         if self.bioconda:
             try:
                 if self.tool_conda_name:
-                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(self.tool_conda_name, version)
+                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
+                        self.tool_conda_name, version
+                    )
                 else:
-                    self.docker_container, self.singularity_container =  nf_core.utils.get_biocontainer_tag(self.tool, version)
+                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
+                        self.tool, version
+                    )
                 log.info(f"Using Docker container: '{self.docker_container}'")
                 log.info(f"Using Singularity container: '{self.singularity_container}'")
             except (ValueError, LookupError) as e:
