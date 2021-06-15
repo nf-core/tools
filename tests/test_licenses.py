@@ -11,6 +11,8 @@ from rich.console import Console
 import nf_core.create
 import nf_core.licences
 
+# TODO nf-core: Assess and strip out if no longer required for DSL2
+
 # class WorkflowLicensesTest(unittest.TestCase):
 #     """A class that performs tests on the workflow license
 #     retrieval functionality of nf-core tools."""

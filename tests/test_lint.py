@@ -214,6 +214,8 @@ class TestLint(unittest.TestCase):
     )
 
 
+# TODO nf-core: Assess and strip out if no longer required for DSL2
+
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""
 #        lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)

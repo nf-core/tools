@@ -38,7 +38,7 @@ def modules = params.modules.clone()
 //
 // MODULE: Local to the pipeline
 //
-include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['csv':'']] )
+include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules

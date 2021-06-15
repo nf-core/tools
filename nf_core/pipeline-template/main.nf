@@ -33,12 +33,12 @@ WorkflowMain.initialise(workflow, params, log)
 ========================================================================================
 */
 
-workflow NFCORE_{{ short_name|upper }} {
+include { {{ short_name|upper }} } from './workflows/{{ short_name }}'
 
-    //
-    // WORKFLOW: Run main {{ name }} analysis pipeline
-    //
-    include { {{ short_name|upper }} } from './workflows/{{ short_name }}'
+//
+// WORKFLOW: Run main {{ name }} analysis pipeline
+//
+workflow NFCORE_{{ short_name|upper }} {
     {{ short_name|upper }} ()
 }
 
