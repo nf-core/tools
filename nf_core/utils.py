@@ -505,7 +505,7 @@ def get_biocontainer_tag(package, version):
         raise LookupError("Could not connect to biocontainers.pro API")
     else:
         if response.status_code == 200:
-            print(response.json())
+            
             images = response.json()["images"]
             singularity_image = None
             docker_image = None
