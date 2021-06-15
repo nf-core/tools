@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 def conda_env_yaml(self):
     """Checks that the conda environment file is valid.
 
-    .. note:: This test is ignored if there is not an ``environment.yml``
+    .. note:: This test warns if there is not an ``environment.yml``
               file present in the pipeline root directory.
 
     DSL1 nf-core pipelines use a single Conda environment to manage all software
@@ -61,7 +61,7 @@ def conda_env_yaml(self):
 
     env_path = os.path.join(self.wf_path, "environment.yml")
     if env_path not in self.files:
-        return {"ignored": ["No `environment.yml` file found - skipping conda_env_yaml test"]}
+        return {"warned": ["No `environment.yml` file found - skipping conda_env_yaml test"]}
 
     with open(env_path, "r") as fh:
         raw_environment_yml = fh.read()
