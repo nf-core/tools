@@ -6,7 +6,6 @@ import nf_core
 
 from distutils import version
 import datetime
-import dateutil.parser
 import errno
 import git
 import hashlib
@@ -497,7 +496,7 @@ def get_biocontainer_tag(package, version):
         Format a date given by the biocontainers API
         Given format: '2021-03-25T08:53:00Z'
         """
-        return dateutil.parser.parse(tag_date)
+        return datetime.datetime.strptime(tag_date, "%Y-%m-%dT%H:%M:%SZ")
 
     try:
         response = requests.get(biocontainers_api_url)
@@ -509,7 +508,7 @@ def get_biocontainer_tag(package, version):
             singularity_image = None
             docker_image = None
             for img in images:
-                # Get most recent Docker and Singularity images
+                # Get most recent Docker and Singularity image
                 if img["image_type"] == "Docker":
                     modification_date = get_tag_date(img["updated"])
                     if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
