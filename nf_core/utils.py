@@ -526,7 +526,7 @@ def get_biocontainer_tag(package, version):
         elif response.status_code != 404:
             raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
-            raise ValueError(f"Could not fine `{package}` on api.biocontainers.pro")
+            raise ValueError(f"Could not find `{package}` on api.biocontainers.pro")
 
 
 def custom_yaml_dumper():
