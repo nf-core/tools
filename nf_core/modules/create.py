@@ -42,7 +42,8 @@ class ModuleCreate(object):
         self.tool_doc_url = ""
         self.tool_dev_url = ""
         self.bioconda = None
-        self.container_tag = None
+        self.singularity_container = None
+        self.docker_container = None
         self.file_paths = {}
 
     def create(self):
@@ -155,12 +156,13 @@ class ModuleCreate(object):
         if self.bioconda:
             try:
                 if self.tool_conda_name:
-                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool_conda_name, version)
+                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(self.tool_conda_name, version)
                 else:
-                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
-                log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
+                    self.docker_container, self.singularity_container =  nf_core.utils.get_biocontainer_tag(self.tool, version)
+                log.info(f"Using Docker container: '{self.docker_container}'")
+                log.info(f"Using Singularity container: '{self.singularity_container}'")
             except (ValueError, LookupError) as e:
-                log.info(f"Could not find a container tag ({e})")
+                log.info(f"Could not find a Docker/Singularity container ({e})")
 
         # Prompt for GitHub username
         # Try to guess the current user if `gh` is installed
