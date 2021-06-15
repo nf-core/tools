@@ -505,22 +505,18 @@ def get_biocontainer_tag(package, version):
         raise LookupError("Could not connect to biocontainers.pro API")
     else:
         if response.status_code == 200:
-            
             images = response.json()["images"]
             singularity_image = None
             docker_image = None
             for img in images:
+                # Get most recent Docker and Singularity images
                 if img["image_type"] == "Docker":
                     modification_date = get_tag_date(img["updated"])
-                    if docker_image and modification_date < get_tag_date(docker_image["updated"]):
-                        continue
-                    else:
+                    if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
                         docker_image = img
                 if img["image_type"] == "Singularity":
                     modification_date = get_tag_date(img["updated"])
-                    if singularity_image and modification_date < get_tag_date(singularity_image["updated"]):
-                        continue
-                    else:
+                    if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
                         singularity_image = img
             return docker_image["image_name"], singularity_image["image_name"]
         elif response.status_code != 404:
