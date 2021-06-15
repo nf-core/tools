@@ -6,6 +6,7 @@ import nf_core
 
 from distutils import version
 import datetime
+import dateutil.parser
 import errno
 import git
 import hashlib
@@ -496,8 +497,7 @@ def get_biocontainer_tag(package, version):
         Format a date given by the biocontainers API
         Given format: '2021-03-25T08:53:00Z'
         """
-        tag_date = tag_date.split("T")[0].split("-")
-        return datetime.date(year=int(tag_date[0]), month=int(tag_date[1]), day=int(tag_date[2]))
+        return dateutil.parser.parse(tag_date)
 
     try:
         response = requests.get(biocontainers_api_url)
