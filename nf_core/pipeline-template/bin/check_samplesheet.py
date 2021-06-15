@@ -85,7 +85,7 @@ def check_samplesheet(file_in, file_out):
 
             ## Check sample name entries
             sample, fastq_1, fastq_2 = lspl[: len(HEADER)]
-            sample = sample.replace(' ', '_')
+            sample = sample.replace(" ", "_")
             if not sample:
                 print_error("Sample entry has not been specified!", "Line", line)
 

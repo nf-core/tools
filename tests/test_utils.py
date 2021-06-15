@@ -78,7 +78,7 @@ class TestUtils(unittest.TestCase):
         assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
 
     # TODO nf-core: Assess and strip out if no longer required for DSL2
-    
+
     # def test_load_conda_env(self):
     #     """Load the pipeline Conda environment.yml file"""
     #     self.pipeline_obj._load_conda_environment()

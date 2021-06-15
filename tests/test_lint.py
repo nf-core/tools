@@ -213,6 +213,7 @@ class TestLint(unittest.TestCase):
         test_files_unchanged_fail,
     )
 
+
 # TODO nf-core: Assess and strip out if no longer required for DSL2
 
 #    def test_critical_missingfiles_example(self):
