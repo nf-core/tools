@@ -526,6 +526,10 @@ class PipelineSchema(object):
         except ValueError:
             p_type = "string"
 
+        # Anything can be "null", means that it is not set
+        if p_val == "null":
+            p_val = None
+
         # NB: Only test "True" for booleans, as it is very common to initialise
         # an empty param as false when really we expect a string at a later date..
         if p_val == "True":
@@ -535,7 +539,7 @@ class PipelineSchema(object):
         p_schema = {"type": p_type, "default": p_val}
 
         # Assume that false and empty strings shouldn't be a default
-        if p_val == "false" or p_val == "":
+        if p_val == "false" or p_val == "" or p_val is None:
             del p_schema["default"]
 
         return p_schema
@@ -555,6 +559,7 @@ class PipelineSchema(object):
         try:
             assert "api_url" in web_response
             assert "web_url" in web_response
+            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
             assert web_response["status"] == "recieved"
         except (AssertionError) as e:
             log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))

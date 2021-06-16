@@ -18,6 +18,7 @@ jobs:
     strategy:
       matrix:
         image: [base, tools]
+      fail-fast: false
     steps:
       - name: Check out tools code
         uses: actions/checkout@v2

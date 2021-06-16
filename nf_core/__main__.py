@@ -32,11 +32,13 @@ log = logging.getLogger()
 
 
 def run_nf_core():
-    # Set up the rich traceback
-    rich.traceback.install(width=200, word_wrap=True, extra_lines=1)
-
-    # Print nf-core header to STDERR
+    # Set up rich stderr console
     stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
+
+    # Set up the rich traceback
+    rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
+
+    # Print nf-core header
     stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
     stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)

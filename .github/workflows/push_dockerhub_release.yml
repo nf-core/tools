@@ -17,6 +17,7 @@ jobs:
     strategy:
       matrix:
         image: [base, tools]
+      fail-fast: false
     steps:
       - name: Check out code
         uses: actions/checkout@v2
@@ -28,5 +29,5 @@ jobs:
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push nfcore/${{ matrix.image }}:latest
-          docker tag nfcore/${{ matrix.image }}:latest nf-core/${{ matrix.image }}:${{ github.event.release.tag_name }}
+          docker tag nfcore/${{ matrix.image }}:latest nfcore/${{ matrix.image }}:${{ github.event.release.tag_name }}
           docker push nfcore/${{ matrix.image }}:${{ github.event.release.tag_name }}
