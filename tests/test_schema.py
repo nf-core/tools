@@ -125,7 +125,7 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.input_params = {"input": "fubar"}
+        self.schema_obj.input_params = {"input": "fubar.csv"}
         assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):

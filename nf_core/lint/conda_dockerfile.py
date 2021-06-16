@@ -40,7 +40,7 @@ def conda_dockerfile(self):
 
     # Check if we have both a conda and dockerfile
     if self._fp("environment.yml") not in self.files or self._fp("Dockerfile") not in self.files:
-        return {"ignored": ["No `environment.yml` / `Dockerfile` file found - skipping conda_dockerfile test"]}
+        return {"warned": ["No `environment.yml` / `Dockerfile` file found - skipping conda_dockerfile test"]}
 
     expected_strings = [
         "COPY environment.yml /",
