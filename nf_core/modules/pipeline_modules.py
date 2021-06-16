@@ -352,8 +352,8 @@ class PipelineModules(object):
 
     def has_modules_file(self):
         """Checks whether a module.json file has been created and creates one if it is missing"""
-        modules_json = os.path.join(self.pipeline_dir, "modules.json")
-        if not os.path.exists(modules_json):
+        modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
+        if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
             pipeline_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
             pipeline_name = pipeline_config["manifest.name"]
