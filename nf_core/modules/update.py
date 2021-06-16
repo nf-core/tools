@@ -140,7 +140,6 @@ class ModuleUpdate(object):
                     log.error(f"Could not decode remote copy of {file} for the {mod.module_name} module")
 
         # All files are up to date
-        print(files_up_to_date)
         if all(files_up_to_date):
             log.info(f"Module up to date: '{mod.module_name}'")
         # Overwrite outdated files with remote copies and update the modules.json file
@@ -150,7 +149,7 @@ class ModuleUpdate(object):
                 local_file_path = os.path.join(mod.module_dir, file)
                 try:
                     with open(local_file_path, "w") as fh:
-                        fh.write(remote_copy[i])
+                        fh.write(remote_copies[i])
                 except Exception as e:
                     log.error(f"Could not update {file} of module '{mod.module_name}'")
                     sys.exit(1)
