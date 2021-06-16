@@ -198,8 +198,7 @@ class PipelineModules(object):
     def install(self, module=None):
 
         # Check whether pipelines is valid
-        if self.has_valid_pipeline():
-            self.has_modules_file()
+        self.has_valid_pipeline()
 
         # Get the available modules
         self.modules_repo.get_modules_file_tree()
@@ -246,7 +245,28 @@ class PipelineModules(object):
         modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
         with open(modules_json_path, "r") as fh:
             modules_json = json.load(fh)
-        commit_sha = self.get_module_commit_sha(module)
+        try:
+            commit_sha = self.get_module_commit_sha(module)
+        except SystemError as e:
+            log.error(e)
+            log.error(f"Will remove module '{module}'")
+            # Remove the module
+            try:
+                shutil.rmtree(module_dir)
+                # Try cleaning up empty parent if tool/subtool and tool/ is empty
+                if module.count("/") > 0:
+                    parent_dir = os.path.dirname(module_dir)
+                    try:
+                        os.rmdir(parent_dir)
+                    except OSError:
+                        log.debug(f"Parent directory not empty: '{parent_dir}'")
+                    else:
+                        log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
+                return False
+            except OSError as e:
+                log.error("Could not remove module: {}".format(e))
+                return False
+
         modules_json["modules"][module] = {"git_sha": commit_sha}
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
@@ -327,12 +347,14 @@ class PipelineModules(object):
         nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.pipeline_dir}'")
+        self.has_modules_file()
         return True
 
     def has_modules_file(self):
         """Checks whether a module.json file has been created and creates one if it is missing"""
         modules_json = os.path.join(self.pipeline_dir, "modules.json")
         if not os.path.exists(modules_json):
+            log.info("Creating missing 'module.json' file.")
             pipeline_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
             pipeline_name = pipeline_config["manifest.name"]
             pipeline_url = pipeline_config["manifest.homePage"]
@@ -342,8 +364,13 @@ class PipelineModules(object):
                 for path in glob.glob(f"{self.pipeline_dir}/modules/nf-core/software/*")
             ]
             for module_name in module_names:
-                commit_sha = self.get_module_commit_sha(module_name)
-                modules_json["modules"][module_name] = {"git_sha": commit_sha}
+                try:
+                    commit_sha = self.get_module_commit_sha(module_name)
+                    modules_json["modules"][module_name] = {"git_sha": commit_sha}
+                except SystemError as e:
+                    log.error(e)
+                    log.error("Will not create 'modules.json' file")
+                    sys.exit(1)
             modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
             with open(modules_json_path, "w") as fh:
                 json.dump(modules_json, fh, indent=4)
@@ -355,5 +382,8 @@ class PipelineModules(object):
         if response.status_code == 200:
             json_response = response.json()
             return json_response["sha"]
+        elif response.status_code == 404:
+            log.error(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
+            sys.exit(1)
         else:
             raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
