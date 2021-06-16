@@ -198,7 +198,8 @@ class PipelineModules(object):
     def install(self, module=None):
 
         # Check whether pipelines is valid
-        self.has_valid_pipeline()
+        if self.has_valid_pipeline():
+            self.has_modules_file()
 
         # Get the available modules
         self.modules_repo.get_modules_file_tree()
@@ -240,6 +241,15 @@ class PipelineModules(object):
             dl_filename = os.path.join(self.pipeline_dir, "modules", *install_folder, *split_filename[1:])
             self.modules_repo.download_gh_file(dl_filename, api_url)
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
+
+        # Update module.json with new module
+        modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
+        with open(modules_json_path, "r") as fh:
+            modules_json = json.load(fh)
+        commit_sha = self.get_module_commit_sha(module)
+        modules_json["modules"][module] = {"git_sha": commit_sha}
+        with open(modules_json_path, "w") as fh:
+            json.dump(modules_json, fh, indent=4)
 
     def update(self, module, force=False):
         log.error("This command is not yet implemented")
@@ -317,3 +327,33 @@ class PipelineModules(object):
         nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.pipeline_dir}'")
+        return True
+
+    def has_modules_file(self):
+        """Checks whether a module.json file has been created and creates one if it is missing"""
+        modules_json = os.path.join(self.pipeline_dir, "modules.json")
+        if not os.path.exists(modules_json):
+            pipeline_config = nf_core.utils.fetch_wf_config(self.pipeline_dir)
+            pipeline_name = pipeline_config["manifest.name"]
+            pipeline_url = pipeline_config["manifest.homePage"]
+            modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "modules": {}}
+            module_names = [
+                path.replace(f"{self.pipeline_dir}/modules/nf-core/software/", "")
+                for path in glob.glob(f"{self.pipeline_dir}/modules/nf-core/software/*")
+            ]
+            for module_name in module_names:
+                commit_sha = self.get_module_commit_sha(module_name)
+                modules_json["modules"][module_name] = {"git_sha": commit_sha}
+            modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
+            with open(modules_json_path, "w") as fh:
+                json.dump(modules_json, fh, indent=4)
+
+    def get_module_commit_sha(self, module_name):
+        """Fetches the latests commit SHA for the requested module"""
+        api_url = f'https://api.github.com/repos/nf-core/modules/commits/master?q={{path="software/{module_name}"}}'
+        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+        if response.status_code == 200:
+            json_response = response.json()
+            return json_response["sha"]
+        else:
+            raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
