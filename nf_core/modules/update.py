@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 """
-The ModuleCreate class handles generating of module templates
+The ModuleUpdate class handles generating of module templates
 """
 
 from __future__ import print_function
 import logging
+import json
 import operator
 import os
 import questionary
@@ -23,6 +24,8 @@ import sys
 import nf_core.utils
 from .pipeline_modules import ModulesRepo
 from .lint import NFCoreModule
+from .module_utils import get_module_commit_sha
+
 
 log = logging.getLogger(__name__)
 
@@ -37,13 +40,29 @@ class ModuleUpdate(object):
     def __init__(self, dir):
         self.dir = dir
         self.modules_repo = ModulesRepo()
+        self.modules_json = None
 
     def update(self, module=None, all_modules=False):
         """
-        TODO update comment
+        Compares a module to the remote copy in the nf-core/modules repository
+        and checks whether it is up to date
+        If not, updated the module with the remote files
+
+        Args:
+            module: If not None, will update only this module
+            all_modules: if True, all modules will be updated
         """
 
+        # Get a list of all installed nf-core modules
         nfcore_modules = self.get_installed_modules()
+
+        # Load the modules.json file
+        try:
+            with open(os.path.join(self.dir, "modules.json"), "r") as fh:
+                self.modules_json = json.load(fh)
+        except FileNotFoundError:
+            log.error("Could not load 'modules.json' file!")
+            sys.exit(1)
 
         # Prompt for module or all
         if module is None and not all_modules:
@@ -62,7 +81,7 @@ class ModuleUpdate(object):
                     choices=[m.module_name for m in nfcore_modules],
                     style=nf_core.utils.nfcore_question_style,
                 ).ask()
-            # Only lint the given module
+        # Only update the given module
         if module:
             if all_modules:
                 raise ModuleUpdateException("You cannot specify a tool and request all tools to be updated.")
@@ -92,15 +111,12 @@ class ModuleUpdate(object):
         Update a single module
         """
         # Compare content to remote
-        # 1. get md5 sums of own content
-        # 2. get md5 sums of remote
         files_to_check = ["main.nf", "functions.nf", "meta.yml"]
         files_up_to_date = [False, False, False]
         remote_copies = []
 
         module_base_url = f"https://raw.githubusercontent.com/{self.modules_repo.name}/{self.modules_repo.branch}/software/{mod.module_name}/"
         for i, file in enumerate(files_to_check):
-
             try:
                 local_copy = open(os.path.join(mod.module_dir, file), "r").read()
             except FileNotFoundError as e:
@@ -124,11 +140,12 @@ class ModuleUpdate(object):
                     log.error(f"Could not decode remote copy of {file} for the {mod.module_name} module")
 
         # All files are up to date
+        print(files_up_to_date)
         if all(files_up_to_date):
             log.info(f"Module up to date: '{mod.module_name}'")
         # Overwrite outdated files with remote copies and update the modules.json file
         else:
-            log.info(f"Some files are of the '{mod.module_name}' module are outdated. Trying to update ...")
+            log.info(f"Module outdated: '{mod.module_name}' - Updating files and git_sha")
             for i, file in enumerate(files_to_check):
                 local_file_path = os.path.join(mod.module_dir, file)
                 try:
@@ -137,6 +154,13 @@ class ModuleUpdate(object):
                 except Exception as e:
                     log.error(f"Could not update {file} of module '{mod.module_name}'")
                     sys.exit(1)
+
+            # Update git_sha entries in modules.json
+            module_git_sha = get_module_commit_sha(mod.module_name)
+            self.modules_json["modules"][mod.module_name] = {"git_sha": module_git_sha}
+
+            with open(os.path.join(self.dir, "modules.json"), "w") as fh:
+                json.dump(self.modules_json, fh, indent=4)
 
             log.info(f"Successfully updated '{mod.module_name}' module.")
 
