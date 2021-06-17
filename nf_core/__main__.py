@@ -406,7 +406,7 @@ def update(ctx, pipeline_dir, tool, all):
     """
     Update one or all software wrapper modules.
     Compares a currently installed module against what is available in nf-core/modules.
-    Fetchs files and updates all relevant files for that software wrapper.
+    Fetches files and updates all relevant files for that software wrapper.
 
     If no module name is specified, loops through all currently installed modules.
     If no version is specified, looks for the latest available version on nf-core/modules.
