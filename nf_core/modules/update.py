@@ -73,7 +73,7 @@ class ModuleUpdate(object):
             }
             answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
             if answer["all_modules"] == "All modules":
-                all_modules = True
+                self.all_modules = True
             else:
                 module = questionary.autocomplete(
                     "Tool name:",
@@ -81,11 +81,9 @@ class ModuleUpdate(object):
                     style=nf_core.utils.nfcore_question_style,
                 ).ask()
 
-        self.all_modules = all_modules
-
         # Only update the given module
         if module:
-            if all_modules:
+            if self.all_modules:
                 raise ModuleUpdateException("You cannot specify a tool and request all tools to be updated.")
             nfcore_modules = [m for m in nfcore_modules if m.module_name == module]
             if len(nfcore_modules) == 0:
@@ -93,7 +91,6 @@ class ModuleUpdate(object):
 
         # Update all modules
         if len(nfcore_modules) > 0:
-
             progress_bar = rich.progress.Progress(
                 "[bold blue]{task.description}",
                 rich.progress.BarColumn(bar_width=None),
@@ -106,8 +103,7 @@ class ModuleUpdate(object):
             )
             for mod in nfcore_modules:
                 progress_bar.update(update_progress, advance=1, test_name=mod.module_name)
-                module_updated = self.update_module(mod)
-                if module_updated:
+                if self.update_module(mod):
                     self.updated.append(mod)
                 else:
                     self.up_to_date.append(mod)
