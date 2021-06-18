@@ -6,7 +6,7 @@ import sys
 import logging
 import nf_core.utils
 
-from .pipeline_modules import ModulesRepo
+from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
