@@ -4,6 +4,7 @@ from nf_core.lint.pipeline_todos import pipeline_todos
 
 log = logging.getLogger(__name__)
 
+
 def module_todos(module_lint_object, module):
     """
     Look for TODO statements in the module files
