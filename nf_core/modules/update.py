@@ -6,16 +6,12 @@ The ModuleUpdate class handles generating of module templates
 from __future__ import print_function
 import logging
 import json
-import operator
 import os
-import re
 import requests
 import questionary
 import rich
 from rich.console import Console
 from rich.table import Table
-from rich.markdown import Markdown
-import yaml
 import rich
 from nf_core.utils import rich_force_colors
 from nf_core.lint.pipeline_todos import pipeline_todos
@@ -55,7 +51,7 @@ class ModuleUpdate(object):
             module: If not None, will update only this module
             all_modules: if True, all modules will be updated
         """
-        
+
         # Get a list of all installed nf-core modules
         nfcore_modules = self.get_installed_modules()
 
@@ -84,7 +80,7 @@ class ModuleUpdate(object):
                     choices=[m.module_name for m in nfcore_modules],
                     style=nf_core.utils.nfcore_question_style,
                 ).ask()
-        
+
         self.all_modules = all_modules
 
         # Only update the given module
@@ -115,10 +111,9 @@ class ModuleUpdate(object):
                     self.updated.append(mod)
                 else:
                     self.up_to_date.append(mod)
-        
+
         # Print the results
         self._print_results()
-
 
     def update_module(self, mod):
         """
@@ -213,7 +208,6 @@ class ModuleUpdate(object):
 
         return nfcore_modules
 
-
     def _print_results(self):
         """Print information about module updates
 
@@ -232,7 +226,7 @@ class ModuleUpdate(object):
             table.add_row(f"{len(self.updated)} outdated modules have been updated", style="yellow")
             if len(self.updated) > 0:
                 for mod in self.updated:
-                    table.add_row(f"[✔] {mod.module_name}",style="yellow")
+                    table.add_row(f"[✔] {mod.module_name}", style="yellow")
             console.print(table)
         else:
             if len(self.updated) > 0:
