@@ -118,7 +118,7 @@ class ModuleUpdate(object):
         # Compare content to remote
         files_to_check = ["main.nf", "functions.nf", "meta.yml"]
         files_up_to_date = [False, False, False]
-        remote_copies = []
+        remote_copies = [None, None, None]
 
         module_base_url = f"https://raw.githubusercontent.com/{self.modules_repo.name}/{self.modules_repo.branch}/software/{mod.module_name}/"
         for i, file in enumerate(files_to_check):
@@ -137,7 +137,7 @@ class ModuleUpdate(object):
             else:
                 try:
                     remote_copy = r.content.decode("utf-8")
-                    remote_copies.append(remote_copy)
+                    remote_copies[i] = remote_copy
                     if local_copy == remote_copy:
                         files_up_to_date[i] = True
 
@@ -150,13 +150,15 @@ class ModuleUpdate(object):
         # Overwrite outdated files with remote copies and update the modules.json file
         else:
             for i, file in enumerate(files_to_check):
-                local_file_path = os.path.join(mod.module_dir, file)
-                try:
-                    with open(local_file_path, "w") as fh:
-                        fh.write(remote_copies[i])
-                except Exception as e:
-                    log.error(f"Could not update {file} of module '{mod.module_name}'")
-                    sys.exit(1)
+                # Only overwrite if remote copy could be fetched
+                if remote_copies[i]:
+                    local_file_path = os.path.join(mod.module_dir, file)
+                    try:
+                        with open(local_file_path, "w") as fh:
+                            fh.write(remote_copies[i])
+                    except Exception as e:
+                        log.error(f"Could not update {file} of module '{mod.module_name}'")
+                        sys.exit(1)
 
             # Update git_sha entries in modules.json
             module_git_sha = get_module_commit_sha(mod.module_name)
