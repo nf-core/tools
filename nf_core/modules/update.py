@@ -20,7 +20,7 @@ import sys
 import nf_core.utils
 from .pipeline_modules import ModulesRepo
 from .lint import NFCoreModule
-from .module_utils import get_module_commit_sha
+from .module_utils import get_module_commit_sha, create_modules_json_file
 
 
 log = logging.getLogger(__name__)
@@ -61,7 +61,7 @@ class ModuleUpdate(object):
                 self.modules_json = json.load(fh)
         except FileNotFoundError:
             log.error("Could not load 'modules.json' file!")
-            sys.exit(1)
+            create_modules_json_file(self.dir)
 
         # Prompt for module or all
         if module is None and not all_modules:
