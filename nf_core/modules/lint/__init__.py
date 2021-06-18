@@ -71,6 +71,7 @@ class ModuleLint(object):
         self.modules_repo = ModulesRepo()
         self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
         self.key = key
+        self.lint_config = None
 
         # Add tests specific to nf-core/modules
         if self.repo_type == "modules":
@@ -148,6 +149,15 @@ class ModuleLint(object):
         if self.key:
             log.info("Only running tests: '{}'".format("', '".join(self.key)))
             self.lint_tests = [k for k in self.lint_tests if k in self.key]
+
+        # If it is a pipeline, load the lint config file
+        if self.repo_type == "pipeline":
+            self._load_lint_config()
+
+            for test_name in self.lint_tests:
+                if self.lint_config.get(test_name, {}) is False:
+                    log.info(f"Ignoring lint test: {test_name}")
+                    self.lint_tests.remove(test_name)
 
         # Lint local modules
         if local and len(local_modules) > 0:
@@ -411,3 +421,25 @@ class ModuleLint(object):
             self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.passed]
             self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in mod.warned]
             self.failed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.failed]
+
+    def _load_lint_config(self):
+        """Parse a pipeline lint config file.
+
+        Look for a file called either `.nf-core-lint.yml` or
+        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
+        (`.yml` takes precedence).
+
+        Add parsed config to the `self.lint_config` class attribute.
+        """
+        config_fn = os.path.join(self.dir, ".nf-core-lint.yml")
+
+        # Pick up the file if it's .yaml instead of .yml
+        if not os.path.isfile(config_fn):
+            config_fn = os.path.join(self.dir, ".nf-core-lint.yaml")
+
+        # Load the YAML
+        try:
+            with open(config_fn, "r") as fh:
+                self.lint_config = yaml.safe_load(fh)
+        except FileNotFoundError:
+            log.debug("No lint config file found: {}".format(config_fn))
