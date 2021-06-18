@@ -147,8 +147,7 @@ class PipelineModules(object):
         try:
             commit_sha = self.get_module_commit_sha(module)
         except SystemError as e:
-            log.error(e)
-            log.error(f"Will remove module '{module}'")
+            log.error(f"Could not fetch `git_sha` for module '{module}': {e}")
             # Remove the module
             try:
                 shutil.rmtree(module_dir)
