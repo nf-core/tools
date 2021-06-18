@@ -60,6 +60,7 @@ class ModuleLint(object):
     from .meta_yml import meta_yml
     from .module_changes import module_changes
     from .module_tests import module_tests
+    from .module_todos import module_todos
 
     def __init__(self, dir, key=()):
         self.dir = dir
@@ -68,7 +69,7 @@ class ModuleLint(object):
         self.warned = []
         self.failed = []
         self.modules_repo = ModulesRepo()
-        self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes"]
+        self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
         self.key = key
 
         # Add tests specific to nf-core/modules
@@ -410,10 +411,3 @@ class ModuleLint(object):
             self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.passed]
             self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in mod.warned]
             self.failed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.failed]
-
-        # Check for TODOs
-        # TODO: implement this better
-        # self.wf_path = self.module_dir
-        # module_todos = pipeline_todos(self)
-        # for i, warning in enumerate(module_todos["warned"]):
-        #     self.warned.append(("module_todo", warning, module_todos["file_paths"][i]))
