@@ -61,7 +61,7 @@ class ModuleLint(object):
     from .module_changes import module_changes
     from .module_tests import module_tests
 
-    def __init__(self, dir):
+    def __init__(self, dir, key=()):
         self.dir = dir
         self.repo_type = self.get_repo_type()
         self.passed = []
@@ -69,6 +69,7 @@ class ModuleLint(object):
         self.failed = []
         self.modules_repo = ModulesRepo()
         self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes"]
+        self.key = key
 
         # Add tests specific to nf-core/modules
         if self.repo_type == "modules":
@@ -131,6 +132,21 @@ class ModuleLint(object):
             log.info(f"Linting pipeline: [magenta]{self.dir}")
         if module:
             log.info(f"Linting module: [magenta]{module}")
+
+        # Check that supplied test keys exist
+        bad_keys = [k for k in self.key if k not in self.lint_tests]
+        if len(bad_keys) > 0:
+            raise AssertionError(
+                "Test name{} not recognised: '{}'".format(
+                    "s" if len(bad_keys) > 1 else "",
+                    "', '".join(bad_keys),
+                )
+            )
+
+        # If -k supplied, only run these tests
+        if self.key:
+            log.info("Only running tests: '{}'".format("', '".join(self.key)))
+            self.lint_tests = [k for k in self.lint_tests if k in self.key]
 
         # Lint local modules
         if local and len(local_modules) > 0:
