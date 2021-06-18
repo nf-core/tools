@@ -8,14 +8,14 @@ import logging
 import json
 import operator
 import os
-import questionary
 import re
 import requests
+import questionary
 import rich
-import yaml
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
+import yaml
 import rich
 from nf_core.utils import rich_force_colors
 from nf_core.lint.pipeline_todos import pipeline_todos
@@ -41,6 +41,9 @@ class ModuleUpdate(object):
         self.dir = dir
         self.modules_repo = ModulesRepo()
         self.modules_json = None
+        self.updated = []
+        self.up_to_date = []
+        self.all_modules = False
 
     def update(self, module=None, all_modules=False):
         """
@@ -52,7 +55,7 @@ class ModuleUpdate(object):
             module: If not None, will update only this module
             all_modules: if True, all modules will be updated
         """
-
+        
         # Get a list of all installed nf-core modules
         nfcore_modules = self.get_installed_modules()
 
@@ -81,6 +84,9 @@ class ModuleUpdate(object):
                     choices=[m.module_name for m in nfcore_modules],
                     style=nf_core.utils.nfcore_question_style,
                 ).ask()
+        
+        self.all_modules = all_modules
+
         # Only update the given module
         if module:
             if all_modules:
@@ -104,7 +110,15 @@ class ModuleUpdate(object):
             )
             for mod in nfcore_modules:
                 progress_bar.update(update_progress, advance=1, test_name=mod.module_name)
-                self.update_module(mod)
+                module_updated = self.update_module(mod)
+                if module_updated:
+                    self.updated.append(mod)
+                else:
+                    self.up_to_date.append(mod)
+        
+        # Print the results
+        self._print_results()
+
 
     def update_module(self, mod):
         """
@@ -141,10 +155,9 @@ class ModuleUpdate(object):
 
         # All files are up to date
         if all(files_up_to_date):
-            log.info(f"Module up to date: '{mod.module_name}'")
+            return False
         # Overwrite outdated files with remote copies and update the modules.json file
         else:
-            log.info(f"Module outdated: '{mod.module_name}' - Updating files and git_sha")
             for i, file in enumerate(files_to_check):
                 local_file_path = os.path.join(mod.module_dir, file)
                 try:
@@ -160,8 +173,7 @@ class ModuleUpdate(object):
 
             with open(os.path.join(self.dir, "modules.json"), "w") as fh:
                 json.dump(self.modules_json, fh, indent=4)
-
-            log.info(f"Successfully updated '{mod.module_name}' module.")
+            return True
 
     def get_installed_modules(self):
         """
@@ -200,3 +212,30 @@ class ModuleUpdate(object):
         ]
 
         return nfcore_modules
+
+
+    def _print_results(self):
+        """Print information about module updates
+
+        Uses the ``rich`` library to print a set of formatted tables to the command line
+        summarising the linting results.
+        """
+
+        log.debug("Printing final results")
+        console = Console(force_terminal=rich_force_colors())
+
+        if self.all_modules:
+            # print summary table for all modules
+            table = Table(box=rich.box.ROUNDED)
+            table.add_column("[bold green]MODULE UPDATE SUMMARY".format(len(self.updated)), no_wrap=True)
+            table.add_row(f"{len(self.up_to_date)} modules up to date", style="green")
+            table.add_row(f"{len(self.updated)} outdated modules have been updated", style="yellow")
+            if len(self.updated) > 0:
+                for mod in self.updated:
+                    table.add_row(f"[✔] {mod.module_name}",style="yellow")
+            console.print(table)
+        else:
+            if len(self.updated) > 0:
+                log.info(f"Updated module: {self.updated[0].module_name}")
+            if len(self.up_to_date) > 0:
+                log.info(f"The {self.up_to_date[0].module_name} module is up to date!")
