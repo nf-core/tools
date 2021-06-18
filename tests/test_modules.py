@@ -51,7 +51,7 @@ class TestModules(unittest.TestCase):
         with open(os.path.join(self.pipeline_dir, "modules.json"), "w") as fh:
             modules_json = {"name": "testpipeline", "homePage": "test_url", "modules": {}}
             json.dump(modules_json, fh, indent=4)
-        
+
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy()
 
@@ -236,26 +236,26 @@ class TestModules(unittest.TestCase):
         module_create.create()
         assert os.path.exists(os.path.join(self.nfcore_modules, "software", "star", "index", "main.nf"))
         assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "star", "index", "main.nf"))
-    
+
     def test_modules_update_missing_module(self):
         """ Fail updating a single module because it doesn't exist """
         module_update = nf_core.modules.ModuleUpdate(dir=self.pipeline_dir)
         with pytest.raises(ModuleUpdateException) as excinfo:
             module_update.update(module="star/index")
         assert "Could not find the specified module" in str(excinfo.value)
-    
+
     def test_update_single_module(self):
         """ Succeed in updating a single, existing module """
         module_update = nf_core.modules.ModuleUpdate(dir=self.pipeline_dir)
         module_update.update(module="fastqc")
         assert len(module_update.up_to_date) == 1
-    
+
     def test_update_multiple_modules(self):
         """ Update multiple modules (fastqc, multiqc) """
         module_update = nf_core.modules.ModuleUpdate(dir=self.pipeline_dir)
         module_update.update(all_modules=True)
         assert len(module_update.up_to_date) == 2
-    
+
     def test_update_outdated_module(self):
         """ Update an outdated module """
         with open(os.path.join(self.pipeline_dir, "modules", "nf-core", "software", "fastqc", "main.nf"), "a") as fh:
@@ -264,7 +264,3 @@ class TestModules(unittest.TestCase):
         module_update.update(all_modules=True)
         assert len(module_update.up_to_date) == 1
         assert len(module_update.updated) == 1
-        
-    
-
-
