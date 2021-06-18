@@ -3,6 +3,7 @@ The NFCoreModule class holds information and uitily functions for a single modul
 """
 import os
 
+
 class NFCoreModule(object):
     """
     A class to hold the information a bout a nf-core module

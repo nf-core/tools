@@ -1,9 +1,10 @@
-#!/usr/bin/env python    
+#!/usr/bin/env python
 
 from operator import imod
 
 
 import yaml
+
 
 def meta_yml(module_lint_object, module):
     """Lint a meta yml file"""

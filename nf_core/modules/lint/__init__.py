@@ -68,13 +68,7 @@ class ModuleLint(object):
         self.warned = []
         self.failed = []
         self.modules_repo = ModulesRepo()
-        self.lint_tests = [
-            "main_nf",
-            "functions_nf",
-            "meta_yml",
-            "module_changes",
-            "module_todos"
-        ]
+        self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes"]
 
         # Add tests specific to nf-core/modules
         if self.repo_type == "modules":
@@ -144,12 +138,7 @@ class ModuleLint(object):
 
         # Lint nf-core modules
         if len(nfcore_modules) > 0:
-
-            # Module specific lint checks
             self.lint_nfcore_modules(nfcore_modules)
-            
-            if "module_changes" in self.lint_tests:
-                self.check_module_changes(nfcore_modules)
 
         if print_results:
             self._print_results(show_passed=show_passed)
@@ -396,7 +385,7 @@ class ModuleLint(object):
             self.main_nf(mod)
             self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.passed]
             self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in mod.warned]
-            
+
         # Otherwise run all the lint tests
         else:
             for test_name in self.lint_tests:
@@ -412,10 +401,3 @@ class ModuleLint(object):
         # module_todos = pipeline_todos(self)
         # for i, warning in enumerate(module_todos["warned"]):
         #     self.warned.append(("module_todo", warning, module_todos["file_paths"][i]))
-
-
-
-
-
-
-

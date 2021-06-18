@@ -5,6 +5,7 @@ import nf_core
 
 log = logging.getLogger(__name__)
 
+
 def functions_nf(module_lint_object, module):
     """
     Lint a functions.nf file

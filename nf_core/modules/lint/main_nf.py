@@ -1,7 +1,8 @@
-#!/usr/bin/env python    
+#!/usr/bin/env python
 
 import re
 import nf_core
+
 
 def main_nf(module_lint_object, module):
     """
@@ -109,7 +110,6 @@ def main_nf(module_lint_object, module):
     return inputs, outputs
 
 
-
 def check_script_section(self, lines):
     """
     Lint the script section
@@ -121,9 +121,7 @@ def check_script_section(self, lines):
     if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
         self.passed.append(("main_nf_version_script", "Software version specified in script section", self.main_nf))
     else:
-        self.warned.append(
-            ("main_nf_version_script", "Software version unspecified in script section", self.main_nf)
-        )
+        self.warned.append(("main_nf_version_script", "Software version unspecified in script section", self.main_nf))
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
@@ -131,6 +129,7 @@ def check_script_section(self, lines):
             self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
         else:
             self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
+
 
 def check_process_section(self, lines):
     """
@@ -204,9 +203,7 @@ def check_process_section(self, lines):
                     ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
                 )
             else:
-                self.passed.append(
-                    ("bioconda_latest", "Conda package is the latest available: `{bp}`", self.main_nf)
-                )
+                self.passed.append(("bioconda_latest", "Conda package is the latest available: `{bp}`", self.main_nf))
 
     if docker_tag == singularity_tag:
         return True
@@ -233,6 +230,7 @@ def _parse_input(self, line):
             input.append(line.split()[1])
     return input
 
+
 def _parse_output(self, line):
     output = []
     if "meta" in line:
@@ -243,6 +241,7 @@ def _parse_output(self, line):
         output.append(line.split("emit:")[1].strip())
 
     return output
+
 
 def _is_empty(self, line):
     """Check whether a line is empty or a comment"""
