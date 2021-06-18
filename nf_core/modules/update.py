@@ -125,6 +125,7 @@ class ModuleUpdate(object):
             try:
                 local_copy = open(os.path.join(mod.module_dir, file), "r").read()
             except FileNotFoundError as e:
+                log.debug(f"Could not open file: {os.path.join(mod.module_dir, file)}")
                 continue
 
             # Download remote copy and compare
