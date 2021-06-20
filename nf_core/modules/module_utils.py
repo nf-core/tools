@@ -16,7 +16,15 @@ log = logging.getLogger(__name__)
 
 
 def get_module_git_log(module_name, per_page=30, page_nbr=1):
-    """Fetches the commit history the requested module"""
+    """
+    Fetches the commit history the requested module
+    Args:
+        module_name (str): Name of module
+        per_page (int): Number of commits per page returned by API
+        page_nbr (int): Page number of the retrieved commits
+    Returns:
+        [ dict ]: List of commit SHAs and associated (truncated) message
+    """
     api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=software/{module_name}&per_page={per_page}&page={page_nbr}"
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
@@ -39,7 +47,12 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1):
 
 
 def create_modules_json(pipeline_dir):
-    """Create the modules.json files"""
+    """
+    Create the modules.json files
+
+    Args:
+        pipeline_dir (str): The directory where the `modules.json` should be created
+    """
     pipeline_config = nf_core.utils.fetch_wf_config(pipeline_dir)
     pipeline_name = pipeline_config["manifest.name"]
     pipeline_url = pipeline_config["manifest.homePage"]
@@ -75,12 +88,18 @@ def create_modules_json(pipeline_dir):
         json.dump(modules_json, fh, indent=4)
 
 
-def get_module_paths(pipeline_dir):
-    base_dir = f"{pipeline_dir}/modules/nf-core/software"
-
-
 def find_correct_commit_sha(module_name, module_path, modules_repo, commit_shas):
-    """Returns the SHA for the latest commit where the local files equal the remote files"""
+    """
+    Returns the SHA for the latest commit where the local files are identical to the remote files
+    Args:
+        module_name (str): Name of module
+        module_path (str): Path to module in local repo
+        module_repo (str): Remote repo for module
+        commit_shas ([ str ]): List of commit SHAs for module, sorted in descending order
+    Returns:
+        commit_sha (str): The latest commit SHA where local files are identical to remote files
+    """
+
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]
     local_file_contents = [None, None, None]
     for i, file in enumerate(files_to_check):
@@ -96,7 +115,16 @@ def find_correct_commit_sha(module_name, module_path, modules_repo, commit_shas)
 
 
 def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_sha):
-    """Compares the local module files to the module files for the given commit sha"""
+    """
+    Compares the local module files to the module files for the given commit sha
+    Args:
+        local_files ([ str ]): Contents of local files. `None` if files doesn't exist
+        module_name (str): Name of module
+        module_repo (str): Remote repo for module
+        commit_sha (str): Commit SHA for remote version to compare against local version
+    Returns:
+        bool: Whether all local files are identical to remote version
+    """
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]
     files_are_equal = [False, False, False]
     remote_copies = [None, None, None]
