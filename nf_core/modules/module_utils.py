@@ -4,6 +4,9 @@ import os
 import requests
 import sys
 import logging
+from itertools import count
+
+from requests import api
 
 import nf_core.utils
 
@@ -12,16 +15,22 @@ from .modules_repo import ModulesRepo
 log = logging.getLogger(__name__)
 
 
-def get_module_git_log(module_name):
+def get_module_git_log(module_name, per_page=30, page_nbr=1):
     """Fetches the commit history the requested module"""
-    api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=software/{module_name}"
+    api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=software/{module_name}&per_page={per_page}&page={page_nbr}"
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
-        # Return the commit SHAs and the first line of the commit message
-        return [
-            {"git_sha": commit["sha"], "trunc_message": commit["commit"]["message"].partition("\n")[0]}
-            for commit in response.json()
-        ]
+        commits = response.json()
+
+        if len(commits) == 0:
+            log.debug(f"Reached end of commit history for '{module_name}'")
+            raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
+        else:
+            # Return the commit SHAs and the first line of the commit message
+            return [
+                {"git_sha": commit["sha"], "trunc_message": commit["commit"]["message"].partition("\n")[0]}
+                for commit in commits
+            ]
     elif response.status_code == 404:
         log.error(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
         sys.exit(1)
@@ -43,8 +52,19 @@ def create_modules_json(pipeline_dir):
     module_repo = ModulesRepo()
     for module_name, module_path in zip(module_names, module_paths):
         try:
-            commit_shas = [commit["git_sha"] for commit in get_module_git_log(module_name)]
-            correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
+            # Find the correct commit SHA for the local files.
+            # We iterate over the commit log pages until we either
+            # find a matching commit or we reach the end of the commits
+            correct_commit_sha = None
+            commit_page_nbr = 1
+            while correct_commit_sha is None:
+
+                commit_shas = [
+                    commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
+                ]
+                correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
+                commit_page_nbr += 1
+
             modules_json["modules"][module_name] = {"git_sha": correct_commit_sha}
         except SystemError as e:
             log.error(e)
