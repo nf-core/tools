@@ -47,10 +47,6 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1):
         raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
 
 
-def module_git_log_has_next_page(module_name, per_page=30, page_nbr=1):
-    pass
-
-
 def create_modules_json(pipeline_dir):
     """
     Create the modules.json files
