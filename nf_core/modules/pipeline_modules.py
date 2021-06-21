@@ -94,7 +94,7 @@ class PipelineModules(object):
             return json.dumps(modules, sort_keys=True, indent=4)
         return table
 
-    def install(self, module=None):
+    def install(self, module=None, latest=False):
 
         # Check whether pipelines is valid
         self.has_valid_pipeline()
@@ -107,13 +107,16 @@ class PipelineModules(object):
                 "Tool name:",
                 choices=self.modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
-        try:
-            commit_sha = prompt_module_version_sha(module)
-        except SystemError as e:
-            log.error(e)
-            sys.exit(1)
-
+            ).unsafe_ask()
+        if latest:
+            # Fetch the latest commit to the module
+            version = get_module_git_log(module, per_page=1, page_nbr=1)[0]["git_sha"]
+        else:
+            try:
+                version = prompt_module_version_sha(module)
+            except SystemError as e:
+                log.error(e)
+                sys.exit(1)
         log.info("Installing {}".format(module))
 
         # Check that the supplied name is an available module
@@ -137,7 +140,7 @@ class PipelineModules(object):
             return False
 
         # Download module files
-        files = self.modules_repo.get_module_file_urls(module, commit_sha)
+        files = self.modules_repo.get_module_file_urls(module, version)
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             split_filename = filename.split("/")
@@ -150,7 +153,7 @@ class PipelineModules(object):
         with open(modules_json_path, "r") as fh:
             modules_json = json.load(fh)
 
-        modules_json["modules"][module] = {"git_sha": commit_sha}
+        modules_json["modules"][module] = {"git_sha": version}
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
 

@@ -168,6 +168,6 @@ def prompt_module_version_sha(module):
         choices = commit_titles + [older_commits_choice]
         git_sha = questionary.select(
             f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
-        ).ask()
+        ).unsafe_ask()
         page_nbr += 1
     return git_sha

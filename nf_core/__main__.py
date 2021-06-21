@@ -380,7 +380,8 @@ def list(ctx, pipeline_dir, json):
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
-def install(ctx, pipeline_dir, tool):
+@click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
+def install(ctx, pipeline_dir, tool, latest):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
@@ -391,7 +392,7 @@ def install(ctx, pipeline_dir, tool):
         mods = nf_core.modules.PipelineModules()
         mods.modules_repo = ctx.obj["modules_repo_obj"]
         mods.pipeline_dir = pipeline_dir
-        mods.install(tool)
+        mods.install(tool, latest)
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
