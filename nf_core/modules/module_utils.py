@@ -4,6 +4,7 @@ import os
 import requests
 import sys
 import logging
+import questionary
 from itertools import count
 
 from requests import api
@@ -31,8 +32,7 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1):
         commits = response.json()
 
         if len(commits) == 0:
-            log.debug(f"Reached end of commit history for '{module_name}'")
-            raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
+            raise SystemError(f"Reached end of commit history for '{module_name}'")
         else:
             # Return the commit SHAs and the first line of the commit message
             return [
@@ -150,3 +150,24 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
             files_are_equal[i] = True
 
     return all(files_are_equal)
+
+
+def prompt_module_version_sha(module):
+    older_commits_choice = questionary.Choice(
+        title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
+    )
+
+    git_sha = ""
+    page_nbr = 1
+    while git_sha is "":
+        commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
+        commit_titles = []
+        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
+            tag_display = [("fg:ansiblue", f"{title}  "), ("class:choice-default", "")]
+            commit_titles.append(questionary.Choice(title=tag_display, value=sha))
+        choices = commit_titles + [older_commits_choice]
+        git_sha = questionary.select(
+            f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
+        ).ask()
+        page_nbr += 1
+    return git_sha

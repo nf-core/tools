@@ -51,14 +51,14 @@ class ModulesRepo(object):
                 # remove software/ and /main.nf
                 self.modules_avail_module_names.append(f["path"][9:-8])
 
-    def get_module_file_urls(self, module):
+    def get_module_file_urls(self, module, commit=""):
         """Fetch list of URLs for a specific module
 
         Takes the name of a module and iterates over the GitHub repo file tree.
         Loops over items that are prefixed with the path 'software/<module_name>' and ignores
         anything that's not a blob. Also ignores the test/ subfolder.
 
-        Returns a dictionary with keys as filenames and values as GitHub API URIs.
+        Returns a dictionary with keys as filenames and values as GitHub API URLs.
         These can be used to then download file contents.
 
         Args:
@@ -81,6 +81,9 @@ class ModulesRepo(object):
             if "/test/" in f["path"]:
                 continue
             results[f["path"]] = f["url"]
+        if commit != "":
+            for path in results:
+                results[path] = f"https://api.github.com/repos/nf-core/modules/contents/{path}?ref={commit}"
         return results
 
     def download_gh_file(self, dl_filename, api_url):

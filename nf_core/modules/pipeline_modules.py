@@ -32,7 +32,7 @@ from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
 
 import nf_core.utils
-from .module_utils import create_modules_json
+from .module_utils import create_modules_json, get_module_git_log, prompt_module_version_sha
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -108,6 +108,11 @@ class PipelineModules(object):
                 choices=self.modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
+        try:
+            commit_sha = prompt_module_version_sha(module)
+        except SystemError as e:
+            log.error(e)
+            sys.exit(1)
 
         log.info("Installing {}".format(module))
 
@@ -132,7 +137,7 @@ class PipelineModules(object):
             return False
 
         # Download module files
-        files = self.modules_repo.get_module_file_urls(module)
+        files = self.modules_repo.get_module_file_urls(module, commit_sha)
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             split_filename = filename.split("/")
@@ -144,26 +149,6 @@ class PipelineModules(object):
         modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
         with open(modules_json_path, "r") as fh:
             modules_json = json.load(fh)
-        try:
-            commit_sha = self.get_module_commit_sha(module)
-        except SystemError as e:
-            log.error(f"Could not fetch `git_sha` for module '{module}': {e}")
-            # Remove the module
-            try:
-                shutil.rmtree(module_dir)
-                # Try cleaning up empty parent if tool/subtool and tool/ is empty
-                if module.count("/") > 0:
-                    parent_dir = os.path.dirname(module_dir)
-                    try:
-                        os.rmdir(parent_dir)
-                    except OSError:
-                        log.debug(f"Parent directory not empty: '{parent_dir}'")
-                    else:
-                        log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
-                return False
-            except OSError as e:
-                log.error("Could not remove module: {}".format(e))
-                return False
 
         modules_json["modules"][module] = {"git_sha": commit_sha}
         with open(modules_json_path, "w") as fh:
