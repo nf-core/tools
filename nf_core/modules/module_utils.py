@@ -32,7 +32,8 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1):
         commits = response.json()
 
         if len(commits) == 0:
-            raise SystemError(f"Reached end of commit history for '{module_name}'")
+            log.debug(f"Reached end of commit history for '{module_name}'")
+            return None
         else:
             # Return the commit SHAs and the first line of the commit message
             return [
@@ -44,6 +45,10 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1):
         sys.exit(1)
     else:
         raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
+
+
+def module_git_log_has_next_page(module_name, per_page=30, page_nbr=1):
+    pass
 
 
 def create_modules_json(pipeline_dir):
@@ -156,16 +161,19 @@ def prompt_module_version_sha(module):
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )
-
     git_sha = ""
     page_nbr = 1
+    next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
     while git_sha is "":
-        commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
+        commits = next_page_commits
+        next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
         commit_titles = []
         for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
             tag_display = [("fg:ansiblue", f"{title}  "), ("class:choice-default", "")]
             commit_titles.append(questionary.Choice(title=tag_display, value=sha))
-        choices = commit_titles + [older_commits_choice]
+        choices = commit_titles
+        if next_page_commits is not None:
+            choices += [older_commits_choice]
         git_sha = questionary.select(
             f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
         ).unsafe_ask()
