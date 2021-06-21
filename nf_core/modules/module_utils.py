@@ -16,17 +16,20 @@ from .modules_repo import ModulesRepo
 log = logging.getLogger(__name__)
 
 
-def get_module_git_log(module_name, per_page=30, page_nbr=1):
+def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T00:00:00Z"):
     """
     Fetches the commit history the of requested module
     Args:
         module_name (str): Name of module
         per_page (int): Number of commits per page returned by API
         page_nbr (int): Page number of the retrieved commits
+        since (str): Only show commits later than this timestamp.
+        Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
+
     Returns:
         [ dict ]: List of commit SHAs and associated (truncated) message
     """
-    api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=software/{module_name}&per_page={per_page}&page={page_nbr}"
+    api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=software/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
         commits = response.json()
