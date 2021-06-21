@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def get_module_git_log(module_name, per_page=30, page_nbr=1):
     """
-    Fetches the commit history the requested module
+    Fetches the commit history the of requested module
     Args:
         module_name (str): Name of module
         per_page (int): Number of commits per page returned by API
