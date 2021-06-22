@@ -36,7 +36,7 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T0
 
         if len(commits) == 0:
             log.debug(f"Reached end of commit history for '{module_name}'")
-            return None
+            return []
         else:
             # Return the commit SHAs and the first line of the commit message
             return [
@@ -129,6 +129,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     Returns:
         bool: Whether all local files are identical to remote version
     """
+
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]
     files_are_equal = [False, False, False]
     remote_copies = [None, None, None]
@@ -166,12 +167,11 @@ def prompt_module_version_sha(module):
     while git_sha is "":
         commits = next_page_commits
         next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
-        commit_titles = []
+        choices = []
         for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
             tag_display = [("fg:ansiblue", f"{title}  "), ("class:choice-default", "")]
-            commit_titles.append(questionary.Choice(title=tag_display, value=sha))
-        choices = commit_titles
-        if next_page_commits is not None:
+            choices.append(questionary.Choice(title=tag_display, value=sha))
+        if len(next_page_commits) > 0:
             choices += [older_commits_choice]
         git_sha = questionary.select(
             f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style

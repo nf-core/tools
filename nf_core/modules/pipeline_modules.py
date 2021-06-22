@@ -109,7 +109,7 @@ class PipelineModules(object):
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         if latest:
-            # Fetch the latest commit to the module
+            # Fetch the latest commit for the module
             version = get_module_git_log(module, per_page=1, page_nbr=1)[0]["git_sha"]
         else:
             try:
@@ -156,6 +156,7 @@ class PipelineModules(object):
         modules_json["modules"][module] = {"git_sha": version}
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
+        return True
 
     def update(self, module, force=False):
         log.error("This command is not yet implemented")
