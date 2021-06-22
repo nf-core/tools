@@ -394,7 +394,10 @@ def install(ctx, pipeline_dir, tool, latest, force, sha):
         mods = nf_core.modules.PipelineModules()
         mods.modules_repo = ctx.obj["modules_repo_obj"]
         mods.pipeline_dir = pipeline_dir
-        mods.install(tool, latest, force, sha)
+        mods.force = force
+        mods.latest = latest
+        mods.sha = sha
+        mods.install(tool)
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
