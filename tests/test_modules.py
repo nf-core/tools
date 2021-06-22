@@ -40,9 +40,11 @@ class TestModules(unittest.TestCase):
         shutil.copytree(self.template_dir, self.pipeline_dir)
         self.mods = nf_core.modules.PipelineModules()
         self.mods.pipeline_dir = self.pipeline_dir
+        self.mods.latest = self.mods.force = True
         self.mods_alt = nf_core.modules.PipelineModules()
         self.mods_alt.pipeline_dir = self.pipeline_dir
         self.mods_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+        self.mods_alt.latest = self.mods_alt.force = True
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy()
@@ -65,46 +67,46 @@ class TestModules(unittest.TestCase):
     def test_modules_install_nopipeline(self):
         """Test installing a module - no pipeline given"""
         self.mods.pipeline_dir = None
-        assert self.mods.install("foo", latest=True) is False
+        assert self.mods.install("foo") is False
 
     def test_modules_install_emptypipeline(self):
         """Test installing a module - empty dir given"""
         self.mods.pipeline_dir = tempfile.mkdtemp()
         with pytest.raises(UserWarning) as excinfo:
-            self.mods.install("foo", latest=True)
+            self.mods.install("foo")
         assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
 
     def test_modules_install_nomodule(self):
         """Test installing a module - unrecognised module given"""
-        assert self.mods.install("foo", latest=True) is False
+        assert self.mods.install("foo") is False
 
     def test_modules_install_trimgalore(self):
         """Test installing a module - TrimGalore!"""
-        assert self.mods.install("trimgalore", latest=True) is not False
+        assert self.mods.install("trimgalore") is not False
         module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
         assert os.path.exists(module_path)
 
     def test_modules_install_trimgalore_alternative_source(self):
         """Test installing a module from a different source repository - TrimGalore!"""
-        assert self.mods_alt.install("trimgalore", latest=True) is not False
+        assert self.mods_alt.install("trimgalore") is not False
         module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "trimgalore")
         assert os.path.exists(module_path)
 
     def test_modules_install_trimgalore_twice(self):
         """Test installing a module - TrimGalore! already there"""
-        self.mods.install("trimgalore", latest=True)
-        assert self.mods.install("trimgalore", latest=True) is False
+        self.mods.install("trimgalore")
+        assert self.mods.install("trimgalore") is True
 
     def test_modules_remove_trimgalore(self):
         """Test removing TrimGalore! module after installing it"""
-        self.mods.install("trimgalore", latest=True)
+        self.mods.install("trimgalore")
         module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
         assert self.mods.remove("trimgalore")
         assert os.path.exists(module_path) is False
 
     def test_modules_remove_trimgalore_alternative_source(self):
         """Test removing TrimGalore! module after installing it from an alternative source"""
-        self.mods_alt.install("trimgalore", latest=True)
+        self.mods_alt.install("trimgalore")
         module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "trimgalore")
         assert self.mods_alt.remove("trimgalore")
         assert os.path.exists(module_path) is False
@@ -115,7 +117,7 @@ class TestModules(unittest.TestCase):
 
     def test_modules_lint_trimgalore(self):
         """Test linting the TrimGalore! module"""
-        self.mods.install("trimgalore", latest=True)
+        self.mods.install("trimgalore")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False, module="trimgalore")
         assert len(module_lint.passed) == 20
