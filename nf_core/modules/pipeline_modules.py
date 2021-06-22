@@ -94,7 +94,7 @@ class PipelineModules(object):
             return json.dumps(modules, sort_keys=True, indent=4)
         return table
 
-    def install(self, module=None, latest=False, force=False):
+    def install(self, module=None, latest=False, force=False, sha=""):
 
         # Check whether pipelines is valid
         self.has_valid_pipeline()
@@ -143,6 +143,8 @@ class PipelineModules(object):
             # Check for flag '--latest'
             if latest:
                 version = latest_version
+            elif sha is not None:
+                version = sha
             else:
                 try:
                     version = prompt_module_version_sha(module, installed_sha=current_version["git_sha"])
@@ -157,12 +159,16 @@ class PipelineModules(object):
                     log.error(f"Was unable to fetch version of module '{module}'")
                     return False
                 version = git_log[0]["git_sha"]
+            elif sha is not None:
+                version = sha
             else:
                 try:
                     version = prompt_module_version_sha(module)
                 except SystemError as e:
                     log.error(e)
                     sys.exit(1)
+
+        log.info("Installing {}".format(module))
 
         # Check that we don't already have a folder for this module
         module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
@@ -173,6 +179,7 @@ class PipelineModules(object):
                 )
                 return False
             else:
+                log.info(f"Removing old version of module '{module}'")
                 try:
                     shutil.rmtree(module_dir)
                     # Try cleaning up empty parent if tool/subtool and tool/ is empty
@@ -188,7 +195,6 @@ class PipelineModules(object):
                 except OSError as e:
                     log.error("Could not remove old version of module: {}".format(e))
                     return False
-        log.info("Installing {}".format(module))
 
         log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
 
@@ -198,11 +204,14 @@ class PipelineModules(object):
         for filename, api_url in files.items():
             split_filename = filename.split("/")
             dl_filename = os.path.join(self.pipeline_dir, "modules", *install_folder, *split_filename[1:])
-            self.modules_repo.download_gh_file(dl_filename, api_url)
+            try:
+                self.modules_repo.download_gh_file(dl_filename, api_url)
+            except SystemError as e:
+                log.error(e)
+                return False
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
-        # Update module.json with new module
-
+        # Update module.json with newly installed module
         modules_json["modules"][module] = {"git_sha": version}
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
