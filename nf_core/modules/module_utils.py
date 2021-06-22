@@ -22,6 +22,7 @@ def get_module_commit_sha(module_name):
     else:
         raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
 
+
 def create_modules_json_file(pipeline_dir):
     log.info("Creating missing 'modules.json' file.")
     pipeline_config = nf_core.utils.fetch_wf_config(pipeline_dir)

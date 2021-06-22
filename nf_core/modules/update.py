@@ -60,7 +60,7 @@ class ModuleUpdate(object):
             with open(os.path.join(self.dir, "modules.json"), "r") as fh:
                 self.modules_json = json.load(fh)
         except FileNotFoundError:
-            log.error("Could not load 'modules.json' file!")
+            log.warn("Could not load 'modules.json' file! Will try to create it.")
             create_modules_json_file(self.dir)
 
         # Prompt for module or all
