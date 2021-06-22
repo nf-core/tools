@@ -125,33 +125,33 @@ class PipelineModules(object):
             modules_json = json.load(fh)
 
         current_version = modules_json["modules"].get(module)
-        if current_version is None:
-            if latest:
-                # Fetch the latest commit for the module
-                git_log = get_module_git_log(module, per_page=1, page_nbr=1)
-                if len(git_log) == 0:
-                    log.error(f"Was unable to fetch version of module '{module}'")
-                    return False
-                version = git_log[0]["git_sha"]
-            else:
-                try:
-                    version = prompt_module_version_sha(module)
-                except SystemError as e:
-                    log.error(e)
-                    sys.exit(1)
-        else:
+        print(current_version)
+        if current_version is not None:
             # Fetch the latest commit for the module
             git_log = get_module_git_log(module, per_page=1, page_nbr=1)
             if len(git_log) == 0:
                 log.error(f"Was unable to fetch version of module '{module}'")
                 return False
-            latest_version = git_log[0]["git_sha"]
-            if current_version == latest_version:
+            version = git_log[0]["git_sha"]
+            if current_version == version:
                 log.info("Already up to date")
                 return True
             elif not force:
                 log.error("Found newer version of module. To install use '--force'")
                 return False
+        if latest:
+            # Fetch the latest commit for the module
+            git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+            if len(git_log) == 0:
+                log.error(f"Was unable to fetch version of module '{module}'")
+                return False
+            version = git_log[0]["git_sha"]
+        else:
+            try:
+                version = prompt_module_version_sha(module, old_sha=current_version["git_sha"])
+            except SystemError as e:
+                log.error(e)
+                sys.exit(1)
 
         # Check that we don't already have a folder for this module
         module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)

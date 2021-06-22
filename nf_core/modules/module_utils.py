@@ -158,7 +158,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     return all(files_are_equal)
 
 
-def prompt_module_version_sha(module):
+def prompt_module_version_sha(module, old_sha=None):
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )
@@ -170,8 +170,15 @@ def prompt_module_version_sha(module):
         next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
         choices = []
         for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
-            tag_display = [("fg:ansiblue", f"{title}  "), ("class:choice-default", "")]
-            choices.append(questionary.Choice(title=tag_display, value=sha))
+
+            display_color = "fg:ansiblue" if sha != old_sha else "fg:ansired"
+            message = f"{title} {sha}"
+            if old_sha == sha:
+                message += " (old version)"
+            print(message)
+            print(sha, old_sha)
+            commit_display = [(display_color, message), ("class:choice-default", "")]
+            choices.append(questionary.Choice(title=commit_display, value=sha))
         if len(next_page_commits) > 0:
             choices += [older_commits_choice]
         git_sha = questionary.select(
