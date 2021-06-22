@@ -18,6 +18,7 @@
 * Update comment style of modules `functions.nf` template file [[#1076](https://github.com/nf-core/tools/issues/1076)]
 * Use Biocontainers API instead of quayi.io API for `nf-core modules create` [[#875](https://github.com/nf-core/tools/issues/875)]
 * Update `nf-core modules install` to handle different versions of modules  [#1116](https://github.com/nf-core/tools/pull/1116)
+
 #### Sync
 
 * Don't set the default value to `"null"` when a parameter is initialised as `null` in the config [[#1074](https://github.com/nf-core/tools/pull/1074)]
