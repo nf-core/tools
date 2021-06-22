@@ -154,10 +154,12 @@ class ModuleLint(object):
         if self.repo_type == "pipeline":
             self._load_lint_config()
 
-            for test_name in self.lint_tests:
-                if self.lint_config.get(test_name, {}) is False:
-                    log.info(f"Ignoring lint test: {test_name}")
-                    self.lint_tests.remove(test_name)
+            # Only continue if a lint config has been loaded
+            if self.lint_config:
+                for test_name in self.lint_tests:
+                    if self.lint_config.get(test_name, {}) is False:
+                        log.info(f"Ignoring lint test: {test_name}")
+                        self.lint_tests.remove(test_name)
 
         # Lint local modules
         if local and len(local_modules) > 0:
