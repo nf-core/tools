@@ -30,6 +30,7 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T0
         [ dict ]: List of commit SHAs and associated (truncated) message
     """
     api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=software/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
+    log.debug(f"Fetching commit history of module '{module_name}' from github API")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
         commits = response.json()

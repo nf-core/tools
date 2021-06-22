@@ -94,7 +94,7 @@ class PipelineModules(object):
             return json.dumps(modules, sort_keys=True, indent=4)
         return table
 
-    def install(self, module=None, latest=False):
+    def install(self, module=None, latest=False, force=False):
 
         # Check whether pipelines is valid
         self.has_valid_pipeline()
@@ -108,40 +108,112 @@ class PipelineModules(object):
                 choices=self.modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        if latest:
-            # Fetch the latest commit for the module
-            git_log = get_module_git_log(module, per_page=1, page_nbr=1)
-            if len(git_log) == 0:
-                log.error(f"Was unable to fetch version of module '{module}'")
-                return False
-            version = git_log[0]["git_sha"]
-        else:
-            try:
-                version = prompt_module_version_sha(module)
-            except SystemError as e:
-                log.error(e)
-                sys.exit(1)
-        log.info("Installing {}".format(module))
 
         # Check that the supplied name is an available module
         if module not in self.modules_repo.modules_avail_module_names:
             log.error("Module '{}' not found in list of available modules.".format(module))
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
-        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
-
         # Set the install folder based on the repository name
         install_folder = ["nf-core", "software"]
         if not self.modules_repo.name == "nf-core/modules":
             install_folder = ["external"]
 
+        # Load 'modules.json'
+        modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
+        with open(modules_json_path, "r") as fh:
+            modules_json = json.load(fh)
+
+        current_version = modules_json["modules"].get(module)
+        if current_version is None:
+            if latest:
+                # Fetch the latest commit for the module
+                git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+                if len(git_log) == 0:
+                    log.error(f"Was unable to fetch version of module '{module}'")
+                    return False
+                version = git_log[0]["git_sha"]
+            else:
+                try:
+                    version = prompt_module_version_sha(module)
+                except SystemError as e:
+                    log.error(e)
+                    sys.exit(1)
+        else:
+            # Fetch the latest commit for the module
+            git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+            if len(git_log) == 0:
+                log.error(f"Was unable to fetch version of module '{module}'")
+                return False
+            latest_version = git_log[0]["git_sha"]
+            if current_version == latest_version:
+                log.info("Already up to date")
+                return True
+            elif not force:
+                log.error("Found newer version of module. To install use '--force'")
+                return False
+
         # Check that we don't already have a folder for this module
         module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
         if os.path.exists(module_dir):
-            log.error("Module directory already exists: {}".format(module_dir))
-            # TODO: uncomment next line once update is implemented
-            # log.info("To update an existing module, use the commands 'nf-core update'")
-            return False
+            if not force:
+                log.error(
+                    "Module directory already exists but module {} is not present in 'module.json'".format(module_dir)
+                )
+                return False
+            else:
+                try:
+                    shutil.rmtree(module_dir)
+                    # Try cleaning up empty parent if tool/subtool and tool/ is empty
+                    if module.count("/") > 0:
+                        parent_dir = os.path.dirname(module_dir)
+                        try:
+                            os.rmdir(parent_dir)
+                        except OSError:
+                            log.debug(f"Parent directory not empty: '{parent_dir}'")
+                        else:
+                            log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
+                    log.debug("Successfully removed {} module".format(module))
+                except OSError as e:
+                    log.error("Could not remove old version of module: {}".format(e))
+                    return False
+        # Load 'modules.json'
+        modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
+        with open(modules_json_path, "r") as fh:
+            modules_json = json.load(fh)
+
+        current_version = modules_json.get(module)
+        if current_version is None:
+            if latest or force:
+                # Fetch the latest commit for the module
+                git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+                if len(git_log) == 0:
+                    log.error(f"Was unable to fetch version of module '{module}'")
+                    return False
+                version = git_log[0]["git_sha"]
+            else:
+                try:
+                    version = prompt_module_version_sha(module)
+                except SystemError as e:
+                    log.error(e)
+                    sys.exit(1)
+        else:
+            # Fetch the latest commit for the module
+            git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+            if len(git_log) == 0:
+                log.error(f"Was unable to fetch version of module '{module}'")
+                return False
+            latest_version = git_log[0]["git_sha"]
+            if current_version == latest_version:
+                log.info("Already up to date")
+                return True
+            elif not force:
+                log.error("Found newer version of module. To install use '--force'")
+                return False
+
+        log.info("Installing {}".format(module))
+
+        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
 
         # Download module files
         files = self.modules_repo.get_module_file_urls(module, version)
@@ -153,9 +225,6 @@ class PipelineModules(object):
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
 
         # Update module.json with new module
-        modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
-        with open(modules_json_path, "r") as fh:
-            modules_json = json.load(fh)
 
         modules_json["modules"][module] = {"git_sha": version}
         with open(modules_json_path, "w") as fh:
