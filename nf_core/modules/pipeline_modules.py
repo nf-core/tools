@@ -183,7 +183,9 @@ class PipelineModules(object):
                 version = latest_version
             else:
                 try:
-                    version = prompt_module_version_sha(module)
+                    version = prompt_module_version_sha(
+                        module, installed_sha=current_entry["git_sha"] if not current_entry is None else None
+                    )
                 except SystemError as e:
                     log.error(e)
                     return False
@@ -271,7 +273,6 @@ class PipelineModules(object):
             create_modules_json(self.pipeline_dir)
 
     def clear_module_dir(self, module_name, module_dir):
-        """Removes a module directory recursively"""
         try:
             shutil.rmtree(module_dir)
             # Try cleaning up empty parent if tool/subtool and tool/ is empty
