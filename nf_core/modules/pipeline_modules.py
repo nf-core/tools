@@ -110,7 +110,11 @@ class PipelineModules(object):
             ).unsafe_ask()
         if latest:
             # Fetch the latest commit for the module
-            version = get_module_git_log(module, per_page=1, page_nbr=1)[0]["git_sha"]
+            git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+            if len(git_log) == 0:
+                log.error(f"Was unable to fetch version of module '{module}'")
+                return False
+            version = git_log[0]["git_sha"]
         else:
             try:
                 version = prompt_module_version_sha(module)
