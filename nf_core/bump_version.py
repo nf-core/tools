@@ -34,13 +34,6 @@ def bump_pipeline_version(pipeline_obj, new_version):
     log.info("Changing version number from '{}' to '{}'".format(current_version, new_version))
 
     # nextflow.config - workflow manifest version
-    # nextflow.config - process container manifest version
-    docker_tag = "dev"
-    if new_version.replace(".", "").isdigit():
-        docker_tag = new_version
-    else:
-        log.info("New version contains letters. Setting docker tag to 'dev'")
-
     update_file_version(
         "nextflow.config",
         pipeline_obj,
@@ -48,61 +41,6 @@ def bump_pipeline_version(pipeline_obj, new_version):
             (
                 r"version\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace(".", r"\.")),
                 "version = '{}'".format(new_version),
-            ),
-            (
-                r"container\s*=\s*[\'\"]nfcore/{}:(?:{}|dev)[\'\"]".format(
-                    pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")
-                ),
-                "container = 'nfcore/{}:{}'".format(pipeline_obj.pipeline_name.lower(), docker_tag),
-            ),
-        ],
-    )
-
-    # .github/workflows/ci.yml - docker build image tag
-    # .github/workflows/ci.yml - docker tag image
-    update_file_version(
-        os.path.join(".github", "workflows", "ci.yml"),
-        pipeline_obj,
-        [
-            (
-                r"docker build --no-cache . -t nfcore/{name}:(?:{tag}|dev)".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
-                ),
-                "docker build --no-cache . -t nfcore/{name}:{tag}".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=docker_tag
-                ),
-            ),
-            (
-                r"docker tag nfcore/{name}:dev nfcore/{name}:(?:{tag}|dev)".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
-                ),
-                "docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=docker_tag
-                ),
-            ),
-        ],
-    )
-
-    # environment.yml - environment name
-    update_file_version(
-        "environment.yml",
-        pipeline_obj,
-        [
-            (
-                r"name: nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
-                "name: nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
-            )
-        ],
-    )
-
-    # Dockerfile - ENV PATH and RUN conda env create
-    update_file_version(
-        "Dockerfile",
-        pipeline_obj,
-        [
-            (
-                r"nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
-                "nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
             )
         ],
     )
@@ -132,8 +70,8 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflowVersion\s*=\s*[\'\"]?>={}[\'\"]?".format(current_version.replace(".", r"\.")),
-                "nextflowVersion = '>={}'".format(new_version),
+                r"nextflowVersion\s*=\s*[\'\"]?!>={}[\'\"]?".format(current_version.replace(".", r"\.")),
+                "nextflowVersion = '!>={}'".format(new_version),
             )
         ],
     )
@@ -157,15 +95,17 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace(".", r"\.")),
-                "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version),
+                r"nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(current_version.replace(".", r"\.")),
+                "nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(new_version),
             ),
             (
-                # example: 1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>=20.04.0`)
-                r"1\.\s*Install\s*\[`nextflow`\]\(https://nf-co\.re/usage/installation\)\s*\(`>={}`\)".format(
+                # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
+                r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>={}`\)".format(
                     current_version.replace(".", r"\.")
                 ),
-                "1. Install [`nextflow`](https://nf-co.re/usage/installation) (`>={}`)".format(new_version),
+                "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={}`)".format(
+                    new_version
+                ),
             ),
         ],
     )

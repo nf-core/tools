@@ -477,10 +477,10 @@ def pip_package(dep):
 
 def get_biocontainer_tag(package, version):
     """
-    Given a bioconda package and version, look for a container
-    at quay.io and returns the tag of the most recent image
-    that matches the package version
-    Sends a HTTP GET request to the quay.io API.
+    Given a bioconda package and version, looks for Docker and Singularity containers
+    using the biocontaineres API, e.g.:
+    https://api.biocontainers.pro/ga4gh/trs/v2/tools/{tool}/versions/{tool}-{version}
+    Returns the most recent container versions by default.
     Args:
         package (str): A bioconda package name.
         version (str): Version of the bioconda package
@@ -489,37 +489,39 @@ def get_biocontainer_tag(package, version):
         A ValueError, if the package name can not be found (404)
     """
 
-    def get_tag_date(tag_date):
-        # Reformat a date given by quay.io to  datetime
-        return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
+    biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{package}/versions/{package}-{version}"
 
-    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
+    def get_tag_date(tag_date):
+        """
+        Format a date given by the biocontainers API
+        Given format: '2021-03-25T08:53:00Z'
+        """
+        return datetime.datetime.strptime(tag_date, "%Y-%m-%dT%H:%M:%SZ")
 
     try:
-        response = requests.get(quay_api_url)
+        response = requests.get(biocontainers_api_url)
     except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to quay.io API")
+        raise LookupError("Could not connect to biocontainers.pro API")
     else:
         if response.status_code == 200:
-            # Get the container tag
-            tags = response.json()["tags"]
-            matching_tags = [t for t in tags if t["name"].startswith(version)]
-            # If version matches several images, get the most recent one, else return tag
-            if len(matching_tags) > 0:
-                tag = matching_tags[0]
-                tag_date = get_tag_date(tag["last_modified"])
-                for t in matching_tags:
-                    if get_tag_date(t["last_modified"]) > tag_date:
-                        tag = t
-                return package + ":" + tag["name"]
-            else:
-                return matching_tags[0]["name"]
+            images = response.json()["images"]
+            singularity_image = None
+            docker_image = None
+            for img in images:
+                # Get most recent Docker and Singularity image
+                if img["image_type"] == "Docker":
+                    modification_date = get_tag_date(img["updated"])
+                    if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
+                        docker_image = img
+                if img["image_type"] == "Singularity":
+                    modification_date = get_tag_date(img["updated"])
+                    if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
+                        singularity_image = img
+            return docker_image["image_name"], singularity_image["image_name"]
         elif response.status_code != 404:
-            raise LookupError(
-                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
-            )
+            raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
-            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
+            raise ValueError(f"Could not find `{package}` on api.biocontainers.pro")
 
 
 def custom_yaml_dumper():
