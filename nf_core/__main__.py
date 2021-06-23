@@ -370,9 +370,9 @@ def list(ctx, pipeline_dir, json):
     If no pipeline directory is given, lists all currently available
     software wrappers in the nf-core/modules repository.
     """
-    module_list = nf_core.modules.ModuleList(pipeline_dir)
+    module_list = nf_core.modules.ModuleList(pipeline_dir, json)
     module_list.modules_repo = ctx.obj["modules_repo_obj"]
-    print(module_list.list_modules(json))
+    print(module_list.list_modules())
 
 
 @modules.command(help_priority=2)
@@ -394,7 +394,7 @@ def install(ctx, pipeline_dir, tool, latest, force, sha):
     try:
         module_install = nf_core.modules.ModuleInstall(pipeline_dir, tool, force=force, latest=latest, sha=sha)
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
-        module_install.install(tool)
+        module_install.install()
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)

@@ -22,7 +22,7 @@ class ModuleCommand:
         Initialise the ModulesCommand object
         """
         self.modules_repo = ModulesRepo()
-        self.pipeline_dir = None
+        self.pipeline_dir = pipeline_dir
         self.pipeline_module_names = []
 
     def get_pipeline_modules(self):

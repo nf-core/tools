@@ -25,7 +25,7 @@ from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
 
 import nf_core.utils
-from .pipeline_modules import ModulesRepo
+from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 

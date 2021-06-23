@@ -21,7 +21,8 @@ import yaml
 import operator
 
 import nf_core.utils
-import nf_core.modules.pipeline_modules
+
+from .modules_repo import ModulesRepo
 
 
 log = logging.getLogger(__name__)
@@ -62,7 +63,7 @@ class ModulesTestYmlBuilder(object):
 
         # Get the tool name if not specified
         if self.module_name is None:
-            modules_repo = nf_core.modules.pipeline_modules.ModulesRepo()
+            modules_repo = ModulesRepo()
             modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
