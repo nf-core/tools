@@ -24,6 +24,10 @@
 
 * Don't set the default value to `"null"` when a parameter is initialised as `null` in the config [[#1074](https://github.com/nf-core/tools/pull/1074)]
 
+#### Tests
+
+* Added a test for the `version_consistency` lint check
+
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 
 ### Template
