@@ -10,9 +10,6 @@ def test_version_consistency(self):
     lint_obj.nextflow_config()
 
     result = lint_obj.version_consistency()
+    print(result)
     assert result["passed"] == ["Version tags are numeric and consistent between container, release tag and config."]
-    assert result["failed"] == [
-        "manifest.version was not numeric: 1.0dev!",
-        "process.container was not numeric: dev!",
-        "The versioning is not consistent between container, release tag and config. Found manifest.version = 1.0dev, process.container = dev",
-    ]
+    assert result["failed"] == ["manifest.version was not numeric: 1.0dev!"]
