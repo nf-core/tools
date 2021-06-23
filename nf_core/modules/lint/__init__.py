@@ -81,7 +81,8 @@ class ModuleLint(object):
             self.lint_tests.append("module_tests")
 
         if self.repo_type == "pipeline":
-            self.lint_tests.append("module_version")
+            # add as first test to load git_sha before module_changes
+            self.lint_tests.insert(0, "module_version")
 
     def lint(self, module=None, all_modules=False, print_results=True, show_passed=False, local=False):
         """

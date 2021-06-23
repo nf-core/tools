@@ -23,7 +23,7 @@ def module_changes(module_lint_object, module):
 
     # If module.git_sha specified, check specific commit version for changes
     if module.git_sha:
-        module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module.git_sha}/software/{module.module_name}"
+        module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module.git_sha}/software/{module.module_name}/"
 
     for f in files_to_check:
         # open local copy, continue if file not found (a failed message has already been issued in this case)
