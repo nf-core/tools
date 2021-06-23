@@ -25,7 +25,7 @@ from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
 
 import nf_core.utils
-from nf_core.modules.pipeline_modules import ModulesRepo
+from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)
