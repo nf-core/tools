@@ -3,12 +3,12 @@ from os import pipe
 import rich
 import logging
 
-from .modules_command import ModulesCommand
+from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModulesList(ModulesCommand):
+class ModuleList(ModuleCommand):
     def __init__(self, pipeline_dir, print_json=False):
         super().__init__(pipeline_dir)
         self.print_json = print_json

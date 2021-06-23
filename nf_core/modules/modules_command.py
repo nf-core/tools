@@ -12,12 +12,12 @@ from .module_utils import create_modules_json
 log = logging.getLogger(__name__)
 
 
-class ModulesCommand:
+class ModuleCommand:
     """
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self):
+    def __init__(self, pipeline_dir):
         """
         Initialise the ModulesCommand object
         """

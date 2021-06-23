@@ -5,13 +5,13 @@ import logging
 
 import nf_core.utils
 
-from .modules_command import ModulesCommand
+from .modules_command import ModuleCommand
 from .module_utils import get_module_git_log, prompt_module_version_sha
 
 log = logging.getLogger(__name__)
 
 
-class ModulesInstall(ModulesCommand):
+class ModuleInstall(ModuleCommand):
     def __init__(self, pipeline_dir, module=None, force=False, latest=False, sha=""):
         super().__init__(pipeline_dir)
         self.force = force

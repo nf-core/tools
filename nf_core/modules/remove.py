@@ -4,12 +4,12 @@ import logging
 
 import nf_core.utils
 
-from .modules_command import ModulesCommand
+from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModulesRemove(ModulesCommand):
+class ModuleRemove(ModuleCommand):
     def __init__(self, pipeline_dir, module):
         """
         Initialise the ModulesRemove object and run remove command
