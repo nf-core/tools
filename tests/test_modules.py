@@ -40,9 +40,11 @@ class TestModules(unittest.TestCase):
         shutil.copytree(self.template_dir, self.pipeline_dir)
         self.mods = nf_core.modules.PipelineModules()
         self.mods.pipeline_dir = self.pipeline_dir
+        self.mods.latest = self.mods.force = True
         self.mods_alt = nf_core.modules.PipelineModules()
         self.mods_alt.pipeline_dir = self.pipeline_dir
         self.mods_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+        self.mods_alt.latest = self.mods_alt.force = True
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy()
@@ -93,7 +95,7 @@ class TestModules(unittest.TestCase):
     def test_modules_install_trimgalore_twice(self):
         """Test installing a module - TrimGalore! already there"""
         self.mods.install("trimgalore")
-        assert self.mods.install("trimgalore") is False
+        assert self.mods.install("trimgalore") is True
 
     def test_modules_remove_trimgalore(self):
         """Test removing TrimGalore! module after installing it"""

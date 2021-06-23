@@ -380,7 +380,12 @@ def list(ctx, pipeline_dir, json):
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
-def install(ctx, pipeline_dir, tool):
+@click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
+@click.option(
+    "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
+)
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
+def install(ctx, pipeline_dir, tool, latest, force, sha):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
@@ -391,6 +396,9 @@ def install(ctx, pipeline_dir, tool):
         mods = nf_core.modules.PipelineModules()
         mods.modules_repo = ctx.obj["modules_repo_obj"]
         mods.pipeline_dir = pipeline_dir
+        mods.force = force
+        mods.latest = latest
+        mods.sha = sha
         mods.install(tool)
     except UserWarning as e:
         log.critical(e)
