@@ -508,10 +508,11 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
-def lint(ctx, pipeline_dir, tool, all, local, passed):
+def lint(ctx, pipeline_dir, tool, key, all, local, passed):
     """
     Lint one or more modules in a directory.
 
@@ -522,7 +523,7 @@ def lint(ctx, pipeline_dir, tool, all, local, passed):
     nf-core/modules repository.
     """
     try:
-        module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir)
+        module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir, key=key)
         module_lint.modules_repo = ctx.obj["modules_repo_obj"]
         module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
         if len(module_lint.failed) > 0:
