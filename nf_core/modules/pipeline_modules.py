@@ -106,6 +106,7 @@ class PipelineModules(object):
         self.modules_repo.get_modules_file_tree()
         if self.latest and self.sha is not None:
             log.error("Cannot use '--sha' and '--latest' at the same time!")
+            return False
 
         if module is None:
             module = questionary.autocomplete(
