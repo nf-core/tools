@@ -205,7 +205,6 @@ class TestLint(unittest.TestCase):
     from lint.nextflow_config import (
         test_nextflow_config_example_pass,
         test_nextflow_config_bad_name_fail,
-        test_nextflow_config_bad_container_name_failed,
         test_nextflow_config_dev_in_release_mode_failed,
     )
 
@@ -216,6 +215,8 @@ class TestLint(unittest.TestCase):
 
     from lint.version_consistency import test_version_consistency
 
+
+# TODO nf-core: Assess and strip out if no longer required for DSL2
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""

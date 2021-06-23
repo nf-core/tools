@@ -13,7 +13,7 @@ def actions_awsfulltest(self):
     The GitHub Actions workflow is called ``awsfulltest.yml``, and it can be found in the ``.github/workflows/`` directory.
 
     .. warning::  This workflow incurs AWS costs, therefore it should only be triggered for pipeline releases:
-                  ``workflow_run`` (after the docker hub release workflow) and ``workflow_dispatch``.
+                  ``release`` (after the pipeline release) and ``workflow_dispatch``.
 
     .. note::  You can manually trigger the AWS tests by going to the `Actions` tab on the pipeline GitHub repository and selecting the
                   `nf-core AWS full size tests` workflow on the left.
@@ -23,7 +23,7 @@ def actions_awsfulltest(self):
     The ``.github/workflows/awsfulltest.yml`` file is tested for the following:
 
     * Must be turned on ``workflow_dispatch``.
-    * Must be turned on for ``workflow_run`` with ``workflows: ["nf-core Docker push (release)"]`` and ``types: [completed]``
+    * Must be turned on for ``release`` with ``types: [published]``
     * Should run the profile ``test_full`` that should be edited to provide the links to full-size datasets. If it runs the profile ``test``, a warning is given.
     """
     passed = []
@@ -42,9 +42,7 @@ def actions_awsfulltest(self):
 
         # Check that the action is only turned on for published releases
         try:
-            assert "workflow_run" in wf[True]
-            assert wf[True]["workflow_run"]["workflows"] == ["nf-core Docker push (release)"]
-            assert wf[True]["workflow_run"]["types"] == ["completed"]
+            assert wf[True]["release"]["types"] == ["published"]
             assert "workflow_dispatch" in wf[True]
         except (AssertionError, KeyError, TypeError):
             failed.append("`.github/workflows/awsfulltest.yml` is not triggered correctly")

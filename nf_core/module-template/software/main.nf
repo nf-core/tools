@@ -33,9 +33,9 @@ process {{ tool_name_underscore|upper }} {
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda (params.enable_conda ? "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}" : null)
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/{{ container_tag if container_tag else 'YOUR-TOOL-HERE' }}"
+        container "https://depot.galaxyproject.org/singularity/{{ singularity_container if singularity_container else 'YOUR-TOOL-HERE' }}"
     } else {
-        container "quay.io/biocontainers/{{ container_tag if container_tag else 'YOUR-TOOL-HERE' }}"
+        container "quay.io/biocontainers/{{ docker_container if docker_container else 'YOUR-TOOL-HERE' }}"
     }
 
     input:
