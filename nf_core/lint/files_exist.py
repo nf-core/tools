@@ -150,6 +150,7 @@ def files_exist(self):
         [os.path.join(".github", "workflows", "awstest.yml")],
         [os.path.join(".github", "workflows", "awsfulltest.yml")],
         [os.path.join("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
+        ["modules.json"],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.

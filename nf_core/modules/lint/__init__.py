@@ -16,6 +16,7 @@ import re
 import requests
 import rich
 import yaml
+import json
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
@@ -61,6 +62,7 @@ class ModuleLint(object):
     from .module_changes import module_changes
     from .module_tests import module_tests
     from .module_todos import module_todos
+    from .module_version import module_version
 
     def __init__(self, dir, key=()):
         self.dir = dir
@@ -72,10 +74,14 @@ class ModuleLint(object):
         self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
         self.key = key
         self.lint_config = None
+        self.modules_json = None
 
-        # Add tests specific to nf-core/modules
+        # Add tests specific to nf-core/modules or pipelines
         if self.repo_type == "modules":
             self.lint_tests.append("module_tests")
+
+        if self.repo_type == "pipeline":
+            self.lint_tests.append("module_version")
 
     def lint(self, module=None, all_modules=False, print_results=True, show_passed=False, local=False):
         """
@@ -150,9 +156,10 @@ class ModuleLint(object):
             log.info("Only running tests: '{}'".format("', '".join(self.key)))
             self.lint_tests = [k for k in self.lint_tests if k in self.key]
 
-        # If it is a pipeline, load the lint config file
+        # If it is a pipeline, load the lint config file and the modules.json file
         if self.repo_type == "pipeline":
             self._load_lint_config()
+            self._load_modules_json()
 
             # Only continue if a lint config has been loaded
             if self.lint_config:
@@ -445,3 +452,28 @@ class ModuleLint(object):
                 self.lint_config = yaml.safe_load(fh)
         except FileNotFoundError:
             log.debug("No lint config file found: {}".format(config_fn))
+
+    def _load_modules_json(self):
+        """
+        Load the modules.json file
+
+        If not find, ask whether we should create it
+        """
+        modules_json_path = os.path.join(self.dir, "modules.json")
+
+        try:
+            with open(modules_json_path, "r") as fh:
+                self.modules_json = json.load(fh)
+        except FileNotFoundError:
+            create_modules_json = questionary.confirm(
+                "Could not find `modules.json` file. Should I create it now?", default=True
+            ).unsafe_ask()
+            if create_modules_json:
+                nf_core.modules.module_utils.create_modules_json(self.dir)
+
+                with open(modules_json_path, "r") as fh:
+                    self.modules_json = json.load(fh)
+
+            else:
+                log.error(f"No `modules.json` file found! Please create one before continuing.")
+                sys.exit(1)

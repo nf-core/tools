@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+"""
+Verify that a module has a correct entry in the modules.json file
+"""
+
+import logging
+import os
+import json
+import re
+import questionary
+import nf_core
+import sys
+
+import nf_core.modules.module_utils
+
+log = logging.getLogger(__name__)
+
+
+def module_version(module_lint_object, module):
+    """
+    Verify that the module has a version (git_sha) specified in the
+    modules.json file
+    """
+    modules_json_path = os.path.join(module_lint_object.dir, "modules.json")
+    try:
+        git_sha = module_lint_object.modules_json["modules"][module.module_name]["git_sha"]
+        module.git_sha = git_sha
+        module.passed.append(("git_sha", "Found git_sha entry in `modules.json`", modules_json_path))
+    except KeyError:
+        module.failed.append(("git_sha", "No git_sha entry in `modules.json`", modules_json_path))
