@@ -33,10 +33,8 @@ class ModuleVersionBumper(object):
     def __init__(
         self,
         dir=".",
-        tool="",
     ):
         self.dir = dir
-        self.tool = tool
 
     def bump_versions(self, module=None, all_modules=False):
         """
@@ -98,11 +96,44 @@ class ModuleVersionBumper(object):
                 progress_bar.update(bump_progress, advance=1, test_name=mod.module_name)
                 self.bump_module_version(mod)
 
-    def bump_module_version(module: NFCoreModule):
+    def bump_module_version(self, module: NFCoreModule):
         """
         Bump the bioconda and container version of a single NFCoreModule
 
         Args:
             module: NFCoreModule
         """
+
+        # Get the current bioconda version
+
+        # Check if a new version is available
+
+        # Install the new version
+
+        # Be done with it
+
         print("bumping that module")
+        bioconda_packages = self.get_bioconda_version(module)
+        print(bioconda_packages)
+
+    def get_bioconda_version(self, module):
+        """
+        Extract the bioconda version from a module
+        """
+        # Check whether file exists and load it
+        try:
+            with open(module.main_nf, "r") as fh:
+                lines = fh.readlines()
+        except FileNotFoundError as e:
+            log.error(f"Could not read `main.nf` of {module.module_name} module.")
+            sys.exit(1)
+
+        for l in lines:
+            if re.search("bioconda::", l):
+                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+            if re.search("org/singularity", l):
+                singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+            if re.search("biocontainers", l):
+                docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+
+        return bioconda_packages
