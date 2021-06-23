@@ -6,7 +6,7 @@ import logging
 import nf_core.utils
 
 from .modules_command import ModuleCommand
-from .module_utils import get_module_git_log, prompt_module_version_sha
+from .module_utils import get_module_git_log
 
 log = logging.getLogger(__name__)
 
@@ -90,7 +90,9 @@ class ModuleInstall(ModuleCommand):
                 return True
             else:
                 try:
-                    version = prompt_module_version_sha(self.module, installed_sha=current_entry["git_sha"])
+                    version = self.prompt_module_version_sha(
+                        installed_sha=current_entry["git_sha"] if not current_entry is None else None
+                    )
                 except SystemError as e:
                     log.error(e)
                     return False
@@ -106,8 +108,8 @@ class ModuleInstall(ModuleCommand):
                 version = latest_version
             else:
                 try:
-                    version = prompt_module_version_sha(
-                        self.module, installed_sha=current_entry["git_sha"] if not current_entry is None else None
+                    version = self.prompt_module_version_sha(
+                        installed_sha=current_entry["git_sha"] if not current_entry is None else None
                     )
                 except SystemError as e:
                     log.error(e)
@@ -141,3 +143,30 @@ class ModuleInstall(ModuleCommand):
                 return False
         else:
             return True
+
+    def prompt_module_version_sha(self, installed_sha=None):
+        older_commits_choice = questionary.Choice(
+            title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
+        )
+        git_sha = ""
+        page_nbr = 1
+        next_page_commits = get_module_git_log(self.module, per_page=10, page_nbr=page_nbr)
+        while git_sha is "":
+            commits = next_page_commits
+            next_page_commits = get_module_git_log(self.module, per_page=10, page_nbr=page_nbr + 1)
+            choices = []
+            for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
+
+                display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
+                message = f"{title} {sha}"
+                if installed_sha == sha:
+                    message += " (installed version)"
+                commit_display = [(display_color, message), ("class:choice-default", "")]
+                choices.append(questionary.Choice(title=commit_display, value=sha))
+            if len(next_page_commits) > 0:
+                choices += [older_commits_choice]
+            git_sha = questionary.select(
+                f"Select '{self.module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
+            ).unsafe_ask()
+            page_nbr += 1
+        return git_sha

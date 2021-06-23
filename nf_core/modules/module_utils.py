@@ -156,31 +156,3 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
             files_are_equal[i] = True
 
     return all(files_are_equal)
-
-
-def prompt_module_version_sha(module, installed_sha=None):
-    older_commits_choice = questionary.Choice(
-        title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
-    )
-    git_sha = ""
-    page_nbr = 1
-    next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
-    while git_sha is "":
-        commits = next_page_commits
-        next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
-        choices = []
-        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
-
-            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
-            message = f"{title} {sha}"
-            if installed_sha == sha:
-                message += " (installed version)"
-            commit_display = [(display_color, message), ("class:choice-default", "")]
-            choices.append(questionary.Choice(title=commit_display, value=sha))
-        if len(next_page_commits) > 0:
-            choices += [older_commits_choice]
-        git_sha = questionary.select(
-            f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
-        ).unsafe_ask()
-        page_nbr += 1
-    return git_sha
