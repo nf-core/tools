@@ -159,7 +159,7 @@ class PipelineModules(object):
         if not self.check_module_files_installed(module, module_dir):
             return False
 
-        if self.sha is not None:
+        if self.sha:
             if not current_entry is None and not self.force:
                 return False
             if self.download_module_file(module, self.sha, install_folder, module_dir):
