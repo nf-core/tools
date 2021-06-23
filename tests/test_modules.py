@@ -38,13 +38,18 @@ class TestModules(unittest.TestCase):
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "mypipeline")
         shutil.copytree(self.template_dir, self.pipeline_dir)
-        self.mods = nf_core.modules.PipelineModules()
-        self.mods.pipeline_dir = self.pipeline_dir
-        self.mods.latest = self.mods.force = True
-        self.mods_alt = nf_core.modules.PipelineModules()
-        self.mods_alt.pipeline_dir = self.pipeline_dir
-        self.mods_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
-        self.mods_alt.latest = self.mods_alt.force = True
+
+        # Set up install objects
+        print("Setting up install objects")
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, latest=True, force=True)
+        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, latest=True, force=True)
+        self.mods_install_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+
+        # Set up remove objects
+        print("Setting up remove objects")
+        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
+        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
+        self.mods_remove_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy()
@@ -57,8 +62,8 @@ class TestModules(unittest.TestCase):
 
     def test_modules_list(self):
         """Test listing available modules"""
-        self.mods.pipeline_dir = None
-        listed_mods = self.mods.list_modules()
+        mods_list = nf_core.modules.ModuleList(None)
+        listed_mods = mods_list.list_modules()
         console = Console(record=True)
         console.print(listed_mods)
         output = console.export_text()
@@ -66,58 +71,58 @@ class TestModules(unittest.TestCase):
 
     def test_modules_install_nopipeline(self):
         """Test installing a module - no pipeline given"""
-        self.mods.pipeline_dir = None
-        assert self.mods.install("foo") is False
+        self.mods_install.pipeline_dir = None
+        assert self.mods_install.install("foo") is False
 
     def test_modules_install_emptypipeline(self):
         """Test installing a module - empty dir given"""
-        self.mods.pipeline_dir = tempfile.mkdtemp()
+        self.mods_install.pipeline_dir = tempfile.mkdtemp()
         with pytest.raises(UserWarning) as excinfo:
-            self.mods.install("foo")
+            self.mods_install.install("foo")
         assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
 
     def test_modules_install_nomodule(self):
         """Test installing a module - unrecognised module given"""
-        assert self.mods.install("foo") is False
+        assert self.mods_install.install("foo") is False
 
     def test_modules_install_trimgalore(self):
         """Test installing a module - TrimGalore!"""
-        assert self.mods.install("trimgalore") is not False
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
+        assert self.mods_install.install("trimgalore") is not False
+        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
         assert os.path.exists(module_path)
 
     def test_modules_install_trimgalore_alternative_source(self):
         """Test installing a module from a different source repository - TrimGalore!"""
-        assert self.mods_alt.install("trimgalore") is not False
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "trimgalore")
+        assert self.mods_install_alt.install("trimgalore") is not False
+        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "external", "trimgalore")
         assert os.path.exists(module_path)
 
     def test_modules_install_trimgalore_twice(self):
         """Test installing a module - TrimGalore! already there"""
-        self.mods.install("trimgalore")
-        assert self.mods.install("trimgalore") is True
+        self.mods_install.install("trimgalore")
+        assert self.mods_install.install("trimgalore") is True
 
     def test_modules_remove_trimgalore(self):
         """Test removing TrimGalore! module after installing it"""
-        self.mods.install("trimgalore")
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
-        assert self.mods.remove("trimgalore")
+        self.mods_install.install("trimgalore")
+        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
+        assert self.mods_remove.remove("trimgalore")
         assert os.path.exists(module_path) is False
 
     def test_modules_remove_trimgalore_alternative_source(self):
         """Test removing TrimGalore! module after installing it from an alternative source"""
-        self.mods_alt.install("trimgalore")
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "external", "trimgalore")
-        assert self.mods_alt.remove("trimgalore")
+        self.mods_install_alt.install("trimgalore")
+        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "external", "trimgalore")
+        assert self.mods_remove_alt.remove("trimgalore")
         assert os.path.exists(module_path) is False
 
     def test_modules_remove_trimgalore_uninstalled(self):
         """Test removing TrimGalore! module without installing it"""
-        assert self.mods.remove("trimgalore") is False
+        assert self.mods_remove.remove("trimgalore") is False
 
     def test_modules_lint_trimgalore(self):
         """Test linting the TrimGalore! module"""
-        self.mods.install("trimgalore")
+        self.mods_install.install("trimgalore")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False, module="trimgalore")
         assert len(module_lint.passed) == 20
@@ -126,8 +131,8 @@ class TestModules(unittest.TestCase):
 
     def test_modules_lint_empty(self):
         """Test linting a pipeline with no modules installed"""
-        self.mods.remove("fastqc")
-        self.mods.remove("multiqc")
+        self.mods_remove.remove("fastqc")
+        self.mods_remove.remove("multiqc")
         module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
         module_lint.lint(print_results=False, all_modules=True)
         assert len(module_lint.passed) == 0

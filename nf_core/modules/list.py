@@ -9,11 +9,10 @@ log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir, print_json=False):
+    def __init__(self, pipeline_dir):
         super().__init__(pipeline_dir)
-        self.print_json = print_json
 
-    def list_modules(self):
+    def list_modules(self, print_json=False):
         """
         Get available module names from GitHub tree for repo
         and print as list to stdout
@@ -56,6 +55,6 @@ class ModuleList(ModuleCommand):
 
         for mod in sorted(modules):
             table.add_row(mod)
-        if self.print_json:
+        if print_json:
             return json.dumps(modules, sort_keys=True, indent=4)
         return table

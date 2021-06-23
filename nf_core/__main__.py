@@ -370,9 +370,9 @@ def list(ctx, pipeline_dir, json):
     If no pipeline directory is given, lists all currently available
     software wrappers in the nf-core/modules repository.
     """
-    module_list = nf_core.modules.ModuleList(pipeline_dir, json)
+    module_list = nf_core.modules.ModuleList(pipeline_dir)
     module_list.modules_repo = ctx.obj["modules_repo_obj"]
-    print(module_list.list_modules())
+    print(module_list.list_modules(json))
 
 
 @modules.command(help_priority=2)
@@ -392,9 +392,9 @@ def install(ctx, pipeline_dir, tool, latest, force, sha):
     along with associated metadata.
     """
     try:
-        module_install = nf_core.modules.ModuleInstall(pipeline_dir, tool, force=force, latest=latest, sha=sha)
+        module_install = nf_core.modules.ModuleInstall(pipeline_dir, force=force, latest=latest, sha=sha)
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
-        module_install.install()
+        module_install.install(tool)
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
@@ -430,9 +430,9 @@ def remove(ctx, pipeline_dir, tool):
     Remove a software wrapper from a pipeline.
     """
     try:
-        module_remove = nf_core.modules.ModuleRemove(pipeline_dir, tool)
+        module_remove = nf_core.modules.ModuleRemove(pipeline_dir)
         module_remove.modules_repo = ctx.obj["modules_repo_obj"]
-        module_remove.remove()
+        module_remove.remove(tool)
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)

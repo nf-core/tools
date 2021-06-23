@@ -10,14 +10,13 @@ log = logging.getLogger(__name__)
 
 
 class ModuleRemove(ModuleCommand):
-    def __init__(self, pipeline_dir, module):
+    def __init__(self, pipeline_dir):
         """
         Initialise the ModulesRemove object and run remove command
         """
         super().__init__(pipeline_dir)
-        self.module = module
 
-    def remove(self):
+    def remove(self, module):
         """
         Remove an already installed module
         This command only works for modules that are installed from 'nf-core/modules'
@@ -29,11 +28,11 @@ class ModuleRemove(ModuleCommand):
         # Get the installed modules
         self.get_pipeline_modules()
 
-        if self.module is None:
+        if module is None:
             if len(self.pipeline_module_names) == 0:
                 log.error("No installed modules found in pipeline")
                 return False
-            self.module = questionary.autocomplete(
+            module = questionary.autocomplete(
                 "Tool name:", choices=self.pipeline_module_names, style=nf_core.utils.nfcore_question_style
             ).ask()
 
@@ -43,7 +42,7 @@ class ModuleRemove(ModuleCommand):
             install_folder = ["external"]
 
         # Get the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, self.module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
@@ -51,7 +50,7 @@ class ModuleRemove(ModuleCommand):
             log.info("The module you want to remove does not seem to be installed")
             return False
 
-        log.info("Removing {}".format(self.module))
+        log.info("Removing {}".format(module))
 
         # Remove the module
-        return self.clear_module_dir(module_name=self.module, module_dir=module_dir)
+        return self.clear_module_dir(module_name=module, module_dir=module_dir)

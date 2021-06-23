@@ -12,14 +12,14 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInstall(ModuleCommand):
-    def __init__(self, pipeline_dir, module=None, force=False, latest=False, sha=""):
+    def __init__(self, pipeline_dir, module=None, force=False, latest=False, sha=None):
         super().__init__(pipeline_dir)
         self.force = force
         self.latest = latest
         self.sha = sha
-        self.module = module
+        module = module
 
-    def install(self):
+    def install(self, module):
 
         # Check whether pipelines is valid
         self.has_valid_pipeline()
@@ -30,16 +30,16 @@ class ModuleInstall(ModuleCommand):
             log.error("Cannot use '--sha' and '--latest' at the same time!")
             return False
 
-        if self.module is None:
-            self.module = questionary.autocomplete(
+        if module is None:
+            module = questionary.autocomplete(
                 "Tool name:",
                 choices=self.modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check that the supplied name is an available module
-        if self.module not in self.modules_repo.modules_avail_module_names:
-            log.error("Module '{}' not found in list of available modules.".format(self.module))
+        if module not in self.modules_repo.modules_avail_module_names:
+            log.error("Module '{}' not found in list of available modules.".format(module))
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
         # Set the install folder based on the repository name
@@ -48,21 +48,21 @@ class ModuleInstall(ModuleCommand):
             install_folder = ["external"]
 
         # Compute the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, self.module)
+        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
 
         # Load 'modules.json'
         modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
         with open(modules_json_path, "r") as fh:
             modules_json = json.load(fh)
 
-        current_entry = modules_json["modules"].get(self.module)
+        current_entry = modules_json["modules"].get(module)
 
         if current_entry is not None and self.sha is None:
             # Fetch the latest commit for the module
             current_version = current_entry["git_sha"]
-            git_log = get_module_git_log(self.module, per_page=1, page_nbr=1)
+            git_log = get_module_git_log(module, per_page=1, page_nbr=1)
             if len(git_log) == 0:
-                log.error(f"Was unable to fetch version of module '{self.module}'")
+                log.error(f"Was unable to fetch version of module '{module}'")
                 return False
             latest_version = git_log[0]["git_sha"]
             if current_version == latest_version and not self.force:
@@ -79,14 +79,14 @@ class ModuleInstall(ModuleCommand):
             latest_version = None
 
         # Check that we don't already have a folder for this module
-        if not self.check_module_files_installed(self.module, module_dir):
+        if not self.check_module_files_installed(module, module_dir):
             return False
 
         if self.sha:
             if not current_entry is None and not self.force:
                 return False
-            if self.download_module_file(self.module, self.sha, install_folder, module_dir):
-                self.update_modules_json(modules_json, modules_json_path, self.module, self.sha)
+            if self.download_module_file(module, self.sha, install_folder, module_dir):
+                self.update_modules_json(modules_json, modules_json_path, module, self.sha)
                 return True
             else:
                 try:
@@ -100,9 +100,9 @@ class ModuleInstall(ModuleCommand):
             if self.latest:
                 # Fetch the latest commit for the module
                 if latest_version is None:
-                    git_log = get_module_git_log(self.module, per_page=1, page_nbr=1)
+                    git_log = get_module_git_log(module, per_page=1, page_nbr=1)
                     if len(git_log) == 0:
-                        log.error(f"Was unable to fetch version of module '{self.module}'")
+                        log.error(f"Was unable to fetch version of module '{module}'")
                         return False
                     latest_version = git_log[0]["git_sha"]
                 version = latest_version
@@ -115,17 +115,15 @@ class ModuleInstall(ModuleCommand):
                     log.error(e)
                     return False
 
-        log.info("Installing {}".format(self.module))
-        log.debug(
-            "Installing module '{}' at modules hash {}".format(self.module, self.modules_repo.modules_current_hash)
-        )
+        log.info("Installing {}".format(module))
+        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
 
         # Download module files
-        if not self.download_module_file(self.module, version, install_folder, module_dir):
+        if not self.download_module_file(module, version, install_folder, module_dir):
             return False
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, modules_json_path, self.module, version)
+        self.update_modules_json(modules_json, modules_json_path, module, version)
         return True
 
     def check_module_files_installed(self, module_name, module_dir):
@@ -144,16 +142,16 @@ class ModuleInstall(ModuleCommand):
         else:
             return True
 
-    def prompt_module_version_sha(self, installed_sha=None):
+    def prompt_module_version_sha(self, module, installed_sha=None):
         older_commits_choice = questionary.Choice(
             title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
         )
         git_sha = ""
         page_nbr = 1
-        next_page_commits = get_module_git_log(self.module, per_page=10, page_nbr=page_nbr)
+        next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
         while git_sha is "":
             commits = next_page_commits
-            next_page_commits = get_module_git_log(self.module, per_page=10, page_nbr=page_nbr + 1)
+            next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
             choices = []
             for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
 
@@ -166,7 +164,7 @@ class ModuleInstall(ModuleCommand):
             if len(next_page_commits) > 0:
                 choices += [older_commits_choice]
             git_sha = questionary.select(
-                f"Select '{self.module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
+                f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
             page_nbr += 1
         return git_sha
