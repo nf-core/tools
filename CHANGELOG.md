@@ -23,7 +23,7 @@
 
 #### Tests
 
-* added a test for the `version_consistency` lint check
+* Added a test for the `version_consistency` lint check
 
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 
