@@ -1,4 +1,5 @@
 import os
+import sys
 import json
 import questionary
 import logging
@@ -20,7 +21,9 @@ class ModuleInstall(ModuleCommand):
         module = module
 
     def install(self, module):
-
+        if self.repo_type == "modules":
+            log.error("You cannot install a module in a clone of nf-core/modules")
+            sys.exit(1)
         # Check whether pipelines is valid
         self.has_valid_directory()
 

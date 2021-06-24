@@ -1,6 +1,8 @@
 import os
+import sys
 import questionary
 import logging
+
 
 import nf_core.utils
 
@@ -21,6 +23,9 @@ class ModuleRemove(ModuleCommand):
         Remove an already installed module
         This command only works for modules that are installed from 'nf-core/modules'
         """
+        if self.repo_type == "modules":
+            log.error("You cannot remove a module in a clone of nf-core/modules!")
+            sys.exit(1)
 
         # Check whether pipelines is valid
         self.has_valid_directory()
