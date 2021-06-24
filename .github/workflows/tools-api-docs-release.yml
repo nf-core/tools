@@ -9,8 +9,9 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        dir: [latest, ${{ github.ref }}]
-
+        dir: 
+            - latest
+            - ${{ github.ref }}
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v2
