@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        dir: [latest, $GITHUB_REF]
+        dir: [latest, ${{ github.ref }}]
 
     steps:
       - name: Check out source-code repository
