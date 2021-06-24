@@ -5,9 +5,8 @@ import json
 import logging
 import questionary
 
-
-from .modules_repo import ModulesRepo
-from .module_utils import create_modules_json
+import nf_core.modules.module_utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -17,41 +16,50 @@ class ModuleCommand:
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self, pipeline_dir):
+    def __init__(self, dir):
         """
         Initialise the ModulesCommand object
         """
         self.modules_repo = ModulesRepo()
-        self.pipeline_dir = pipeline_dir
-        self.pipeline_module_names = []
+        self.dir = dir
+        self.module_names = []
+        self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
 
     def get_pipeline_modules(self):
-        """Get list of modules installed in the current pipeline"""
-        self.pipeline_module_names = []
-        module_mains = glob.glob(f"{self.pipeline_dir}/modules/nf-core/software/**/main.nf", recursive=True)
+        """Get list of modules installed in the current directory"""
+        self.module_names = []
+        if self.repo_type == "pipeline":
+            module_base_path = f"{self.dir}/modules/nf-core/software"
+        elif self.repo_type == "modules":
+            module_base_path = f"{self.dir}/software"
+        else:
+            log.error("Directory is neither a clone of nf-core/modules nor a pipeline")
+            raise SystemError
+        module_mains_path = f"{module_base_path}/**/main.nf"
+        module_mains = glob.glob(module_mains_path, recursive=True)
         for mod in module_mains:
-            self.pipeline_module_names.append(
-                os.path.dirname(os.path.relpath(mod, f"{self.pipeline_dir}/modules/nf-core/software/"))
-            )
+            self.module_names.append(os.path.dirname(os.path.relpath(mod, module_base_path)))
 
-    def has_valid_pipeline(self):
-        """Check that we were given a pipeline"""
-        if self.pipeline_dir is None or not os.path.exists(self.pipeline_dir):
-            log.error("Could not find pipeline: {}".format(self.pipeline_dir))
+    def has_valid_directory(self):
+        """Check that we were given a pipeline or clone of nf-core/modules"""
+        if self.repo_type == "modules":
+            return True
+        if self.dir is None or not os.path.exists(self.dir):
+            log.error("Could not find pipeline: {}".format(self.dir))
             return False
-        main_nf = os.path.join(self.pipeline_dir, "main.nf")
-        nf_config = os.path.join(self.pipeline_dir, "nextflow.config")
+        main_nf = os.path.join(self.dir, "main.nf")
+        nf_config = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
-            raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.pipeline_dir}'")
+            raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
         self.has_modules_file()
         return True
 
     def has_modules_file(self):
         """Checks whether a module.json file has been created and creates one if it is missing"""
-        modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
+        modules_json_path = os.path.join(self.dir, "modules.json")
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
-            create_modules_json(self.pipeline_dir)
+            nf_core.modules.module_utils.create_modules_json(self.dir)
 
     def clear_module_dir(self, module_name, module_dir):
         """Removes all files in the module directory"""
@@ -78,7 +86,7 @@ class ModuleCommand:
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             split_filename = filename.split("/")
-            dl_filename = os.path.join(self.pipeline_dir, "modules", *install_folder, *split_filename[1:])
+            dl_filename = os.path.join(self.dir, "modules", *install_folder, *split_filename[1:])
             try:
                 self.modules_repo.download_gh_file(dl_filename, api_url)
             except SystemError as e:

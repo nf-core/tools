@@ -24,7 +24,7 @@ class ModuleList(ModuleCommand):
         modules = []
 
         # No pipeline given - show all remote
-        if self.pipeline_dir is None:
+        if self.dir is None:
             log.info(f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch}):\n")
 
             # Get the list of available modules
@@ -37,20 +37,20 @@ class ModuleList(ModuleCommand):
 
         # We have a pipeline - list what's installed
         else:
-            log.info(f"Modules installed in '{self.pipeline_dir}':\n")
+            log.info(f"Modules installed in '{self.dir}':\n")
 
             # Check whether pipelines is valid
             try:
-                self.has_valid_pipeline()
+                self.has_valid_directory()
             except UserWarning as e:
                 log.error(e)
                 return ""
             # Get installed modules
             self.get_pipeline_modules()
-            modules = self.pipeline_module_names
+            modules = self.module_names
             # Nothing found
             if len(modules) == 0:
-                log.info(f"No nf-core modules found in '{self.pipeline_dir}'")
+                log.info(f"No nf-core modules found in '{self.dir}'")
                 return ""
 
         for mod in sorted(modules):

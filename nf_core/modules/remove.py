@@ -23,26 +23,27 @@ class ModuleRemove(ModuleCommand):
         """
 
         # Check whether pipelines is valid
-        self.has_valid_pipeline()
+        self.has_valid_directory()
 
         # Get the installed modules
         self.get_pipeline_modules()
 
         if module is None:
-            if len(self.pipeline_module_names) == 0:
+            if len(self.module_names) == 0:
                 log.error("No installed modules found in pipeline")
                 return False
             module = questionary.autocomplete(
-                "Tool name:", choices=self.pipeline_module_names, style=nf_core.utils.nfcore_question_style
+                "Tool name:", choices=self.module_names, style=nf_core.utils.nfcore_question_style
             ).ask()
 
         # Set the install folder based on the repository name
         install_folder = ["nf-core", "software"]
+        print(self.modules_repo.name)
         if not self.modules_repo.name == "nf-core/modules":
             install_folder = ["external"]
 
         # Get the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
+        module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):

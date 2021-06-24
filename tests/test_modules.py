@@ -71,12 +71,12 @@ class TestModules(unittest.TestCase):
 
     def test_modules_install_nopipeline(self):
         """Test installing a module - no pipeline given"""
-        self.mods_install.pipeline_dir = None
+        self.mods_install.dir = None
         assert self.mods_install.install("foo") is False
 
     def test_modules_install_emptypipeline(self):
         """Test installing a module - empty dir given"""
-        self.mods_install.pipeline_dir = tempfile.mkdtemp()
+        self.mods_install.dir = tempfile.mkdtemp()
         with pytest.raises(UserWarning) as excinfo:
             self.mods_install.install("foo")
         assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
@@ -88,13 +88,13 @@ class TestModules(unittest.TestCase):
     def test_modules_install_trimgalore(self):
         """Test installing a module - TrimGalore!"""
         assert self.mods_install.install("trimgalore") is not False
-        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
+        module_path = os.path.join(self.mods_install.dir, "modules", "nf-core", "software", "trimgalore")
         assert os.path.exists(module_path)
 
     def test_modules_install_trimgalore_alternative_source(self):
         """Test installing a module from a different source repository - TrimGalore!"""
         assert self.mods_install_alt.install("trimgalore") is not False
-        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "external", "trimgalore")
+        module_path = os.path.join(self.mods_install.dir, "modules", "external", "trimgalore")
         assert os.path.exists(module_path)
 
     def test_modules_install_trimgalore_twice(self):
@@ -105,14 +105,14 @@ class TestModules(unittest.TestCase):
     def test_modules_remove_trimgalore(self):
         """Test removing TrimGalore! module after installing it"""
         self.mods_install.install("trimgalore")
-        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "nf-core", "software", "trimgalore")
+        module_path = os.path.join(self.mods_install.dir, "modules", "nf-core", "software", "trimgalore")
         assert self.mods_remove.remove("trimgalore")
         assert os.path.exists(module_path) is False
 
     def test_modules_remove_trimgalore_alternative_source(self):
         """Test removing TrimGalore! module after installing it from an alternative source"""
         self.mods_install_alt.install("trimgalore")
-        module_path = os.path.join(self.mods_install.pipeline_dir, "modules", "external", "trimgalore")
+        module_path = os.path.join(self.mods_install.dir, "modules", "external", "trimgalore")
         assert self.mods_remove_alt.remove("trimgalore")
         assert os.path.exists(module_path) is False
 

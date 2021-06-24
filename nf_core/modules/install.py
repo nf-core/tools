@@ -22,7 +22,7 @@ class ModuleInstall(ModuleCommand):
     def install(self, module):
 
         # Check whether pipelines is valid
-        self.has_valid_pipeline()
+        self.has_valid_directory()
 
         # Get the available modules
         self.modules_repo.get_modules_file_tree()
@@ -48,10 +48,10 @@ class ModuleInstall(ModuleCommand):
             install_folder = ["external"]
 
         # Compute the module directory
-        module_dir = os.path.join(self.pipeline_dir, "modules", *install_folder, module)
+        module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
         # Load 'modules.json'
-        modules_json_path = os.path.join(self.pipeline_dir, "modules.json")
+        modules_json_path = os.path.join(self.dir, "modules.json")
         with open(modules_json_path, "r") as fh:
             modules_json = json.load(fh)
 

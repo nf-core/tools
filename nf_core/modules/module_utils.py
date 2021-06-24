@@ -156,3 +156,23 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
             files_are_equal[i] = True
 
     return all(files_are_equal)
+
+
+def get_repo_type(dir):
+    """
+    Determine whether this is a pipeline repository or a clone of
+    nf-core/modules
+    """
+    # Verify that the pipeline dir exists
+    if dir is None or not os.path.exists(dir):
+        log.error("Could not find directory: {}".format(dir))
+        sys.exit(1)
+
+    # Determine repository type
+    if os.path.exists(os.path.join(dir, "main.nf")):
+        return "pipeline"
+    elif os.path.exists(os.path.join(dir, "software")):
+        return "modules"
+    else:
+        log.error("Could not determine repository type of {}".format(dir))
+        sys.exit(1)
