@@ -24,7 +24,7 @@ class ModuleRemove(ModuleCommand):
         This command only works for modules that are installed from 'nf-core/modules'
         """
         if self.repo_type == "modules":
-            log.error("You cannot remove a module in a clone of nf-core/modules!")
+            log.error("You cannot remove a module in a clone of nf-core/modules")
             sys.exit(1)
 
         # Check whether pipelines is valid
