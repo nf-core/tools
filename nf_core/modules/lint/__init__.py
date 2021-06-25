@@ -466,15 +466,5 @@ class ModuleLint(object):
             with open(modules_json_path, "r") as fh:
                 self.modules_json = json.load(fh)
         except FileNotFoundError:
-            create_modules_json = questionary.confirm(
-                "Could not find `modules.json` file. Should I create it now?", default=True
-            ).unsafe_ask()
-            if create_modules_json:
-                nf_core.modules.module_utils.create_modules_json(self.dir)
-
-                with open(modules_json_path, "r") as fh:
-                    self.modules_json = json.load(fh)
-
-            else:
-                log.error(f"No `modules.json` file found! Please create one before continuing.")
+                log.error(f"No `modules.json` file found! Please create one before continuing. You can create the file using `nf-core modules install`")
                 sys.exit(1)
