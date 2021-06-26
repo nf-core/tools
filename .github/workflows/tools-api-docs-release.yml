@@ -11,7 +11,7 @@ jobs:
       matrix:
         dir: 
             - latest
-            - ${{ github.ref }}
+            - ${{ github.event.release.tag_name }}
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v2
