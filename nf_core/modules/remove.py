@@ -25,7 +25,7 @@ class ModuleRemove(ModuleCommand):
         """
         if self.repo_type == "modules":
             log.error("You cannot remove a module in a clone of nf-core/modules")
-            sys.exit(1)
+            return False
 
         # Check whether pipelines is valid
         self.has_valid_directory()
