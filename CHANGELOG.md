@@ -19,6 +19,7 @@
 * Changed working directory to temporary directory for `nf-core modules create-test-yml` [[#908](https://github.com/nf-core/tools/issues/908)]
 * Use Biocontainers API instead of quayi.io API for `nf-core modules create` [[#875](https://github.com/nf-core/tools/issues/875)]
 * Update `nf-core modules install` to handle different versions of modules  [#1116](https://github.com/nf-core/tools/pull/1116)
+* Added `nf-core modules bump-versions` command to update all versions in the `nf-core/modules` repository [[#1123](https://github.com/nf-core/tools/issues/1123)]
 
 #### Sync
 
