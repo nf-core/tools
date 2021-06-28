@@ -25,8 +25,10 @@ from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
 
 import nf_core.utils
-from nf_core.modules.pipeline_modules import ModulesRepo
+import nf_core.modules.module_utils
+from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
+
 
 log = logging.getLogger(__name__)
 
@@ -64,7 +66,7 @@ class ModuleLint(object):
 
     def __init__(self, dir, key=()):
         self.dir = dir
-        self.repo_type = self.get_repo_type()
+        self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
         self.passed = []
         self.warned = []
         self.failed = []
@@ -226,25 +228,6 @@ class ModuleLint(object):
             for mod in nfcore_modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
                 self.lint_module(mod)
-
-    def get_repo_type(self):
-        """
-        Determine whether this is a pipeline repository or a clone of
-        nf-core/modules
-        """
-        # Verify that the pipeline dir exists
-        if self.dir is None or not os.path.exists(self.dir):
-            log.error("Could not find directory: {}".format(self.dir))
-            sys.exit(1)
-
-        # Determine repository type
-        if os.path.exists(os.path.join(self.dir, "main.nf")):
-            return "pipeline"
-        elif os.path.exists(os.path.join(self.dir, "software")):
-            return "modules"
-        else:
-            log.error("Could not determine repository type of {}".format(self.dir))
-            sys.exit(1)
 
     def get_installed_modules(self):
         """

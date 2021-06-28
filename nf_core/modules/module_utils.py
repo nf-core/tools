@@ -266,4 +266,5 @@ def get_repo_type(dir):
         return "modules"
     else:
         log.error("Could not determine repository type of {}".format(dir))
+
         sys.exit(1)
