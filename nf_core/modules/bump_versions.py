@@ -35,7 +35,7 @@ class ModuleVersionBumper(ModuleCommand):
         Looks for a bioconda tool version in the `main.nf` file of the module and checks whether
         are more recent version is available. If yes, then tries to get docker/singularity
         container links and replace the bioconda version and the container links in the main.nf file
-        of the repsective module.
+        of the respective module.
 
         Args:
             module: a specific module to update
