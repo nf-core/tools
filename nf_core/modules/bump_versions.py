@@ -90,7 +90,7 @@ class ModuleVersionBumper(object):
         )
         with progress_bar:
             bump_progress = progress_bar.add_task(
-                "Linting nf-core modules", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
+                "Bumping nf-core modules versions", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
             )
             for mod in nfcore_modules:
                 progress_bar.update(bump_progress, advance=1, test_name=mod.module_name)
@@ -112,15 +112,93 @@ class ModuleVersionBumper(object):
 
         # Be done with it
 
-        print("bumping that module")
         bioconda_packages = self.get_bioconda_version(module)
-        print(bioconda_packages)
+
+        # If multiple versions - don't update! (can't update mulled containers)
+        if not bioconda_packages or len(bioconda_packages) > 1:
+            return
+
+        # Check for correct version and newer versions
+        bioconda_tool_name = bioconda_packages[0].split("=")[0].replace("bioconda::", "").strip("'").strip('"')
+        bp = bioconda_packages[0]
+        bp = bp.strip("'").strip('"')
+        try:
+            bioconda_version = bp.split("=")[1]
+            response = nf_core.utils.anaconda_package(bp)
+        except LookupError as e:
+            log.warn(f"Conda version not specified correctly: {module.main_nf}")
+        except ValueError as e:
+            log.warn(f"Conda version not specified correctly: {module.main_nf}")
+        else:
+            # Check that required version is available at all
+            if bioconda_version not in response.get("versions"):
+                log.error(f"Conda package had unknown version: `{module.main_nf}`")
+                return  # No need to test for latest version, continue linting
+            # Check version is latest available
+            last_ver = response.get("latest_version")
+            if last_ver is not None and last_ver != bioconda_version:
+                package, ver = bp.split("=", 1)
+
+                # Get docker and singularity container links
+                try:
+                    docker_img, singularity_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name, last_ver)
+                except LookupError as e:
+                    log.error(f"Could not update version for {bioconda_tool_name}: {e}")
+                    return
+
+                patterns = [
+                    (bioconda_packages[0], f"bioconda::{bioconda_tool_name}={last_ver}"),
+                    (r"quay.io/biocontainers/{}:.*".format(bioconda_tool_name), docker_img),
+                    (r"https://depot.galaxyproject.org/singularity/{}:.*".format(bioconda_tool_name), singularity_img),
+                ]
+
+                with open(module.main_nf, "r") as fh:
+                    content = fh.read()
+
+                # Go over file content of main.nf and find replacements
+                replacements = []
+                for pattern in patterns:
+
+                    found_match = False
+
+                    newcontent = []
+                    for line in content.splitlines():
+
+                        # Match the pattern
+                        matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
+                        if matches_pattern:
+                            found_match = True
+
+                            # Replace the match
+                            newline = re.sub(pattern[0], pattern[1], line)
+                            newcontent.append(newline)
+
+                            # Save for logging
+                            replacements.append((line, newline))
+
+                        # No match, keep line as it is
+                        else:
+                            newcontent.append(line)
+
+                    if found_match:
+                        content = "\n".join(newcontent)
+                    else:
+                        log.error(f"Could not update pattern in {module.main_nf}: '{pattern}'")
+
+                # Write new content to the file
+                with open(module.main_nf, "w") as fh:
+                    fh.write(content)
+
+            else:
+                print("version up to date")
+                return
 
     def get_bioconda_version(self, module):
         """
         Extract the bioconda version from a module
         """
         # Check whether file exists and load it
+        bioconda_packages = None
         try:
             with open(module.main_nf, "r") as fh:
                 lines = fh.readlines()
@@ -136,4 +214,7 @@ class ModuleVersionBumper(object):
             if re.search("biocontainers", l):
                 docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
 
-        return bioconda_packages
+        if bioconda_packages:
+            return bioconda_packages
+        else:
+            return False
