@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
+from nf_core.lint.pipeline_todos import pipeline_todos
 from nf_core.modules.bump_versions import ModuleVersionBumper
 from click.types import File
 from rich import print
@@ -518,7 +519,7 @@ def bump_versions(ctx, modules_dir, tool, all, show_all):
     Bump versions for one or more modules in a directory.
     """
     try:
-        version_bumper = ModuleVersionBumper(dir=modules_dir)
+        version_bumper = ModuleVersionBumper(pipeline_dir=modules_dir)
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)

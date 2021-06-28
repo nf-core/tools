@@ -8,30 +8,25 @@ from __future__ import print_function
 import logging
 import questionary
 import re
-from requests.models import requote_uri
 import rich
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
 import rich
 from nf_core.utils import rich_force_colors
-from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
 
 import nf_core.utils
 import nf_core.modules.module_utils
-from nf_core.modules.pipeline_modules import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
+from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModuleVersionBumper(object):
-    def __init__(
-        self,
-        dir=".",
-    ):
-        self.dir = dir
+class ModuleVersionBumper(ModuleCommand):
+    def __init__(self, pipeline_dir):
+        super().__init__(pipeline_dir)
 
     def bump_versions(self, module=None, all_modules=False, show_uptodate=False):
         """
