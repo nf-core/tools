@@ -50,7 +50,7 @@ class ModuleVersionBumper(ModuleCommand):
         repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
         if not repo_type == "modules":
             log.error("This command only works on the nf-core/modules repository, not on pipelines!")
-            sys.exit()
+            return False
 
         # Get list of all modules
         _, nfcore_modules = nf_core.modules.module_utils.get_installed_modules(self.dir)
