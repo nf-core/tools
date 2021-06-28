@@ -235,3 +235,13 @@ class TestModules(unittest.TestCase):
         module_create.create()
         assert os.path.exists(os.path.join(self.nfcore_modules, "software", "star", "index", "main.nf"))
         assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "star", "index", "main.nf"))
+
+    def test_modules_bump_versions_single_module(self):
+        version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
+        version_bumper.bump_versions(module="star/align")
+        assert len(version_bumper.failed) == 0
+
+    def test_modules_bump_versions_all_modules(self):
+        version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
+        version_bumper.bump_versions(all_modules=True)
+        assert len(version_bumper.failed) == 0
