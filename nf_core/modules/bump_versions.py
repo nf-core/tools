@@ -202,7 +202,7 @@ class ModuleVersionBumper(ModuleCommand):
                 lines = fh.readlines()
         except FileNotFoundError as e:
             log.error(f"Could not read `main.nf` of {module.module_name} module.")
-            sys.exit(1)
+            return False
 
         for l in lines:
             if re.search("bioconda::", l):
