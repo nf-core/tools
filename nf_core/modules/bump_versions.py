@@ -6,13 +6,10 @@ or for a single module
 
 from __future__ import print_function
 import logging
-import operator
-import os
 import questionary
 import re
-import requests
+from requests.models import requote_uri
 import rich
-import yaml
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
@@ -36,14 +33,23 @@ class ModuleVersionBumper(object):
     ):
         self.dir = dir
 
-    def bump_versions(self, module=None, all_modules=False):
+    def bump_versions(self, module=None, all_modules=False, show_uptodate=False):
         """
         Bump the container and conda version of single module or all modules
+
+        Looks for a bioconda tool version in the `main.nf` file of the module and checks whether
+        are more recent version is available. If yes, then tries to get docker/singularity
+        container links and replace the bioconda version and the container links in the main.nf file
+        of the repsective module.
 
         Args:
             module: a specific module to update
             all_modules: whether to bump versions for all modules
         """
+        self.up_to_date = []
+        self.updated = []
+        self.failed = []
+        self.show_up_to_date = show_uptodate
 
         # Verify that this is not a pipeline
         repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -96,6 +102,8 @@ class ModuleVersionBumper(object):
                 progress_bar.update(bump_progress, advance=1, test_name=mod.module_name)
                 self.bump_module_version(mod)
 
+        self._print_results()
+
     def bump_module_version(self, module: NFCoreModule):
         """
         Bump the bioconda and container version of a single NFCoreModule
@@ -103,20 +111,12 @@ class ModuleVersionBumper(object):
         Args:
             module: NFCoreModule
         """
-
-        # Get the current bioconda version
-
-        # Check if a new version is available
-
-        # Install the new version
-
-        # Be done with it
-
+        # Extract bioconda version from `main.nf`
         bioconda_packages = self.get_bioconda_version(module)
 
         # If multiple versions - don't update! (can't update mulled containers)
         if not bioconda_packages or len(bioconda_packages) > 1:
-            return
+            return (f"Ignoring mulled container {module.main_nf}", module.module_name)
 
         # Check for correct version and newer versions
         bioconda_tool_name = bioconda_packages[0].split("=")[0].replace("bioconda::", "").strip("'").strip('"')
@@ -126,24 +126,24 @@ class ModuleVersionBumper(object):
             bioconda_version = bp.split("=")[1]
             response = nf_core.utils.anaconda_package(bp)
         except LookupError as e:
-            log.warn(f"Conda version not specified correctly: {module.main_nf}")
+            self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
+            return
         except ValueError as e:
-            log.warn(f"Conda version not specified correctly: {module.main_nf}")
+            self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
+            return
         else:
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
-                log.error(f"Conda package had unknown version: `{module.main_nf}`")
-                return  # No need to test for latest version, continue linting
+                return (f"Conda package had unknown version: `{module.main_nf}`", module.module_name)
             # Check version is latest available
             last_ver = response.get("latest_version")
             if last_ver is not None and last_ver != bioconda_version:
-                package, ver = bp.split("=", 1)
-
+                log.debug(f"Updating version for {module.module_name}")
                 # Get docker and singularity container links
                 try:
                     docker_img, singularity_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name, last_ver)
                 except LookupError as e:
-                    log.error(f"Could not update version for {bioconda_tool_name}: {e}")
+                    self.failed.append((f"Could not download container tags: {e}", module.module_name))
                     return
 
                 patterns = [
@@ -156,11 +156,8 @@ class ModuleVersionBumper(object):
                     content = fh.read()
 
                 # Go over file content of main.nf and find replacements
-                replacements = []
                 for pattern in patterns:
-
                     found_match = False
-
                     newcontent = []
                     for line in content.splitlines():
 
@@ -172,10 +169,6 @@ class ModuleVersionBumper(object):
                             # Replace the match
                             newline = re.sub(pattern[0], pattern[1], line)
                             newcontent.append(newline)
-
-                            # Save for logging
-                            replacements.append((line, newline))
-
                         # No match, keep line as it is
                         else:
                             newcontent.append(line)
@@ -183,14 +176,25 @@ class ModuleVersionBumper(object):
                     if found_match:
                         content = "\n".join(newcontent)
                     else:
-                        log.error(f"Could not update pattern in {module.main_nf}: '{pattern}'")
+                        self.failed.append(
+                            (f"Did not find pattern {pattern[0]} in module {module.module_name}", module.module_name)
+                        )
+                        return
 
                 # Write new content to the file
                 with open(module.main_nf, "w") as fh:
                     fh.write(content)
 
+                self.updated.append(
+                    (
+                        f"Module updated:  {bioconda_version} --> {last_ver}",
+                        module.module_name,
+                    )
+                )
+                return
+
             else:
-                print("version up to date")
+                self.up_to_date.append((f"Module version up to date: {module.module_name}", module.module_name))
                 return
 
     def get_bioconda_version(self, module):
@@ -218,3 +222,101 @@ class ModuleVersionBumper(object):
             return bioconda_packages
         else:
             return False
+
+    def _print_results(self):
+        """
+        Print the results for the bump_versions command
+        Uses the ``rich`` library to print a set of formatted tables to the command line
+        summarising the linting results.
+        """
+
+        log.debug("Printing bump_versions results")
+
+        console = Console(force_terminal=rich_force_colors())
+        # Find maximum module name length
+        max_mod_name_len = 40
+        for m in [self.up_to_date, self.updated, self.failed]:
+            try:
+                max_mod_name_len = max(len(m[2]), max_mod_name_len)
+            except:
+                pass
+
+        def _s(some_list):
+            if len(some_list) > 1:
+                return "s"
+            return ""
+
+        def format_result(module_updates, table):
+            """
+            Create rows for module updates
+            """
+            # TODO: Row styles don't work current as table-level style overrides.
+            # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
+            last_modname = False
+            row_style = None
+            for module_update in module_updates:
+                if last_modname and module_update[1] != last_modname:
+                    if row_style:
+                        row_style = None
+                    else:
+                        row_style = "magenta"
+                last_modname = module_update[1]
+                table.add_row(
+                    Markdown(f"{module_update[1]}"),
+                    Markdown(f"{module_update[0]}"),
+                    style=row_style,
+                )
+            return table
+
+        # Table of up to date modules
+        if len(self.up_to_date) > 0 and self.show_up_to_date:
+            console.print(
+                rich.panel.Panel(
+                    r"[!] {} Module{} version{} up to date.".format(
+                        len(self.up_to_date), _s(self.up_to_date), _s(self.up_to_date)
+                    ),
+                    style="bold green",
+                )
+            )
+            table = Table(style="green", box=rich.box.ROUNDED)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Update Message")
+            table = format_result(self.up_to_date, table)
+            console.print(table)
+
+        # Table of updated modules
+        if len(self.updated) > 0:
+            console.print(
+                rich.panel.Panel(
+                    r"[!] {} Module{} updated".format(len(self.updated), _s(self.updated)), style="bold yellow"
+                )
+            )
+            table = Table(style="yellow", box=rich.box.ROUNDED)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Update message")
+            table = format_result(self.updated, table)
+            console.print(table)
+
+        # Table of modules that couldn't be updated
+        if len(self.failed) > 0:
+            console.print(
+                rich.panel.Panel(
+                    r"[!] {} Module update{} failed".format(len(self.failed), _s(self.failed)), style="bold red"
+                )
+            )
+            table = Table(style="red", box=rich.box.ROUNDED)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Update message")
+            table = format_result(self.failed, table)
+            console.print(table)
+
+        # # Summary table
+        # table = Table(box=rich.box.ROUNDED)
+        # table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        # table.add_row(
+        #     r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+        #     style="green",
+        # )
+        # table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
+        # table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        # console.print(table)

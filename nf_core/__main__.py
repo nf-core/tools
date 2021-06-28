@@ -518,13 +518,14 @@ def lint(ctx, pipeline_dir, tool, key, all, local, passed):
 @click.argument("modules_dir", type=click.Path(exists=True), required=True, metavar="<nf-core/modules directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 @click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
-def bump_versions(ctx, modules_dir, tool, all):
+@click.option("-s", "--show-all", is_flag=True, metavar="Show up-to-date modules in results")
+def bump_versions(ctx, modules_dir, tool, all, show_all):
     """
     Bump versions for one or more modules in a directory.
     """
     try:
         version_bumper = ModuleVersionBumper(dir=modules_dir)
-        version_bumper.bump_versions(module=tool, all_modules=all)
+        version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
