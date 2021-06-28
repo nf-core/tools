@@ -73,7 +73,6 @@ class ModuleVersionBumper(ModuleCommand):
                     style=nf_core.utils.nfcore_question_style,
                 ).ask()
 
-                # Only lint the given module
         if module:
             if all_modules:
                 raise nf_core.modules.module_utils.ModuleException(
