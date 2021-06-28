@@ -124,7 +124,7 @@ class ModuleVersionBumper(ModuleCommand):
             response = nf_core.utils.anaconda_package(bp)
         except LookupError as e:
             self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
-            return
+            return False
         except ValueError as e:
             self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
             return
