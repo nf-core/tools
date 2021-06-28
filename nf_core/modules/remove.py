@@ -59,8 +59,7 @@ class ModuleRemove(ModuleCommand):
         log.info("Removing {}".format(module))
 
         # Remove entry from modules.json
-        if not self.remove_modules_json_entry(module):
-            return False
+        self.remove_modules_json_entry(module)
 
         # Remove the module
         return self.clear_module_dir(module_name=module, module_dir=module_dir)
