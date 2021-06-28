@@ -2,6 +2,7 @@
 """ Tests covering the modules commands
 """
 
+from nf_core.modules.module_utils import ModuleException
 from nf_core.modules import create
 import nf_core.modules
 
@@ -237,11 +238,20 @@ class TestModules(unittest.TestCase):
         assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "star", "index", "main.nf"))
 
     def test_modules_bump_versions_single_module(self):
+        """ Test updating a single module """
         version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
         version_bumper.bump_versions(module="star/align")
         assert len(version_bumper.failed) == 0
 
     def test_modules_bump_versions_all_modules(self):
+        """ Test updating all modules """
         version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
         version_bumper.bump_versions(all_modules=True)
         assert len(version_bumper.failed) == 0
+
+    def test_modules_bump_versions_fail(self):
+        """ Fail updating a module with wrong name"""
+        version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
+        with pytest.raises(ModuleException) as excinfo:
+            version_bumper.bump_versions(module="no/module")
+        assert "Could not find the specified module:" in str(excinfo.value)

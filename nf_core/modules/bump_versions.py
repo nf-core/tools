@@ -116,7 +116,8 @@ class ModuleVersionBumper(ModuleCommand):
 
         # If multiple versions - don't update! (can't update mulled containers)
         if not bioconda_packages or len(bioconda_packages) > 1:
-            return (f"Ignoring mulled container {module.main_nf}", module.module_name)
+            self.failed.append((f"Ignoring mulled container", module.module_name))
+            return False
 
         # Check for correct version and newer versions
         bioconda_tool_name = bioconda_packages[0].split("=")[0].replace("bioconda::", "").strip("'").strip('"')
@@ -130,11 +131,12 @@ class ModuleVersionBumper(ModuleCommand):
             return False
         except ValueError as e:
             self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
-            return
+            return False
         else:
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
-                return (f"Conda package had unknown version: `{module.main_nf}`", module.module_name)
+                self.failed.append((f"Conda package had unknown version: `{module.main_nf}`", module.module_name))
+                return False
             # Check version is latest available
             last_ver = response.get("latest_version")
             if last_ver is not None and last_ver != bioconda_version:
@@ -144,7 +146,7 @@ class ModuleVersionBumper(ModuleCommand):
                     docker_img, singularity_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name, last_ver)
                 except LookupError as e:
                     self.failed.append((f"Could not download container tags: {e}", module.module_name))
-                    return
+                    return False
 
                 patterns = [
                     (bioconda_packages[0], f"bioconda::{bioconda_tool_name}={last_ver}"),
@@ -179,7 +181,7 @@ class ModuleVersionBumper(ModuleCommand):
                         self.failed.append(
                             (f"Did not find pattern {pattern[0]} in module {module.module_name}", module.module_name)
                         )
-                        return
+                        return False
 
                 # Write new content to the file
                 with open(module.main_nf, "w") as fh:
@@ -191,11 +193,11 @@ class ModuleVersionBumper(ModuleCommand):
                         module.module_name,
                     )
                 )
-                return
+                return True
 
             else:
                 self.up_to_date.append((f"Module version up to date: {module.module_name}", module.module_name))
-                return
+                return True
 
     def get_bioconda_version(self, module):
         """
@@ -309,14 +311,3 @@ class ModuleVersionBumper(ModuleCommand):
             table.add_column("Update message")
             table = format_result(self.failed, table)
             console.print(table)
-
-        # # Summary table
-        # table = Table(box=rich.box.ROUNDED)
-        # table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
-        # table.add_row(
-        #     r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
-        #     style="green",
-        # )
-        # table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        # table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
-        # console.print(table)
