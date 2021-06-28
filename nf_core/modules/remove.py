@@ -68,17 +68,19 @@ class ModuleRemove(ModuleCommand):
     def remove_modules_json_entry(self, module):
         # Load 'modules.json'
         modules_json_path = os.path.join(self.dir, "modules.json")
-        with open(modules_json_path, "r") as fh:
-            modules_json = json.load(fh)
+        try:
+            with open(modules_json_path, "r") as fh:
+                modules_json = json.load(fh)
+        except FileNotFoundError:
+            log.error("File 'modules.json' is missing")
+            return False
         if module in modules_json.get("modules", {}):
             modules_json["modules"].pop(module)
         else:
-            # If the module is missing from modules.json we can still clear the directory
-            # in which the untracked module resides
             log.error(f"Module '{module}' is missing from 'modules.json' file.")
-            return questionary.confirm(
-                f"Do you wish to continue removing module '{module}'?", default=False
-            ).unsafe_ask()
+            return False
+
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
+
         return True
