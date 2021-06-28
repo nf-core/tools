@@ -27,10 +27,12 @@ log = logging.getLogger(__name__)
 class ModuleVersionBumper(ModuleCommand):
     def __init__(self, pipeline_dir):
         super().__init__(pipeline_dir)
-    self.up_to_date = None
-    self.updated = None
-    self.failed = None
-    self.show_up_to_date = None
+
+        self.up_to_date = None
+        self.updated = None
+        self.failed = None
+        self.show_up_to_date = None
+
     def bump_versions(self, module=None, all_modules=False, show_uptodate=False):
         """
         Bump the container and conda version of single module or all modules
@@ -52,8 +54,9 @@ class ModuleVersionBumper(ModuleCommand):
         # Verify that this is not a pipeline
         repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
         if not repo_type == "modules":
-            log.error("This command only works on the nf-core/modules repository, not on pipelines!")
-            return False
+            raise nf_core.modules.module_utils.ModuleException(
+                "This command only works on the nf-core/modules repository, not on pipelines!"
+            )
 
         # Get list of all modules
         _, nfcore_modules = nf_core.modules.module_utils.get_installed_modules(self.dir)
