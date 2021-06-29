@@ -24,10 +24,19 @@ class ModuleInstall(ModuleCommand):
             log.error("You cannot install a module in a clone of nf-core/modules")
             return False
         # Check whether pipelines is valid
-        self.has_valid_directory()
+        try:
+            self.has_valid_directory()
+        except UserWarning as e:
+            log.error(e)
+            return False
 
         # Get the available modules
-        self.modules_repo.get_modules_file_tree()
+        try:
+            self.modules_repo.get_modules_file_tree()
+        except LookupError as e:
+            log.error(e)
+            return False
+
         if self.latest and self.sha is not None:
             log.error("Cannot use '--sha' and '--latest' at the same time!")
             return False
