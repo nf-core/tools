@@ -66,12 +66,8 @@ class ModuleRemove(ModuleCommand):
 
     def remove_modules_json_entry(self, module):
         # Load 'modules.json'
-        modules_json_path = os.path.join(self.dir, "modules.json")
-        try:
-            with open(modules_json_path, "r") as fh:
-                modules_json = json.load(fh)
-        except FileNotFoundError:
-            log.error("File 'modules.json' is missing")
+        modules_json = self.load_modules_json()
+        if not modules_json:
             return False
         if module in modules_json.get("modules", {}):
             modules_json["modules"].pop(module)
@@ -79,7 +75,6 @@ class ModuleRemove(ModuleCommand):
             log.error(f"Module '{module}' is missing from 'modules.json' file.")
             return False
 
-        with open(modules_json_path, "w") as fh:
-            json.dump(modules_json, fh, indent=4)
+        self.dump_modules_json(modules_json)
 
         return True

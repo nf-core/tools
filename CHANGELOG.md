@@ -22,6 +22,7 @@
 * Updated `nf-core modules lint` to check whether a `git_sha` exists in the `modules.json` file or whether a new version is available [[#1114](https://github.com/nf-core/tools/issues/1114)]
 * Refactored `nf-core modules` command into one file per command [#1124](https://github.com/nf-core/tools/pull/1124)
 * Updated `nf-core modules remove` to also remove entry in `modules.json` file ([#1115](https://github.com/nf-core/tools/issues/1115))
+* Bugfix: Interactive prompt for `nf-core modules install` was receiving too few arguments
 
 #### Sync
 
