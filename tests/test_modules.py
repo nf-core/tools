@@ -37,14 +37,6 @@ class TestModules(unittest.TestCase):
         self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "mypipeline")
         shutil.copytree(self.template_dir, self.pipeline_dir)
 
-        self.mods = nf_core.modules.PipelineModules()
-        self.mods.pipeline_dir = self.pipeline_dir
-        self.mods.latest = self.mods.force = True
-        self.mods_alt = nf_core.modules.PipelineModules()
-        self.mods_alt.pipeline_dir = self.pipeline_dir
-        self.mods_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
-        self.mods_alt.latest = self.mods_alt.force = True
-
         # Set up install objects
         print("Setting up install objects")
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, latest=True, force=True)
