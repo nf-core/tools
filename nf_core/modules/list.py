@@ -59,6 +59,8 @@ class ModuleList(ModuleCommand):
 
             modules_json = self.load_modules_json()
             if not modules_json:
+                # If the modules.json file is missing we show the old version
+                # of the list command, i.e only names
                 for mod in sorted(modules):
                     table.add_row(mod)
             else:
