@@ -18,7 +18,6 @@ class ModuleInstall(ModuleCommand):
         self.force = force
         self.latest = latest
         self.sha = sha
-        module = module
 
     def install(self, module):
         if self.repo_type == "modules":
@@ -54,9 +53,9 @@ class ModuleInstall(ModuleCommand):
         module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
         # Load 'modules.json'
-        modules_json_path = os.path.join(self.dir, "modules.json")
-        with open(modules_json_path, "r") as fh:
-            modules_json = json.load(fh)
+        modules_json = self.load_modules_json()
+        if not modules_json:
+            return False
 
         current_entry = modules_json["modules"].get(module)
 
@@ -89,12 +88,12 @@ class ModuleInstall(ModuleCommand):
             if not current_entry is None and not self.force:
                 return False
             if self.download_module_file(module, self.sha, install_folder, module_dir):
-                self.update_modules_json(modules_json, modules_json_path, module, self.sha)
+                self.update_modules_json(modules_json, module, self.sha)
                 return True
             else:
                 try:
                     version = self.prompt_module_version_sha(
-                        installed_sha=current_entry["git_sha"] if not current_entry is None else None
+                        module, installed_sha=current_entry["git_sha"] if not current_entry is None else None
                     )
                 except SystemError as e:
                     log.error(e)
@@ -112,7 +111,7 @@ class ModuleInstall(ModuleCommand):
             else:
                 try:
                     version = self.prompt_module_version_sha(
-                        installed_sha=current_entry["git_sha"] if not current_entry is None else None
+                        module, installed_sha=current_entry["git_sha"] if not current_entry is None else None
                     )
                 except SystemError as e:
                     log.error(e)
@@ -126,7 +125,7 @@ class ModuleInstall(ModuleCommand):
             return False
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, modules_json_path, module, version)
+        self.update_modules_json(modules_json, module, version)
         return True
 
     def check_module_files_installed(self, module_name, module_dir):
