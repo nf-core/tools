@@ -23,6 +23,7 @@
 * Updated `nf-core modules remove` to also remove entry in `modules.json` file ([#1115](https://github.com/nf-core/tools/issues/1115))
 * Bugfix: Interactive prompt for `nf-core modules install` was receiving too few arguments
 * Updated `nf-core modules list` to show versions of local modules
+* Improved exit behavior by replacing `sys.exit` with exceptions
 
 #### Sync
 
