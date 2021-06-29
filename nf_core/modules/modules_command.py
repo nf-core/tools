@@ -98,8 +98,19 @@ class ModuleCommand:
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
         return True
 
-    def update_modules_json(self, modules_json, modules_json_path, module_name, module_version):
+    def load_modules_json(self):
+        modules_json_path = os.path.join(self.dir, "modules.json")
+        try:
+            with open(modules_json_path, "r") as fh:
+                modules_json = json.load(fh)
+        except FileNotFoundError:
+            log.error("File 'modules.json' is missing")
+            modules_json = None
+        return modules_json
+
+    def update_modules_json(self, modules_json, module_name, module_version):
         """Updates the 'module.json' file with new module info"""
+        modules_json_path = os.path.join(self.dir, "modules.json")
         modules_json["modules"][module_name] = {"git_sha": module_version}
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
