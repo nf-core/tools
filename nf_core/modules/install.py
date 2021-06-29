@@ -24,11 +24,7 @@ class ModuleInstall(ModuleCommand):
             log.error("You cannot install a module in a clone of nf-core/modules")
             return False
         # Check whether pipelines is valid
-        try:
-            self.has_valid_directory()
-        except UserWarning as e:
-            log.error(e)
-            return False
+        self.has_valid_directory()
 
         # Get the available modules
         try:

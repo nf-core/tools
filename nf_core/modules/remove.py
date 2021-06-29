@@ -29,11 +29,7 @@ class ModuleRemove(ModuleCommand):
             return False
 
         # Check whether pipelines is valid
-        try:
-            self.has_valid_directory()
-        except UserWarning as e:
-            log.error(e)
-            return False
+        self.has_valid_directory()
 
         # Get the installed modules
         self.get_pipeline_modules()
