@@ -21,6 +21,7 @@
 * Update `nf-core modules install` to handle different versions of modules  [#1116](https://github.com/nf-core/tools/pull/1116)
 * Refactored `nf-core modules` command into one file per command [#1124](https://github.com/nf-core/tools/pull/1124)
 * Updated `nf-core modules remove` to also remove entry in `modules.json` file ([#1115](https://github.com/nf-core/tools/issues/1115))
+* Bugfix: Interactive prompt for `nf-core modules install` was receiving too few arguments
 
 #### Sync
 
