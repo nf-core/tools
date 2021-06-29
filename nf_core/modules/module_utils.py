@@ -80,7 +80,7 @@ def get_commit_info(commit_sha):
     elif response.status_code == 404:
         raise LookupError(f"Commit '{commit_sha}' not found in 'nf-core/modules/'\n{api_url}")
     else:
-        raise LookupError(f"Unable to fetch meta-data for commit SHA {commit_sha}")
+        raise LookupError(f"Unable to fetch metadata for commit SHA {commit_sha}")
 
 
 def create_modules_json(pipeline_dir):
