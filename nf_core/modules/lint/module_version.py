@@ -25,8 +25,8 @@ def module_version(module_lint_object, module):
 
     # Verify that a git_sha exists in the `modules.json` file for this module
     try:
-        module = module_lint_object.modules_json["modules"][module.module_name]
-        git_sha = module["git_sha"]
+        module_entry = module_lint_object.modules_json["modules"][module.module_name]
+        git_sha = module_entry["git_sha"]
         module.git_sha = git_sha
         module.passed.append(("git_sha", "Found git_sha entry in `modules.json`", modules_json_path))
     except KeyError:

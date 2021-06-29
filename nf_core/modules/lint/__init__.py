@@ -162,7 +162,7 @@ class ModuleLint(ModuleCommand):
         # If it is a pipeline, load the lint config file and the modules.json file
         if self.repo_type == "pipeline":
             self.load_lint_config()
-            self.load_modules_json()
+            self.modules_json = self.load_modules_json()
 
             # Only continue if a lint config has been loaded
             if self.lint_config:
