@@ -5,6 +5,7 @@ import requests
 import sys
 import logging
 import questionary
+import rich
 from itertools import count
 
 from requests import api
@@ -68,26 +69,37 @@ def create_modules_json(pipeline_dir):
     module_paths = list(set(map(os.path.dirname, filter(os.path.isfile, all_module_file_paths))))
     module_names = [path.replace(f"{pipeline_dir}/modules/nf-core/software/", "") for path in module_paths]
     module_repo = ModulesRepo()
-    for module_name, module_path in zip(module_names, module_paths):
-        try:
-            # Find the correct commit SHA for the local files.
-            # We iterate over the commit log pages until we either
-            # find a matching commit or we reach the end of the commits
-            correct_commit_sha = None
-            commit_page_nbr = 1
-            while correct_commit_sha is None:
+    progress_bar = rich.progress.Progress(
+        "[bold blue]{task.description}",
+        rich.progress.BarColumn(bar_width=None),
+        "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+        transient=True,
+    )
+    with progress_bar:
+        file_progress = progress_bar.add_task(
+            "Creating 'modules.json' file", total=len(module_names), test_name="module.json"
+        )
+        for module_name, module_path in zip(module_names, module_paths):
+            progress_bar.update(file_progress, advance=1, test_name=module_name)
+            try:
+                # Find the correct commit SHA for the local files.
+                # We iterate over the commit log pages until we either
+                # find a matching commit or we reach the end of the commits
+                correct_commit_sha = None
+                commit_page_nbr = 1
+                while correct_commit_sha is None:
 
-                commit_shas = [
-                    commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
-                ]
-                correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
-                commit_page_nbr += 1
+                    commit_shas = [
+                        commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
+                    ]
+                    correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
+                    commit_page_nbr += 1
 
-            modules_json["modules"][module_name] = {"git_sha": correct_commit_sha}
-        except SystemError as e:
-            log.error(e)
-            log.error("Will not create 'modules.json' file")
-            sys.exit(1)
+                modules_json["modules"][module_name] = {"git_sha": correct_commit_sha}
+            except SystemError as e:
+                log.error(e)
+                log.error("Will not create 'modules.json' file")
+                sys.exit(1)
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
