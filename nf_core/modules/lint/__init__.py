@@ -9,6 +9,7 @@ nf-core modules lint
 
 from __future__ import print_function
 import logging
+from nf_core.modules.modules_command import ModuleCommand
 import operator
 import os
 import questionary
@@ -30,7 +31,6 @@ import nf_core.modules.module_utils
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 
-
 log = logging.getLogger(__name__)
 
 
@@ -51,7 +51,7 @@ class LintResult(object):
         self.module_name = mod.module_name
 
 
-class ModuleLint(object):
+class ModuleLint(ModuleCommand):
     """
     An object for linting modules either in a clone of the 'nf-core/modules'
     repository or in any nf-core pipeline directory
@@ -161,8 +161,8 @@ class ModuleLint(object):
 
         # If it is a pipeline, load the lint config file and the modules.json file
         if self.repo_type == "pipeline":
-            self._load_lint_config()
-            self._load_modules_json()
+            self.load_lint_config()
+            self.load_modules_json()
 
             # Only continue if a lint config has been loaded
             if self.lint_config:
@@ -414,42 +414,3 @@ class ModuleLint(object):
             self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.passed]
             self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in mod.warned]
             self.failed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.failed]
-
-    def _load_lint_config(self):
-        """Parse a pipeline lint config file.
-
-        Look for a file called either `.nf-core-lint.yml` or
-        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
-        (`.yml` takes precedence).
-
-        Add parsed config to the `self.lint_config` class attribute.
-        """
-        config_fn = os.path.join(self.dir, ".nf-core-lint.yml")
-
-        # Pick up the file if it's .yaml instead of .yml
-        if not os.path.isfile(config_fn):
-            config_fn = os.path.join(self.dir, ".nf-core-lint.yaml")
-
-        # Load the YAML
-        try:
-            with open(config_fn, "r") as fh:
-                self.lint_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug("No lint config file found: {}".format(config_fn))
-
-    def _load_modules_json(self):
-        """
-        Load the modules.json file
-
-        If not find, ask whether we should create it
-        """
-        modules_json_path = os.path.join(self.dir, "modules.json")
-
-        try:
-            with open(modules_json_path, "r") as fh:
-                self.modules_json = json.load(fh)
-        except FileNotFoundError:
-            log.error(
-                f"No `modules.json` file found! Please create one before continuing. You can create the file using `nf-core modules install`"
-            )
-            sys.exit(1)
