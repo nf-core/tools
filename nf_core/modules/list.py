@@ -30,7 +30,12 @@ class ModuleList(ModuleCommand):
             log.info(f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch}):\n")
 
             # Get the list of available modules
-            self.modules_repo.get_modules_file_tree()
+            try:
+                self.modules_repo.get_modules_file_tree()
+            except LookupError as e:
+                log.error(e)
+                return False
+
             modules = self.modules_repo.modules_avail_module_names
             # Nothing found
             if len(modules) == 0:

@@ -5,6 +5,7 @@ import requests
 import sys
 import logging
 import questionary
+import rich
 import datetime
 from itertools import count
 
@@ -53,10 +54,9 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T0
                 for commit in commits
             ]
     elif response.status_code == 404:
-        log.error(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
-        sys.exit(1)
+        raise LookupError(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
     else:
-        raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
+        raise LookupError(f"Unable to fetch commit SHA for module {module_name}")
 
 
 def get_commit_info(commit_sha):
@@ -107,26 +107,37 @@ def create_modules_json(pipeline_dir):
     module_paths = list(set(map(os.path.dirname, filter(os.path.isfile, all_module_file_paths))))
     module_names = [path.replace(f"{pipeline_dir}/modules/nf-core/software/", "") for path in module_paths]
     module_repo = ModulesRepo()
-    for module_name, module_path in zip(module_names, module_paths):
-        try:
-            # Find the correct commit SHA for the local files.
-            # We iterate over the commit log pages until we either
-            # find a matching commit or we reach the end of the commits
-            correct_commit_sha = None
-            commit_page_nbr = 1
-            while correct_commit_sha is None:
 
-                commit_shas = [
-                    commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
-                ]
-                correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
-                commit_page_nbr += 1
+    progress_bar = rich.progress.Progress(
+        "[bold blue]{task.description}",
+        rich.progress.BarColumn(bar_width=None),
+        "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+        transient=True,
+    )
+    with progress_bar:
+        file_progress = progress_bar.add_task(
+            "Creating 'modules.json' file", total=len(module_names), test_name="module.json"
+        )
+        for module_name, module_path in zip(module_names, module_paths):
+            progress_bar.update(file_progress, advance=1, test_name=module_name)
+            try:
+                # Find the correct commit SHA for the local files.
+                # We iterate over the commit log pages until we either
+                # find a matching commit or we reach the end of the commits
+                correct_commit_sha = None
+                commit_page_nbr = 1
+                while correct_commit_sha is None:
 
-            modules_json["modules"][module_name] = {"git_sha": correct_commit_sha}
-        except SystemError as e:
-            log.error(e)
-            log.error("Will not create 'modules.json' file")
-            sys.exit(1)
+                    commit_shas = [
+                        commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
+                    ]
+                    correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
+                    commit_page_nbr += 1
+
+                modules_json["modules"][module_name] = {"git_sha": correct_commit_sha}
+            except LookupError as e:
+                log.error(e)
+                raise UserWarning("Will not create 'modules.json' file")
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
@@ -288,8 +299,7 @@ def get_repo_type(dir):
     """
     # Verify that the pipeline dir exists
     if dir is None or not os.path.exists(dir):
-        log.error("Could not find directory: {}".format(dir))
-        sys.exit(1)
+        raise LookupError("Could not find directory: {}".format(dir))
 
     # Determine repository type
     if os.path.exists(os.path.join(dir, "main.nf")):
@@ -297,6 +307,4 @@ def get_repo_type(dir):
     elif os.path.exists(os.path.join(dir, "software")):
         return "modules"
     else:
-        log.error("Could not determine repository type of {}".format(dir))
-
-        sys.exit(1)
+        raise LookupError("Could not determine repository type of {}".format(dir))

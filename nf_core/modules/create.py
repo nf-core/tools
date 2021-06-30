@@ -74,7 +74,10 @@ class ModuleCreate(object):
         """
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
-        self.repo_type = self.get_repo_type(self.directory)
+        try:
+            self.repo_type = self.get_repo_type(self.directory)
+        except LookupError as e:
+            raise UserWarning(e)
 
         log.info(
             "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
