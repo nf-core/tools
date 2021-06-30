@@ -20,6 +20,7 @@ class NFCoreModule(object):
         self.inputs = []
         self.outputs = []
         self.has_meta = False
+        self.git_sha = None
 
         if nf_core_module:
             # Initialize the important files
