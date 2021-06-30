@@ -4,9 +4,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 
-import click
 import datetime
-import errno
 import git
 import json
 import logging
@@ -15,8 +13,6 @@ import re
 import requests
 import rich.console
 import rich.table
-import subprocess
-import sys
 
 import nf_core.utils
 
@@ -259,8 +255,14 @@ class Workflows(object):
             else:
                 table.add_row(*rowdata)
 
-        # Print summary table
-        return table
+        if len(filtered_workflows) > 0:
+            # Print summary table
+            return table
+        else:
+            return_str = f"No pipelines found using filter keywords: '{', '.join(self.keyword_filters)}'"
+            if self.keyword_filters == ("modules",):
+                return_str += "\n\n:bulb: Did you mean 'nf-core modules list' instead?"
+            return return_str
 
     def print_json(self):
         """Dump JSON of all parsed information"""
