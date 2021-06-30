@@ -56,7 +56,9 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T0
     elif response.status_code == 404:
         raise LookupError(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
     else:
-        raise LookupError(f"Unable to fetch commit SHA for module {module_name}")
+        raise LookupError(
+            f"Unable to fetch commit SHA for module {module_name}. API responded with '{response.status_code}'"
+        )
 
 
 def get_commit_info(commit_sha):
