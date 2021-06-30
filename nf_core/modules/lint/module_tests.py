@@ -34,7 +34,7 @@ def module_tests(module_lint_object, module):
             else:
                 module.failed.append(("test_pytest_yml", "missing entry in pytest_software.yml", pytest_yml_path))
     except FileNotFoundError as e:
-        module.failed.append((f"Could not open pytest_software.yml file: {e}"), pytest_yml_path)
+        module.failed.append(("test_pytest_yml", f"Could not open pytest_software.yml file", pytest_yml_path))
 
     # Lint the test.yml file
     try:
