@@ -9,7 +9,7 @@ import yaml
 def meta_yml(module_lint_object, module):
     """Lint a meta yml file"""
     required_keys = ["name", "input", "output"]
-    required_keys_lists = ["intput", "output"]
+    required_keys_lists = ["input", "output"]
     try:
         with open(module.meta_yml, "r") as fh:
             meta_yaml = yaml.safe_load(fh)

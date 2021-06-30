@@ -3,7 +3,7 @@ import glob
 import shutil
 import json
 import logging
-import questionary
+import yaml
 
 import nf_core.modules.module_utils
 from nf_core.modules.modules_repo import ModulesRepo
@@ -98,8 +98,45 @@ class ModuleCommand:
         log.info("Downloaded {} files to {}".format(len(files), module_dir))
         return True
 
-    def update_modules_json(self, modules_json, modules_json_path, module_name, module_version):
-        """Updates the 'module.json' file with new module info"""
-        modules_json["modules"][module_name] = {"git_sha": module_version}
+    def load_modules_json(self):
+        """Loads the modules.json file"""
+        modules_json_path = os.path.join(self.dir, "modules.json")
+        try:
+            with open(modules_json_path, "r") as fh:
+                modules_json = json.load(fh)
+        except FileNotFoundError:
+            log.error("File 'modules.json' is missing")
+            modules_json = None
+        return modules_json
+
+    def dump_modules_json(self, modules_json):
+        modules_json_path = os.path.join(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
+
+    def update_modules_json(self, modules_json, module_name, module_version):
+        """Updates the 'module.json' file with new module info"""
+        modules_json["modules"][module_name] = {"git_sha": module_version}
+        self.dump_modules_json(modules_json)
+
+    def load_lint_config(self):
+        """Parse a pipeline lint config file.
+
+        Look for a file called either `.nf-core-lint.yml` or
+        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
+        (`.yml` takes precedence).
+
+        Add parsed config to the `self.lint_config` class attribute.
+        """
+        config_fn = os.path.join(self.dir, ".nf-core-lint.yml")
+
+        # Pick up the file if it's .yaml instead of .yml
+        if not os.path.isfile(config_fn):
+            config_fn = os.path.join(self.dir, ".nf-core-lint.yaml")
+
+        # Load the YAML
+        try:
+            with open(config_fn, "r") as fh:
+                self.lint_config = yaml.safe_load(fh)
+        except FileNotFoundError:
+            log.debug("No lint config file found: {}".format(config_fn))

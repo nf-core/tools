@@ -1,5 +1,6 @@
 import os
 import sys
+import json
 import questionary
 import logging
 
@@ -43,7 +44,6 @@ class ModuleRemove(ModuleCommand):
 
         # Set the install folder based on the repository name
         install_folder = ["nf-core", "software"]
-        print(self.modules_repo.name)
         if not self.modules_repo.name == "nf-core/modules":
             install_folder = ["external"]
 
@@ -58,5 +58,23 @@ class ModuleRemove(ModuleCommand):
 
         log.info("Removing {}".format(module))
 
+        # Remove entry from modules.json
+        self.remove_modules_json_entry(module)
+
         # Remove the module
         return self.clear_module_dir(module_name=module, module_dir=module_dir)
+
+    def remove_modules_json_entry(self, module):
+        # Load 'modules.json'
+        modules_json = self.load_modules_json()
+        if not modules_json:
+            return False
+        if module in modules_json.get("modules", {}):
+            modules_json["modules"].pop(module)
+        else:
+            log.error(f"Module '{module}' is missing from 'modules.json' file.")
+            return False
+
+        self.dump_modules_json(modules_json)
+
+        return True

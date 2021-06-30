@@ -1,0 +1,12 @@
+{
+    "name": "{{ name }}",
+    "homePage": "https://github.com/{{ name }}",
+    "modules": {
+        "fastqc": {
+            "git_sha": "95e02f913fa0917fafae00e96e631d5b25a965f3"
+        },
+        "multiqc": {
+            "git_sha": "95e02f913fa0917fafae00e96e631d5b25a965f3"
+        }
+    }
+}

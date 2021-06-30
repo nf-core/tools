@@ -20,7 +20,11 @@
 * Use Biocontainers API instead of quayi.io API for `nf-core modules create` [[#875](https://github.com/nf-core/tools/issues/875)]
 * Update `nf-core modules install` to handle different versions of modules  [#1116](https://github.com/nf-core/tools/pull/1116)
 * Added `nf-core modules bump-versions` command to update all versions in the `nf-core/modules` repository [[#1123](https://github.com/nf-core/tools/issues/1123)]
+* Updated `nf-core modules lint` to check whether a `git_sha` exists in the `modules.json` file or whether a new version is available [[#1114](https://github.com/nf-core/tools/issues/1114)]
 * Refactored `nf-core modules` command into one file per command [#1124](https://github.com/nf-core/tools/pull/1124)
+* Updated `nf-core modules remove` to also remove entry in `modules.json` file ([#1115](https://github.com/nf-core/tools/issues/1115))
+* Bugfix: Interactive prompt for `nf-core modules install` was receiving too few arguments
+* Updated `nf-core modules list` to show versions of local modules
 
 #### Sync
 
