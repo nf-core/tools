@@ -6,6 +6,7 @@ import sys
 import logging
 import questionary
 import rich
+import datetime
 from itertools import count
 
 from requests import api
@@ -50,6 +51,37 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T0
         sys.exit(1)
     else:
         raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
+
+
+def get_commit_info(commit_sha):
+    """
+    Fetches metadata about the commit (dates, message, etc.)
+    Args:
+        module_name (str): Name of module
+        commit_sha (str): The SHA of the requested commit
+    Returns:
+        message (str): The commit message for the requested commit
+        date (str): The commit date for the requested commit
+    Raises:
+        LookupError: If the call to the API fails.
+    """
+    api_url = f"https://api.github.com/repos/nf-core/modules/commits/{commit_sha}?stats=false"
+    log.debug(f"Fetching commit metadata for commit at {commit_sha}")
+    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    if response.status_code == 200:
+        commit = response.json()
+        message = commit["commit"]["message"].partition("\n")[0]
+        raw_date = commit["commit"]["author"]["date"]
+
+        # Parse the date returned from the API
+        date_obj = datetime.datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%SZ")
+        date = str(date_obj.date())
+
+        return message, date
+    elif response.status_code == 404:
+        raise LookupError(f"Commit '{commit_sha}' not found in 'nf-core/modules/'\n{api_url}")
+    else:
+        raise LookupError(f"Unable to fetch metadata for commit SHA {commit_sha}")
 
 
 def create_modules_json(pipeline_dir):

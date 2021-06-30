@@ -99,6 +99,7 @@ class ModuleCommand:
         return True
 
     def load_modules_json(self):
+        """Loads the modules.json file"""
         modules_json_path = os.path.join(self.dir, "modules.json")
         try:
             with open(modules_json_path, "r") as fh:

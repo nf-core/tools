@@ -23,6 +23,7 @@
 * Updated `nf-core modules remove` to also remove entry in `modules.json` file ([#1115](https://github.com/nf-core/tools/issues/1115))
 * Bugfix: Interactive prompt for `nf-core modules install` was receiving too few arguments
 * Added progress bar to creation of 'modules.json'
+* Updated `nf-core modules list` to show versions of local modules
 
 #### Sync
 
