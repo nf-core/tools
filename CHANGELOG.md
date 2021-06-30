@@ -19,9 +19,11 @@
 * Changed working directory to temporary directory for `nf-core modules create-test-yml` [[#908](https://github.com/nf-core/tools/issues/908)]
 * Use Biocontainers API instead of quayi.io API for `nf-core modules create` [[#875](https://github.com/nf-core/tools/issues/875)]
 * Update `nf-core modules install` to handle different versions of modules  [#1116](https://github.com/nf-core/tools/pull/1116)
+* Updated `nf-core modules lint` to check whether a `git_sha` exists in the `modules.json` file or whether a new version is available [[#1114](https://github.com/nf-core/tools/issues/1114)]
 * Refactored `nf-core modules` command into one file per command [#1124](https://github.com/nf-core/tools/pull/1124)
 * Updated `nf-core modules remove` to also remove entry in `modules.json` file ([#1115](https://github.com/nf-core/tools/issues/1115))
 * Bugfix: Interactive prompt for `nf-core modules install` was receiving too few arguments
+* Added progress bar to creation of 'modules.json'
 * Updated `nf-core modules list` to show versions of local modules
 * Improved exit behavior by replacing `sys.exit` with exceptions
 

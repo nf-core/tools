@@ -3,7 +3,7 @@ import glob
 import shutil
 import json
 import logging
-import questionary
+import yaml
 
 import nf_core.modules.module_utils
 from nf_core.modules.modules_repo import ModulesRepo
@@ -124,3 +124,25 @@ class ModuleCommand:
         """Updates the 'module.json' file with new module info"""
         modules_json["modules"][module_name] = {"git_sha": module_version}
         self.dump_modules_json(modules_json)
+
+    def load_lint_config(self):
+        """Parse a pipeline lint config file.
+
+        Look for a file called either `.nf-core-lint.yml` or
+        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
+        (`.yml` takes precedence).
+
+        Add parsed config to the `self.lint_config` class attribute.
+        """
+        config_fn = os.path.join(self.dir, ".nf-core-lint.yml")
+
+        # Pick up the file if it's .yaml instead of .yml
+        if not os.path.isfile(config_fn):
+            config_fn = os.path.join(self.dir, ".nf-core-lint.yaml")
+
+        # Load the YAML
+        try:
+            with open(config_fn, "r") as fh:
+                self.lint_config = yaml.safe_load(fh)
+        except FileNotFoundError:
+            log.debug("No lint config file found: {}".format(config_fn))

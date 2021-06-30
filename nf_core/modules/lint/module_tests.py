@@ -1,3 +1,6 @@
+"""
+Lint the tests of a module in nf-core/modules
+"""
 import os
 import logging
 import sys

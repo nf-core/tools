@@ -1,3 +1,6 @@
+"""
+Check whether the content of a module has changed compared to the original repository
+"""
 import os
 import requests
 import rich
@@ -9,12 +12,18 @@ def module_changes(module_lint_object, module):
     Checks whether installed nf-core modules have changed compared to the
     original repository
     Downloads the 'main.nf', 'functions.nf' and 'meta.yml' files for every module
-    and compare them to the local copies
+    and compares them to the local copies
+
+    If the module has a 'git_sha', the file content is checked against this sha
     """
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]
 
     # Loop over nf-core modules
     module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module_lint_object.modules_repo.branch}/software/{module.module_name}/"
+
+    # If module.git_sha specified, check specific commit version for changes
+    if module.git_sha:
+        module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module.git_sha}/software/{module.module_name}/"
 
     for f in files_to_check:
         # open local copy, continue if file not found (a failed message has already been issued in this case)
