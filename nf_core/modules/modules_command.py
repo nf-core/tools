@@ -54,15 +54,21 @@ class ModuleCommand:
         nf_config = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
-        self.has_modules_file()
-        return True
+        try:
+            self.has_modules_file()
+            return True
+        except UserWarning as e:
+            raise
 
     def has_modules_file(self):
         """Checks whether a module.json file has been created and creates one if it is missing"""
         modules_json_path = os.path.join(self.dir, "modules.json")
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
-            nf_core.modules.module_utils.create_modules_json(self.dir)
+            try:
+                nf_core.modules.module_utils.create_modules_json(self.dir)
+            except UserWarning as e:
+                raise
 
     def clear_module_dir(self, module_name, module_dir):
         """Removes all files in the module directory"""

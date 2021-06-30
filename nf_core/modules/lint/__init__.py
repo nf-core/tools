@@ -68,7 +68,11 @@ class ModuleLint(ModuleCommand):
 
     def __init__(self, dir, key=()):
         self.dir = dir
-        self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+        try:
+            self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+        except LookupError as e:
+            raise UserWarning(e)
+
         self.passed = []
         self.warned = []
         self.failed = []

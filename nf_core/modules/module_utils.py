@@ -47,10 +47,9 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T0
                 for commit in commits
             ]
     elif response.status_code == 404:
-        log.error(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
-        sys.exit(1)
+        raise LookupError(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
     else:
-        raise SystemError(f"Unable to fetch commit SHA for module {module_name}")
+        raise LookupError(f"Unable to fetch commit SHA for module {module_name}")
 
 
 def get_commit_info(commit_sha):
@@ -101,6 +100,7 @@ def create_modules_json(pipeline_dir):
     module_paths = list(set(map(os.path.dirname, filter(os.path.isfile, all_module_file_paths))))
     module_names = [path.replace(f"{pipeline_dir}/modules/nf-core/software/", "") for path in module_paths]
     module_repo = ModulesRepo()
+
     progress_bar = rich.progress.Progress(
         "[bold blue]{task.description}",
         rich.progress.BarColumn(bar_width=None),
@@ -128,10 +128,9 @@ def create_modules_json(pipeline_dir):
                     commit_page_nbr += 1
 
                 modules_json["modules"][module_name] = {"git_sha": correct_commit_sha}
-            except SystemError as e:
+            except LookupError as e:
                 log.error(e)
-                log.error("Will not create 'modules.json' file")
-                sys.exit(1)
+                raise UserWarning("Will not create 'modules.json' file")
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
@@ -209,8 +208,7 @@ def get_repo_type(dir):
     """
     # Verify that the pipeline dir exists
     if dir is None or not os.path.exists(dir):
-        log.error("Could not find directory: {}".format(dir))
-        sys.exit(1)
+        raise LookupError("Could not find directory: {}".format(dir))
 
     # Determine repository type
     if os.path.exists(os.path.join(dir, "main.nf")):
@@ -218,5 +216,4 @@ def get_repo_type(dir):
     elif os.path.exists(os.path.join(dir, "software")):
         return "modules"
     else:
-        log.error("Could not determine repository type of {}".format(dir))
-        sys.exit(1)
+        raise LookupError("Could not determine repository type of {}".format(dir))
