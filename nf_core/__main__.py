@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
+from nf_core.lint.pipeline_todos import pipeline_todos
+from nf_core.modules.bump_versions import ModuleVersionBumper
 from click.types import File
 from rich import print
 from rich.prompt import Confirm
@@ -400,28 +402,7 @@ def install(ctx, pipeline_dir, tool, latest, force, sha):
         sys.exit(1)
 
 
-# TODO: Not yet implemented
-# @modules.command(help_priority=3)
-# @click.pass_context
-# @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
-# @click.argument("tool", type=str, metavar="<tool name>")
-# def update(ctx, tool, pipeline_dir):
-#     """
-#     Update one or all software wrapper modules.
-#
-#     Compares a currently installed module against what is available in nf-core/modules.
-#     Fetchs files and updates all relevant files for that software wrapper.
-#
-#     If no module name is specified, loops through all currently installed modules.
-#     If no version is specified, looks for the latest available version on nf-core/modules.
-#     """
-#     mods = nf_core.modules.PipelineModules()
-#     mods.modules_repo = ctx.obj["modules_repo_obj"]
-#     mods.pipeline_dir = pipeline_dir
-#     mods.update(tool)
-
-
-@modules.command(help_priority=4)
+@modules.command(help_priority=3)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
@@ -438,7 +419,7 @@ def remove(ctx, pipeline_dir, tool):
         sys.exit(1)
 
 
-@modules.command("create", help_priority=5)
+@modules.command("create", help_priority=4)
 @click.pass_context
 @click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
@@ -476,7 +457,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force, con
         sys.exit(1)
 
 
-@modules.command("create-test-yml", help_priority=6)
+@modules.command("create-test-yml", help_priority=5)
 @click.pass_context
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 @click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
@@ -498,7 +479,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
-@modules.command(help_priority=7)
+@modules.command(help_priority=6)
 @click.pass_context
 @click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
@@ -523,6 +504,24 @@ def lint(ctx, pipeline_dir, tool, key, all, local, passed):
         if len(module_lint.failed) > 0:
             sys.exit(1)
     except (UserWarning, nf_core.modules.lint.ModuleLintException) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+@modules.command(help_priority=7)
+@click.pass_context
+@click.argument("modules_dir", type=click.Path(exists=True), required=True, metavar="<nf-core/modules directory>")
+@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
+@click.option("-s", "--show-all", is_flag=True, metavar="Show up-to-date modules in results")
+def bump_versions(ctx, modules_dir, tool, all, show_all):
+    """
+    Bump versions for one or more modules in a directory.
+    """
+    try:
+        version_bumper = ModuleVersionBumper(pipeline_dir=modules_dir)
+        version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
+    except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
 

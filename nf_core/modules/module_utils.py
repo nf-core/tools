@@ -14,8 +14,15 @@ from requests import api
 import nf_core.utils
 
 from .modules_repo import ModulesRepo
+from .nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)
+
+
+class ModuleException(Exception):
+    """Exception raised when there was an error with module commands"""
+
+    pass
 
 
 def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T00:00:00Z"):
@@ -199,6 +206,90 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
             files_are_equal[i] = True
 
     return all(files_are_equal)
+
+
+def prompt_module_version_sha(module, installed_sha=None):
+    older_commits_choice = questionary.Choice(
+        title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
+    )
+    git_sha = ""
+    page_nbr = 1
+    next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
+    while git_sha is "":
+        commits = next_page_commits
+        next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
+        choices = []
+        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
+
+            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
+            message = f"{title} {sha}"
+            if installed_sha == sha:
+                message += " (installed version)"
+            commit_display = [(display_color, message), ("class:choice-default", "")]
+            choices.append(questionary.Choice(title=commit_display, value=sha))
+        if len(next_page_commits) > 0:
+            choices += [older_commits_choice]
+        git_sha = questionary.select(
+            f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
+        ).unsafe_ask()
+        page_nbr += 1
+    return git_sha
+
+
+def get_installed_modules(dir, repo_type="modules"):
+    """
+    Make a list of all modules installed in this repository
+
+    Returns a tuple of two lists, one for local modules
+    and one for nf-core modules. The local modules are represented
+    as direct filepaths to the module '.nf' file.
+    Nf-core module are returned as file paths to the module directories.
+    In case the module contains several tools, one path to each tool directory
+    is returned.
+
+    returns (local_modules, nfcore_modules)
+    """
+    # initialize lists
+    local_modules = []
+    nfcore_modules = []
+    local_modules_dir = None
+    nfcore_modules_dir = os.path.join(dir, "modules", "nf-core", "software")
+
+    # Get local modules
+    if repo_type == "pipeline":
+        local_modules_dir = os.path.join(dir, "modules", "local", "process")
+
+        # Filter local modules
+        if os.path.exists(local_modules_dir):
+            local_modules = os.listdir(local_modules_dir)
+            local_modules = sorted([x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")])
+
+    # nf-core/modules
+    if repo_type == "modules":
+        nfcore_modules_dir = os.path.join(dir, "software")
+
+    # Get nf-core modules
+    if os.path.exists(nfcore_modules_dir):
+        for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
+            if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
+                raise ModuleException(
+                    f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
+                )
+            m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
+            # Not a module, but contains sub-modules
+            if not "main.nf" in m_content:
+                for tool in m_content:
+                    nfcore_modules.append(os.path.join(m, tool))
+            else:
+                nfcore_modules.append(m)
+
+    # Make full (relative) file paths and create NFCoreModule objects
+    local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+    nfcore_modules = [
+        NFCoreModule(os.path.join(nfcore_modules_dir, m), repo_type=repo_type, base_dir=dir) for m in nfcore_modules
+    ]
+
+    return local_modules, nfcore_modules
 
 
 def get_repo_type(dir):

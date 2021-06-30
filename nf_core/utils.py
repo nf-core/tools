@@ -504,20 +504,23 @@ def get_biocontainer_tag(package, version):
         raise LookupError("Could not connect to biocontainers.pro API")
     else:
         if response.status_code == 200:
-            images = response.json()["images"]
-            singularity_image = None
-            docker_image = None
-            for img in images:
-                # Get most recent Docker and Singularity image
-                if img["image_type"] == "Docker":
-                    modification_date = get_tag_date(img["updated"])
-                    if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
-                        docker_image = img
-                if img["image_type"] == "Singularity":
-                    modification_date = get_tag_date(img["updated"])
-                    if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
-                        singularity_image = img
-            return docker_image["image_name"], singularity_image["image_name"]
+            try:
+                images = response.json()["images"]
+                singularity_image = None
+                docker_image = None
+                for img in images:
+                    # Get most recent Docker and Singularity image
+                    if img["image_type"] == "Docker":
+                        modification_date = get_tag_date(img["updated"])
+                        if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
+                            docker_image = img
+                    if img["image_type"] == "Singularity":
+                        modification_date = get_tag_date(img["updated"])
+                        if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
+                            singularity_image = img
+                return docker_image["image_name"], singularity_image["image_name"]
+            except TypeError:
+                raise LookupError(f"Could not find docker or singularity container for {package}")
         elif response.status_code != 404:
             raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
