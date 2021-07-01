@@ -379,14 +379,14 @@ def list(ctx, pipeline_dir, json):
 
 @modules.command(help_priority=2)
 @click.pass_context
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 @click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
 @click.option(
     "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def install(ctx, pipeline_dir, tool, latest, force, sha):
+def install(ctx, dir, tool, latest, force, sha):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
@@ -394,7 +394,7 @@ def install(ctx, pipeline_dir, tool, latest, force, sha):
     along with associated metadata.
     """
     try:
-        module_install = nf_core.modules.ModuleInstall(pipeline_dir, force=force, latest=latest, sha=sha)
+        module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha)
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
         module_install.install(tool)
     except UserWarning as e:
@@ -404,14 +404,14 @@ def install(ctx, pipeline_dir, tool, latest, force, sha):
 
 @modules.command(help_priority=3)
 @click.pass_context
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
-def remove(ctx, pipeline_dir, tool):
+def remove(ctx, dir, tool):
     """
     Remove a software wrapper from a pipeline.
     """
     try:
-        module_remove = nf_core.modules.ModuleRemove(pipeline_dir)
+        module_remove = nf_core.modules.ModuleRemove(dir)
         module_remove.modules_repo = ctx.obj["modules_repo_obj"]
         module_remove.remove(tool)
     except UserWarning as e:
