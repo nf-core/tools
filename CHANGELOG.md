@@ -28,6 +28,7 @@
 * Updated `nf-core modules list` to show versions of local modules
 * Improved exit behavior by replacing `sys.exit` with exceptions
 * Updated `nf-core modules remove` to remove module entry in `modules.json` if module directory is missing
+* Refactored passing of command line arguments to `nf-core` commands and subcommands
 
 #### Sync
 
