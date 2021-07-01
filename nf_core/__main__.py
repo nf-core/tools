@@ -382,14 +382,14 @@ def list(ctx, pipeline_dir, json):
 
 @modules.command(help_priority=2)
 @click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
-@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 @click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
 @click.option(
     "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def install(ctx, dir, tool, latest, force, sha):
+def install(ctx, tool, dir, latest, force, sha):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
@@ -407,8 +407,8 @@ def install(ctx, dir, tool, latest, force, sha):
 
 @modules.command(help_priority=3)
 @click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
-@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
 def remove(ctx, dir, tool):
     """
     Remove a software wrapper from a pipeline.
