@@ -29,8 +29,8 @@ def bump_pipeline_version(pipeline_obj, new_version):
         log.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
     if not current_version:
-        log.error("Could not find config variable 'manifest.version'")
-        sys.exit(1)
+        raise UserWarning("Could not find config variable 'manifest.version'")
+
     log.info("Changing version number from '{}' to '{}'".format(current_version, new_version))
 
     # nextflow.config - workflow manifest version
@@ -60,8 +60,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
     current_version = re.sub(r"^[^0-9\.]*", "", current_version)
     new_version = re.sub(r"^[^0-9\.]*", "", new_version)
     if not current_version:
-        log.error("Could not find config variable 'manifest.nextflowVersion'")
-        sys.exit(1)
+        raise UserWarning("Could not find config variable 'manifest.nextflowVersion'")
     log.info("Changing Nextlow version number from '{}' to '{}'".format(current_version, new_version))
 
     # nextflow.config - manifest minimum nextflowVersion
