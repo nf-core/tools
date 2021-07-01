@@ -619,12 +619,12 @@ def lint(schema_path):
 
 
 @nf_core_cli.command("bump-version", help_priority=9)
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
 @click.argument("new_version", required=True, metavar="<new version>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option(
     "-n", "--nextflow", is_flag=True, default=False, help="Bump required nextflow version instead of pipeline version"
 )
-def bump_version(pipeline_dir, new_version, nextflow):
+def bump_version(new_version, dir, nextflow):
     """
     Update nf-core pipeline version number.
 
@@ -637,24 +637,28 @@ def bump_version(pipeline_dir, new_version, nextflow):
 
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
-    # Make a pipeline object and load config etc
-    pipeline_obj = nf_core.utils.Pipeline(pipeline_dir)
-    pipeline_obj._load()
+    try:
+        # Make a pipeline object and load config etc
+        pipeline_obj = nf_core.utils.Pipeline(dir)
+        pipeline_obj._load()
 
-    # Bump the pipeline version number
-    if not nextflow:
-        nf_core.bump_version.bump_pipeline_version(pipeline_obj, new_version)
-    else:
-        nf_core.bump_version.bump_nextflow_version(pipeline_obj, new_version)
+        # Bump the pipeline version number
+        if not nextflow:
+            nf_core.bump_version.bump_pipeline_version(pipeline_obj, new_version)
+        else:
+            nf_core.bump_version.bump_nextflow_version(pipeline_obj, new_version)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 
 @nf_core_cli.command("sync", help_priority=10)
-@click.argument("pipeline_dir", required=True, type=click.Path(exists=True), metavar="<pipeline directory>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
 @click.option("-r", "--repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-def sync(pipeline_dir, from_branch, pull_request, repository, username):
+def sync(dir, from_branch, pull_request, repository, username):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
 
@@ -669,7 +673,7 @@ def sync(pipeline_dir, from_branch, pull_request, repository, username):
     """
 
     # Sync the given pipeline dir
-    sync_obj = nf_core.sync.PipelineSync(pipeline_dir, from_branch, pull_request, repository, username)
+    sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, repository, username)
     try:
         sync_obj.sync()
     except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:

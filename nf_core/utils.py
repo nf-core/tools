@@ -121,6 +121,12 @@ class Pipeline(object):
         self.pipeline_name = None
         self.schema_obj = None
 
+        # Check if 'wf_path' is a pipeline directory
+        try:
+            is_pipeline_directory(self.wf_path)
+        except UserWarning:
+            raise
+
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
@@ -181,6 +187,23 @@ class Pipeline(object):
     def _fp(self, fn):
         """Convenience function to get full path to a file in the pipeline"""
         return os.path.join(self.wf_path, fn)
+
+
+def is_pipeline_directory(wf_path):
+    """
+    Checks if the specified directory have the minimum required files
+    ('main.nf', 'nextflow.config') for a pipeline directory
+
+    Args:
+        wf_path (str): The directory to be inspected
+
+    Raises:
+        UserWarning: If one of the files are missing
+    """
+    for fn in ["main.nf", "nextflow.config"]:
+        path = os.path.join(wf_path, fn)
+        if not os.path.isfile(path):
+            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
 
 
 def fetch_wf_config(wf_path):

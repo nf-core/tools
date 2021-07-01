@@ -66,6 +66,12 @@ class PipelineSync(object):
     ):
         """Initialise syncing object"""
 
+        # Check if 'pipeline_dir' is a pipeline directory
+        try:
+            nf_core.utils.is_pipeline_directory(pipeline_dir)
+        except UserWarning:
+            raise
+
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
         self.original_branch = None
