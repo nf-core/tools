@@ -567,7 +567,7 @@ def validate(pipeline, params):
 
 
 @schema.command(help_priority=2)
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline directory>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
 @click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
 @click.option(
@@ -576,7 +576,7 @@ def validate(pipeline, params):
     default="https://nf-co.re/pipeline_schema_builder",
     help="Customise the builder URL (for development work)",
 )
-def build(pipeline_dir, no_prompts, web_only, url):
+def build(dir, no_prompts, web_only, url):
     """
     Interactively build a pipeline schema from Nextflow params.
 
@@ -588,8 +588,12 @@ def build(pipeline_dir, no_prompts, web_only, url):
     https://nf-co.re website where you can annotate and organise parameters.
     Listens for this to be completed and saves the updated schema.
     """
-    schema_obj = nf_core.schema.PipelineSchema()
-    if schema_obj.build_schema(pipeline_dir, no_prompts, web_only, url) is False:
+    try:
+        schema_obj = nf_core.schema.PipelineSchema()
+        if schema_obj.build_schema(dir, no_prompts, web_only, url) is False:
+            sys.exit(1)
+    except UserWarning as e:
+        log.error(e)
         sys.exit(1)
 
 

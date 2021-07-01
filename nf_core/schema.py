@@ -334,6 +334,12 @@ class PipelineSchema(object):
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
         """Interactively build a new pipeline schema for a pipeline"""
 
+        # Check if supplied pipeline directory really is one
+        try:
+            nf_core.utils.is_pipeline_directory(pipeline_dir)
+        except UserWarning:
+            raise
+
         if no_prompts:
             self.no_prompts = True
         if web_only:
