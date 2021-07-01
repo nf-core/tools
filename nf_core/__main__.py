@@ -324,6 +324,13 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
     See the documentation for details.
     """
 
+    # Check if pipeline directory is a pipeline
+    try:
+        nf_core.utils.is_pipeline_directory(dir)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
     # Run the lint tests!
     try:
         lint_obj = nf_core.lint.run_linting(dir, release, fix, key, show_passed, fail_ignored, markdown, json)
@@ -645,6 +652,9 @@ def bump_version(new_version, dir, nextflow):
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
     try:
+        # Check if pipeline directory contain necessary files
+        nf_core.utils.is_pipeline_directory(dir)
+
         # Make a pipeline object and load config etc
         pipeline_obj = nf_core.utils.Pipeline(dir)
         pipeline_obj._load()
@@ -678,6 +688,11 @@ def sync(dir, from_branch, pull_request, repository, username):
     the pipeline. It is run automatically for all pipelines when ever a
     new release of nf-core/tools (and the included template) is made.
     """
+    # Check if pipeline directory contain necessary files
+    try:
+        nf_core.utils.is_pipeline_directory(dir)
+    except UserWarning:
+        raise
 
     # Sync the given pipeline dir
     sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, repository, username)

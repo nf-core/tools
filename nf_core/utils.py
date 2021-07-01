@@ -121,12 +121,6 @@ class Pipeline(object):
         self.pipeline_name = None
         self.schema_obj = None
 
-        # Check if 'wf_path' is a pipeline directory
-        try:
-            is_pipeline_directory(self.wf_path)
-        except UserWarning:
-            raise
-
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
