@@ -276,8 +276,9 @@ class ModulesTestYmlBuilder(object):
 
         tmp_dir = tempfile.mkdtemp()
         tmp_dir_repeat = tempfile.mkdtemp()
-        command_repeat = command + f" --outdir {tmp_dir_repeat} -work-dir {tmp_dir_repeat}"
-        command += f" --outdir {tmp_dir} -work-dir {tmp_dir}"
+        work_dir = tempfile.mkdtemp()
+        command_repeat = command + f" --outdir {tmp_dir_repeat} -work-dir {work_dir}"
+        command += f" --outdir {tmp_dir} -work-dir {work_dir}"
 
         log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
         try:

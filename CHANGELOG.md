@@ -28,6 +28,7 @@
 * Updated `nf-core modules list` to show versions of local modules
 * Improved exit behavior by replacing `sys.exit` with exceptions
 * Updated `nf-core modules remove` to remove module entry in `modules.json` if module directory is missing
+* Create extra tempdir as work directory for `nf-core modules create-test-yml` to avoid adding the temporary files to the `test.yml`
 * Refactored passing of command line arguments to `nf-core` commands and subcommands ([#1139](https://github.com/nf-core/tools/issues/1139), [#1140](https://github.com/nf-core/tools/issues/1140))
 
 #### Sync
