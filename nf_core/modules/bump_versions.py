@@ -33,7 +33,7 @@ class ModuleVersionBumper(ModuleCommand):
         self.failed = None
         self.show_up_to_date = None
 
-    def bump_versions(self, module=None, all_modules=False, show_uptodate=False):
+    def bump_versions(self, module=None, all_modules=False, show_uptodate=False, ignored=None):
         """
         Bump the container and conda version of single module or all modules
 
@@ -50,6 +50,7 @@ class ModuleVersionBumper(ModuleCommand):
         self.updated = []
         self.failed = []
         self.show_up_to_date = show_uptodate
+        self.ignored = ignored
 
         # Verify that this is not a pipeline
         repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -88,6 +89,13 @@ class ModuleVersionBumper(ModuleCommand):
             nfcore_modules = [m for m in nfcore_modules if m.module_name == module]
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.module_utils.ModuleException(f"Could not find the specified module: '{module}'")
+
+        if module and module in self.ignored:
+            raise nf_core.modules.module_utils.ModuleException(f"Cannot bump version of an ignored module!")
+
+        # Don't bump versions of modules in the `ignored` list
+        nfcore_modules = self.remove_ignored_modules(nfcore_modules)
+        log.info(f"Ignoring modules: {self.ignored}")
 
         progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
@@ -315,3 +323,20 @@ class ModuleVersionBumper(ModuleCommand):
             table.add_column("Update message")
             table = format_result(self.failed, table)
             console.print(table)
+
+    def remove_ignored_modules(self, nfcore_modules):
+        """
+        Remove all modules in the self.ignore list
+        If only the tool is sepcified in the ignored list, remove all subtools as well
+        """
+        cleaned_modules = []
+        for m in nfcore_modules:
+            if "/" in m.module_name:
+                tool, _ = m.module_name.split("/")
+            else:
+                tool = m.module_name
+
+            if not tool in self.ignored and not m.module_name in self.ignored:
+                cleaned_modules.append(m)
+
+        return cleaned_modules
