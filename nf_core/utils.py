@@ -183,6 +183,23 @@ class Pipeline(object):
         return os.path.join(self.wf_path, fn)
 
 
+def is_pipeline_directory(wf_path):
+    """
+    Checks if the specified directory have the minimum required files
+    ('main.nf', 'nextflow.config') for a pipeline directory
+
+    Args:
+        wf_path (str): The directory to be inspected
+
+    Raises:
+        UserWarning: If one of the files are missing
+    """
+    for fn in ["main.nf", "nextflow.config"]:
+        path = os.path.join(wf_path, fn)
+        if not os.path.isfile(path):
+            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
+
+
 def fetch_wf_config(wf_path):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.

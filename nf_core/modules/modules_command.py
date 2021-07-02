@@ -23,10 +23,13 @@ class ModuleCommand:
         self.modules_repo = ModulesRepo()
         self.dir = dir
         self.module_names = []
-        if self.dir:
-            self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
-        else:
-            self.repo_type = None
+        try:
+            if self.dir:
+                self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+            else:
+                self.repo_type = None
+        except LookupError as e:
+            raise UserWarning(e)
 
     def get_pipeline_modules(self):
         """Get list of modules installed in the current directory"""

@@ -309,4 +309,4 @@ def get_repo_type(dir):
     elif os.path.exists(os.path.join(dir, "software")):
         return "modules"
     else:
-        raise LookupError("Could not determine repository type of {}".format(dir))
+        raise LookupError("Could not determine repository type of '{}'".format(dir))
