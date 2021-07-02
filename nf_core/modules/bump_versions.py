@@ -151,7 +151,7 @@ class ModuleVersionBumper(ModuleCommand):
 
                 patterns = [
                     (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
-                    (r"quay.io/biocontainers/{}:[^\'\"\s]*".format(bioconda_tool_name), docker_img),
+                    (r"quay.io/biocontainers/{}:[^'\"\s]+".format(bioconda_tool_name), docker_img),
                     (
                         r"https://depot.galaxyproject.org/singularity/{}:[^'\"\s]+".format(bioconda_tool_name),
                         singularity_img,
