@@ -80,6 +80,7 @@ class ModuleVersionBumper(ModuleCommand):
                 ).ask()
 
         if module:
+            self.show_up_to_date = True
             if all_modules:
                 raise nf_core.modules.module_utils.ModuleException(
                     "You cannot specify a tool and request all tools to be bumped."
@@ -149,9 +150,12 @@ class ModuleVersionBumper(ModuleCommand):
                     return False
 
                 patterns = [
-                    (bioconda_packages[0], f"bioconda::{bioconda_tool_name}={last_ver}"),
-                    (r"quay.io/biocontainers/{}:.*".format(bioconda_tool_name), docker_img),
-                    (r"https://depot.galaxyproject.org/singularity/{}:.*".format(bioconda_tool_name), singularity_img),
+                    (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
+                    (r"quay.io/biocontainers/{}:[^'\"\s]+".format(bioconda_tool_name), docker_img),
+                    (
+                        r"https://depot.galaxyproject.org/singularity/{}:[^'\"\s]+".format(bioconda_tool_name),
+                        singularity_img,
+                    ),
                 ]
 
                 with open(module.main_nf, "r") as fh:
