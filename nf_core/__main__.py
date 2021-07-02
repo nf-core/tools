@@ -382,9 +382,13 @@ def list(ctx, installed, json):
     If no pipeline directory is given, lists all currently available
     software wrappers in the nf-core/modules repository.
     """
-    module_list = nf_core.modules.ModuleList(installed)
-    module_list.modules_repo = ctx.obj["modules_repo_obj"]
-    print(module_list.list_modules(json))
+    try:
+        module_list = nf_core.modules.ModuleList(installed)
+        module_list.modules_repo = ctx.obj["modules_repo_obj"]
+        print(module_list.list_modules(json))
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 @modules.command(help_priority=2)
@@ -513,8 +517,11 @@ def lint(ctx, tool, dir, key, all, local, passed):
         module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
         if len(module_lint.failed) > 0:
             sys.exit(1)
-    except (UserWarning, nf_core.modules.lint.ModuleLintException) as e:
+    except nf_core.modules.lint.ModuleLintException as e:
         log.error(e)
+        sys.exit(1)
+    except UserWarning as e:
+        log.critical(e)
         sys.exit(1)
 
 
@@ -533,6 +540,9 @@ def bump_versions(ctx, tool, dir, all, show_all):
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
+        sys.exit(1)
+    except UserWarning as e:
+        log.critical(e)
         sys.exit(1)
 
 
