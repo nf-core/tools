@@ -121,7 +121,10 @@ class PipelineLint(nf_core.utils.Pipeline):
         """Initialise linting object"""
 
         # Initialise the parent object
-        super().__init__(wf_path)
+        try:
+            super().__init__(wf_path)
+        except UserWarning:
+            raise
 
         self.lint_config = {}
         self.release_mode = release_mode
