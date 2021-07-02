@@ -624,7 +624,7 @@ Tip: Some of these linting errors can automatically be resolved with the followi
     nf-core lint . --fix conda_env_yaml
 ```
 
-You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint . -k files_exist -k files_unchanged`
+You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
 
 ### Linting documentation
 
@@ -719,7 +719,7 @@ If no existing schema is found it will create one for you.
 Once built, the tool can send the schema to the nf-core website so that you can use a graphical interface to organise and fill in the schema.
 The tool checks the status of your schema on the website and once complete, saves your changes locally.
 
-Usage is `nextflow schema build <pipeline_directory>`, eg:
+Usage is `nextflow schema build`, eg:
 
 ```console
 $ nf-core schema build nf-core-testpipeline
@@ -746,8 +746,9 @@ $ nf-core schema build nf-core-testpipeline
   INFO: Writing JSON schema with 25 params: nf-core-testpipeline/nextflow_schema.json
 ```
 
-There are three flags that you can use with this command:
+There are four flags that you can use with this command:
 
+* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory
 * `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
 * `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
 * `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
@@ -780,7 +781,7 @@ When releasing a new version of a nf-core pipeline, version numbers have to be u
 
 The command uses results from the linting process, so will only work with workflows that pass these tests.
 
-Usage is `nf-core bump-version <pipeline_dir> <new_version>`, eg:
+Usage is `nf-core bump-version <new_version>`, eg:
 
 ```console
 $ cd path/to/my_pipeline
@@ -822,7 +823,7 @@ INFO     Updated version in 'Dockerfile'
            + RUN conda env export --name nf-core-methylseq-1.7 > nf-core-methylseq-1.7.yml
 ```
 
-To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
+You can change the directory from the current working directory by specifying `--dir <pipeline_dir>`. To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
 ## Sync a pipeline with the template
 
@@ -836,7 +837,7 @@ Note that pipeline synchronisation happens automatically each time nf-core/tools
 **As such, you do not normally need to run this command yourself!**
 
 This command takes a pipeline directory and attempts to run this synchronisation.
-Usage is `nf-core sync <pipeline_dir>`, eg:
+Usage is `nf-core sync`, eg:
 
 ```console
 $ nf-core sync my_pipeline/
@@ -865,6 +866,8 @@ The sync command tries to check out the `TEMPLATE` branch from the `origin` remo
 It will fail if it cannot do either of these things.
 The `nf-core create` command should make this template automatically when you first start your pipeline.
 Please see the [nf-core website sync documentation](https://nf-co.re/developers/sync) if you have difficulties.
+
+To specify a directory to sync other than the current working directory, use the `--dir <pipline_dir>`.
 
 By default, the tool will collect workflow variables from the current branch in your pipeline directory.
 You can supply the `--from-branch` flag to specific a different branch.
@@ -918,13 +921,12 @@ INFO     Modules available from nf-core/modules (master)
 
 ### List installed modules
 
-The same `nf-core modules list` command can take an optional argument for a local pipeline directory.
-If given, it will instead list all installed modules in that pipeline.
+To list modules installed in a local pipeline directory you can use `nf-core modules list --installed <directory>`.
 
 ### Install a module into a pipeline
 
-You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install <pipeline_dir>`.
-A module installed this way will be installed to the `<pipeline_dir>/modules/nf-core/software` directory.
+You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
+A module installed this way will be installed to the `./modules/nf-core/software` directory.
 
 ```console
 $ nf-core modules install .
@@ -941,11 +943,18 @@ INFO     Installing cat/fastq
 INFO     Downloaded 3 files to ./modules/nf-core/software/cat/fastq
 ```
 
-Use the `--tool` flat to specify a module name on the command line instead of using the cli prompt.
+You can pass the module name as a optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+
+There are four flags that you can use with this command:
+
+* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
+* `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
+* `--force`: Overwrite a previously installed version of the module.
+* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
 
 ### Remove a module from a pipeline
 
-To delete a module from your pipeline, run `nf-core modules remove <pipeline-directory>`
+To delete a module from your pipeline, run `nf-core modules remove`
 
 ```console
 $ nf-core modules remove .
@@ -963,13 +972,15 @@ INFO     Removing star/align
 INFO     Successfully removed star/align module
 ```
 
+You can pass the module name as a optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
+
 ### Create a new module
 
 This command creates a new nf-core module from the nf-core module template.
 This ensures that your module follows the nf-core guidelines.
 The template contains extensive `TODO` messages to walk you through the changes you need to make to the template.
 
-You can create a new module using `nf-core modules create <directory>`.
+You can create a new module using `nf-core modules create`. This will create the new module in the current working directory. To specify another directory, use `--dir <directory>`.
 
 If writing a module for the shared [nf-core/modules](https://github.com/nf-core/modules) repository, the `<directory>` argument should be the path to the clone of your fork of the modules repository.
 
@@ -1056,11 +1067,11 @@ INFO     Test workflow finished!
 INFO     Writing to 'tests/software/star/align/test.yml'
 ```
 
-## Check a module against nf-core guidelines
+### Check a module against nf-core guidelines
 
-Run this command to modules in a given directory (pipeline or nf-core/modules clone) against nf-core guidelines.
+Run the `nf-core modules lint` command to check modules in the current working directory (pipeline or nf-core/modules clone) against nf-core guidelines.
 
-Use the `--all` flag to run linting on all modules found.
+Use the `--all` flag to run linting on all modules found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
 
 ```console
 $ nf-core modules lint nf-core-modules
