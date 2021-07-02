@@ -1,5 +1,6 @@
 import nf_core.lint
 
+
 def test_modules_json_fail(self):
     self.lint_obj._load()
     results = self.lint_obj.modules_json()
