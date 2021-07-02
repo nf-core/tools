@@ -943,7 +943,7 @@ INFO     Installing cat/fastq
 INFO     Downloaded 3 files to ./modules/nf-core/software/cat/fastq
 ```
 
-You can pass the module name as a optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
 
 There are four flags that you can use with this command:
 
@@ -972,7 +972,7 @@ INFO     Removing star/align
 INFO     Successfully removed star/align module
 ```
 
-You can pass the module name as a optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
 ### Create a new module
 

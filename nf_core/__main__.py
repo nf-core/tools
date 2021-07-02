@@ -662,7 +662,7 @@ def bump_version(new_version, dir, nextflow):
     As well as the pipeline version, you can also change the required version of Nextflow.
     """
     try:
-        # Check if pipeline directory contain necessary files
+        # Check if pipeline directory contains necessary files
         nf_core.utils.is_pipeline_directory(dir)
 
         # Make a pipeline object and load config etc
@@ -698,7 +698,7 @@ def sync(dir, from_branch, pull_request, repository, username):
     the pipeline. It is run automatically for all pipelines when ever a
     new release of nf-core/tools (and the included template) is made.
     """
-    # Check if pipeline directory contain necessary files
+    # Check if pipeline directory contains necessary files
     try:
         nf_core.utils.is_pipeline_directory(dir)
     except UserWarning:
