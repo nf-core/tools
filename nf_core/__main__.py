@@ -431,15 +431,15 @@ def remove(ctx, dir, tool):
 
 @modules.command("create", help_priority=4)
 @click.pass_context
-@click.argument("directory", type=click.Path(exists=True), required=True, metavar="<directory>")
-@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
 @click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username")
 @click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process")
 @click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
 @click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 @click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
-def create_module(ctx, directory, tool, author, label, meta, no_meta, force, conda_name):
+def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -460,7 +460,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force, con
 
     # Run function
     try:
-        module_create = nf_core.modules.ModuleCreate(directory, tool, author, label, has_meta, force, conda_name)
+        module_create = nf_core.modules.ModuleCreate(dir, tool, author, label, has_meta, force, conda_name)
         module_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -469,7 +469,7 @@ def create_module(ctx, directory, tool, author, label, meta, no_meta, force, con
 
 @modules.command("create-test-yml", help_priority=5)
 @click.pass_context
-@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-o", "--output", type=str, help="Path for output YAML file")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
@@ -491,13 +491,13 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 
 @modules.command(help_priority=6)
 @click.pass_context
-@click.argument("pipeline_dir", type=click.Path(exists=True), required=True, metavar="<pipeline/modules directory>")
-@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
-def lint(ctx, pipeline_dir, tool, key, all, local, passed):
+def lint(ctx, tool, dir, key, all, local, passed):
     """
     Lint one or more modules in a directory.
 
@@ -508,7 +508,7 @@ def lint(ctx, pipeline_dir, tool, key, all, local, passed):
     nf-core/modules repository.
     """
     try:
-        module_lint = nf_core.modules.ModuleLint(dir=pipeline_dir, key=key)
+        module_lint = nf_core.modules.ModuleLint(dir=dir, key=key)
         module_lint.modules_repo = ctx.obj["modules_repo_obj"]
         module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
         if len(module_lint.failed) > 0:
@@ -520,16 +520,16 @@ def lint(ctx, pipeline_dir, tool, key, all, local, passed):
 
 @modules.command(help_priority=7)
 @click.pass_context
-@click.argument("modules_dir", type=click.Path(exists=True), required=True, metavar="<nf-core/modules directory>")
-@click.option("-t", "--tool", type=str, metavar="<tool> or <tool/subtool>")
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
 @click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
 @click.option("-s", "--show-all", is_flag=True, metavar="Show up-to-date modules in results")
-def bump_versions(ctx, modules_dir, tool, all, show_all):
+def bump_versions(ctx, tool, dir, all, show_all):
     """
     Bump versions for one or more modules in a directory.
     """
     try:
-        version_bumper = ModuleVersionBumper(pipeline_dir=modules_dir)
+        version_bumper = ModuleVersionBumper(pipeline_dir=dir)
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
