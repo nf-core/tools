@@ -14,7 +14,7 @@ class ModuleList(ModuleCommand):
     def __init__(self, pipeline_dir):
         super().__init__(pipeline_dir)
 
-    def list_modules(self, keywords, print_json=False):
+    def list_modules(self, keywords=None, print_json=False):
         """
         Get available module names from GitHub tree for repo
         and print as list to stdout
