@@ -327,7 +327,7 @@ class ModuleVersionBumper(ModuleCommand):
     def remove_ignored_modules(self, nfcore_modules):
         """
         Remove all modules in the self.ignore list
-        If only the tool is sepcified in the ignored list, remove all subtools as well
+        If only the tool is specified in the ignored list, remove all subtools as well
         """
         cleaned_modules = []
         for m in nfcore_modules:
