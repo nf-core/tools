@@ -14,7 +14,7 @@ class ModuleList(ModuleCommand):
     def __init__(self, pipeline_dir):
         super().__init__(pipeline_dir)
 
-    def list_modules(self, print_json=False):
+    def list_modules(self, keywords, print_json=False):
         """
         Get available module names from GitHub tree for repo
         and print as list to stdout
@@ -25,9 +25,24 @@ class ModuleList(ModuleCommand):
         table.add_column("Module Name")
         modules = []
 
+        if keywords is None:
+            keywords = []
+
+        def pattern_msg(keywords):
+            if len(keywords) == 0:
+                return ""
+            if len(keywords) == 1:
+                return f" matching pattern '{keywords[0]}'"
+            else:
+                quoted_keywords = (f"'{key}'" for key in keywords)
+                return f" matching patterns {', '.join(quoted_keywords)}"
+
         # No pipeline given - show all remote
         if self.dir is None:
-            log.info(f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch}):\n")
+            log.info(
+                f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch})"
+                f"{pattern_msg(keywords)}:\n"
+            )
 
             # Get the list of available modules
             try:
@@ -37,16 +52,24 @@ class ModuleList(ModuleCommand):
                 return False
 
             modules = self.modules_repo.modules_avail_module_names
+
+            # Filter the modules by keywords
+            modules = [mod for mod in modules if all(k in mod for k in keywords)]
+
             # Nothing found
             if len(modules) == 0:
-                log.info(f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})")
+                log.info(
+                    f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})"
+                    f"{pattern_msg(keywords)}"
+                )
                 return ""
+
             for mod in sorted(modules):
                 table.add_row(mod)
 
         # We have a pipeline - list what's installed
         else:
-            log.info(f"Modules installed in '{self.dir}':\n")
+            log.info(f"Modules installed in '{self.dir}'{pattern_msg(keywords)}:\n")
 
             # Check whether pipelines is valid
             try:
@@ -57,9 +80,13 @@ class ModuleList(ModuleCommand):
             # Get installed modules
             self.get_pipeline_modules()
             modules = self.module_names
+
+            # Filter the modules by keywords
+            modules = [mod for mod in modules if all(k in mod for k in keywords)]
+
             # Nothing found
             if len(modules) == 0:
-                log.info(f"No nf-core modules found in '{self.dir}'")
+                log.info(f"No nf-core modules found in '{self.dir}'{pattern_msg(keywords)}")
                 return ""
 
             modules_json = self.load_modules_json()
