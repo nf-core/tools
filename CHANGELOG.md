@@ -31,6 +31,7 @@
 * Create extra tempdir as work directory for `nf-core modules create-test-yml` to avoid adding the temporary files to the `test.yml`
 * Refactored passing of command line arguments to `nf-core` commands and subcommands ([#1139](https://github.com/nf-core/tools/issues/1139), [#1140](https://github.com/nf-core/tools/issues/1140))
 * Check for `modules.json` for entries of modules that are not actually installed in the pipeline [[#1141](https://github.com/nf-core/tools/issues/1141)]
+* Added `<keywords>` argument to `nf-core modules list` for filtering the listed modules. ([#1139](https://github.com/nf-core/tools/issues/1139)
 
 #### Sync
 
