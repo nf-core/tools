@@ -33,7 +33,7 @@ class ModuleVersionBumper(ModuleCommand):
         self.failed = None
         self.show_up_to_date = None
 
-    def bump_versions(self, module=None, all_modules=False, show_uptodate=False, ignored=None):
+    def bump_versions(self, module=None, all_modules=False, show_uptodate=False, ignored=[]):
         """
         Bump the container and conda version of single module or all modules
 
@@ -90,8 +90,8 @@ class ModuleVersionBumper(ModuleCommand):
             if len(nfcore_modules) == 0:
                 raise nf_core.modules.module_utils.ModuleException(f"Could not find the specified module: '{module}'")
 
-        if module and module in self.ignored:
-            raise nf_core.modules.module_utils.ModuleException(f"Cannot bump version of an ignored module!")
+            if module in self.ignored:
+                raise nf_core.modules.module_utils.ModuleException(f"Cannot bump version of an ignored module!")
 
         # Don't bump versions of modules in the `ignored` list
         nfcore_modules = self.remove_ignored_modules(nfcore_modules)
