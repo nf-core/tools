@@ -145,8 +145,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
-            "conda_env_yaml",
-            "conda_dockerfile",
             "pipeline_todos",
             "pipeline_name_conventions",
             "template_strings",
