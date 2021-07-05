@@ -101,8 +101,6 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_awstest import actions_awstest
     from .actions_ci import actions_ci
     from .actions_schema_validation import actions_schema_validation
-    from .conda_dockerfile import conda_dockerfile
-    from .conda_env_yaml import conda_env_yaml
     from .files_exist import files_exist
     from .files_unchanged import files_unchanged
     from .merge_markers import merge_markers
