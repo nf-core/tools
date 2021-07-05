@@ -371,9 +371,10 @@ def modules(ctx, repository, branch):
 
 @modules.command(help_priority=1)
 @click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-i", "--installed", type=click.Path(exists=True), help="List modules installed in local directory")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def list(ctx, installed, json):
+def list(ctx, keywords, installed, json):
     """
     List available software modules.
 
@@ -385,7 +386,7 @@ def list(ctx, installed, json):
     try:
         module_list = nf_core.modules.ModuleList(installed)
         module_list.modules_repo = ctx.obj["modules_repo_obj"]
-        print(module_list.list_modules(json))
+        print(module_list.list_modules(keywords, json))
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)

@@ -12,6 +12,7 @@
 * Regular release sync fix - this time it was to do with JSON serialisation [[#1072](https://github.com/nf-core/tools/pull/1072)]
 * Fixed bug in schema validation that ignores upper/lower-case typos in parameters [[#1087](https://github.com/nf-core/tools/issues/1087)]
 * Bugfix: Download should use path relative to workflow for configs
+* Removed `params_used` lint check because of incompatibility with DSL2
 
 ### Modules
 
@@ -31,6 +32,8 @@
 * Create extra tempdir as work directory for `nf-core modules create-test-yml` to avoid adding the temporary files to the `test.yml`
 * Refactored passing of command line arguments to `nf-core` commands and subcommands ([#1139](https://github.com/nf-core/tools/issues/1139), [#1140](https://github.com/nf-core/tools/issues/1140))
 * Add `--ignore` option to `nf-core modules bump-versions` to ignore certain modules when bumping versions [[#1142]](https://github.com/nf-core/tools/issues/1142)
+* Check for `modules.json` for entries of modules that are not actually installed in the pipeline [[#1141](https://github.com/nf-core/tools/issues/1141)]
+* Added `<keywords>` argument to `nf-core modules list` for filtering the listed modules. ([#1139](https://github.com/nf-core/tools/issues/1139)
 
 #### Sync
 

@@ -106,8 +106,8 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .files_exist import files_exist
     from .files_unchanged import files_unchanged
     from .merge_markers import merge_markers
+    from .modules_json import modules_json
     from .nextflow_config import nextflow_config
-    from .params_used import params_used
     from .pipeline_name_conventions import pipeline_name_conventions
     from .pipeline_todos import pipeline_todos
     from .readme import readme
@@ -138,7 +138,6 @@ class PipelineLint(nf_core.utils.Pipeline):
         self.lint_tests = [
             "files_exist",
             "nextflow_config",
-            "params_used",
             "files_unchanged",
             "actions_ci",
             "actions_awstest",
@@ -154,6 +153,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "schema_description",
             "actions_schema_validation",
             "merge_markers",
+            "modules_json",
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
