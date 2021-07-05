@@ -27,12 +27,12 @@ def modules_json(self):
 
         for key in modules_json["modules"].keys():
             if not key in module_remove.module_names:
-                failed.append(f"Entry for`{key}` found in `modules.json` but module is not installed in pipeline.")
+                failed.append(f"Entry for `{key}` found in `modules.json` but module is not installed in pipeline.")
                 all_modules_passed = False
 
         if all_modules_passed:
             passed.append("Only installed modules found in `modules.json`")
     else:
-        warned.append("Could not open modules.json file.")
+        warned.append("Could not open `modules.json` file.")
 
     return {"passed": passed, "warned": warned, "failed": failed}
