@@ -61,7 +61,9 @@ class WorkflowLicences(object):
             response = requests.get(env_url)
             # Check that the pipeline exists
             if response.status_code == 404:
-                raise LookupError(f"Couldn't find pipeline conda file: {env_url}. (Note: DSL2 pipelines are currently not supported by this command.")
+                raise LookupError(
+                    f"Couldn't find pipeline conda file: {env_url}. (Note: DSL2 pipelines are currently not supported by this command."
+                )
             self.conda_config = yaml.safe_load(response.text)
 
     def fetch_conda_licences(self):
