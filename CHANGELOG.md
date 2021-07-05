@@ -13,6 +13,7 @@
 * Fixed bug in schema validation that ignores upper/lower-case typos in parameters [[#1087](https://github.com/nf-core/tools/issues/1087)]
 * Bugfix: Download should use path relative to workflow for configs
 * Remove lint checks for files related to conda and docker as not needed anymore for DSL2
+* Removed `params_used` lint check because of incompatibility with DSL2
 
 ### Modules
 
