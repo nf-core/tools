@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 from logging import warn
-from nf_core.modules.remove import ModuleRemove
+from nf_core.modules.modules_command import ModuleCommand
 
 
 def modules_json(self):
@@ -17,16 +17,16 @@ def modules_json(self):
     failed = []
 
     # Load pipeline modules and modules.json
-    module_remove = ModuleRemove(self.wf_path)
-    modules_json = module_remove.load_modules_json()
+    modules_command = ModuleCommand(self.wf_path)
+    modules_json = modules_command.load_modules_json()
 
     if modules_json:
-        module_remove.get_pipeline_modules()
+        modules_command.get_pipeline_modules()
 
         all_modules_passed = True
 
         for key in modules_json["modules"].keys():
-            if not key in module_remove.module_names:
+            if not key in modules_command.module_names:
                 failed.append(f"Entry for `{key}` found in `modules.json` but module is not installed in pipeline.")
                 all_modules_passed = False
 
