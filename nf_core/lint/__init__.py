@@ -5,7 +5,6 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
-from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table
 from rich.panel import Panel
@@ -21,6 +20,7 @@ import yaml
 
 import nf_core.utils
 import nf_core.lint_utils
+from nf_core.lint_utils import console
 from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
@@ -55,8 +55,11 @@ def run_linting(
     module_lint_obj = ModuleLint(pipeline_dir)
 
     # Run only the tests we want
-    module_lint_tests = ("module_changes",)
+    module_lint_tests = ("module_changes", "module_version")
     module_lint_obj.filter_tests_by_key(module_lint_tests)
+
+    # Set up files for modules linting test
+    module_lint_obj.set_up_pipeline_files()
 
     # Run the pipeline linting tests
     try:
@@ -76,6 +79,7 @@ def run_linting(
     lint_obj._print_results(show_passed)
     module_lint_obj._print_results(show_passed)
     nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj)
+    nf_core.lint_utils.print_fixes(lint_obj, module_lint_obj)
 
     # Save results to Markdown file
     if md_fn is not None:
@@ -306,7 +310,6 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
 
         log.debug("Printing final results")
-        console = Console(force_terminal=nf_core.utils.rich_force_colors())
 
         # Helper function to format test links nicely
         def format_result(test_results, table):
@@ -361,19 +364,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             table = format_result(self.failed, table)
             console.print(table)
 
-        if len(self.could_fix):
-            fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
-            console.print(
-                f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
-            )
-        if len(self.fix):
-            console.print(
-                "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
-            )
-
     def _print_summary(self):
-        console = Console(force_terminal=nf_core.utils.rich_force_colors())
-
         def _s(some_list):
             if len(some_list) != 1:
                 return "s"

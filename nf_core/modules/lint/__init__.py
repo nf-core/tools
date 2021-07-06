@@ -18,7 +18,6 @@ import requests
 import rich
 import yaml
 import json
-from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -29,8 +28,10 @@ import sys
 
 import nf_core.utils
 import nf_core.modules.module_utils
+
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
+from nf_core.lint_utils import console
 
 log = logging.getLogger(__name__)
 
@@ -335,7 +336,6 @@ class ModuleLint(ModuleCommand):
         """
 
         log.debug("Printing final results")
-        console = Console(force_terminal=rich_force_colors())
 
         # Sort the results
         self.passed.sort(key=operator.attrgetter("message", "module_name"))
@@ -423,9 +423,6 @@ class ModuleLint(ModuleCommand):
             console.print(table)
 
     def print_summary(self):
-
-        console = Console(force_terminal=rich_force_colors())
-
         def _s(some_list):
             if len(some_list) > 1:
                 return "s"
