@@ -8,6 +8,7 @@ the nf-core community guidelines.
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.table import Table
+from rich.panel import Panel
 import datetime
 import git
 import json
@@ -19,6 +20,8 @@ import rich.progress
 import yaml
 
 import nf_core.utils
+import nf_core.lint_utils
+from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +43,7 @@ def run_linting(
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, key, fail_ignored)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, key, fail_ignored, show_passed)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -48,16 +51,31 @@ def run_linting(
     lint_obj._load_conda_environment()
     lint_obj._list_files()
 
-    # Run the linting tests
+    # Create the modules lint object
+    module_lint_obj = ModuleLint(pipeline_dir)
+
+    # Run only the tests we want
+    module_lint_tests = ("module_changes",)
+    module_lint_obj.filter_tests_by_key(module_lint_tests)
+
+    # Run the pipeline linting tests
     try:
         lint_obj._lint_pipeline()
     except AssertionError as e:
         log.critical("Critical error: {}".format(e))
         log.info("Stopping tests...")
-        return lint_obj
+        return lint_obj, module_lint_obj
+
+    # Run the module lint tests
+    if len(module_lint_obj.all_local_modules) > 0:
+        module_lint_obj.lint_modules(module_lint_obj.all_local_modules, local=True)
+    if len(module_lint_obj.all_nfcore_modules) > 0:
+        module_lint_obj.lint_modules(module_lint_obj.all_nfcore_modules, local=False)
 
     # Print the results
     lint_obj._print_results(show_passed)
+    module_lint_obj._print_results(show_passed)
+    nf_core.lint_utils.print_joint_summary(lint_obj, module_lint_obj)
 
     # Save results to Markdown file
     if md_fn is not None:
@@ -75,7 +93,7 @@ def run_linting(
         if release_mode:
             log.info("Reminder: Lint tests were run in --release mode.")
 
-    return lint_obj
+    return lint_obj, module_lint_obj
 
 
 class PipelineLint(nf_core.utils.Pipeline):
@@ -117,7 +135,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 
-    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False):
+    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False, show_passed=False):
         """Initialise linting object"""
 
         # Initialise the parent object
@@ -280,7 +298,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 if test_results.get("could_fix", False):
                     self.could_fix.append(test_name)
 
-    def _print_results(self, show_passed=False):
+    def _print_results(self, show_passed):
         """Print linting results to the command line.
 
         Uses the ``rich`` library to print a set of formatted tables to the command line
@@ -304,6 +322,9 @@ class PipelineLint(nf_core.utils.Pipeline):
             if len(some_list) != 1:
                 return "s"
             return ""
+
+        # Print lint results header
+        console.print(Panel("[magenta]General lint results"))
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
@@ -340,6 +361,24 @@ class PipelineLint(nf_core.utils.Pipeline):
             table = format_result(self.failed, table)
             console.print(table)
 
+        if len(self.could_fix):
+            fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
+            console.print(
+                f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
+            )
+        if len(self.fix):
+            console.print(
+                "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
+            )
+
+    def _print_summary(self):
+        console = Console(force_terminal=nf_core.utils.rich_force_colors())
+
+        def _s(some_list):
+            if len(some_list) != 1:
+                return "s"
+            return ""
+
         # Summary table
         summary_colour = "red" if len(self.failed) > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)
@@ -351,16 +390,6 @@ class PipelineLint(nf_core.utils.Pipeline):
         table.add_row(r"[yellow][!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)))
         table.add_row(r"[red][✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)))
         console.print(table)
-
-        if len(self.could_fix):
-            fix_cmd = "nf-core lint {} --fix {}".format(self.wf_path, " --fix ".join(self.could_fix))
-            console.print(
-                f"\nTip: Some of these linting errors can automatically be resolved with the following command:\n\n[blue]    {fix_cmd}\n"
-            )
-        if len(self.fix):
-            console.print(
-                "Automatic fixes applied. Please check with 'git diff' and revert any changes you do not want with 'git checkout <file>'."
-            )
 
     def _get_results_md(self):
         """

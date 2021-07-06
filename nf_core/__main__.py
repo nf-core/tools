@@ -333,8 +333,10 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
 
     # Run the lint tests!
     try:
-        lint_obj = nf_core.lint.run_linting(dir, release, fix, key, show_passed, fail_ignored, markdown, json)
-        if len(lint_obj.failed) > 0:
+        lint_obj, module_lint_obj = nf_core.lint.run_linting(
+            dir, release, fix, key, show_passed, fail_ignored, markdown, json
+        )
+        if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
             sys.exit(1)
     except AssertionError as e:
         log.critical(e)

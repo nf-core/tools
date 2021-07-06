@@ -21,6 +21,7 @@ import json
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
+from rich.panel import Panel
 import rich
 from nf_core.utils import rich_force_colors
 from nf_core.lint.pipeline_todos import pipeline_todos
@@ -66,7 +67,7 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir, key=()):
+    def __init__(self, dir):
         self.dir = dir
         try:
             self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -82,7 +83,6 @@ class ModuleLint(ModuleCommand):
         # Get lists of modules install in directory
         self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
 
-        self.key = key
         self.lint_config = None
         self.modules_json = None
 
@@ -94,7 +94,7 @@ class ModuleLint(ModuleCommand):
             # Add as first test to load git_sha before module_changes
             self.lint_tests.insert(0, "module_version")
 
-    def lint(self, module=None, all_modules=False, print_results=True, show_passed=False, local=False):
+    def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
         """
         Lint all or one specific module
 
@@ -157,9 +157,9 @@ class ModuleLint(ModuleCommand):
             log.info(f"Linting module: [magenta]{module}")
 
         # Filter the tests by the key if one is supplied
-        if self.key:
+        if key:
             self.filter_tests_by_key()
-            log.info("Only running tests: '{}'".format("', '".join(self.key)))
+            log.info("Only running tests: '{}'".format("', '".join(key)))
 
         # If it is a pipeline, load the lint config file and the modules.json file
         if self.repo_type == "pipeline":
@@ -187,10 +187,10 @@ class ModuleLint(ModuleCommand):
                     log.info(f"Ignoring lint test: {test_name}")
                     self.lint_tests.remove(test_name)
 
-    def filter_tests_by_key(self):
+    def filter_tests_by_key(self, key):
         """Filters the tests by the supplied key"""
         # Check that supplied test keys exist
-        bad_keys = [k for k in self.key if k not in self.lint_tests]
+        bad_keys = [k for k in key if k not in self.lint_tests]
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
@@ -200,7 +200,7 @@ class ModuleLint(ModuleCommand):
             )
 
         # If -k supplied, only run these tests
-        self.lint_tests = [k for k in self.lint_tests if k in self.key]
+        self.lint_tests = [k for k in self.lint_tests if k in key]
 
     def get_installed_modules(self):
         """
@@ -381,6 +381,9 @@ class ModuleLint(ModuleCommand):
                 return "s"
             return ""
 
+        # Print module linting results header
+        console.print(Panel("[magenta]General lint results"))
+
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             console.print(
@@ -418,6 +421,15 @@ class ModuleLint(ModuleCommand):
             table.add_column("Test message")
             table = format_result(self.failed, table)
             console.print(table)
+
+    def print_summary(self):
+
+        console = Console(force_terminal=rich_force_colors())
+
+        def _s(some_list):
+            if len(some_list) > 1:
+                return "s"
+            return ""
 
         # Summary table
         table = Table(box=rich.box.ROUNDED)
