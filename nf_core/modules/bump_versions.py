@@ -7,6 +7,7 @@ or for a single module
 from __future__ import print_function
 import logging
 import questionary
+import os
 import re
 import rich
 from rich.console import Console
@@ -15,6 +16,7 @@ from rich.markdown import Markdown
 import rich
 from nf_core.utils import rich_force_colors
 import sys
+import yaml
 
 import nf_core.utils
 import nf_core.modules.module_utils
@@ -32,6 +34,7 @@ class ModuleVersionBumper(ModuleCommand):
         self.updated = None
         self.failed = None
         self.show_up_to_date = None
+        self.tools_config = {}
 
     def bump_versions(self, module=None, all_modules=False, show_uptodate=False):
         """
@@ -60,6 +63,9 @@ class ModuleVersionBumper(ModuleCommand):
 
         # Get list of all modules
         _, nfcore_modules = nf_core.modules.module_utils.get_installed_modules(self.dir)
+
+        # Load the .nf-core-tools.config
+        self._load_tools_config()
 
         # Prompt for module or all
         if module is None and not all_modules:
@@ -112,6 +118,7 @@ class ModuleVersionBumper(ModuleCommand):
         Args:
             module: NFCoreModule
         """
+        config_version = None
         # Extract bioconda version from `main.nf`
         bioconda_packages = self.get_bioconda_version(module)
 
@@ -120,88 +127,101 @@ class ModuleVersionBumper(ModuleCommand):
             self.failed.append((f"Ignoring mulled container", module.module_name))
             return False
 
-        # Check for correct version and newer versions
+        # Don't update if blocked in blacklist
+        if module.module_name in self.tools_config.keys():
+            config_version = self.tools_config[module.module_name]
+            if not config_version:
+                self.up_to_date.append((f"Omitting module due to config: {module.module_name}", module.module_name))
+                return False
+
+        # check for correct version and newer versions
         bioconda_tool_name = bioconda_packages[0].split("=")[0].replace("bioconda::", "").strip("'").strip('"')
         bp = bioconda_packages[0]
         bp = bp.strip("'").strip('"')
-        try:
-            bioconda_version = bp.split("=")[1]
-            response = nf_core.utils.anaconda_package(bp)
-        except LookupError as e:
-            self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
-            return False
-        except ValueError as e:
-            self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
-            return False
-        else:
+        bioconda_version = bp.split("=")[1]
+
+        if not config_version:
+            try:
+                response = nf_core.utils.anaconda_package(bp)
+            except LookupError as e:
+                self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
+                return False
+            except ValueError as e:
+                self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
+                return False
+
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
                 self.failed.append((f"Conda package had unknown version: `{module.main_nf}`", module.module_name))
                 return False
+
             # Check version is latest available
             last_ver = response.get("latest_version")
-            if last_ver is not None and last_ver != bioconda_version:
-                log.debug(f"Updating version for {module.module_name}")
-                # Get docker and singularity container links
-                try:
-                    docker_img, singularity_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name, last_ver)
-                except LookupError as e:
-                    self.failed.append((f"Could not download container tags: {e}", module.module_name))
+        else:
+            last_ver = config_version
+
+        if last_ver is not None and last_ver != bioconda_version:
+            log.debug(f"Updating version for {module.module_name}")
+            # Get docker and singularity container links
+            try:
+                docker_img, singularity_img = nf_core.utils.get_biocontainer_tag(bioconda_tool_name, last_ver)
+            except LookupError as e:
+                self.failed.append((f"Could not download container tags: {e}", module.module_name))
+                return False
+
+            patterns = [
+                (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
+                (r"quay.io/biocontainers/{}:[^'\"\s]+".format(bioconda_tool_name), docker_img),
+                (
+                    r"https://depot.galaxyproject.org/singularity/{}:[^'\"\s]+".format(bioconda_tool_name),
+                    singularity_img,
+                ),
+            ]
+
+            with open(module.main_nf, "r") as fh:
+                content = fh.read()
+
+            # Go over file content of main.nf and find replacements
+            for pattern in patterns:
+                found_match = False
+                newcontent = []
+                for line in content.splitlines():
+
+                    # Match the pattern
+                    matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
+                    if matches_pattern:
+                        found_match = True
+
+                        # Replace the match
+                        newline = re.sub(pattern[0], pattern[1], line)
+                        newcontent.append(newline)
+                    # No match, keep line as it is
+                    else:
+                        newcontent.append(line)
+
+                if found_match:
+                    content = "\n".join(newcontent)
+                else:
+                    self.failed.append(
+                        (f"Did not find pattern {pattern[0]} in module {module.module_name}", module.module_name)
+                    )
                     return False
 
-                patterns = [
-                    (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
-                    (r"quay.io/biocontainers/{}:[^'\"\s]+".format(bioconda_tool_name), docker_img),
-                    (
-                        r"https://depot.galaxyproject.org/singularity/{}:[^'\"\s]+".format(bioconda_tool_name),
-                        singularity_img,
-                    ),
-                ]
+            # Write new content to the file
+            with open(module.main_nf, "w") as fh:
+                fh.write(content)
 
-                with open(module.main_nf, "r") as fh:
-                    content = fh.read()
-
-                # Go over file content of main.nf and find replacements
-                for pattern in patterns:
-                    found_match = False
-                    newcontent = []
-                    for line in content.splitlines():
-
-                        # Match the pattern
-                        matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
-                        if matches_pattern:
-                            found_match = True
-
-                            # Replace the match
-                            newline = re.sub(pattern[0], pattern[1], line)
-                            newcontent.append(newline)
-                        # No match, keep line as it is
-                        else:
-                            newcontent.append(line)
-
-                    if found_match:
-                        content = "\n".join(newcontent)
-                    else:
-                        self.failed.append(
-                            (f"Did not find pattern {pattern[0]} in module {module.module_name}", module.module_name)
-                        )
-                        return False
-
-                # Write new content to the file
-                with open(module.main_nf, "w") as fh:
-                    fh.write(content)
-
-                self.updated.append(
-                    (
-                        f"Module updated:  {bioconda_version} --> {last_ver}",
-                        module.module_name,
-                    )
+            self.updated.append(
+                (
+                    f"Module updated:  {bioconda_version} --> {last_ver}",
+                    module.module_name,
                 )
-                return True
+            )
+            return True
 
-            else:
-                self.up_to_date.append((f"Module version up to date: {module.module_name}", module.module_name))
-                return True
+        else:
+            self.up_to_date.append((f"Module version up to date: {module.module_name}", module.module_name))
+            return True
 
     def get_bioconda_version(self, module):
         """
@@ -315,3 +335,16 @@ class ModuleVersionBumper(ModuleCommand):
             table.add_column("Update message")
             table = format_result(self.failed, table)
             console.print(table)
+
+    def _load_tools_config(self):
+        """
+        Parse the nf-core-tools.yml configuration file
+        """
+        config_fn = os.path.join(self.dir, ".nf-core-tools.yml")
+
+        # Load the YAML
+        try:
+            with open(config_fn, "r") as fh:
+                self.tools_config = yaml.safe_load(fh)
+        except FileNotFoundError:
+            log.debug(f"No tools config file found: {config_fn}")
