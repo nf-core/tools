@@ -1,0 +1,44 @@
+name: Bug report
+description: Report something that is broken or incorrect
+labels: bug
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        Hi there!
+
+        Thanks for telling us about a problem with the nf-core/tools package.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description of the bug
+      description: A clear and concise description of what the bug is.
+    validations:
+      required: true
+
+  - type: textarea
+    id: command_used
+    attributes:
+      label: Command used and terminal output
+      description: Steps to reproduce the behaviour. Please paste the command and output from your terminal.
+      render: console
+      placeholder: |
+        $ nf-core lint ...
+
+        Some output where something broke
+
+  - type: textarea
+    id: system
+    attributes:
+      label: System information
+      description: |
+        A clear and concise description of what the bug is.
+
+        * Nextflow version _(eg. 21.04.01)_
+        * Hardware _(eg. HPC, Desktop, Cloud)_
+        * Executor _(eg. slurm, local, awsbatch)_
+        * OS _(eg. CentOS Linux, macOS, Linux Mint)_
+        * Version of nf-core/tools _(eg. 1.1, 1.5, 1.8.2)_
+        * Python version _(eg. 3.7, 3.8)_
