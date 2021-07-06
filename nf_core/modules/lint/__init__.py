@@ -382,7 +382,7 @@ class ModuleLint(ModuleCommand):
             return ""
 
         # Print module linting results header
-        console.print(Panel("[magenta]General lint results"))
+        console.print(Panel("[magenta]Module lint results"))
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:

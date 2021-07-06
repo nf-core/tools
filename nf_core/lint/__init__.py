@@ -43,7 +43,7 @@ def run_linting(
     """
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, key, fail_ignored, show_passed)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, key, fail_ignored)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -139,7 +139,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 
-    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False, show_passed=False):
+    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False):
         """Initialise linting object"""
 
         # Initialise the parent object
