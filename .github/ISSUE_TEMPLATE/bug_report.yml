@@ -34,8 +34,6 @@ body:
     attributes:
       label: System information
       description: |
-        A clear and concise description of what the bug is.
-
         * Nextflow version _(eg. 21.04.01)_
         * Hardware _(eg. HPC, Desktop, Cloud)_
         * Executor _(eg. slurm, local, awsbatch)_
