@@ -33,15 +33,13 @@ jobs:
           -H "Content-Type: application/json" \
           -d '{
             "launch": {
-              "id" : "string",
               "computeEnvId" : "'"${TOWER_COMPUTE_ENV}"'",
               "pipeline" : "{{ name }}",
               "workDir" : "s3://'"${AWS_S3_BUCKET}"'/work/{{ short_name }}/commit-'"${GITHUB_SHA}"'",
               "paramsText" : "{\"outdir\":\"s3://'"${AWS_S3_BUCKET}"'/{{ short_name }}/results-'"${GITHUB_SHA}"'\"}",
               "revision" : "'"${GITHUB_SHA}"'",
               "configProfiles" : ["test_full","aws_tower"],
-              "resume" : false,
-              "dateCreated" : "1970-01-01T00:00:00.000Z"
+              "resume" : false
               }
             }' \
           --fail
