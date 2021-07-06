@@ -78,6 +78,10 @@ class ModuleLint(ModuleCommand):
         self.failed = []
         self.modules_repo = ModulesRepo()
         self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
+
+        # Get lists of modules install in directory
+        self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
+
         self.key = key
         self.lint_config = None
         self.modules_json = None
@@ -112,9 +116,6 @@ class ModuleLint(ModuleCommand):
                                 the passed, warned and failed tests
         """
 
-        # Get lists of all modules in a pipeline
-        local_modules, nfcore_modules = self.get_installed_modules()
-
         # Prompt for module or all
         if module is None and not all_modules:
             questions = [
@@ -129,7 +130,7 @@ class ModuleLint(ModuleCommand):
                     "name": "tool_name",
                     "message": "Tool name:",
                     "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.module_name for m in nfcore_modules],
+                    "choices": [m.module_name for m in self.all_nfcore_modules],
                 },
             ]
             answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
@@ -141,9 +142,12 @@ class ModuleLint(ModuleCommand):
             if all_modules:
                 raise ModuleLintException("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            nfcore_modules = [m for m in nfcore_modules if m.module_name == module]
+            nfcore_modules = [m for m in self.all_nfcore_modules if m.module_name == module]
             if len(nfcore_modules) == 0:
                 raise ModuleLintException(f"Could not find the specified module: '{module}'")
+        else:
+            local_modules = self.all_local_modules
+            nfcore_modules = self.all_nfcore_modules
 
         if self.repo_type == "modules":
             log.info(f"Linting modules repo: [magenta]{self.dir}")
@@ -171,8 +175,6 @@ class ModuleLint(ModuleCommand):
 
         if print_results:
             self._print_results(show_passed=show_passed)
-
-        return self
 
     def set_up_pipeline_files(self):
         self.load_lint_config()
