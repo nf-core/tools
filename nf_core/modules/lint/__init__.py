@@ -108,29 +108,33 @@ class ModuleLint(ModuleCommand):
         :param print_results:   Whether to print the linting results
         :param show_passed:     Whether passed tests should be shown as well
 
-        :returns:               dict of {passed, warned, failed}
+        :returns:               A ModuleLint object containing information of
+                                the passed, warned and failed tests
         """
 
-        # Get list of all modules in a pipeline
+        # Get lists of all modules in a pipeline
         local_modules, nfcore_modules = self.get_installed_modules()
 
         # Prompt for module or all
         if module is None and not all_modules:
-            question = {
-                "type": "list",
-                "name": "all_modules",
-                "message": "Lint all modules or a single named module?",
-                "choices": ["All modules", "Named module"],
-            }
-            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
-            if answer["all_modules"] == "All modules":
-                all_modules = True
-            else:
-                module = questionary.autocomplete(
-                    "Tool name:",
-                    choices=[m.module_name for m in nfcore_modules],
-                    style=nf_core.utils.nfcore_question_style,
-                ).ask()
+            questions = [
+                {
+                    "type": "list",
+                    "name": "all_modules",
+                    "message": "Lint all modules or a single named module?",
+                    "choices": ["All modules", "Named module"],
+                },
+                {
+                    "type": "autocomplete",
+                    "name": "tool_name",
+                    "message": "Tool name:",
+                    "when": lambda x: x["all_modules"] == "Named module",
+                    "choices": [m.module_name for m in nfcore_modules],
+                },
+            ]
+            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
+            all_modules = answers["all_modules"] == "All modules"
+            module = answers.get("tool_name")
 
         # Only lint the given module
         if module:
@@ -148,6 +152,41 @@ class ModuleLint(ModuleCommand):
         if module:
             log.info(f"Linting module: [magenta]{module}")
 
+        # Filter the tests by the key if one is supplied
+        if self.key:
+            self.filter_tests_by_key()
+            log.info("Only running tests: '{}'".format("', '".join(self.key)))
+
+        # If it is a pipeline, load the lint config file and the modules.json file
+        if self.repo_type == "pipeline":
+            self.set_up_pipeline_files()
+
+        # Lint local modules
+        if local and len(local_modules) > 0:
+            self.lint_modules(local_modules, local=True)
+
+        # Lint nf-core modules
+        if len(nfcore_modules) > 0:
+            self.lint_modules(nfcore_modules, local=False)
+
+        if print_results:
+            self._print_results(show_passed=show_passed)
+
+        return self
+
+    def set_up_pipeline_files(self):
+        self.load_lint_config()
+        self.modules_json = self.load_modules_json()
+
+        # Only continue if a lint config has been loaded
+        if self.lint_config:
+            for test_name in self.lint_tests:
+                if self.lint_config.get(test_name, {}) is False:
+                    log.info(f"Ignoring lint test: {test_name}")
+                    self.lint_tests.remove(test_name)
+
+    def filter_tests_by_key(self):
+        """Filters the tests by the supplied key"""
         # Check that supplied test keys exist
         bad_keys = [k for k in self.key if k not in self.lint_tests]
         if len(bad_keys) > 0:
@@ -159,35 +198,7 @@ class ModuleLint(ModuleCommand):
             )
 
         # If -k supplied, only run these tests
-        if self.key:
-            log.info("Only running tests: '{}'".format("', '".join(self.key)))
-            self.lint_tests = [k for k in self.lint_tests if k in self.key]
-
-        # If it is a pipeline, load the lint config file and the modules.json file
-        if self.repo_type == "pipeline":
-            self.load_lint_config()
-            self.modules_json = self.load_modules_json()
-
-            # Only continue if a lint config has been loaded
-            if self.lint_config:
-                for test_name in self.lint_tests:
-                    if self.lint_config.get(test_name, {}) is False:
-                        log.info(f"Ignoring lint test: {test_name}")
-                        self.lint_tests.remove(test_name)
-
-        # Lint local modules
-        print(local_modules)
-        if local and len(local_modules) > 0:
-            self.lint_modules(local_modules, local=True)
-
-        # Lint nf-core modules
-        if len(nfcore_modules) > 0:
-            self.lint_modules(nfcore_modules, local=False)
-
-        if print_results:
-            self._print_results(show_passed=show_passed)
-
-        return {"passed": self.passed, "warned": self.warned, "failed": self.failed}
+        self.lint_tests = [k for k in self.lint_tests if k in self.key]
 
     def get_installed_modules(self):
         """
