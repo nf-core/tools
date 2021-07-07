@@ -18,7 +18,7 @@ class ModulesRepo(object):
 
     def __init__(self, repo="nf-core/modules", branch="master"):
         self.name = repo
-        self.user, self.repo = self.name.split("/")
+        self.owner, self.repo = self.name.split("/")
         self.branch = branch
         self.modules_file_tree = {}
         self.modules_current_hash = None
