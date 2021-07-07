@@ -65,7 +65,7 @@ class ModuleVersionBumper(ModuleCommand):
         _, nfcore_modules = nf_core.modules.module_utils.get_installed_modules(self.dir)
 
         # Load the .nf-core-tools.config
-        self._load_tools_config()
+        self.tools_config = nf_core.utils.load_tools_config(self.dir)
 
         # Prompt for module or all
         if module is None and not all_modules:
@@ -336,15 +336,3 @@ class ModuleVersionBumper(ModuleCommand):
             table = format_result(self.failed, table)
             console.print(table)
 
-    def _load_tools_config(self):
-        """
-        Parse the nf-core-tools.yml configuration file
-        """
-        config_fn = os.path.join(self.dir, ".nf-core-tools.yml")
-
-        # Load the YAML
-        try:
-            with open(config_fn, "r") as fh:
-                self.tools_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug(f"No tools config file found: {config_fn}")
