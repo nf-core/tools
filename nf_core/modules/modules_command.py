@@ -1,3 +1,4 @@
+from nf_core import modules
 import os
 import glob
 import shutil
@@ -35,9 +36,9 @@ class ModuleCommand:
         """Get list of modules installed in the current directory"""
         self.module_names = []
         if self.repo_type == "pipeline":
-            module_base_path = f"{self.dir}/modules/nf-core/software"
+            module_base_path = f"{self.dir}/modules/nf-core/modules"
         elif self.repo_type == "modules":
-            module_base_path = f"{self.dir}/software"
+            module_base_path = f"{self.dir}/modules"
         else:
             log.error("Directory is neither a clone of nf-core/modules nor a pipeline")
             raise SystemError
@@ -118,15 +119,17 @@ class ModuleCommand:
             modules_json = None
         return modules_json
 
+    def update_modules_json(self, modules_json, repo_name, module_name, module_version):
+        """Updates the 'module.json' file with new module info"""
+        if repo_name not in modules_json["repos"]:
+            modules_json["repos"][repo_name] = dict()
+        modules_json["repos"][repo_name][module_name] = {"git_sha": module_version}
+        self.dump_modules_json(modules_json)
+
     def dump_modules_json(self, modules_json):
         modules_json_path = os.path.join(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
-
-    def update_modules_json(self, modules_json, module_name, module_version):
-        """Updates the 'module.json' file with new module info"""
-        modules_json["modules"][module_name] = {"git_sha": module_version}
-        self.dump_modules_json(modules_json)
 
     def load_lint_config(self):
         """Parse a pipeline lint config file.
