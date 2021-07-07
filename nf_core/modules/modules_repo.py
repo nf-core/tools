@@ -18,6 +18,7 @@ class ModulesRepo(object):
 
     def __init__(self, repo="nf-core/modules", branch="master"):
         self.name = repo
+        self.user, self.repo = self.name.split("/")
         self.branch = branch
         self.modules_file_tree = {}
         self.modules_current_hash = None
@@ -46,9 +47,9 @@ class ModulesRepo(object):
         self.modules_current_hash = result["sha"]
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
-            if f["path"].startswith("software/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
+            if f["path"].startswith(f"modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
                 # remove software/ and /main.nf
-                self.modules_avail_module_names.append(f["path"][9:-8])
+                self.modules_avail_module_names.append(f["path"].replace("modules/", "").replace("/main.nf", ""))
 
     def get_module_file_urls(self, module, commit=""):
         """Fetch list of URLs for a specific module
@@ -73,7 +74,7 @@ class ModulesRepo(object):
         """
         results = {}
         for f in self.modules_file_tree:
-            if not f["path"].startswith("software/{}".format(module)):
+            if not f["path"].startswith("modules/{}".format(module)):
                 continue
             if f["type"] != "blob":
                 continue

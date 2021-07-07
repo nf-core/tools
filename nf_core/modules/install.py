@@ -1,6 +1,4 @@
 import os
-import sys
-import json
 import questionary
 import logging
 
@@ -49,10 +47,9 @@ class ModuleInstall(ModuleCommand):
             log.error("Module '{}' not found in list of available modules.".format(module))
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
+
         # Set the install folder based on the repository name
-        install_folder = ["nf-core", "software"]
-        if not self.modules_repo.name == "nf-core/modules":
-            install_folder = ["external"]
+        install_folder = [self.modules_repo.user, self.modules_repo.repo]
 
         # Compute the module directory
         module_dir = os.path.join(self.dir, "modules", *install_folder, module)
@@ -130,7 +127,7 @@ class ModuleInstall(ModuleCommand):
             return False
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, module, version)
+        self.update_modules_json(modules_json, self.modules_repo.name, module, version)
         return True
 
     def check_module_files_installed(self, module_name, module_dir):
