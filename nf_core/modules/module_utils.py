@@ -25,15 +25,19 @@ class ModuleException(Exception):
     pass
 
 
-def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T00:00:00Z"):
+def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"):
     """
-    Fetches the commit history the of requested module
+    Fetches the commit history the of requested module since a given date. The default value is
+    not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
+    update breaking backwards compatibility.
     Args:
         module_name (str): Name of module
         per_page (int): Number of commits per page returned by API
         page_nbr (int): Page number of the retrieved commits
         since (str): Only show commits later than this timestamp.
         Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
+
+
 
     Returns:
         [ dict ]: List of commit SHAs and associated (truncated) message
@@ -112,7 +116,6 @@ def create_modules_json(pipeline_dir):
         if os.path.isdir(os.path.join(modules_dir, user_name)) and user_name != "local"
         for repo_name in os.listdir(os.path.join(modules_dir, user_name))
     ]
-    log.warning(repo_names)
 
     # Get all module names in the repos
     repo_module_names = {
@@ -125,7 +128,6 @@ def create_modules_json(pipeline_dir):
         )
         for repo_name in repo_names
     }
-    log.warning(repo_module_names)
 
     progress_bar = rich.progress.Progress(
         "[bold blue]{task.description}",
