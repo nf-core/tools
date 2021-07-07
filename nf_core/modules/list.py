@@ -101,7 +101,7 @@ class ModuleList(ModuleCommand):
                 table.add_column("Date")
 
                 for module in sorted(modules):
-                    module_entry = modules_json["modules"].get(module)
+                    module_entry = modules_json["repos"][self.modules_repo.name].get(module)
                     if module_entry:
                         version_sha = module_entry["git_sha"]
                         try:

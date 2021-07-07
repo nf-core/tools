@@ -59,7 +59,7 @@ class ModuleInstall(ModuleCommand):
         if not modules_json:
             return False
 
-        current_entry = modules_json["repos"].get(module)
+        current_entry = modules_json["repos"][self.modules_repo.name].get(module)
 
         if current_entry is not None and self.sha is None:
             # Fetch the latest commit for the module
