@@ -41,7 +41,7 @@ class ModuleRemove(ModuleCommand):
         if self.modules_repo.name != "nf-core/modules":
             repo_name = self.modules_repo.name
         elif len(self.module_names) == 1:
-            repo_name = self.module_names.keys()[0]
+            repo_name = list(self.module_names.keys())[0]
         else:
             repo_name = questionary.autocomplete(
                 "Repo name:", choices=self.module_names.keys(), style=nf_core.utils.nfcore_question_style
