@@ -215,7 +215,7 @@ class TestLint(unittest.TestCase):
 
     from lint.version_consistency import test_version_consistency
 
-    from lint.modules_json import test_modules_json_fail
+    from lint.modules_json import test_modules_json_pass
 
 
 # TODO nf-core: Assess and strip out if no longer required for DSL2
