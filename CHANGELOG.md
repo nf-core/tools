@@ -37,6 +37,7 @@
 * Fixed `nf-core modules create-test-yml` so it doesn't break when the output directory is supplied [[#1148](https://github.com/nf-core/tools/issues/1148)]
 * Updated `nf-core modules lint` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
 * Updated `nf-core modules install` and `modules.json` to work with new directory structure ([#1159](https://github.com/nf-core/tools/issues/1159))
+* Updated `nf-core modules remove` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
 
 #### Sync
 
