@@ -36,9 +36,9 @@ class ModuleCommand:
         """Get list of modules installed in the current directory"""
         self.module_names = []
         if self.repo_type == "pipeline":
-            module_base_path = f"{self.dir}/modules/nf-core/software"
+            module_base_path = f"{self.dir}/modules/nf-core/modules"
         elif self.repo_type == "modules":
-            module_base_path = f"{self.dir}/software"
+            module_base_path = f"{self.dir}/modules"
         else:
             log.error("Directory is neither a clone of nf-core/modules nor a pipeline")
             raise SystemError

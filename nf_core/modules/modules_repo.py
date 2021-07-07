@@ -48,7 +48,7 @@ class ModulesRepo(object):
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
             if f["path"].startswith(f"modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
-                # remove software/ and /main.nf
+                # remove modules/ and /main.nf
                 self.modules_avail_module_names.append(f["path"].replace("modules/", "").replace("/main.nf", ""))
 
     def get_module_file_urls(self, module, commit=""):
