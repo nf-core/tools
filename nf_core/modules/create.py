@@ -67,7 +67,7 @@ class ModuleCreate(object):
         modules/tests/software/tool/subtool/
             * main.nf
             * test.yml
-        tests/config/pytest_software.yml
+        tests/config/pytest_modules.yml
 
         The function will attempt to automatically find a Bioconda package called <tool>
         and matching Docker / Singularity images from BioContainers.
@@ -222,29 +222,29 @@ class ModuleCreate(object):
         self.render_template()
 
         if self.repo_type == "modules":
-            # Add entry to pytest_software.yml
+            # Add entry to pytest_modules.yml
             try:
-                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "r") as fh:
-                    pytest_software_yml = yaml.safe_load(fh)
+                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
+                    pytest_modules_yml = yaml.safe_load(fh)
                 if self.subtool:
-                    pytest_software_yml[self.tool_name] = [
+                    pytest_modules_yml[self.tool_name] = [
                         f"software/{self.tool}/{self.subtool}/**",
                         f"tests/software/{self.tool}/{self.subtool}/**",
                     ]
                 else:
-                    pytest_software_yml[self.tool_name] = [
+                    pytest_modules_yml[self.tool_name] = [
                         f"software/{self.tool}/**",
                         f"tests/software/{self.tool}/**",
                     ]
-                pytest_software_yml = dict(sorted(pytest_software_yml.items()))
-                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "w") as fh:
-                    yaml.dump(pytest_software_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
+                pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
+                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
+                    yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
-                raise UserWarning(f"Could not open 'tests/config/pytest_software.yml' file!")
+                raise UserWarning(f"Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())
         if self.repo_type == "modules":
-            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_software.yml"))
+            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"))
         log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
     def render_template(self):
@@ -282,7 +282,7 @@ class ModuleCreate(object):
         # Determine repository type
         if os.path.exists(os.path.join(directory, "main.nf")):
             return "pipeline"
-        elif os.path.exists(os.path.join(directory, "software")):
+        elif os.path.exists(os.path.join(directory, "modules")):
             return "modules"
         else:
             raise UserWarning(

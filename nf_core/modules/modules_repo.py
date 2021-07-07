@@ -55,7 +55,7 @@ class ModulesRepo(object):
         """Fetch list of URLs for a specific module
 
         Takes the name of a module and iterates over the GitHub repo file tree.
-        Loops over items that are prefixed with the path 'software/<module_name>' and ignores
+        Loops over items that are prefixed with the path 'modules/<module_name>' and ignores
         anything that's not a blob. Also ignores the test/ subfolder.
 
         Returns a dictionary with keys as filenames and values as GitHub API URLs.
@@ -68,8 +68,8 @@ class ModulesRepo(object):
             dict: Set of files and associated URLs as follows:
 
             {
-                'software/fastqc/main.nf': 'https://api.github.com/repos/nf-core/modules/git/blobs/65ba598119206a2b851b86a9b5880b5476e263c3',
-                'software/fastqc/meta.yml': 'https://api.github.com/repos/nf-core/modules/git/blobs/0d5afc23ba44d44a805c35902febc0a382b17651'
+                'modules/fastqc/main.nf': 'https://api.github.com/repos/nf-core/modules/git/blobs/65ba598119206a2b851b86a9b5880b5476e263c3',
+                'modules/fastqc/meta.yml': 'https://api.github.com/repos/nf-core/modules/git/blobs/0d5afc23ba44d44a805c35902febc0a382b17651'
             }
         """
         results = {}
