@@ -25,9 +25,11 @@ class ModuleException(Exception):
     pass
 
 
-def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2020-11-25T00:00:00Z"):
+def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"):
     """
-    Fetches the commit history the of requested module
+    Fetches the commit history the of requested module since a given date. The default value is
+    not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
+    update breaking backwards compatibility.
     Args:
         module_name (str): Name of module
         per_page (int): Number of commits per page returned by API
@@ -102,13 +104,28 @@ def create_modules_json(pipeline_dir):
     pipeline_config = nf_core.utils.fetch_wf_config(pipeline_dir)
     pipeline_name = pipeline_config["manifest.name"]
     pipeline_url = pipeline_config["manifest.homePage"]
-    modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "modules": {}}
-    all_module_file_paths = glob.glob(f"{pipeline_dir}/modules/nf-core/modules/**/*", recursive=True)
+    modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
+    modules_dir = f"{pipeline_dir}/modules"
 
-    # Extract the module paths from the file paths
-    module_paths = list(set(map(os.path.dirname, filter(os.path.isfile, all_module_file_paths))))
-    module_names = [path.replace(f"{pipeline_dir}/modules/nf-core/modules/", "") for path in module_paths]
-    module_repo = ModulesRepo()
+    # Extract all modules repos in the pipeline directory
+    repo_names = [
+        f"{user_name}/{repo_name}"
+        for user_name in os.listdir(modules_dir)
+        if os.path.isdir(os.path.join(modules_dir, user_name)) and user_name != "local"
+        for repo_name in os.listdir(os.path.join(modules_dir, user_name))
+    ]
+
+    # Get all module names in the repos
+    repo_module_names = {
+        repo_name: list(
+            {
+                os.path.relpath(os.path.dirname(path), os.path.join(modules_dir, repo_name))
+                for path in glob.glob(f"{modules_dir}/{repo_name}/**/*", recursive=True)
+                if os.path.isfile(path)
+            }
+        )
+        for repo_name in repo_names
+    }
 
     progress_bar = rich.progress.Progress(
         "[bold blue]{task.description}",
@@ -118,28 +135,33 @@ def create_modules_json(pipeline_dir):
     )
     with progress_bar:
         file_progress = progress_bar.add_task(
-            "Creating 'modules.json' file", total=len(module_names), test_name="module.json"
+            "Creating 'modules.json' file", total=sum(map(len, repo_module_names.values())), test_name="module.json"
         )
-        for module_name, module_path in zip(module_names, module_paths):
-            progress_bar.update(file_progress, advance=1, test_name=module_name)
-            try:
-                # Find the correct commit SHA for the local files.
-                # We iterate over the commit log pages until we either
-                # find a matching commit or we reach the end of the commits
-                correct_commit_sha = None
-                commit_page_nbr = 1
-                while correct_commit_sha is None:
+        for repo_name, module_names in repo_module_names.items():
+            module_repo = ModulesRepo(repo=repo_name)
+            repo_path = os.path.join(modules_dir, repo_name)
+            modules_json["repos"][repo_name] = dict()
+            for module_name in module_names:
+                module_path = os.path.join(repo_path, module_name)
+                progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
+                try:
+                    # Find the correct commit SHA for the local files.
+                    # We iterate over the commit log pages until we either
+                    # find a matching commit or we reach the end of the commits
+                    correct_commit_sha = None
+                    commit_page_nbr = 1
+                    while correct_commit_sha is None:
 
-                    commit_shas = [
-                        commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
-                    ]
-                    correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
-                    commit_page_nbr += 1
+                        commit_shas = [
+                            commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
+                        ]
+                        correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
+                        commit_page_nbr += 1
 
-                modules_json["modules"][module_name] = {"git_sha": correct_commit_sha}
-            except LookupError as e:
-                log.error(e)
-                raise UserWarning("Will not create 'modules.json' file")
+                    modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
+                except LookupError as e:
+                    log.error(e)
+                    raise UserWarning("Will not create 'modules.json' file")
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)

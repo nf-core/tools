@@ -32,7 +32,7 @@ def test_modules_install_trimgalore(self):
 def test_modules_install_trimgalore_alternative_source(self):
     """Test installing a module from a different source repository - TrimGalore!"""
     assert self.mods_install_alt.install("trimgalore") is not False
-    module_path = os.path.join(self.mods_install.dir, "modules", "external", "trimgalore")
+    module_path = os.path.join(self.mods_install.dir, "modules", "ewels", "nf-core-modules", "trimgalore")
     assert os.path.exists(module_path)
 
 
