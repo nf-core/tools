@@ -53,7 +53,9 @@ class WorkflowLicences(object):
             pipeline_obj = nf_core.utils.Pipeline(self.pipeline)
             pipeline_obj._load()
             if pipeline_obj._fp("environment.yml") not in pipeline_obj.files:
-                raise LookupError("No `environment.yml` file found. (Note: DSL2 pipelines are currently not supported by this command.)")
+                raise LookupError(
+                    "No `environment.yml` file found. (Note: DSL2 pipelines are currently not supported by this command.)"
+                )
             self.conda_config = pipeline_obj.conda_config
         else:
             env_url = "https://raw.githubusercontent.com/nf-core/{}/master/environment.yml".format(self.pipeline)
