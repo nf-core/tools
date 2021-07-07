@@ -234,15 +234,18 @@ class ModulesTestYmlBuilder(object):
                     results_dir = None
 
         test_files = self.create_test_file_dict(results_dir=results_dir)
-        test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
 
-        # Compare both test.yml files
-        for i in range(len(test_files)):
-            if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
-                test_files[i].pop("md5sum")
-                test_files[i][
-                    "contains"
-                ] = "[ # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead ]"
+        # If test was repeated, compare the md5 sums
+        if results_dir_repeat:
+            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
+
+            # Compare both test.yml files
+            for i in range(len(test_files)):
+                if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
+                    test_files[i].pop("md5sum")
+                    test_files[i][
+                        "contains"
+                    ] = "[ # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead ]"
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")
