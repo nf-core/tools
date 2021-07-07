@@ -2,14 +2,10 @@ import glob
 import json
 import os
 import requests
-import sys
 import logging
-import questionary
 import rich
 import datetime
-from itertools import count
 
-from requests import api
 
 import nf_core.utils
 
@@ -25,7 +21,9 @@ class ModuleException(Exception):
     pass
 
 
-def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"):
+def get_module_git_log(
+    module_name, owner="nf-core", modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"
+):
     """
     Fetches the commit history the of requested module since a given date. The default value is
     not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
@@ -40,7 +38,10 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2021-07-07T0
     Returns:
         [ dict ]: List of commit SHAs and associated (truncated) message
     """
-    api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=modules/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
+    if modules_repo is None:
+        modules_repo = ModulesRepo()
+
+    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits?sha=master&path=modules/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
     log.debug(f"Fetching commit history of module '{module_name}' from github API")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
@@ -56,7 +57,7 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2021-07-07T0
                 for commit in commits
             ]
     elif response.status_code == 404:
-        raise LookupError(f"Module '{module_name}' not found in 'nf-core/modules/'\n{api_url}")
+        raise LookupError(f"Module '{module_name}' not found in '{modules_repo.name}'\n{api_url}")
     else:
         raise LookupError(
             f"Unable to fetch commit SHA for module {module_name}. API responded with '{response.status_code}'"
@@ -138,7 +139,7 @@ def create_modules_json(pipeline_dir):
             "Creating 'modules.json' file", total=sum(map(len, repo_module_names.values())), test_name="module.json"
         )
         for repo_name, module_names in repo_module_names.items():
-            module_repo = ModulesRepo(repo=repo_name)
+            modules_repo = ModulesRepo(repo=repo_name)
             repo_path = os.path.join(modules_dir, repo_name)
             modules_json["repos"][repo_name] = dict()
             for module_name in module_names:
@@ -153,9 +154,14 @@ def create_modules_json(pipeline_dir):
                     while correct_commit_sha is None:
 
                         commit_shas = [
-                            commit["git_sha"] for commit in get_module_git_log(module_name, page_nbr=commit_page_nbr)
+                            commit["git_sha"]
+                            for commit in get_module_git_log(
+                                module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr
+                            )
                         ]
-                        correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
+                        correct_commit_sha = find_correct_commit_sha(
+                            module_name, module_path, modules_repo, commit_shas
+                        )
                         commit_page_nbr += 1
 
                     modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
@@ -230,34 +236,6 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
             files_are_equal[i] = True
 
     return all(files_are_equal)
-
-
-def prompt_module_version_sha(module, installed_sha=None):
-    older_commits_choice = questionary.Choice(
-        title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
-    )
-    git_sha = ""
-    page_nbr = 1
-    next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
-    while git_sha is "":
-        commits = next_page_commits
-        next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
-        choices = []
-        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
-
-            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
-            message = f"{title} {sha}"
-            if installed_sha == sha:
-                message += " (installed version)"
-            commit_display = [(display_color, message), ("class:choice-default", "")]
-            choices.append(questionary.Choice(title=commit_display, value=sha))
-        if len(next_page_commits) > 0:
-            choices += [older_commits_choice]
-        git_sha = questionary.select(
-            f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
-        ).unsafe_ask()
-        page_nbr += 1
-    return git_sha
 
 
 def get_installed_modules(dir, repo_type="modules"):
