@@ -29,14 +29,15 @@ def test_modules_install_trimgalore(self):
     assert os.path.exists(module_path)
 
 
-def test_modules_install_trimgalore_alternative_source(self):
-    """Test installing a module from a different source repository - TrimGalore!"""
-    assert self.mods_install_alt.install("trimgalore") is not False
-    module_path = os.path.join(self.mods_install.dir, "modules", "ewels", "nf-core-modules", "trimgalore")
-    assert os.path.exists(module_path)
-
-
 def test_modules_install_trimgalore_twice(self):
     """Test installing a module - TrimGalore! already there"""
     self.mods_install.install("trimgalore")
     assert self.mods_install.install("trimgalore") is True
+
+
+# TODO Remove comments once external repository to have same structure as nf-core/modules
+# def test_modules_install_trimgalore_alternative_source(self):
+#     """Test installing a module from a different source repository - TrimGalore!"""
+#     assert self.mods_install_alt.install("trimgalore") is not False
+#     module_path = os.path.join(self.mods_install.dir, "modules", "ewels", "nf-core-modules", "trimgalore")
+#     assert os.path.exists(module_path)
