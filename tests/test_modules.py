@@ -2,17 +2,12 @@
 """ Tests covering the modules commands
 """
 
-from nf_core.modules.module_utils import ModuleException
-from nf_core.modules import create
 import nf_core.modules
 
 import os
-import re
 import shutil
 import tempfile
 import unittest
-import pytest
-from rich.console import Console
 
 
 def create_modules_repo_dummy():
@@ -62,237 +57,51 @@ class TestModules(unittest.TestCase):
         assert modrepo.name == "nf-core/modules"
         assert modrepo.branch == "master"
 
-    def test_modules_list_remote(self):
-        """Test listing available modules"""
-        mods_list = nf_core.modules.ModuleList(None)
-        listed_mods = mods_list.list_modules()
-        console = Console(record=True)
-        console.print(listed_mods)
-        output = console.export_text()
-        assert "fastqc" in output
+    ############################################
+    # Test of the individual modules commands. #
+    ############################################
 
-    def test_modules_list_pipeline(self):
-        """Test listing locally installed modules"""
-        mods_list = nf_core.modules.ModuleList(self.pipeline_dir)
-        listed_mods = mods_list.list_modules()
-        console = Console(record=True)
-        console.print(listed_mods)
-        output = console.export_text()
-        assert "fastqc" in output
-        assert "multiqc" in output
+    from modules.list import (
+        test_modules_list_remote,
+        test_modules_list_pipeline,
+        test_modules_install_and_list_pipeline,
+    )
 
-    def test_modules_install_and_list_pipeline(self):
-        """Test listing locally installed modules"""
-        self.mods_install.install("trimgalore")
-        mods_list = nf_core.modules.ModuleList(self.pipeline_dir)
-        listed_mods = mods_list.list_modules()
-        console = Console(record=True)
-        console.print(listed_mods)
-        output = console.export_text()
-        assert "trimgalore" in output
+    from modules.install import (
+        test_modules_install_nopipeline,
+        test_modules_install_emptypipeline,
+        test_modules_install_nomodule,
+        test_modules_install_trimgalore,
+        test_modules_install_trimgalore_alternative_source,
+        test_modules_install_trimgalore_twice,
+    )
 
-    def test_modules_install_nopipeline(self):
-        """Test installing a module - no pipeline given"""
-        self.mods_install.dir = None
-        assert self.mods_install.install("foo") is False
+    from modules.remove import (
+        test_modules_remove_trimgalore,
+        test_modules_remove_trimgalore_alternative_source,
+        test_modules_remove_trimgalore_uninstalled,
+    )
 
-    def test_modules_install_emptypipeline(self):
-        """Test installing a module - empty dir given"""
-        self.mods_install.dir = tempfile.mkdtemp()
-        with pytest.raises(UserWarning) as excinfo:
-            self.mods_install.install("foo")
-        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
+    from modules.lint import test_modules_lint_trimgalore, test_modules_lint_empty, test_modules_lint_new_modules
 
-    def test_modules_install_nomodule(self):
-        """Test installing a module - unrecognised module given"""
-        assert self.mods_install.install("foo") is False
+    from modules.create import (
+        test_modules_create_succeed,
+        test_modules_create_fail_exists,
+        test_modules_create_nfcore_modules,
+        test_modules_create_nfcore_modules_subtool,
+    )
 
-    def test_modules_install_trimgalore(self):
-        """Test installing a module - TrimGalore!"""
-        assert self.mods_install.install("trimgalore") is not False
-        module_path = os.path.join(self.mods_install.dir, "modules", "nf-core", "software", "trimgalore")
-        assert os.path.exists(module_path)
+    from modules.create_test_yml import (
+        test_modules_custom_yml_dumper,
+        test_modules_test_file_dict,
+        test_modules_create_test_yml_get_md5,
+        test_modules_create_test_yml_entry_points,
+        test_modules_create_test_yml_check_inputs,
+    )
 
-    def test_modules_install_trimgalore_alternative_source(self):
-        """Test installing a module from a different source repository - TrimGalore!"""
-        assert self.mods_install_alt.install("trimgalore") is not False
-        module_path = os.path.join(self.mods_install.dir, "modules", "external", "trimgalore")
-        assert os.path.exists(module_path)
-
-    def test_modules_install_trimgalore_twice(self):
-        """Test installing a module - TrimGalore! already there"""
-        self.mods_install.install("trimgalore")
-        assert self.mods_install.install("trimgalore") is True
-
-    def test_modules_remove_trimgalore(self):
-        """Test removing TrimGalore! module after installing it"""
-        self.mods_install.install("trimgalore")
-        module_path = os.path.join(self.mods_install.dir, "modules", "nf-core", "software", "trimgalore")
-        assert self.mods_remove.remove("trimgalore")
-        assert os.path.exists(module_path) is False
-
-    def test_modules_remove_trimgalore_alternative_source(self):
-        """Test removing TrimGalore! module after installing it from an alternative source"""
-        self.mods_install_alt.install("trimgalore")
-        module_path = os.path.join(self.mods_install.dir, "modules", "external", "trimgalore")
-        assert self.mods_remove_alt.remove("trimgalore")
-        assert os.path.exists(module_path) is False
-
-    def test_modules_remove_trimgalore_uninstalled(self):
-        """Test removing TrimGalore! module without installing it"""
-        assert self.mods_remove.remove("trimgalore") is False
-
-    def test_modules_lint_trimgalore(self):
-        """Test linting the TrimGalore! module"""
-        self.mods_install.install("trimgalore")
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-        module_lint.lint(print_results=False, module="trimgalore")
-        assert len(module_lint.passed) > 0
-        assert len(module_lint.warned) == 0
-        assert len(module_lint.failed) == 0
-
-    def test_modules_lint_empty(self):
-        """Test linting a pipeline with no modules installed"""
-        self.mods_remove.remove("fastqc")
-        self.mods_remove.remove("multiqc")
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-        module_lint.lint(print_results=False, all_modules=True)
-        assert len(module_lint.passed) == 0
-        assert len(module_lint.warned) == 0
-        assert len(module_lint.failed) == 0
-
-    def test_modules_lint_new_modules(self):
-        """lint all modules in nf-core/modules repo clone"""
-        module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
-        module_lint.lint(print_results=True, all_modules=True)
-        assert len(module_lint.passed) > 0
-        assert len(module_lint.warned) >= 0
-        assert len(module_lint.failed) == 0
-
-    def test_modules_create_succeed(self):
-        """Succeed at creating the TrimGalore! module"""
-        module_create = nf_core.modules.ModuleCreate(
-            self.pipeline_dir, "trimgalore", "@author", "process_low", True, True, conda_name="trim-galore"
-        )
-        module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
-
-    def test_modules_create_fail_exists(self):
-        """Fail at creating the same module twice"""
-        module_create = nf_core.modules.ModuleCreate(
-            self.pipeline_dir, "trimgalore", "@author", "process_low", False, False, conda_name="trim-galore"
-        )
-        module_create.create()
-        with pytest.raises(UserWarning) as excinfo:
-            module_create.create()
-        assert "Module file exists already" in str(excinfo.value)
-
-    def test_modules_custom_yml_dumper(self):
-        """Try to create a yml file with the custom yml dumper"""
-        out_dir = tempfile.mkdtemp()
-        yml_output_path = os.path.join(out_dir, "test.yml")
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
-        meta_builder.test_yml_output_path = yml_output_path
-        meta_builder.tests = [{"testname": "myname"}]
-        meta_builder.print_test_yml()
-        assert os.path.isfile(yml_output_path)
-
-    def test_modules_test_file_dict(self):
-        """Creat dict of test files and create md5 sums"""
-        test_file_dir = tempfile.mkdtemp()
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
-        with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
-            fh.write("this line is just for testing")
-        test_files = meta_builder.create_test_file_dict(test_file_dir)
-        assert len(test_files) == 1
-        assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
-
-    def test_modules_create_test_yml_get_md5(self):
-        """Get md5 sums from a dummy output"""
-        test_file_dir = tempfile.mkdtemp()
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
-        with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
-            fh.write("this line is just for testing")
-        test_files = meta_builder.get_md5_sums(
-            entry_point="dummy", command="dummy", results_dir=test_file_dir, results_dir_repeat=test_file_dir
-        )
-        assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
-
-    def test_modules_create_test_yml_entry_points(self):
-        """Test extracting test entry points from a main.nf file"""
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
-        meta_builder.module_test_main = os.path.join(
-            self.nfcore_modules, "tests", "software", "star", "align", "main.nf"
-        )
-        meta_builder.scrape_workflow_entry_points()
-        assert meta_builder.entry_points[0] == "test_star_align"
-
-    def test_modules_create_test_yml_check_inputs(self):
-        """Test the check_inputs() function - raise UserWarning because test.yml exists"""
-        cwd = os.getcwd()
-        os.chdir(self.nfcore_modules)
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
-        meta_builder.module_test_main = os.path.join(
-            self.nfcore_modules, "tests", "software", "star", "align", "main.nf"
-        )
-        with pytest.raises(UserWarning) as excinfo:
-            meta_builder.check_inputs()
-        os.chdir(cwd)
-        assert "Test YAML file already exists!" in str(excinfo.value)
-
-    def test_modules_create_nfcore_modules(self):
-        """Create a module in nf-core/modules clone"""
-        module_create = nf_core.modules.ModuleCreate(
-            self.nfcore_modules, "fastqc", "@author", "process_low", False, False
-        )
-        module_create.create()
-        assert os.path.exists(os.path.join(self.nfcore_modules, "software", "fastqc", "main.nf"))
-        assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "fastqc", "main.nf"))
-
-    def test_modules_create_nfcore_modules_subtool(self):
-        """Create a tool/subtool module in a nf-core/modules clone"""
-        module_create = nf_core.modules.ModuleCreate(
-            self.nfcore_modules, "star/index", "@author", "process_medium", False, False
-        )
-        module_create.create()
-        assert os.path.exists(os.path.join(self.nfcore_modules, "software", "star", "index", "main.nf"))
-        assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "software", "star", "index", "main.nf"))
-
-    def test_modules_bump_versions_single_module(self):
-        """ Test updating a single module """
-        # Change the star/align version to an older version
-        main_nf_path = os.path.join(self.nfcore_modules, "software", "star", "align", "main.nf")
-        with open(main_nf_path, "r") as fh:
-            content = fh.read()
-        new_content = re.sub(r"bioconda::star=\d.\d.\d\D?", r"bioconda::star=2.6.1d", content)
-        with open(main_nf_path, "w") as fh:
-            fh.write(new_content)
-        version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
-        version_bumper.bump_versions(module="star/align")
-        assert len(version_bumper.failed) == 0
-
-    def test_modules_bump_versions_all_modules(self):
-        """ Test updating all modules """
-        version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
-        version_bumper.bump_versions(all_modules=True)
-        assert len(version_bumper.failed) == 0
-
-    def test_modules_bump_versions_fail(self):
-        """ Fail updating a module with wrong name"""
-        version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
-        with pytest.raises(ModuleException) as excinfo:
-            version_bumper.bump_versions(module="no/module")
-        assert "Could not find the specified module:" in str(excinfo.value)
-
-    def test_modules_bump_versions_fail_unknown_version(self):
-        """ Fail because of an unknown version """
-        # Change the star/align version to an older version
-        main_nf_path = os.path.join(self.nfcore_modules, "software", "star", "align", "main.nf")
-        with open(main_nf_path, "r") as fh:
-            content = fh.read()
-        new_content = re.sub(r"bioconda::star=\d.\d.\d\D?", r"bioconda::star=xxx", content)
-        with open(main_nf_path, "w") as fh:
-            fh.write(new_content)
-        version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
-        version_bumper.bump_versions(module="star/align")
-        assert "Conda package had unknown version" in version_bumper.failed[0][0]
+    from modules.bump_versions import (
+        test_modules_bump_versions_single_module,
+        test_modules_bump_versions_all_modules,
+        test_modules_bump_versions_fail,
+        test_modules_bump_versions_fail_unknown_version,
+    )
