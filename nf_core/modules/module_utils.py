@@ -40,7 +40,7 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2021-07-07T0
     Returns:
         [ dict ]: List of commit SHAs and associated (truncated) message
     """
-    api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=software/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
+    api_url = f"https://api.github.com/repos/nf-core/modules/commits?sha=master&path=modules/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
     log.debug(f"Fetching commit history of module '{module_name}' from github API")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
@@ -209,7 +209,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     files_are_equal = [False, False, False]
     remote_copies = [None, None, None]
 
-    module_base_url = f"https://raw.githubusercontent.com/{modules_repo.name}/{commit_sha}/software/{module_name}"
+    module_base_url = f"https://raw.githubusercontent.com/{modules_repo.name}/{commit_sha}/modules/{module_name}"
     for i, file in enumerate(files_to_check):
         # Download remote copy and compare
         api_url = f"{module_base_url}/{file}"
@@ -277,7 +277,7 @@ def get_installed_modules(dir, repo_type="modules"):
     local_modules = []
     nfcore_modules = []
     local_modules_dir = None
-    nfcore_modules_dir = os.path.join(dir, "modules", "nf-core", "software")
+    nfcore_modules_dir = os.path.join(dir, "modules", "nf-core", "modules")
 
     # Get local modules
     if repo_type == "pipeline":
@@ -290,7 +290,7 @@ def get_installed_modules(dir, repo_type="modules"):
 
     # nf-core/modules
     if repo_type == "modules":
-        nfcore_modules_dir = os.path.join(dir, "software")
+        nfcore_modules_dir = os.path.join(dir, "modules")
 
     # Get nf-core modules
     if os.path.exists(nfcore_modules_dir):
@@ -328,7 +328,7 @@ def get_repo_type(dir):
     # Determine repository type
     if os.path.exists(os.path.join(dir, "main.nf")):
         return "pipeline"
-    elif os.path.exists(os.path.join(dir, "software")):
+    elif os.path.exists(os.path.join(dir, "modules")):
         return "modules"
     else:
         raise LookupError("Could not determine repository type of '{}'".format(dir))
