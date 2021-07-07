@@ -37,8 +37,6 @@ def get_module_git_log(module_name, per_page=30, page_nbr=1, since="2021-07-07T0
         since (str): Only show commits later than this timestamp.
         Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
 
-
-
     Returns:
         [ dict ]: List of commit SHAs and associated (truncated) message
     """
@@ -106,7 +104,7 @@ def create_modules_json(pipeline_dir):
     pipeline_config = nf_core.utils.fetch_wf_config(pipeline_dir)
     pipeline_name = pipeline_config["manifest.name"]
     pipeline_url = pipeline_config["manifest.homePage"]
-    modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "modules": dict()}
+    modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
     modules_dir = f"{pipeline_dir}/modules"
 
     # Extract all modules repos in the pipeline directory
@@ -142,7 +140,7 @@ def create_modules_json(pipeline_dir):
         for repo_name, module_names in repo_module_names.items():
             module_repo = ModulesRepo(repo=repo_name)
             repo_path = os.path.join(modules_dir, repo_name)
-            modules_json["modules"][repo_name] = dict()
+            modules_json["repos"][repo_name] = dict()
             for module_name in module_names:
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
@@ -160,7 +158,7 @@ def create_modules_json(pipeline_dir):
                         correct_commit_sha = find_correct_commit_sha(module_name, module_path, module_repo, commit_shas)
                         commit_page_nbr += 1
 
-                    modules_json["modules"][repo_name][module_name] = {"git_sha": correct_commit_sha}
+                    modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
                 except LookupError as e:
                     log.error(e)
                     raise UserWarning("Will not create 'modules.json' file")

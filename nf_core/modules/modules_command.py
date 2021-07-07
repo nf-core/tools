@@ -121,9 +121,9 @@ class ModuleCommand:
 
     def update_modules_json(self, modules_json, repo_name, module_name, module_version):
         """Updates the 'module.json' file with new module info"""
-        if repo_name not in modules_json["modules"]:
-            modules_json["modules"][repo_name] = dict()
-        modules_json["modules"][repo_name][module_name] = {"git_sha": module_version}
+        if repo_name not in modules_json["repos"]:
+            modules_json["repos"][repo_name] = dict()
+        modules_json["repos"][repo_name][module_name] = {"git_sha": module_version}
         self.dump_modules_json(modules_json)
 
     def dump_modules_json(self, modules_json):
