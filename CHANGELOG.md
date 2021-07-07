@@ -43,6 +43,7 @@
 #### Tests
 
 * Added a test for the `version_consistency` lint check
+* Refactored modules tests into separate files, and removed direct comparisons with number of tests in `lint` tests ([#1158](https://github.com/nf-core/tools/issues/1158))
 
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 
