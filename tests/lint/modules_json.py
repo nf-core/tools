@@ -6,4 +6,4 @@ def test_modules_json_fail(self):
     results = self.lint_obj.modules_json()
     assert len(results.get("warned", [])) == 0
     assert len(results.get("failed", [])) == 0
-    assert len(results.get("passed", [])) == 1
+    assert len(results.get("passed", [])) > 0
