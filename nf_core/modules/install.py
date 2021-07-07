@@ -11,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInstall(ModuleCommand):
-    def __init__(self, pipeline_dir, module=None, force=False, latest=False, sha=None):
+    def __init__(self, pipeline_dir, force=False, latest=False, sha=None):
         super().__init__(pipeline_dir)
         self.force = force
         self.latest = latest

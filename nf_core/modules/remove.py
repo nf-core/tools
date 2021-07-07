@@ -42,40 +42,46 @@ class ModuleRemove(ModuleCommand):
                 "Tool name:", choices=self.module_names, style=nf_core.utils.nfcore_question_style
             ).ask()
 
-        # Set the install folder based on the repository name
-        install_folder = ["nf-core", "modules"]
-        if not self.modules_repo.name == "nf-core/modules":
-            install_folder = ["external"]
+        # Set the remove folder based on the repository name
+        remove_folder = [self.modules_repo.owner, self.modules_repo.repo]
 
         # Get the module directory
-        module_dir = os.path.join(self.dir, "modules", *install_folder, module)
+        module_dir = os.path.join(self.dir, "modules", *remove_folder, module)
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
             log.error("Module directory is not installed: {}".format(module_dir))
             log.info("The module you want to remove does not seem to be installed")
+
             modules_json = self.load_modules_json()
-            if module in modules_json.get("modules"):
+            if (
+                self.modules_repo.name in modules_json["repos"]
+                and module in modules_json["repos"][self.module_repo.name]
+            ):
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
-                modules_json["modules"].pop(module)
-                self.dump_modules_json(modules_json)
+                self.remove_modules_json_entry(module, modules_json)
             return False
 
         log.info("Removing {}".format(module))
 
         # Remove entry from modules.json
-        self.remove_modules_json_entry(module)
+        modules_json = self.load_modules_json()
+        self.remove_modules_json_entry(module, modules_json)
 
         # Remove the module
         return self.clear_module_dir(module_name=module, module_dir=module_dir)
 
-    def remove_modules_json_entry(self, module):
+    def remove_modules_json_entry(self, module, modules_json):
         # Load 'modules.json'
-        modules_json = self.load_modules_json()
         if not modules_json:
             return False
-        if module in modules_json.get("modules", {}):
-            modules_json["modules"].pop(module)
+        repo_name = self.modules_repo.name
+        if repo_name in modules_json.get("repos", {}):
+            repo_entry = modules_json["repos"][repo_name]
+            if module in repo_entry:
+                repo_entry.pop(module)
+            if len(repo_entry) == 0:
+                modules_json["repos"].pop(repo_name)
         else:
             log.error(f"Module '{module}' is missing from 'modules.json' file.")
             return False
