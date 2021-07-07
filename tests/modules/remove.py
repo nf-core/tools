@@ -4,7 +4,7 @@ import os
 def test_modules_remove_trimgalore(self):
     """Test removing TrimGalore! module after installing it"""
     self.mods_install.install("trimgalore")
-    module_path = os.path.join(self.mods_install.dir, "modules", "nf-core", "software", "trimgalore")
+    module_path = os.path.join(self.mods_install.dir, "modules", "nf-core", "modules", "trimgalore")
     assert self.mods_remove.remove("trimgalore")
     assert os.path.exists(module_path) is False
 

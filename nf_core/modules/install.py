@@ -50,7 +50,7 @@ class ModuleInstall(ModuleCommand):
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
         # Set the install folder based on the repository name
-        install_folder = ["nf-core", "software"]
+        install_folder = ["nf-core", "modules"]
         if not self.modules_repo.name == "nf-core/modules":
             install_folder = ["external"]
 
