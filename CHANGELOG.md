@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v1.15dev
+## v2.0dev
 
 ### Template
 
@@ -14,6 +14,7 @@
 * Bugfix: Download should use path relative to workflow for configs
 * Remove lint checks for files related to conda and docker as not needed anymore for DSL2
 * Removed `params_used` lint check because of incompatibility with DSL2
+* Added`modules bump-versions` command to `README.md`
 
 ### Modules
 
