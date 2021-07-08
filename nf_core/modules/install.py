@@ -51,6 +51,8 @@ class ModuleInstall(ModuleCommand):
                 return False
             repos_and_modules = [(self.modules_repo, module)]
         else:
+            if module:
+                raise UserWarning("You cannot specify a module and use '--all' flag at the same time")
             if self.force:
                 log.warning("'--force' doesn't do anything when used with '--all'")
             else:
