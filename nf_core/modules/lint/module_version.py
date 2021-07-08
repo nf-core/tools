@@ -33,12 +33,14 @@ def module_version(module_lint_object, module):
         module.passed.append(("git_sha", "Found git_sha entry in `modules.json`", modules_json_path))
 
         # Check whether a new version is available
-        module_git_log = nf_core.modules.module_utils.get_module_git_log(module.module_name)
-
-        if git_sha == module_git_log[0]["git_sha"]:
-            module.passed.append(("module_version", "Module is the latest version", module.module_dir))
-        else:
-            module.warned.append(("module_version", "New version available", module.module_dir))
+        try:
+            module_git_log = nf_core.modules.module_utils.get_module_git_log(module.module_name)
+            if git_sha == module_git_log[0]["git_sha"]:
+                module.passed.append(("module_version", "Module is the latest version", module.module_dir))
+            else:
+                module.warned.append(("module_version", "New version available", module.module_dir))
+        except UserWarning:
+            module.warned.append(("module_version", "Failed to fetch git log", module.module_dir))
 
     except KeyError:
         module.failed.append(("git_sha", "No git_sha entry in `modules.json`", modules_json_path))

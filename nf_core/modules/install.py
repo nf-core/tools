@@ -67,8 +67,9 @@ class ModuleInstall(ModuleCommand):
         if current_entry is not None and self.sha is None:
             # Fetch the latest commit for the module
             current_version = current_entry["git_sha"]
-            git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
-            if len(git_log) == 0:
+            try:
+                git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
+            except UserWarning:
                 log.error(f"Was unable to fetch version of module '{module}'")
                 return False
             latest_version = git_log[0]["git_sha"]
@@ -107,8 +108,9 @@ class ModuleInstall(ModuleCommand):
             if self.latest:
                 # Fetch the latest commit for the module
                 if latest_version is None:
-                    git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
-                    if len(git_log) == 0:
+                    try:
+                        git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
+                    except UserWarning:
                         log.error(f"Was unable to fetch version of module '{module}'")
                         return False
                     latest_version = git_log[0]["git_sha"]
@@ -157,12 +159,22 @@ class ModuleInstall(ModuleCommand):
         )
         git_sha = ""
         page_nbr = 1
-        next_page_commits = get_module_git_log(module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr)
+        try:
+            next_page_commits = get_module_git_log(
+                module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr
+            )
+        except UserWarning:
+            next_page_commits = None
+
         while git_sha is "":
             commits = next_page_commits
-            next_page_commits = get_module_git_log(
-                module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr + 1
-            )
+            try:
+                next_page_commits = get_module_git_log(
+                    module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr + 1
+                )
+            except UserWarning:
+                next_page_commits = None
+
             choices = []
             for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
 
@@ -172,7 +184,7 @@ class ModuleInstall(ModuleCommand):
                     message += " (installed version)"
                 commit_display = [(display_color, message), ("class:choice-default", "")]
                 choices.append(questionary.Choice(title=commit_display, value=sha))
-            if len(next_page_commits) > 0:
+            if next_page_commits is None:
                 choices += [older_commits_choice]
             git_sha = questionary.select(
                 f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
