@@ -1134,7 +1134,20 @@ $ nf-core modules bump-versions -d modules
 ├───────────────────────────┤─────────────────────────────────┤
 │ bcftools/consensus        │ Module updated:  1.11 --> 1.12  │
 ╰─────────────────────────────────────────────────────────────╯
+```
 
+If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can precent the `star/align` module from being update by adding the following to the `.nf-core.yml` file:
+
+```yaml
+bump-versions:
+  star/align: False
+```
+
+If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
+
+```yaml
+bump-versions:
+  star/align: "2.6.1d"
 ```
 
 ## Citation
