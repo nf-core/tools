@@ -38,7 +38,7 @@
 * Updated `nf-core modules lint` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
 * Updated `nf-core modules install` and `modules.json` to work with new directory structure ([#1159](https://github.com/nf-core/tools/issues/1159))
 * Updated `nf-core modules remove` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
-* Added cli prompt to specify remove repo in `nf-core modules remove` and removed old table style for `nf-core modules list`
+* Restructured code and removed old table style in `nf-core modules list`
 
 #### Sync
 
