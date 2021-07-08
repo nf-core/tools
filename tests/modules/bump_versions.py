@@ -9,7 +9,7 @@ from nf_core.modules.module_utils import ModuleException
 def test_modules_bump_versions_single_module(self):
     """Test updating a single module"""
     # Change the star/align version to an older version
-    main_nf_path = os.path.join(self.nfcore_modules, "software", "star", "align", "main.nf")
+    main_nf_path = os.path.join(self.nfcore_modules, "modules", "star", "align", "main.nf")
     with open(main_nf_path, "r") as fh:
         content = fh.read()
     new_content = re.sub(r"bioconda::star=\d.\d.\d\D?", r"bioconda::star=2.6.1d", content)
@@ -38,7 +38,7 @@ def test_modules_bump_versions_fail(self):
 def test_modules_bump_versions_fail_unknown_version(self):
     """Fail because of an unknown version"""
     # Change the star/align version to an older version
-    main_nf_path = os.path.join(self.nfcore_modules, "software", "star", "align", "main.nf")
+    main_nf_path = os.path.join(self.nfcore_modules, "modules", "star", "align", "main.nf")
     with open(main_nf_path, "r") as fh:
         content = fh.read()
     new_content = re.sub(r"bioconda::star=\d.\d.\d\D?", r"bioconda::star=xxx", content)

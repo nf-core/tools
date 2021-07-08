@@ -70,8 +70,8 @@ class ModulesTestYmlBuilder(object):
                 choices=modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
-        self.module_dir = os.path.join("software", *self.module_name.split("/"))
-        self.module_test_main = os.path.join("tests", "software", *self.module_name.split("/"), "main.nf")
+        self.module_dir = os.path.join("modules", *self.module_name.split("/"))
+        self.module_test_main = os.path.join("tests", "modules", *self.module_name.split("/"), "main.nf")
 
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.module_dir):
@@ -86,7 +86,7 @@ class ModulesTestYmlBuilder(object):
 
         # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
-            default_val = f"tests/software/{self.module_name}/test.yml"
+            default_val = f"tests/modules/{self.module_name}/test.yml"
             if self.no_prompts:
                 self.test_yml_output_path = default_val
             else:
@@ -160,7 +160,7 @@ class ModulesTestYmlBuilder(object):
 
         while ep_test["command"] == "":
             default_val = (
-                f"nextflow run tests/software/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
+                f"nextflow run tests/modules/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
             )
             if self.no_prompts:
                 ep_test["command"] = default_val
