@@ -147,7 +147,6 @@ class ModuleVersionBumper(ModuleCommand):
             except (LookupError, ValueError) as e:
                 self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
                 return False
-            
 
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
