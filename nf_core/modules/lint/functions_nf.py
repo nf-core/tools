@@ -40,7 +40,7 @@ def functions_nf(module_lint_object, module):
         log.error(f"Could not open {module.function_nf}")
 
     # Get the template file
-    template_copy_path = os.path.join(os.path.dirname(nf_core.__file__), "module-template/software/functions.nf")
+    template_copy_path = os.path.join(os.path.dirname(nf_core.__file__), "module-template/modules/functions.nf")
     try:
         template_copy = open(template_copy_path, "r").read()
     except FileNotFoundError as e:
