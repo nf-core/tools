@@ -12,8 +12,9 @@ import unittest
 
 def create_modules_repo_dummy():
     """Create a dummy copy of the nf-core/modules repo"""
-    root_dir = tempfile.mkdtemp()
-    os.mkdir(os.path.join(root_dir, "modules"))
+    tmp_dir = tempfile.mkdtemp()
+    root_dir = os.path.join(tmp_dir, "modules")
+    os.makedirs(os.path.join(root_dir, "modules"))
     os.makedirs(os.path.join(root_dir, "tests", "modules"))
     os.makedirs(os.path.join(root_dir, "tests", "config"))
     with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
