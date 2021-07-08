@@ -52,11 +52,8 @@ class ModuleInstall(ModuleCommand):
             repos_and_modules = [(self.modules_repo, module)]
         else:
             if module:
-                raise UserWarning("You cannot specify a module and use '--all' flag at the same time")
-            if self.force:
-                log.warning("'--force' doesn't do anything when used with '--all'")
-            else:
-                self.force = True
+                raise UserWarning("You cannot specify a module and use the '--all' flag at the same time")
+            self.force = True
 
             self.get_pipeline_modules()
             repos_and_modules = [
@@ -101,7 +98,7 @@ class ModuleInstall(ModuleCommand):
                 elif not self.force:
                     log.error("Found newer version of module.")
                     self.latest = self.force = questionary.confirm(
-                        "Do you want install it? (--force --latest)", default=False
+                        "Do you want to install it? (--force --latest)", default=False
                     ).unsafe_ask()
                     if not self.latest:
                         exit_value = False

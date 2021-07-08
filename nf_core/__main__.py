@@ -401,7 +401,7 @@ def list(ctx, keywords, installed, json):
     "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-@click.option("--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
+@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
 def install(ctx, tool, dir, latest, force, sha, all):
     """
     Add a DSL2 software wrapper module to a pipeline.
