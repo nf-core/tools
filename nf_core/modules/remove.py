@@ -38,7 +38,8 @@ class ModuleRemove(ModuleCommand):
             return False
 
         # Decide from which repo the module was installed
-        if self.modules_repo.name != "nf-core/modules":
+        # TODO Configure the prompt for repository name in a nice way
+        if True:
             repo_name = self.modules_repo.name
         elif len(self.module_names) == 1:
             repo_name = list(self.module_names.keys())[0]
