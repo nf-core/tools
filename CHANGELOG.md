@@ -12,6 +12,7 @@
 * Regular release sync fix - this time it was to do with JSON serialisation [[#1072](https://github.com/nf-core/tools/pull/1072)]
 * Fixed bug in schema validation that ignores upper/lower-case typos in parameters [[#1087](https://github.com/nf-core/tools/issues/1087)]
 * Bugfix: Download should use path relative to workflow for configs
+* Remove lint checks for files related to conda and docker as not needed anymore for DSL2
 * Removed `params_used` lint check because of incompatibility with DSL2
 
 ### Modules
@@ -34,6 +35,11 @@
 * Check for `modules.json` for entries of modules that are not actually installed in the pipeline [[#1141](https://github.com/nf-core/tools/issues/1141)]
 * Added `<keywords>` argument to `nf-core modules list` for filtering the listed modules. ([#1139](https://github.com/nf-core/tools/issues/1139)
 * Added support for a `bump-versions` configuratoin file [[#1142](https://github.com/nf-core/tools/issues/1142)]
+* Fixed `nf-core modules create-test-yml` so it doesn't break when the output directory is supplied [[#1148](https://github.com/nf-core/tools/issues/1148)]
+* Updated `nf-core modules lint` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
+* Updated `nf-core modules install` and `modules.json` to work with new directory structure ([#1159](https://github.com/nf-core/tools/issues/1159))
+* Updated `nf-core modules remove` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
+* Restructured code and removed old table style in `nf-core modules list`
 
 #### Sync
 
@@ -42,6 +48,7 @@
 #### Tests
 
 * Added a test for the `version_consistency` lint check
+* Refactored modules tests into separate files, and removed direct comparisons with number of tests in `lint` tests ([#1158](https://github.com/nf-core/tools/issues/1158))
 
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 

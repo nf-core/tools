@@ -45,7 +45,6 @@ def run_linting(
     # Load the various pipeline configs
     lint_obj._load_lint_config()
     lint_obj._load_pipeline_config()
-    lint_obj._load_conda_environment()
     lint_obj._list_files()
 
     # Run the linting tests
@@ -101,8 +100,6 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_awstest import actions_awstest
     from .actions_ci import actions_ci
     from .actions_schema_validation import actions_schema_validation
-    from .conda_dockerfile import conda_dockerfile
-    from .conda_env_yaml import conda_env_yaml
     from .files_exist import files_exist
     from .files_unchanged import files_unchanged
     from .merge_markers import merge_markers
@@ -143,8 +140,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
-            "conda_env_yaml",
-            "conda_dockerfile",
             "pipeline_todos",
             "pipeline_name_conventions",
             "template_strings",
