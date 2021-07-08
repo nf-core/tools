@@ -40,6 +40,7 @@
 * Updated `nf-core modules install` and `modules.json` to work with new directory structure ([#1159](https://github.com/nf-core/tools/issues/1159))
 * Updated `nf-core modules remove` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
 * Restructured code and removed old table style in `nf-core modules list`
+* Fixed bug causing `modules.json` creation to loop indefinitly
 
 #### Sync
 
