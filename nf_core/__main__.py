@@ -401,7 +401,8 @@ def list(ctx, keywords, installed, json):
     "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def install(ctx, tool, dir, latest, force, sha):
+@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
+def install(ctx, tool, dir, latest, force, sha, all):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
@@ -409,11 +410,17 @@ def install(ctx, tool, dir, latest, force, sha):
     along with associated metadata.
     """
     try:
-        module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha)
+        module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha, update_all=all)
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
-        module_install.install(tool)
+        exit_status = module_install.install(tool)
+        if not exit_status and all:
+            log.critical(
+                "Install command exited with bad exit status. "
+                "Some of your module files might have been erroneously removed."
+            )
+            sys.exit(1)
     except UserWarning as e:
-        log.critical(e)
+        log.error(e)
         sys.exit(1)
 
 
