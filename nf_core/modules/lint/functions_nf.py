@@ -49,6 +49,8 @@ def functions_nf(module_lint_object, module):
     # Compare the files
     if local_copy and template_copy:
         if local_copy != template_copy:
-            module.failed.append(("function_nf_comparison", "New version of functions.nf available", module.function_nf))
+            module.failed.append(
+                ("function_nf_comparison", "New version of functions.nf available", module.function_nf)
+            )
         else:
             module.passed.append(("function_nf_comparison", "functions.nf is up to date", module.function_nf))
