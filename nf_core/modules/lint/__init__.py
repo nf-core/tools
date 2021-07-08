@@ -272,7 +272,7 @@ class ModuleLint(ModuleCommand):
         # nf-core/modules
         if self.repo_type == "modules":
             nfcore_modules_dir = os.path.join(self.dir, "modules")
-        
+
         # Get nf-core modules
         if os.path.exists(nfcore_modules_dir):
             for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
