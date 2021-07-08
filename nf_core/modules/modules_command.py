@@ -119,9 +119,9 @@ class ModuleCommand:
             log.error("Could not remove module: {}".format(e))
             return False
 
-    def download_module_file(self, module_name, module_version, install_folder, module_dir):
+    def download_module_file(self, module_name, module_version, modules_repo, install_folder, module_dir):
         """Downloads the files of a module from the remote repo"""
-        files = self.modules_repo.get_module_file_urls(module_name, module_version)
+        files = modules_repo.get_module_file_urls(module_name, module_version)
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             split_filename = filename.split("/")
