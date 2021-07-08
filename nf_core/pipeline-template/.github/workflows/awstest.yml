@@ -1,43 +1,28 @@
-name: nf-core AWS tests
-# This workflow is triggered only on manual dispatch.
-# It can be additionally triggered manually with GitHub actions workflow dispatch.
+name: nf-core AWS test
+# This workflow can be triggered manually with the GitHub actions workflow dispatch button.
 # It runs the -profile 'test' on AWS batch
 
 on:
   workflow_dispatch:
-
-{% raw %}
-env:
-  TOWER_WORKSPACE_ID: ${{ secrets.TOWER_WORKSPACE_ID }}
-  TOWER_BEARER_TOKEN: ${{ secrets.TOWER_BEARER_TOKEN }}
-  TOWER_COMPUTE_ENV: ${{ secrets.TOWER_COMPUTE_ENV }}
-  AWS_S3_BUCKET: ${{ secrets.AWS_S3_BUCKET }}
-{% endraw %}
-
 jobs:
-  run-awstest:
-    name: Run AWS tests
+  run-tower:
+    name: Run AWS full tests
     if: github.repository == '{{ name }}'
     runs-on: ubuntu-latest
     steps:
       - name: Launch workflow via tower
-        # TODO nf-core: You can customise AWS full pipeline tests as required
-        # Add full size test data (but still relatively small datasets for few samples)
-        # on the `test_full.config` test runs with only one set of parameters
-        run: |
-          curl -X POST "https://api.tower.nf/workflow/launch?workspaceId=${TOWER_WORKSPACE_ID}" \
-          -H "Accept: application/json" \
-          -H "Authorization: Bearer ${TOWER_BEARER_TOKEN}" \
-          -H "Content-Type: application/json" \
-          -d '{
-            "launch": {
-              "computeEnvId" : "'"${TOWER_COMPUTE_ENV}"'",
-              "pipeline" : "{{ name }}",
-              "workDir" : "s3://'"${AWS_S3_BUCKET}"'/work/{{ short_name }}/commit-'"${GITHUB_SHA}"'",
-              "paramsText" : "{\"outdir\":\"s3://'"${AWS_S3_BUCKET}"'/{{ short_name }}/results-'"${GITHUB_SHA}"'\"}",
-              "revision" : "'"${GITHUB_SHA}"'",
-              "configProfiles" : ["test","aws_tower"],
-              "resume" : false
-              }
-            }' \
-          --fail
+        uses: nf-core/tower-action@master
+        {% raw %}
+        with:
+          workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
+          bearer_token: ${{ secrets.TOWER_BEARER_TOKEN }}
+          compute_env: ${{ secrets.TOWER_COMPUTE_ENV }}
+          pipeline: ${{ github.repository }}
+          revision: ${{ github.sha }}
+          workdir: s3://${{ secrets.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}
+          parameters: |
+            {
+              "outdir": "s3://{% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ github.sha }}{% endraw %}"
+            }
+          profiles: '[ "test", "aws_tower" ]'
+
