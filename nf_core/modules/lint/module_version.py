@@ -25,7 +25,7 @@ def module_version(module_lint_object, module):
 
     # Verify that a git_sha exists in the `modules.json` file for this module
     try:
-        module_entry = module_lint_object.modules_json["repos"]["nf-core/modules"][module.module_name]
+        module_entry = module_lint_object.modules_json["repos"][module_lint_object.modules_repo.name][module.module_name]
         git_sha = module_entry["git_sha"]
         module.git_sha = git_sha
         module.passed.append(("git_sha", "Found git_sha entry in `modules.json`", modules_json_path))
