@@ -167,24 +167,13 @@ class PipelineLint(nf_core.utils.Pipeline):
     def _load_lint_config(self):
         """Parse a pipeline lint config file.
 
-        Look for a file called either `.nf-core-lint.yml` or
-        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
-        (`.yml` takes precedence).
+        Load the '.nf-core.yml'  config file and extract
+        the lint config from it
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        config_fn = os.path.join(self.wf_path, ".nf-core-lint.yml")
-
-        # Pick up the file if it's .yaml instead of .yml
-        if not os.path.isfile(config_fn):
-            config_fn = os.path.join(self.wf_path, ".nf-core-lint.yaml")
-
-        # Load the YAML
-        try:
-            with open(config_fn, "r") as fh:
-                self.lint_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug("No lint config file found: {}".format(config_fn))
+        tools_config = nf_core.utils.load_tools_config(self.wf_path)
+        self.lint_config = tools_config.get("lint", {})
 
         # Check if we have any keys that don't match lint test names
         for k in self.lint_config:
