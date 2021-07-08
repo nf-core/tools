@@ -128,8 +128,9 @@ class ModuleVersionBumper(ModuleCommand):
             return False
 
         # Don't update if blocked in blacklist
-        if module.module_name in self.tools_config.keys():
-            config_version = self.tools_config[module.module_name]
+        self.bump_versions_config = self.tools_config.get("bump-versions", {})
+        if module.module_name in self.bump_versions_config.keys():
+            config_version = self.bump_versions_config[module.module_name]
             if not config_version:
                 self.up_to_date.append((f"Omitting module due to config: {module.module_name}", module.module_name))
                 return False
@@ -335,4 +336,3 @@ class ModuleVersionBumper(ModuleCommand):
             table.add_column("Update message")
             table = format_result(self.failed, table)
             console.print(table)
-

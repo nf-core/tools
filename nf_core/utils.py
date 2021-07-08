@@ -738,36 +738,38 @@ def get_repo_releases_branches(pipeline, wfs):
 
 
 def load_tools_config(dir="."):
-        """
-        Parse the nf-core.yml configuration file
+    """
+    Parse the nf-core.yml configuration file
 
-        Look for a file called either `.nf-core.yml` or `.nf-core.yaml`
+    Look for a file called either `.nf-core.yml` or `.nf-core.yaml`
 
-        Also looks for the deprecated file `.nf-core-lint.yml/yaml` and issues
-        a warning that this file will be deprecated in the future
+    Also looks for the deprecated file `.nf-core-lint.yml/yaml` and issues
+    a warning that this file will be deprecated in the future
 
-        Returns the loaded config dict or False, if the file couldn't be loaded
-        """
-        tools_config = None
-        config_fn = os.path.join(dir, ".nf-core.yml")
+    Returns the loaded config dict or False, if the file couldn't be loaded
+    """
+    tools_config = {}
+    config_fn = os.path.join(dir, ".nf-core.yml")
 
-        # Check if old config file is used
-        old_config_fn_yml = os.path.join(dir, ".nf-core-lint.yml")
-        old_config_fn_yaml = os.path.join(dir, ".nf-core-lint.yaml")
+    # Check if old config file is used
+    old_config_fn_yml = os.path.join(dir, ".nf-core-lint.yml")
+    old_config_fn_yaml = os.path.join(dir, ".nf-core-lint.yaml")
 
-        if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
-            log.error(f"Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`.")
-            return False
+    if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
+        log.error(
+            f"Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
+        )
+        return {}
 
-        if not os.path.isfile(config_fn):
-            config_fn = os.path.join(dir, ".nf-core.yaml")
+    if not os.path.isfile(config_fn):
+        config_fn = os.path.join(dir, ".nf-core.yaml")
 
-        # Load the YAML
-        try:
-            with open(config_fn, "r") as fh:
-                tools_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug(f"No tools config file found: {config_fn}")
-            return False
-        
-        return tools_config
+    # Load the YAML
+    try:
+        with open(config_fn, "r") as fh:
+            tools_config = yaml.safe_load(fh)
+    except FileNotFoundError:
+        log.debug(f"No tools config file found: {config_fn}")
+        return {}
+
+    return tools_config

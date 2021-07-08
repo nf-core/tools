@@ -30,7 +30,10 @@ class NFCoreModule(object):
             if self.repo_type == "pipeline":
                 self.module_name = module_dir.split("nf-core/modules" + os.sep)[1]
             else:
-                self.module_name = module_dir.split("modules/modules" + os.sep)[1]
+                if "modules/modules" in module_dir:
+                    self.module_name = module_dir.split("modules/modules" + os.sep)[1]
+                else:
+                    self.module_name = module_dir.split("modules" + os.sep)[1]
 
             self.test_dir = os.path.join(self.base_dir, "tests", "modules", self.module_name)
             self.test_yml = os.path.join(self.test_dir, "test.yml")
