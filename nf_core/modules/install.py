@@ -86,8 +86,9 @@ class ModuleInstall(ModuleCommand):
             if current_entry is not None and self.sha is None:
                 # Fetch the latest commit for the module
                 current_version = current_entry["git_sha"]
-                git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
-                if len(git_log) == 0:
+                try:
+                    git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
+                except UserWarning:
                     log.error(f"Was unable to fetch version of '{modules_repo.name}/{module}'")
                     exit_value = False
                     continue
@@ -112,7 +113,7 @@ class ModuleInstall(ModuleCommand):
 
             if self.sha:
                 if current_entry is not None and not self.force:
-                    return False
+                    exit_value = False
                 if self.download_module_file(module, self.sha, modules_repo, install_folder, module_dir):
                     self.update_modules_json(modules_json, modules_repo.name, module, self.sha)
                 else:
@@ -122,8 +123,9 @@ class ModuleInstall(ModuleCommand):
                 if self.latest or self.update_all:
                     # Fetch the latest commit for the module
                     if latest_version is None:
-                        git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
-                        if len(git_log) == 0:
+                        try:
+                            git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
+                        except UserWarning:
                             log.error(f"Was unable to fetch version of module '{module}'")
                             exit_value = False
                             continue
