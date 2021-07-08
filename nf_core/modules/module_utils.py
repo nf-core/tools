@@ -48,8 +48,7 @@ def get_module_git_log(
         commits = response.json()
 
         if len(commits) == 0:
-            log.debug(f"Reached end of commit history for '{module_name}'")
-            return []
+            raise UserWarning(f"Reached end of commit history for '{module_name}'")
         else:
             # Return the commit SHAs and the first line of the commit message
             return [
@@ -165,7 +164,7 @@ def create_modules_json(pipeline_dir):
                         commit_page_nbr += 1
 
                     modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
-                except LookupError as e:
+                except (UserWarning, LookupError) as e:
                     log.error(e)
                     raise UserWarning("Will not create 'modules.json' file")
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
