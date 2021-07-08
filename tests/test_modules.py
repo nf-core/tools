@@ -13,11 +13,11 @@ import unittest
 def create_modules_repo_dummy():
     """Create a dummy copy of the nf-core/modules repo"""
     root_dir = tempfile.mkdtemp()
-    os.mkdir(os.path.join(root_dir, "software"))
-    os.makedirs(os.path.join(root_dir, "tests", "software"))
+    os.mkdir(os.path.join(root_dir, "modules"))
+    os.makedirs(os.path.join(root_dir, "tests", "modules"))
     os.makedirs(os.path.join(root_dir, "tests", "config"))
-    with open(os.path.join(root_dir, "tests", "config", "pytest_software.yml"), "w") as fh:
-        fh.writelines(["test:", "\n  - software/test/**", "\n  - tests/software/test/**"])
+    with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
+        fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
 
     module_create = nf_core.modules.ModuleCreate(root_dir, "star/align", "@author", "process_medium", False, False)
     module_create.create()
@@ -40,7 +40,9 @@ class TestModules(unittest.TestCase):
         print("Setting up install objects")
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, latest=True, force=True)
         self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, latest=True, force=True)
-        self.mods_install_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+
+        # TODO Remove comments once external repository to have same structure as nf-core/modules
+        # self.mods_install_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
 
         # Set up remove objects
         print("Setting up remove objects")
@@ -72,13 +74,11 @@ class TestModules(unittest.TestCase):
         test_modules_install_emptypipeline,
         test_modules_install_nomodule,
         test_modules_install_trimgalore,
-        test_modules_install_trimgalore_alternative_source,
         test_modules_install_trimgalore_twice,
     )
 
     from modules.remove import (
         test_modules_remove_trimgalore,
-        test_modules_remove_trimgalore_alternative_source,
         test_modules_remove_trimgalore_uninstalled,
     )
 

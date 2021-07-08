@@ -1,3 +1,5 @@
+from posixpath import dirname
+from nf_core import modules
 import os
 import glob
 import shutil
@@ -32,19 +34,44 @@ class ModuleCommand:
             raise UserWarning(e)
 
     def get_pipeline_modules(self):
-        """Get list of modules installed in the current directory"""
-        self.module_names = []
+        """
+        Get the modules installed in the current directory.
+
+        If the current directory is a pipeline, the `module_names`
+        field is set to a dictionary indexed by the different
+        installation repositories in the directory. If the directory
+        is a clone of nf-core/modules the filed is set to
+        `{"modules": modules_in_dir}`
+
+        """
+
+        self.module_names = {}
+
+        module_base_path = f"{self.dir}/modules/"
+
         if self.repo_type == "pipeline":
-            module_base_path = f"{self.dir}/modules/nf-core/software"
+            repo_owners = (owner for owner in os.listdir(module_base_path) if owner != "local")
+            repo_names = (
+                f"{repo_owner}/{name}"
+                for repo_owner in repo_owners
+                for name in os.listdir(f"{module_base_path}/{repo_owner}")
+            )
+            for repo_name in repo_names:
+                repo_path = os.path.join(module_base_path, repo_name)
+                module_mains_path = f"{repo_path}/**/main.nf"
+                module_mains = glob.glob(module_mains_path, recursive=True)
+                self.module_names[repo_name] = [
+                    os.path.dirname(os.path.relpath(mod, repo_path)) for mod in module_mains
+                ]
         elif self.repo_type == "modules":
-            module_base_path = f"{self.dir}/software"
+            module_mains_path = f"{module_base_path}/**/main.nf"
+            module_mains = glob.glob(module_mains_path, recursive=True)
+            self.module_names["modules"] = [
+                os.path.dirname(os.path.relpath(mod, module_base_path)) for mod in module_mains
+            ]
         else:
             log.error("Directory is neither a clone of nf-core/modules nor a pipeline")
             raise SystemError
-        module_mains_path = f"{module_base_path}/**/main.nf"
-        module_mains = glob.glob(module_mains_path, recursive=True)
-        for mod in module_mains:
-            self.module_names.append(os.path.dirname(os.path.relpath(mod, module_base_path)))
 
     def has_valid_directory(self):
         """Check that we were given a pipeline or clone of nf-core/modules"""
@@ -118,15 +145,17 @@ class ModuleCommand:
             modules_json = None
         return modules_json
 
+    def update_modules_json(self, modules_json, repo_name, module_name, module_version):
+        """Updates the 'module.json' file with new module info"""
+        if repo_name not in modules_json["repos"]:
+            modules_json["repos"][repo_name] = dict()
+        modules_json["repos"][repo_name][module_name] = {"git_sha": module_version}
+        self.dump_modules_json(modules_json)
+
     def dump_modules_json(self, modules_json):
         modules_json_path = os.path.join(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
-
-    def update_modules_json(self, modules_json, module_name, module_version):
-        """Updates the 'module.json' file with new module info"""
-        modules_json["modules"][module_name] = {"git_sha": module_version}
-        self.dump_modules_json(modules_json)
 
     def load_lint_config(self):
         """Parse a pipeline lint config file.

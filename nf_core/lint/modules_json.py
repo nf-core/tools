@@ -25,10 +25,11 @@ def modules_json(self):
 
         all_modules_passed = True
 
-        for key in modules_json["modules"].keys():
-            if not key in modules_command.module_names:
-                failed.append(f"Entry for `{key}` found in `modules.json` but module is not installed in pipeline.")
-                all_modules_passed = False
+        for repo in modules_json["repos"].keys():
+            for key in modules_json["repos"][repo].keys():
+                if not key in modules_command.module_names[repo]:
+                    failed.append(f"Entry for `{key}` found in `modules.json` but module is not installed in pipeline.")
+                    all_modules_passed = False
 
         if all_modules_passed:
             passed.append("Only installed modules found in `modules.json`")

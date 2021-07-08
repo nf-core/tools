@@ -1,6 +1,4 @@
 import os
-import sys
-import json
 import questionary
 import logging
 
@@ -13,7 +11,7 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInstall(ModuleCommand):
-    def __init__(self, pipeline_dir, module=None, force=False, latest=False, sha=None):
+    def __init__(self, pipeline_dir, force=False, latest=False, sha=None):
         super().__init__(pipeline_dir)
         self.force = force
         self.latest = latest
@@ -49,10 +47,9 @@ class ModuleInstall(ModuleCommand):
             log.error("Module '{}' not found in list of available modules.".format(module))
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
+
         # Set the install folder based on the repository name
-        install_folder = ["nf-core", "software"]
-        if not self.modules_repo.name == "nf-core/modules":
-            install_folder = ["external"]
+        install_folder = [self.modules_repo.owner, self.modules_repo.repo]
 
         # Compute the module directory
         module_dir = os.path.join(self.dir, "modules", *install_folder, module)
@@ -62,12 +59,15 @@ class ModuleInstall(ModuleCommand):
         if not modules_json:
             return False
 
-        current_entry = modules_json["modules"].get(module)
+        if self.modules_repo.name in modules_json["repos"]:
+            current_entry = modules_json["repos"][self.modules_repo.name].get(module)
+        else:
+            current_entry = None
 
         if current_entry is not None and self.sha is None:
             # Fetch the latest commit for the module
             current_version = current_entry["git_sha"]
-            git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+            git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
             if len(git_log) == 0:
                 log.error(f"Was unable to fetch version of module '{module}'")
                 return False
@@ -107,7 +107,7 @@ class ModuleInstall(ModuleCommand):
             if self.latest:
                 # Fetch the latest commit for the module
                 if latest_version is None:
-                    git_log = get_module_git_log(module, per_page=1, page_nbr=1)
+                    git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
                     if len(git_log) == 0:
                         log.error(f"Was unable to fetch version of module '{module}'")
                         return False
@@ -122,15 +122,17 @@ class ModuleInstall(ModuleCommand):
                     log.error(e)
                     return False
 
-        log.info("Installing {}".format(module))
-        log.debug("Installing module '{}' at modules hash {}".format(module, self.modules_repo.modules_current_hash))
+        log.info(f"Installing {module}")
+        log.debug(
+            f"Installing module '{module}' at modules hash {self.modules_repo.modules_current_hash} from {self.modules_repo.name}"
+        )
 
         # Download module files
         if not self.download_module_file(module, version, install_folder, module_dir):
             return False
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, module, version)
+        self.update_modules_json(modules_json, self.modules_repo.name, module, version)
         return True
 
     def check_module_files_installed(self, module_name, module_dir):
@@ -155,10 +157,12 @@ class ModuleInstall(ModuleCommand):
         )
         git_sha = ""
         page_nbr = 1
-        next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr)
+        next_page_commits = get_module_git_log(module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr)
         while git_sha is "":
             commits = next_page_commits
-            next_page_commits = get_module_git_log(module, per_page=10, page_nbr=page_nbr + 1)
+            next_page_commits = get_module_git_log(
+                module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr + 1
+            )
             choices = []
             for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
 
