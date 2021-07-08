@@ -42,7 +42,7 @@ def test_modules_create_test_yml_get_md5(self):
 def test_modules_create_test_yml_entry_points(self):
     """Test extracting test entry points from a main.nf file"""
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
-    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "software", "star", "align", "main.nf")
+    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "star", "align", "main.nf")
     meta_builder.scrape_workflow_entry_points()
     assert meta_builder.entry_points[0] == "test_star_align"
 
@@ -52,7 +52,7 @@ def test_modules_create_test_yml_check_inputs(self):
     cwd = os.getcwd()
     os.chdir(self.nfcore_modules)
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
-    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "software", "star", "align", "main.nf")
+    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "star", "align", "main.nf")
     with pytest.raises(UserWarning) as excinfo:
         meta_builder.check_inputs()
     os.chdir(cwd)

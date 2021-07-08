@@ -1,5 +1,5 @@
 import nf_core.modules
-
+import os
 
 def test_modules_lint_trimgalore(self):
     """Test linting the TrimGalore! module"""
