@@ -178,12 +178,22 @@ class ModuleInstall(ModuleCommand):
         )
         git_sha = ""
         page_nbr = 1
-        next_page_commits = get_module_git_log(module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr)
+        try:
+            next_page_commits = get_module_git_log(
+                module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr
+            )
+        except UserWarning:
+            next_page_commits = None
+
         while git_sha is "":
             commits = next_page_commits
-            next_page_commits = get_module_git_log(
-                module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr + 1
-            )
+            try:
+                next_page_commits = get_module_git_log(
+                    module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr + 1
+                )
+            except UserWarning:
+                next_page_commits = None
+
             choices = []
             for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
 
@@ -193,7 +203,7 @@ class ModuleInstall(ModuleCommand):
                     message += " (installed version)"
                 commit_display = [(display_color, message), ("class:choice-default", "")]
                 choices.append(questionary.Choice(title=commit_display, value=sha))
-            if len(next_page_commits) > 0:
+            if next_page_commits is not None:
                 choices += [older_commits_choice]
             git_sha = questionary.select(
                 f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
