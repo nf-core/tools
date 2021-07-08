@@ -78,8 +78,8 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
-        config_dict = {test_name: False for test_name in lint_obj.lint_tests}
-        with open(os.path.join(new_pipeline, ".nf-core-lint.yml"), "w") as fh:
+        config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
+        with open(os.path.join(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
