@@ -112,10 +112,22 @@ class ModuleInstall(ModuleCommand):
             # Check that we don't already have a folder for this module
             if not self.check_module_files_installed(module, module_dir):
                 exit_value = False
+                continue
 
             if self.sha:
-                if current_entry is not None and not self.force:
-                    exit_value = False
+                if current_entry is not None:
+                    if self.force:
+                        if current_entry["git_sha"] == self.sha:
+                            log.info(f"Module {modules_repo.name}/{module} already installed at {self.sha}")
+                            continue
+                    else:
+                        exit_value = False
+                        continue
+
+                if self.force:
+                    log.info(f"Removing old version of module '{module}'")
+                    self.clear_module_dir(module, module_dir)
+
                 if self.download_module_file(module, self.sha, modules_repo, install_folder, module_dir):
                     self.update_modules_json(modules_json, modules_repo.name, module, self.sha)
                 else:
@@ -149,6 +161,10 @@ class ModuleInstall(ModuleCommand):
                 f"Installing module '{module}' at modules hash {modules_repo.modules_current_hash} from {self.modules_repo.name}"
             )
 
+            if self.force:
+                log.info(f"Removing old version of module '{module}'")
+                self.clear_module_dir(module, module_dir)
+
             # Download module files
             if not self.download_module_file(module, version, modules_repo, install_folder, module_dir):
                 exit_value = False
@@ -166,11 +182,7 @@ class ModuleInstall(ModuleCommand):
                 self.force = questionary.confirm(
                     "Do you want to overwrite local files? (--force)", default=False
                 ).unsafe_ask()
-            if self.force:
-                log.info(f"Removing old version of module '{module_name}'")
-                return self.clear_module_dir(module_name, module_dir)
-            else:
-                return False
+            return self.force
         else:
             return True
 
