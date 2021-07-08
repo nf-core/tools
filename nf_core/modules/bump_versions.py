@@ -129,7 +129,7 @@ class ModuleVersionBumper(ModuleCommand):
 
         # Don't update if blocked in blacklist
         self.bump_versions_config = self.tools_config.get("bump-versions", {})
-        if module.module_name in self.bump_versions_config.keys():
+        if module.module_name in self.bump_versions_config:
             config_version = self.bump_versions_config[module.module_name]
             if not config_version:
                 self.up_to_date.append((f"Omitting module due to config: {module.module_name}", module.module_name))
@@ -144,12 +144,10 @@ class ModuleVersionBumper(ModuleCommand):
         if not config_version:
             try:
                 response = nf_core.utils.anaconda_package(bp)
-            except LookupError as e:
+            except (LookupError, ValueError) as e:
                 self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
                 return False
-            except ValueError as e:
-                self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
-                return False
+            
 
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
