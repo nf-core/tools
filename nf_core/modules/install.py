@@ -95,7 +95,7 @@ class ModuleInstall(ModuleCommand):
                     exit_value = False
                     continue
                 latest_version = git_log[0]["git_sha"]
-                if current_version == latest_version and (not self.force or self.update_all):
+                if current_version == latest_version and (not self.force or self.latest):
                     log.info(f"'{modules_repo.name}/{module}' is already up to date")
                     continue
                 elif not self.force:
@@ -134,7 +134,7 @@ class ModuleInstall(ModuleCommand):
                     exit_value = False
                 continue
             else:
-                if self.latest or self.update_all:
+                if self.latest:
                     # Fetch the latest commit for the module
                     if latest_version is None:
                         try:
@@ -195,17 +195,14 @@ class ModuleInstall(ModuleCommand):
         git_sha = ""
         page_nbr = 1
         try:
-            next_page_commits = get_module_git_log(
-                module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr
-            )
+            next_page_commits = get_module_git_log(module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr)
         except UserWarning:
             next_page_commits = None
-
         while git_sha is "":
             commits = next_page_commits
             try:
                 next_page_commits = get_module_git_log(
-                    module, modules_repo=self.modules_repo, per_page=10, page_nbr=page_nbr + 1
+                    module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr + 1
                 )
             except UserWarning:
                 next_page_commits = None
