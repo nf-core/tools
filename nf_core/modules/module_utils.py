@@ -165,8 +165,9 @@ def create_modules_json(pipeline_dir):
 
                     modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
                 except (UserWarning, LookupError) as e:
-                    log.error(e)
-                    raise UserWarning("Will not create 'modules.json' file")
+                    log.warn(
+                        f"Could not fetch 'git_sha' for module: '{module_name}'. Please try to install a newer version of this module. ({e})"
+                    )
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
