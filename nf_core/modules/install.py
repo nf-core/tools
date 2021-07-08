@@ -184,7 +184,7 @@ class ModuleInstall(ModuleCommand):
                     message += " (installed version)"
                 commit_display = [(display_color, message), ("class:choice-default", "")]
                 choices.append(questionary.Choice(title=commit_display, value=sha))
-            if next_page_commits is None:
+            if next_page_commits is not None:
                 choices += [older_commits_choice]
             git_sha = questionary.select(
                 f"Select '{module}' version", choices=choices, style=nf_core.utils.nfcore_question_style
