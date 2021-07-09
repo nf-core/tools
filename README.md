@@ -193,7 +193,7 @@ $ nf-core list
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -218,7 +218,7 @@ $ nf-core list rna rna-seq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name ┃ Stars ┃ Latest Release ┃     Released ┃ Last Pulled ┃ Have latest release? ┃
@@ -247,7 +247,7 @@ $ nf-core list -s stars
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -291,7 +291,7 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
@@ -371,7 +371,7 @@ $ nf-core download
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.14
+    nf-core/tools version 2.0
 
 
 Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
@@ -557,7 +557,7 @@ $ nf-core create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
@@ -712,7 +712,7 @@ $ nf-core schema validate rnaseq nf-params.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -744,7 +744,7 @@ $ nf-core schema build nf-core-testpipeline
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
   INFO     [✓] Default parameters look valid
   INFO     [✓] Pipeline schema looks valid (found 25 params)
@@ -783,7 +783,7 @@ $ nf-core schema lint nextflow_schema.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
   ERROR    [✗] Pipeline schema does not follow nf-core specs:
             Definition subschema 'input_output_options' not included in schema 'allOf'
@@ -806,7 +806,7 @@ $ nf-core bump-version . 1.7
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -861,7 +861,7 @@ $ nf-core sync my_pipeline/
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
