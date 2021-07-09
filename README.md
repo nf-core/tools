@@ -1068,7 +1068,7 @@ $ nf-core modules create-test-yml
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses
@@ -1107,29 +1107,34 @@ Run the `nf-core modules lint` command to check modules in the current working d
 Use the `--all` flag to run linting on all modules found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
 
 ```console
-$ nf-core modules lint -d nf-core-modules
+$ nf-core modules lint
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
-? Lint all modules or a single named module?  Named module
+? Lint all modules or a single named module? Named module
 ? Tool name: star/align
-INFO     Linting modules repo: .
+INFO     Linting pipeline: .
 INFO     Linting module: star/align
-╭──────────────────────────────────────────┬────────────────────────────────────┬─────────────────────────────╮
-│ Module name                              │ Test message                       │ File path                   │
-├──────────────────────────────────────────┼────────────────────────────────────┼─────────────────────────────┤
-│ star/align                               │ Conda update: bioconda::star       │ software/star/align/main.nf │
-│                                          │ 2.6.1d -> 2.7.8a                   │                             │
-╰──────────────────────────────────────────┴────────────────────────────────────┴─────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Module lint results                                                                                                │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warning                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────┬────────────────────────────────────────────┬───────────────────────────────────────────────────╮
+│ Module name       │ File path                                  │ Test message                                      │
+├───────────────────┼────────────────────────────────────────────┼───────────────────────────────────────────────────┤
+│ star/align        │ modules/nf-core/modules/star/align/main.nf │ Conda update: bioconda::star 2.6.1d -> 2.7.9a     │
+╰───────────────────┴────────────────────────────────────────────┴───────────────────────────────────────────────────╯
 ╭──────────────────────╮
 │ LINT RESULTS SUMMARY │
 ├──────────────────────┤
-│ [✔]  18 Tests Passed │
+│ [✔]  21 Tests Passed │
 │ [!]   1 Test Warning │
 │ [✗]   0 Test Failed  │
 ╰──────────────────────╯
