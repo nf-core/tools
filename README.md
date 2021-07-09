@@ -490,7 +490,7 @@ If the download speeds are much slower than your internet connection is capable 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-> NB: Currently this command does not work for DSL2 pipelines. This will be addressed soon.
+> NB: Currently this command does not work for DSL2 pipelines. This will be addressed [soon](https://github.com/nf-core/tools/issues/1155).
 
 ```console
 $ nf-core licences rnaseq
