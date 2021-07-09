@@ -26,7 +26,9 @@ A python package with helper tools for the nf-core community.
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 * [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
     * [`modules list` - List available modules](#list-modules)
-    * [`modules install` - Install a module from nf-core/modules](#install-a-module-into-a-pipeline)
+        * [`modules list remote` - List remote modules](#list-remote-modules)
+        * [`modules list local` - List installed modules](#list-installed-modules)
+    * [`modules install` - Install or update modules in pipeline](#install-or-update-modules-in-a-pipeline)
     * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
     * [`modules create` - Create a module from the template](#create-a-new-module)
     * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
@@ -953,10 +955,10 @@ INFO     Modules installed in '.':
 └─────────────┴─────────────────┴──────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────┴────────────┘
 ```
 
-### Install a module into a pipeline
+### Install or update modules in a pipeline
 
 You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
-A module installed this way will be installed to the `./modules/nf-core/software` directory.
+A module installed this way will be installed to the `./modules/nf-core/modules` directory.
 
 ```console
 $ nf-core modules install
@@ -966,25 +968,27 @@ $ nf-core modules install
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ? Tool name: cat/fastq
+? Select 'cat/fastq' version: Rename software/ directory to modules/ to re-organise module structure ...truncated...
 INFO     Installing cat/fastq
-INFO     Downloaded 3 files to ./modules/nf-core/software/cat/fastq
+INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
 ```
 
 You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
 
-There are four flags that you can use with this command:
+There are five flags that you can use with this command:
 
 * `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
 * `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
 * `--force`: Overwrite a previously installed version of the module.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force` on all installed modules.
 
 ### Remove a module from a pipeline
 
-To delete a module from your pipeline, run `nf-core modules remove`
+To delete a module from your pipeline, run `nf-core modules remove`.
 
 ```console
 $ nf-core modules remove
@@ -995,14 +999,13 @@ $ nf-core modules remove
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ? Tool name: star/align
 INFO     Removing star/align
-INFO     Successfully removed star/align module
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
+You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
 ### Create a new module
 
