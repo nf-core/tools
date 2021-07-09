@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v2.0
+## [v2.0 - Palladium Platypus](https://github.com/nf-core/tools/releases/tag/2.0) - [2021-07-09]
 
 ### Template
 
