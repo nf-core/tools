@@ -3,7 +3,6 @@ import requests
 import base64
 import sys
 import logging
-import json
 import nf_core.utils
 
 log = logging.getLogger(__name__)
