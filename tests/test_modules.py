@@ -49,7 +49,8 @@ class TestModules(unittest.TestCase):
         print("Setting up remove objects")
         self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
         self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
-        self.mods_remove_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+        # TODO Remove comments once external repository to have same structure as nf-core/modules
+        # self.mods_remove_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy()
