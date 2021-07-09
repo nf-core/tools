@@ -1030,7 +1030,7 @@ $ nf-core modules create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses. ctrl+click underlined text to open links.
