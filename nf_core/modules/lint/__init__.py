@@ -422,6 +422,9 @@ class ModuleLint(ModuleCommand):
             table = format_result(self.failed, table)
             console.print(table)
 
+        # Print lint summary
+        self.print_summary()
+
     def print_summary(self):
         def _s(some_list):
             if len(some_list) > 1:
