@@ -595,37 +595,44 @@ This is the same test that is used on the automated continuous integration tests
 For example, the current version looks something like this:
 
 ```console
-$ cd path/to/my_pipeline
-$ nf-core lint .
+$ nf-core lint
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
-
-  INFO     Testing pipeline: nf-core-testpipeline/
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 3 Test Warnings                                                                                      │
-├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ actions_awsfulltest: .github/workflows/awsfulltest.yml should test full datasets, not -profile test      │
-│ conda_env_yaml: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                            │
-│ conda_env_yaml: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+INFO     Testing pipeline: .
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ General lint results                                                                                            │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warnings                                                                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ pipeline_todos: TODO string in base.config: Check the defaults for all processes                                │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Module lint results                                                                                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warnings                                                                                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────┬──────────────────────────────────┬───────────────────────────────────╮
+│ Module name                              │ File path                        │ Test message                      │
+├──────────────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────┤
+│ get_software_versions.nf                 │ modules/local/get_software_vers… │ 'options' variable not specified  │
+╰──────────────────────────────────────────┴──────────────────────────────────┴───────────────────────────────────╯
 ╭───────────────────────╮
 │ LINT RESULTS SUMMARY  │
 ├───────────────────────┤
-│ [✔] 155 Tests Passed  │
+│ [✔] 183 Tests Passed  │
 │ [?]   0 Tests Ignored │
-│ [!]   3 Test Warnings │
+│ [!]   2 Test Warnings │
 │ [✗]   0 Tests Failed  │
 ╰───────────────────────╯
 
-Tip: Some of these linting errors can automatically be resolved with the following command:
-
-    nf-core lint . --fix conda_env_yaml
 ```
 
 You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
