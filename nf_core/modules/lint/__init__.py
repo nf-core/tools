@@ -176,6 +176,7 @@ class ModuleLint(ModuleCommand):
 
         if print_results:
             self._print_results(show_passed=show_passed)
+            self.print_summary()
 
     def set_up_pipeline_files(self):
         self.load_lint_config()
@@ -421,9 +422,6 @@ class ModuleLint(ModuleCommand):
             table.add_column("Test message")
             table = format_result(self.failed, table)
             console.print(table)
-
-        # Print lint summary
-        self.print_summary()
 
     def print_summary(self):
         def _s(some_list):
