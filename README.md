@@ -1120,7 +1120,7 @@ $ nf-core modules bump-versions -d modules
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0.dev0
+    nf-core/tools version 2.0
 
 
 
