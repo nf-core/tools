@@ -159,7 +159,7 @@ class ModuleLint(ModuleCommand):
 
         # Filter the tests by the key if one is supplied
         if key:
-            self.filter_tests_by_key()
+            self.filter_tests_by_key(key)
             log.info("Only running tests: '{}'".format("', '".join(key)))
 
         # If it is a pipeline, load the lint config file and the modules.json file
