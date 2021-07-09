@@ -954,12 +954,12 @@ $ nf-core modules list local
 
 INFO     Modules installed in '.':
 
-┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
-┃ Module Name ┃ Repository      ┃ Version SHA                              ┃ Message                                                                       ┃ Date       ┃
-┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
-│ fastqc      │ nf-core/modules │ e937c7950af70930d1f34bb961403d9d2aa81c7d │ Rename software/ directory to modules/ to re-organise module structure (#567) │ 2021-07-07 │
-│ multiqc     │ nf-core/modules │ e937c7950af70930d1f34bb961403d9d2aa81c7d │ Rename software/ directory to modules/ to re-organise module structure (#567) │ 2021-07-07 │
-└─────────────┴─────────────────┴──────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────┴────────────┘
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Module Name ┃ Repository      ┃ Version SHA ┃ Message                                                ┃ Date       ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ fastqc      │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
+│ multiqc     │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
+└─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
 ```
 
 ### Install or update modules in a pipeline
