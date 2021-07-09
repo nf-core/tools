@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 jobs:
   run-tower:
-    name: Run AWS full tests
+    name: Run AWS tests
     if: github.repository == '{{ name }}'
     runs-on: ubuntu-latest
     steps:
