@@ -9,8 +9,7 @@ def test_actions_awsfulltest_warn(self):
     """Lint test: actions_awsfulltest - WARN"""
     self.lint_obj._load()
     results = self.lint_obj.actions_awsfulltest()
-    assert results["passed"] == ["`.github/workflows/awsfulltest.yml` is triggered correctly"]
-    assert results["warned"] == ["`.github/workflows/awsfulltest.yml` should test full datasets, not `-profile test`"]
+    assert "`.github/workflows/awsfulltest.yml` is triggered correctly" in results["passed"]
     assert len(results.get("failed", [])) == 0
     assert len(results.get("ignored", [])) == 0
 
@@ -57,6 +56,5 @@ def test_actions_awsfulltest_fail(self):
 
     results = lint_obj.actions_awsfulltest()
     assert results["failed"] == ["`.github/workflows/awsfulltest.yml` is not triggered correctly"]
-    assert results["warned"] == ["`.github/workflows/awsfulltest.yml` should test full datasets, not `-profile test`"]
-    assert len(results.get("passed", [])) == 0
+    assert "`.github/workflows/awsfulltest.yml` does not use `-profile test`" in results["passed"]
     assert len(results.get("ignored", [])) == 0
