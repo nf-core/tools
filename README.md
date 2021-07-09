@@ -1120,7 +1120,7 @@ $ nf-core modules bump-versions -d modules
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.15.dev0
+    nf-core/tools version 2.0.dev0
 
 
 
@@ -1136,7 +1136,7 @@ $ nf-core modules bump-versions -d modules
 ╰─────────────────────────────────────────────────────────────╯
 ```
 
-If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can precent the `star/align` module from being update by adding the following to the `.nf-core.yml` file:
+If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module from being updated by adding the following to the `.nf-core.yml` file:
 
 ```yaml
 bump-versions:
