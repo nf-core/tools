@@ -45,6 +45,7 @@
 * Fixed bug causing `modules.json` creation to loop indefinitly
 * Added `--all` flag to `nf-core modules install`
 * Added `remote` and `local` subcommands to `nf-core modules list`
+* Fix bug due to restructuring in modules template
 
 #### Sync
 
