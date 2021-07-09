@@ -18,9 +18,9 @@ import requests
 import rich
 import yaml
 import json
-from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
+from rich.panel import Panel
 import rich
 from nf_core.utils import rich_force_colors
 from nf_core.lint.pipeline_todos import pipeline_todos
@@ -28,8 +28,10 @@ import sys
 
 import nf_core.utils
 import nf_core.modules.module_utils
+
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
+from nf_core.lint_utils import console
 
 log = logging.getLogger(__name__)
 
@@ -66,7 +68,7 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir, key=()):
+    def __init__(self, dir):
         self.dir = dir
         try:
             self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -78,7 +80,10 @@ class ModuleLint(ModuleCommand):
         self.failed = []
         self.modules_repo = ModulesRepo()
         self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
-        self.key = key
+
+        # Get lists of modules install in directory
+        self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
+
         self.lint_config = None
         self.modules_json = None
 
@@ -90,7 +95,7 @@ class ModuleLint(ModuleCommand):
             # Add as first test to load git_sha before module_changes
             self.lint_tests.insert(0, "module_version")
 
-    def lint(self, module=None, all_modules=False, print_results=True, show_passed=False, local=False):
+    def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
         """
         Lint all or one specific module
 
@@ -108,38 +113,42 @@ class ModuleLint(ModuleCommand):
         :param print_results:   Whether to print the linting results
         :param show_passed:     Whether passed tests should be shown as well
 
-        :returns:               dict of {passed, warned, failed}
+        :returns:               A ModuleLint object containing information of
+                                the passed, warned and failed tests
         """
-
-        # Get list of all modules in a pipeline
-        local_modules, nfcore_modules = self.get_installed_modules()
 
         # Prompt for module or all
         if module is None and not all_modules:
-            question = {
-                "type": "list",
-                "name": "all_modules",
-                "message": "Lint all modules or a single named module?",
-                "choices": ["All modules", "Named module"],
-            }
-            answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
-            if answer["all_modules"] == "All modules":
-                all_modules = True
-            else:
-                module = questionary.autocomplete(
-                    "Tool name:",
-                    choices=[m.module_name for m in nfcore_modules],
-                    style=nf_core.utils.nfcore_question_style,
-                ).ask()
+            questions = [
+                {
+                    "type": "list",
+                    "name": "all_modules",
+                    "message": "Lint all modules or a single named module?",
+                    "choices": ["All modules", "Named module"],
+                },
+                {
+                    "type": "autocomplete",
+                    "name": "tool_name",
+                    "message": "Tool name:",
+                    "when": lambda x: x["all_modules"] == "Named module",
+                    "choices": [m.module_name for m in self.all_nfcore_modules],
+                },
+            ]
+            answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
+            all_modules = answers["all_modules"] == "All modules"
+            module = answers.get("tool_name")
 
         # Only lint the given module
         if module:
             if all_modules:
                 raise ModuleLintException("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            nfcore_modules = [m for m in nfcore_modules if m.module_name == module]
+            nfcore_modules = [m for m in self.all_nfcore_modules if m.module_name == module]
             if len(nfcore_modules) == 0:
                 raise ModuleLintException(f"Could not find the specified module: '{module}'")
+        else:
+            local_modules = self.all_local_modules
+            nfcore_modules = self.all_nfcore_modules
 
         if self.repo_type == "modules":
             log.info(f"Linting modules repo: [magenta]{self.dir}")
@@ -148,8 +157,42 @@ class ModuleLint(ModuleCommand):
         if module:
             log.info(f"Linting module: [magenta]{module}")
 
+        # Filter the tests by the key if one is supplied
+        if key:
+            self.filter_tests_by_key(key)
+            log.info("Only running tests: '{}'".format("', '".join(key)))
+
+        # If it is a pipeline, load the lint config file and the modules.json file
+        if self.repo_type == "pipeline":
+            self.set_up_pipeline_files()
+
+        # Lint local modules
+        if local and len(local_modules) > 0:
+            self.lint_modules(local_modules, local=True)
+
+        # Lint nf-core modules
+        if len(nfcore_modules) > 0:
+            self.lint_modules(nfcore_modules, local=False)
+
+        if print_results:
+            self._print_results(show_passed=show_passed)
+            self.print_summary()
+
+    def set_up_pipeline_files(self):
+        self.load_lint_config()
+        self.modules_json = self.load_modules_json()
+
+        # Only continue if a lint config has been loaded
+        if self.lint_config:
+            for test_name in self.lint_tests:
+                if self.lint_config.get(test_name, {}) is False:
+                    log.info(f"Ignoring lint test: {test_name}")
+                    self.lint_tests.remove(test_name)
+
+    def filter_tests_by_key(self, key):
+        """Filters the tests by the supplied key"""
         # Check that supplied test keys exist
-        bad_keys = [k for k in self.key if k not in self.lint_tests]
+        bad_keys = [k for k in key if k not in self.lint_tests]
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
@@ -159,102 +202,20 @@ class ModuleLint(ModuleCommand):
             )
 
         # If -k supplied, only run these tests
-        if self.key:
-            log.info("Only running tests: '{}'".format("', '".join(self.key)))
-            self.lint_tests = [k for k in self.lint_tests if k in self.key]
-
-        # If it is a pipeline, load the lint config file and the modules.json file
-        if self.repo_type == "pipeline":
-            self.load_lint_config()
-            self.modules_json = self.load_modules_json()
-
-            # Only continue if a lint config has been loaded
-            if self.lint_config:
-                for test_name in self.lint_tests:
-                    if self.lint_config.get(test_name, {}) is False:
-                        log.info(f"Ignoring lint test: {test_name}")
-                        self.lint_tests.remove(test_name)
-
-        # Lint local modules
-        if local and len(local_modules) > 0:
-            self.lint_local_modules(local_modules)
-
-        # Lint nf-core modules
-        if len(nfcore_modules) > 0:
-            self.lint_nfcore_modules(nfcore_modules)
-
-        if print_results:
-            self._print_results(show_passed=show_passed)
-
-        return {"passed": self.passed, "warned": self.warned, "failed": self.failed}
-
-    def lint_local_modules(self, local_modules):
-        """
-        Lint a local module
-        Only issues warnings instead of failures
-        """
-        progress_bar = rich.progress.Progress(
-            "[bold blue]{task.description}",
-            rich.progress.BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
-            transient=True,
-        )
-        with progress_bar:
-            lint_progress = progress_bar.add_task(
-                "Linting local modules", total=len(local_modules), test_name=os.path.basename(local_modules[0])
-            )
-
-            for mod in local_modules:
-                progress_bar.update(lint_progress, advance=1, test_name=os.path.basename(mod))
-                mod_object = NFCoreModule(
-                    module_dir=mod, base_dir=self.dir, repo_type=self.repo_type, nf_core_module=False
-                )
-                mod_object.main_nf = mod
-                mod_object.module_name = os.path.basename(mod)
-                self.lint_module(mod_object, local=True)
-
-    def lint_nfcore_modules(self, nfcore_modules):
-        """
-        Lint nf-core modules
-        For each nf-core module, checks for existence of the files
-        - main.nf
-        - meta.yml
-        - functions.nf
-        And verifies that their content.
-
-        If the linting is run for modules in the central nf-core/modules repo
-        (repo_type==modules), files that are relevant for module testing are
-        also examined
-        """
-
-        progress_bar = rich.progress.Progress(
-            "[bold blue]{task.description}",
-            rich.progress.BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
-            transient=True,
-        )
-        with progress_bar:
-            lint_progress = progress_bar.add_task(
-                "Linting nf-core modules", total=len(nfcore_modules), test_name=nfcore_modules[0].module_name
-            )
-            for mod in nfcore_modules:
-                progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
-                self.lint_module(mod)
+        self.lint_tests = [k for k in self.lint_tests if k in key]
 
     def get_installed_modules(self):
         """
-        Make a list of all modules installed in this repository
+        Makes lists of the local and and nf-core modules installed in this directory.
 
-        Returns a tuple of two lists, one for local modules
-        and one for nf-core modules. The local modules are represented
-        as direct filepaths to the module '.nf' file.
-        Nf-core module are returned as file paths to the module directories.
-        In case the module contains several tools, one path to each tool directory
-        is returned.
+        Returns:
+            local_modules, nfcore_modules ([NfCoreModule], [NfCoreModule]):
+                A tuple of two lists: One for local modules and one for nf-core modules.
+                In case the module contains several subtools, one path to each tool directory
+                is returned.
 
-        returns (local_modules, nfcore_modules)
         """
-        # initialize lists
+        # Initialize lists
         local_modules = []
         nfcore_modules = []
         local_modules_dir = None
@@ -262,7 +223,7 @@ class ModuleLint(ModuleCommand):
 
         # Get local modules
         if self.repo_type == "pipeline":
-            local_modules_dir = os.path.join(self.dir, "modules", "local", "process")
+            local_modules_dir = os.path.join(self.dir, "modules", "local")
 
             # Filter local modules
             if os.path.exists(local_modules_dir):
@@ -288,14 +249,85 @@ class ModuleLint(ModuleCommand):
                 else:
                     nfcore_modules.append(m)
 
-        # Make full (relative) file paths and create NFCoreModule objects
-        local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
+        # Create NFCoreModule objects for the nf-core and local modules
         nfcore_modules = [
             NFCoreModule(os.path.join(nfcore_modules_dir, m), repo_type=self.repo_type, base_dir=self.dir)
             for m in nfcore_modules
         ]
 
+        local_modules = [
+            NFCoreModule(
+                os.path.join(local_modules_dir, m), repo_type=self.repo_type, base_dir=self.dir, nf_core_module=False
+            )
+            for m in local_modules
+        ]
+
+        # The local modules mustn't conform to the same file structure
+        # as the nf-core modules. We therefore only check the main script
+        # of the module
+        for mod in local_modules:
+            mod.main_nf = mod.module_dir
+            mod.module_name = os.path.basename(mod.module_dir)
+
         return local_modules, nfcore_modules
+
+    def lint_modules(self, modules, local=False):
+        """
+        Lint a list of modules
+
+        Args:
+            modules ([NFCoreModule]): A list of module objects
+            local (boolean): Whether the list consist of local or nf-core modules
+        """
+        progress_bar = rich.progress.Progress(
+            "[bold blue]{task.description}",
+            rich.progress.BarColumn(bar_width=None),
+            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
+            transient=True,
+        )
+        with progress_bar:
+            lint_progress = progress_bar.add_task(
+                f"Linting {'local' if local else 'nf-core'} modules",
+                total=len(modules),
+                test_name=modules[0].module_name,
+            )
+
+            for mod in modules:
+                progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
+                self.lint_module(mod, local=local)
+
+    def lint_module(self, mod, local=False):
+        """
+        Perform linting on one module
+
+        If the module is a local module we only check the `main.nf` file,
+        and issue warnings instead of failures.
+
+        If the module is a nf-core module we check for existence of the files
+        - main.nf
+        - meta.yml
+        - functions.nf
+        And verify that their content conform to the nf-core standards.
+
+        If the linting is run for modules in the central nf-core/modules repo
+        (repo_type==modules), files that are relevant for module testing are
+        also examined
+        """
+
+        # Only check the main script in case of a local module
+        if local:
+            self.main_nf(mod)
+            self.passed += [LintResult(mod, *m) for m in mod.passed]
+            self.warned += [LintResult(mod, *m) for m in mod.warned]
+
+        # Otherwise run all the lint tests
+        else:
+            for test_name in self.lint_tests:
+                getattr(self, test_name)(mod)
+
+            self.passed += [LintResult(mod, *m) for m in mod.passed]
+            self.warned += [LintResult(mod, *m) for m in mod.warned]
+            self.failed += [LintResult(mod, *m) for m in mod.failed]
 
     def _print_results(self, show_passed=False):
         """Print linting results to the command line.
@@ -305,7 +337,6 @@ class ModuleLint(ModuleCommand):
         """
 
         log.debug("Printing final results")
-        console = Console(force_terminal=rich_force_colors())
 
         # Sort the results
         self.passed.sort(key=operator.attrgetter("message", "module_name"))
@@ -351,6 +382,9 @@ class ModuleLint(ModuleCommand):
                 return "s"
             return ""
 
+        # Print module linting results header
+        console.print(Panel("[magenta]Module lint results"))
+
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             console.print(
@@ -389,6 +423,12 @@ class ModuleLint(ModuleCommand):
             table = format_result(self.failed, table)
             console.print(table)
 
+    def print_summary(self):
+        def _s(some_list):
+            if len(some_list) > 1:
+                return "s"
+            return ""
+
         # Summary table
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
@@ -399,22 +439,3 @@ class ModuleLint(ModuleCommand):
         table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
         table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
         console.print(table)
-
-    def lint_module(self, mod, local=False):
-        """Perform linting on this module"""
-        # Iterate over modules and run all checks on them
-
-        # Only check main_if in case of a local module
-        if local:
-            self.main_nf(mod)
-            self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.passed]
-            self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in mod.warned]
-
-        # Otherwise run all the lint tests
-        else:
-            for test_name in self.lint_tests:
-                getattr(self, test_name)(mod)
-
-            self.passed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.passed]
-            self.warned += [LintResult(mod, m[0], m[1], m[2]) for m in mod.warned]
-            self.failed += [LintResult(mod, m[0], m[1], m[2]) for m in mod.failed]
