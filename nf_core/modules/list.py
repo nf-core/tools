@@ -11,8 +11,9 @@ log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir):
+    def __init__(self, pipeline_dir, remote=True):
         super().__init__(pipeline_dir)
+        self.remote = remote
 
     def list_modules(self, keywords=None, print_json=False):
         """
@@ -38,7 +39,7 @@ class ModuleList(ModuleCommand):
                 return f" matching patterns {', '.join(quoted_keywords)}"
 
         # No pipeline given - show all remote
-        if self.dir is None:
+        if self.remote:
             log.info(
                 f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch})"
                 f"{pattern_msg(keywords)}:\n"
@@ -51,10 +52,8 @@ class ModuleList(ModuleCommand):
                 log.error(e)
                 return False
 
-            modules = self.modules_repo.modules_avail_module_names
-
             # Filter the modules by keywords
-            modules = [mod for mod in modules if all(k in mod for k in keywords)]
+            modules = [mod for mod in self.modules_repo.modules_avail_module_names if all(k in mod for k in keywords)]
 
             # Nothing found
             if len(modules) == 0:
@@ -100,7 +99,7 @@ class ModuleList(ModuleCommand):
             # Load 'modules.json'
             modules_json = self.load_modules_json()
 
-            for repo_name, modules in sorted(self.module_names.items(), key=lambda x: x[0]):
+            for repo_name, modules in sorted(repos_with_mods.items()):
                 repo_entry = modules_json["repos"].get(repo_name, {})
                 for module in sorted(modules):
                     module_entry = repo_entry.get(module)
