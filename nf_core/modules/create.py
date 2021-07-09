@@ -42,7 +42,8 @@ class ModuleCreate(object):
         self.tool_doc_url = ""
         self.tool_dev_url = ""
         self.bioconda = None
-        self.container_tag = None
+        self.singularity_container = None
+        self.docker_container = None
         self.file_paths = {}
 
     def create(self):
@@ -59,21 +60,24 @@ class ModuleCreate(object):
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
-        modules/software/tool/subtool/
+        modules/modules/tool/subtool/
             * main.nf
             * meta.yml
             * functions.nf
-        modules/tests/software/tool/subtool/
+        modules/tests/modules/tool/subtool/
             * main.nf
             * test.yml
-        tests/config/pytest_software.yml
+        tests/config/pytest_modules.yml
 
         The function will attempt to automatically find a Bioconda package called <tool>
         and matching Docker / Singularity images from BioContainers.
         """
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
-        self.repo_type = self.get_repo_type(self.directory)
+        try:
+            self.repo_type = self.get_repo_type(self.directory)
+        except LookupError as e:
+            raise UserWarning(e)
 
         log.info(
             "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
@@ -155,12 +159,17 @@ class ModuleCreate(object):
         if self.bioconda:
             try:
                 if self.tool_conda_name:
-                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool_conda_name, version)
+                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
+                        self.tool_conda_name, version
+                    )
                 else:
-                    self.container_tag = nf_core.utils.get_biocontainer_tag(self.tool, version)
-                log.info(f"Using Docker / Singularity container with tag: '{self.container_tag}'")
+                    self.docker_container, self.singularity_container = nf_core.utils.get_biocontainer_tag(
+                        self.tool, version
+                    )
+                log.info(f"Using Docker container: '{self.docker_container}'")
+                log.info(f"Using Singularity container: '{self.singularity_container}'")
             except (ValueError, LookupError) as e:
-                log.info(f"Could not find a container tag ({e})")
+                log.info(f"Could not find a Docker/Singularity container ({e})")
 
         # Prompt for GitHub username
         # Try to guess the current user if `gh` is installed
@@ -202,7 +211,7 @@ class ModuleCreate(object):
                 "Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' "
                 "MUST be provided as an input via a Groovy Map called 'meta'. "
                 "This information may [italic]not[/] be required in some instances, for example "
-                "[link=https://github.com/nf-core/modules/blob/master/software/bwa/index/main.nf]indexing reference genome files[/link]."
+                "[link=https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf]indexing reference genome files[/link]."
             )
         while self.has_meta is None:
             self.has_meta = rich.prompt.Confirm.ask(
@@ -213,29 +222,29 @@ class ModuleCreate(object):
         self.render_template()
 
         if self.repo_type == "modules":
-            # Add entry to pytest_software.yml
+            # Add entry to pytest_modules.yml
             try:
-                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "r") as fh:
-                    pytest_software_yml = yaml.safe_load(fh)
+                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
+                    pytest_modules_yml = yaml.safe_load(fh)
                 if self.subtool:
-                    pytest_software_yml[self.tool_name] = [
-                        f"software/{self.tool}/{self.subtool}/**",
-                        f"tests/software/{self.tool}/{self.subtool}/**",
+                    pytest_modules_yml[self.tool_name] = [
+                        f"modules/{self.tool}/{self.subtool}/**",
+                        f"tests/modules/{self.tool}/{self.subtool}/**",
                     ]
                 else:
-                    pytest_software_yml[self.tool_name] = [
-                        f"software/{self.tool}/**",
-                        f"tests/software/{self.tool}/**",
+                    pytest_modules_yml[self.tool_name] = [
+                        f"modules/{self.tool}/**",
+                        f"tests/modules/{self.tool}/**",
                     ]
-                pytest_software_yml = dict(sorted(pytest_software_yml.items()))
-                with open(os.path.join(self.directory, "tests", "config", "pytest_software.yml"), "w") as fh:
-                    yaml.dump(pytest_software_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
+                pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
+                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
+                    yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
-                raise UserWarning(f"Could not open 'tests/config/pytest_software.yml' file!")
+                raise UserWarning(f"Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())
         if self.repo_type == "modules":
-            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_software.yml"))
+            new_files.append(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"))
         log.info("Created / edited following files:\n  " + "\n  ".join(new_files))
 
     def render_template(self):
@@ -273,7 +282,7 @@ class ModuleCreate(object):
         # Determine repository type
         if os.path.exists(os.path.join(directory, "main.nf")):
             return "pipeline"
-        elif os.path.exists(os.path.join(directory, "software")):
+        elif os.path.exists(os.path.join(directory, "modules")):
             return "modules"
         else:
             raise UserWarning(
@@ -309,11 +318,11 @@ class ModuleCreate(object):
                 )
 
             # Set file paths
-            file_paths[os.path.join("software", "main.nf")] = module_file
+            file_paths[os.path.join("modules", "main.nf")] = module_file
 
         if self.repo_type == "modules":
-            software_dir = os.path.join(self.directory, "software", self.tool_dir)
-            test_dir = os.path.join(self.directory, "tests", "software", self.tool_dir)
+            software_dir = os.path.join(self.directory, "modules", self.tool_dir)
+            test_dir = os.path.join(self.directory, "tests", "modules", self.tool_dir)
 
             # Check if module directories exist already
             if os.path.exists(software_dir) and not self.force_overwrite:
@@ -323,8 +332,8 @@ class ModuleCreate(object):
                 raise UserWarning(f"Module test directory exists: '{test_dir}'. Use '--force' to overwrite")
 
             # If a subtool, check if there is a module called the base tool name already
-            parent_tool_main_nf = os.path.join(self.directory, "software", self.tool, "main.nf")
-            parent_tool_test_nf = os.path.join(self.directory, "tests", "software", self.tool, "main.nf")
+            parent_tool_main_nf = os.path.join(self.directory, "modules", self.tool, "main.nf")
+            parent_tool_test_nf = os.path.join(self.directory, "tests", "modules", self.tool, "main.nf")
             if self.subtool and os.path.exists(parent_tool_main_nf):
                 raise UserWarning(
                     f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.tool_name}'"
@@ -335,16 +344,16 @@ class ModuleCreate(object):
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob("{}/*/main.nf".format(os.path.join(self.directory, "software", self.tool)))
+            tool_glob = glob.glob("{}/*/main.nf".format(os.path.join(self.directory, "modules", self.tool)))
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.tool_name}'"
                 )
 
             # Set file paths - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths[os.path.join("software", "functions.nf")] = os.path.join(software_dir, "functions.nf")
-            file_paths[os.path.join("software", "main.nf")] = os.path.join(software_dir, "main.nf")
-            file_paths[os.path.join("software", "meta.yml")] = os.path.join(software_dir, "meta.yml")
+            file_paths[os.path.join("modules", "functions.nf")] = os.path.join(software_dir, "functions.nf")
+            file_paths[os.path.join("modules", "main.nf")] = os.path.join(software_dir, "main.nf")
+            file_paths[os.path.join("modules", "meta.yml")] = os.path.join(software_dir, "meta.yml")
             file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
             file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
 

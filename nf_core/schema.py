@@ -401,6 +401,12 @@ class PipelineSchema(object):
     def build_schema(self, pipeline_dir, no_prompts, web_only, url):
         """Interactively build a new pipeline schema for a pipeline"""
 
+        # Check if supplied pipeline directory really is one
+        try:
+            nf_core.utils.is_pipeline_directory(pipeline_dir)
+        except UserWarning:
+            raise
+
         if no_prompts:
             self.no_prompts = True
         if web_only:
@@ -626,6 +632,7 @@ class PipelineSchema(object):
         try:
             assert "api_url" in web_response
             assert "web_url" in web_response
+            # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
             assert web_response["status"] == "recieved"
         except (AssertionError) as e:
             log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))

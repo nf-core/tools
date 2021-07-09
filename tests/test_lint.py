@@ -78,8 +78,8 @@ class TestLint(unittest.TestCase):
         lint_obj = nf_core.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
-        config_dict = {test_name: False for test_name in lint_obj.lint_tests}
-        with open(os.path.join(new_pipeline, ".nf-core-lint.yml"), "w") as fh:
+        config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
+        with open(os.path.join(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
@@ -128,8 +128,8 @@ class TestLint(unittest.TestCase):
         # Load created JSON file and check its contents
         with open(json_fn, "r") as fh:
             saved_json = json.load(fh)
-        assert saved_json["num_tests_pass"] == 2
-        assert saved_json["num_tests_warned"] == 1
+        assert saved_json["num_tests_pass"] > 0
+        assert saved_json["num_tests_warned"] > 0
         assert saved_json["num_tests_ignored"] == 0
         assert saved_json["num_tests_failed"] == 0
         assert saved_json["has_tests_pass"]
@@ -205,7 +205,6 @@ class TestLint(unittest.TestCase):
     from lint.nextflow_config import (
         test_nextflow_config_example_pass,
         test_nextflow_config_bad_name_fail,
-        test_nextflow_config_bad_container_name_failed,
         test_nextflow_config_dev_in_release_mode_failed,
     )
 
@@ -214,11 +213,17 @@ class TestLint(unittest.TestCase):
         test_files_unchanged_fail,
     )
 
+    from lint.version_consistency import test_version_consistency
+
+    from lint.modules_json import test_modules_json_pass
+
+
+# TODO nf-core: Assess and strip out if no longer required for DSL2
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""
 #        lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
-#        assert len(lint_obj.failed) == 1
+#        assert len(lint_obj.failed) > 0
 #
 #    def test_failing_missingfiles_example(self):
 #        """Tests for missing files like Dockerfile or LICENSE"""

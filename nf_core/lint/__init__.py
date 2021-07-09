@@ -45,7 +45,6 @@ def run_linting(
     # Load the various pipeline configs
     lint_obj._load_lint_config()
     lint_obj._load_pipeline_config()
-    lint_obj._load_conda_environment()
     lint_obj._list_files()
 
     # Run the linting tests
@@ -101,13 +100,11 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .actions_awstest import actions_awstest
     from .actions_ci import actions_ci
     from .actions_schema_validation import actions_schema_validation
-    from .conda_dockerfile import conda_dockerfile
-    from .conda_env_yaml import conda_env_yaml
     from .files_exist import files_exist
     from .files_unchanged import files_unchanged
     from .merge_markers import merge_markers
+    from .modules_json import modules_json
     from .nextflow_config import nextflow_config
-    from .params_used import params_used
     from .pipeline_name_conventions import pipeline_name_conventions
     from .pipeline_todos import pipeline_todos
     from .readme import readme
@@ -121,7 +118,10 @@ class PipelineLint(nf_core.utils.Pipeline):
         """Initialise linting object"""
 
         # Initialise the parent object
-        super().__init__(wf_path)
+        try:
+            super().__init__(wf_path)
+        except UserWarning:
+            raise
 
         self.lint_config = {}
         self.release_mode = release_mode
@@ -135,14 +135,11 @@ class PipelineLint(nf_core.utils.Pipeline):
         self.lint_tests = [
             "files_exist",
             "nextflow_config",
-            "params_used",
             "files_unchanged",
             "actions_ci",
             "actions_awstest",
             "actions_awsfulltest",
             "readme",
-            "conda_env_yaml",
-            "conda_dockerfile",
             "pipeline_todos",
             "pipeline_name_conventions",
             "template_strings",
@@ -151,6 +148,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "schema_description",
             "actions_schema_validation",
             "merge_markers",
+            "modules_json",
         ]
         if self.release_mode:
             self.lint_tests.extend(["version_consistency"])
@@ -169,24 +167,13 @@ class PipelineLint(nf_core.utils.Pipeline):
     def _load_lint_config(self):
         """Parse a pipeline lint config file.
 
-        Look for a file called either `.nf-core-lint.yml` or
-        `.nf-core-lint.yaml` in the pipeline root directory and parse it.
-        (`.yml` takes precedence).
+        Load the '.nf-core.yml'  config file and extract
+        the lint config from it
 
         Add parsed config to the `self.lint_config` class attribute.
         """
-        config_fn = os.path.join(self.wf_path, ".nf-core-lint.yml")
-
-        # Pick up the file if it's .yaml instead of .yml
-        if not os.path.isfile(config_fn):
-            config_fn = os.path.join(self.wf_path, ".nf-core-lint.yaml")
-
-        # Load the YAML
-        try:
-            with open(config_fn, "r") as fh:
-                self.lint_config = yaml.safe_load(fh)
-        except FileNotFoundError:
-            log.debug("No lint config file found: {}".format(config_fn))
+        tools_config = nf_core.utils.load_tools_config(self.wf_path)
+        self.lint_config = tools_config.get("lint", {})
 
         # Check if we have any keys that don't match lint test names
         for k in self.lint_config:

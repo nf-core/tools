@@ -1,4 +1,9 @@
-from .pipeline_modules import ModulesRepo, PipelineModules
+from .modules_repo import ModulesRepo
 from .create import ModuleCreate
 from .test_yml_builder import ModulesTestYmlBuilder
 from .lint import ModuleLint
+from .bump_versions import ModuleVersionBumper
+from .module_utils import ModuleException
+from .list import ModuleList
+from .install import ModuleInstall
+from .remove import ModuleRemove

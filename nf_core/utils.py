@@ -183,6 +183,23 @@ class Pipeline(object):
         return os.path.join(self.wf_path, fn)
 
 
+def is_pipeline_directory(wf_path):
+    """
+    Checks if the specified directory have the minimum required files
+    ('main.nf', 'nextflow.config') for a pipeline directory
+
+    Args:
+        wf_path (str): The directory to be inspected
+
+    Raises:
+        UserWarning: If one of the files are missing
+    """
+    for fn in ["main.nf", "nextflow.config"]:
+        path = os.path.join(wf_path, fn)
+        if not os.path.isfile(path):
+            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
+
+
 def fetch_wf_config(wf_path):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
@@ -477,10 +494,10 @@ def pip_package(dep):
 
 def get_biocontainer_tag(package, version):
     """
-    Given a bioconda package and version, look for a container
-    at quay.io and returns the tag of the most recent image
-    that matches the package version
-    Sends a HTTP GET request to the quay.io API.
+    Given a bioconda package and version, looks for Docker and Singularity containers
+    using the biocontaineres API, e.g.:
+    https://api.biocontainers.pro/ga4gh/trs/v2/tools/{tool}/versions/{tool}-{version}
+    Returns the most recent container versions by default.
     Args:
         package (str): A bioconda package name.
         version (str): Version of the bioconda package
@@ -489,37 +506,42 @@ def get_biocontainer_tag(package, version):
         A ValueError, if the package name can not be found (404)
     """
 
-    def get_tag_date(tag_date):
-        # Reformat a date given by quay.io to  datetime
-        return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
+    biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{package}/versions/{package}-{version}"
 
-    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
+    def get_tag_date(tag_date):
+        """
+        Format a date given by the biocontainers API
+        Given format: '2021-03-25T08:53:00Z'
+        """
+        return datetime.datetime.strptime(tag_date, "%Y-%m-%dT%H:%M:%SZ")
 
     try:
-        response = requests.get(quay_api_url)
+        response = requests.get(biocontainers_api_url)
     except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to quay.io API")
+        raise LookupError("Could not connect to biocontainers.pro API")
     else:
         if response.status_code == 200:
-            # Get the container tag
-            tags = response.json()["tags"]
-            matching_tags = [t for t in tags if t["name"].startswith(version)]
-            # If version matches several images, get the most recent one, else return tag
-            if len(matching_tags) > 0:
-                tag = matching_tags[0]
-                tag_date = get_tag_date(tag["last_modified"])
-                for t in matching_tags:
-                    if get_tag_date(t["last_modified"]) > tag_date:
-                        tag = t
-                return package + ":" + tag["name"]
-            else:
-                return matching_tags[0]["name"]
+            try:
+                images = response.json()["images"]
+                singularity_image = None
+                docker_image = None
+                for img in images:
+                    # Get most recent Docker and Singularity image
+                    if img["image_type"] == "Docker":
+                        modification_date = get_tag_date(img["updated"])
+                        if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
+                            docker_image = img
+                    if img["image_type"] == "Singularity":
+                        modification_date = get_tag_date(img["updated"])
+                        if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
+                            singularity_image = img
+                return docker_image["image_name"], singularity_image["image_name"]
+            except TypeError:
+                raise LookupError(f"Could not find docker or singularity container for {package}")
         elif response.status_code != 404:
-            raise LookupError(
-                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
-            )
+            raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
-            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
+            raise ValueError(f"Could not find `{package}` on api.biocontainers.pro")
 
 
 def custom_yaml_dumper():
@@ -713,3 +735,41 @@ def get_repo_releases_branches(pipeline, wfs):
 
     # Return pipeline again in case we added the nf-core/ prefix
     return pipeline, wf_releases, wf_branches
+
+
+def load_tools_config(dir="."):
+    """
+    Parse the nf-core.yml configuration file
+
+    Look for a file called either `.nf-core.yml` or `.nf-core.yaml`
+
+    Also looks for the deprecated file `.nf-core-lint.yml/yaml` and issues
+    a warning that this file will be deprecated in the future
+
+    Returns the loaded config dict or False, if the file couldn't be loaded
+    """
+    tools_config = {}
+    config_fn = os.path.join(dir, ".nf-core.yml")
+
+    # Check if old config file is used
+    old_config_fn_yml = os.path.join(dir, ".nf-core-lint.yml")
+    old_config_fn_yaml = os.path.join(dir, ".nf-core-lint.yaml")
+
+    if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
+        log.error(
+            f"Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
+        )
+        return {}
+
+    if not os.path.isfile(config_fn):
+        config_fn = os.path.join(dir, ".nf-core.yaml")
+
+    # Load the YAML
+    try:
+        with open(config_fn, "r") as fh:
+            tools_config = yaml.safe_load(fh)
+    except FileNotFoundError:
+        log.debug(f"No tools config file found: {config_fn}")
+        return {}
+
+    return tools_config
