@@ -52,10 +52,8 @@ class ModuleList(ModuleCommand):
                 log.error(e)
                 return False
 
-            modules = self.modules_repo.modules_avail_module_names
-
             # Filter the modules by keywords
-            modules = [mod for mod in modules if all(k in mod for k in keywords)]
+            modules = [mod for mod in self.modules_repo.modules_avail_module_names if all(k in mod for k in keywords)]
 
             # Nothing found
             if len(modules) == 0:
@@ -87,6 +85,7 @@ class ModuleList(ModuleCommand):
                 repo_name: [mod for mod in self.module_names[repo_name] if all(k in mod for k in keywords)]
                 for repo_name in self.module_names
             }
+
             # Nothing found
             if sum(map(len, repos_with_mods)) == 0:
                 log.info(f"No nf-core modules found in '{self.dir}'{pattern_msg(keywords)}")
@@ -100,7 +99,7 @@ class ModuleList(ModuleCommand):
             # Load 'modules.json'
             modules_json = self.load_modules_json()
 
-            for repo_name, modules in sorted(repos_with_mods.items(), key=lambda x: x[0]):
+            for repo_name, modules in sorted(repos_with_mods.items()):
                 repo_entry = modules_json["repos"].get(repo_name, {})
                 for module in sorted(modules):
                     module_entry = repo_entry.get(module)
