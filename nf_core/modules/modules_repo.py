@@ -3,6 +3,7 @@ import requests
 import base64
 import sys
 import logging
+import json
 import nf_core.utils
 
 log = logging.getLogger(__name__)
@@ -18,11 +19,40 @@ class ModulesRepo(object):
 
     def __init__(self, repo="nf-core/modules", branch="master"):
         self.name = repo
-        self.owner, self.repo = self.name.split("/")
         self.branch = branch
+
+        # Verify that the repo seems to be correctly configured
+        if self.name != "nf-core/modules":
+            try:
+                self.verify_modules_repo()
+            except LookupError:
+                raise
+
+        self.owner, self.repo = self.name.split("/")
         self.modules_file_tree = {}
         self.modules_current_hash = None
         self.modules_avail_module_names = []
+
+    def verify_modules_repo(self):
+
+        # Check if name seems to be well formed
+        if self.name.count("/") != 1:
+            raise LookupError(f"Repository name '{self.name}'is not well formed")
+
+        # Check if repository exist
+        api_url = f"https://api.github.com/repos/{self.name}/branches"
+        response = requests.get(api_url)
+        if response.status_code == 200:
+            branches = [branch["name"] for branch in response.json()]
+            if self.branch not in branches:
+                raise LookupError(f"Branch '{self.branch}' not found in '{self.name}'")
+        else:
+            raise LookupError(f"Repository '{self.name}' is not available from GitHub")
+
+        api_url = f"https://api.github.com/repos/{self.name}/contents/modules?ref={self.branch}"
+        response = requests.get(api_url)
+        if response.status_code == 404:
+            raise LookupError(f"Repository '{self.name}' does not contain a 'modules' directory")
 
     def get_modules_file_tree(self):
         """
@@ -50,6 +80,8 @@ class ModulesRepo(object):
             if f["path"].startswith(f"modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
                 # remove modules/ and /main.nf
                 self.modules_avail_module_names.append(f["path"].replace("modules/", "").replace("/main.nf", ""))
+        if len(self.modules_avail_module_names) == 0:
+            raise LookupError(f"Found no modules in '{self.name}'")
 
     def get_module_file_urls(self, module, commit=""):
         """Fetch list of URLs for a specific module
