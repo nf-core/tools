@@ -100,7 +100,7 @@ class ModuleLint(ModuleCommand):
         Lint all or one specific module
 
         First gets a list of all local modules (in modules/local/process) and all modules
-        installed from nf-core (in modules/nf-core/software)
+        installed from nf-core (in modules/nf-core/modules)
 
         For all nf-core modules, the correct file structure is assured and important
         file content is verified. If directory subject to linting is a clone of 'nf-core/modules',
@@ -218,7 +218,7 @@ class ModuleLint(ModuleCommand):
         local_modules = []
         nfcore_modules = []
         local_modules_dir = None
-        nfcore_modules_dir = os.path.join(self.dir, "modules", "nf-core", "software")
+        nfcore_modules_dir = os.path.join(self.dir, "modules", "nf-core", "modules")
 
         # Get local modules
         if self.repo_type == "pipeline":
@@ -231,7 +231,7 @@ class ModuleLint(ModuleCommand):
 
         # nf-core/modules
         if self.repo_type == "modules":
-            nfcore_modules_dir = os.path.join(self.dir, "software")
+            nfcore_modules_dir = os.path.join(self.dir, "modules")
 
         # Get nf-core modules
         if os.path.exists(nfcore_modules_dir):

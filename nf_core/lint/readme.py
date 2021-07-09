@@ -38,8 +38,9 @@ def readme(self):
         content = fh.read()
 
     # Check that there is a readme badge showing the minimum required version of Nextflow
+    # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.04.0-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)
     # and that it has the correct version
-    nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow-%E2%89%A5([\d\.]+)-brightgreen\.svg\)\]\(https://www\.nextflow\.io/\)"
+    nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-%E2%89%A5([\d\.]+)-23aa62\.svg\?labelColor=000000\)\]\(https://www\.nextflow\.io/\)"
     match = re.search(nf_badge_re, content)
     if match:
         nf_badge_version = match.group(1).strip("'\"")
@@ -61,8 +62,8 @@ def readme(self):
         warned.append("README did not have a Nextflow minimum version badge.")
 
     # Check that the minimum version mentioned in the quick start section is consistent
-    # Looking for: "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)"
-    nf_version_re = r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>=(\d*\.\d*\.\d*)`\)"
+    # Looking for: "1. Install [`Nextflow`](https://nf-co.re/usage/installation) (`>=21.04.0`)"
+    nf_version_re = r"1\.\s*Install\s*\[`Nextflow`\]\(https://nf-co.re/usage/installation\)\s*\(`>=(\d*\.\d*\.\d*)`\)"
     match = re.search(nf_version_re, content)
     if match:
         nf_quickstart_version = match.group(1)
@@ -78,13 +79,5 @@ def readme(self):
             )
     else:
         warned.append("README did not have a Nextflow minimum version mentioned in Quick Start section.")
-
-    # Check that we have a bioconda badge if we have a bioconda environment file
-    if os.path.join(self.wf_path, "environment.yml") in self.files:
-        bioconda_badge = "[![install with bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/)"
-        if bioconda_badge in content:
-            passed.append("README had a bioconda badge")
-        else:
-            warned.append("Found a bioconda environment.yml file but no badge in the README")
 
     return {"passed": passed, "warned": warned, "failed": failed}

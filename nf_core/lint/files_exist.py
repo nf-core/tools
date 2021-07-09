@@ -62,8 +62,6 @@ def files_exist(self):
     .. code-block:: bash
 
         main.nf
-        environment.yml
-        Dockerfile
         assets/multiqc_config.yaml
         conf/base.config
         conf/igenomes.config
@@ -142,8 +140,6 @@ def files_exist(self):
 
     files_warn = [
         ["main.nf"],
-        ["environment.yml"],
-        ["Dockerfile"],
         [os.path.join("assets", "multiqc_config.yaml")],
         [os.path.join("conf", "base.config")],
         [os.path.join("conf", "igenomes.config")],

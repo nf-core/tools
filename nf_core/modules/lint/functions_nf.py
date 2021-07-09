@@ -11,6 +11,8 @@ def functions_nf(module_lint_object, module):
     Lint a functions.nf file
     Verifies that the file exists and contains all necessary functions
     """
+    local_copy = None
+    template_copy = None
     try:
         with open(module.function_nf, "r") as fh:
             lines = fh.readlines()
@@ -38,14 +40,17 @@ def functions_nf(module_lint_object, module):
         log.error(f"Could not open {module.function_nf}")
 
     # Get the template file
-    template_copy_path = os.path.join(os.path.dirname(nf_core.__file__), "module-template/software/functions.nf")
+    template_copy_path = os.path.join(os.path.dirname(nf_core.__file__), "module-template/modules/functions.nf")
     try:
         template_copy = open(template_copy_path, "r").read()
     except FileNotFoundError as e:
         log.error(f"Could not open {template_copy_path}")
 
     # Compare the files
-    if local_copy != template_copy:
-        module.failed.append(("function_nf_comparison", "New version of functions.nf available", module.function_nf))
-    else:
-        module.passed.append(("function_nf_comparison", "functions.nf is up to date", module.function_nf))
+    if local_copy and template_copy:
+        if local_copy != template_copy:
+            module.failed.append(
+                ("function_nf_comparison", "New version of functions.nf available", module.function_nf)
+            )
+        else:
+            module.passed.append(("function_nf_comparison", "functions.nf is up to date", module.function_nf))

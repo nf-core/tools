@@ -371,22 +371,43 @@ def modules(ctx, repository, branch):
     ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
 
 
-@modules.command(help_priority=1)
+@modules.group(cls=CustomHelpOrder, help_priority=1)
+@click.pass_context
+def list(ctx):
+    """
+    List local and remote software modules.
+    """
+    pass
+
+
+@list.command(help_priority=1)
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
-@click.option("-i", "--installed", type=click.Path(exists=True), help="List modules installed in local directory")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def list(ctx, keywords, installed, json):
+def remote(ctx, keywords, json):
     """
-    List available software modules.
-
-    If a pipeline directory is given, lists all modules installed locally.
-
-    If no pipeline directory is given, lists all currently available
-    software wrappers in the nf-core/modules repository.
+    List all modules currently available from a remote repository
     """
     try:
-        module_list = nf_core.modules.ModuleList(installed)
+        module_list = nf_core.modules.ModuleList(None, remote=True)
+        module_list.modules_repo = ctx.obj["modules_repo_obj"]
+        print(module_list.list_modules(keywords, json))
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+@list.command(help_priority=2)
+@click.pass_context
+@click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
+@click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+def local(ctx, keywords, json, dir):
+    """
+    List all modules installed in a pipeline
+    """
+    try:
+        module_list = nf_core.modules.ModuleList(dir, remote=False)
         module_list.modules_repo = ctx.obj["modules_repo_obj"]
         print(module_list.list_modules(keywords, json))
     except UserWarning as e:
@@ -403,7 +424,8 @@ def list(ctx, keywords, installed, json):
     "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-def install(ctx, tool, dir, latest, force, sha):
+@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
+def install(ctx, tool, dir, latest, force, sha, all):
     """
     Add a DSL2 software wrapper module to a pipeline.
 
@@ -411,11 +433,17 @@ def install(ctx, tool, dir, latest, force, sha):
     along with associated metadata.
     """
     try:
-        module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha)
+        module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha, update_all=all)
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
-        module_install.install(tool)
+        exit_status = module_install.install(tool)
+        if not exit_status and all:
+            log.critical(
+                "Install command exited with bad exit status. "
+                "Some of your module files might have been erroneously removed."
+            )
+            sys.exit(1)
     except UserWarning as e:
-        log.critical(e)
+        log.error(e)
         sys.exit(1)
 
 
