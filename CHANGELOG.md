@@ -16,6 +16,7 @@
 * Remove lint checks for files related to conda and docker as not needed anymore for DSL2
 * Removed `params_used` lint check because of incompatibility with DSL2
 * Added`modules bump-versions` command to `README.md`
+* Update docs for v2.0 release
 
 ### Modules
 

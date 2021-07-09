@@ -151,11 +151,11 @@ class ModuleLint(ModuleCommand):
             nfcore_modules = self.all_nfcore_modules
 
         if self.repo_type == "modules":
-            log.info(f"Linting modules repo: [magenta]{self.dir}")
+            log.info(f"Linting modules repo: [magenta]'{self.dir}'")
         else:
-            log.info(f"Linting pipeline: [magenta]{self.dir}")
+            log.info(f"Linting pipeline: [magenta]'{self.dir}'")
         if module:
-            log.info(f"Linting module: [magenta]{module}")
+            log.info(f"Linting module: [magenta]'{module}'")
 
         # Filter the tests by the key if one is supplied
         if key:

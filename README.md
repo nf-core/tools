@@ -26,7 +26,9 @@ A python package with helper tools for the nf-core community.
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 * [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
     * [`modules list` - List available modules](#list-modules)
-    * [`modules install` - Install a module from nf-core/modules](#install-a-module-into-a-pipeline)
+        * [`modules list remote` - List remote modules](#list-remote-modules)
+        * [`modules list local` - List installed modules](#list-installed-modules)
+    * [`modules install` - Install or update modules in pipeline](#install-or-update-modules-in-a-pipeline)
     * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
     * [`modules create` - Create a module from the template](#create-a-new-module)
     * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
@@ -191,7 +193,7 @@ $ nf-core list
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -216,7 +218,7 @@ $ nf-core list rna rna-seq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name ┃ Stars ┃ Latest Release ┃     Released ┃ Last Pulled ┃ Have latest release? ┃
@@ -245,7 +247,7 @@ $ nf-core list -s stars
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -289,7 +291,7 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
@@ -369,7 +371,7 @@ $ nf-core download
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.14
+    nf-core/tools version 2.0
 
 
 Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
@@ -555,7 +557,7 @@ $ nf-core create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
@@ -593,37 +595,44 @@ This is the same test that is used on the automated continuous integration tests
 For example, the current version looks something like this:
 
 ```console
-$ cd path/to/my_pipeline
-$ nf-core lint .
+$ nf-core lint
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
-
-  INFO     Testing pipeline: nf-core-testpipeline/
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 3 Test Warnings                                                                                      │
-├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ actions_awsfulltest: .github/workflows/awsfulltest.yml should test full datasets, not -profile test      │
-│ conda_env_yaml: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                            │
-│ conda_env_yaml: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+INFO     Testing pipeline: .
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ General lint results                                                                                            │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warnings                                                                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ pipeline_todos: TODO string in base.config: Check the defaults for all processes                                │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Module lint results                                                                                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warnings                                                                                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────┬──────────────────────────────────┬───────────────────────────────────╮
+│ Module name                              │ File path                        │ Test message                      │
+├──────────────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────┤
+│ get_software_versions.nf                 │ modules/local/get_software_vers… │ 'options' variable not specified  │
+╰──────────────────────────────────────────┴──────────────────────────────────┴───────────────────────────────────╯
 ╭───────────────────────╮
 │ LINT RESULTS SUMMARY  │
 ├───────────────────────┤
-│ [✔] 155 Tests Passed  │
+│ [✔] 183 Tests Passed  │
 │ [?]   0 Tests Ignored │
-│ [!]   3 Test Warnings │
+│ [!]   2 Test Warnings │
 │ [✗]   0 Tests Failed  │
 ╰───────────────────────╯
 
-Tip: Some of these linting errors can automatically be resolved with the following command:
-
-    nf-core lint . --fix conda_env_yaml
 ```
 
 You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
@@ -703,7 +712,7 @@ $ nf-core schema validate rnaseq nf-params.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -735,7 +744,7 @@ $ nf-core schema build nf-core-testpipeline
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
   INFO     [✓] Default parameters look valid
   INFO     [✓] Pipeline schema looks valid (found 25 params)
@@ -774,7 +783,7 @@ $ nf-core schema lint nextflow_schema.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
   ERROR    [✗] Pipeline schema does not follow nf-core specs:
             Definition subschema 'input_output_options' not included in schema 'allOf'
@@ -797,7 +806,7 @@ $ nf-core bump-version . 1.7
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -852,7 +861,7 @@ $ nf-core sync my_pipeline/
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -894,18 +903,22 @@ The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
 ### List modules
 
+The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
+
+### List remote modules
+
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
-`nf-core modules list`, which will print all available modules to the terminal.
+`nf-core modules list remote`, which will print all available modules to the terminal.
 
 ```console
-$ nf-core modules list
+$ nf-core modules list remote
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Modules available from nf-core/modules (master)
@@ -926,12 +939,33 @@ INFO     Modules available from nf-core/modules (master)
 
 ### List installed modules
 
-To list modules installed in a local pipeline directory you can use `nf-core modules list --installed <directory>`.
+To list modules installed in a local pipeline directory you can use `nf-core modules list local`. This will list the modules install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
 
-### Install a module into a pipeline
+```console
+$ nf-core modules list local
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0
+
+
+INFO     Modules installed in '.':
+
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Module Name ┃ Repository      ┃ Version SHA ┃ Message                                                ┃ Date       ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ fastqc      │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
+│ multiqc     │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
+└─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
+```
+
+### Install or update modules in a pipeline
 
 You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
-A module installed this way will be installed to the `./modules/nf-core/software` directory.
+A module installed this way will be installed to the `./modules/nf-core/modules` directory.
 
 ```console
 $ nf-core modules install
@@ -941,25 +975,27 @@ $ nf-core modules install
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ? Tool name: cat/fastq
+? Select 'cat/fastq' version: Rename software/ directory to modules/ to re-organise module structure ...truncated...
 INFO     Installing cat/fastq
-INFO     Downloaded 3 files to ./modules/nf-core/software/cat/fastq
+INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
 ```
 
 You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
 
-There are four flags that you can use with this command:
+There are five flags that you can use with this command:
 
 * `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
 * `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
 * `--force`: Overwrite a previously installed version of the module.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force` on all installed modules.
 
 ### Remove a module from a pipeline
 
-To delete a module from your pipeline, run `nf-core modules remove`
+To delete a module from your pipeline, run `nf-core modules remove`.
 
 ```console
 $ nf-core modules remove
@@ -970,14 +1006,13 @@ $ nf-core modules remove
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ? Tool name: star/align
 INFO     Removing star/align
-INFO     Successfully removed star/align module
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
+You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
 ### Create a new module
 
@@ -1002,7 +1037,7 @@ $ nf-core modules create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses. ctrl+click underlined text to open links.
@@ -1040,7 +1075,7 @@ $ nf-core modules create-test-yml
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses
@@ -1079,29 +1114,34 @@ Run the `nf-core modules lint` command to check modules in the current working d
 Use the `--all` flag to run linting on all modules found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
 
 ```console
-$ nf-core modules lint -d nf-core-modules
+$ nf-core modules lint
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
-? Lint all modules or a single named module?  Named module
+? Lint all modules or a single named module? Named module
 ? Tool name: star/align
-INFO     Linting modules repo: .
+INFO     Linting pipeline: .
 INFO     Linting module: star/align
-╭──────────────────────────────────────────┬────────────────────────────────────┬─────────────────────────────╮
-│ Module name                              │ Test message                       │ File path                   │
-├──────────────────────────────────────────┼────────────────────────────────────┼─────────────────────────────┤
-│ star/align                               │ Conda update: bioconda::star       │ software/star/align/main.nf │
-│                                          │ 2.6.1d -> 2.7.8a                   │                             │
-╰──────────────────────────────────────────┴────────────────────────────────────┴─────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Module lint results                                                                                                │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warning                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────┬────────────────────────────────────────────┬───────────────────────────────────────────────────╮
+│ Module name       │ File path                                  │ Test message                                      │
+├───────────────────┼────────────────────────────────────────────┼───────────────────────────────────────────────────┤
+│ star/align        │ modules/nf-core/modules/star/align/main.nf │ Conda update: bioconda::star 2.6.1d -> 2.7.9a     │
+╰───────────────────┴────────────────────────────────────────────┴───────────────────────────────────────────────────╯
 ╭──────────────────────╮
 │ LINT RESULTS SUMMARY │
 ├──────────────────────┤
-│ [✔]  18 Tests Passed │
+│ [✔]  21 Tests Passed │
 │ [!]   1 Test Warning │
 │ [✗]   0 Test Failed  │
 ╰──────────────────────╯
@@ -1112,7 +1152,7 @@ INFO     Linting module: star/align
 If you are contributing to the `nf-core/modules` repository and want to bump bioconda and container versions of certain modules, you can use the `nf-core modules bump-versions` helper tool. This will bump the bioconda version of a single or all modules to the latest version and also fetch the correct Docker and Singularity container tags.
 
 ```console
-$ nf-core modules bump-versions -d modules 
+$ nf-core modules bump-versions -d modules
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -1130,7 +1170,7 @@ $ nf-core modules bump-versions -d modules
 │ [!] 1  Module updated     │
 ╰───────────────────────────╯
 ╭─────────────────────────────────────────────────────────────╮
-│ Module name               │ Update message                  │     
+│ Module name               │ Update message                  │
 ├───────────────────────────┤─────────────────────────────────┤
 │ bcftools/consensus        │ Module updated:  1.11 --> 1.12  │
 ╰─────────────────────────────────────────────────────────────╯
