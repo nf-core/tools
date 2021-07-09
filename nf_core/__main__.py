@@ -543,9 +543,9 @@ def lint(ctx, tool, dir, key, all, local, passed):
     nf-core/modules repository.
     """
     try:
-        module_lint = nf_core.modules.ModuleLint(dir=dir, key=key)
+        module_lint = nf_core.modules.ModuleLint(dir=dir)
         module_lint.modules_repo = ctx.obj["modules_repo_obj"]
-        module_lint.lint(module=tool, all_modules=all, print_results=True, local=local, show_passed=passed)
+        module_lint.lint(module=tool, key=key, all_modules=all, print_results=True, local=local, show_passed=passed)
         if len(module_lint.failed) > 0:
             sys.exit(1)
     except nf_core.modules.lint.ModuleLintException as e:
