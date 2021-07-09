@@ -31,6 +31,8 @@ A python package with helper tools for the nf-core community.
     * [`modules create` - Create a module from the template](#create-a-new-module)
     * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
     * [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
+    * [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
+
 * [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -639,25 +641,28 @@ Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find
 It's sometimes desirable to disable certain lint tests, especially if you're using nf-core/tools with your
 own pipeline that is outside of nf-core.
 
-To help with this, you can add a linting config file to your pipeline called `.nf-core-lint.yml` or
-`.nf-core-lint.yaml` in the pipeline root directory. Here you can list the names of any tests that you
-would like to disable and set them to `False`, for example:
+To help with this, you can add a tools config file to your pipeline called `.nf-core.yml` in the pipeline root directory (previously: `.nf-core-lint.yml`).
+Here you can list the names of any tests that you would like to disable and set them to `False`, for example:
 
 ```yaml
-actions_awsfulltest: False
-pipeline_todos: False
+lint:
+    actions_awsfulltest: False
+    pipeline_todos: False
 ```
 
 Some lint tests allow greater granularity, for example skipping a test only for a specific file.
 This is documented in the test-specific docs but generally involves passing a list, for example:
 
 ```yaml
-files_exist:
-  - CODE_OF_CONDUCT.md
-files_unchanged:
-  - assets/email_template.html
-  - CODE_OF_CONDUCT.md
+lint:
+    files_exist:
+    - CODE_OF_CONDUCT.md
+    files_unchanged:
+    - assets/email_template.html
+    - CODE_OF_CONDUCT.md
 ```
+
+Note that you have to list all configurations for the `nf-core lint` command under the `lint:` field in the `.nf-core.yml` file, as this file is also used for configuration of other commands.
 
 ### Automatically fix errors
 
@@ -929,7 +934,7 @@ You can install modules from [nf-core/modules](https://github.com/nf-core/module
 A module installed this way will be installed to the `./modules/nf-core/software` directory.
 
 ```console
-$ nf-core modules install .
+$ nf-core modules install
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
@@ -957,7 +962,7 @@ There are four flags that you can use with this command:
 To delete a module from your pipeline, run `nf-core modules remove`
 
 ```console
-$ nf-core modules remove .
+$ nf-core modules remove
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -989,7 +994,7 @@ Alternatively, if writing a more niche module that does not make sense to share,
 The `nf-core modules create` command will prompt you with the relevant questions in order to create all of the necessary module files.
 
 ```console
-$ nf-core modules create .
+$ nf-core modules create
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -1074,7 +1079,7 @@ Run the `nf-core modules lint` command to check modules in the current working d
 Use the `--all` flag to run linting on all modules found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
 
 ```console
-$ nf-core modules lint nf-core-modules
+$ nf-core modules lint -d nf-core-modules
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
@@ -1100,6 +1105,49 @@ INFO     Linting module: star/align
 │ [!]   1 Test Warning │
 │ [✗]   0 Test Failed  │
 ╰──────────────────────╯
+```
+
+### Bump bioconda and container versions of modules in
+
+If you are contributing to the `nf-core/modules` repository and want to bump bioconda and container versions of certain modules, you can use the `nf-core modules bump-versions` helper tool. This will bump the bioconda version of a single or all modules to the latest version and also fetch the correct Docker and Singularity container tags.
+
+```console
+$ nf-core modules bump-versions -d modules 
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0.dev0
+
+
+
+? Bump versions for all modules or a single named module?  Named module
+? Tool name: bcftools/consensus
+╭───────────────────────────╮
+│ [!] 1  Module updated     │
+╰───────────────────────────╯
+╭─────────────────────────────────────────────────────────────╮
+│ Module name               │ Update message                  │     
+├───────────────────────────┤─────────────────────────────────┤
+│ bcftools/consensus        │ Module updated:  1.11 --> 1.12  │
+╰─────────────────────────────────────────────────────────────╯
+```
+
+If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module from being updated by adding the following to the `.nf-core.yml` file:
+
+```yaml
+bump-versions:
+  star/align: False
+```
+
+If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
+
+```yaml
+bump-versions:
+  star/align: "2.6.1d"
 ```
 
 ## Citation
