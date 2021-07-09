@@ -5,6 +5,7 @@
 ### Template
 
 * Move TODO item of `contains:` map in a YAML string [[#1082](https://github.com/nf-core/tools/issues/1082)]
+* Trigger AWS tests via Tower API [[#1160](https://github.com/nf-core/tools/pull/1160)]
 
 ### General
 
