@@ -300,7 +300,7 @@ class ModuleLint(ModuleCommand):
         Perform linting on one module
 
         If the module is a local module we only check the `main.nf` file,
-        and it issue warnings instead of failures.
+        and issue warnings instead of failures.
 
         If the module is a nf-core module we check for existence of the files
         - main.nf
