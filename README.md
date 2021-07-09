@@ -894,18 +894,22 @@ The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
 ### List modules
 
+The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
+
+### List remote modules
+
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
-`nf-core modules list`, which will print all available modules to the terminal.
+`nf-core modules list remote`, which will print all available modules to the terminal.
 
 ```console
-$ nf-core modules list
+$ nf-core modules list remote
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Modules available from nf-core/modules (master)
@@ -926,7 +930,28 @@ INFO     Modules available from nf-core/modules (master)
 
 ### List installed modules
 
-To list modules installed in a local pipeline directory you can use `nf-core modules list --installed <directory>`.
+To list modules installed in a local pipeline directory you can use `nf-core modules list local`. This will list the modules install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
+
+```console
+$ nf-core modules list local
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0
+
+
+INFO     Modules installed in '.':
+
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Module Name ┃ Repository      ┃ Version SHA                              ┃ Message                                                                       ┃ Date       ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ fastqc      │ nf-core/modules │ e937c7950af70930d1f34bb961403d9d2aa81c7d │ Rename software/ directory to modules/ to re-organise module structure (#567) │ 2021-07-07 │
+│ multiqc     │ nf-core/modules │ e937c7950af70930d1f34bb961403d9d2aa81c7d │ Rename software/ directory to modules/ to re-organise module structure (#567) │ 2021-07-07 │
+└─────────────┴─────────────────┴──────────────────────────────────────────┴───────────────────────────────────────────────────────────────────────────────┴────────────┘
+```
 
 ### Install a module into a pipeline
 
@@ -1112,7 +1137,7 @@ INFO     Linting module: star/align
 If you are contributing to the `nf-core/modules` repository and want to bump bioconda and container versions of certain modules, you can use the `nf-core modules bump-versions` helper tool. This will bump the bioconda version of a single or all modules to the latest version and also fetch the correct Docker and Singularity container tags.
 
 ```console
-$ nf-core modules bump-versions -d modules 
+$ nf-core modules bump-versions -d modules
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -1130,7 +1155,7 @@ $ nf-core modules bump-versions -d modules
 │ [!] 1  Module updated     │
 ╰───────────────────────────╯
 ╭─────────────────────────────────────────────────────────────╮
-│ Module name               │ Update message                  │     
+│ Module name               │ Update message                  │
 ├───────────────────────────┤─────────────────────────────────┤
 │ bcftools/consensus        │ Module updated:  1.11 --> 1.12  │
 ╰─────────────────────────────────────────────────────────────╯
