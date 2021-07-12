@@ -310,3 +310,33 @@ def get_repo_type(dir):
         return "modules"
     else:
         raise LookupError("Could not determine repository type of '{}'".format(dir))
+
+
+def verify_pipeline_dir(dir):
+    modules_dir = os.path.join(dir, "modules")
+    if os.path.exists(modules_dir):
+        repo_names = (
+            f"{user}/{repo}"
+            for user in os.listdir(modules_dir)
+            if user != "local"
+            for repo in os.listdir(os.path.join(modules_dir, user))
+        )
+        missing_remote = []
+        modules_is_software = False
+        for repo_name in repo_names:
+            api_url = f"https://api.github.com/repos/{repo_name}/contents"
+            response = requests.get(api_url)
+            if response.status_code == 404:
+                missing_remote.append(repo_name)
+                if repo_name == "nf-core/software":
+                    modules_is_software = True
+
+        if len(missing_remote) > 0:
+            missing_remote = [f"'{repo_name}'" for repo_name in missing_remote]
+            error_msg = "Could not find GitHub repository for: " + ", ".join(missing_remote)
+            if modules_is_software:
+                error_msg += (
+                    "\nAs of version 2.0, remote modules are installed in 'modules/<github user>/<github repo>'"
+                )
+                error_msg += "\nThe 'nf-core/software' directory should therefore be renamed to 'nf-core/modules'"
+            raise UserWarning(error_msg)
