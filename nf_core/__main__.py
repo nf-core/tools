@@ -377,7 +377,7 @@ def modules(ctx, repository, branch):
 @click.pass_context
 def list(ctx):
     """
-    List modules available locally in a pipeline or in remote repo like nf-core/modules.
+    List modules available locally in a pipeline or in a remote repo like nf-core/modules.
     """
     pass
 
