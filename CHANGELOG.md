@@ -1,6 +1,16 @@
 # nf-core/tools: Changelog
 
-## [v2.0 - Palladium Platypus](https://github.com/nf-core/tools/releases/tag/2.0) - [2021-07-09]
+## [v2.0 - Palladium Platypus](https://github.com/nf-core/tools/releases/tag/2.0) - [2021-07-12]
+
+### :warning: Major enhancements & breaking changes
+
+This marks the first DSL2-centric release of `tools`, which means that some commands won't work in full with DSL1 pipelines anymore.
+Please use a `v1.x` pipeline of `tools` for such pipeline or, better yet, make the transition to DSL2. Here are the most important changes:
+
+* The pipeline template has been re-written for DSL2 pipelines
+* Linting has been adapted to DSL2 pipelines
+* Version tracking of modules installed from `nf-core/modules` via an additional `modules.json` file and `git_sha` sums
+* Pipeline commands must now be run either from within a pipeline directory or by specifying the path to a pipeline with `-d`/`--directory`
 
 ### Template
 
