@@ -59,6 +59,7 @@ Please use a `v1.x` pipeline of `tools` for such pipeline or, better yet, make t
 * Fix bug due to restructuring in modules template
 * Added checks for verifying that the remote repository is well formed
 * Added checks to `ModulesCommand` for verifying validity of remote repositories
+* Misc. changes to `modules install`: check that module exist in remote, `--all` is has `--latest` by default.
 
 #### Sync
 
