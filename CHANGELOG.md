@@ -58,6 +58,7 @@ Please use a `v1.x` pipeline of `tools` for such pipeline or, better yet, make t
 * Added `remote` and `local` subcommands to `nf-core modules list`
 * Fix bug due to restructuring in modules template
 * Added checks for verifying that the remote repository is well formed
+* Added checks to `ModulesCommand` for verifying validity of remote repositories
 
 #### Sync
 
