@@ -450,7 +450,7 @@ def install(ctx, tool, dir, latest, force, sha, all):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 def remove(ctx, dir, tool):
     """
-    Remove a software wrapper from a pipeline.
+    Remove a module from a pipeline.
     """
     try:
         module_remove = nf_core.modules.ModuleRemove(dir)
@@ -479,7 +479,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     'modules/local/tool_subtool.nf'
 
     If <directory> is a clone of nf-core/modules, it creates or modifies files
-    in 'modules/software', 'modules/tests' and 'tests/config/pytest_software.yml'
+    in 'modules/', 'tests/modules' and 'tests/config/pytest_modules.yml'
     """
     # Combine two bool flags into one variable
     has_meta = None
