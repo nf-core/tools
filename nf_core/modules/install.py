@@ -104,7 +104,7 @@ class ModuleInstall(ModuleCommand):
                     exit_value = False
                     continue
                 latest_version = git_log[0]["git_sha"]
-                if current_version == latest_version and (not self.force or self.latest):
+                if current_version == latest_version and (not self.force or self.latest or self.update_all):
                     log.info(f"'{modules_repo.name}/{module}' is already up to date")
                     continue
                 elif not self.force:
@@ -143,7 +143,7 @@ class ModuleInstall(ModuleCommand):
                     exit_value = False
                 continue
             else:
-                if self.latest:
+                if self.latest or self.update_all:
                     # Fetch the latest commit for the module
                     if latest_version is None:
                         try:
