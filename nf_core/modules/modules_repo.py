@@ -21,7 +21,7 @@ class ModulesRepo(object):
         self.branch = branch
 
         # Verify that the repo seems to be correctly configured
-        if self.name != "nf-core/modules":
+        if self.name != "nf-core/modules" or self.branch != "master":
             try:
                 self.verify_modules_repo()
             except LookupError:
