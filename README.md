@@ -991,7 +991,7 @@ There are five flags that you can use with this command:
 * `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
 * `--force`: Overwrite a previously installed version of the module.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
-* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force` on all installed modules.
+* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force --latest` on all installed modules. To change all modules to a specific version you can run `nf-core modules install --all --sha <commit sha>`.
 
 ### Remove a module from a pipeline
 
