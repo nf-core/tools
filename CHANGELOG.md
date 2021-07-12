@@ -4,13 +4,11 @@
 
 ### :warning: Major enhancements & breaking changes
 
-This marks the first DSL2-centric release of `tools`, which means that some commands won't work in full with DSL1 pipelines anymore.
-Please use a `v1.x` pipeline of `tools` for such pipeline or, better yet, make the transition to DSL2. Here are the most important changes:
+This marks the first Nextflow DSL2-centric release of `tools` which means that some commands won't work in full with DSL1 pipelines anymore. Please use a `v1.x` version of `tools` for such pipelines or better yet join us to improve our DSL2 efforts! Here are the most important changes:
 
-* The pipeline template has been re-written for DSL2 pipelines
-* Linting has been adapted to DSL2 pipelines
-* Version tracking of modules installed from `nf-core/modules` via an additional `modules.json` file and `git_sha` sums
-* Pipeline commands must now be run either from within a pipeline directory or by specifying the path to a pipeline with `-d`/`--directory`
+* The pipeline template has been completely re-written in DSL2
+* A module template has been added to auto-create best-practice DSL2 modules to speed up development
+* A whole suite of commands have been added to streamline the creation, installation, removal, linting and version bumping of DSL2 modules either installed within pipelines or the nf-core/modules repo
 
 ### Template
 
