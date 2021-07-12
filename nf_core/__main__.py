@@ -377,7 +377,7 @@ def modules(ctx, repository, branch):
 @click.pass_context
 def list(ctx):
     """
-    List modules available locally in a pipeline or in a remote repo like nf-core/modules.
+    List modules in a local pipeline or remote repo e.g nf-core/modules.
     """
     pass
 
@@ -388,7 +388,7 @@ def list(ctx):
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
 def remote(ctx, keywords, json):
     """
-    List all modules available in a remote GitHub repo like on nf-core/modules
+    List all modules in a remote GitHub repo e.g. nf-core/modules
     """
     try:
         module_list = nf_core.modules.ModuleList(None, remote=True)
