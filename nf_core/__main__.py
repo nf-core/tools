@@ -368,7 +368,11 @@ def modules(ctx, repository, branch):
     ctx.ensure_object(dict)
 
     # Make repository object to pass to subcommands
-    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
+    try:
+        ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
+    except LookupError as e:
+        log.critical(e)
+        sys.exit(1)
 
 
 @modules.group(cls=CustomHelpOrder, help_priority=1)
