@@ -422,9 +422,7 @@ def local(ctx, keywords, json, dir):
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Force installation of module if it already exists"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Force installation of module if it already exists")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
 def install(ctx, tool, dir, latest, force, sha, all):
