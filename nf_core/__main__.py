@@ -439,10 +439,6 @@ def install(ctx, tool, dir, latest, force, sha, all):
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
         exit_status = module_install.install(tool)
         if not exit_status and all:
-            log.critical(
-                "Install command exited with bad exit status. "
-                "Some of your module files might have been erroneously removed."
-            )
             sys.exit(1)
     except UserWarning as e:
         log.error(e)
