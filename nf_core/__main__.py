@@ -526,7 +526,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
-@click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
+@click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 def lint(ctx, tool, dir, key, all, local, passed):
@@ -536,7 +536,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
     Checks DSL2 module code against nf-core guidelines to ensure
     that all modules follow the same standards.
 
-    Test modules within a pipeline or with your clone of the
+    Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
     try:
@@ -557,11 +557,12 @@ def lint(ctx, tool, dir, key, all, local, passed):
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
-@click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
-@click.option("-s", "--show-all", is_flag=True, metavar="Show up-to-date modules in results")
+@click.option("-a", "--all", is_flag=True, help="Run on all modules")
+@click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
 def bump_versions(ctx, tool, dir, all, show_all):
     """
-    Bump versions for one or more modules in a directory.
+    Bump versions for one or more modules in a clone of
+    the nf-core/modules repo.
     """
     try:
         version_bumper = ModuleVersionBumper(pipeline_dir=dir)
