@@ -423,16 +423,15 @@ def local(ctx, keywords, json, dir):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
 @click.option(
-    "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
+    "-f", "--force", is_flag=True, default=False, help="Force installation of module if it already exists"
 )
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
 def install(ctx, tool, dir, latest, force, sha, all):
     """
-    Add a DSL2 software wrapper module to a pipeline.
+    Install/update DSL2 modules within a pipeline.
 
-    Finds the relevant files in nf-core/modules and copies to the pipeline,
-    along with associated metadata.
+    Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
     try:
         module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha, update_all=all)
