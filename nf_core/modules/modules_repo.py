@@ -36,7 +36,7 @@ class ModulesRepo(object):
 
         # Check if name seems to be well formed
         if self.name.count("/") != 1:
-            raise LookupError(f"Repository name '{self.name}'is not well formed")
+            raise LookupError(f"Repository name '{self.name}' is not well formed")
 
         # Check if repository exist
         api_url = f"https://api.github.com/repos/{self.name}/branches"
