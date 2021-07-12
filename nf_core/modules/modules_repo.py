@@ -48,10 +48,17 @@ class ModulesRepo(object):
         else:
             raise LookupError(f"Repository '{self.name}' is not available from GitHub")
 
-        api_url = f"https://api.github.com/repos/{self.name}/contents/modules?ref={self.branch}"
+        api_url = f"https://api.github.com/repos/{self.name}/contents?ref={self.branch}"
         response = requests.get(api_url)
-        if response.status_code == 404:
-            raise LookupError(f"Repository '{self.name}' does not contain a 'modules' directory")
+        if response.status_code == 200:
+            dir_names = [entry["name"] for entry in response.json() if entry["type"] == "dir"]
+            if "modules" not in dir_names:
+                err_str = f"Repository '{self.name}' does not contain a 'modules' directory"
+                if "software" in dir_names:
+                    err_str += ".\nAs of version 2.0, the 'software' directory should be renamed to 'modules'"
+                raise LookupError(err_str)
+        else:
+            raise LookupError(f"Unable to fetch repository information from '{self.name}' ({self.branch})")
 
     def get_modules_file_tree(self):
         """
