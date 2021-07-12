@@ -53,7 +53,7 @@ class ModulesRepo(object):
         if response.status_code == 200:
             dir_names = [entry["name"] for entry in response.json() if entry["type"] == "dir"]
             if "modules" not in dir_names:
-                err_str = f"Repository '{self.name}' does not contain a 'modules' directory"
+                err_str = f"Repository '{self.name}' ({self.branch}) does not contain a 'modules' directory"
                 if "software" in dir_names:
                     err_str += ".\nAs of version 2.0, the 'software' directory should be renamed to 'modules'"
                 raise LookupError(err_str)
