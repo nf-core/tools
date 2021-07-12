@@ -353,15 +353,13 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
     "--repository",
     type=str,
     default="nf-core/modules",
-    help="GitHub repository hosting software wrapper modules.",
+    help="GitHub repository hosting modules.",
 )
-@click.option("-b", "--branch", type=str, default="master", help="Modules GitHub repo git branch to use.")
+@click.option("-b", "--branch", type=str, default="master", help="Branch of GitHub repository hosting modules.")
 @click.pass_context
 def modules(ctx, repository, branch):
     """
-    Work with the nf-core/modules software wrappers.
-
-    Tools to manage DSL 2 nf-core/modules software wrapper imports.
+    Tools to manage Nextflow DSL2 modules as hosted on nf-core/modules.
     """
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called
     # by means other than the `if` block below)
@@ -379,7 +377,7 @@ def modules(ctx, repository, branch):
 @click.pass_context
 def list(ctx):
     """
-    List local and remote software modules.
+    List modules available locally in a pipeline or in a remote repo like nf-core/modules.
     """
     pass
 
@@ -390,7 +388,7 @@ def list(ctx):
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
 def remote(ctx, keywords, json):
     """
-    List all modules currently available from a remote repository
+    List all modules available in a remote GitHub repo like on nf-core/modules
     """
     try:
         module_list = nf_core.modules.ModuleList(None, remote=True)
@@ -408,7 +406,7 @@ def remote(ctx, keywords, json):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 def local(ctx, keywords, json, dir):
     """
-    List all modules installed in a pipeline
+    List all modules installed locally in a pipeline
     """
     try:
         module_list = nf_core.modules.ModuleList(dir, remote=False)

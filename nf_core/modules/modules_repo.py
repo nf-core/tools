@@ -13,7 +13,7 @@ class ModulesRepo(object):
     An object to store details about the repository being used for modules.
 
     Used by the `nf-core modules` top-level command with -r and -b flags,
-    so that this can be used in the same way by all sucommands.
+    so that this can be used in the same way by all sub-commands.
     """
 
     def __init__(self, repo="nf-core/modules", branch="master"):
@@ -36,7 +36,7 @@ class ModulesRepo(object):
 
         # Check if name seems to be well formed
         if self.name.count("/") != 1:
-            raise LookupError(f"Repository name '{self.name}' is not well formed")
+            raise LookupError(f"Repository name '{self.name}' should be of the format '<github_user_name>/<repo_name>'")
 
         # Check if repository exist
         api_url = f"https://api.github.com/repos/{self.name}/branches"
