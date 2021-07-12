@@ -5,7 +5,7 @@ import logging
 import nf_core.utils
 
 from .modules_command import ModuleCommand
-from .module_utils import get_installed_modules, get_module_git_log
+from .module_utils import get_installed_modules, get_module_git_log, module_exist_in_repo
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -71,6 +71,14 @@ class ModuleInstall(ModuleCommand):
 
         exit_value = True
         for modules_repo, module in repos_and_modules:
+            if not module_exist_in_repo(module, modules_repo):
+                warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
+                if self.update_all:
+                    warn_msg += ". Skipping..."
+                log.warning(warn_msg)
+                exit_value = False
+                continue
+
             if modules_repo.name in modules_json["repos"]:
                 current_entry = modules_json["repos"][modules_repo.name].get(module)
             else:
@@ -87,6 +95,10 @@ class ModuleInstall(ModuleCommand):
                 current_version = current_entry["git_sha"]
                 try:
                     git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
+                except LookupError as e:
+                    log.error(e)
+                    exit_value = False
+                    continue
                 except UserWarning:
                     log.error(f"Was unable to fetch version of '{modules_repo.name}/{module}'")
                     exit_value = False
@@ -195,6 +207,10 @@ class ModuleInstall(ModuleCommand):
             next_page_commits = get_module_git_log(module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr)
         except UserWarning:
             next_page_commits = None
+        except LookupError as e:
+            log.warning(e)
+            next_page_commits = None
+
         while git_sha is "":
             commits = next_page_commits
             try:
@@ -202,6 +218,9 @@ class ModuleInstall(ModuleCommand):
                     module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr + 1
                 )
             except UserWarning:
+                next_page_commits = None
+            except LookupError as e:
+                log.warning(e)
                 next_page_commits = None
 
             choices = []

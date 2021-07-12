@@ -21,6 +21,23 @@ class ModuleException(Exception):
     pass
 
 
+def module_exist_in_repo(module_name, modules_repo):
+    """
+    Checks whether a module exists in a branch of a GitHub repository
+
+    Args:
+        module_name (str): Name of module
+        modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
+    Returns:
+        boolean: Whether the module exist in the repo or not.
+    """
+    api_url = (
+        f"https://api.github.com/repos/{modules_repo.name}/contents/modules/{module_name}?ref={modules_repo.branch}"
+    )
+    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    return not (response.status_code == 404)
+
+
 def get_module_git_log(
     module_name, owner="nf-core", modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"
 ):
@@ -138,7 +155,11 @@ def create_modules_json(pipeline_dir):
             "Creating 'modules.json' file", total=sum(map(len, repo_module_names.values())), test_name="module.json"
         )
         for repo_name, module_names in repo_module_names.items():
-            modules_repo = ModulesRepo(repo=repo_name)
+            try:
+                modules_repo = ModulesRepo(repo=repo_name)
+            except LookupError as e:
+                raise UserWarning(e)
+
             repo_path = os.path.join(modules_dir, repo_name)
             modules_json["repos"][repo_name] = dict()
             for module_name in module_names:
