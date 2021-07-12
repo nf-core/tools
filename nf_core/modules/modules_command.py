@@ -33,6 +33,12 @@ class ModuleCommand:
         except LookupError as e:
             raise UserWarning(e)
 
+        if self.repo_type == "pipeline":
+            try:
+                nf_core.modules.module_utils.verify_pipeline_dir(self.dir)
+            except UserWarning:
+                raise
+
     def get_pipeline_modules(self):
         """
         Get the modules installed in the current directory.
