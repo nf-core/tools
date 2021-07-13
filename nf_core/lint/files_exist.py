@@ -19,12 +19,13 @@ def files_exist(self):
     .. code-block:: bash
 
         .gitattributes
+        .gitignore
+        .markdownlint.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.md
         .github/ISSUE_TEMPLATE/config.yml
         .github/ISSUE_TEMPLATE/feature_request.md
-        .github/markdownlint.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/ci.yml
@@ -35,17 +36,23 @@ def files_exist(self):
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo.png
         assets/sendmail_template.txt
-        bin/markdown_to_html.py
+        bin/scrape_software_versions.py
+        conf/modules.config
+        conf/test.config
+        conf/test_full.config
         CHANGELOG.md
-        CODE_OF_CONDUCT.md
+        CITATIONS.md
         CODE_OF_CONDUCT.md
         docs/images/nf-core-PIPELINE_logo.png
         docs/output.md
         docs/README.md
-        docs/README.md
         docs/usage.md
         lib/nfcore_external_java_deps.jar
         lib/NfcoreSchema.groovy
+        lib/NfcoreTemplate.groovy
+        lib/Utils.groovy
+        lib/WorkflowMain.groovy
+        modules/local/get_software_versions.nf
         nextflow_schema.json
         nextflow.config
         README.md
@@ -55,11 +62,12 @@ def files_exist(self):
     .. code-block:: bash
 
         main.nf
-        environment.yml
-        Dockerfile
+        assets/multiqc_config.yaml
         conf/base.config
+        conf/igenomes.config
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
+        lib/WorkflowPIPELINE.groovy
 
     Files that *must not* be present:
 
@@ -89,7 +97,10 @@ def files_exist(self):
     short_name = self.nf_config["manifest.name"].strip("\"'").replace("nf-core/", "")
     files_fail = [
         [".gitattributes"],
+        [".gitignore"],
+        [".markdownlint.yml"],
         ["CHANGELOG.md"],
+        ["CITATIONS.md"],
         ["CODE_OF_CONDUCT.md"],
         ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
@@ -101,7 +112,6 @@ def files_exist(self):
         [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
-        [os.path.join(".github", "markdownlint.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
@@ -111,7 +121,10 @@ def files_exist(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("bin", "markdown_to_html.py")],
+        [os.path.join("bin", "scrape_software_versions.py")],
+        [os.path.join("conf", "modules.config")],
+        [os.path.join("conf", "test.config")],
+        [os.path.join("conf", "test_full.config")],
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
         [os.path.join("docs", "output.md")],
         [os.path.join("docs", "README.md")],
@@ -119,14 +132,21 @@ def files_exist(self):
         [os.path.join("docs", "usage.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
         [os.path.join("lib", "NfcoreSchema.groovy")],
+        [os.path.join("lib", "NfcoreTemplate.groovy")],
+        [os.path.join("lib", "Utils.groovy")],
+        [os.path.join("lib", "WorkflowMain.groovy")],
+        [os.path.join("modules", "local", "get_software_versions.nf")],
     ]
+
     files_warn = [
         ["main.nf"],
-        ["environment.yml"],
-        ["Dockerfile"],
+        [os.path.join("assets", "multiqc_config.yaml")],
         [os.path.join("conf", "base.config")],
+        [os.path.join("conf", "igenomes.config")],
         [os.path.join(".github", "workflows", "awstest.yml")],
         [os.path.join(".github", "workflows", "awsfulltest.yml")],
+        [os.path.join("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
+        ["modules.json"],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
