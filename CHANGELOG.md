@@ -1,14 +1,10 @@
 # nf-core/tools: Changelog
 
-## v2.0.1dev
+## [v2.0.1 - Palladium Platypus II](https://github.com/nf-core/tools/releases/tag/2.0) - [2021-07-13]
 
 ### Template
 
-* Add `--dir` declaration to `nf-core lint` Actions CI in `linting.yml`
-
-### General
-
-Nothing yet
+* Critical tweak to add `--dir` declaration to `nf-core lint` Actions CI in `linting.yml`
 
 ### Modules
 
