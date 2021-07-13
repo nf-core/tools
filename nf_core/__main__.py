@@ -377,7 +377,7 @@ def modules(ctx, repository, branch):
 @click.pass_context
 def list(ctx):
     """
-    List modules available locally in a pipeline or in a remote repo like nf-core/modules.
+    List modules in a local pipeline or remote repo e.g nf-core/modules.
     """
     pass
 
@@ -388,7 +388,7 @@ def list(ctx):
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
 def remote(ctx, keywords, json):
     """
-    List all modules available in a remote GitHub repo like on nf-core/modules
+    List all modules in a remote GitHub repo e.g. nf-core/modules
     """
     try:
         module_list = nf_core.modules.ModuleList(None, remote=True)
@@ -422,17 +422,14 @@ def local(ctx, keywords, json, dir):
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
-@click.option(
-    "-f", "--force", is_flag=True, default=False, help="Force installation of module if module already exists"
-)
+@click.option("-f", "--force", is_flag=True, default=False, help="Force installation of module if it already exists")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
 def install(ctx, tool, dir, latest, force, sha, all):
     """
-    Add a DSL2 software wrapper module to a pipeline.
+    Install/update DSL2 modules within a pipeline.
 
-    Finds the relevant files in nf-core/modules and copies to the pipeline,
-    along with associated metadata.
+    Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
     try:
         module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha, update_all=all)
@@ -451,7 +448,7 @@ def install(ctx, tool, dir, latest, force, sha, all):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 def remove(ctx, dir, tool):
     """
-    Remove a software wrapper from a pipeline.
+    Remove a module from a pipeline.
     """
     try:
         module_remove = nf_core.modules.ModuleRemove(dir)
@@ -480,7 +477,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     'modules/local/tool_subtool.nf'
 
     If <directory> is a clone of nf-core/modules, it creates or modifies files
-    in 'modules/software', 'modules/tests' and 'tests/config/pytest_software.yml'
+    in 'modules/', 'tests/modules' and 'tests/config/pytest_modules.yml'
     """
     # Combine two bool flags into one variable
     has_meta = None
@@ -527,7 +524,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
-@click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
+@click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 def lint(ctx, tool, dir, key, all, local, passed):
@@ -537,7 +534,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
     Checks DSL2 module code against nf-core guidelines to ensure
     that all modules follow the same standards.
 
-    Test modules within a pipeline or with your clone of the
+    Test modules within a pipeline or a clone of the
     nf-core/modules repository.
     """
     try:
@@ -558,11 +555,12 @@ def lint(ctx, tool, dir, key, all, local, passed):
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
-@click.option("-a", "--all", is_flag=True, metavar="Run on all discovered tools")
-@click.option("-s", "--show-all", is_flag=True, metavar="Show up-to-date modules in results")
+@click.option("-a", "--all", is_flag=True, help="Run on all modules")
+@click.option("-s", "--show-all", is_flag=True, help="Show up-to-date modules in results too")
 def bump_versions(ctx, tool, dir, all, show_all):
     """
-    Bump versions for one or more modules in a directory.
+    Bump versions for one or more modules in a clone of
+    the nf-core/modules repo.
     """
     try:
         version_bumper = ModuleVersionBumper(pipeline_dir=dir)
