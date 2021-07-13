@@ -701,7 +701,7 @@ To help developers working with pipeline schema, nf-core tools has three `schema
 Nextflow can take input parameters in a JSON or YAML file when running a pipeline using the `-params-file` option.
 This command validates such a file against the pipeline schema.
 
-Usage is `nextflow schema validate <pipeline> <parameter file>`, eg:
+Usage is `nf-core schema validate <pipeline> <parameter file>`, eg:
 
 ```console
 $ nf-core schema validate rnaseq nf-params.json
@@ -733,7 +733,7 @@ If no existing schema is found it will create one for you.
 Once built, the tool can send the schema to the nf-core website so that you can use a graphical interface to organise and fill in the schema.
 The tool checks the status of your schema on the website and once complete, saves your changes locally.
 
-Usage is `nextflow schema build`, eg:
+Usage is `nf-core schema build -d <pipeline_directory>`, eg:
 
 ```console
 $ nf-core schema build nf-core-testpipeline
@@ -772,7 +772,7 @@ There are four flags that you can use with this command:
 The pipeline schema is linted as part of the main pipeline `nf-core lint` command,
 however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
 
-Usage is `nextflow schema lint <schema>`, eg:
+Usage is `nf-core schema lint <schema>`, eg:
 
 ```console
 $ nf-core schema lint nextflow_schema.json
