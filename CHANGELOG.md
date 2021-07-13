@@ -4,6 +4,8 @@
 
 ### Template
 
+* Add `--dir` declaration to `nf-core lint` Actions CI in `linting.yml`
+
 ### General
 
 Nothing yet
