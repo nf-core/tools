@@ -733,7 +733,7 @@ If no existing schema is found it will create one for you.
 Once built, the tool can send the schema to the nf-core website so that you can use a graphical interface to organise and fill in the schema.
 The tool checks the status of your schema on the website and once complete, saves your changes locally.
 
-Usage is `nf-core schema build <pipeline_directory>`, eg:
+Usage is `nf-core schema build -d <pipeline_directory>`, eg:
 
 ```console
 $ nf-core schema build nf-core-testpipeline
