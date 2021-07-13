@@ -4,9 +4,11 @@
 
 ### Template
 
-* Critical tweak to add `--dir` declaration to `nf-core lint` Actions CI in `linting.yml`
+* Critical tweak to add `--dir` declaration to `nf-core lint` GitHub Actions `linting.yml` workflow
 
-### Modules
+### General
+
+* Add `--dir` declaration to `nf-core sync` GitHub Actions `sync.yml` workflow
 
 ## [v2.0 - Palladium Platypus](https://github.com/nf-core/tools/releases/tag/2.0) - [2021-07-13]
 
