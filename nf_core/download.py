@@ -388,7 +388,7 @@ class DownloadWorkflow(object):
         """Edit the downloaded nextflow.config file to use the local config files"""
         nfconfig_fn = os.path.join(self.outdir, "workflow", "nextflow.config")
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
-        repl_str = "../configs/"
+        repl_str = "${projectDir}/../configs/"
         log.debug("Editing 'params.custom_config_base' in '{}'".format(nfconfig_fn))
 
         # Load the nextflow.config file into memory

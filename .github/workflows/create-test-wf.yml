@@ -1,0 +1,41 @@
+name: Create a pipeline and test it
+on: [push, pull_request]
+
+# Uncomment if we need an edge release of Nextflow again
+# env: NXF_EDGE: 1
+
+jobs:
+  RunTestWorkflow:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        name: Check out source-code repository
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install .
+
+      - name: Install Nextflow
+        env:
+          CAPSULE_LOG: none
+        run: |
+          wget -qO- get.nextflow.io | bash
+          sudo mv nextflow /usr/local/bin/
+
+      - name: Run nf-core/tools
+        run: |
+          nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+          nextflow run nf-core-testpipeline -profile test,docker
+
+      - name: Upload log file artifact
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v2
+        with:
+          name: nf-core-log-file
+          path: log.txt

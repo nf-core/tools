@@ -113,7 +113,7 @@ class DownloadTest(unittest.TestCase):
         # Test the function
         download_obj.wf_use_local_configs()
         wf_config = nf_core.utils.fetch_wf_config(os.path.join(test_outdir, "workflow"))
-        assert wf_config["params.custom_config_base"] == "'../configs/'"
+        assert wf_config["params.custom_config_base"] == f"'{test_outdir}/workflow/../configs/'"
 
     #
     # Tests for 'find_container_images'

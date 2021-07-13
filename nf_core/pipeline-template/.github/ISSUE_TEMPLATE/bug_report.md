@@ -18,7 +18,7 @@ Please delete this text and anything that's not relevant from the template below
 I have checked the following places for your error:
 
 - [ ] [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
-- [ ] [{{ name }} pipeline documentation](https://nf-co.re/{{ name }}/usage)
+- [ ] [{{ name }} pipeline documentation](https://nf-co.re/{{ short_name }}/usage)
 
 ## Description of the bug
 
@@ -51,13 +51,12 @@ Have you provided the following extra information/files:
 
 ## Nextflow Installation
 
-- Version: <!-- [e.g. 19.10.0] -->
+- Version: <!-- [e.g. 21.04.0] -->
 
 ## Container engine
 
 - Engine: <!-- [e.g. Conda, Docker, Singularity, Podman, Shifter or Charliecloud] -->
 - version: <!-- [e.g. 1.0.0] -->
-- Image tag: <!-- [e.g. {{ name_docker }}:1.0.0] -->
 
 ## Additional context
 
