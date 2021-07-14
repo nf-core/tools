@@ -113,7 +113,7 @@ class ModuleCommand:
         Checks whether the modules installed in the directory
         are consistent with the entries in the 'modules.json' file and vice versa.
 
-        If a module has an entry in the 'modules.json' file but is missing the in the directory,
+        If a module has an entry in the 'modules.json' file but is missing in the directory,
         we first try to reinstall the module from the remote and if that fails we remove the entry
         in 'modules.json'.
 
