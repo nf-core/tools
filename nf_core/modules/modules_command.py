@@ -3,6 +3,7 @@ from nf_core import modules
 import os
 import glob
 import shutil
+import copy
 import json
 import logging
 import yaml
@@ -105,6 +106,130 @@ class ModuleCommand:
                 nf_core.modules.module_utils.create_modules_json(self.dir)
             except UserWarning as e:
                 raise
+
+    def modules_json_up_to_date(self):
+        """
+        Checks whether the modules installed in the directory
+        are consistent with the entries in the 'modules.json' file and vice versa.
+
+        If a module has an entry in the 'modules.json' file but is missing the in the directory,
+        we first try to reinstall the module from the remote and if that fails we remove the entry
+        in 'modules.json'.
+
+        If a module is installed but the entry in 'modules.json' is missing we iterate through
+        the commit log in the remote to try to determine the SHA.
+        """
+        mod_json = self.load_modules_json()
+        fresh_mod_json = copy.deepcopy(mod_json)
+        self.get_pipeline_modules()
+        missing_from_modules_json = {}
+
+        # Iterate through all installed modules
+        # and remove all entries in modules_json which
+        # are present in the directory
+        for repo, modules in self.module_names.items():
+            if repo in mod_json["repos"]:
+                for module in modules:
+                    if module in mod_json["repos"][repo]:
+                        mod_json["repos"][repo].pop(module)
+                    else:
+                        if repo not in missing_from_modules_json:
+                            missing_from_modules_json[repo] = []
+                        missing_from_modules_json[repo].append(module)
+                if len(mod_json["repos"][repo]) == 0:
+                    mod_json["repos"].pop(repo)
+            else:
+                missing_from_modules_json[repo] = modules
+
+        # If there are any modules left in 'modules.json' after all  installed are removed,
+        # we try to reinstall them
+        if len(mod_json["repos"]) > 0:
+            missing_but_in_mod_json = [
+                f"'{repo}/{module}'" for repo, modules in mod_json["repos"].items() for module in modules
+            ]
+            log.info(
+                f"Reinstalling modules found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
+            )
+
+            remove_from_mod_json = {}
+            for repo, modules in mod_json["repos"].items():
+                try:
+                    modules_repo = ModulesRepo(repo=repo)
+                    modules_repo.get_modules_file_tree()
+                    install_folder = [modules_repo.owner, modules_repo.repo]
+                except LookupError as e:
+                    remove_from_mod_json[repo] = list(modules.keys())
+                    continue
+
+                for module, entry in modules.items():
+                    sha = entry.get("git_sha")
+                    if sha is None:
+                        if repo not in remove_from_mod_json:
+                            remove_from_mod_json[repo] = []
+                        remove_from_mod_json[repo].append(module)
+                        continue
+                    module_dir = os.path.join(self.dir, "modules", *install_folder, module)
+                    self.download_module_file(module, sha, modules_repo, install_folder, module_dir)
+
+            # If the reinstall fails, we remove those entries in 'modules.json'
+            if sum(map(len, remove_from_mod_json.values())) > 0:
+                uninstallable_mods = [
+                    f"'{repo}/{module}'" for repo, modules in remove_from_mod_json.items() for module in modules
+                ]
+                if len(uninstallable_mods) == 1:
+                    log.info(f"Was unable to reinstall {uninstallable_mods[0]}. Removing 'modules.json' entry")
+                else:
+                    log.info(
+                        f"Was unable to reinstall some modules. Removing 'modules.json' entries: {', '.join(uninstallable_mods)}"
+                    )
+
+                for repo, modules in remove_from_mod_json.items():
+                    for module in modules:
+                        fresh_mod_json["repos"][repo].pop(module)
+                    if len(fresh_mod_json["repos"][repo]) == 0:
+                        fresh_mod_json["repos"].pop(repo)
+
+        # If some modules didn't have an entry in the 'modules.json' file
+        # we try to determine the SHA from the commit log of the remote
+        if sum(map(len, missing_from_modules_json.values())) > 0:
+
+            format_missing = [
+                f"'{repo}/{module}'" for repo, modules in missing_from_modules_json.items() for module in modules
+            ]
+            if len(format_missing) == 1:
+                log.info(f"Recomputing commit SHA for module {format_missing[0]} which was missing from 'modules.json'")
+            else:
+                log.info(
+                    f"Recomputing commit SHAs for modules which which were were missing from 'modules.json': {', '.join(format_missing)}"
+                )
+            failed_to_find_commit_sha = []
+            for repo, modules in missing_from_modules_json.items():
+                modules_repo = ModulesRepo(repo=repo)
+                repo_path = os.path.join(self.dir, "modules", repo)
+                for module in modules:
+                    module_path = os.path.join(repo_path, module)
+                    try:
+                        correct_commit_sha = nf_core.modules.module_utils.find_correct_commit_sha(
+                            module, module_path, modules_repo
+                        )
+                        if repo not in fresh_mod_json["repos"]:
+                            fresh_mod_json["repos"][repo] = {}
+
+                        fresh_mod_json["repos"][repo][module] = {"git_sha": correct_commit_sha}
+                    except (LookupError, UserWarning) as e:
+                        failed_to_find_commit_sha.append(f"'{repo}/{module}'")
+
+            if len(failed_to_find_commit_sha) > 0:
+
+                def _s(some_list):
+                    return "" if len(some_list) == 1 else "s"
+
+                log.info(
+                    f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: '{', '.join(failed_to_find_commit_sha)}'."
+                    f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'}  module{_s(failed_to_find_commit_sha)}."
+                )
+
+        self.dump_modules_json(fresh_mod_json)
 
     def clear_module_dir(self, module_name, module_dir):
         """Removes all files in the module directory"""

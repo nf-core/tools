@@ -166,44 +166,60 @@ def create_modules_json(pipeline_dir):
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
                 try:
-                    # Find the correct commit SHA for the local files.
-                    # We iterate over the commit log pages until we either
-                    # find a matching commit or we reach the end of the commits
-                    correct_commit_sha = None
-                    commit_page_nbr = 1
-                    while correct_commit_sha is None:
+                    correct_commit_sha = find_correct_commit_sha(module_name, module_path, modules_repo)
 
-                        commit_shas = [
-                            commit["git_sha"]
-                            for commit in get_module_git_log(
-                                module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr
-                            )
-                        ]
-                        correct_commit_sha = find_correct_commit_sha(
-                            module_name, module_path, modules_repo, commit_shas
-                        )
-                        commit_page_nbr += 1
-
-                    modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
-                except (UserWarning, LookupError) as e:
+                except (LookupError, UserWarning) as e:
                     log.warn(
                         f"Could not fetch 'git_sha' for module: '{module_name}'. Please try to install a newer version of this module. ({e})"
                     )
+                    continue
+                modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
+
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
 
 
-def find_correct_commit_sha(module_name, module_path, modules_repo, commit_shas):
+def find_correct_commit_sha(module_name, module_path, modules_repo):
     """
     Returns the SHA for the latest commit where the local files are identical to the remote files
     Args:
         module_name (str): Name of module
         module_path (str): Path to module in local repo
         module_repo (str): Remote repo for module
-        commit_shas ([ str ]): List of commit SHAs for module, sorted in descending order
     Returns:
         commit_sha (str): The latest commit SHA where local files are identical to remote files
+    """
+    try:
+        # Find the correct commit SHA for the local files.
+        # We iterate over the commit log pages until we either
+        # find a matching commit or we reach the end of the commits
+        correct_commit_sha = None
+        commit_page_nbr = 1
+        while correct_commit_sha is None:
+
+            commit_shas = [
+                commit["git_sha"]
+                for commit in get_module_git_log(module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr)
+            ]
+            correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
+            commit_page_nbr += 1
+        return correct_commit_sha
+    except (UserWarning, LookupError) as e:
+        raise
+
+
+def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas):
+    """
+    Iterates through a list of commits for a module and checks if the local file contents match the remote
+    Args:
+        module_name (str): Name of module
+        module_path (str): Path to module in local repo
+        module_repo (str): Remote repo for module
+        commit_shas ([ str ]): List of commit SHAs for module, sorted in descending order
+    Returns:
+        commit_sha (str): The latest commit SHA from 'commit_shas' where local files
+        are identical to remote files
     """
 
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]
