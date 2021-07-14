@@ -121,7 +121,7 @@ class ModulesRepo(object):
             results[f["path"]] = f["url"]
         if commit != "":
             for path in results:
-                results[path] = f"https://api.github.com/repos/nf-core/modules/contents/{path}?ref={commit}"
+                results[path] = f"https://api.github.com/repos/{self.name}/contents/{path}?ref={commit}"
         return results
 
     def download_gh_file(self, dl_filename, api_url):
