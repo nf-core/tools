@@ -9,6 +9,7 @@ import logging
 import yaml
 
 import nf_core.modules.module_utils
+import nf_core.utils
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -285,6 +286,9 @@ class ModuleCommand:
 
     def dump_modules_json(self, modules_json):
         modules_json_path = os.path.join(self.dir, "modules.json")
+        # Sort the 'modules.json' repo entries
+        modules_json["repos"] = nf_core.utils.sort_dictionary(modules_json["repos"])
+
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
 

@@ -154,7 +154,7 @@ def create_modules_json(pipeline_dir):
         file_progress = progress_bar.add_task(
             "Creating 'modules.json' file", total=sum(map(len, repo_module_names.values())), test_name="module.json"
         )
-        for repo_name, module_names in repo_module_names.items():
+        for repo_name, module_names in sorted(repo_module_names.items()):
             try:
                 modules_repo = ModulesRepo(repo=repo_name)
             except LookupError as e:
@@ -162,7 +162,7 @@ def create_modules_json(pipeline_dir):
 
             repo_path = os.path.join(modules_dir, repo_name)
             modules_json["repos"][repo_name] = dict()
-            for module_name in module_names:
+            for module_name in sorted(module_names):
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
                 try:
@@ -197,7 +197,6 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
         correct_commit_sha = None
         commit_page_nbr = 1
         while correct_commit_sha is None:
-
             commit_shas = [
                 commit["git_sha"]
                 for commit in get_module_git_log(module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr)

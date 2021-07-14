@@ -773,3 +773,14 @@ def load_tools_config(dir="."):
         return {}
 
     return tools_config
+
+
+def sort_dictionary(d):
+    """Sorts a nested dictionary recursively"""
+    result = dict()
+    for k, v in sorted(d.items()):
+        if isinstance(v, dict):
+            result[k] = sort_dictionary(v)
+        else:
+            result[k] = v
+    return result
