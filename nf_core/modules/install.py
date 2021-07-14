@@ -25,6 +25,10 @@ class ModuleInstall(ModuleCommand):
             return False
         # Check whether pipelines is valid
         self.has_valid_directory()
+
+        # Verify that 'modules.json' is consistent with the installed modules
+        self.modules_json_up_to_date()
+
         if not self.update_all:
             # Get the available modules
             try:
