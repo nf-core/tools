@@ -54,20 +54,49 @@ class ModuleInstall(ModuleCommand):
                 log.error("Module '{}' not found in list of available modules.".format(module))
                 log.info("Use the command 'nf-core modules list' to view available software")
                 return False
-            repos_and_modules = [(self.modules_repo, module)]
+            repos_mods_shas = [(self.modules_repo, module, self.sha)]
         else:
             if module:
                 raise UserWarning("You cannot specify a module and use the '--all' flag at the same time")
             self.force = True
 
             self.get_pipeline_modules()
-            repos_and_modules = [
-                (ModulesRepo(repo=repo_name), modules) for repo_name, modules in self.module_names.items()
+            tool_config = nf_core.utils.load_tools_config()
+            update_config = tool_config.get("install", {})
+
+            # Filter out modules that should not be updated or assign versions if there are any
+            repos_mods_shas = {}
+            for repo_name, modules in self.module_names.items():
+                if repo_name not in update_config or update_config[repo_name] is True:
+                    repos_mods_shas[repo_name] = []
+                    for module in modules:
+                        repos_mods_shas[repo_name].append((module, self.sha))
+                elif isinstance(update_config[repo_name], dict):
+                    repo_config = update_config[repo_name]
+                    repos_mods_shas[repo_name] = []
+                    for module in modules:
+                        if module not in repo_config or repo_config[module] is True:
+                            repos_mods_shas[repo_name].append((module, self.sha))
+                        elif isinstance(repo_config[module], str):
+                            # If a string is given it is the commit SHA to which we should update to
+                            custom_sha = repo_config[module]
+                            repos_mods_shas[repo_name].append((module, custom_sha))
+                        # Otherwise the entry must be 'False' and we should ignore the module
+                elif isinstance(update_config[repo_name], str):
+                    # If a string is given it is the commit SHA to which we should update to
+                    custom_sha = update_config[repo_name]
+                    repos_mods_shas[repo_name] = []
+                    for module in modules:
+                        repos_mods_shas[repo_name].append((module, custom_sha))
+                # Otherwise the entry must be 'False' and we should ignore the repo
+
+            repos_mods_shas = [
+                (ModulesRepo(repo=repo_name), mods_shas) for repo_name, mods_shas in repos_mods_shas.items()
             ]
             # Load the modules file trees
-            for repo, _ in repos_and_modules:
+            for repo, _ in repos_mods_shas:
                 repo.get_modules_file_tree()
-            repos_and_modules = [(repo, module) for repo, modules in repos_and_modules for module in modules]
+            repos_mods_shas = [(repo, mod, sha) for repo, mod_shas in repos_mods_shas for mod, sha in mod_shas]
 
         # Load 'modules.json'
         modules_json = self.load_modules_json()
@@ -75,7 +104,7 @@ class ModuleInstall(ModuleCommand):
             return False
 
         exit_value = True
-        for modules_repo, module in repos_and_modules:
+        for modules_repo, module, sha in repos_mods_shas:
             if not module_exist_in_repo(module, modules_repo):
                 warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
                 if self.update_all:
@@ -95,7 +124,7 @@ class ModuleInstall(ModuleCommand):
             # Compute the module directory
             module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
-            if current_entry is not None and self.sha is None:
+            if current_entry is not None and sha is None:
                 # Fetch the latest commit for the module
                 current_version = current_entry["git_sha"]
                 try:
@@ -110,7 +139,7 @@ class ModuleInstall(ModuleCommand):
                     continue
                 latest_version = git_log[0]["git_sha"]
                 if current_version == latest_version and (not self.force or self.latest or self.update_all):
-                    log.info(f"'{modules_repo.name}/{module}' is already up to date")
+                    log.info(f"Module '{modules_repo.name}/{module}' is already up to date")
                     continue
                 elif not self.force:
                     log.error("Found newer version of module.")
@@ -128,22 +157,22 @@ class ModuleInstall(ModuleCommand):
                 exit_value = False
                 continue
 
-            if self.sha:
+            if sha:
                 if current_entry is not None:
                     if self.force:
-                        if current_entry["git_sha"] == self.sha:
-                            log.info(f"Module {modules_repo.name}/{module} already installed at {self.sha}")
+                        if current_entry["git_sha"] == sha:
+                            log.info(f"Module '{modules_repo.name}/{module}' already installed at {sha}")
                             continue
                     else:
                         exit_value = False
                         continue
 
                 if self.force:
-                    log.info(f"Removing old version of module '{module}'")
+                    log.info(f"Removing installed version of module '{module}'")
                     self.clear_module_dir(module, module_dir)
 
-                if self.download_module_file(module, self.sha, modules_repo, install_folder, module_dir):
-                    self.update_modules_json(modules_json, modules_repo.name, module, self.sha)
+                if self.download_module_file(module, sha, modules_repo, install_folder, module_dir):
+                    self.update_modules_json(modules_json, modules_repo.name, module, sha)
                 else:
                     exit_value = False
                 continue
