@@ -421,18 +421,17 @@ def local(ctx, keywords, json, dir):
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
-@click.option("-l", "--latest", is_flag=True, default=False, help="Install the latest version of the module")
+@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-f", "--force", is_flag=True, default=False, help="Force installation of module if it already exists")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
-@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
-def install(ctx, tool, dir, latest, force, sha, all):
+def install(ctx, tool, dir, prompt, force, sha):
     """
     Install/update DSL2 modules within a pipeline.
 
     Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
     try:
-        module_install = nf_core.modules.ModuleInstall(dir, force=force, latest=latest, sha=sha, update_all=all)
+        module_install = nf_core.modules.ModuleInstall(dir, force=force, prompt=prompt, sha=sha)
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
         exit_status = module_install.install(tool)
         if not exit_status and all:
@@ -443,6 +442,31 @@ def install(ctx, tool, dir, latest, force, sha, all):
 
 
 @modules.command(help_priority=3)
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option("-f", "--force", is_flag=True, default=False, help="Force update of module even if it already up to date")
+@click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
+@click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
+@click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
+def update(ctx, tool, dir, force, prompt, sha, all):
+    """
+    Install/update DSL2 modules within a pipeline.
+
+    Fetches and installs module files from a remote repo e.g. nf-core/modules.
+    """
+    try:
+        module_install = nf_core.modules.ModuleUpdate(dir, force=force, prompt=prompt, sha=sha, update_all=all)
+        module_install.modules_repo = ctx.obj["modules_repo_obj"]
+        exit_status = module_install.update(tool)
+        if not exit_status and all:
+            sys.exit(1)
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
+
+
+@modules.command(help_priority=4)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -459,7 +483,7 @@ def remove(ctx, dir, tool):
         sys.exit(1)
 
 
-@modules.command("create", help_priority=4)
+@modules.command("create", help_priority=5)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
@@ -497,7 +521,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
         sys.exit(1)
 
 
-@modules.command("create-test-yml", help_priority=5)
+@modules.command("create-test-yml", help_priority=6)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
@@ -519,7 +543,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
-@modules.command(help_priority=6)
+@modules.command(help_priority=7)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
@@ -551,7 +575,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
         sys.exit(1)
 
 
-@modules.command(help_priority=7)
+@modules.command(help_priority=8)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
