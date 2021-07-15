@@ -30,6 +30,10 @@ class ModuleInstall(ModuleCommand):
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json_up_to_date()
 
+        # Loads the tools config
+        tool_config = nf_core.utils.load_tools_config()
+        update_config = tool_config.get("install", {})
+
         if not self.update_all:
             # Get the available modules
             try:
@@ -48,7 +52,12 @@ class ModuleInstall(ModuleCommand):
                     choices=self.modules_repo.modules_avail_module_names,
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
-
+            if (
+                module in update_config.get(self.modules_repo.name, {})
+                and update_config[self.modules_repo.name][module] is False
+            ):
+                log.error("Module's install entry in '.nf-core.yml' is set to False")
+                return False
             # Check that the supplied name is an available module
             if module and module not in self.modules_repo.modules_avail_module_names:
                 log.error("Module '{}' not found in list of available modules.".format(module))
@@ -61,8 +70,6 @@ class ModuleInstall(ModuleCommand):
             self.force = True
 
             self.get_pipeline_modules()
-            tool_config = nf_core.utils.load_tools_config()
-            update_config = tool_config.get("install", {})
 
             # Filter out modules that should not be updated or assign versions if there are any
             repos_mods_shas = {}
