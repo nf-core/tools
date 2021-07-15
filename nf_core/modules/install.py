@@ -81,9 +81,8 @@ class ModuleInstall(ModuleCommand):
             module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
             # Check that the module is not already installed
-            if (current_entry is not None and not self.force) or not self.check_module_files_installed(
-                module, module_dir
-            ):
+            if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
+
                 log.error(f"Module is already installed.")
                 log.info(
                     f"To update '{module}' run 'nf-core modules update {module}'. To force reinstallation use '--force'"
@@ -115,14 +114,14 @@ class ModuleInstall(ModuleCommand):
                 latest_version = git_log[0]["git_sha"]
                 version = latest_version
 
-            log.info(f"Installing {module}")
+            if self.force:
+                log.info(f"Removing installed version of '{modules_repo.name}/{module}'")
+                self.clear_module_dir(module, module_dir)
+
+            log.info(f"{'Rei' if self.force else 'I'}nstalling '{modules_repo.name}/{module}'")
             log.debug(
                 f"Installing module '{module}' at modules hash {modules_repo.modules_current_hash} from {self.modules_repo.name}"
             )
-
-            if self.force:
-                log.info(f"Removing old version of module '{module}'")
-                self.clear_module_dir(module, module_dir)
 
             # Download module files
             if not self.download_module_file(module, version, modules_repo, install_folder, module_dir):
@@ -132,15 +131,3 @@ class ModuleInstall(ModuleCommand):
             # Update module.json with newly installed module
             self.update_modules_json(modules_json, modules_repo.name, module, version)
         return exit_value
-
-    def check_module_files_installed(self, module_name, module_dir):
-        """Checks if a module is already installed"""
-        if os.path.exists(module_dir):
-            if not self.force:
-                log.error(f"Module directory '{module_dir}' already exists.")
-                self.force = questionary.confirm(
-                    "Do you want to overwrite local files? (--force)", default=False
-                ).unsafe_ask()
-            return self.force
-        else:
-            return True
