@@ -28,7 +28,8 @@ A python package with helper tools for the nf-core community.
     * [`modules list` - List available modules](#list-modules)
         * [`modules list remote` - List remote modules](#list-remote-modules)
         * [`modules list local` - List installed modules](#list-installed-modules)
-    * [`modules install` - Install or update modules in pipeline](#install-or-update-modules-in-a-pipeline)
+    * [`modules install` - Install modules in pipeline](#install-modules-in-a-pipeline)
+    * [`modules update` - Update modules in pipeline](#update-modules-in-a-pipeline)
     * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
     * [`modules create` - Create a module from the template](#create-a-new-module)
     * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
@@ -962,7 +963,7 @@ INFO     Modules installed in '.':
 └─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
 ```
 
-### Install or update modules in a pipeline
+### Install modules in a pipeline
 
 You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
 A module installed this way will be installed to the `./modules/nf-core/modules` directory.
@@ -978,9 +979,36 @@ $ nf-core modules install
     nf-core/tools version 2.0
 
 ? Tool name: cat/fastq
-? Select 'cat/fastq' version: Rename software/ directory to modules/ to re-organise module structure ...truncated...
 INFO     Installing cat/fastq
 INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
+```
+
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+
+There are four flags that you can use with this command:
+
+* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
+* `--prompt`: Select the module version using a cli prompt.
+* `--force`: Overwrite a previously installed version of the module.
+* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+
+### Update modules in a pipeline
+
+You can update modules installed from a remote repository in your pipeline using `nf-core modules update`.
+
+```console
+$ nf-core modules update
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0
+
+? Tool name: fastqc
+INFO     Updating 'nf-core/modules/fastqc'
+INFO     Downloaded 3 files to ./modules/nf-core/modules/fastqc
 ```
 
 You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
@@ -988,10 +1016,10 @@ You can pass the module name as an optional argument to `nf-core modules install
 There are five flags that you can use with this command:
 
 * `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
-* `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
-* `--force`: Overwrite a previously installed version of the module.
+* `--force`: Reinstall module even if it appears to be up to date
+* `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
-* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force --latest` on all installed modules. To change all modules to a specific version you can run `nf-core modules install --all --sha <commit sha>`.
+* `--all`: Use this flag to run the command on all modules in the pipeline.
 
 ### Remove a module from a pipeline
 
