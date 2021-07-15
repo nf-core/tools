@@ -983,15 +983,45 @@ INFO     Installing cat/fastq
 INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify another pipeline than the current working directory by using the `--dir <pipeline dir>`.
 
-There are five flags that you can use with this command:
+There are three additional flags that you can use when installing a module:
 
-* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
 * `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
 * `--force`: Overwrite a previously installed version of the module.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
-* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force --latest` on all installed modules. To change all modules to a specific version you can run `nf-core modules install --all --sha <commit sha>`.
+
+In addition to installing and changing the version of single modules, you can update all installed modules with `nf-core modules install --all`. This will by default update all installed modules to the latest version available. If you want to change all modules to a specific version you can use `nf-core modules install --all --sha <commit sha>`.
+
+If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
+
+```yaml
+install:
+  nf-core/modules:
+    star/align: False
+```
+
+If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
+
+```yaml
+install:
+  nf-core/modules:
+    star/align: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+```
+
+This also works at the repository level. For example, if you want to exclude all modules installed from `nf-core/modules` from being updated you could add:
+
+```yaml
+install:
+  nf-core/modules: False
+```
+
+or if you want all modules in `nf-core/modules` at a specific version:
+
+```yaml
+install:
+  nf-core/modules: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+```
 
 ### Remove a module from a pipeline
 
