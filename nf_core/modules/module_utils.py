@@ -5,6 +5,7 @@ import requests
 import logging
 import rich
 import datetime
+import questionary
 
 
 import nf_core.utils
@@ -376,3 +377,47 @@ def verify_pipeline_dir(dir):
                 )
                 error_msg += "\nThe 'nf-core/software' directory should therefore be renamed to 'nf-core/modules'"
             raise UserWarning(error_msg)
+
+
+def prompt_module_version_sha(module, modules_repo, installed_sha=None):
+    older_commits_choice = questionary.Choice(
+        title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
+    )
+    git_sha = ""
+    page_nbr = 1
+    try:
+        next_page_commits = get_module_git_log(module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr)
+    except UserWarning:
+        next_page_commits = None
+    except LookupError as e:
+        log.warning(e)
+        next_page_commits = None
+
+    while git_sha is "":
+        commits = next_page_commits
+        try:
+            next_page_commits = get_module_git_log(
+                module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr + 1
+            )
+        except UserWarning:
+            next_page_commits = None
+        except LookupError as e:
+            log.warning(e)
+            next_page_commits = None
+
+        choices = []
+        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
+
+            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
+            message = f"{title} {sha}"
+            if installed_sha == sha:
+                message += " (installed version)"
+            commit_display = [(display_color, message), ("class:choice-default", "")]
+            choices.append(questionary.Choice(title=commit_display, value=sha))
+        if next_page_commits is not None:
+            choices += [older_commits_choice]
+        git_sha = questionary.select(
+            f"Select '{module}' version:", choices=choices, style=nf_core.utils.nfcore_question_style
+        ).unsafe_ask()
+        page_nbr += 1
+    return git_sha
