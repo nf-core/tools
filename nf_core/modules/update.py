@@ -65,7 +65,6 @@ class ModuleUpdate(ModuleCommand):
         else:
             if module:
                 raise UserWarning("You cannot specify a module and use the '--all' flag at the same time")
-            self.force = True
 
             self.get_pipeline_modules()
             repos_and_modules = [
@@ -102,64 +101,38 @@ class ModuleUpdate(ModuleCommand):
             # Compute the module directory
             module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
-            if current_entry is not None and self.sha is None:
-                # Fetch the latest commit for the module
-                current_version = current_entry["git_sha"]
+            if self.sha:
+                version = self.sha
+            elif self.prompt:
                 try:
-                    git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
-                except LookupError as e:
+                    version = nf_core.modules.module_utils.prompt_module_version_sha(
+                        module,
+                        modules_repo=modules_repo,
+                        installed_sha=current_entry["git_sha"] if not current_entry is None else None,
+                    )
+                except SystemError as e:
                     log.error(e)
                     exit_value = False
                     continue
+            else:
+                # Fetch the latest commit for the module
+                try:
+                    git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
                 except UserWarning:
-                    log.error(f"Was unable to fetch version of '{modules_repo.name}/{module}'")
+                    log.error(f"Was unable to fetch version of module '{module}'")
                     exit_value = False
                     continue
-                latest_version = git_log[0]["git_sha"]
-                if current_version == latest_version and not self.prompt:
-                    log.info(f"'{modules_repo.name}/{module}' is already up to date")
+                version = git_log[0]["git_sha"]
+
+            if current_entry is not None and not self.force:
+                # Fetch the latest commit for the module
+                current_version = current_entry["git_sha"]
+                if current_version == version:
+                    if self.sha or self.prompt:
+                        log.info(f"'{modules_repo.name}/{module}' is already installed at {version}")
+                    else:
+                        log.info(f"'{modules_repo.name}/{module}' is already up to date")
                     continue
-            else:
-                latest_version = None
-
-            if self.sha:
-                if current_entry is not None and not self.force:
-                    if current_entry["git_sha"] == self.sha:
-                        log.info(f"Module {modules_repo.name}/{module} already installed at {self.sha}")
-                        continue
-
-                # Remove installed module files
-                log.info(f"Removing old version of module '{module}'")
-                self.clear_module_dir(module, module_dir)
-
-                if self.download_module_file(module, self.sha, modules_repo, install_folder, module_dir):
-                    self.update_modules_json(modules_json, modules_repo.name, module, self.sha)
-                else:
-                    exit_value = False
-                continue
-            else:
-                if not self.prompt:
-                    # Fetch the latest commit for the module
-                    if latest_version is None:
-                        try:
-                            git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
-                        except UserWarning:
-                            log.error(f"Was unable to fetch version of module '{module}'")
-                            exit_value = False
-                            continue
-                        latest_version = git_log[0]["git_sha"]
-                    version = latest_version
-                else:
-                    try:
-                        version = nf_core.modules.module_utils.prompt_module_version_sha(
-                            module,
-                            modules_repo=modules_repo,
-                            installed_sha=current_entry["git_sha"] if not current_entry is None else None,
-                        )
-                    except SystemError as e:
-                        log.error(e)
-                        exit_value = False
-                        continue
 
             log.info(f"Updating '{modules_repo.name}/{module}'")
             log.debug(
