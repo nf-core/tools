@@ -422,11 +422,11 @@ def local(ctx, keywords, json, dir):
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
-@click.option("-f", "--force", is_flag=True, default=False, help="Force installation of module if it already exists")
+@click.option("-f", "--force", is_flag=True, default=False, help="Force reinstallation of module if it already exists")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 def install(ctx, tool, dir, prompt, force, sha):
     """
-    Install/update DSL2 modules within a pipeline.
+    Install DSL2 modules within a pipeline.
 
     Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
@@ -445,15 +445,15 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
-@click.option("-f", "--force", is_flag=True, default=False, help="Force update of module even if it already up to date")
+@click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
 def update(ctx, tool, dir, force, prompt, sha, all):
     """
-    Install/update DSL2 modules within a pipeline.
+    Update DSL2 modules within a pipeline.
 
-    Fetches and installs module files from a remote repo e.g. nf-core/modules.
+    Fetches and updates module files from a remote repo e.g. nf-core/modules.
     """
     try:
         module_install = nf_core.modules.ModuleUpdate(dir, force=force, prompt=prompt, sha=sha, update_all=all)
