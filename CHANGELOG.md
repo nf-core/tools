@@ -4,6 +4,8 @@
 
 ### Template
 
+* Update Nextflow installation link in pipeline template ([#1201](https://github.com/nf-core/tools/issues/1201))
+
 ### General
 
 ### Modules
