@@ -9,6 +9,7 @@
 ### Modules
 
 * Added consistency checks between installed modules and `modules.json` ([#1199](https://github.com/nf-core/tools/issues/1199))
+* Added missing function call to `nf-core lint` ([#1198](https://github.com/nf-core/tools/issues/1198))
 
 ## [v2.0.1 - Palladium Platypus Junior](https://github.com/nf-core/tools/releases/tag/2.0.1) - [2021-07-13]
 
