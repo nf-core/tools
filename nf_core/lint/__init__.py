@@ -42,8 +42,23 @@ def run_linting(
         An object of type :class:`PipelineLint` that contains all the linting results.
     """
 
+    # Verify that the requested tests exist
+    if key:
+        all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(set(ModuleLint._get_all_lint_tests()))
+        bad_keys = [k for k in key if k not in all_tests]
+        if len(bad_keys) > 0:
+            raise AssertionError(
+                "Test name{} not recognised: '{}'".format(
+                    "s" if len(bad_keys) > 1 else "",
+                    "', '".join(bad_keys),
+                )
+            )
+        log.info("Only running tests: '{}'".format("', '".join(key)))
+
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, key, fail_ignored)
+    pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode)))) if key else []
+
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -60,7 +75,12 @@ def run_linting(
         raise
 
     # Run only the tests we want
-    module_lint_tests = ("module_changes", "module_version")
+    if key:
+        # Select only the module lint tests
+        module_lint_tests = list(set(key).intersection(set(ModuleLint._get_all_lint_tests())))
+    else:
+        # If no key is supplied, run the default modules tests
+        module_lint_tests = ("module_changes", "module_version")
     module_lint_obj.filter_tests_by_key(module_lint_tests)
 
     # Set up files for modules linting test
@@ -160,7 +180,14 @@ class PipelineLint(nf_core.utils.Pipeline):
         self.passed = []
         self.warned = []
         self.could_fix = []
-        self.lint_tests = [
+        self.lint_tests = self._get_all_lint_tests(self.release_mode)
+        self.fix = fix
+        self.key = key
+        self.progress_bar = None
+
+    @staticmethod
+    def _get_all_lint_tests(release_mode):
+        return [
             "files_exist",
             "nextflow_config",
             "files_unchanged",
@@ -177,12 +204,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "actions_schema_validation",
             "merge_markers",
             "modules_json",
-        ]
-        if self.release_mode:
-            self.lint_tests.extend(["version_consistency"])
-        self.fix = fix
-        self.key = key
-        self.progress_bar = None
+        ] + (["version_consistency"] if release_mode else [])
 
     def _load(self):
         """Load information about the pipeline into the PipelineLint object"""
@@ -240,7 +262,6 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         # If -k supplied, only run these tests
         if self.key:
-            log.info("Only running tests: '{}'".format("', '".join(self.key)))
             self.lint_tests = [k for k in self.lint_tests if k in self.key]
 
         # Check that the pipeline_dir is a clean git repo
