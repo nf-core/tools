@@ -53,6 +53,12 @@ def run_linting(
     # Create the modules lint object
     module_lint_obj = ModuleLint(pipeline_dir)
 
+    # Verify that the pipeline is correctly configured
+    try:
+        module_lint_obj.has_valid_directory()
+    except UserWarning:
+        raise
+
     # Run only the tests we want
     module_lint_tests = ("module_changes", "module_version")
     module_lint_obj.filter_tests_by_key(module_lint_tests)
