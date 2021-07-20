@@ -37,8 +37,8 @@ class NfcoreTemplate {
                         }
                     }
                 }
-            } catch (all) {
-                log.warn "[$workflow.manifest.name] Could not determine 'hostname'. Skipping check."
+            } catch (Exception e) {
+                log.warn "[$workflow.manifest.name] Could not determine 'hostname' - skipping check. Reason: ${e.message}."
             }
         }
     }
