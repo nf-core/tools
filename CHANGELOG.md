@@ -5,6 +5,7 @@
 ### Template
 
 * Update Nextflow installation link in pipeline template ([#1201](https://github.com/nf-core/tools/issues/1201))
+* Command `hostname` is not portable [[#1212](https://github.com/nf-core/tools/pull/1212)]
 
 ### General
 
