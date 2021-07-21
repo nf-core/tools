@@ -16,7 +16,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 //               e.g. it's ok to have a single module for bwa to output BAM instead of SAM:
 //                 bwa mem | samtools view -B -T ref.fasta
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty 
-                 list (`[]`) instead of a file can be used to work around this issue.
+//               list (`[]`) instead of a file can be used to work around this issue.
 
 params.options = [:]
 options        = initOptions(params.options)
