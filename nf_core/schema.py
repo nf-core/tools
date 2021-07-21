@@ -21,8 +21,6 @@ import copy
 import nf_core.list, nf_core.utils
 
 log = logging.getLogger(__name__)
-# Set the base logger to output DEBUG
-log.setLevel(logging.DEBUG)
 
 
 class PipelineSchema(object):
