@@ -20,6 +20,7 @@ import nf_core.schema, nf_core.utils
 
 log = logging.getLogger(__name__)
 
+
 class Launch(object):
     """Class to hold config option to launch a pipeline"""
 
