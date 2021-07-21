@@ -1,19 +1,20 @@
 name: Create a pipeline and lint it
 on: [push, pull_request]
 
+# Uncomment if we need an edge release of Nextflow again
+# env: NXF_EDGE: 1
+
 jobs:
   MakeTestWorkflow:
     runs-on: ubuntu-latest
-    env:
-      NXF_VER: 21.03.0-edge
     steps:
       - uses: actions/checkout@v2
         name: Check out source-code repository
 
-      - name: Set up Python 3.7
+      - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
-          python-version: 3.7
+          python-version: 3.8
 
       - name: Install python dependencies
         run: |
@@ -31,28 +32,28 @@ jobs:
         run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
       - name: nf-core lint
-        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored
 
       - name: nf-core list
         run: nf-core --log-file log.txt list
 
-      - name: nf-core licences
-        run: nf-core --log-file log.txt licences nf-core-testpipeline
+      # - name: nf-core licences
+      #   run: nf-core --log-file log.txt licences nf-core-testpipeline
 
       - name: nf-core sync
-        run: nf-core --log-file log.txt sync nf-core-testpipeline/
+        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
 
       - name: nf-core schema
-        run: nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
+        run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts
 
       - name: nf-core bump-version
-        run: nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
+        run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
 
       - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored --release
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --release
 
       - name: nf-core modules install
-        run: nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
+        run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force --latest
 
       - name: Upload log file artifact
         if: ${{ always() }}

@@ -1,0 +1,39 @@
+name: nf-core/tools dev API docs
+on:
+  push:
+    branches: [dev]
+
+jobs:
+  api-docs:
+    name: Build & push Sphinx API docs
+    runs-on: ubuntu-18.04
+
+    steps:
+      - name: Check out source-code repository
+        uses: actions/checkout@v2
+
+      - name: Set up Python 3.7
+        uses: actions/setup-python@v1
+        with:
+          python-version: 3.7
+
+      - name: Install python dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r ./docs/api/requirements.txt
+          pip install .
+
+      - name: Build HTML docs
+        run: make --directory ./docs/api html
+
+      - name: Sync dev docs
+        if: github.repository == 'nf-core/tools'
+        uses: SamKirkland/FTP-Deploy-Action@4.0.0
+        with:
+          server: ${{ secrets.ftp_server }}
+          username: ${{ secrets.ftp_username}}
+          password: ${{ secrets.ftp_password }}
+          local-dir: './docs/api/_build/html/'
+          server-dir: ${{ secrets.ftp_server_dir }}/dev/
+          protocol: ${{ secrets.ftp_protocol }}
+          port: ${{ secrets.ftp_port }}

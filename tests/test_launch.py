@@ -16,7 +16,7 @@ class TestLaunch(unittest.TestCase):
     """Class for launch tests"""
 
     def setUp(self):
-        """ Create a new PipelineSchema and Launch objects """
+        """Create a new PipelineSchema and Launch objects"""
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
@@ -26,12 +26,12 @@ class TestLaunch(unittest.TestCase):
     @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
     def test_launch_pipeline(self, mock_webbrowser, mock_lauch_web_gui):
-        """ Test the main launch function """
+        """Test the main launch function"""
         self.launcher.launch_pipeline()
 
     @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
     def test_launch_file_exists(self, mock_confirm):
-        """ Test that we detect an existing params file and return """
+        """Test that we detect an existing params file and return"""
         # Make an empty params file to be overwritten
         open(self.nf_params_fn, "a").close()
         # Try and to launch, return with error
@@ -41,19 +41,19 @@ class TestLaunch(unittest.TestCase):
     @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
     @mock.patch.object(nf_core.launch.Confirm, "ask", side_effect=[False])
     def test_launch_file_exists_overwrite(self, mock_webbrowser, mock_lauch_web_gui, mock_confirm):
-        """ Test that we detect an existing params file and we overwrite it """
+        """Test that we detect an existing params file and we overwrite it"""
         # Make an empty params file to be overwritten
         open(self.nf_params_fn, "a").close()
         # Try and to launch, return with error
         self.launcher.launch_pipeline()
 
     def test_get_pipeline_schema(self):
-        """ Test loading the params schema from a pipeline """
+        """Test loading the params schema from a pipeline"""
         self.launcher.get_pipeline_schema()
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
 
     def test_make_pipeline_schema(self):
-        """ Make a copy of the template workflow, but delete the schema file, then try to load it """
+        """Make a copy of the template workflow, but delete the schema file, then try to load it"""
         test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
@@ -62,20 +62,20 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
-            "description": "The output directory where the results will be saved.",
+            "description": "Path to the output directory where the results will be saved.",
             "default": "./results",
             "fa_icon": "fas fa-folder-open",
         }
 
     def test_get_pipeline_defaults(self):
-        """ Test fetching default inputs from the pipeline schema """
+        """Test fetching default inputs from the pipeline schema"""
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
         assert self.launcher.schema_obj.input_params["outdir"] == "./results"
 
     def test_get_pipeline_defaults_input_params(self):
-        """ Test fetching default inputs from the pipeline schema with an input params file supplied """
+        """Test fetching default inputs from the pipeline schema with an input params file supplied"""
         tmp_filehandle, tmp_filename = tempfile.mkstemp()
         with os.fdopen(tmp_filehandle, "w") as fh:
             json.dump({"outdir": "fubar"}, fh)
@@ -86,7 +86,7 @@ class TestLaunch(unittest.TestCase):
         assert self.launcher.schema_obj.input_params["outdir"] == "fubar"
 
     def test_nf_merge_schema(self):
-        """ Checking merging the nextflow schema with the pipeline schema """
+        """Checking merging the nextflow schema with the pipeline schema"""
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         self.launcher.merge_nxf_flag_schema()
@@ -94,7 +94,7 @@ class TestLaunch(unittest.TestCase):
         assert "-resume" in self.launcher.schema_obj.schema["definitions"]["coreNextflow"]["properties"]
 
     def test_ob_to_questionary_string(self):
-        """ Check converting a python dict to a pyenquirer format - simple strings """
+        """Check converting a python dict to a pyenquirer format - simple strings"""
         sc_obj = {
             "type": "string",
             "default": "data/*{1,2}.fastq.gz",
@@ -104,17 +104,17 @@ class TestLaunch(unittest.TestCase):
 
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Web based"}])
     def test_prompt_web_gui_true(self, mock_prompt):
-        """ Check the prompt to launch the web schema or use the cli """
+        """Check the prompt to launch the web schema or use the cli"""
         assert self.launcher.prompt_web_gui() == True
 
     @mock.patch("questionary.unsafe_prompt", side_effect=[{"use_web_gui": "Command line"}])
     def test_prompt_web_gui_false(self, mock_prompt):
-        """ Check the prompt to launch the web schema or use the cli """
+        """Check the prompt to launch the web schema or use the cli"""
         assert self.launcher.prompt_web_gui() == False
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{}])
     def test_launch_web_gui_missing_keys(self, mock_poll_nfcore_web_api):
-        """ Check the code that opens the web browser """
+        """Check the code that opens the web browser"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         try:
@@ -129,14 +129,14 @@ class TestLaunch(unittest.TestCase):
     @mock.patch("webbrowser.open")
     @mock.patch("nf_core.utils.wait_cli_function")
     def test_launch_web_gui(self, mock_poll_nfcore_web_api, mock_webbrowser, mock_wait_cli_function):
-        """ Check the code that opens the web browser """
+        """Check the code that opens the web browser"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         assert self.launcher.launch_web_gui() == None
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "error", "message": "foo"}])
     def test_get_web_launch_response_error(self, mock_poll_nfcore_web_api):
-        """ Test polling the website for a launch response - status error """
+        """Test polling the website for a launch response - status error"""
         try:
             self.launcher.get_web_launch_response()
             raise UserWarning("Should have hit an AssertionError")
@@ -145,7 +145,7 @@ class TestLaunch(unittest.TestCase):
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "foo"}])
     def test_get_web_launch_response_unexpected(self, mock_poll_nfcore_web_api):
-        """ Test polling the website for a launch response - status error """
+        """Test polling the website for a launch response - status error"""
         try:
             self.launcher.get_web_launch_response()
             raise UserWarning("Should have hit an AssertionError")
@@ -154,12 +154,12 @@ class TestLaunch(unittest.TestCase):
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "waiting_for_user"}])
     def test_get_web_launch_response_waiting(self, mock_poll_nfcore_web_api):
-        """ Test polling the website for a launch response - status waiting_for_user"""
+        """Test polling the website for a launch response - status waiting_for_user"""
         assert self.launcher.get_web_launch_response() == False
 
     @mock.patch("nf_core.utils.poll_nfcore_web_api", side_effect=[{"status": "launch_params_complete"}])
     def test_get_web_launch_response_missing_keys(self, mock_poll_nfcore_web_api):
-        """ Test polling the website for a launch response - complete, but missing keys """
+        """Test polling the website for a launch response - complete, but missing keys"""
         try:
             self.launcher.get_web_launch_response()
             raise UserWarning("Should have hit an AssertionError")
@@ -183,23 +183,23 @@ class TestLaunch(unittest.TestCase):
     )
     @mock.patch.object(nf_core.launch.Launch, "sanitise_web_response")
     def test_get_web_launch_response_valid(self, mock_poll_nfcore_web_api, mock_sanitise):
-        """ Test polling the website for a launch response - complete, valid response """
+        """Test polling the website for a launch response - complete, valid response"""
         self.launcher.get_pipeline_schema()
         assert self.launcher.get_web_launch_response() == True
 
     def test_sanitise_web_response(self):
-        """ Check that we can properly sanitise results from the web """
+        """Check that we can properly sanitise results from the web"""
         self.launcher.get_pipeline_schema()
         self.launcher.nxf_flags["-name"] = ""
-        self.launcher.schema_obj.input_params["single_end"] = "true"
+        self.launcher.schema_obj.input_params["igenomes_ignore"] = "true"
         self.launcher.schema_obj.input_params["max_cpus"] = "12"
         self.launcher.sanitise_web_response()
         assert "-name" not in self.launcher.nxf_flags
-        assert self.launcher.schema_obj.input_params["single_end"] == True
+        assert self.launcher.schema_obj.input_params["igenomes_ignore"] == True
         assert self.launcher.schema_obj.input_params["max_cpus"] == 12
 
     def test_ob_to_questionary_bool(self):
-        """ Check converting a python dict to a pyenquirer format - booleans """
+        """Check converting a python dict to a pyenquirer format - booleans"""
         sc_obj = {
             "type": "boolean",
             "default": "True",
@@ -219,7 +219,7 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"](False) == False
 
     def test_ob_to_questionary_number(self):
-        """ Check converting a python dict to a pyenquirer format - with enum """
+        """Check converting a python dict to a pyenquirer format - with enum"""
         sc_obj = {"type": "number", "default": 0.1}
         result = self.launcher.single_param_to_questionary("min_reps_consensus", sc_obj)
         assert result["type"] == "input"
@@ -233,7 +233,7 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_integer(self):
-        """ Check converting a python dict to a pyenquirer format - with enum """
+        """Check converting a python dict to a pyenquirer format - with enum"""
         sc_obj = {"type": "integer", "default": 1}
         result = self.launcher.single_param_to_questionary("broad_cutoff", sc_obj)
         assert result["type"] == "input"
@@ -247,7 +247,7 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_range(self):
-        """ Check converting a python dict to a pyenquirer format - with enum """
+        """Check converting a python dict to a pyenquirer format - with enum"""
         sc_obj = {"type": "number", "minimum": "10", "maximum": "20", "default": 15}
         result = self.launcher.single_param_to_questionary("broad_cutoff", sc_obj)
         assert result["type"] == "input"
@@ -261,7 +261,7 @@ class TestLaunch(unittest.TestCase):
         assert result["filter"]("") == ""
 
     def test_ob_to_questionary_enum(self):
-        """ Check converting a python dict to a questionary format - with enum """
+        """Check converting a python dict to a questionary format - with enum"""
         sc_obj = {"type": "string", "default": "copy", "enum": ["symlink", "rellink"]}
         result = self.launcher.single_param_to_questionary("publish_dir_mode", sc_obj)
         assert result["type"] == "list"
@@ -269,7 +269,7 @@ class TestLaunch(unittest.TestCase):
         assert result["choices"] == ["symlink", "rellink"]
 
     def test_ob_to_questionary_pattern(self):
-        """ Check converting a python dict to a questionary format - with pattern """
+        """Check converting a python dict to a questionary format - with pattern"""
         sc_obj = {"type": "string", "pattern": "^([a-zA-Z0-9_\\-\\.]+)@([a-zA-Z0-9_\\-\\.]+)\\.([a-zA-Z]{2,5})$"}
         result = self.launcher.single_param_to_questionary("email", sc_obj)
         assert result["type"] == "input"
@@ -281,7 +281,7 @@ class TestLaunch(unittest.TestCase):
         )
 
     def test_strip_default_params(self):
-        """ Test stripping default parameters """
+        """Test stripping default parameters"""
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
@@ -290,14 +290,14 @@ class TestLaunch(unittest.TestCase):
         assert self.launcher.schema_obj.input_params == {"input": "custom_input"}
 
     def test_build_command_empty(self):
-        """ Test the functionality to build a nextflow command - nothing customsied """
+        """Test the functionality to build a nextflow command - nothing customsied"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.build_command()
         assert self.launcher.nextflow_cmd == "nextflow run {}".format(self.template_dir)
 
     def test_build_command_nf(self):
-        """ Test the functionality to build a nextflow command - core nf customised """
+        """Test the functionality to build a nextflow command - core nf customised"""
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.nxf_flags["-name"] = "Test_Workflow"
@@ -306,7 +306,7 @@ class TestLaunch(unittest.TestCase):
         assert self.launcher.nextflow_cmd == 'nextflow run {} -name "Test_Workflow" -resume'.format(self.template_dir)
 
     def test_build_command_params(self):
-        """ Test the functionality to build a nextflow command - params supplied """
+        """Test the functionality to build a nextflow command - params supplied"""
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
@@ -320,7 +320,7 @@ class TestLaunch(unittest.TestCase):
         assert saved_json == {"input": "custom_input"}
 
     def test_build_command_params_cl(self):
-        """ Test the functionality to build a nextflow command - params on Nextflow command line """
+        """Test the functionality to build a nextflow command - params on Nextflow command line"""
         self.launcher.use_params_file = False
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})

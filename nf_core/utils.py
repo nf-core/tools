@@ -11,8 +11,10 @@ import git
 import hashlib
 import json
 import logging
+import mimetypes
 import os
 import prompt_toolkit
+import questionary
 import re
 import requests
 import requests_cache
@@ -108,7 +110,7 @@ class Pipeline(object):
     """
 
     def __init__(self, wf_path):
-        """ Initialise pipeline object """
+        """Initialise pipeline object"""
         self.conda_config = {}
         self.conda_package_info = {}
         self.nf_config = {}
@@ -179,6 +181,23 @@ class Pipeline(object):
     def _fp(self, fn):
         """Convenience function to get full path to a file in the pipeline"""
         return os.path.join(self.wf_path, fn)
+
+
+def is_pipeline_directory(wf_path):
+    """
+    Checks if the specified directory have the minimum required files
+    ('main.nf', 'nextflow.config') for a pipeline directory
+
+    Args:
+        wf_path (str): The directory to be inspected
+
+    Raises:
+        UserWarning: If one of the files are missing
+    """
+    for fn in ["main.nf", "nextflow.config"]:
+        path = os.path.join(wf_path, fn)
+        if not os.path.isfile(path):
+            raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
 
 
 def fetch_wf_config(wf_path):
@@ -283,13 +302,17 @@ def setup_requests_cachedir():
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
     cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
-    if not os.path.exists(cachedir):
-        os.makedirs(cachedir)
-    requests_cache.install_cache(
-        os.path.join(cachedir, "github_info"),
-        expire_after=datetime.timedelta(hours=1),
-        backend="sqlite",
-    )
+
+    try:
+        if not os.path.exists(cachedir):
+            os.makedirs(cachedir)
+        requests_cache.install_cache(
+            os.path.join(cachedir, "github_info"),
+            expire_after=datetime.timedelta(hours=1),
+            backend="sqlite",
+        )
+    except PermissionError:
+        pass
 
 
 def wait_cli_function(poll_func, poll_every=20):
@@ -324,36 +347,36 @@ def poll_nfcore_web_api(api_url, post_data=None):
 
     Expects API reponse to be valid JSON and contain a top-level 'status' key.
     """
-    # Clear requests_cache so that we get the updated statuses
-    requests_cache.clear()
-    try:
-        if post_data is None:
-            response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
+    # Run without requests_cache so that we get the updated statuses
+    with requests_cache.disabled():
+        try:
+            if post_data is None:
+                response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
+            else:
+                response = requests.post(url=api_url, data=post_data)
+        except (requests.exceptions.Timeout):
+            raise AssertionError("URL timed out: {}".format(api_url))
+        except (requests.exceptions.ConnectionError):
+            raise AssertionError("Could not connect to URL: {}".format(api_url))
         else:
-            response = requests.post(url=api_url, data=post_data)
-    except (requests.exceptions.Timeout):
-        raise AssertionError("URL timed out: {}".format(api_url))
-    except (requests.exceptions.ConnectionError):
-        raise AssertionError("Could not connect to URL: {}".format(api_url))
-    else:
-        if response.status_code != 200:
-            log.debug("Response content:\n{}".format(response.content))
-            raise AssertionError(
-                "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
-            )
-        else:
-            try:
-                web_response = json.loads(response.content)
-                assert "status" in web_response
-            except (json.decoder.JSONDecodeError, AssertionError) as e:
+            if response.status_code != 200:
                 log.debug("Response content:\n{}".format(response.content))
                 raise AssertionError(
-                    "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
-                        api_url
-                    )
+                    "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
                 )
             else:
-                return web_response
+                try:
+                    web_response = json.loads(response.content)
+                    assert "status" in web_response
+                except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
+                    log.debug("Response content:\n{}".format(response.content))
+                    raise AssertionError(
+                        "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
+                            api_url
+                        )
+                    )
+                else:
+                    return web_response
 
 
 def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
@@ -471,10 +494,10 @@ def pip_package(dep):
 
 def get_biocontainer_tag(package, version):
     """
-    Given a bioconda package and version, look for a container
-    at quay.io and returns the tag of the most recent image
-    that matches the package version
-    Sends a HTTP GET request to the quay.io API.
+    Given a bioconda package and version, looks for Docker and Singularity containers
+    using the biocontaineres API, e.g.:
+    https://api.biocontainers.pro/ga4gh/trs/v2/tools/{tool}/versions/{tool}-{version}
+    Returns the most recent container versions by default.
     Args:
         package (str): A bioconda package name.
         version (str): Version of the bioconda package
@@ -483,41 +506,46 @@ def get_biocontainer_tag(package, version):
         A ValueError, if the package name can not be found (404)
     """
 
-    def get_tag_date(tag_date):
-        # Reformat a date given by quay.io to  datetime
-        return datetime.datetime.strptime(tag_date.replace("-0000", "").strip(), "%a, %d %b %Y %H:%M:%S")
+    biocontainers_api_url = f"https://api.biocontainers.pro/ga4gh/trs/v2/tools/{package}/versions/{package}-{version}"
 
-    quay_api_url = f"https://quay.io/api/v1/repository/biocontainers/{package}/tag/"
+    def get_tag_date(tag_date):
+        """
+        Format a date given by the biocontainers API
+        Given format: '2021-03-25T08:53:00Z'
+        """
+        return datetime.datetime.strptime(tag_date, "%Y-%m-%dT%H:%M:%SZ")
 
     try:
-        response = requests.get(quay_api_url)
+        response = requests.get(biocontainers_api_url)
     except requests.exceptions.ConnectionError:
-        raise LookupError("Could not connect to quay.io API")
+        raise LookupError("Could not connect to biocontainers.pro API")
     else:
         if response.status_code == 200:
-            # Get the container tag
-            tags = response.json()["tags"]
-            matching_tags = [t for t in tags if t["name"].startswith(version)]
-            # If version matches several images, get the most recent one, else return tag
-            if len(matching_tags) > 0:
-                tag = matching_tags[0]
-                tag_date = get_tag_date(tag["last_modified"])
-                for t in matching_tags:
-                    if get_tag_date(t["last_modified"]) > tag_date:
-                        tag = t
-                return package + ":" + tag["name"]
-            else:
-                return matching_tags[0]["name"]
+            try:
+                images = response.json()["images"]
+                singularity_image = None
+                docker_image = None
+                for img in images:
+                    # Get most recent Docker and Singularity image
+                    if img["image_type"] == "Docker":
+                        modification_date = get_tag_date(img["updated"])
+                        if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
+                            docker_image = img
+                    if img["image_type"] == "Singularity":
+                        modification_date = get_tag_date(img["updated"])
+                        if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
+                            singularity_image = img
+                return docker_image["image_name"], singularity_image["image_name"]
+            except TypeError:
+                raise LookupError(f"Could not find docker or singularity container for {package}")
         elif response.status_code != 404:
-            raise LookupError(
-                f"quay.io API returned unexpected response code `{response.status_code}` for {quay_api_url}"
-            )
+            raise LookupError(f"Unexpected response code `{response.status_code}` for {biocontainers_api_url}")
         elif response.status_code == 404:
-            raise ValueError(f"Could not find `{package}` on quayi.io/repository/biocontainers")
+            raise ValueError(f"Could not find `{package}` on api.biocontainers.pro")
 
 
 def custom_yaml_dumper():
-    """ Overwrite default PyYAML output to make Prettier YAML linting happy """
+    """Overwrite default PyYAML output to make Prettier YAML linting happy"""
 
     class CustomDumper(yaml.Dumper):
         def represent_dict_preserve_order(self, data):
@@ -546,3 +574,202 @@ def custom_yaml_dumper():
 
     CustomDumper.add_representer(dict, CustomDumper.represent_dict_preserve_order)
     return CustomDumper
+
+
+def is_file_binary(path):
+    """Check file path to see if it is a binary file"""
+    binary_ftypes = ["image", "application/java-archive", "application/x-java-archive"]
+    binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
+
+    # Check common file extensions
+    filename, file_extension = os.path.splitext(path)
+    if file_extension in binary_extensions:
+        return True
+
+    # Try to detect binary files
+    (ftype, encoding) = mimetypes.guess_type(path, strict=False)
+    if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+        return True
+
+
+def prompt_remote_pipeline_name(wfs):
+    """Prompt for the pipeline name with questionary
+
+    Args:
+        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+
+    Returns:
+        pipeline (str): GitHub repo - username/repo
+
+    Raises:
+        AssertionError, if pipeline cannot be found
+    """
+
+    pipeline = questionary.autocomplete(
+        "Pipeline name:",
+        choices=[wf.name for wf in wfs.remote_workflows],
+        style=nfcore_question_style,
+    ).unsafe_ask()
+
+    # Check nf-core repos
+    for wf in wfs.remote_workflows:
+        if wf.full_name == pipeline or wf.name == pipeline:
+            return wf.full_name
+
+    # Non nf-core repo on GitHub
+    else:
+        if pipeline.count("/") == 1:
+            try:
+                gh_response = requests.get(f"https://api.github.com/repos/{pipeline}")
+                assert gh_response.json().get("message") != "Not Found"
+            except AssertionError:
+                pass
+            else:
+                return pipeline
+
+    log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in wfs.remote_workflows])))
+    raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+
+
+def prompt_pipeline_release_branch(wf_releases, wf_branches):
+    """Prompt for pipeline release / branch
+
+    Args:
+        wf_releases (array): Array of repo releases as returned by the GitHub API
+        wf_branches (array): Array of repo branches, as returned by the GitHub API
+
+    Returns:
+        choice (str): Selected release / branch name
+    """
+    # Prompt user for release tag
+    choices = []
+
+    # Releases
+    if len(wf_releases) > 0:
+        for tag in map(lambda release: release.get("tag_name"), wf_releases):
+            tag_display = [("fg:ansiblue", f"{tag}  "), ("class:choice-default", "[release]")]
+            choices.append(questionary.Choice(title=tag_display, value=tag))
+
+    # Branches
+    for branch in wf_branches.keys():
+        branch_display = [("fg:ansiyellow", f"{branch}  "), ("class:choice-default", "[branch]")]
+        choices.append(questionary.Choice(title=branch_display, value=branch))
+
+    if len(choices) == 0:
+        return False
+
+    return questionary.select("Select release / branch:", choices=choices, style=nfcore_question_style).unsafe_ask()
+
+
+def get_repo_releases_branches(pipeline, wfs):
+    """Fetches details of a nf-core workflow to download.
+
+    Args:
+        pipeline (str): GitHub repo username/repo
+        wfs: A nf_core.list.Workflows() object, where get_remote_workflows() has been called.
+
+    Returns:
+        wf_releases, wf_branches (tuple): Array of releases, Array of branches
+
+    Raises:
+        LockupError, if the pipeline can not be found.
+    """
+
+    wf_releases = []
+    wf_branches = {}
+
+    # Repo is a nf-core pipeline
+    for wf in wfs.remote_workflows:
+        if wf.full_name == pipeline or wf.name == pipeline:
+
+            # Set to full name just in case it didn't have the nf-core/ prefix
+            pipeline = wf.full_name
+
+            # Store releases and stop loop
+            wf_releases = list(sorted(wf.releases, key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+            break
+
+    # Arbitrary GitHub repo
+    else:
+        if pipeline.count("/") == 1:
+
+            # Looks like a GitHub address - try working with this repo
+            log.debug(
+                f"Pipeline '{pipeline}' not in nf-core, but looks like a GitHub address - fetching releases from API"
+            )
+
+            # Get releases from GitHub API
+            rel_r = requests.get(f"https://api.github.com/repos/{pipeline}/releases")
+
+            # Check that this repo existed
+            try:
+                assert rel_r.json().get("message") != "Not Found"
+            except AssertionError:
+                raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+            except AttributeError:
+                # When things are working we get a list, which doesn't work with .get()
+                wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
+
+                # Get release tag commit hashes
+                if len(wf_releases) > 0:
+                    # Get commit hash information for each release
+                    tags_r = requests.get(f"https://api.github.com/repos/{pipeline}/tags")
+                    for tag in tags_r.json():
+                        for release in wf_releases:
+                            if tag["name"] == release["tag_name"]:
+                                release["tag_sha"] = tag["commit"]["sha"]
+
+        else:
+            log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in wfs.remote_workflows])))
+            raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+
+    # Get branch information from github api - should be no need to check if the repo exists again
+    branch_response = requests.get(f"https://api.github.com/repos/{pipeline}/branches")
+    for branch in branch_response.json():
+        if (
+            branch["name"] != "TEMPLATE"
+            and branch["name"] != "initial_commit"
+            and not branch["name"].startswith("nf-core-template-merge")
+        ):
+            wf_branches[branch["name"]] = branch["commit"]["sha"]
+
+    # Return pipeline again in case we added the nf-core/ prefix
+    return pipeline, wf_releases, wf_branches
+
+
+def load_tools_config(dir="."):
+    """
+    Parse the nf-core.yml configuration file
+
+    Look for a file called either `.nf-core.yml` or `.nf-core.yaml`
+
+    Also looks for the deprecated file `.nf-core-lint.yml/yaml` and issues
+    a warning that this file will be deprecated in the future
+
+    Returns the loaded config dict or False, if the file couldn't be loaded
+    """
+    tools_config = {}
+    config_fn = os.path.join(dir, ".nf-core.yml")
+
+    # Check if old config file is used
+    old_config_fn_yml = os.path.join(dir, ".nf-core-lint.yml")
+    old_config_fn_yaml = os.path.join(dir, ".nf-core-lint.yaml")
+
+    if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
+        log.error(
+            f"Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
+        )
+        return {}
+
+    if not os.path.isfile(config_fn):
+        config_fn = os.path.join(dir, ".nf-core.yaml")
+
+    # Load the YAML
+    try:
+        with open(config_fn, "r") as fh:
+            tools_config = yaml.safe_load(fh)
+    except FileNotFoundError:
+        log.debug(f"No tools config file found: {config_fn}")
+        return {}
+
+    return tools_config

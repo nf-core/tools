@@ -18,89 +18,81 @@ import unittest
 class DownloadTest(unittest.TestCase):
 
     #
-    # Tests for 'fetch_workflow_details()'
+    # Tests for 'get_release_hash'
     #
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_release(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.0.0")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
-        mock_workflows.remote_workflows = [mock_workflow]
+    def test_get_release_hash_release(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline = "methylseq"
+        download_obj = DownloadWorkflow(pipeline=pipeline, release="1.6")
+        (
+            download_obj.pipeline,
+            download_obj.wf_releases,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_release_hash()
+        assert download_obj.wf_sha == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+        assert download_obj.outdir == "nf-core-methylseq-1.6"
+        assert (
+            download_obj.wf_download_url
+            == "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+        )
 
-        download_obj.fetch_workflow_details(mock_workflows)
+    def test_get_release_hash_branch(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        # Exoseq pipeline is archived, so `dev` branch should be stable
+        pipeline = "exoseq"
+        download_obj = DownloadWorkflow(pipeline=pipeline, release="dev")
+        (
+            download_obj.pipeline,
+            download_obj.wf_releases,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_release_hash()
+        assert download_obj.wf_sha == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
+        assert download_obj.outdir == "nf-core-exoseq-dev"
+        assert (
+            download_obj.wf_download_url
+            == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
+        )
 
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_dev_version(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = []
-        mock_workflows.remote_workflows = [mock_workflow]
-
-        download_obj.fetch_workflow_details(mock_workflows)
-
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_and_autoset_release(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
-        mock_workflows.remote_workflows = [mock_workflow]
-
-        download_obj.fetch_workflow_details(mock_workflows)
-        assert download_obj.release == "1.0.0"
-
-    @mock.patch("nf_core.list.RemoteWorkflow")
-    @mock.patch("nf_core.list.Workflows")
-    @pytest.mark.xfail(raises=LookupError, strict=True)
-    def test_fetch_workflow_details_for_unknown_release(self, mock_workflows, mock_workflow):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0")
-        mock_workflow.name = "dummy"
-        mock_workflow.releases = [{"tag_name": "1.0.0", "tag_sha": "n3v3rl4nd"}]
-        mock_workflows.remote_workflows = [mock_workflow]
-
-        download_obj.fetch_workflow_details(mock_workflows)
-
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_github_ressource(self, mock_workflows):
-        download_obj = DownloadWorkflow(pipeline="myorg/dummy", release="1.2.0")
-        mock_workflows.remote_workflows = []
-
-        download_obj.fetch_workflow_details(mock_workflows)
-
-    @mock.patch("nf_core.list.Workflows")
-    def test_fetch_workflow_details_for_github_ressource_take_master(self, mock_workflows):
-        download_obj = DownloadWorkflow(pipeline="myorg/dummy")
-        mock_workflows.remote_workflows = []
-
-        download_obj.fetch_workflow_details(mock_workflows)
-        assert download_obj.release == "master"
-
-    @mock.patch("nf_core.list.Workflows")
-    @pytest.mark.xfail(raises=LookupError, strict=True)
-    def test_fetch_workflow_details_no_search_result(self, mock_workflows):
-        download_obj = DownloadWorkflow(pipeline="http://my-server.org/dummy", release="1.2.0")
-        mock_workflows.remote_workflows = []
-
-        download_obj.fetch_workflow_details(mock_workflows)
+    @pytest.mark.xfail(raises=AssertionError, strict=True)
+    def test_get_release_hash_non_existent_release(self):
+        wfs = nf_core.list.Workflows()
+        wfs.get_remote_workflows()
+        pipeline = "methylseq"
+        download_obj = DownloadWorkflow(pipeline=pipeline, release="thisisfake")
+        (
+            download_obj.pipeline,
+            download_obj.wf_releases,
+            download_obj.wf_branches,
+        ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
+        download_obj.get_release_hash()
 
     #
     # Tests for 'download_wf_files'
     #
     def test_download_wf_files(self):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0", outdir=tempfile.mkdtemp())
-        download_obj.wf_name = "nf-core/methylseq"
-        download_obj.wf_sha = "1.0"
-        download_obj.wf_download_url = "https://github.com/nf-core/methylseq/archive/1.0.zip"
+        outdir = tempfile.mkdtemp()
+        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", release="1.6")
+        download_obj.outdir = outdir
+        download_obj.wf_sha = "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
+        download_obj.wf_download_url = (
+            "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
+        )
         download_obj.download_wf_files()
+        assert os.path.exists(os.path.join(outdir, "workflow", "main.nf"))
 
     #
     # Tests for 'download_configs'
     #
     def test_download_configs(self):
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0", outdir=tempfile.mkdtemp())
+        outdir = tempfile.mkdtemp()
+        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", release="1.6")
+        download_obj.outdir = outdir
         download_obj.download_configs()
+        assert os.path.exists(os.path.join(outdir, "configs", "nfcore_custom.config"))
 
     #
     # Tests for 'wf_use_local_configs'
@@ -121,7 +113,7 @@ class DownloadTest(unittest.TestCase):
         # Test the function
         download_obj.wf_use_local_configs()
         wf_config = nf_core.utils.fetch_wf_config(os.path.join(test_outdir, "workflow"))
-        assert wf_config["params.custom_config_base"] == "'../configs/'"
+        assert wf_config["params.custom_config_base"] == f"'{test_outdir}/workflow/../configs/'"
 
     #
     # Tests for 'find_container_images'
@@ -190,12 +182,18 @@ class DownloadTest(unittest.TestCase):
     # Tests for the main entry method 'download_workflow'
     #
     @mock.patch("nf_core.download.DownloadWorkflow.singularity_pull_image")
-    def test_download_workflow_with_success(self, mock_download_image):
+    @mock.patch("shutil.which")
+    def test_download_workflow_with_success(self, mock_download_image, mock_singularity_installed):
 
         tmp_dir = tempfile.mkdtemp()
+        os.environ["NXF_SINGULARITY_CACHEDIR"] = "foo"
 
         download_obj = DownloadWorkflow(
-            pipeline="nf-core/methylseq", outdir=os.path.join(tmp_dir, "new"), singularity=True
+            pipeline="nf-core/methylseq",
+            outdir=os.path.join(tmp_dir, "new"),
+            container="singularity",
+            release="1.6",
+            compress_type="none",
         )
 
         download_obj.download_workflow()

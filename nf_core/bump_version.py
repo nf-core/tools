@@ -3,7 +3,6 @@
 a nf-core pipeline.
 """
 
-import click
 import logging
 import os
 import re
@@ -12,7 +11,7 @@ import sys
 import nf_core.utils
 
 log = logging.getLogger(__name__)
-stderr = rich.console.Console(file=sys.stderr, force_terminal=nf_core.utils.rich_force_colors())
+stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
 
 
 def bump_pipeline_version(pipeline_obj, new_version):
@@ -30,18 +29,11 @@ def bump_pipeline_version(pipeline_obj, new_version):
         log.warning("Stripping leading 'v' from new version number")
         new_version = new_version[1:]
     if not current_version:
-        log.error("Could not find config variable 'manifest.version'")
-        sys.exit(1)
+        raise UserWarning("Could not find config variable 'manifest.version'")
+
     log.info("Changing version number from '{}' to '{}'".format(current_version, new_version))
 
     # nextflow.config - workflow manifest version
-    # nextflow.config - process container manifest version
-    docker_tag = "dev"
-    if new_version.replace(".", "").isdigit():
-        docker_tag = new_version
-    else:
-        log.info("New version contains letters. Setting docker tag to 'dev'")
-
     update_file_version(
         "nextflow.config",
         pipeline_obj,
@@ -49,61 +41,6 @@ def bump_pipeline_version(pipeline_obj, new_version):
             (
                 r"version\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace(".", r"\.")),
                 "version = '{}'".format(new_version),
-            ),
-            (
-                r"container\s*=\s*[\'\"]nfcore/{}:(?:{}|dev)[\'\"]".format(
-                    pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")
-                ),
-                "container = 'nfcore/{}:{}'".format(pipeline_obj.pipeline_name.lower(), docker_tag),
-            ),
-        ],
-    )
-
-    # .github/workflows/ci.yml - docker build image tag
-    # .github/workflows/ci.yml - docker tag image
-    update_file_version(
-        os.path.join(".github", "workflows", "ci.yml"),
-        pipeline_obj,
-        [
-            (
-                r"docker build --no-cache . -t nfcore/{name}:(?:{tag}|dev)".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
-                ),
-                "docker build --no-cache . -t nfcore/{name}:{tag}".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=docker_tag
-                ),
-            ),
-            (
-                r"docker tag nfcore/{name}:dev nfcore/{name}:(?:{tag}|dev)".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=current_version.replace(".", r"\.")
-                ),
-                "docker tag nfcore/{name}:dev nfcore/{name}:{tag}".format(
-                    name=pipeline_obj.pipeline_name.lower(), tag=docker_tag
-                ),
-            ),
-        ],
-    )
-
-    # environment.yml - environment name
-    update_file_version(
-        "environment.yml",
-        pipeline_obj,
-        [
-            (
-                r"name: nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
-                "name: nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
-            )
-        ],
-    )
-
-    # Dockerfile - ENV PATH and RUN conda env create
-    update_file_version(
-        "Dockerfile",
-        pipeline_obj,
-        [
-            (
-                r"nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), current_version.replace(".", r"\.")),
-                "nf-core-{}-{}".format(pipeline_obj.pipeline_name.lower(), new_version),
             )
         ],
     )
@@ -123,8 +60,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
     current_version = re.sub(r"^[^0-9\.]*", "", current_version)
     new_version = re.sub(r"^[^0-9\.]*", "", new_version)
     if not current_version:
-        log.error("Could not find config variable 'manifest.nextflowVersion'")
-        sys.exit(1)
+        raise UserWarning("Could not find config variable 'manifest.nextflowVersion'")
     log.info("Changing Nextlow version number from '{}' to '{}'".format(current_version, new_version))
 
     # nextflow.config - manifest minimum nextflowVersion
@@ -133,8 +69,8 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflowVersion\s*=\s*[\'\"]?>={}[\'\"]?".format(current_version.replace(".", r"\.")),
-                "nextflowVersion = '>={}'".format(new_version),
+                r"nextflowVersion\s*=\s*[\'\"]?!>={}[\'\"]?".format(current_version.replace(".", r"\.")),
+                "nextflowVersion = '!>={}'".format(new_version),
             )
         ],
     )
@@ -145,8 +81,9 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nxf_ver: \[[\'\"]?{}[\'\"]?, '21.03.0-edge'\]".format(current_version.replace(".", r"\.")),
-                "nxf_ver: ['{}', '21.03.0-edge']".format(new_version),
+                # example: nxf_ver: ['20.04.0', '']
+                r"nxf_ver: \[[\'\"]{}[\'\"], [\'\"][\'\"]\]".format(current_version.replace(".", r"\.")),
+                "nxf_ver: ['{}', '']".format(new_version),
             )
         ],
     )
@@ -157,9 +94,18 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflow-%E2%89%A5{}-brightgreen.svg".format(current_version.replace(".", r"\.")),
-                "nextflow-%E2%89%A5{}-brightgreen.svg".format(new_version),
-            )
+                r"nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(current_version.replace(".", r"\.")),
+                "nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(new_version),
+            ),
+            (
+                # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
+                r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>={}`\)".format(
+                    current_version.replace(".", r"\.")
+                ),
+                "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={}`)".format(
+                    new_version
+                ),
+            ),
         ],
     )
 
@@ -190,24 +136,36 @@ def update_file_version(filename, pipeline_obj, patterns):
     replacements = []
     for pattern in patterns:
 
-        # Check that we have a match
-        matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), content, re.MULTILINE)
-        if len(matches_pattern) == 0:
+        found_match = False
+
+        newcontent = []
+        for line in content.splitlines():
+
+            # Match the pattern
+            matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
+            if matches_pattern:
+                found_match = True
+
+                # Replace the match
+                newline = re.sub(pattern[0], pattern[1], line)
+                newcontent.append(newline)
+
+                # Save for logging
+                replacements.append((line, newline))
+
+            # No match, keep line as it is
+            else:
+                newcontent.append(line)
+
+        if found_match:
+            content = "\n".join(newcontent)
+        else:
             log.error("Could not find version number in {}: '{}'".format(filename, pattern))
-            continue
-
-        # Replace the match
-        content = re.sub(pattern[0], pattern[1], content)
-        matches_newstr = re.findall("^.*{}.*$".format(pattern[1]), content, re.MULTILINE)
-
-        # Save for logging
-        replacements.append((matches_pattern, matches_newstr))
 
     log.info("Updated version in '{}'".format(filename))
     for replacement in replacements:
-        for idx, matched in enumerate(replacement[0]):
-            stderr.print("          [red] - {}".format(matched.strip()), highlight=False)
-            stderr.print("          [green] + {}".format(replacement[1][idx].strip()), highlight=False)
+        stderr.print("          [red] - {}".format(replacement[0].strip()), highlight=False)
+        stderr.print("          [green] + {}".format(replacement[1].strip()), highlight=False)
     stderr.print("\n")
 
     with open(fn, "w") as fh:

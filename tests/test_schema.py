@@ -20,7 +20,7 @@ class TestSchema(unittest.TestCase):
     """Class for schema tests"""
 
     def setUp(self):
-        """ Create a new PipelineSchema object """
+        """Create a new PipelineSchema object"""
         self.schema_obj = nf_core.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         # Copy the template to a temp directory so that we can use that for tests
@@ -30,19 +30,19 @@ class TestSchema(unittest.TestCase):
         self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
 
     def test_load_lint_schema(self):
-        """ Check linting with the pipeline template directory """
+        """Check linting with the pipeline template directory"""
         self.schema_obj.get_schema_path(self.template_dir)
         self.schema_obj.load_lint_schema()
 
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_nofile(self):
-        """ Check that linting raises properly if a non-existant file is given """
+        """Check that linting raises properly if a non-existant file is given"""
         self.schema_obj.get_schema_path("fake_file")
         self.schema_obj.load_lint_schema()
 
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_notjson(self):
-        """ Check that linting raises properly if a non-JSON file is given """
+        """Check that linting raises properly if a non-JSON file is given"""
         self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
         self.schema_obj.load_lint_schema()
 
@@ -59,20 +59,20 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_lint_schema()
 
     def test_get_schema_path_dir(self):
-        """ Get schema file from directory """
+        """Get schema file from directory"""
         self.schema_obj.get_schema_path(self.template_dir)
 
     def test_get_schema_path_path(self):
-        """ Get schema file from a path """
+        """Get schema file from a path"""
         self.schema_obj.get_schema_path(self.template_schema)
 
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_path_notexist(self):
-        """ Get schema file from a path """
+        """Get schema file from a path"""
         self.schema_obj.get_schema_path("fubar", local_only=True)
 
     def test_get_schema_path_name(self):
-        """ Get schema file from the name of a remote pipeline """
+        """Get schema file from the name of a remote pipeline"""
         self.schema_obj.get_schema_path("atacseq")
 
     @pytest.mark.xfail(raises=AssertionError, strict=True)
@@ -84,12 +84,12 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.get_schema_path("exoseq")
 
     def test_load_schema(self):
-        """ Try to load a schema from a file """
+        """Try to load a schema from a file"""
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
 
     def test_save_schema(self):
-        """ Try to save a schema """
+        """Try to save a schema"""
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
@@ -100,7 +100,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.save_schema()
 
     def test_load_input_params_json(self):
-        """ Try to load a JSON file with params for a pipeline run """
+        """Try to load a JSON file with params for a pipeline run"""
         # Make a temporary file to write schema to
         tmp_file = tempfile.NamedTemporaryFile()
         with open(tmp_file.name, "w") as fh:
@@ -108,7 +108,7 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_input_params(tmp_file.name)
 
     def test_load_input_params_yaml(self):
-        """ Try to load a YAML file with params for a pipeline run """
+        """Try to load a YAML file with params for a pipeline run"""
         # Make a temporary file to write schema to
         tmp_file = tempfile.NamedTemporaryFile()
         with open(tmp_file.name, "w") as fh:
@@ -117,19 +117,19 @@ class TestSchema(unittest.TestCase):
 
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_input_params_invalid(self):
-        """ Check failure when a non-existent file params file is loaded """
+        """Check failure when a non-existent file params file is loaded"""
         self.schema_obj.load_input_params("fubar")
 
     def test_validate_params_pass(self):
-        """ Try validating a set of parameters against a schema """
+        """Try validating a set of parameters against a schema"""
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.input_params = {"input": "fubar"}
+        self.schema_obj.input_params = {"input": "fubar.csv"}
         assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):
-        """ Check that False is returned if params don't validate against a schema """
+        """Check that False is returned if params don't validate against a schema"""
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
@@ -137,7 +137,7 @@ class TestSchema(unittest.TestCase):
         assert not self.schema_obj.validate_params()
 
     def test_validate_schema_pass(self):
-        """ Check that the schema validation passes """
+        """Check that the schema validation passes"""
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
@@ -145,7 +145,7 @@ class TestSchema(unittest.TestCase):
 
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_validate_schema_fail_noparams(self):
-        """ Check that the schema validation fails when no params described """
+        """Check that the schema validation fails when no params described"""
         self.schema_obj.schema = {"type": "invalidthing"}
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
@@ -196,7 +196,7 @@ class TestSchema(unittest.TestCase):
             assert e.args[0] == "Subschema `groupThree` found in `allOf` but not `definitions`"
 
     def test_make_skeleton_schema(self):
-        """ Test making a new schema skeleton """
+        """Test making a new schema skeleton"""
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.pipeline_manifest["name"] = "nf-core/test"
         self.schema_obj.pipeline_manifest["description"] = "Test pipeline"
@@ -204,24 +204,24 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
     def test_get_wf_params(self):
-        """ Test getting the workflow parameters from a pipeline """
+        """Test getting the workflow parameters from a pipeline"""
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.get_wf_params()
 
     def test_prompt_remove_schema_notfound_config_returntrue(self):
-        """ Remove unrecognised params from the schema """
+        """Remove unrecognised params from the schema"""
         self.schema_obj.pipeline_params = {"foo": "bar"}
         self.schema_obj.no_prompts = True
         assert self.schema_obj.prompt_remove_schema_notfound_config("baz")
 
     def test_prompt_remove_schema_notfound_config_returnfalse(self):
-        """ Do not remove unrecognised params from the schema """
+        """Do not remove unrecognised params from the schema"""
         self.schema_obj.pipeline_params = {"foo": "bar"}
         self.schema_obj.no_prompts = True
         assert not self.schema_obj.prompt_remove_schema_notfound_config("foo")
 
     def test_remove_schema_notfound_configs(self):
-        """ Remove unrecognised params from the schema """
+        """Remove unrecognised params from the schema"""
         self.schema_obj.schema = {
             "properties": {"foo": {"type": "string"}, "bar": {"type": "string"}},
             "required": ["foo"],
@@ -256,7 +256,7 @@ class TestSchema(unittest.TestCase):
         assert "foo" in params_removed
 
     def test_add_schema_found_configs(self):
-        """ Try adding a new parameter to the schema from the config """
+        """Try adding a new parameter to the schema from the config"""
         self.schema_obj.pipeline_params = {"foo": "bar"}
         self.schema_obj.schema = {"properties": {}}
         self.schema_obj.no_prompts = True
@@ -266,23 +266,23 @@ class TestSchema(unittest.TestCase):
         assert "foo" in params_added
 
     def test_build_schema_param_str(self):
-        """ Build a new schema param from a config value (string) """
+        """Build a new schema param from a config value (string)"""
         param = self.schema_obj.build_schema_param("foo")
         assert param == {"type": "string", "default": "foo"}
 
     def test_build_schema_param_bool(self):
-        """ Build a new schema param from a config value (bool) """
+        """Build a new schema param from a config value (bool)"""
         param = self.schema_obj.build_schema_param("True")
         print(param)
         assert param == {"type": "boolean", "default": True}
 
     def test_build_schema_param_int(self):
-        """ Build a new schema param from a config value (int) """
+        """Build a new schema param from a config value (int)"""
         param = self.schema_obj.build_schema_param("12")
         assert param == {"type": "integer", "default": 12}
 
     def test_build_schema_param_int(self):
-        """ Build a new schema param from a config value (float) """
+        """Build a new schema param from a config value (float)"""
         param = self.schema_obj.build_schema_param("12.34")
         assert param == {"type": "number", "default": 12.34}
 
@@ -309,7 +309,7 @@ class TestSchema(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_timeout(self, mock_post):
-        """ Mock launching the web builder, but timeout on the request """
+        """Mock launching the web builder, but timeout on the request"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.Timeout()
         self.schema_obj.launch_web_builder()
@@ -317,7 +317,7 @@ class TestSchema(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_connection_error(self, mock_post):
-        """ Mock launching the web builder, but get a connection error """
+        """Mock launching the web builder, but get a connection error"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.ConnectionError()
         self.schema_obj.launch_web_builder()
@@ -325,7 +325,7 @@ class TestSchema(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_timeout(self, mock_post):
-        """ Mock checking for a web builder response, but timeout on the request """
+        """Mock checking for a web builder response, but timeout on the request"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.Timeout()
         self.schema_obj.launch_web_builder()
@@ -333,13 +333,13 @@ class TestSchema(unittest.TestCase):
     @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_connection_error(self, mock_post):
-        """ Mock checking for a web builder response, but get a connection error """
+        """Mock checking for a web builder response, but get a connection error"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.ConnectionError()
         self.schema_obj.launch_web_builder()
 
     def mocked_requests_post(**kwargs):
-        """ Helper function to emulate POST requests responses from the web """
+        """Helper function to emulate POST requests responses from the web"""
 
         class MockResponse:
             def __init__(self, data, status_code):
@@ -359,7 +359,7 @@ class TestSchema(unittest.TestCase):
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     def test_launch_web_builder_404(self, mock_post):
-        """ Mock launching the web builder """
+        """Mock launching the web builder"""
         self.schema_obj.web_schema_build_url = "invalid_url"
         try:
             self.schema_obj.launch_web_builder()
@@ -369,7 +369,7 @@ class TestSchema(unittest.TestCase):
 
     @mock.patch("requests.post", side_effect=mocked_requests_post)
     def test_launch_web_builder_invalid_status(self, mock_post):
-        """ Mock launching the web builder """
+        """Mock launching the web builder"""
         self.schema_obj.web_schema_build_url = "valid_url_error"
         try:
             self.schema_obj.launch_web_builder()
@@ -380,7 +380,7 @@ class TestSchema(unittest.TestCase):
     @mock.patch("requests.get")
     @mock.patch("webbrowser.open")
     def test_launch_web_builder_success(self, mock_post, mock_get, mock_webbrowser):
-        """ Mock launching the web builder """
+        """Mock launching the web builder"""
         self.schema_obj.web_schema_build_url = "valid_url_success"
         try:
             self.schema_obj.launch_web_builder()
@@ -390,7 +390,7 @@ class TestSchema(unittest.TestCase):
             assert e.args[0].startswith("Could not access remote API results: https://nf-co.re")
 
     def mocked_requests_get(*args, **kwargs):
-        """ Helper function to emulate GET requests responses from the web """
+        """Helper function to emulate GET requests responses from the web"""
 
         class MockResponse:
             def __init__(self, data, status_code):
@@ -414,7 +414,7 @@ class TestSchema(unittest.TestCase):
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_404(self, mock_post):
-        """ Mock launching the web builder """
+        """Mock launching the web builder"""
         self.schema_obj.web_schema_build_api_url = "invalid_url"
         try:
             self.schema_obj.get_web_builder_response()
@@ -424,7 +424,7 @@ class TestSchema(unittest.TestCase):
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_error(self, mock_post):
-        """ Mock launching the web builder """
+        """Mock launching the web builder"""
         self.schema_obj.web_schema_build_api_url = "valid_url_error"
         try:
             self.schema_obj.get_web_builder_response()
@@ -434,13 +434,13 @@ class TestSchema(unittest.TestCase):
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_waiting(self, mock_post):
-        """ Mock launching the web builder """
+        """Mock launching the web builder"""
         self.schema_obj.web_schema_build_api_url = "valid_url_waiting"
         assert self.schema_obj.get_web_builder_response() is False
 
     @mock.patch("requests.get", side_effect=mocked_requests_get)
     def test_get_web_builder_response_saved(self, mock_post):
-        """ Mock launching the web builder """
+        """Mock launching the web builder"""
         self.schema_obj.web_schema_build_api_url = "valid_url_saved"
         try:
             self.schema_obj.get_web_builder_response()

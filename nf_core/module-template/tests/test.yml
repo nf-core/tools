@@ -1,11 +1,11 @@
 ## TODO nf-core: Please run the following command to build this file:
-#                nf-core modules create-test-yml {{ tool }}/{{ subtool }}
+#                nf-core modules create-test-yml {{ tool }}{%- if subtool %}/{{ subtool }}{%- endif %}
 - name: {{ tool }}{{ ' '+subtool if subtool else '' }}
-  command: nextflow run ./tests/software/{{ tool_dir }} -entry test_{{ tool_name }} -c tests/config/nextflow.config
+  command: nextflow run ./tests/modules/{{ tool_dir }} -entry test_{{ tool_name_underscore }} -c tests/config/nextflow.config
   tags:
     - {{ tool }}
     {%- if subtool %}
-    - {{ tool_name }}
+    - {{ tool }}/{{ subtool }}
     {%- endif %}
   files:
     - path: output/{{ tool }}/test.bam

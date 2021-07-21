@@ -25,12 +25,16 @@ A python package with helper tools for the nf-core community.
 * [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
 * [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
 * [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
-  * [`modules list` - List available modules](#list-modules)
-  * [`modules install` - Install a module from nf-core/modules](#install-a-module-into-a-pipeline)
-  * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
-  * [`modules create` - Create a module from the template](#create-a-new-module)
-  * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
-  * [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
+    * [`modules list` - List available modules](#list-modules)
+        * [`modules list remote` - List remote modules](#list-remote-modules)
+        * [`modules list local` - List installed modules](#list-installed-modules)
+    * [`modules install` - Install or update modules in pipeline](#install-or-update-modules-in-a-pipeline)
+    * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
+    * [`modules create` - Create a module from the template](#create-a-new-module)
+    * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
+    * [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
+    * [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
+
 * [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
@@ -63,6 +67,62 @@ conda activate nf-core
 
 ```bash
 pip install nf-core
+```
+
+### Docker image
+
+There is a docker image that you can use to run `nf-core/tools` that has all of the requirements packaged (including Nextflow) and so should work out of the box. It is called [`nfcore/tools`](https://hub.docker.com/r/nfcore/tools) _**(NB: no hyphen!)**_
+
+You can use this container on the command line as follows:
+
+```bash
+docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools
+```
+
+* `-i` and `-t` are needed for the interactive cli prompts to work (this tells Docker to use a pseudo-tty with stdin attached)
+* The `-v` argument tells Docker to bind your current working directory (`pwd`) to the same path inside the container, so that files created there will be saved to your local file system outside of the container.
+* `-w` sets the working directory in the container to this path, so that it's the same as your working directory outside of the container.
+* `-u` sets your local user account as the user inside the container, so that any files created have the correct ownership permissions
+
+After the above base command, you can use the regular command line flags that you would use with other types of installation.
+For example, to launch the `viralrecon` pipeline:
+
+```bash
+docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools launch viralrecon -r 1.1.0
+```
+
+If you use `$NXF_SINGULARITY_CACHEDIR` for downloads, you'll also need to make this folder and environment variable available to the continer:
+
+```bash
+docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) -v $NXF_SINGULARITY_CACHEDIR:$NXF_SINGULARITY_CACHEDIR -e NXF_SINGULARITY_CACHEDIR nfcore/tools launch viralrecon -r 1.1.0
+```
+
+#### Docker bash alias
+
+The above base command is a bit of a mouthful to type, to say the least.
+To make it easier to use, we highly recommend adding the following bash alias to your `~/.bashrc` file:
+
+```bash
+alias nf-core="docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools"
+```
+
+Once applied (you may need to reload your shell) you can just use the `nf-core` command instead:
+
+```bash
+nf-core list
+```
+
+#### Docker versions
+
+You can use docker image tags to specify the version you would like to use. For example, `nfcore/tools:dev` for the latest development version of the code, or `nfcore/tools:1.14` for version `1.14` of tools.
+If you omit this, it will default to `:latest`, which should be the latest stable release.
+
+If you need a specific version of Nextflow inside the container, you can build an image yourself.
+Clone the repo locally and check out whatever version of nf-core/tools that you need.
+Then build using the `--build-arg NXF_VER` flag as follows:
+
+```bash
+docker build -t nfcore/tools:dev . --build-arg NXF_VER=20.04.0
 ```
 
 ### Development version
@@ -133,7 +193,7 @@ $ nf-core list
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -158,7 +218,7 @@ $ nf-core list rna rna-seq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name ┃ Stars ┃ Latest Release ┃     Released ┃ Last Pulled ┃ Have latest release? ┃
@@ -187,7 +247,7 @@ $ nf-core list -s stars
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -231,7 +291,7 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
@@ -271,24 +331,24 @@ Do you want to run this command now?  [y/n]:
 ### Launch tool options
 
 * `-r`, `--revision`
-  * Specify a pipeline release (or branch / git commit sha) of the project to run
+    * Specify a pipeline release (or branch / git commit sha) of the project to run
 * `-i`, `--id`
-  * You can use the web GUI for nf-core pipelines by clicking _"Launch"_ on the website. Once filled in you will be given an ID to use with this command which is used to retrieve your inputs.
+    * You can use the web GUI for nf-core pipelines by clicking _"Launch"_ on the website. Once filled in you will be given an ID to use with this command which is used to retrieve your inputs.
 * `-c`, `--command-only`
-  * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
+    * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
 * `-p`, `--params-in PATH`
-  * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
-  * This will overwrite the pipeline schema defaults before the wizard is launched.
+    * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
+    * This will overwrite the pipeline schema defaults before the wizard is launched.
 * `-o`, `--params-out PATH`
-  * Path to save parameters JSON file to. (Default: `nf-params.json`)
+    * Path to save parameters JSON file to. (Default: `nf-params.json`)
 * `-a`, `--save-all`
-  * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
-  * This option saves _all_ parameters found to the JSON file.
+    * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
+    * This option saves _all_ parameters found to the JSON file.
 * `-h`, `--show-hidden`
-  * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
-  * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
+    * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
+    * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
 * `--url`
-  * Change the URL used for the graphical interface, useful for development work on the website.
+    * Change the URL used for the graphical interface, useful for development work on the website.
 
 ## Downloading pipelines for offline use
 
@@ -296,15 +356,14 @@ Sometimes you may need to run an nf-core pipeline on a server or HPC system that
 In this case you will need to fetch the pipeline files first, then manually transfer them to your system.
 
 To make this process easier and ensure accurate retrieval of correctly versioned code and software containers, we have written a download helper tool.
-Simply specify the name of the nf-core pipeline and it will be downloaded to your current working directory.
 
-By default, the pipeline will download the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files.
-If you specify the flag `--singularity`, it will also download any singularity image files that are required.
+The `nf-core download` command will download both the pipeline code and the [institutional nf-core/configs](https://github.com/nf-core/configs) files. It can also optionally download any singularity image files that are required.
 
-Use `-r`/`--release` to download a specific release of the pipeline. If not specified, the tool will automatically fetch the latest release.
+If run without any arguments, the download tool will interactively prompt you for the required information.
+Each option has a flag, if all are supplied then it will run without any user input needed.
 
 ```console
-$ nf-core download rnaseq -r 3.0 --singularity
+$ nf-core download
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -312,33 +371,43 @@ $ nf-core download rnaseq -r 3.0 --singularity
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
+Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
+? Pipeline name: rnaseq
+? Select release / branch: 3.0  [release]
 
-INFO     Saving rnaseq
+In addition to the pipeline code, this tool can download software containers.
+? Download software container images: singularity
+
+Nextflow and nf-core can use an environment variable called $NXF_SINGULARITY_CACHEDIR that is a path to a directory where remote Singularity
+images are stored. This allows downloaded images to be cached in a central location.
+? Define $NXF_SINGULARITY_CACHEDIR for a shared Singularity image download folder? [y/n]: y
+? Specify the path: cachedir/
+
+So that $NXF_SINGULARITY_CACHEDIR is always defined, you can add it to your ~/.bashrc file. This will then be autmoatically set every time you open a new terminal. We can add the following line to this file for you:
+export NXF_SINGULARITY_CACHEDIR="/path/to/demo/cachedir"
+? Add to ~/.bashrc ? [y/n]: n
+
+If transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file.
+This is not recommended when downloading Singularity images, as it can take a long time and saves very little space.
+? Choose compression type: none
+INFO     Saving 'nf-core/rnaseq
           Pipeline release: '3.0'
-          Pull singularity containers: 'Yes'
-          Output file: 'nf-core-rnaseq-3.0.tar.gz'
+          Pull containers: 'singularity'
+          Using $NXF_SINGULARITY_CACHEDIR': /path/to/demo/cachedir
+          Output directory: 'nf-core-rnaseq-3.0'
 INFO     Downloading workflow files from GitHub
 INFO     Downloading centralised configs from GitHub
-INFO     Fetching container names for workflow
 INFO     Found 29 containers
-INFO     Tip: Set env var $NXF_SINGULARITY_CACHEDIR to use a central cache for container downloads
-Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
-INFO     Compressing download..
-INFO     Command to extract files: tar -xzf nf-core-rnaseq-3.0.tar.gz
-INFO     MD5 checksum for nf-core-rnaseq-3.0.tar.gz: 9789a9e0bda50f444ab0ee69cc8a95ce
+Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
 ```
 
-The tool automatically compresses all of the resulting file in to a `.tar.gz` archive.
-You can choose other formats (`.tar.bz2`, `zip`) or to not compress (`none`) with the `-c`/`--compress` flag.
-The console output provides the command you need to extract the files.
-
-Once uncompressed, you will see something like the following file structure for the downloaded pipeline:
+Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
 ```console
-$ tree -L 2 nf-core-methylseq-1.4/
+$ tree -L 2 nf-core-rnaseq-3.0/
 
 nf-core-rnaseq-3.0
 ├── configs
@@ -356,7 +425,11 @@ nf-core-rnaseq-3.0
     └── main.nf
 ```
 
-You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command.
+You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
+
+```bash
+nextflow run /path/to/download/nf-core-rnaseq-3.0/workflow/ --input mydata.csv   # usual parameters here
+```
 
 ### Downloaded nf-core configs
 
@@ -366,7 +439,7 @@ So using `-profile <NAME>` should work if available within [nf-core/configs](htt
 ### Downloading singularity containers
 
 If you're using Singularity, the `nf-core download` command can also fetch the required Singularity container images for you.
-To do this, specify the `--singularity` option.
+To do this, select `singularity` in the prompt or specify `--container singularity` in the command.
 Your archive / target output directory will then include three folders: `workflow`, `configs` and also `singularity-containers`.
 
 The downloaded workflow files are again edited to add the following line to the end of the pipeline's `nextflow.config` file:
@@ -385,7 +458,8 @@ We highly recommend setting the `$NXF_SINGULARITY_CACHEDIR` environment variable
 If found, the tool will fetch the Singularity images to this directory first before copying to the target output archive / directory.
 Any images previously fetched will be found there and copied directly - this includes images that may be shared with other pipelines or previous pipeline version downloads or download attempts.
 
-If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose specify `--singularity-cache`.
+If you are running the download on the same system where you will be running the pipeline (eg. a shared filesystem where Nextflow won't have an internet connection at a later date), you can choose to _only_ use the cache via a prompt or cli options `--singularity-cache-only` / `--singularity-cache-copy`.
+
 This instructs `nf-core download` to fetch all Singularity images to the `$NXF_SINGULARITY_CACHEDIR` directory but does _not_ copy them to the workflow archive / directory.
 The workflow config file is _not_ edited. This means that when you later run the workflow, Nextflow will just use the cache folder directly.
 
@@ -403,22 +477,22 @@ Where both are found, the download URL is preferred.
 
 Once a full list of containers is found, they are processed in the following order:
 
-1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache` specified)
-2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache` is _not_ specified, they are copied to the output directory
+1. If the target image already exists, nothing is done (eg. with `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` specified)
+2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` is _not_ specified, they are copied to the output directory
 3. If they start with `http` they are downloaded directly within Python (default 4 at a time, you can customise this with `--parallel-downloads`)
 4. If they look like a Docker image name, they are fetched using a `singularity pull` command
     * This requires Singularity to be installed on the system and is substantially slower
 
 Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
 
-If you really like hammering your internet connection, you can set `--parallel-downloads` to a large number to download loads of images at once.
+If the download speeds are much slower than your internet connection is capable of, you can set `--parallel-downloads` to a large number to download loads of images at once.
 
 ## Pipeline software licences
 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-> NB: Currently this command does not work for DSL2 pipelines. This will be addressed soon.
+> NB: Currently this command does not work for DSL2 pipelines. This will be addressed [soon](https://github.com/nf-core/tools/issues/1155).
 
 ```console
 $ nf-core licences rnaseq
@@ -483,7 +557,7 @@ $ nf-core create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
@@ -521,38 +595,47 @@ This is the same test that is used on the automated continuous integration tests
 For example, the current version looks something like this:
 
 ```console
-$ cd path/to/my_pipeline
-$ nf-core lint .
+$ nf-core lint
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
-
-  INFO     Testing pipeline: nf-core-testpipeline/
-╭──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 3 Test Warnings                                                                                      │
-├──────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ actions_awsfulltest: .github/workflows/awsfulltest.yml should test full datasets, not -profile test      │
-│ conda_env_yaml: Conda dep outdated: bioconda::fastqc=0.11.8, 0.11.9 available                            │
-│ conda_env_yaml: Conda dep outdated: bioconda::multiqc=1.7, 1.9 available                                 │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+INFO     Testing pipeline: .
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ General lint results                                                                                            │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warnings                                                                                             │
+├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
+│ pipeline_todos: TODO string in base.config: Check the defaults for all processes                                │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Module lint results                                                                                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warnings                                                                                             │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────┬──────────────────────────────────┬───────────────────────────────────╮
+│ Module name                              │ File path                        │ Test message                      │
+├──────────────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────┤
+│ get_software_versions.nf                 │ modules/local/get_software_vers… │ 'options' variable not specified  │
+╰──────────────────────────────────────────┴──────────────────────────────────┴───────────────────────────────────╯
 ╭───────────────────────╮
 │ LINT RESULTS SUMMARY  │
 ├───────────────────────┤
-│ [✔] 155 Tests Passed  │
+│ [✔] 183 Tests Passed  │
 │ [?]   0 Tests Ignored │
-│ [!]   3 Test Warnings │
+│ [!]   2 Test Warnings │
 │ [✗]   0 Tests Failed  │
 ╰───────────────────────╯
 
-Tip: Some of these linting errors can automatically be resolved with the following command:
-
-    nf-core lint . --fix conda_env_yaml
 ```
+
+You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
 
 ### Linting documentation
 
@@ -567,25 +650,28 @@ Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find
 It's sometimes desirable to disable certain lint tests, especially if you're using nf-core/tools with your
 own pipeline that is outside of nf-core.
 
-To help with this, you can add a linting config file to your pipeline called `.nf-core-lint.yml` or
-`.nf-core-lint.yaml` in the pipeline root directory. Here you can list the names of any tests that you
-would like to disable and set them to `False`, for example:
+To help with this, you can add a tools config file to your pipeline called `.nf-core.yml` in the pipeline root directory (previously: `.nf-core-lint.yml`).
+Here you can list the names of any tests that you would like to disable and set them to `False`, for example:
 
 ```yaml
-actions_awsfulltest: False
-pipeline_todos: False
+lint:
+    actions_awsfulltest: False
+    pipeline_todos: False
 ```
 
 Some lint tests allow greater granularity, for example skipping a test only for a specific file.
 This is documented in the test-specific docs but generally involves passing a list, for example:
 
 ```yaml
-files_exist:
-  - CODE_OF_CONDUCT.md
-files_unchanged:
-  - assets/email_template.html
-  - CODE_OF_CONDUCT.md
+lint:
+    files_exist:
+    - CODE_OF_CONDUCT.md
+    files_unchanged:
+    - assets/email_template.html
+    - CODE_OF_CONDUCT.md
 ```
+
+Note that you have to list all configurations for the `nf-core lint` command under the `lint:` field in the `.nf-core.yml` file, as this file is also used for configuration of other commands.
 
 ### Automatically fix errors
 
@@ -615,7 +701,7 @@ To help developers working with pipeline schema, nf-core tools has three `schema
 Nextflow can take input parameters in a JSON or YAML file when running a pipeline using the `-params-file` option.
 This command validates such a file against the pipeline schema.
 
-Usage is `nextflow schema validate <pipeline> <parameter file>`, eg:
+Usage is `nf-core schema validate <pipeline> <parameter file>`, eg:
 
 ```console
 $ nf-core schema validate rnaseq nf-params.json
@@ -626,7 +712,7 @@ $ nf-core schema validate rnaseq nf-params.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -647,7 +733,7 @@ If no existing schema is found it will create one for you.
 Once built, the tool can send the schema to the nf-core website so that you can use a graphical interface to organise and fill in the schema.
 The tool checks the status of your schema on the website and once complete, saves your changes locally.
 
-Usage is `nextflow schema build <pipeline_directory>`, eg:
+Usage is `nf-core schema build -d <pipeline_directory>`, eg:
 
 ```console
 $ nf-core schema build nf-core-testpipeline
@@ -658,7 +744,7 @@ $ nf-core schema build nf-core-testpipeline
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
   INFO     [✓] Default parameters look valid
   INFO     [✓] Pipeline schema looks valid (found 25 params)
@@ -674,8 +760,9 @@ $ nf-core schema build nf-core-testpipeline
   INFO: Writing JSON schema with 25 params: nf-core-testpipeline/nextflow_schema.json
 ```
 
-There are three flags that you can use with this command:
+There are four flags that you can use with this command:
 
+* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory
 * `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
 * `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
 * `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
@@ -685,7 +772,7 @@ There are three flags that you can use with this command:
 The pipeline schema is linted as part of the main pipeline `nf-core lint` command,
 however sometimes it can be useful to quickly check the syntax of the JSONSchema without running a full lint run.
 
-Usage is `nextflow schema lint <schema>`, eg:
+Usage is `nf-core schema lint <schema>`, eg:
 
 ```console
 $ nf-core schema lint nextflow_schema.json
@@ -696,7 +783,7 @@ $ nf-core schema lint nextflow_schema.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
   ERROR    [✗] Pipeline schema does not follow nf-core specs:
             Definition subschema 'input_output_options' not included in schema 'allOf'
@@ -708,7 +795,7 @@ When releasing a new version of a nf-core pipeline, version numbers have to be u
 
 The command uses results from the linting process, so will only work with workflows that pass these tests.
 
-Usage is `nf-core bump-version <pipeline_dir> <new_version>`, eg:
+Usage is `nf-core bump-version <new_version>`, eg:
 
 ```console
 $ cd path/to/my_pipeline
@@ -719,7 +806,7 @@ $ nf-core bump-version . 1.7
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -750,7 +837,7 @@ INFO     Updated version in 'Dockerfile'
            + RUN conda env export --name nf-core-methylseq-1.7 > nf-core-methylseq-1.7.yml
 ```
 
-To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
+You can change the directory from the current working directory by specifying `--dir <pipeline_dir>`. To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
 ## Sync a pipeline with the template
 
@@ -764,7 +851,7 @@ Note that pipeline synchronisation happens automatically each time nf-core/tools
 **As such, you do not normally need to run this command yourself!**
 
 This command takes a pipeline directory and attempts to run this synchronisation.
-Usage is `nf-core sync <pipeline_dir>`, eg:
+Usage is `nf-core sync`, eg:
 
 ```console
 $ nf-core sync my_pipeline/
@@ -774,7 +861,7 @@ $ nf-core sync my_pipeline/
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 
@@ -793,6 +880,8 @@ The sync command tries to check out the `TEMPLATE` branch from the `origin` remo
 It will fail if it cannot do either of these things.
 The `nf-core create` command should make this template automatically when you first start your pipeline.
 Please see the [nf-core website sync documentation](https://nf-co.re/developers/sync) if you have difficulties.
+
+To specify a directory to sync other than the current working directory, use the `--dir <pipline_dir>`.
 
 By default, the tool will collect workflow variables from the current branch in your pipeline directory.
 You can supply the `--from-branch` flag to specific a different branch.
@@ -814,18 +903,22 @@ The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
 ### List modules
 
+The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
+
+### List remote modules
+
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
-`nf-core modules list`, which will print all available modules to the terminal.
+`nf-core modules list remote`, which will print all available modules to the terminal.
 
 ```console
-$ nf-core modules list
+$ nf-core modules list remote
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Modules available from nf-core/modules (master)
@@ -846,37 +939,66 @@ INFO     Modules available from nf-core/modules (master)
 
 ### List installed modules
 
-The same `nf-core modules list` command can take an optional argument for a local pipeline directory.
-If given, it will instead list all installed modules in that pipeline.
-
-### Install a module into a pipeline
-
-You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install <pipeline_dir>`.
-A module installed this way will be installed to the `<pipeline_dir>/modules/nf-core/software` directory.
+To list modules installed in a local pipeline directory you can use `nf-core modules list local`. This will list the modules install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
 
 ```console
-$ nf-core modules install .
+$ nf-core modules list local
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
-? Tool name: cat/fastq
-INFO     Installing cat/fastq
-INFO     Downloaded 3 files to ./modules/nf-core/software/cat/fastq
+
+INFO     Modules installed in '.':
+
+┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
+┃ Module Name ┃ Repository      ┃ Version SHA ┃ Message                                                ┃ Date       ┃
+┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
+│ fastqc      │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
+│ multiqc     │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
+└─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
 ```
 
-Use the `--tool` flat to specify a module name on the command line instead of using the cli prompt.
+### Install or update modules in a pipeline
+
+You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
+A module installed this way will be installed to the `./modules/nf-core/modules` directory.
+
+```console
+$ nf-core modules install
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0
+
+? Tool name: cat/fastq
+? Select 'cat/fastq' version: Rename software/ directory to modules/ to re-organise module structure ...truncated...
+INFO     Installing cat/fastq
+INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
+```
+
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+
+There are five flags that you can use with this command:
+
+* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
+* `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
+* `--force`: Overwrite a previously installed version of the module.
+* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force --latest` on all installed modules. To change all modules to a specific version you can run `nf-core modules install --all --sha <commit sha>`.
 
 ### Remove a module from a pipeline
 
-To delete a module from your pipeline, run `nf-core modules remove <pipeline-directory>`
+To delete a module from your pipeline, run `nf-core modules remove`.
 
 ```console
-$ nf-core modules remove .
+$ nf-core modules remove
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -884,12 +1006,13 @@ $ nf-core modules remove .
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 ? Tool name: star/align
 INFO     Removing star/align
-INFO     Successfully removed star/align module
 ```
+
+You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
 ### Create a new module
 
@@ -897,7 +1020,7 @@ This command creates a new nf-core module from the nf-core module template.
 This ensures that your module follows the nf-core guidelines.
 The template contains extensive `TODO` messages to walk you through the changes you need to make to the template.
 
-You can create a new module using `nf-core modules create <directory>`.
+You can create a new module using `nf-core modules create`. This will create the new module in the current working directory. To specify another directory, use `--dir <directory>`.
 
 If writing a module for the shared [nf-core/modules](https://github.com/nf-core/modules) repository, the `<directory>` argument should be the path to the clone of your fork of the modules repository.
 
@@ -906,7 +1029,7 @@ Alternatively, if writing a more niche module that does not make sense to share,
 The `nf-core modules create` command will prompt you with the relevant questions in order to create all of the necessary module files.
 
 ```console
-$ nf-core modules create .
+$ nf-core modules create
 
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
@@ -914,7 +1037,7 @@ $ nf-core modules create .
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses. ctrl+click underlined text to open links.
@@ -952,7 +1075,7 @@ $ nf-core modules create-test-yml
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses
@@ -984,39 +1107,87 @@ INFO     Test workflow finished!
 INFO     Writing to 'tests/software/star/align/test.yml'
 ```
 
-## Check a module against nf-core guidelines
+### Check a module against nf-core guidelines
 
-Run this command to modules in a given directory (pipeline or nf-core/modules clone) against nf-core guidelines.
+Run the `nf-core modules lint` command to check modules in the current working directory (pipeline or nf-core/modules clone) against nf-core guidelines.
 
-Use the `--all` flag to run linting on all modules found.
+Use the `--all` flag to run linting on all modules found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
 
 ```console
-$ nf-core modules lint nf-core-modules
+$ nf-core modules lint
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.13
+    nf-core/tools version 2.0
 
-? Lint all modules or a single named module?  Named module
+? Lint all modules or a single named module? Named module
 ? Tool name: star/align
-INFO     Linting modules repo: .
+INFO     Linting pipeline: .
 INFO     Linting module: star/align
-╭──────────────────────────────────────────┬────────────────────────────────────┬─────────────────────────────╮
-│ Module name                              │ Test message                       │ File path                   │
-├──────────────────────────────────────────┼────────────────────────────────────┼─────────────────────────────┤
-│ star/align                               │ Conda update: bioconda::star       │ software/star/align/main.nf │
-│                                          │ 2.6.1d -> 2.7.8a                   │                             │
-╰──────────────────────────────────────────┴────────────────────────────────────┴─────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ Module lint results                                                                                                │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ [!] 1 Test Warning                                                                                                 │
+╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭───────────────────┬────────────────────────────────────────────┬───────────────────────────────────────────────────╮
+│ Module name       │ File path                                  │ Test message                                      │
+├───────────────────┼────────────────────────────────────────────┼───────────────────────────────────────────────────┤
+│ star/align        │ modules/nf-core/modules/star/align/main.nf │ Conda update: bioconda::star 2.6.1d -> 2.7.9a     │
+╰───────────────────┴────────────────────────────────────────────┴───────────────────────────────────────────────────╯
 ╭──────────────────────╮
 │ LINT RESULTS SUMMARY │
 ├──────────────────────┤
-│ [✔]  18 Tests Passed │
+│ [✔]  21 Tests Passed │
 │ [!]   1 Test Warning │
 │ [✗]   0 Test Failed  │
 ╰──────────────────────╯
+```
+
+### Bump bioconda and container versions of modules in
+
+If you are contributing to the `nf-core/modules` repository and want to bump bioconda and container versions of certain modules, you can use the `nf-core modules bump-versions` helper tool. This will bump the bioconda version of a single or all modules to the latest version and also fetch the correct Docker and Singularity container tags.
+
+```console
+$ nf-core modules bump-versions -d modules
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0
+
+
+
+? Bump versions for all modules or a single named module?  Named module
+? Tool name: bcftools/consensus
+╭───────────────────────────╮
+│ [!] 1  Module updated     │
+╰───────────────────────────╯
+╭─────────────────────────────────────────────────────────────╮
+│ Module name               │ Update message                  │
+├───────────────────────────┤─────────────────────────────────┤
+│ bcftools/consensus        │ Module updated:  1.11 --> 1.12  │
+╰─────────────────────────────────────────────────────────────╯
+```
+
+If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module from being updated by adding the following to the `.nf-core.yml` file:
+
+```yaml
+bump-versions:
+  star/align: False
+```
+
+If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
+
+```yaml
+bump-versions:
+  star/align: "2.6.1d"
 ```
 
 ## Citation

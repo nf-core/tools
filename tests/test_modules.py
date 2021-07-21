@@ -8,105 +8,102 @@ import os
 import shutil
 import tempfile
 import unittest
-import pytest
-from rich.console import Console
+
+
+def create_modules_repo_dummy():
+    """Create a dummy copy of the nf-core/modules repo"""
+    tmp_dir = tempfile.mkdtemp()
+    root_dir = os.path.join(tmp_dir, "modules")
+    os.makedirs(os.path.join(root_dir, "modules"))
+    os.makedirs(os.path.join(root_dir, "tests", "modules"))
+    os.makedirs(os.path.join(root_dir, "tests", "config"))
+    with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
+        fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
+
+    module_create = nf_core.modules.ModuleCreate(root_dir, "star/align", "@author", "process_medium", False, False)
+    module_create.create()
+
+    return root_dir
 
 
 class TestModules(unittest.TestCase):
     """Class for modules tests"""
 
     def setUp(self):
-        """ Create a new PipelineSchema and Launch objects """
+        """Create a new PipelineSchema and Launch objects"""
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "mypipeline")
         shutil.copytree(self.template_dir, self.pipeline_dir)
-        self.mods = nf_core.modules.PipelineModules()
-        self.mods.pipeline_dir = self.pipeline_dir
+
+        # Set up install objects
+        print("Setting up install objects")
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, latest=True, force=True)
+        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, latest=True, force=True)
+
+        # TODO Remove comments once external repository to have same structure as nf-core/modules
+        # self.mods_install_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+
+        # Set up remove objects
+        print("Setting up remove objects")
+        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
+        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
+        # TODO Remove comments once external repository to have same structure as nf-core/modules
+        # self.mods_remove_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+
+        # Set up the nf-core/modules repo dummy
+        self.nfcore_modules = create_modules_repo_dummy()
 
     def test_modulesrepo_class(self):
-        """ Initialise a modules repo object """
+        """Initialise a modules repo object"""
         modrepo = nf_core.modules.ModulesRepo()
         assert modrepo.name == "nf-core/modules"
         assert modrepo.branch == "master"
 
-    def test_modules_list(self):
-        """ Test listing available modules """
-        self.mods.pipeline_dir = None
-        listed_mods = self.mods.list_modules()
-        console = Console(record=True)
-        console.print(listed_mods)
-        output = console.export_text()
-        assert "fastqc" in output
+    ############################################
+    # Test of the individual modules commands. #
+    ############################################
 
-    def test_modules_install_nopipeline(self):
-        """ Test installing a module - no pipeline given """
-        self.mods.pipeline_dir = None
-        assert self.mods.install("foo") is False
+    from modules.list import (
+        test_modules_list_remote,
+        test_modules_list_pipeline,
+        test_modules_install_and_list_pipeline,
+    )
 
-    def test_modules_install_emptypipeline(self):
-        """ Test installing a module - empty dir given """
-        self.mods.pipeline_dir = tempfile.mkdtemp()
-        with pytest.raises(UserWarning) as excinfo:
-            self.mods.install("foo")
-        assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)
+    from modules.install import (
+        test_modules_install_nopipeline,
+        test_modules_install_emptypipeline,
+        test_modules_install_nomodule,
+        test_modules_install_trimgalore,
+        test_modules_install_trimgalore_twice,
+    )
 
-    def test_modules_install_nomodule(self):
-        """ Test installing a module - unrecognised module given """
-        assert self.mods.install("foo") is False
+    from modules.remove import (
+        test_modules_remove_trimgalore,
+        test_modules_remove_trimgalore_uninstalled,
+    )
 
-    def test_modules_install_fastqc(self):
-        """ Test installing a module - FastQC """
-        assert self.mods.install("fastqc") is not False
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
-        assert os.path.exists(module_path)
+    from modules.lint import test_modules_lint_trimgalore, test_modules_lint_empty, test_modules_lint_new_modules
 
-    def test_modules_install_fastqc_twice(self):
-        """ Test installing a module - FastQC already there """
-        self.mods.install("fastqc")
-        assert self.mods.install("fastqc") is False
+    from modules.create import (
+        test_modules_create_succeed,
+        test_modules_create_fail_exists,
+        test_modules_create_nfcore_modules,
+        test_modules_create_nfcore_modules_subtool,
+    )
 
-    def test_modules_remove_fastqc(self):
-        """ Test removing FastQC module after installing it"""
-        self.mods.install("fastqc")
-        module_path = os.path.join(self.mods.pipeline_dir, "modules", "nf-core", "software", "fastqc")
-        assert self.mods.remove("fastqc")
-        assert os.path.exists(module_path) is False
+    from modules.create_test_yml import (
+        test_modules_custom_yml_dumper,
+        test_modules_test_file_dict,
+        test_modules_create_test_yml_get_md5,
+        test_modules_create_test_yml_entry_points,
+        test_modules_create_test_yml_check_inputs,
+    )
 
-    def test_modules_remove_fastqc_uninstalled(self):
-        """ Test removing FastQC module without installing it """
-        assert self.mods.remove("fastqc") is False
-
-    def test_modules_lint_fastqc(self):
-        """ Test linting the fastqc module """
-        self.mods.install("fastqc")
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-        module_lint.lint(print_results=False, all_modules=True)
-        assert len(module_lint.passed) == 18
-        assert len(module_lint.warned) == 0
-        assert len(module_lint.failed) == 0
-
-    def test_modules_lint_empty(self):
-        """ Test linting a pipeline with no modules installed """
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-        module_lint.lint(print_results=False, all_modules=True)
-        assert len(module_lint.passed) == 0
-        assert len(module_lint.warned) == 0
-        assert len(module_lint.failed) == 0
-
-    def test_modules_create_succeed(self):
-        """ Succeed at creating the FastQC module """
-        module_create = nf_core.modules.ModuleCreate(self.pipeline_dir, "fastqc", "@author", "process_low", True, True)
-        module_create.create()
-        assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "fastqc.nf"))
-
-    def test_modules_create_fail_exists(self):
-        """ Fail at creating the same module twice"""
-        module_create = nf_core.modules.ModuleCreate(
-            self.pipeline_dir, "fastqc", "@author", "process_low", False, False
-        )
-        module_create.create()
-        with pytest.raises(UserWarning) as excinfo:
-            module_create.create()
-        assert "Module file exists already" in str(excinfo.value)
+    from modules.bump_versions import (
+        test_modules_bump_versions_single_module,
+        test_modules_bump_versions_all_modules,
+        test_modules_bump_versions_fail,
+        test_modules_bump_versions_fail_unknown_version,
+    )
