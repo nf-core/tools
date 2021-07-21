@@ -5,7 +5,7 @@
 ### Template
 
 * Correct regex pattern for file names in `nextflow_schema.json`
-* Remove ` .` from command examples
+* Remove `.` from nf-core/tools command examples
 * Update Nextflow installation link in pipeline template ([#1201](https://github.com/nf-core/tools/issues/1201))
 * Command `hostname` is not portable [[#1212](https://github.com/nf-core/tools/pull/1212)]
 
