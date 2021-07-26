@@ -66,7 +66,7 @@ class ModuleInstall(ModuleCommand):
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
 
-        repos_and_modules = [(self.modules_repo, module, self.sha)]
+        repos_mods_shas = [(self.modules_repo, module, self.sha)]
 
         # Load 'modules.json'
         modules_json = self.load_modules_json()
@@ -96,8 +96,11 @@ class ModuleInstall(ModuleCommand):
             if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
 
                 log.error(f"Module is already installed.")
+                repo_flag = "" if modules_repo.name == "nf-core/modules" else f"-g {modules_repo.name} "
+                branch_flag = "" if modules_repo.branch == "master" else f"-b {modules_repo.branch} "
+
                 log.info(
-                    f"To update '{module}' run 'nf-core modules update {module}'. To force reinstallation use '--force'"
+                    f"To update '{module}' run 'nf-core modules {repo_flag}{branch_flag}update {module}'. To force reinstallation use '--force'"
                 )
                 exit_value = False
                 continue
