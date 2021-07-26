@@ -135,3 +135,4 @@ class ModuleInstall(ModuleCommand):
 
         # Update module.json with newly installed module
         self.update_modules_json(modules_json, self.modules_repo.name, module, version)
+        return True
