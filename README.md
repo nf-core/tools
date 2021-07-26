@@ -888,7 +888,7 @@ By default, the tool will collect workflow variables from the current branch in 
 You can supply the `--from-branch` flag to specific a different branch.
 
 Finally, if you give the `--pull-request` flag, the command will push any changes to the remote and attempt to create a pull request using the GitHub API.
-The GitHub username and repository name will be fetched from the remote url (see `git remote -v | grep origin`), or can be supplied with `--username` and `--repository`.
+The GitHub username and repository name will be fetched from the remote url (see `git remote -v | grep origin`), or can be supplied with `--username` and `--github-repository`.
 
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
@@ -901,6 +901,13 @@ These are software tool process definitions that can be imported into any pipeli
 This allows multiple pipelines to use the same code for share tools and gives a greater degree of granulairy and unit testing.
 
 The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
+
+The modules supercommand comes with two flags for specifying a custom remote:
+
+* `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
+* `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
+
+Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
 ### List modules
 

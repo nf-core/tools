@@ -24,13 +24,13 @@ class DownloadTest(unittest.TestCase):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
         pipeline = "methylseq"
-        download_obj = DownloadWorkflow(pipeline=pipeline, release="1.6")
+        download_obj = DownloadWorkflow(pipeline=pipeline, revision="1.6")
         (
             download_obj.pipeline,
-            download_obj.wf_releases,
+            download_obj.wf_revisions,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_release_hash()
+        download_obj.get_revision_hash()
         assert download_obj.wf_sha == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
         assert download_obj.outdir == "nf-core-methylseq-1.6"
         assert (
@@ -43,13 +43,13 @@ class DownloadTest(unittest.TestCase):
         wfs.get_remote_workflows()
         # Exoseq pipeline is archived, so `dev` branch should be stable
         pipeline = "exoseq"
-        download_obj = DownloadWorkflow(pipeline=pipeline, release="dev")
+        download_obj = DownloadWorkflow(pipeline=pipeline, revision="dev")
         (
             download_obj.pipeline,
-            download_obj.wf_releases,
+            download_obj.wf_revisions,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_release_hash()
+        download_obj.get_revision_hash()
         assert download_obj.wf_sha == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
         assert download_obj.outdir == "nf-core-exoseq-dev"
         assert (
@@ -62,20 +62,20 @@ class DownloadTest(unittest.TestCase):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
         pipeline = "methylseq"
-        download_obj = DownloadWorkflow(pipeline=pipeline, release="thisisfake")
+        download_obj = DownloadWorkflow(pipeline=pipeline, revision="thisisfake")
         (
             download_obj.pipeline,
-            download_obj.wf_releases,
+            download_obj.wf_revisions,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_release_hash()
+        download_obj.get_revision_hash()
 
     #
     # Tests for 'download_wf_files'
     #
     def test_download_wf_files(self):
         outdir = tempfile.mkdtemp()
-        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", release="1.6")
+        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
         download_obj.wf_sha = "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
         download_obj.wf_download_url = (
@@ -89,7 +89,7 @@ class DownloadTest(unittest.TestCase):
     #
     def test_download_configs(self):
         outdir = tempfile.mkdtemp()
-        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", release="1.6")
+        download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
         download_obj.download_configs()
         assert os.path.exists(os.path.join(outdir, "configs", "nfcore_custom.config"))
@@ -106,7 +106,7 @@ class DownloadTest(unittest.TestCase):
         create_obj.init_pipeline()
 
         test_outdir = tempfile.mkdtemp()
-        download_obj = DownloadWorkflow(pipeline="dummy", release="1.2.0", outdir=test_outdir)
+        download_obj = DownloadWorkflow(pipeline="dummy", revision="1.2.0", outdir=test_outdir)
         shutil.copytree(test_pipeline_dir, os.path.join(test_outdir, "workflow"))
         download_obj.download_configs()
 
@@ -192,7 +192,7 @@ class DownloadTest(unittest.TestCase):
             pipeline="nf-core/methylseq",
             outdir=os.path.join(tmp_dir, "new"),
             container="singularity",
-            release="1.6",
+            revision="1.6",
             compress_type="none",
         )
 

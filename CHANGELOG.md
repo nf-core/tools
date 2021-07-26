@@ -11,6 +11,8 @@
 
 ### General
 
+* Changed names of some flags with `-r` as short options to make the flags more consistent between commands.
+
 ### Modules
 
 * Added consistency checks between installed modules and `modules.json` ([#1199](https://github.com/nf-core/tools/issues/1199))
