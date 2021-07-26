@@ -4,12 +4,21 @@
 
 ### Template
 
+* Correct regex pattern for file names in `nextflow_schema.json`
+* Remove `.` from nf-core/tools command examples
+* Update Nextflow installation link in pipeline template ([#1201](https://github.com/nf-core/tools/issues/1201))
+* Command `hostname` is not portable [[#1212](https://github.com/nf-core/tools/pull/1212)]
+
 ### General
 
 ### Modules
 
 * Added consistency checks between installed modules and `modules.json` ([#1199](https://github.com/nf-core/tools/issues/1199))
 * Added support excluding or specifying version of modules in `.nf-core.yml` when updating with `nf-core modules install --all` ([#1204](https://github.com/nf-core/tools/issues/1204))
+* Created `nf-core modules update` and removed updating options from `nf-core modules install`
+* Added missing function call to `nf-core lint` ([#1198](https://github.com/nf-core/tools/issues/1198))
+* Fix `nf-core lint` not filtering modules test when run with `--key` ([#1203](https://github.com/nf-core/tools/issues/1203))
+* Fixed `nf-core modules install` not working when installing from branch with `-b` ([#1218](https://github.com/nf-core/tools/issues/1218))
 
 ## [v2.0.1 - Palladium Platypus Junior](https://github.com/nf-core/tools/releases/tag/2.0.1) - [2021-07-13]
 

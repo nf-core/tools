@@ -68,9 +68,11 @@ class ModuleCommand:
                 repo_path = os.path.join(module_base_path, repo_name)
                 module_mains_path = f"{repo_path}/**/main.nf"
                 module_mains = glob.glob(module_mains_path, recursive=True)
-                self.module_names[repo_name] = [
-                    os.path.dirname(os.path.relpath(mod, repo_path)) for mod in module_mains
-                ]
+                if len(module_mains) > 0:
+                    self.module_names[repo_name] = [
+                        os.path.dirname(os.path.relpath(mod, repo_path)) for mod in module_mains
+                    ]
+
         elif self.repo_type == "modules":
             module_mains_path = f"{module_base_path}/**/main.nf"
             module_mains = glob.glob(module_mains_path, recursive=True)

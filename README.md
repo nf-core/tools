@@ -28,7 +28,8 @@ A python package with helper tools for the nf-core community.
     * [`modules list` - List available modules](#list-modules)
         * [`modules list remote` - List remote modules](#list-remote-modules)
         * [`modules list local` - List installed modules](#list-installed-modules)
-    * [`modules install` - Install or update modules in pipeline](#install-or-update-modules-in-a-pipeline)
+    * [`modules install` - Install modules in pipeline](#install-modules-in-a-pipeline)
+    * [`modules update` - Update modules in pipeline](#update-modules-in-a-pipeline)
     * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
     * [`modules create` - Create a module from the template](#create-a-new-module)
     * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
@@ -962,7 +963,7 @@ INFO     Modules installed in '.':
 └─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
 ```
 
-### Install or update modules in a pipeline
+### Install modules in a pipeline
 
 You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
 A module installed this way will be installed to the `./modules/nf-core/modules` directory.
@@ -978,20 +979,17 @@ $ nf-core modules install
     nf-core/tools version 2.0
 
 ? Tool name: cat/fastq
-? Select 'cat/fastq' version: Rename software/ directory to modules/ to re-organise module structure ...truncated...
 INFO     Installing cat/fastq
 INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify another pipeline than the current working directory by using the `--dir <pipeline dir>`.
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
 There are three additional flags that you can use when installing a module:
 
-* `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
 * `--force`: Overwrite a previously installed version of the module.
+* `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
-
-In addition to installing and changing the version of single modules, you can update all installed modules with `nf-core modules install --all`. This will by default update all installed modules to the latest version available. If you want to change all modules to a specific version you can use `nf-core modules install --all --sha <commit sha>`.
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
 
@@ -1022,6 +1020,34 @@ or if you want all modules in `nf-core/modules` at a specific version:
 install:
   nf-core/modules: "e937c7950af70930d1f34bb961403d9d2aa81c7"
 ```
+
+### Update modules in a pipeline
+
+You can update modules installed from a remote repository in your pipeline using `nf-core modules update`.
+
+```console
+$ nf-core modules update
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0
+
+? Tool name: fastqc
+INFO     Updating 'nf-core/modules/fastqc'
+INFO     Downloaded 3 files to ./modules/nf-core/modules/fastqc
+```
+
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
+
+There are four additional flags that you can use with this command:
+
+* `--force`: Reinstall module even if it appears to be up to date
+* `--prompt`: Select the module version using a cli prompt.
+* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+* `--all`: Use this flag to run the command on all modules in the pipeline.
 
 ### Remove a module from a pipeline
 
