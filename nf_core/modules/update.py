@@ -122,10 +122,12 @@ class ModuleUpdate(ModuleCommand):
                     skipped_repos.append(repo_name)
 
             if skipped_repos:
-                log.info("Skipping modules in repositories: '{}'".format("', '".join(skipped_repos)))
+                skipped_str = "', '".join(skipped_repos)
+                log.info(f"Skipping modules in repositor{'y' if len(skipped_repos) == 1 else 'ies'}: '{skipped_str}'")
 
             if skipped_modules:
-                log.info("Skipping modules: '{}'".format("', '".join(skipped_modules)))
+                skipped_str = "', '".join(skipped_modules)
+                log.info(f"Skipping module{'' if len(skipped_modules) == 1 else 's'}: '{skipped_str}'")
 
             repos_mods_shas = [
                 (ModulesRepo(repo=repo_name), mods_shas) for repo_name, mods_shas in repos_mods_shas.items()
