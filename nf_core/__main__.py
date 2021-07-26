@@ -349,15 +349,15 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
 ## nf-core module subcommands
 @nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
 @click.option(
-    "-r",
-    "--repository",
+    "-g",
+    "--github-repository",
     type=str,
     default="nf-core/modules",
     help="GitHub repository hosting modules.",
 )
 @click.option("-b", "--branch", type=str, default="master", help="Branch of GitHub repository hosting modules.")
 @click.pass_context
-def modules(ctx, repository, branch):
+def modules(ctx, github_repository, branch):
     """
     Tools to manage Nextflow DSL2 modules as hosted on nf-core/modules.
     """
@@ -367,7 +367,7 @@ def modules(ctx, repository, branch):
 
     # Make repository object to pass to subcommands
     try:
-        ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(repository, branch)
+        ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(github_repository, branch)
     except LookupError as e:
         log.critical(e)
         sys.exit(1)
