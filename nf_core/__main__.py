@@ -524,7 +524,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
 @modules.command("create-test-yml", help_priority=6)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-r", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
+@click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
 @click.option("-o", "--output", type=str, help="Path for output YAML file")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output YAML file if it already exists")
 @click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
