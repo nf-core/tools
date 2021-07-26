@@ -734,9 +734,9 @@ def bump_version(new_version, dir, nextflow):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
-@click.option("-r", "--repository", type=str, help="GitHub PR: target repository.")
+@click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
-def sync(dir, from_branch, pull_request, repository, username):
+def sync(dir, from_branch, pull_request, github_repository, username):
     """
     Sync a pipeline TEMPLATE branch with the nf-core template.
 
@@ -756,7 +756,7 @@ def sync(dir, from_branch, pull_request, repository, username):
         raise
 
     # Sync the given pipeline dir
-    sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, repository, username)
+    sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, github_repository, username)
     try:
         sync_obj.sync()
     except (nf_core.sync.SyncException, nf_core.sync.PullRequestException) as e:
