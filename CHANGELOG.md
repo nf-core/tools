@@ -16,6 +16,7 @@
 ### Modules
 
 * Added consistency checks between installed modules and `modules.json` ([#1199](https://github.com/nf-core/tools/issues/1199))
+* Added support excluding or specifying version of modules in `.nf-core.yml` when updating with `nf-core modules install --all` ([#1204](https://github.com/nf-core/tools/issues/1204))
 * Created `nf-core modules update` and removed updating options from `nf-core modules install`
 * Added missing function call to `nf-core lint` ([#1198](https://github.com/nf-core/tools/issues/1198))
 * Fix `nf-core lint` not filtering modules test when run with `--key` ([#1203](https://github.com/nf-core/tools/issues/1203))

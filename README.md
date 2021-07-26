@@ -990,13 +990,12 @@ INFO     Installing cat/fastq
 INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
-There are four flags that you can use with this command:
+There are three additional flags that you can use when installing a module:
 
-* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
-* `--prompt`: Select the module version using a cli prompt.
 * `--force`: Overwrite a previously installed version of the module.
+* `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
 
 ### Update modules in a pipeline
@@ -1018,15 +1017,46 @@ INFO     Updating 'nf-core/modules/fastqc'
 INFO     Downloaded 3 files to ./modules/nf-core/modules/fastqc
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+You can pass the module name as an optional argument to `nf-core modules update` instead of using the cli prompt, eg: `nf-core modules update fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
-There are five flags that you can use with this command:
+There are four additional flags that you can use with this command:
 
-* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
 * `--force`: Reinstall module even if it appears to be up to date
 * `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
 * `--all`: Use this flag to run the command on all modules in the pipeline.
+
+If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
+
+```yaml
+update:
+  nf-core/modules:
+    star/align: False
+```
+
+If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
+
+```yaml
+update:
+  nf-core/modules:
+    star/align: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+```
+
+This also works at the repository level. For example, if you want to exclude all modules installed from `nf-core/modules` from being updated you could add:
+
+```yaml
+update:
+  nf-core/modules: False
+```
+
+or if you want all modules in `nf-core/modules` at a specific version:
+
+```yaml
+update:
+  nf-core/modules: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+```
+
+Note that the module versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
 
 ### Remove a module from a pipeline
 

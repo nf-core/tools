@@ -54,80 +54,72 @@ class ModuleInstall(ModuleCommand):
             log.error("Module '{}' not found in list of available modules.".format(module))
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
-        repos_and_modules = [(self.modules_repo, module)]
 
         # Load 'modules.json'
         modules_json = self.load_modules_json()
         if not modules_json:
             return False
 
-        exit_value = True
-        for modules_repo, module in repos_and_modules:
-            if not module_exist_in_repo(module, modules_repo):
-                warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
-                log.warning(warn_msg)
-                exit_value = False
-                continue
+        if not module_exist_in_repo(module, self.modules_repo):
+            warn_msg = f"Module '{module}' not found in remote '{self.modules_repo.name}' ({self.modules_repo.branch})"
+            log.warning(warn_msg)
+            return False
 
-            if modules_repo.name in modules_json["repos"]:
-                current_entry = modules_json["repos"][modules_repo.name].get(module)
-            else:
-                current_entry = None
+        if self.modules_repo.name in modules_json["repos"]:
+            current_entry = modules_json["repos"][self.modules_repo.name].get(module)
+        else:
+            current_entry = None
 
-            # Set the install folder based on the repository name
-            install_folder = [modules_repo.owner, modules_repo.repo]
+        # Set the install folder based on the repository name
+        install_folder = [self.modules_repo.owner, self.modules_repo.repo]
 
-            # Compute the module directory
-            module_dir = os.path.join(self.dir, "modules", *install_folder, module)
+        # Compute the module directory
+        module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
-            # Check that the module is not already installed
-            if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
+        # Check that the module is not already installed
+        if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
 
-                log.error(f"Module is already installed.")
-                log.info(
-                    f"To update '{module}' run 'nf-core modules update {module}'. To force reinstallation use '--force'"
-                )
-                exit_value = False
-                continue
+            log.error(f"Module is already installed.")
+            repo_flag = "" if self.modules_repo.name == "nf-core/modules" else f"-g {self.modules_repo.name} "
+            branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 
-            if self.sha:
-                version = self.sha
-            elif self.prompt:
-                try:
-                    version = nf_core.modules.module_utils.prompt_module_version_sha(
-                        module,
-                        installed_sha=current_entry["git_sha"] if not current_entry is None else None,
-                        modules_repo=modules_repo,
-                    )
-                except SystemError as e:
-                    log.error(e)
-                    exit_value = False
-                    continue
-            else:
-                # Fetch the latest commit for the module
-                try:
-                    git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
-                except UserWarning:
-                    log.error(f"Was unable to fetch version of module '{module}'")
-                    exit_value = False
-                    continue
-                latest_version = git_log[0]["git_sha"]
-                version = latest_version
-
-            if self.force:
-                log.info(f"Removing installed version of '{modules_repo.name}/{module}'")
-                self.clear_module_dir(module, module_dir)
-
-            log.info(f"{'Rei' if self.force else 'I'}nstalling '{modules_repo.name}/{module}'")
-            log.debug(
-                f"Installing module '{module}' at modules hash {modules_repo.modules_current_hash} from {self.modules_repo.name}"
+            log.info(
+                f"To update '{module}' run 'nf-core modules {repo_flag}{branch_flag}update {module}'. To force reinstallation use '--force'"
             )
+            return False
 
-            # Download module files
-            if not self.download_module_file(module, version, modules_repo, install_folder, module_dir):
-                exit_value = False
-                continue
+        if self.sha:
+            version = self.sha
+        elif self.prompt:
+            try:
+                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                    module,
+                    installed_sha=current_entry["git_sha"] if not current_entry is None else None,
+                    modules_repo=self.modules_repo,
+                )
+            except SystemError as e:
+                log.error(e)
+                return False
+        else:
+            # Fetch the latest commit for the module
+            try:
+                git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
+            except UserWarning:
+                log.error(f"Was unable to fetch version of module '{module}'")
+                return False
+            version = git_log[0]["git_sha"]
 
-            # Update module.json with newly installed module
-            self.update_modules_json(modules_json, modules_repo.name, module, version)
-        return exit_value
+        if self.force:
+            log.info(f"Removing installed version of '{self.modules_repo.name}/{module}'")
+            self.clear_module_dir(module, module_dir)
+
+        log.info(f"{'Rei' if self.force else 'I'}nstalling '{self.modules_repo.name}/{module}'")
+        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.name}")
+
+        # Download module files
+        if not self.download_module_file(module, version, self.modules_repo, install_folder, module_dir):
+            return False
+
+        # Update module.json with newly installed module
+        self.update_modules_json(modules_json, self.modules_repo.name, module, version)
+        return True

@@ -31,6 +31,9 @@ class ModuleUpdate(ModuleCommand):
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json_up_to_date()
 
+        tool_config = nf_core.utils.load_tools_config()
+        update_config = tool_config.get("update", {})
+
         if not self.update_all:
             # Get the available modules
             try:
@@ -55,25 +58,86 @@ class ModuleUpdate(ModuleCommand):
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
 
+            sha = self.sha
+            if module in update_config.get(self.modules_repo.name, {}):
+                config_entry = update_config[self.modules_repo.name].get(module)
+                if config_entry is not None and config_entry is not True:
+                    if config_entry is False:
+                        log.error("Module's update entry in '.nf-core.yml' is set to False")
+                        return False
+                    elif isinstance(config_entry, str):
+                        if self.sha:
+                            log.warning(
+                                "Found entry in '.nf-core.yml' for module "
+                                "which will override version specified with '--sha'"
+                            )
+                        sha = config_entry
+                    else:
+                        log.error("Module's update entry in '.nf-core.yml' is of wrong type")
+                        return False
+
             # Check that the supplied name is an available module
             if module and module not in self.modules_repo.modules_avail_module_names:
                 log.error("Module '{}' not found in list of available modules.".format(module))
                 log.info("Use the command 'nf-core modules list remote' to view available software")
                 return False
 
-            repos_and_modules = [(self.modules_repo, module)]
+            repos_mods_shas = [(self.modules_repo, module, sha)]
+
         else:
             if module:
                 raise UserWarning("You cannot specify a module and use the '--all' flag at the same time")
 
             self.get_pipeline_modules()
-            repos_and_modules = [
-                (ModulesRepo(repo=repo_name), modules) for repo_name, modules in self.module_names.items()
+
+            # Filter out modules that should not be updated or assign versions if there are any
+            skipped_repos = []
+            skipped_modules = []
+            repos_mods_shas = {}
+            for repo_name, modules in self.module_names.items():
+                if repo_name not in update_config or update_config[repo_name] is True:
+                    repos_mods_shas[repo_name] = []
+                    for module in modules:
+                        repos_mods_shas[repo_name].append((module, self.sha))
+                elif isinstance(update_config[repo_name], dict):
+                    repo_config = update_config[repo_name]
+                    repos_mods_shas[repo_name] = []
+                    for module in modules:
+                        if module not in repo_config or repo_config[module] is True:
+                            repos_mods_shas[repo_name].append((module, self.sha))
+                        elif isinstance(repo_config[module], str):
+                            # If a string is given it is the commit SHA to which we should update to
+                            custom_sha = repo_config[module]
+                            repos_mods_shas[repo_name].append((module, custom_sha))
+                        else:
+                            # Otherwise the entry must be 'False' and we should ignore the module
+                            skipped_modules.append(f"{repo_name}/{module}")
+                elif isinstance(update_config[repo_name], str):
+                    # If a string is given it is the commit SHA to which we should update to
+                    custom_sha = update_config[repo_name]
+                    repos_mods_shas[repo_name] = []
+                    for module in modules:
+                        repos_mods_shas[repo_name].append((module, custom_sha))
+                else:
+                    skipped_repos.append(repo_name)
+
+            if skipped_repos:
+                skipped_str = "', '".join(skipped_repos)
+                log.info(f"Skipping modules in repositor{'y' if len(skipped_repos) == 1 else 'ies'}: '{skipped_str}'")
+
+            if skipped_modules:
+                skipped_str = "', '".join(skipped_modules)
+                log.info(f"Skipping module{'' if len(skipped_modules) == 1 else 's'}: '{skipped_str}'")
+
+            repos_mods_shas = [
+                (ModulesRepo(repo=repo_name), mods_shas) for repo_name, mods_shas in repos_mods_shas.items()
             ]
-            # Load the modules file trees
-            for repo, _ in repos_and_modules:
+
+            for repo, _ in repos_mods_shas:
                 repo.get_modules_file_tree()
-            repos_and_modules = [(repo, module) for repo, modules in repos_and_modules for module in modules]
+
+            # Flatten the list
+            repos_mods_shas = [(repo, mod, sha) for repo, mods_shas in repos_mods_shas for mod, sha in mods_shas]
 
         # Load 'modules.json'
         modules_json = self.load_modules_json()
@@ -81,7 +145,7 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         exit_value = True
-        for modules_repo, module in repos_and_modules:
+        for modules_repo, module, sha in repos_mods_shas:
             if not module_exist_in_repo(module, modules_repo):
                 warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
                 if self.update_all:
@@ -101,8 +165,8 @@ class ModuleUpdate(ModuleCommand):
             # Compute the module directory
             module_dir = os.path.join(self.dir, "modules", *install_folder, module)
 
-            if self.sha:
-                version = self.sha
+            if sha:
+                version = sha
             elif self.prompt:
                 try:
                     version = nf_core.modules.module_utils.prompt_module_version_sha(
@@ -135,9 +199,7 @@ class ModuleUpdate(ModuleCommand):
                     continue
 
             log.info(f"Updating '{modules_repo.name}/{module}'")
-            log.debug(
-                f"Updating module '{module}' to {modules_repo.modules_current_hash} from {self.modules_repo.name}"
-            )
+            log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
 
             log.debug(f"Removing old version of module '{module}'")
             self.clear_module_dir(module, module_dir)

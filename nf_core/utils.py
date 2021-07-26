@@ -771,7 +771,9 @@ def load_tools_config(dir="."):
     except FileNotFoundError:
         log.debug(f"No tools config file found: {config_fn}")
         return {}
-
+    if tools_config is None:
+        # If the file is empty
+        return {}
     return tools_config
 
 
