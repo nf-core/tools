@@ -58,7 +58,7 @@ def get_module_git_log(
     if modules_repo is None:
         modules_repo = ModulesRepo()
 
-    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits?sha=master&path=modules/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
+    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits?sha={modules_repo.branch}&path=modules/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
     log.debug(f"Fetching commit history of module '{module_name}' from github API")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
