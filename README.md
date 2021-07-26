@@ -998,21 +998,6 @@ There are three additional flags that you can use when installing a module:
 * `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
 
-If you want to guarantee that certain modules won't be installed into a pipeline, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` from `nf-core/modules` from being installed by adding the following to the `.nf-core.yml` file:
-
-```yaml
-install:
-  nf-core/modules:
-    star/align: False
-```
-
-This also works at the repository level. For example, if you want to exclude all modules installed from `nf-core/modules` from being installed you could add:
-
-```yaml
-install:
-  nf-core/modules: False
-```
-
 ### Update modules in a pipeline
 
 You can update modules installed from a remote repository in your pipeline using `nf-core modules update`.
@@ -1032,7 +1017,7 @@ INFO     Updating 'nf-core/modules/fastqc'
 INFO     Downloaded 3 files to ./modules/nf-core/modules/fastqc
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
+You can pass the module name as an optional argument to `nf-core modules update` instead of using the cli prompt, eg: `nf-core modules update fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
 There are four additional flags that you can use with this command:
 

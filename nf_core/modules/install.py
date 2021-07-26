@@ -31,10 +31,6 @@ class ModuleInstall(ModuleCommand):
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json_up_to_date()
 
-        # Loads the tools config
-        tool_config = nf_core.utils.load_tools_config()
-        update_config = tool_config.get("install", {})
-
         # Get the available modules
         try:
             self.modules_repo.get_modules_file_tree()
@@ -52,13 +48,6 @@ class ModuleInstall(ModuleCommand):
                 choices=self.modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-
-        if (
-            module in update_config.get(self.modules_repo.name, {})
-            and update_config[self.modules_repo.name].get(module) is False
-        ):
-            log.error("Module's install entry in '.nf-core.yml' is set to False")
-            return False
 
         # Check that the supplied name is an available module
         if module and module not in self.modules_repo.modules_avail_module_names:
