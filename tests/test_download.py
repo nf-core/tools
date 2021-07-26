@@ -30,7 +30,7 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_releases,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_release_hash()
+        download_obj.get_revisions_hash()
         assert download_obj.wf_sha == "b3e5e3b95aaf01d98391a62a10a3990c0a4de395"
         assert download_obj.outdir == "nf-core-methylseq-1.6"
         assert (
@@ -49,7 +49,7 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_releases,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_release_hash()
+        download_obj.get_revisions_hash()
         assert download_obj.wf_sha == "819cbac792b76cf66c840b567ed0ee9a2f620db7"
         assert download_obj.outdir == "nf-core-exoseq-dev"
         assert (
@@ -68,7 +68,7 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_releases,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_release_hash()
+        download_obj.get_revisions_hash()
 
     #
     # Tests for 'download_wf_files'
