@@ -71,7 +71,7 @@ class DownloadWorkflow(object):
 
     Args:
         pipeline (str): A nf-core pipeline name.
-        release (str): The workflow release version to download, like `1.0`. Defaults to None.
+        revision (str): The workflow revision to download, like `1.0`. Defaults to None.
         singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
     """
@@ -79,7 +79,7 @@ class DownloadWorkflow(object):
     def __init__(
         self,
         pipeline=None,
-        release=None,
+        revision=None,
         outdir=None,
         compress_type=None,
         force=False,
@@ -88,7 +88,7 @@ class DownloadWorkflow(object):
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
-        self.release = release
+        self.revision = revision
         self.outdir = outdir
         self.output_filename = None
         self.compress_type = compress_type
@@ -97,7 +97,7 @@ class DownloadWorkflow(object):
         self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
 
-        self.wf_releases = {}
+        self.wf_revisions = {}
         self.wf_branches = {}
         self.wf_sha = None
         self.wf_download_url = None
@@ -114,11 +114,11 @@ class DownloadWorkflow(object):
         # Get workflow details
         try:
             self.prompt_pipeline_name()
-            self.pipeline, self.wf_releases, self.wf_branches = nf_core.utils.get_repo_releases_branches(
+            self.pipeline, self.wf_revisions, self.wf_branches = nf_core.utils.get_repo_releases_branches(
                 self.pipeline, self.wfs
             )
-            self.prompt_release()
-            self.get_release_hash()
+            self.prompt_revision()
+            self.get_revision_hash()
             self.prompt_container_download()
             self.prompt_use_singularity_cachedir()
             self.prompt_singularity_cachedir_only()
@@ -127,7 +127,7 @@ class DownloadWorkflow(object):
             log.critical(e)
             sys.exit(1)
 
-        summary_log = [f"Pipeline release: '{self.release}'", f"Pull containers: '{self.container}'"]
+        summary_log = [f"Pipeline revision: '{self.revision}'", f"Pull containers: '{self.container}'"]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
             summary_log.append(
                 "Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
@@ -194,41 +194,41 @@ class DownloadWorkflow(object):
             stderr.print("Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).")
             self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
 
-    def prompt_release(self):
-        """Prompt for pipeline release / branch"""
-        # Prompt user for release tag if '--release' was not set
-        if self.release is None:
-            self.release = nf_core.utils.prompt_pipeline_release_branch(self.wf_releases, self.wf_branches)
+    def prompt_revision(self):
+        """Prompt for pipeline revision / branch"""
+        # Prompt user for revision tag if '--revision' was not set
+        if self.revision is None:
+            self.revision = nf_core.utils.prompt_pipeline_release_branch(self.wf_revisions, self.wf_branches)
 
-    def get_release_hash(self):
-        """Find specified release / branch hash"""
+    def get_revision_hash(self):
+        """Find specified revision / branch hash"""
 
         # Branch
-        if self.release in self.wf_branches.keys():
-            self.wf_sha = self.wf_branches[self.release]
+        if self.revision in self.wf_branches.keys():
+            self.wf_sha = self.wf_branches[self.revision]
 
-        # Release
+        # Revision
         else:
-            for r in self.wf_releases:
-                if r["tag_name"] == self.release:
+            for r in self.wf_revisions:
+                if r["tag_name"] == self.revision:
                     self.wf_sha = r["tag_sha"]
                     break
 
-            # Can't find the release or branch - throw an error
+            # Can't find the revisions or branch - throw an error
             else:
                 log.info(
-                    "Available {} releases: '{}'".format(
-                        self.pipeline, "', '".join([r["tag_name"] for r in self.wf_releases])
+                    "Available {} revisions: '{}'".format(
+                        self.pipeline, "', '".join([r["tag_name"] for r in self.wf_revisions])
                     )
                 )
                 log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
                 raise AssertionError(
-                    "Not able to find release / branch '{}' for {}".format(self.release, self.pipeline)
+                    "Not able to find revision / branch '{}' for {}".format(self.revision, self.pipeline)
                 )
 
         # Set the outdir
         if not self.outdir:
-            self.outdir = "{}-{}".format(self.pipeline.replace("/", "-").lower(), self.release)
+            self.outdir = "{}-{}".format(self.pipeline.replace("/", "-").lower(), self.revision)
 
         # Set the download URL and return
         self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.wf_sha)
