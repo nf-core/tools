@@ -29,7 +29,6 @@ class ModulesRepo(object):
 
         self.owner, self.repo = self.name.split("/")
         self.modules_file_tree = {}
-        self.modules_current_hash = None
         self.modules_avail_module_names = []
 
     def verify_modules_repo(self):
@@ -65,7 +64,6 @@ class ModulesRepo(object):
         Fetch the file list from the repo, using the GitHub API
 
         Sets self.modules_file_tree
-             self.modules_current_hash
              self.modules_avail_module_names
         """
         api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.name, self.branch)
@@ -80,7 +78,6 @@ class ModulesRepo(object):
         result = r.json()
         assert result["truncated"] == False
 
-        self.modules_current_hash = result["sha"]
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
             if f["path"].startswith(f"modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:

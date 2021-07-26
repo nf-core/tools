@@ -199,9 +199,7 @@ class ModuleUpdate(ModuleCommand):
                     continue
 
             log.info(f"Updating '{modules_repo.name}/{module}'")
-            log.debug(
-                f"Updating module '{module}' to {modules_repo.modules_current_hash} from {self.modules_repo.name}"
-            )
+            log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
 
             log.debug(f"Removing old version of module '{module}'")
             self.clear_module_dir(module, module_dir)

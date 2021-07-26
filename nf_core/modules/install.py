@@ -125,9 +125,7 @@ class ModuleInstall(ModuleCommand):
             self.clear_module_dir(module, module_dir)
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{self.modules_repo.name}/{module}'")
-        log.debug(
-            f"Installing module '{module}' at modules hash {self.modules_repo.modules_current_hash} from {self.modules_repo.name}"
-        )
+        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.name}")
 
         # Download module files
         if not self.download_module_file(module, version, self.modules_repo, install_folder, module_dir):
