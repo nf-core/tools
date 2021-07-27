@@ -420,7 +420,7 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
         if next_page_commits is not None:
             choices += [older_commits_choice]
         git_sha = questionary.select(
-            f"Select '{module}' version:", choices=choices, style=nf_core.utils.nfcore_question_style
+            f"Select '{module}' commit:", choices=choices, style=nf_core.utils.nfcore_question_style
         ).unsafe_ask()
         page_nbr += 1
     return git_sha
