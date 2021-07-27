@@ -39,9 +39,7 @@ def module_exist_in_repo(module_name, modules_repo):
     return not (response.status_code == 404)
 
 
-def get_module_git_log(
-    module_name, owner="nf-core", modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"
-):
+def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"):
     """
     Fetches the commit history the of requested module since a given date. The default value is
     not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
@@ -58,8 +56,13 @@ def get_module_git_log(
     """
     if modules_repo is None:
         modules_repo = ModulesRepo()
+    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits"
+    api_url += f"?sha{modules_repo.branch}"
+    if module_name is not None:
+        api_url += f"&path=modules/{module_name}"
+    api_url += f"&page={page_nbr}"
+    api_url += f"&since={since}"
 
-    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits?sha={modules_repo.branch}&path=modules/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
     log.debug(f"Fetching commit history of module '{module_name}' from github API")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
@@ -421,3 +424,14 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
         ).unsafe_ask()
         page_nbr += 1
     return git_sha
+
+
+def sha_exists(sha, modules_repo):
+    i = 1
+    while True:
+        try:
+            if sha in {commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=i)}:
+                return True
+            i += 1
+        except (UserWarning, LookupError):
+            raise
