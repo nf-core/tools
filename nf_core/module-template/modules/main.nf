@@ -15,7 +15,7 @@ include { initOptions; saveFiles; getSoftwareName } from './functions'
 //               unless there is a run-time, storage advantage in implementing in this way
 //               e.g. it's ok to have a single module for bwa to output BAM instead of SAM:
 //                 bwa mem | samtools view -B -T ref.fasta
-// TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty 
+// TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
 //               list (`[]`) instead of a file can be used to work around this issue.
 
 params.options = [:]
@@ -34,9 +34,9 @@ process {{ tool_name_underscore|upper }} {
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda (params.enable_conda ? "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}" : null)
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/{{ singularity_container if singularity_container else 'YOUR-TOOL-HERE' }}"
+        container "{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}"
     } else {
-        container "quay.io/biocontainers/{{ docker_container if docker_container else 'YOUR-TOOL-HERE' }}"
+        container "{{ docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}"
     }
 
     input:

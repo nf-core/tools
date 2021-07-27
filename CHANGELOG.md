@@ -8,6 +8,7 @@
 * Remove `.` from nf-core/tools command examples
 * Update Nextflow installation link in pipeline template ([#1201](https://github.com/nf-core/tools/issues/1201))
 * Command `hostname` is not portable [[#1212](https://github.com/nf-core/tools/pull/1212)]
+* Changed how singularity and docker links are written in template to avoid duplicate links
 
 ### General
 
