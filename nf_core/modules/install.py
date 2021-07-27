@@ -1,5 +1,4 @@
 import os
-from re import I
 import questionary
 import logging
 
