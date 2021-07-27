@@ -113,7 +113,7 @@ class ModuleInstall(ModuleCommand):
             log.info(f"Removing installed version of '{self.modules_repo.name}/{module}'")
             self.clear_module_dir(module, module_dir)
 
-        log.info(f"{'Rei' if self.force else 'I'}nstalling '{self.modules_repo.name}/{module}'")
+        log.info(f"{'Rei' if self.force else 'I'}nstalling '{module}'")
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.name}")
 
         # Download module files

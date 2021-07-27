@@ -72,7 +72,7 @@ class ModuleUpdate(ModuleCommand):
 
             # Check if module is installed before trying to update
             if module not in self.module_names[repo_name]:
-                log.error(f"Module '{module}' is not installed in pipeline")
+                log.error(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
                 return False
 
             sha = self.sha
