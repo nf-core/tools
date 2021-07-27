@@ -44,16 +44,27 @@ class ModuleUpdate(ModuleCommand):
                 == "All modules"
             )
 
+        if self.prompt and self.sha is not None:
+            log.error("Cannot use '--sha' and '--prompt' at the same time!")
+            return False
+
+        # Verify that the provided SHA exists in the repo
+        if self.sha:
+            try:
+                nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
+            except UserWarning:
+                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.name}'")
+                return False
+            except LookupError as e:
+                log.error(e)
+                return False
+
         if not self.update_all:
             # Get the available modules
             try:
                 self.modules_repo.get_modules_file_tree()
             except LookupError as e:
                 log.error(e)
-                return False
-
-            if self.prompt and self.sha is not None:
-                log.error("Cannot use '--sha' and '--prompt' at the same time!")
                 return False
 
             # Check if there are any modules installed from

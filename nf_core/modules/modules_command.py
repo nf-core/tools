@@ -262,7 +262,7 @@ class ModuleCommand:
             dl_filename = os.path.join(self.dir, "modules", *install_folder, *split_filename[1:])
             try:
                 self.modules_repo.download_gh_file(dl_filename, api_url)
-            except SystemError as e:
+            except (SystemError, LookupError) as e:
                 log.error(e)
                 return False
         log.info("Downloaded {} files to {}".format(len(files), module_dir))

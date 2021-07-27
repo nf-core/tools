@@ -42,6 +42,17 @@ class ModuleInstall(ModuleCommand):
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
             return False
 
+        # Verify that the provided SHA exists in the repo
+        if self.sha:
+            try:
+                nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
+            except UserWarning:
+                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.name}'")
+                return False
+            except LookupError as e:
+                log.error(e)
+                return False
+
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
