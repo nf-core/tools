@@ -33,6 +33,16 @@ class ModuleUpdate(ModuleCommand):
 
         tool_config = nf_core.utils.load_tools_config()
         update_config = tool_config.get("update", {})
+        if not self.update_all and module is None:
+            choices = ["All modules", "Named module"]
+            self.update_all = (
+                questionary.select(
+                    "Update all modules or a single named module?",
+                    choices=choices,
+                    style=nf_core.utils.nfcore_question_style,
+                ).ask()
+                == "All modules"
+            )
 
         if not self.update_all:
             # Get the available modules

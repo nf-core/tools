@@ -21,6 +21,7 @@
 * Added missing function call to `nf-core lint` ([#1198](https://github.com/nf-core/tools/issues/1198))
 * Fix `nf-core lint` not filtering modules test when run with `--key` ([#1203](https://github.com/nf-core/tools/issues/1203))
 * Fixed `nf-core modules install` not working when installing from branch with `-b` ([#1218](https://github.com/nf-core/tools/issues/1218))
+* Added prompt to choose between updating all modules or named module in  `nf-core modules update`
 
 ## [v2.0.1 - Palladium Platypus Junior](https://github.com/nf-core/tools/releases/tag/2.0.1) - [2021-07-13]
 
