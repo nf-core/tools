@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v2.2dev
+
+### Template
+
+### General
+
+### Modules
+
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
 ### Template
