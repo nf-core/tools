@@ -198,7 +198,7 @@ class ModuleVersionBumper(ModuleCommand):
                         newcontent.append(line)
 
                 if found_match:
-                    content = "\n".join(newcontent)
+                    content = "\n".join(newcontent) + "\n"
                 else:
                     self.failed.append(
                         (f"Did not find pattern {pattern[0]} in module {module.module_name}", module.module_name)

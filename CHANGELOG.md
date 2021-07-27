@@ -24,6 +24,7 @@
 * Added prompt to choose between updating all modules or named module in  `nf-core modules update`
 * Check if modules is installed before trying to update in `nf-core modules update`
 * Verify that a commit SHA provided with `--sha` exists for `install/update` commands
+* Add new-line to `main.nf` after `bump-versions` command to make ECLint happy
 
 ## [v2.0.1 - Palladium Platypus Junior](https://github.com/nf-core/tools/releases/tag/2.0.1) - [2021-07-13]
 
