@@ -487,7 +487,7 @@ def remove(ctx, dir, tool):
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
-@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username")
+@click.option("-a", "--author", type=str, metavar="<author>", help="Module author's GitHub username prefixed with '@'")
 @click.option("-l", "--label", type=str, metavar="<process label>", help="Standard resource label for process")
 @click.option("-m", "--meta", is_flag=True, default=False, help="Use Groovy meta map for sample information")
 @click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
