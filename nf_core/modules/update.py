@@ -56,24 +56,31 @@ class ModuleUpdate(ModuleCommand):
                 log.error("Cannot use '--sha' and '--prompt' at the same time!")
                 return False
 
+            # Check if there are any modules installed from
+            repo_name = self.modules_repo.name
+            if repo_name not in self.module_names:
+                log.error(f"No modules installed from '{repo_name}'")
+                return False
+
             if module is None:
                 self.get_pipeline_modules()
-                repo_name = self.modules_repo.name
-                if repo_name not in self.module_names:
-                    log.error(f"No modules installed from '{repo_name}'")
-                    return False
                 module = questionary.autocomplete(
                     "Tool name:",
                     choices=self.module_names[repo_name],
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
 
+            # Check if module is installed before trying to update
+            if module not in self.module_names[repo_name]:
+                log.error(f"Module '{module}' is not installed in pipeline")
+                return False
+
             sha = self.sha
             if module in update_config.get(self.modules_repo.name, {}):
                 config_entry = update_config[self.modules_repo.name].get(module)
                 if config_entry is not None and config_entry is not True:
                     if config_entry is False:
-                        log.error("Module's update entry in '.nf-core.yml' is set to False")
+                        log.info("Module's update entry in '.nf-core.yml' is set to False")
                         return False
                     elif isinstance(config_entry, str):
                         if self.sha:
@@ -130,7 +137,6 @@ class ModuleUpdate(ModuleCommand):
                         repos_mods_shas[repo_name].append((module, custom_sha))
                 else:
                     skipped_repos.append(repo_name)
-
             if skipped_repos:
                 skipped_str = "', '".join(skipped_repos)
                 log.info(f"Skipping modules in repositor{'y' if len(skipped_repos) == 1 else 'ies'}: '{skipped_str}'")
