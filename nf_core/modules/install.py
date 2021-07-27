@@ -42,7 +42,7 @@ class ModuleInstall(ModuleCommand):
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
             return False
 
-        # Verify that a provided SHA is exist in the repo
+        # Verify that the provided SHA exists in the repo
         if self.sha:
             try:
                 nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
