@@ -771,5 +771,18 @@ def load_tools_config(dir="."):
     except FileNotFoundError:
         log.debug(f"No tools config file found: {config_fn}")
         return {}
-
+    if tools_config is None:
+        # If the file is empty
+        return {}
     return tools_config
+
+
+def sort_dictionary(d):
+    """Sorts a nested dictionary recursively"""
+    result = dict()
+    for k, v in sorted(d.items()):
+        if isinstance(v, dict):
+            result[k] = sort_dictionary(v)
+        else:
+            result[k] = v
+    return result

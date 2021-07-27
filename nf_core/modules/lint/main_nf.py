@@ -206,7 +206,7 @@ def check_process_section(self, lines):
                     ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
                 )
             else:
-                self.passed.append(("bioconda_latest", "Conda package is the latest available: `{bp}`", self.main_nf))
+                self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
     if docker_tag == singularity_tag:
         return True

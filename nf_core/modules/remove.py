@@ -61,8 +61,7 @@ class ModuleRemove(ModuleCommand):
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
-            log.error("Module directory is not installed: {}".format(module_dir))
-            log.info("The module you want to remove does not seem to be installed")
+            log.error(f"Module directory does not exist: '{module_dir}'")
 
             modules_json = self.load_modules_json()
             if self.modules_repo.name in modules_json["repos"] and module in modules_json["repos"][repo_name]:

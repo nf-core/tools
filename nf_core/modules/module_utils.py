@@ -5,6 +5,7 @@ import requests
 import logging
 import rich
 import datetime
+import questionary
 
 
 import nf_core.utils
@@ -38,9 +39,7 @@ def module_exist_in_repo(module_name, modules_repo):
     return not (response.status_code == 404)
 
 
-def get_module_git_log(
-    module_name, owner="nf-core", modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"
-):
+def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"):
     """
     Fetches the commit history the of requested module since a given date. The default value is
     not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
@@ -57,8 +56,13 @@ def get_module_git_log(
     """
     if modules_repo is None:
         modules_repo = ModulesRepo()
+    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits"
+    api_url += f"?sha{modules_repo.branch}"
+    if module_name is not None:
+        api_url += f"&path=modules/{module_name}"
+    api_url += f"&page={page_nbr}"
+    api_url += f"&since={since}"
 
-    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits?sha=master&path=modules/{module_name}&per_page={per_page}&page={page_nbr}&since={since}"
     log.debug(f"Fetching commit history of module '{module_name}' from github API")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
@@ -154,7 +158,7 @@ def create_modules_json(pipeline_dir):
         file_progress = progress_bar.add_task(
             "Creating 'modules.json' file", total=sum(map(len, repo_module_names.values())), test_name="module.json"
         )
-        for repo_name, module_names in repo_module_names.items():
+        for repo_name, module_names in sorted(repo_module_names.items()):
             try:
                 modules_repo = ModulesRepo(repo=repo_name)
             except LookupError as e:
@@ -162,48 +166,63 @@ def create_modules_json(pipeline_dir):
 
             repo_path = os.path.join(modules_dir, repo_name)
             modules_json["repos"][repo_name] = dict()
-            for module_name in module_names:
+            for module_name in sorted(module_names):
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
                 try:
-                    # Find the correct commit SHA for the local files.
-                    # We iterate over the commit log pages until we either
-                    # find a matching commit or we reach the end of the commits
-                    correct_commit_sha = None
-                    commit_page_nbr = 1
-                    while correct_commit_sha is None:
+                    correct_commit_sha = find_correct_commit_sha(module_name, module_path, modules_repo)
 
-                        commit_shas = [
-                            commit["git_sha"]
-                            for commit in get_module_git_log(
-                                module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr
-                            )
-                        ]
-                        correct_commit_sha = find_correct_commit_sha(
-                            module_name, module_path, modules_repo, commit_shas
-                        )
-                        commit_page_nbr += 1
-
-                    modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
-                except (UserWarning, LookupError) as e:
+                except (LookupError, UserWarning) as e:
                     log.warn(
                         f"Could not fetch 'git_sha' for module: '{module_name}'. Please try to install a newer version of this module. ({e})"
                     )
+                    continue
+                modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
+
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
 
 
-def find_correct_commit_sha(module_name, module_path, modules_repo, commit_shas):
+def find_correct_commit_sha(module_name, module_path, modules_repo):
     """
     Returns the SHA for the latest commit where the local files are identical to the remote files
     Args:
         module_name (str): Name of module
         module_path (str): Path to module in local repo
         module_repo (str): Remote repo for module
-        commit_shas ([ str ]): List of commit SHAs for module, sorted in descending order
     Returns:
         commit_sha (str): The latest commit SHA where local files are identical to remote files
+    """
+    try:
+        # Find the correct commit SHA for the local files.
+        # We iterate over the commit log pages until we either
+        # find a matching commit or we reach the end of the commits
+        correct_commit_sha = None
+        commit_page_nbr = 1
+        while correct_commit_sha is None:
+            commit_shas = [
+                commit["git_sha"]
+                for commit in get_module_git_log(module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr)
+            ]
+            correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
+            commit_page_nbr += 1
+        return correct_commit_sha
+    except (UserWarning, LookupError) as e:
+        raise
+
+
+def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas):
+    """
+    Iterates through a list of commits for a module and checks if the local file contents match the remote
+    Args:
+        module_name (str): Name of module
+        module_path (str): Path to module in local repo
+        module_repo (str): Remote repo for module
+        commit_shas ([ str ]): List of commit SHAs for module, sorted in descending order
+    Returns:
+        commit_sha (str): The latest commit SHA from 'commit_shas' where local files
+        are identical to remote files
     """
 
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]
@@ -361,3 +380,58 @@ def verify_pipeline_dir(dir):
                 )
                 error_msg += "\nThe 'nf-core/software' directory should therefore be renamed to 'nf-core/modules'"
             raise UserWarning(error_msg)
+
+
+def prompt_module_version_sha(module, modules_repo, installed_sha=None):
+    older_commits_choice = questionary.Choice(
+        title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
+    )
+    git_sha = ""
+    page_nbr = 1
+    try:
+        next_page_commits = get_module_git_log(module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr)
+    except UserWarning:
+        next_page_commits = None
+    except LookupError as e:
+        log.warning(e)
+        next_page_commits = None
+
+    while git_sha is "":
+        commits = next_page_commits
+        try:
+            next_page_commits = get_module_git_log(
+                module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr + 1
+            )
+        except UserWarning:
+            next_page_commits = None
+        except LookupError as e:
+            log.warning(e)
+            next_page_commits = None
+
+        choices = []
+        for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
+
+            display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
+            message = f"{title} {sha}"
+            if installed_sha == sha:
+                message += " (installed version)"
+            commit_display = [(display_color, message), ("class:choice-default", "")]
+            choices.append(questionary.Choice(title=commit_display, value=sha))
+        if next_page_commits is not None:
+            choices += [older_commits_choice]
+        git_sha = questionary.select(
+            f"Select '{module}' commit:", choices=choices, style=nf_core.utils.nfcore_question_style
+        ).unsafe_ask()
+        page_nbr += 1
+    return git_sha
+
+
+def sha_exists(sha, modules_repo):
+    i = 1
+    while True:
+        try:
+            if sha in {commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=i)}:
+                return True
+            i += 1
+        except (UserWarning, LookupError):
+            raise

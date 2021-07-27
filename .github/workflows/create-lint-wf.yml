@@ -53,7 +53,7 @@ jobs:
         run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --release
 
       - name: nf-core modules install
-        run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force --latest
+        run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
 
       - name: Upload log file artifact
         if: ${{ always() }}

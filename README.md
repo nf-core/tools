@@ -28,7 +28,8 @@ A python package with helper tools for the nf-core community.
     * [`modules list` - List available modules](#list-modules)
         * [`modules list remote` - List remote modules](#list-remote-modules)
         * [`modules list local` - List installed modules](#list-installed-modules)
-    * [`modules install` - Install or update modules in pipeline](#install-or-update-modules-in-a-pipeline)
+    * [`modules install` - Install modules in a pipeline](#install-modules-in-a-pipeline)
+    * [`modules update` - Update modules in a pipeline](#update-modules-in-a-pipeline)
     * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
     * [`modules create` - Create a module from the template](#create-a-new-module)
     * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
@@ -887,7 +888,7 @@ By default, the tool will collect workflow variables from the current branch in 
 You can supply the `--from-branch` flag to specific a different branch.
 
 Finally, if you give the `--pull-request` flag, the command will push any changes to the remote and attempt to create a pull request using the GitHub API.
-The GitHub username and repository name will be fetched from the remote url (see `git remote -v | grep origin`), or can be supplied with `--username` and `--repository`.
+The GitHub username and repository name will be fetched from the remote url (see `git remote -v | grep origin`), or can be supplied with `--username` and `--github-repository`.
 
 To create the pull request, a personal access token is required for API authentication.
 These can be created at [https://github.com/settings/tokens](https://github.com/settings/tokens).
@@ -900,6 +901,13 @@ These are software tool process definitions that can be imported into any pipeli
 This allows multiple pipelines to use the same code for share tools and gives a greater degree of granulairy and unit testing.
 
 The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
+
+The modules supercommand comes with two flags for specifying a custom remote:
+
+* `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
+* `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
+
+Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
 ### List modules
 
@@ -962,7 +970,7 @@ INFO     Modules installed in '.':
 └─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
 ```
 
-### Install or update modules in a pipeline
+### Install modules in a pipeline
 
 You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
 A module installed this way will be installed to the `./modules/nf-core/modules` directory.
@@ -978,20 +986,77 @@ $ nf-core modules install
     nf-core/tools version 2.0
 
 ? Tool name: cat/fastq
-? Select 'cat/fastq' version: Rename software/ directory to modules/ to re-organise module structure ...truncated...
 INFO     Installing cat/fastq
 INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
 ```
 
-You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`.
+You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
-There are five flags that you can use with this command:
+There are three additional flags that you can use when installing a module:
 
-* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory.
-* `--latest`: Install the latest version of the module instead of specifying the version using the cli prompt.
 * `--force`: Overwrite a previously installed version of the module.
+* `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
-* `--all`: Use this flag to change versions on all installed modules. Has the same effect as running `nf-core modules install --force --latest` on all installed modules. To change all modules to a specific version you can run `nf-core modules install --all --sha <commit sha>`.
+
+### Update modules in a pipeline
+
+You can update modules installed from a remote repository in your pipeline using `nf-core modules update`.
+
+```console
+$ nf-core modules update
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.0
+
+? Tool name: fastqc
+INFO     Updating 'nf-core/modules/fastqc'
+INFO     Downloaded 3 files to ./modules/nf-core/modules/fastqc
+```
+
+You can pass the module name as an optional argument to `nf-core modules update` instead of using the cli prompt, eg: `nf-core modules update fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
+
+There are four additional flags that you can use with this command:
+
+* `--force`: Reinstall module even if it appears to be up to date
+* `--prompt`: Select the module version using a cli prompt.
+* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+* `--all`: Use this flag to run the command on all modules in the pipeline.
+
+If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
+
+```yaml
+update:
+  nf-core/modules:
+    star/align: False
+```
+
+If you want this module to be updated only to a specific version (or downgraded), you could instead specifiy the version:
+
+```yaml
+update:
+  nf-core/modules:
+    star/align: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+```
+
+This also works at the repository level. For example, if you want to exclude all modules installed from `nf-core/modules` from being updated you could add:
+
+```yaml
+update:
+  nf-core/modules: False
+```
+
+or if you want all modules in `nf-core/modules` at a specific version:
+
+```yaml
+update:
+  nf-core/modules: "e937c7950af70930d1f34bb961403d9d2aa81c7"
+```
+
+Note that the module versions specified in the `.nf-core.yml` file has higher precedence than versions specified with the command line flags, thus aiding you in writing reproducible pipelines.
 
 ### Remove a module from a pipeline
 
