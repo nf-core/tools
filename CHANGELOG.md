@@ -8,6 +8,8 @@
 
 ### Modules
 
+* Fixed typo in `module_utils.py`.
+
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
 ### Template
