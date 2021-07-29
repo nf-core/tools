@@ -204,7 +204,7 @@ class ModuleCreate(object):
                 choices=process_label_defaults,
                 style=nf_core.utils.nfcore_question_style,
                 default="process_low",
-            ).ask()
+            ).unsafe_ask()
 
         if self.has_meta is None:
             log.info(

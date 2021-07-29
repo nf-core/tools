@@ -40,7 +40,7 @@ class ModuleUpdate(ModuleCommand):
                     "Update all modules or a single named module?",
                     choices=choices,
                     style=nf_core.utils.nfcore_question_style,
-                ).ask()
+                ).unsafe_ask()
                 == "All modules"
             )
 
