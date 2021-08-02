@@ -52,6 +52,7 @@ class ModuleVersionBumper(ModuleCommand):
         self.up_to_date = []
         self.updated = []
         self.failed = []
+        self.ignored = []
         self.show_up_to_date = show_uptodate
 
         # Verify that this is not a pipeline
@@ -132,7 +133,7 @@ class ModuleVersionBumper(ModuleCommand):
         if module.module_name in self.bump_versions_config:
             config_version = self.bump_versions_config[module.module_name]
             if not config_version:
-                self.up_to_date.append((f"Omitting module due to config: {module.module_name}", module.module_name))
+                self.ignored.append((f"Omitting module due to config.", module.module_name))
                 return False
 
         # check for correct version and newer versions
@@ -332,4 +333,17 @@ class ModuleVersionBumper(ModuleCommand):
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.failed, table)
+            console.print(table)
+
+        # Table of modules ignored due to `.nf-core.yml`
+        if len(self.ignored) > 0:
+            console.print(
+                rich.panel.Panel(
+                    r"[!] {} Module update{} ignored".format(len(self.ignored), _s(self.ignored)), style="grey58"
+                )
+            )
+            table = Table(style="grey58", box=rich.box.ROUNDED)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Update message")
+            table = format_result(self.ignored, table)
             console.print(table)
