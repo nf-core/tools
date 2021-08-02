@@ -92,15 +92,12 @@ workflow {{ short_name|upper }} {
     // MODULE: Pipeline reporting
     //
     ch_software_versions
-        .map { it -> if (it) [ it.baseName, it ] }
-        .groupTuple()
-        .map { it[1][0] }
         .flatten()
-        .collect()
+        .unique { it.getName() + it.getText() }
         .set { ch_software_versions }
 
     GET_SOFTWARE_VERSIONS (
-        ch_software_versions.map { it }.collect()
+        ch_software_versions.collect()
     )
 
     //
