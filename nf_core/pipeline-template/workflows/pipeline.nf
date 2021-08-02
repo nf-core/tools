@@ -94,6 +94,7 @@ workflow {{ short_name|upper }} {
     ch_software_versions
         .flatten()
         .unique { it.getName() + it.getText() }
+        .collectFile(sort:true) { it -> [ it.getName(), it.getText()] } 
         .set { ch_software_versions }
 
     GET_SOFTWARE_VERSIONS (
