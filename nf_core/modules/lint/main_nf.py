@@ -141,6 +141,13 @@ def check_process_section(self, lines):
     Specifically checks for correct software versions
     and containers
     """
+    # Check that we have a process section
+    if len(lines) == 0:
+        self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
+        return
+    else:
+        self.passed.append(("process_exist", "Process definition exists", self.main_nf))
+
     # Checks that build numbers of bioconda, singularity and docker container are matching
     build_id = "build"
     singularity_tag = "singularity"

@@ -321,7 +321,7 @@ class ModuleLint(ModuleCommand):
         if local:
             self.main_nf(mod)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
-            self.warned += [LintResult(mod, *m) for m in mod.warned]
+            self.warned += [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
 
         # Otherwise run all the lint tests
         else:
