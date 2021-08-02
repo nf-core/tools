@@ -11,7 +11,7 @@ for version_file in version_files:
         software = "{{ name }}"
 
     with open(version_file) as fin:
-        version = fin.read().strip().replace('\n',', ')
+        version = fin.read().strip().replace("\n", ", ")
     results[software] = version
 
 # Dump to YAML
