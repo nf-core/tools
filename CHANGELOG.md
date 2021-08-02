@@ -7,6 +7,7 @@
 ### General
 
 * Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
+* Convert documentation to MyST.
 
 ### Modules
 
