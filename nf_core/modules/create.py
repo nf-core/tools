@@ -140,13 +140,14 @@ class ModuleCreate(object):
                     anaconda_response = nf_core.utils.anaconda_package(self.tool_conda_name, ["bioconda"])
                 else:
                     anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
+
                 if not self.tool_conda_version:
-                    version = questionary.select(
-                        "Select bioconda version:",
-                        choices=[str(parse_version(v)) for v in anaconda_response["versions"]],
-                    ).unsafe_ask()
+                    version = anaconda_response.get("latest_version")
+                    if not version:
+                        version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
                 else:
                     version = self.tool_conda_version
+
                 self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
                 self.tool_description = anaconda_response.get("summary", "")
                 self.tool_doc_url = anaconda_response.get("doc_url", "")
