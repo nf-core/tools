@@ -11,6 +11,7 @@
 ### Modules
 
 * Fixed typo in `module_utils.py`.
+* Added modules ignored table to `nf-core modules bump-versions`. ([#1234](https://github.com/nf-core/tools/issues/1234))
 
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
