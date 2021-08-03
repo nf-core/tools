@@ -52,7 +52,7 @@ process {{ tool_name_underscore|upper }} {
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
     {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
     // TODO nf-core: List additional required output channels/values here
-    path "*.version.txt"          , emit: version
+    path "versions.yml"          , emit: version
 
     script:
     def software = getSoftwareName(task.process)
