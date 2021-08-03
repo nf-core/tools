@@ -26,8 +26,13 @@ process GET_SOFTWARE_VERSIONS {
 
     script: // This script is bundled with the pipeline, in {{ name }}/bin/
     """
-    echo $workflow.manifest.version > pipeline.version.txt
-    echo $workflow.nextflow.version > nextflow.version.txt
-    scrape_software_versions.py &> software_versions_mqc.yaml
+    # echo $workflow.manifest.version > pipeline.version.txt
+    # echo $workflow.nextflow.version > nextflow.version.txt
+    # scrape_software_versions.py &> software_versions_mqc.yaml
+    cat - $versions <<-END_WORKFLOW_VERSION > software_versions_mqc.yaml
+    Workflow:
+        - Nextflow: $workflow.nextflow.version
+        - $workflow.manifest.name: $workflow.manifest.version
+    END_WORKFLOW_VERSION
     """
 }
