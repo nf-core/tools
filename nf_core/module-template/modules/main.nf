@@ -80,7 +80,7 @@ process {{ tool_name_underscore|upper }} {
         $bam
 
     cat <<-END_VERSIONS > versions.yml
-    ${task.process}:
+    ${task.process.tokenize(':')[-1]}:
         - samtools: \$( samtools --version 2>&1 | sed 's/^.*samtools //; s/Using.*\$// )
     END_VERSIONS
     """
