@@ -31,6 +31,7 @@ process GET_SOFTWARE_VERSIONS {
         - Nextflow: $workflow.nextflow.version
         - $workflow.manifest.name: $workflow.manifest.version
     END_WORKFLOW_VERSION
+    
     cat - <( sed 's/^/    /' software_versions.yml ) <<-END_MQC_YAML > software_versions_mqc.yaml
     id: 'software_versions'
     section_name: '{{ name }} Software Versions'
