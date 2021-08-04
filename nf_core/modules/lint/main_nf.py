@@ -10,10 +10,20 @@ import nf_core
 def main_nf(module_lint_object, module):
     """
     Lint a single main.nf module file
+
     Can also be used to lint local module files,
-    in which case failures should be interpreted
-    as warnings
+    in which case failures will be reported as
+    warnings
+
+    The test checks that software versions and
+    containers are correct. It warns if that the
+    module does not have a process label or if it
+    is not among the standard ones.
+
+    In the modules script section it checks that
+    ``def software`` and ``def prefix`` are defined.
     """
+
     inputs = []
     outputs = []
 
@@ -116,7 +126,7 @@ def main_nf(module_lint_object, module):
 def check_script_section(self, lines):
     """
     Lint the script section
-    Checks whether 'def sotware' and 'def prefix' are defined
+    Checks whether 'def software' and 'def prefix' are defined
     """
     script = "".join(lines)
 

@@ -3,7 +3,6 @@ Lint the tests of a module in nf-core/modules
 """
 import os
 import logging
-import sys
 import yaml
 
 log = logging.getLogger(__name__)
@@ -11,7 +10,13 @@ log = logging.getLogger(__name__)
 
 def module_tests(module_lint_object, module):
     """
-    Lint module tests
+    Lint the tests of a module in nf-core/modules
+
+    It verifies that the test directory exists
+    and contains a ``main.nf`` and a ``test.yml``,
+    and that the module is present in the ``pytest_modules.yml``
+    file.
+
     """
 
     if os.path.exists(module.test_dir):

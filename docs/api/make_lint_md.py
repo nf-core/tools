@@ -20,6 +20,7 @@ def make_docs(docs_basedir, lint_tests, md_template):
         else:
             with open(fn, "w") as fh:
                 fh.write(md_template.format(test_name))
+                print(test_name)
 
     for fn in existing_docs:
         os.remove(fn)
@@ -29,10 +30,10 @@ def make_docs(docs_basedir, lint_tests, md_template):
 pipeline_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "pipeline_lint_tests")
 make_docs(
     pipeline_docs_basedir,
-    nf_core.lint.PipelineLint._get_all_lint_tests(),
+    nf_core.lint.PipelineLint._get_all_lint_tests(True),
     """# {0}
 
-    ```{eval-rst}
+    ```{{eval-rst}}
     .. automethod:: nf_core.lint.PipelineLint.{0}
     ```
 
@@ -40,13 +41,13 @@ make_docs(
 )
 
 # Create the modules lint docs
-modules_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "modules_lint_tests")
+modules_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "module_lint_tests")
 make_docs(
     modules_docs_basedir,
     nf_core.modules.lint.ModuleLint._get_all_lint_tests(),
     """# {0}
 
-    ```{eval-rst}
+    ```{{eval-rst}}
     .. automethod:: nf_core.modules.lint.ModuleLint.{0}
     ```
 

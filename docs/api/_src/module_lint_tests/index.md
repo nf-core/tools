@@ -1,4 +1,4 @@
-# Pipeline lint tests
+# Module lint tests
 
 ```{toctree}
 :caption: 'Tests:'

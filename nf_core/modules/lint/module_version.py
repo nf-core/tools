@@ -18,9 +18,13 @@ log = logging.getLogger(__name__)
 
 def module_version(module_lint_object, module):
     """
-    Verify that the module has a version (git_sha) specified in the
-    modules.json file and checks whether a new version is available
+    Verifies that the module has a version specified in the modules.json
+
+    It checks whether the module has an entry in the ``modules.json`` file
+    containing a commit SHA. If that is true, it verifies that there are no
+    newer version of the module available.
     """
+
     modules_json_path = os.path.join(module_lint_object.dir, "modules.json")
 
     # Verify that a git_sha exists in the `modules.json` file for this module

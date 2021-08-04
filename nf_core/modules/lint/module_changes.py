@@ -11,11 +11,14 @@ def module_changes(module_lint_object, module):
     """
     Checks whether installed nf-core modules have changed compared to the
     original repository
-    Downloads the 'main.nf', 'functions.nf' and 'meta.yml' files for every module
+
+    Downloads the ``main.nf``, ``functions.nf`` and ``meta.yml`` files for every module
     and compares them to the local copies
 
-    If the module has a 'git_sha', the file content is checked against this sha
+    If the module has a commit SHA entry in the ``modules.json``, the file content is
+    checked against this SHA
     """
+
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]
 
     # Loop over nf-core modules
