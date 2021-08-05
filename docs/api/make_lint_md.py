@@ -33,11 +33,10 @@ make_docs(
     nf_core.lint.PipelineLint._get_all_lint_tests(True),
     """# {0}
 
-    ```{{eval-rst}}
-    .. automethod:: nf_core.lint.PipelineLint.{0}
-    ```
-
-    """,
+```{{eval-rst}}
+.. automethod:: nf_core.lint.PipelineLint.{0}
+```
+""",
 )
 
 # Create the modules lint docs
@@ -47,9 +46,8 @@ make_docs(
     nf_core.modules.lint.ModuleLint._get_all_lint_tests(),
     """# {0}
 
-    ```{{eval-rst}}
-    .. automethod:: nf_core.modules.lint.ModuleLint.{0}
-    ```
-
-    """,
+```{{eval-rst}}
+.. automethod:: nf_core.modules.lint.ModuleLint.{0}
+```
+""",
 )
