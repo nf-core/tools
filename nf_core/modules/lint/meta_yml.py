@@ -12,8 +12,8 @@ def meta_yml(module_lint_object, module):
 
     The lint test checks that the module has
     a ``meta.yml`` file and that it contains
-    the required keys: 'name', input' and
-    'output'.
+    the required keys: ``name``, input`` and
+    ``output``.
 
     In addition it checks that the module name
     and module input is consistent between the

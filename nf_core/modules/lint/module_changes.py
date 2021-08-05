@@ -10,13 +10,13 @@ from nf_core.modules.lint import LintResult
 def module_changes(module_lint_object, module):
     """
     Checks whether installed nf-core modules have changed compared to the
-    original repository
+    original repository.
 
-    Downloads the ``main.nf``, ``functions.nf`` and ``meta.yml`` files for every module
-    and compares them to the local copies
+    Downloads the ``main.nf``, ``functions.nf`` and ``meta.yml`` files from the remote
+    for every module and compares them to the local copies.
 
     If the module has a commit SHA entry in the ``modules.json``, the file content is
-    checked against this SHA
+    compared against the files in the remote at this SHA.
     """
 
     files_to_check = ["main.nf", "functions.nf", "meta.yml"]

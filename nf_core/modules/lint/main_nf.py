@@ -13,15 +13,18 @@ def main_nf(module_lint_object, module):
 
     Can also be used to lint local module files,
     in which case failures will be reported as
-    warnings
+    warnings.
 
-    The test checks that software versions and
-    containers are correct. It warns if that the
-    module does not have a process label or if it
-    is not among the standard ones.
+    The test checks for the following:
 
-    In the modules script section it checks that
-    ``def software`` and ``def prefix`` are defined.
+    * Software versions and containers are valid
+    * The module has a process label and it is among
+      the standard ones.
+    * If a ``meta`` map is defined as one of the modules
+      inputs it should be defined as one of the outputs,
+      and be correctly configured in the ``saveAs`` function.
+    * The module script section should contain definitions
+      of ``software`` and ``prefix``
     """
 
     inputs = []
@@ -162,7 +165,7 @@ def check_process_section(self, lines):
     if all([x.upper() for x in self.process_name]):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:
-        self.failed.append(("process_capitals", "Process name is not in captial letters", self.main_nf))
+        self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
