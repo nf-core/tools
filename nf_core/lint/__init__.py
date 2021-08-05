@@ -44,7 +44,9 @@ def run_linting(
 
     # Verify that the requested tests exist
     if key:
-        all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(set(nf_core.modules.lint.ModuleLint._get_all_lint_tests()))
+        all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(
+            set(nf_core.modules.lint.ModuleLint._get_all_lint_tests())
+        )
         bad_keys = [k for k in key if k not in all_tests]
         if len(bad_keys) > 0:
             raise AssertionError(
