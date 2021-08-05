@@ -9,7 +9,7 @@ import nf_core
 
 def main_nf(module_lint_object, module):
     """
-    Lint a single main.nf module file
+    Lint a ``main.nf`` module file
 
     Can also be used to lint local module files,
     in which case failures will be reported as

@@ -18,7 +18,7 @@ log = logging.getLogger(__name__)
 
 def module_version(module_lint_object, module):
     """
-    Verifies that the module has a version specified in the modules.json
+    Verifies that the module has a version specified in the ``modules.json`` file
 
     It checks whether the module has an entry in the ``modules.json`` file
     containing a commit SHA. If that is true, it verifies that there are no

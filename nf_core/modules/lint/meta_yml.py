@@ -8,7 +8,7 @@ import yaml
 
 def meta_yml(module_lint_object, module):
     """
-    Lint a meta.yml file
+    Lint a ``meta.yml`` file
 
     The lint test checks that the module has
     a ``meta.yml`` file and that it contains

@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 def functions_nf(module_lint_object, module):
     """
-    Lint a functions.nf file
+    Lint a ``functions.nf`` file
 
     Verifies that the file exists and contains the following functions::
 

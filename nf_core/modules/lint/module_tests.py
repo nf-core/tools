@@ -10,7 +10,7 @@ log = logging.getLogger(__name__)
 
 def module_tests(module_lint_object, module):
     """
-    Lint the tests of a module in nf-core/modules
+    Lint the tests of a module in ``nf-core/modules``
 
     It verifies that the test directory exists
     and contains a ``main.nf`` and a ``test.yml``,
