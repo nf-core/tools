@@ -11,6 +11,7 @@
 ### Modules
 
 * Fixed typo in `module_utils.py`.
+* Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
 
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
