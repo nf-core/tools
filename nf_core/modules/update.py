@@ -100,12 +100,15 @@ class ModuleUpdate(ModuleCommand):
                         log.info("Module's update entry in '.nf-core.yml' is set to False")
                         return False
                     elif isinstance(config_entry, str):
+                        sha = config_entry
                         if self.sha:
                             log.warning(
-                                "Found entry in '.nf-core.yml' for module "
+                                f"Found entry in '.nf-core.yml' for module '{module}' "
                                 "which will override version specified with '--sha'"
                             )
-                        sha = config_entry
+                        else:
+                            log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
+                        log.info(f"Updating module to ({sha})")
                     else:
                         log.error("Module's update entry in '.nf-core.yml' is of wrong type")
                         return False
