@@ -4,6 +4,7 @@ import questionary
 import logging
 import tempfile
 import difflib
+import enum
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -180,6 +181,27 @@ class ModuleUpdate(ModuleCommand):
         if not modules_json:
             return False
 
+        if self.diff:
+            # Ask the user whether the diffs should be written to a file or
+            # or displayed in the terminal directly
+            diff_file = questionary.select(
+                "How should the diffs be handled?",
+                choices=[
+                    {"name": "Display in terminal", "value": False},
+                    {"name": "Write to file", "value": True},
+                ],
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+            if diff_file:
+                diff_file_name = questionary.text(
+                    "Enter the file name: ", style=nf_core.utils.nfcore_question_style
+                ).unsafe_ask()
+                while os.path.exists(diff_file_name):
+                    diff_file_name = questionary.text(
+                        f"'{diff_file_name}' already exists. Enter a new file name: ",
+                        style=nf_core.utils.nfcore_question_style,
+                    ).unsafe_ask()
+
         exit_value = True
         for modules_repo, module, sha in repos_mods_shas:
             dry_run = self.diff
@@ -252,13 +274,17 @@ class ModuleUpdate(ModuleCommand):
                 continue
 
             if dry_run:
-                console = Console(force_terminal=nf_core.utils.rich_force_colors())
+
+                class DiffEnum(enum.Enum):
+                    """Enumeration for keeping track of the diff status"""
+
+                    UNCHANGED = enum.auto()
+                    CREATED = enum.auto()
+                    REMOVED = enum.auto()
+
+                diffs = {}
                 files = os.listdir(os.path.join(*install_folder, module))
                 temp_folder = os.path.join(*install_folder, module)
-                log.info(
-                    f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
-                )
-
                 for file in files:
                     temp_path = os.path.join(temp_folder, file)
                     curr_path = os.path.join(module_dir, file)
@@ -268,10 +294,8 @@ class ModuleUpdate(ModuleCommand):
                         with open(curr_path, "r") as fh:
                             old_lines = fh.readlines()
                         if new_lines == old_lines:
-                            # The files are identical
-                            log.info(f"'{os.path.join(module, file)}' is unchanged")
+                            diffs[file] = DiffEnum.UNCHANGED
                         else:
-                            log.info(f"Changes in '{os.path.join(module, file)}':")
                             # Compute the diff
                             diff = difflib.unified_diff(
                                 old_lines,
@@ -279,32 +303,73 @@ class ModuleUpdate(ModuleCommand):
                                 fromfile=f"{os.path.join(module, file)} (installed)",
                                 tofile=f"{os.path.join(module, file)} (new)",
                             )
+                            diffs[file] = diff
+                    elif os.path.exists(temp_path):
+                        diff[file] = DiffEnum.CREATED
+                    elif os.path.exists(curr_path):
+                        diffs[file] = DiffEnum.REMOVED
 
+                if diff_file:
+                    log.info(f"Writing diff of '{module}' to file")
+                    with open(diff_file_name, "a") as fh:
+                        fh.write(
+                            f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})\n"
+                        )
+                        for file, diff in diffs.items():
+                            if diff == DiffEnum.UNCHANGED:
+                                # The files are identical
+                                fh.write(f"'{os.path.join(module, file)}' is unchanged\n")
+                            elif diff == DiffEnum.CREATED:
+                                # The file was created between the commits
+                                fh.write(f"'{os.path.join(module, file)} was created\n")
+                            elif diff == DiffEnum.REMOVED:
+                                # The file was removed between the commits
+                                fh.write(f"'{os.path.join(module, file)} was removed\n")
+                            else:
+                                fh.write(f"Changes in '{os.path.join(module, file)}':\n")
+                                # Pretty print the diff using the pygments diff lexer
+                                for line in diff:
+                                    fh.write(line)
+                                fh.write("\n")
+
+                        fh.write("*" * 60 + "\n")
+                else:
+                    console = Console(force_terminal=nf_core.utils.rich_force_colors())
+                    log.info(
+                        f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
+                    )
+
+                    # Ask the user if they want to install the module
+                    for file, diff in diffs.items():
+                        if diff == DiffEnum.UNCHANGED:
+                            # The files are identical
+                            log.info(f"'{os.path.join(module, file)}' is unchanged")
+                        elif diff == DiffEnum.CREATED:
+                            # The file was created between the commits
+                            log.info(f"'{os.path.join(module, file)} was created")
+                        elif diff == DiffEnum.REMOVED:
+                            # The file was removed between the commits
+                            log.info(f"'{os.path.join(module, file)} was removed")
+                        else:
+                            log.info(f"Changes in '{os.path.join(module, file)}':")
                             # Pretty print the diff using the pygments diff lexer
                             console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
 
-                    elif os.path.exists(temp_path):
-                        # The file was created between the commits
-                        log.info(f"Created file '{file}'")
-
-                    elif os.path.exists(curr_path):
-                        # The file was removed between the commits
-                        log.info(f"Removed file '{file}'")
-
-                # Ask the user if they want to install the module
-                dry_run = not questionary.confirm("Update module?", default=False).unsafe_ask()
-                if not dry_run:
-                    # The new module files are already installed
-                    # we just need to clear the directory and move the
-                    # new files from the temporary directory
-                    self.clear_module_dir(module, module_dir)
-                    os.mkdir(module_dir)
-                    for file in files:
-                        path = os.path.join(temp_folder, file)
-                        if os.path.exists(path):
-                            shutil.move(path, os.path.join(module_dir, file))
-                    log.info(f"Updating '{modules_repo.name}/{module}'")
-                    log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
+                    dry_run = not questionary.confirm(
+                        "Update module?", default=False, style=nf_core.utils.nfcore_question_style
+                    ).unsafe_ask()
+                    if not dry_run:
+                        # The new module files are already installed
+                        # we just need to clear the directory and move the
+                        # new files from the temporary directory
+                        self.clear_module_dir(module, module_dir)
+                        os.mkdir(module_dir)
+                        for file in files:
+                            path = os.path.join(temp_folder, file)
+                            if os.path.exists(path):
+                                shutil.move(path, os.path.join(module_dir, file))
+                        log.info(f"Updating '{modules_repo.name}/{module}'")
+                        log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
 
             if not dry_run:
                 # Update module.json with newly installed module
