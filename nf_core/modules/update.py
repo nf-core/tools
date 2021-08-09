@@ -5,6 +5,7 @@ import logging
 import tempfile
 import difflib
 import enum
+from questionary import question
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -197,8 +198,11 @@ class ModuleUpdate(ModuleCommand):
                     "Enter the file name: ", style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
                 while os.path.exists(diff_file_name):
+                    if questionary.confirm("'{diff_file_name}' exists. Remove file?"):
+                        os.remove(diff_file_name)
+                        break
                     diff_file_name = questionary.text(
-                        f"'{diff_file_name}' already exists. Enter a new file name: ",
+                        f"Enter a new file name: ",
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
 
@@ -305,6 +309,7 @@ class ModuleUpdate(ModuleCommand):
                             new_lines = fh.readlines()
                         with open(curr_path, "r") as fh:
                             old_lines = fh.readlines()
+
                         if new_lines == old_lines:
                             # The files are identical
                             diffs[file] = (DiffEnum.UNCHANGED, ())
@@ -317,17 +322,13 @@ class ModuleUpdate(ModuleCommand):
                                 tofile=f"{os.path.join(module, file)} (new)",
                             )
                             diffs[file] = (DiffEnum.CHANGED, diff)
+
                     elif os.path.exists(temp_path):
                         # The file was created
-                        with open(temp_path, "r") as fh:
-                            new_lines = fh.readlines()
-
                         diffs[file] = (DiffEnum.CREATED, ())
+
                     elif os.path.exists(curr_path):
                         # The file was removed
-                        with open(curr_path, "r") as fh:
-                            old_lines = fh.readlines()
-
                         diffs[file] = (DiffEnum.REMOVED, ())
 
                 if diff_file:
@@ -336,18 +337,23 @@ class ModuleUpdate(ModuleCommand):
                         fh.write(
                             f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})\n"
                         )
+
                         for file, d in diffs.items():
                             diff_status, diff = d
                             if diff_status == DiffEnum.UNCHANGED:
                                 # The files are identical
                                 fh.write(f"'{os.path.join(module, file)}' is unchanged\n")
+
                             elif diff_status == DiffEnum.CREATED:
                                 # The file was created between the commits
                                 fh.write(f"'{os.path.join(module, file)}' was created\n")
+
                             elif diff_status == DiffEnum.REMOVED:
                                 # The file was removed between the commits
                                 fh.write(f"'{os.path.join(module, file)}' was removed\n")
+
                             else:
+                                # The file has changed
                                 fh.write(f"Changes in '{os.path.join(module, file)}':\n")
                                 # Write the diff lines to the file
                                 for line in diff:
@@ -361,7 +367,6 @@ class ModuleUpdate(ModuleCommand):
                         f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
                     )
 
-                    # Ask the user if they want to install the module
                     for file, d in diffs.items():
                         diff_status, diff = d
                         if diff_status == DiffEnum.UNCHANGED:
@@ -374,10 +379,12 @@ class ModuleUpdate(ModuleCommand):
                             # The file was removed between the commits
                             log.info(f"'{os.path.join(module, file)}' was removed:")
                         else:
+                            # The file has changed
                             log.info(f"Changes in '{os.path.join(module, file)}':")
                             # Pretty print the diff using the pygments diff lexer
                             console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
 
+                    # Ask the user if they want to install the module
                     dry_run = not questionary.confirm(
                         "Update module?", default=False, style=nf_core.utils.nfcore_question_style
                     ).unsafe_ask()
