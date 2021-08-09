@@ -502,7 +502,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     """
     Create a new DSL2 module from the nf-core template.
 
-    If the specified is a pipeline, this function creates a file called
+    If the specified directory is a pipeline, this function creates a file called
     'modules/local/tool_subtool.nf'
 
     If the specified directory is a clone of nf-core/modules, it creates or modifies files
