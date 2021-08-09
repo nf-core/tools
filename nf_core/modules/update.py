@@ -20,13 +20,16 @@ log = logging.getLogger(__name__)
 
 
 class ModuleUpdate(ModuleCommand):
-    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, diff=False):
+    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, diff=False, diff_file=None):
         super().__init__(pipeline_dir)
         self.force = force
         self.prompt = prompt
         self.sha = sha
         self.update_all = update_all
         self.diff = diff
+        self.diff_file = diff_file
+        if self.diff_file is not None:
+            self.diff = True
 
     def update(self, module):
         if self.repo_type == "modules":
@@ -159,6 +162,7 @@ class ModuleUpdate(ModuleCommand):
                         repos_mods_shas[repo_name].append((module, custom_sha))
                 else:
                     skipped_repos.append(repo_name)
+
             if skipped_repos:
                 skipped_str = "', '".join(skipped_repos)
                 log.info(f"Skipping modules in repositor{'y' if len(skipped_repos) == 1 else 'ies'}: '{skipped_str}'")
@@ -183,28 +187,34 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         if self.diff:
-            # Ask the user whether the diffs should be written to a file or
-            # or displayed in the terminal directly
-            diff_file = questionary.select(
-                "How should the diffs be handled?",
-                choices=[
-                    {"name": "Display in terminal", "value": False},
-                    {"name": "Write to file", "value": True},
-                ],
-                style=nf_core.utils.nfcore_question_style,
-            ).unsafe_ask()
-            if diff_file:
-                diff_file_name = questionary.text(
-                    "Enter the file name: ", style=nf_core.utils.nfcore_question_style
+            if self.diff_file is None:
+                # Ask the user whether the diffs should be written to a file or
+                # or displayed in the terminal directly
+                self.diff_file = questionary.select(
+                    "How should the diffs be handled?",
+                    choices=[
+                        {"name": "Display in terminal", "value": False},
+                        {"name": "Write to file", "value": True},
+                    ],
+                    style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
-                while os.path.exists(diff_file_name):
-                    if questionary.confirm("'{diff_file_name}' exists. Remove file?"):
-                        os.remove(diff_file_name)
-                        break
-                    diff_file_name = questionary.text(
-                        f"Enter a new file name: ",
-                        style=nf_core.utils.nfcore_question_style,
+                if self.diff_file:
+                    self.diff_file = questionary.text(
+                        "Enter the filename: ", style=nf_core.utils.nfcore_question_style
                     ).unsafe_ask()
+                    while os.path.exists(self.diff_file):
+                        if questionary.confirm(f"'{self.diff_file}' exists. Remove file?"):
+                            os.remove(self.diff_file)
+                            break
+                        self.diff_file = questionary.text(
+                            f"Enter a new filename: ",
+                            style=nf_core.utils.nfcore_question_style,
+                        ).unsafe_ask()
+            elif os.path.exists(self.diff_file):
+                # Since we append to the file later, it should be empty to begin with
+                os.remove(
+                    self.diff_file,
+                )
 
         exit_value = True
         for modules_repo, module, sha in repos_mods_shas:
@@ -292,7 +302,7 @@ class ModuleUpdate(ModuleCommand):
 
                 diffs = {}
 
-                # Get all (unique) file names in the two folders.
+                # Get all unique filenames in the two folders.
                 # `dict.fromkeys()` is used instead of `set()` to preserve order
                 files = dict.fromkeys(os.listdir(os.path.join(*install_folder, module)))
                 files.update(dict.fromkeys(os.listdir(module_dir)))
@@ -331,9 +341,9 @@ class ModuleUpdate(ModuleCommand):
                         # The file was removed
                         diffs[file] = (DiffEnum.REMOVED, ())
 
-                if diff_file:
+                if self.diff_file:
                     log.info(f"Writing diff of '{module}' to file")
-                    with open(diff_file_name, "a") as fh:
+                    with open(self.diff_file, "a") as fh:
                         fh.write(
                             f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})\n"
                         )
@@ -374,10 +384,10 @@ class ModuleUpdate(ModuleCommand):
                             log.info(f"'{os.path.join(module, file)}' is unchanged")
                         elif diff_status == DiffEnum.CREATED:
                             # The file was created between the commits
-                            log.info(f"'{os.path.join(module, file)}' was created:")
+                            log.info(f"'{os.path.join(module, file)}' was created")
                         elif diff_status == DiffEnum.REMOVED:
                             # The file was removed between the commits
-                            log.info(f"'{os.path.join(module, file)}' was removed:")
+                            log.info(f"'{os.path.join(module, file)}' was removed")
                         else:
                             # The file has changed
                             log.info(f"Changes in '{os.path.join(module, file)}':")
