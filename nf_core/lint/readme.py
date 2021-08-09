@@ -63,7 +63,7 @@ def readme(self):
 
     # Check that the minimum version mentioned in the quick start section is consistent
     # Looking for: "1. Install [`Nextflow`](https://nf-co.re/usage/installation) (`>=21.04.0`)"
-    nf_version_re = r"1\.\s*Install\s*\[`Nextflow`\]\(https://nf-co.re/usage/installation\)\s*\(`>=(\d*\.\d*\.\d*)`\)"
+    nf_version_re = r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>=(\d*\.\d*\.\d*)`\)"
     match = re.search(nf_version_re, content)
     if match:
         nf_quickstart_version = match.group(1)
