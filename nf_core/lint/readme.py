@@ -62,7 +62,7 @@ def readme(self):
         warned.append("README did not have a Nextflow minimum version badge.")
 
     # Check that the minimum version mentioned in the quick start section is consistent
-    # Looking for: "1. Install [`Nextflow`](https://nf-co.re/usage/installation) (`>=21.04.0`)"
+    # Looking for: "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.04.0`)"
     nf_version_re = r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>=(\d*\.\d*\.\d*)`\)"
     match = re.search(nf_version_re, content)
     if match:
