@@ -1025,6 +1025,7 @@ There are five additional flags that you can use with this command:
 * `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
 * `--diff`: Show the diff between the installed files and the new version before installing.
+* `--diff-file <filename>`: Specify where the diffs between the local and remote versions of a module should be written
 * `--all`: Use this flag to run the command on all modules in the pipeline.
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
