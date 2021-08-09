@@ -502,10 +502,10 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     """
     Create a new DSL2 module from the nf-core template.
 
-    If <directory> is a pipeline, this function creates a file called
+    If the working directory is a pipeline, this function creates a file called
     'modules/local/tool_subtool.nf'
 
-    If <directory> is a clone of nf-core/modules, it creates or modifies files
+    If the working directory is a clone of nf-core/modules, it creates or modifies files
     in 'modules/', 'tests/modules' and 'tests/config/pytest_modules.yml'
     """
     # Combine two bool flags into one variable
