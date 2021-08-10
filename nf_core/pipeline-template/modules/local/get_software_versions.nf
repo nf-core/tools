@@ -28,8 +28,8 @@ process GET_SOFTWARE_VERSIONS {
     """
     cat - $versions <<-END_WORKFLOW_VERSION > software_versions.yml
     Workflow:
-        - Nextflow: $workflow.nextflow.version
-        - $workflow.manifest.name: $workflow.manifest.version
+        Nextflow: $workflow.nextflow.version
+        $workflow.manifest.name: $workflow.manifest.version
     END_WORKFLOW_VERSION
 
     cat - <<-END_MQC_YAML > software_versions_mqc.yaml
@@ -39,7 +39,7 @@ process GET_SOFTWARE_VERSIONS {
     plot_type: 'table'
     description: 'are collected at run time from the software output.'
     data:
-    \$( sed 's/^/    /' software_versions.yml ) 
+    \$( sed 's/^/    /' software_versions.yml )
     END_MQC_YAML
     """
 }
