@@ -88,15 +88,6 @@ workflow {{ short_name|upper }} {
     )
     ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
 
-    //
-    // MODULE: Pipeline reporting
-    //
-    // ch_software_versions
-        // .flatten()
-        // .unique { it.getName() + it.getText() }
-        // .collectFile(sort:true) { it -> [ it.getName(), it.getText()] }
-        // .set { ch_software_versions }
-
     GET_SOFTWARE_VERSIONS (
         ch_software_versions.collectFile()
     )
