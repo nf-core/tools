@@ -80,7 +80,7 @@ process {{ tool_name_underscore|upper }} {
 
     cat <<-END_VERSIONS > versions.yml
     ${getProcessName(task.process)}:
-        samtools: \$( samtools --version 2>&1 | sed 's/^.*samtools //; s/Using.*\$// )
+        samtools: \$( samtools --version 2>&1 | sed 's/^.*samtools //; s/Using.*\$//' )
     END_VERSIONS
     """
 }
