@@ -26,7 +26,7 @@ process {{ tool_name_underscore|upper }} {
     label '{{ process_label }}'
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
-        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getSoftwareName(task.process), meta:{{ 'meta' if has_meta else "[:]" }}, publish_by_meta:{{ "['id']" if has_meta else "[]" }}) }
+        saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:getProcessName(task.process), meta:{{ 'meta' if has_meta else "[:]" }}, publish_by_meta:{{ "['id']" if has_meta else "[]" }}) }
 
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
