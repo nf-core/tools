@@ -55,7 +55,6 @@ process {{ tool_name_underscore|upper }} {
     path "versions.yml"          , emit: version
 
     script:
-    def software = getSoftwareName(task.process)
     {% if has_meta -%}
     def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
     {%- endif %}

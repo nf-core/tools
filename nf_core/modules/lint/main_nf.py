@@ -120,12 +120,6 @@ def check_script_section(self, lines):
     """
     script = "".join(lines)
 
-    # check for software
-    if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
-        self.passed.append(("main_nf_version_script", "Software version specified in script section", self.main_nf))
-    else:
-        self.warned.append(("main_nf_version_script", "Software version unspecified in script section", self.main_nf))
-
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
         if re.search("\s*prefix\s*=\s*options.suffix", script):
