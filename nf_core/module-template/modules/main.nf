@@ -1,5 +1,5 @@
 // Import generic module functions
-include { initOptions; saveFiles; getProcessName } from './functions'
+include { initOptions; saveFiles; getSoftwareName; getProcessName } from './functions'
 
 // TODO nf-core: If in doubt look at other nf-core/modules to see how we are doing things! :)
 //               https://github.com/nf-core/modules/tree/master/software
@@ -55,6 +55,7 @@ process {{ tool_name_underscore|upper }} {
     path "versions.yml"          , emit: version
 
     script:
+    def software = getSoftwareName(task.process)
     {% if has_meta -%}
     def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
     {%- endif %}
