@@ -145,7 +145,9 @@ class ModuleCreate(object):
                 log.info(f"Using Bioconda package: '{self.bioconda}'")
                 break
             except (ValueError, LookupError) as e:
-                log.warning(f"Could not find Conda dependency using the Anaconda API: '{self.tool}'")
+                log.warning(
+                    f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.tool}'"
+                )
                 if rich.prompt.Confirm.ask(f"[violet]Do you want to enter a different Bioconda package name?"):
                     self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
                     continue
