@@ -8,7 +8,7 @@ def test_modules_lint_trimgalore(self):
     module_lint.lint(print_results=False, module="trimgalore")
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 0, module_lint.failed
 
 
 def test_modules_lint_empty(self):
@@ -19,7 +19,7 @@ def test_modules_lint_empty(self):
     module_lint.lint(print_results=False, all_modules=True)
     assert len(module_lint.passed) == 0
     assert len(module_lint.warned) == 0
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 0, module_lint.failed
 
 
 def test_modules_lint_new_modules(self):
@@ -28,4 +28,4 @@ def test_modules_lint_new_modules(self):
     module_lint.lint(print_results=True, all_modules=True)
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 0, module_lint.failed
