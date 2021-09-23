@@ -10,13 +10,6 @@ def getSoftwareName(task_process) {
 }
 
 //
-// Extract name of module from process name using $task.process
-//
-def getProcessName(task_process) {
-    return task_process.tokenize(':')[-1]
-}
-
-//
 // Function to initialise default values and to generate a Groovy Map of available options for nf-core modules
 //
 def initOptions(Map args) {
@@ -44,7 +37,7 @@ def getPathFromList(path_list) {
 // Function to save/publish module results
 //
 def saveFiles(Map args) {
-    if (!args.filename.equals('versions.yml')) {
+    if (!args.filename.endsWith('.version.txt')) {
         def ioptions  = initOptions(args.options)
         def path_list = [ ioptions.publish_dir ?: args.publish_dir ]
         if (ioptions.publish_by_meta) {
