@@ -38,7 +38,7 @@ def modules = params.modules.clone()
 //
 // MODULE: Local to the pipeline
 //
-include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['tsv':'']] )
+include { GET_SOFTWARE_VERSIONS } from '../modules/local/get_software_versions' addParams( options: [publish_files : ['yml':'']] )
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
@@ -88,19 +88,8 @@ workflow {{ short_name|upper }} {
     )
     ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
 
-    //
-    // MODULE: Pipeline reporting
-    //
-    ch_software_versions
-        .map { it -> if (it) [ it.baseName, it ] }
-        .groupTuple()
-        .map { it[1][0] }
-        .flatten()
-        .collect()
-        .set { ch_software_versions }
-
     GET_SOFTWARE_VERSIONS (
-        ch_software_versions.map { it }.collect()
+        ch_software_versions.collectFile()
     )
 
     //
@@ -113,7 +102,7 @@ workflow {{ short_name|upper }} {
     ch_multiqc_files = ch_multiqc_files.mix(Channel.from(ch_multiqc_config))
     ch_multiqc_files = ch_multiqc_files.mix(ch_multiqc_custom_config.collect().ifEmpty([]))
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
-    ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.yaml.collect())
+    ch_multiqc_files = ch_multiqc_files.mix(GET_SOFTWARE_VERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
 
     MULTIQC (

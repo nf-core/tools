@@ -36,7 +36,6 @@ def files_exist(self):
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo.png
         assets/sendmail_template.txt
-        bin/scrape_software_versions.py
         conf/modules.config
         conf/test.config
         conf/test_full.config
@@ -121,7 +120,6 @@ def files_exist(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("bin", "scrape_software_versions.py")],
         [os.path.join("conf", "modules.config")],
         [os.path.join("conf", "test.config")],
         [os.path.join("conf", "test_full.config")],

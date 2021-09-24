@@ -4,6 +4,8 @@
 
 ### Template
 
+* Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
+
 ### General
 
 * Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
