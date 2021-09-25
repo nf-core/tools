@@ -121,7 +121,7 @@ def check_script_section(self, lines):
     script = "".join(lines)
 
     # check that process name is used for `versions.yml`
-    if re.search("\${\s*getProcessName(\s*task.process\s*)\s*}", script):
+    if re.search("\$\{\s*getProcessName\s*\(\s*task\.process\s*\)\s*\}", script):
         self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
         self.failed.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
