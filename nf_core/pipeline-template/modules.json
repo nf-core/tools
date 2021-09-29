@@ -3,6 +3,9 @@
     "homePage": "https://github.com/{{ name }}",
     "repos": {
         "nf-core/modules": {
+            "custom/dumpsoftwareversions": {
+                "git_sha": "b2c2d4deb456d92e21777985bb2eda59002748cc"
+            },
             "fastqc": {
                 "git_sha": "ab67a1d41b63bf52fd7c147f7f8f6e8d167590b5"
             },

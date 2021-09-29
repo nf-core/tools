@@ -1,35 +1,37 @@
 // Import generic module functions
-include { saveFiles } from './functions'
+include { initOptions; saveFiles; getSoftwareName; getProcessName } from './functions'
 
 params.options = [:]
+options        = initOptions(params.options)
 
-process GET_SOFTWARE_VERSIONS {
+process CUSTOM_DUMPSOFTWAREVERSIONS {
+    label 'process_low'
     publishDir "${params.outdir}",
         mode: params.publish_dir_mode,
         saveAs: { filename -> saveFiles(filename:filename, options:params.options, publish_dir:'pipeline_info', meta:[:], publish_by_meta:[]) }
 
-    // This module only requires the PyYAML library, but rather than create a new container on biocontainers we reuse the multiqc container.
-    conda (params.enable_conda ? "bioconda::multiqc=1.10.1" : null)
+    // Requires `pyyaml` which does not have a dedicated container but is in the MultiQC container
+    conda (params.enable_conda ? "bioconda::multiqc=1.11" : null)
     if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
-        container "https://depot.galaxyproject.org/singularity/multiqc:1.10.1--pyhdfd78af_1"
+        container "https://depot.galaxyproject.org/singularity/multiqc:1.11--pyhdfd78af_0"
     } else {
-        container "quay.io/biocontainers/multiqc:1.10.1--pyhdfd78af_1"
+        container "quay.io/biocontainers/multiqc:1.11--pyhdfd78af_0"
     }
-
-    cache false
 
     input:
     path versions
 
     output:
-    path "software_versions.yml"     , emit: yml
-    path "software_versions_mqc.yml" , emit: mqc_yml
+    path 'software_versions.yml'    , emit: yml
+    path 'software_versions_mqc.yml', emit: mqc_yaml
+    path 'versions.yml'             , emit: versions
 
     script:
     """
     #!/usr/bin/env python
 
     import yaml
+    import platform
     from textwrap import dedent
 
     def _make_versions_html(versions):
@@ -91,5 +93,13 @@ process GET_SOFTWARE_VERSIONS {
         yaml.dump(versions, f, default_flow_style=False)
     with open("software_versions_mqc.yml", 'w') as f:
         yaml.dump(versions_mqc, f, default_flow_style=False)
+
+    yaml_version = {}
+    yaml_version["${getProcessName(task.process)}"] = {
+        'python': platform.python_version(),
+        'yaml': yaml.__version__
+    }
+    with open('versions.yml', 'w') as f:
+        yaml.dump(yaml_version, f, default_flow_style=False)
     """
 }
