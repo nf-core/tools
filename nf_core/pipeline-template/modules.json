@@ -4,10 +4,10 @@
     "repos": {
         "nf-core/modules": {
             "fastqc": {
-                "git_sha": "e937c7950af70930d1f34bb961403d9d2aa81c7d"
+                "git_sha": "ab67a1d41b63bf52fd7c147f7f8f6e8d167590b5"
             },
             "multiqc": {
-                "git_sha": "e937c7950af70930d1f34bb961403d9d2aa81c7d"
+                "git_sha": "ab67a1d41b63bf52fd7c147f7f8f6e8d167590b5"
             }
         }
     }
