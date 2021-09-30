@@ -51,7 +51,6 @@ def files_exist(self):
         lib/NfcoreTemplate.groovy
         lib/Utils.groovy
         lib/WorkflowMain.groovy
-        modules/local/get_software_versions.nf
         nextflow_schema.json
         nextflow.config
         README.md
@@ -133,7 +132,6 @@ def files_exist(self):
         [os.path.join("lib", "NfcoreTemplate.groovy")],
         [os.path.join("lib", "Utils.groovy")],
         [os.path.join("lib", "WorkflowMain.groovy")],
-        [os.path.join("modules", "local", "get_software_versions.nf")],
     ]
 
     files_warn = [
