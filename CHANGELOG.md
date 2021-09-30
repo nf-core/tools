@@ -1,5 +1,24 @@
 # nf-core/tools: Changelog
 
+## v2.2dev
+
+### Template
+
+* Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
+
+### General
+
+* Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
+* Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
+* Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
+* Update 'fix' message in `nf-core lint` to conform to the current command line options. ([#1259](https://github.com/nf-core/tools/issues/1259))
+
+### Modules
+
+* Fixed typo in `module_utils.py`.
+* Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
+* Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag
+
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
 ### Template
