@@ -12,6 +12,7 @@ workflow INPUT_CHECK {
 
     main:
     SAMPLESHEET_CHECK ( samplesheet )
+        .csv
         .splitCsv ( header:true, sep:',' )
         .map { create_fastq_channels(it) }
         .set { reads }
