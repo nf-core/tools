@@ -4,13 +4,13 @@
     "repos": {
         "nf-core/modules": {
             "custom/dumpsoftwareversions": {
-                "git_sha": "22ec5c6007159d441585ef54bfa6272b6f93c78a"
+                "git_sha": "7b3315591a149609e27914965f858c9a7e071564"
             },
             "fastqc": {
-                "git_sha": "ab67a1d41b63bf52fd7c147f7f8f6e8d167590b5"
+                "git_sha": "7b3315591a149609e27914965f858c9a7e071564"
             },
             "multiqc": {
-                "git_sha": "ab67a1d41b63bf52fd7c147f7f8f6e8d167590b5"
+                "git_sha": "7b3315591a149609e27914965f858c9a7e071564"
             }
         }
     }

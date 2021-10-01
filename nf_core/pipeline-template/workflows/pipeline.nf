@@ -67,7 +67,7 @@ def multiqc_report = []
 
 workflow {{ short_name|upper }} {
 
-    ch_software_versions = Channel.empty()
+    ch_versions = Channel.empty()
 
     //
     // SUBWORKFLOW: Read in samplesheet, validate and stage input files
@@ -75,6 +75,7 @@ workflow {{ short_name|upper }} {
     INPUT_CHECK (
         ch_input
     )
+    ch_versions = ch_versions.mix(INPUT_CHECK.out.versions)
 
     //
     // MODULE: Run FastQC
@@ -82,10 +83,10 @@ workflow {{ short_name|upper }} {
     FASTQC (
         INPUT_CHECK.out.reads
     )
-    ch_software_versions = ch_software_versions.mix(FASTQC.out.version.first().ifEmpty(null))
+    ch_versions = ch_versions.mix(FASTQC.out.versions.first())
 
     CUSTOM_DUMPSOFTWAREVERSIONS (
-        ch_software_versions.collectFile()
+        ch_versions.collectFile()
     )
 
     //
@@ -104,8 +105,8 @@ workflow {{ short_name|upper }} {
     MULTIQC (
         ch_multiqc_files.collect()
     )
-    multiqc_report       = MULTIQC.out.report.toList()
-    ch_software_versions = ch_software_versions.mix(MULTIQC.out.version.ifEmpty(null))
+    multiqc_report = MULTIQC.out.report.toList()
+    ch_versions    = ch_versions.mix(MULTIQC.out.versions)
 }
 
 /*

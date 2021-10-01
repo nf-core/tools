@@ -52,11 +52,11 @@ process {{ tool_name_underscore|upper }} {
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
     {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
     // TODO nf-core: List additional required output channels/values here
-    path "versions.yml"          , emit: version
+    path "versions.yml"          , emit: versions
 
     script:
     {% if has_meta -%}
-    def prefix   = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
+    def prefix = options.suffix ? "${meta.id}${options.suffix}" : "${meta.id}"
     {%- endif %}
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
     //               If the software is unable to output a version number on the command-line then it can be manually specified
@@ -80,7 +80,7 @@ process {{ tool_name_underscore|upper }} {
 
     cat <<-END_VERSIONS > versions.yml
     ${getProcessName(task.process)}:
-        samtools: \$( samtools --version 2>&1 | sed 's/^.*samtools //; s/Using.*\$//' )
+        ${getSoftwareName(task.process)}: \$( samtools --version 2>&1 | sed 's/^.*samtools //; s/Using.*\$//' )
     END_VERSIONS
     """
 }
