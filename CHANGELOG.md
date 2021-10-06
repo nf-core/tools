@@ -5,6 +5,7 @@
 ### Template
 
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
+* Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
 
 ### General
 
