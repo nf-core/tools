@@ -4,7 +4,7 @@
     "repos": {
         "nf-core/modules": {
             "custom/dumpsoftwareversions": {
-                "git_sha": "7b3315591a149609e27914965f858c9a7e071564"
+                "git_sha": "84f2302920078b0cf7716b2a2e5fcc0be5c4531d"
             },
             "fastqc": {
                 "git_sha": "7b3315591a149609e27914965f858c9a7e071564"
