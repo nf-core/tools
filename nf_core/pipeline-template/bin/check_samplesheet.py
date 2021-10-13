@@ -19,8 +19,6 @@ logger = logging.getLogger()
 class RowChecker:
 
     VALID_FORMATS = (
-        ".fq",
-        ".fastq",
         ".fq.gz",
         ".fastq.gz",
     )
