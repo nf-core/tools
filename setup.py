@@ -33,7 +33,6 @@ setup(
     license="MIT",
     entry_points={"console_scripts": ["nf-core=nf_core.__main__:run_nf_core"]},
     install_requires=required,
-    setup_requires=["twine>=1.11.0", "setuptools>=38.6."],
     packages=find_packages(exclude=("docs")),
     include_package_data=True,
     zip_safe=False,
