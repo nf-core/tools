@@ -58,14 +58,14 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     # Set and clean up the current version string
     if current_version == None:
         current_version = nf_core.__version__
-    current_version = re.sub("[^0-9\.]", "", current_version)
+    current_version = re.sub(r"[^0-9\.]", "", current_version)
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = "{}?v={}".format(source_url, current_version)
     # Fetch and clean up the remote version
     if remote_version == None:
         response = requests.get(source_url, timeout=3)
-        remote_version = re.sub("[^0-9\.]", "", response.text)
+        remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
     is_outdated = version.StrictVersion(remote_version) > version.StrictVersion(current_version)
     return (is_outdated, current_version, remote_version)
