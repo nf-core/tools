@@ -103,7 +103,8 @@ class ModuleList(ModuleCommand):
                     if module_entry:
                         version_sha = module_entry["git_sha"]
                         try:
-                            message, date = nf_core.modules.module_utils.get_commit_info(version_sha)
+                            # pass repo_name to get info on modules even outside nf-core/modules
+                            message, date = nf_core.modules.module_utils.get_commit_info(version_sha, repo_name)
                         except LookupError as e:
                             log.warning(e)
                             date = "[red]Not Available"

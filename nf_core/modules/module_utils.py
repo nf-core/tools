@@ -46,6 +46,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     update breaking backwards compatibility.
     Args:
         module_name (str): Name of module
+        modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
         per_page (int): Number of commits per page returned by API
         page_nbr (int): Page number of the retrieved commits
         since (str): Only show commits later than this timestamp.
@@ -84,19 +85,21 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
         )
 
 
-def get_commit_info(commit_sha):
+def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     """
     Fetches metadata about the commit (dates, message, etc.)
     Args:
-        module_name (str): Name of module
         commit_sha (str): The SHA of the requested commit
+        repo_name (str): module repos name (def. {0})
     Returns:
         message (str): The commit message for the requested commit
         date (str): The commit date for the requested commit
     Raises:
         LookupError: If the call to the API fails.
-    """
-    api_url = f"https://api.github.com/repos/nf-core/modules/commits/{commit_sha}?stats=false"
+    """.format(
+        repo_name
+    )
+    api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
