@@ -334,7 +334,7 @@ class LocalWorkflow(object):
             if len(os.environ.get("NXF_ASSETS", "")) > 0:
                 nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)
             elif len(os.environ.get("NXF_HOME", "")) > 0:
-                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets")
+                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets", self.full_name)
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):
