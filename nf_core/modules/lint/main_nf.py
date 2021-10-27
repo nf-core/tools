@@ -116,15 +116,15 @@ def main_nf(module_lint_object, module):
 def check_script_section(self, lines):
     """
     Lint the script section
-    Checks whether 'def sotware' and 'def prefix' are defined
+    Checks whether 'def prefix'  is defined and whether getProcessName is used for `versions.yml`.
     """
     script = "".join(lines)
 
-    # check for software
-    if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
-        self.passed.append(("main_nf_version_script", "Software version specified in script section", self.main_nf))
+    # check that process name is used for `versions.yml`
+    if re.search("\$\{\s*getProcessName\s*\(\s*task\.process\s*\)\s*\}", script):
+        self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
-        self.warned.append(("main_nf_version_script", "Software version unspecified in script section", self.main_nf))
+        self.failed.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
