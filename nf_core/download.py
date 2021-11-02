@@ -396,6 +396,7 @@ class DownloadWorkflow(object):
             nfconfig = nfconfig_fh.read()
 
         # Replace the target string
+        log.debug(f"Replacing '{find_str}' with '{repl_str}'")
         nfconfig = nfconfig.replace(find_str, repl_str)
 
         # Append the singularity.cacheDir to the end if we need it
@@ -407,6 +408,7 @@ class DownloadWorkflow(object):
             )
 
         # Write the file out again
+        log.debug(f"Updating '{nfconfig_fn}'")
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 

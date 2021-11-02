@@ -4,6 +4,7 @@
 
 ### Template
 
+* Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
 * Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
 
@@ -13,6 +14,7 @@
 * Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
 * Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
 * Update 'fix' message in `nf-core lint` to conform to the current command line options. ([#1259](https://github.com/nf-core/tools/issues/1259))
+* Fixed bug in `nf-core list` when `NXF_HOME` is set
 
 ### Modules
 

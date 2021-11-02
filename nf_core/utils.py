@@ -58,14 +58,14 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     # Set and clean up the current version string
     if current_version == None:
         current_version = nf_core.__version__
-    current_version = re.sub("[^0-9\.]", "", current_version)
+    current_version = re.sub(r"[^0-9\.]", "", current_version)
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = "{}?v={}".format(source_url, current_version)
     # Fetch and clean up the remote version
     if remote_version == None:
         response = requests.get(source_url, timeout=3)
-        remote_version = re.sub("[^0-9\.]", "", response.text)
+        remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
     is_outdated = version.StrictVersion(remote_version) > version.StrictVersion(current_version)
     return (is_outdated, current_version, remote_version)
@@ -200,16 +200,19 @@ def is_pipeline_directory(wf_path):
             raise UserWarning(f"'{wf_path}' is not a pipeline - '{fn}' is missing")
 
 
-def fetch_wf_config(wf_path):
+def fetch_wf_config(wf_path, cache_config=True):
     """Uses Nextflow to retrieve the the configuration variables
     from a Nextflow workflow.
 
     Args:
         wf_path (str): Nextflow workflow file system path.
+        cache_config (bool): cache configuration or not (def. True)
 
     Returns:
         dict: Workflow configuration settings.
     """
+
+    log.debug(f"Got '{wf_path}' as path")
 
     config = dict()
     cache_fn = None
@@ -272,7 +275,11 @@ def fetch_wf_config(wf_path):
         log.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
 
     # If we can, save a cached copy
-    if cache_path:
+    # HINT: during testing phase (in test_download, for example) we don't want
+    # to save configuration copy in $HOME, otherwise the tests/test_download.py::DownloadTest::test_wf_use_local_configs
+    # will fail after the first attempt. It's better to not save temporary data
+    # in others folders than tmp when doing tests in general
+    if cache_path and cache_config:
         log.debug("Saving config cache: {}".format(cache_path))
         with open(cache_path, "w") as fh:
             json.dump(config, fh, indent=4)
