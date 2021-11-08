@@ -8,6 +8,7 @@
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
 * Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
 * Remove `params.hostnames` from the pipeline template ([#1304](https://github.com/nf-core/tools/issues/1304))
+* Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
 
 ### General
 
