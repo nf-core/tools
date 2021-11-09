@@ -107,7 +107,9 @@ def files_unchanged(self):
     logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
     # Generate a new pipeline with nf-core create that we can compare to
-    test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-{}".format(short_name))
+    tmp_dir = tempfile.mkdtemp()
+
+    test_pipeline_dir = os.path.join(tmp_dir, "nf-core-{}".format(short_name))
     create_obj = nf_core.create.PipelineCreate(
         self.nf_config["manifest.name"].strip("\"'"),
         self.nf_config["manifest.description"].strip("\"'"),
@@ -191,5 +193,8 @@ def files_unchanged(self):
                             could_fix = True
                 except FileNotFoundError:
                     pass
+
+    # cleaning up temporary dir
+    shutil.rmtree(tmp_dir)
 
     return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed, "could_fix": could_fix}

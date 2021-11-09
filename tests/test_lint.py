@@ -16,6 +16,8 @@ import yaml
 import nf_core.create
 import nf_core.lint
 
+from .utils import with_temporary_folder
+
 
 class TestLint(unittest.TestCase):
     """Class for lint tests"""
@@ -25,7 +27,9 @@ class TestLint(unittest.TestCase):
 
         Use nf_core.create() to make a pipeline that we can use for testing
         """
-        self.test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+
+        self.tmp_dir = tempfile.mkdtemp()
+        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
         )
@@ -33,11 +37,17 @@ class TestLint(unittest.TestCase):
         # Base lint object on this directory
         self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
 
+    def tearDown(self):
+        """Clean up temporary files and folders"""
+
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
+
     def _make_pipeline_copy(self):
         """Make a copy of the test pipeline that can be edited
 
         Returns: Path to new temp directory with pipeline"""
-        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        new_pipeline = os.path.join(self.tmp_dir, "nf-core-testpipeline-copy")
         shutil.copytree(self.test_pipeline_dir, new_pipeline)
         return new_pipeline
 
@@ -72,9 +82,9 @@ class TestLint(unittest.TestCase):
 
     def test_load_lint_config_ignore_all_tests(self):
         """Try to load a linting config file that ignores all tests"""
+
         # Make a copy of the test pipeline and create a lint object
-        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
-        shutil.copytree(self.test_pipeline_dir, new_pipeline)
+        new_pipeline = self._make_pipeline_copy()
         lint_obj = nf_core.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
@@ -93,7 +103,8 @@ class TestLint(unittest.TestCase):
         assert len(lint_obj.failed) == 0
         assert len(lint_obj.ignored) == len(lint_obj.lint_tests)
 
-    def test_json_output(self):
+    @with_temporary_folder
+    def test_json_output(self, tmp_dir):
         """
         Test creation of a JSON file with lint results
 
@@ -122,7 +133,7 @@ class TestLint(unittest.TestCase):
         self.lint_obj.warned.append(("test_three", "This test gave a warning"))
 
         # Make a temp dir for the JSON output
-        json_fn = os.path.join(tempfile.mkdtemp(), "lint_results.json")
+        json_fn = os.path.join(tmp_dir, "lint_results.json")
         self.lint_obj._save_json_results(json_fn)
 
         # Load created JSON file and check its contents
@@ -176,46 +187,46 @@ class TestLint(unittest.TestCase):
     #######################
     # SPECIFIC LINT TESTS #
     #######################
-    from lint.actions_awsfulltest import (
+    from .lint.actions_awsfulltest import (
         test_actions_awsfulltest_warn,
         test_actions_awsfulltest_pass,
         test_actions_awsfulltest_fail,
     )
-    from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
-    from lint.files_exist import (
+    from .lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
+    from .lint.files_exist import (
         test_files_exist_missing_config,
         test_files_exist_missing_main,
         test_files_exist_depreciated_file,
         test_files_exist_pass,
     )
-    from lint.actions_ci import (
+    from .lint.actions_ci import (
         test_actions_ci_pass,
         test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_docker_ver,
         test_actions_ci_fail_wrong_trigger,
     )
 
-    from lint.actions_schema_validation import (
+    from .lint.actions_schema_validation import (
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
     )
 
-    from lint.merge_markers import test_merge_markers_found
+    from .lint.merge_markers import test_merge_markers_found
 
-    from lint.nextflow_config import (
+    from .lint.nextflow_config import (
         test_nextflow_config_example_pass,
         test_nextflow_config_bad_name_fail,
         test_nextflow_config_dev_in_release_mode_failed,
     )
 
-    from lint.files_unchanged import (
+    from .lint.files_unchanged import (
         test_files_unchanged_pass,
         test_files_unchanged_fail,
     )
 
-    from lint.version_consistency import test_version_consistency
+    from .lint.version_consistency import test_version_consistency
 
-    from lint.modules_json import test_modules_json_pass
+    from .lint.modules_json import test_modules_json_pass
 
 
 # TODO nf-core: Assess and strip out if no longer required for DSL2
