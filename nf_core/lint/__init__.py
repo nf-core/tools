@@ -20,8 +20,8 @@ import yaml
 
 import nf_core.utils
 import nf_core.lint_utils
+import nf_core.modules.lint
 from nf_core.lint_utils import console
-from nf_core.modules.lint import ModuleLint
 
 log = logging.getLogger(__name__)
 
@@ -44,7 +44,9 @@ def run_linting(
 
     # Verify that the requested tests exist
     if key:
-        all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(set(ModuleLint._get_all_lint_tests()))
+        all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(
+            set(nf_core.modules.lint.ModuleLint._get_all_lint_tests())
+        )
         bad_keys = [k for k in key if k not in all_tests]
         if len(bad_keys) > 0:
             raise AssertionError(
@@ -66,7 +68,7 @@ def run_linting(
     lint_obj._list_files()
 
     # Create the modules lint object
-    module_lint_obj = ModuleLint(pipeline_dir)
+    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir)
 
     # Verify that the pipeline is correctly configured
     try:
@@ -77,7 +79,7 @@ def run_linting(
     # Run only the tests we want
     if key:
         # Select only the module lint tests
-        module_lint_tests = list(set(key).intersection(set(ModuleLint._get_all_lint_tests())))
+        module_lint_tests = list(set(key).intersection(set(nf_core.modules.lint.ModuleLint._get_all_lint_tests())))
     else:
         # If no key is supplied, run the default modules tests
         module_lint_tests = ("module_changes", "module_version")
