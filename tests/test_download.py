@@ -161,7 +161,6 @@ class DownloadTest(unittest.TestCase):
 
         download_obj.validate_md5(tmpfile.name, val_hash)
 
-
     #
     # Tests for 'singularity_pull_image'
     #
@@ -173,7 +172,6 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
         download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
-
 
     #
     # Tests for the main entry method 'download_workflow'

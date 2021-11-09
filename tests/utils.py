@@ -28,6 +28,7 @@ def with_temporary_file(func):
     Call the decorated funtion under the tempfile.NamedTemporaryFile
     context manager. Pass the opened file handle to the decorated function
     """
+
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         with tempfile.NamedTemporaryFile() as tmpfile:
