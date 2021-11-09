@@ -8,6 +8,8 @@
 * Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
 * Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
+* Remove `params.hostnames` from the pipeline template ([#1304](https://github.com/nf-core/tools/issues/1304))
+* Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
 
 ### General
 
@@ -16,6 +18,7 @@
 * Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
 * Update 'fix' message in `nf-core lint` to conform to the current command line options. ([#1259](https://github.com/nf-core/tools/issues/1259))
 * Fixed bug in `nf-core list` when `NXF_HOME` is set
+* Run CI test used to create and lint/run the pipeline template with minimum and latest edge release of NF ([#1304](https://github.com/nf-core/tools/issues/1304))
 
 ### Modules
 
