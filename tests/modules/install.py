@@ -1,6 +1,7 @@
-import tempfile
 import pytest
 import os
+
+from ..utils import with_temporary_folder
 
 
 def test_modules_install_nopipeline(self):
@@ -9,9 +10,10 @@ def test_modules_install_nopipeline(self):
     assert self.mods_install.install("foo") is False
 
 
-def test_modules_install_emptypipeline(self):
+@with_temporary_folder
+def test_modules_install_emptypipeline(self, tmpdir):
     """Test installing a module - empty dir given"""
-    self.mods_install.dir = tempfile.mkdtemp()
+    self.mods_install.dir = tmpdir
     with pytest.raises(UserWarning) as excinfo:
         self.mods_install.install("foo")
     assert "Could not find a 'main.nf' or 'nextflow.config' file" in str(excinfo.value)

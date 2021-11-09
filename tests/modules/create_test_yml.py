@@ -1,13 +1,14 @@
 import os
-import tempfile
 import pytest
 
 import nf_core.modules
 
+from ..utils import with_temporary_folder
 
-def test_modules_custom_yml_dumper(self):
+
+@with_temporary_folder
+def test_modules_custom_yml_dumper(self, out_dir):
     """Try to create a yml file with the custom yml dumper"""
-    out_dir = tempfile.mkdtemp()
     yml_output_path = os.path.join(out_dir, "test.yml")
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
     meta_builder.test_yml_output_path = yml_output_path
@@ -16,9 +17,9 @@ def test_modules_custom_yml_dumper(self):
     assert os.path.isfile(yml_output_path)
 
 
-def test_modules_test_file_dict(self):
+@with_temporary_folder
+def test_modules_test_file_dict(self, test_file_dir):
     """Creat dict of test files and create md5 sums"""
-    test_file_dir = tempfile.mkdtemp()
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
     with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
         fh.write("this line is just for testing")
@@ -27,9 +28,9 @@ def test_modules_test_file_dict(self):
     assert test_files[0]["md5sum"] == "2191e06b28b5ba82378bcc0672d01786"
 
 
-def test_modules_create_test_yml_get_md5(self):
+@with_temporary_folder
+def test_modules_create_test_yml_get_md5(self, test_file_dir):
     """Get md5 sums from a dummy output"""
-    test_file_dir = tempfile.mkdtemp()
     meta_builder = nf_core.modules.ModulesTestYmlBuilder("test/tool", False, "./", False, True)
     with open(os.path.join(test_file_dir, "test_file.txt"), "w") as fh:
         fh.write("this line is just for testing")

@@ -10,9 +10,9 @@ import tempfile
 import unittest
 
 
-def create_modules_repo_dummy():
+def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
-    tmp_dir = tempfile.mkdtemp()
+
     root_dir = os.path.join(tmp_dir, "modules")
     os.makedirs(os.path.join(root_dir, "modules"))
     os.makedirs(os.path.join(root_dir, "tests", "modules"))
@@ -31,10 +31,12 @@ class TestModules(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineSchema and Launch objects"""
+        self.tmp_dir = tempfile.mkdtemp()
+
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "mypipeline")
+        self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
         shutil.copytree(self.template_dir, self.pipeline_dir)
 
         # Set up install objects
@@ -53,7 +55,13 @@ class TestModules(unittest.TestCase):
         # self.mods_remove_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
 
         # Set up the nf-core/modules repo dummy
-        self.nfcore_modules = create_modules_repo_dummy()
+        self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
+
+    def tearDown(self):
+        """Clean up temporary files and folders"""
+
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     def test_modulesrepo_class(self):
         """Initialise a modules repo object"""
@@ -65,13 +73,13 @@ class TestModules(unittest.TestCase):
     # Test of the individual modules commands. #
     ############################################
 
-    from modules.list import (
+    from .modules.list import (
         test_modules_list_remote,
         test_modules_list_pipeline,
         test_modules_install_and_list_pipeline,
     )
 
-    from modules.install import (
+    from .modules.install import (
         test_modules_install_nopipeline,
         test_modules_install_emptypipeline,
         test_modules_install_nomodule,
@@ -79,21 +87,21 @@ class TestModules(unittest.TestCase):
         test_modules_install_trimgalore_twice,
     )
 
-    from modules.remove import (
+    from .modules.remove import (
         test_modules_remove_trimgalore,
         test_modules_remove_trimgalore_uninstalled,
     )
 
-    from modules.lint import test_modules_lint_trimgalore, test_modules_lint_empty, test_modules_lint_new_modules
+    from .modules.lint import test_modules_lint_trimgalore, test_modules_lint_empty, test_modules_lint_new_modules
 
-    from modules.create import (
+    from .modules.create import (
         test_modules_create_succeed,
         test_modules_create_fail_exists,
         test_modules_create_nfcore_modules,
         test_modules_create_nfcore_modules_subtool,
     )
 
-    from modules.create_test_yml import (
+    from .modules.create_test_yml import (
         test_modules_custom_yml_dumper,
         test_modules_test_file_dict,
         test_modules_create_test_yml_get_md5,
@@ -101,7 +109,7 @@ class TestModules(unittest.TestCase):
         test_modules_create_test_yml_check_inputs,
     )
 
-    from modules.bump_versions import (
+    from .modules.bump_versions import (
         test_modules_bump_versions_single_module,
         test_modules_bump_versions_all_modules,
         test_modules_bump_versions_fail,
