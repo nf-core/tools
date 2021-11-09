@@ -5,6 +5,7 @@
 import nf_core.create
 import nf_core.sync
 
+import git
 import json
 import mock
 import os
@@ -12,22 +13,27 @@ import shutil
 import tempfile
 import unittest
 
+from .utils import with_temporary_folder
+
 
 class TestModules(unittest.TestCase):
     """Class for modules tests"""
 
     def setUp(self):
-        self.make_new_pipeline()
-
-    def make_new_pipeline(self):
         """Create a new pipeline to test"""
-        self.pipeline_dir = os.path.join(tempfile.mkdtemp(), "test_pipeline")
+        self.tmp_dir = tempfile.mkdtemp()
+        self.pipeline_dir = os.path.join(self.tmp_dir, "test_pipeline")
         self.create_obj = nf_core.create.PipelineCreate("testing", "test pipeline", "tester", outdir=self.pipeline_dir)
         self.create_obj.init_pipeline()
 
-    def test_inspect_sync_dir_notgit(self):
+    def tearDown(self):
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
+
+    @with_temporary_folder
+    def test_inspect_sync_dir_notgit(self, tmp_dir):
         """Try syncing an empty directory"""
-        psync = nf_core.sync.PipelineSync(tempfile.mkdtemp())
+        psync = nf_core.sync.PipelineSync(tmp_dir)
         try:
             psync.inspect_sync_dir()
             raise UserWarning("Should have hit an exception")

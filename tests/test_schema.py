@@ -15,6 +15,8 @@ import tempfile
 import unittest
 import yaml
 
+from .utils import with_temporary_file, with_temporary_folder
+
 
 class TestSchema(unittest.TestCase):
     """Class for schema tests"""
@@ -24,10 +26,15 @@ class TestSchema(unittest.TestCase):
         self.schema_obj = nf_core.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         # Copy the template to a temp directory so that we can use that for tests
-        self.template_dir = os.path.join(tempfile.mkdtemp(), "wf")
+        self.tmp_dir = tempfile.mkdtemp()
+        self.template_dir = os.path.join(self.tmp_dir, "wf")
         template_dir = os.path.join(self.root_repo_dir, "nf_core", "pipeline-template")
         shutil.copytree(template_dir, self.template_dir)
         self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
+
+    def tearDown(self):
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     def test_load_lint_schema(self):
         """Check linting with the pipeline template directory"""
@@ -46,13 +53,13 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
         self.schema_obj.load_lint_schema()
 
+    @with_temporary_file
     @pytest.mark.xfail(raises=AssertionError, strict=True)
-    def test_load_lint_schema_noparams(self):
+    def test_load_lint_schema_noparams(self, tmp_file):
         """
         Check that linting raises properly if a JSON file is given without any params
         """
-        # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
+        # write schema to a temporary file
         with open(tmp_file.name, "w") as fh:
             json.dump({"type": "fubar"}, fh)
         self.schema_obj.get_schema_path(tmp_file.name)
@@ -88,29 +95,29 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
 
-    def test_save_schema(self):
+    @with_temporary_file
+    def test_save_schema(self, tmp_file):
         """Try to save a schema"""
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
 
         # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
         self.schema_obj.schema_filename = tmp_file.name
         self.schema_obj.save_schema()
 
-    def test_load_input_params_json(self):
+    @with_temporary_file
+    def test_load_input_params_json(self, tmp_file):
         """Try to load a JSON file with params for a pipeline run"""
-        # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
+        # write schema to a temporary file
         with open(tmp_file.name, "w") as fh:
             json.dump({"input": "fubar"}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
-    def test_load_input_params_yaml(self):
+    @with_temporary_file
+    def test_load_input_params_yaml(self, tmp_file):
         """Try to load a YAML file with params for a pipeline run"""
-        # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
+        # write schema to a temporary file
         with open(tmp_file.name, "w") as fh:
             yaml.dump({"input": "fubar"}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
@@ -293,14 +300,15 @@ class TestSchema(unittest.TestCase):
         """
         param = self.schema_obj.build_schema(self.template_dir, True, False, None)
 
-    def test_build_schema_from_scratch(self):
+    @with_temporary_folder
+    def test_build_schema_from_scratch(self, tmp_dir):
         """
         Build a new schema param from a pipeline with no existing file
         Run code to ensure it doesn't crash. Individual functions tested separately.
 
         Pretty much a copy of test_launch.py test_make_pipeline_schema
         """
-        test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "wf")
+        test_pipeline_dir = os.path.join(tmp_dir, "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
 
