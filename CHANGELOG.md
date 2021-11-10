@@ -9,6 +9,7 @@
 * Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
 * Remove `params.hostnames` from the pipeline template ([#1304](https://github.com/nf-core/tools/issues/1304))
 * Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
+* Adding support for [Julia](https://julialang.org) package environments to `nextflow.config`([#1317](https://github.com/nf-core/tools/pull/1317))
 
 ### General
 
