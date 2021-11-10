@@ -22,7 +22,7 @@ def functions_nf(module_lint_object, module):
         return
 
     # Test whether all required functions are present
-    required_functions = ["getSoftwareName", "initOptions", "getPathFromList", "saveFiles"]
+    required_functions = ["getSoftwareName", "getProcessName", "initOptions", "getPathFromList", "saveFiles"]
     lines = "\n".join(lines)
     contains_all_functions = True
     for f in required_functions:

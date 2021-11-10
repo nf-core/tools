@@ -253,19 +253,20 @@ class ModuleCommand:
             log.error("Could not remove module: {}".format(e))
             return False
 
-    def download_module_file(self, module_name, module_version, modules_repo, install_folder, module_dir):
+    def download_module_file(self, module_name, module_version, modules_repo, install_folder, dry_run=False):
         """Downloads the files of a module from the remote repo"""
         files = modules_repo.get_module_file_urls(module_name, module_version)
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             split_filename = filename.split("/")
-            dl_filename = os.path.join(self.dir, "modules", *install_folder, *split_filename[1:])
+            dl_filename = os.path.join(*install_folder, *split_filename[1:])
             try:
                 self.modules_repo.download_gh_file(dl_filename, api_url)
             except (SystemError, LookupError) as e:
                 log.error(e)
                 return False
-        log.info("Downloaded {} files to {}".format(len(files), module_dir))
+        if not dry_run:
+            log.info("Downloaded {} files to {}".format(len(files), os.path.join(*install_folder, module_name)))
         return True
 
     def load_modules_json(self):
