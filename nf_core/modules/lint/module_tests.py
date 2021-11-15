@@ -31,14 +31,14 @@ def module_tests(module_lint_object, module):
     try:
         pytest_yml_path = os.path.join(module.base_dir, "tests", "config", "pytest_modules.yml")
         with open(pytest_yml_path, "r") as fh:
-            module.passed.append(("test_pytest_yml", "pytest_modules.yml file is there", pytest_yml_path))
             # FIXME Using anchors breaks this
             # https://github.com/nf-core/modules/pull/933
             # pytest_yml = yaml.safe_load(fh)
-            # if module.module_name in pytest_yml.keys():
-            #     module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
-            # else:
-            #     module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
+            pytest_yml = yaml.load(fh, Loader=yaml.BaseLoader)
+            if module.module_name in pytest_yml.keys():
+                module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
+            else:
+                module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
     except FileNotFoundError as e:
         module.failed.append(("test_pytest_yml", f"Could not open pytest_modules.yml file", pytest_yml_path))
 
