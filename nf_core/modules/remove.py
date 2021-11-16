@@ -46,12 +46,12 @@ class ModuleRemove(ModuleCommand):
         else:
             repo_name = questionary.autocomplete(
                 "Repo name:", choices=self.module_names.keys(), style=nf_core.utils.nfcore_question_style
-            ).ask()
+            ).unsafe_ask()
 
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:", choices=self.module_names[repo_name], style=nf_core.utils.nfcore_question_style
-            ).ask()
+            ).unsafe_ask()
 
         # Set the remove folder based on the repository name
         remove_folder = os.path.split(repo_name)
@@ -61,8 +61,7 @@ class ModuleRemove(ModuleCommand):
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
-            log.error("Module directory is not installed: {}".format(module_dir))
-            log.info("The module you want to remove does not seem to be installed")
+            log.error(f"Module directory does not exist: '{module_dir}'")
 
             modules_json = self.load_modules_json()
             if self.modules_repo.name in modules_json["repos"] and module in modules_json["repos"][repo_name]:

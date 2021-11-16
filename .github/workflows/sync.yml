@@ -67,7 +67,7 @@ jobs:
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
-            --repository nf-core/${{ matrix.pipeline }}
+            --github-repository nf-core/${{ matrix.pipeline }}
 
       - name: Upload sync log file artifact
         if: ${{ always() }}

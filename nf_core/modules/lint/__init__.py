@@ -79,8 +79,7 @@ class ModuleLint(ModuleCommand):
         self.warned = []
         self.failed = []
         self.modules_repo = ModulesRepo()
-        self.lint_tests = ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
-
+        self.lint_tests = self._get_all_lint_tests()
         # Get lists of modules install in directory
         self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
 
@@ -94,6 +93,10 @@ class ModuleLint(ModuleCommand):
         if self.repo_type == "pipeline":
             # Add as first test to load git_sha before module_changes
             self.lint_tests.insert(0, "module_version")
+
+    @staticmethod
+    def _get_all_lint_tests():
+        return ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
 
     def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
         """

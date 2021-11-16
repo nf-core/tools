@@ -83,7 +83,7 @@ class ModuleVersionBumper(ModuleCommand):
                     "Tool name:",
                     choices=[m.module_name for m in nfcore_modules],
                     style=nf_core.utils.nfcore_question_style,
-                ).ask()
+                ).unsafe_ask()
 
         if module:
             self.show_up_to_date = True
@@ -198,7 +198,7 @@ class ModuleVersionBumper(ModuleCommand):
                         newcontent.append(line)
 
                 if found_match:
-                    content = "\n".join(newcontent)
+                    content = "\n".join(newcontent) + "\n"
                 else:
                     self.failed.append(
                         (f"Did not find pattern {pattern[0]} in module {module.module_name}", module.module_name)

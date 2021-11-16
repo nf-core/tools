@@ -98,10 +98,13 @@ def bump_nextflow_version(pipeline_obj, new_version):
                 "nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(new_version),
             ),
             (
+                # Replace links to 'nf-co.re' installation page with links to Nextflow installation page
+                r"https://nf-co.re/usage/installation",
+                "https://www.nextflow.io/docs/latest/getstarted.html#installation",
+            ),
+            (
                 # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
-                r"1\.\s*Install\s*\[`Nextflow`\]\(https://www.nextflow.io/docs/latest/getstarted.html#installation\)\s*\(`>={}`\)".format(
-                    current_version.replace(".", r"\.")
-                ),
+                r"1\.\s*Install\s*\[`Nextflow`\]\(y\)\s*\(`>={}`\)".format(current_version.replace(".", r"\.")),
                 "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={}`)".format(
                     new_version
                 ),
