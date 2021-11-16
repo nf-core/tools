@@ -396,7 +396,7 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
         log.warning(e)
         next_page_commits = None
 
-    while git_sha is "":
+    while git_sha == "":
         commits = next_page_commits
         try:
             next_page_commits = get_module_git_log(

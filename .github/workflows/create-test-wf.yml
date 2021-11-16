@@ -1,12 +1,15 @@
 name: Create a pipeline and test it
 on: [push, pull_request]
 
-# Uncomment if we need an edge release of Nextflow again
-# env: NXF_EDGE: 1
-
 jobs:
   RunTestWorkflow:
     runs-on: ubuntu-latest
+    env:
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions: check pipeline minimum and latest edge version
+        nxf_ver: ["NXF_VER=21.04.0", "NXF_EDGE=1"]
     steps:
       - uses: actions/checkout@v2
         name: Check out source-code repository
@@ -27,6 +30,8 @@ jobs:
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
+          export ${{ matrix.nxf_ver }}
+          nextflow self-update
 
       - name: Run nf-core/tools
         run: |

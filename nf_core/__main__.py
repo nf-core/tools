@@ -449,14 +449,19 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
-def update(ctx, tool, dir, force, prompt, sha, all):
+@click.option(
+    "-c", "--diff", is_flag=True, default=False, help="Show differences between module versions before updating"
+)
+def update(ctx, tool, dir, force, prompt, sha, all, diff):
     """
     Update DSL2 modules within a pipeline.
 
     Fetches and updates module files from a remote repo e.g. nf-core/modules.
     """
     try:
-        module_install = nf_core.modules.ModuleUpdate(dir, force=force, prompt=prompt, sha=sha, update_all=all)
+        module_install = nf_core.modules.ModuleUpdate(
+            dir, force=force, prompt=prompt, sha=sha, update_all=all, diff=diff
+        )
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
         exit_status = module_install.update(tool)
         if not exit_status and all:
@@ -497,10 +502,10 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     """
     Create a new DSL2 module from the nf-core template.
 
-    If <directory> is a pipeline, this function creates a file called
+    If the specified directory is a pipeline, this function creates a file called
     'modules/local/tool_subtool.nf'
 
-    If <directory> is a clone of nf-core/modules, it creates or modifies files
+    If the specified directory is a clone of nf-core/modules, it creates or modifies files
     in 'modules/', 'tests/modules' and 'tests/config/pytest_modules.yml'
     """
     # Combine two bool flags into one variable

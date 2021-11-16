@@ -83,7 +83,7 @@ class ModuleVersionBumper(ModuleCommand):
                     "Tool name:",
                     choices=[m.module_name for m in nfcore_modules],
                     style=nf_core.utils.nfcore_question_style,
-                ).ask()
+                ).unsafe_ask()
 
         if module:
             self.show_up_to_date = True
