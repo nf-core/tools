@@ -297,7 +297,7 @@ def nextflow_cmd(cmd):
             raise AssertionError("It looks like Nextflow is not installed. It is required for most nf-core functions.")
     except subprocess.CalledProcessError as e:
         raise AssertionError(
-            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}"
+            f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
         )
 
 
