@@ -40,10 +40,6 @@ class ModuleList(ModuleCommand):
 
         # No pipeline given - show all remote
         if self.remote:
-            log.info(
-                f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch})"
-                f"{pattern_msg(keywords)}:\n"
-            )
 
             # Get the list of available modules
             try:
@@ -68,14 +64,15 @@ class ModuleList(ModuleCommand):
 
         # We have a pipeline - list what's installed
         else:
-            log.info(f"Modules installed in '{self.dir}'{pattern_msg(keywords)}:\n")
-
             # Check whether pipelines is valid
             try:
                 self.has_valid_directory()
             except UserWarning as e:
                 log.error(e)
                 return ""
+
+            # Verify that 'modules.json' is consistent with the installed modules
+            self.modules_json_up_to_date()
 
             # Get installed modules
             self.get_pipeline_modules()
@@ -120,4 +117,12 @@ class ModuleList(ModuleCommand):
 
         if print_json:
             return json.dumps(modules, sort_keys=True, indent=4)
+
+        if self.remote:
+            log.info(
+                f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch})"
+                f"{pattern_msg(keywords)}:\n"
+            )
+        else:
+            log.info(f"Modules installed in '{self.dir}'{pattern_msg(keywords)}:\n")
         return table
