@@ -128,14 +128,6 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.input_params = {"input": "fubar.csv"}
         assert self.schema_obj.validate_params()
 
-    def test_validate_params_pass_ext(self):
-        """Try validating an extended set of parameters against a schema"""
-        self.schema_obj.schema = {
-            "properties": {"foo": {"type": "string"}, "bar": {"type": "string", "default": ""}},
-            "required": ["foo"],
-        }
-        assert self.schema_obj.validate_params()
-
     def test_validate_params_fail(self):
         """Check that False is returned if params don't validate against a schema"""
         # Load the template schema
