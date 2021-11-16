@@ -153,8 +153,8 @@ def files_exist(self):
         os.path.join("bin", "markdown_to_html.r"),
         os.path.join("conf", "aws.config"),
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
+        os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
+        os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
     ]
     files_warn_ifexists = [".travis.yml"]
 
