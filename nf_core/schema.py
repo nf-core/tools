@@ -226,7 +226,7 @@ class PipelineSchema(object):
             log.error("[red][✗] Pipeline schema not found")
         except jsonschema.exceptions.ValidationError as e:
             raise AssertionError("Default parameters are invalid: {}".format(e.message))
-        log.info("[green][✓] Default parameters look valid")
+        log.info("[green][✓] Default parameters match schema validation")
 
         # Make sure every default parameter exists in the nextflow.config and is of correct type
         if self.pipeline_params == {}:
