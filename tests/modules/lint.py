@@ -8,18 +8,19 @@ def test_modules_lint_trimgalore(self):
     module_lint.lint(print_results=False, module="trimgalore")
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
 
 
 def test_modules_lint_empty(self):
     """Test linting a pipeline with no modules installed"""
     self.mods_remove.remove("fastqc")
     self.mods_remove.remove("multiqc")
+    self.mods_remove.remove("custom/dumpsoftwareversions")
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
     module_lint.lint(print_results=False, all_modules=True)
     assert len(module_lint.passed) == 0
     assert len(module_lint.warned) == 0
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
 
 
 def test_modules_lint_new_modules(self):
@@ -28,4 +29,4 @@ def test_modules_lint_new_modules(self):
     module_lint.lint(print_results=True, all_modules=True)
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
-    assert len(module_lint.failed) == 0
+    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"

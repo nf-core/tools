@@ -22,9 +22,9 @@ def files_unchanged(self):
         .markdownlint.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
-        .github/ISSUE_TEMPLATE/bug_report.md
+        .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
-        .github/ISSUE_TEMPLATE/feature_request.md
+        .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/linting_comment.yml
@@ -81,9 +81,9 @@ def files_unchanged(self):
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
         [os.path.join(".github", ".dockstore.yml")],
         [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "linting_comment.yml")],
@@ -92,7 +92,6 @@ def files_unchanged(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("bin", "scrape_software_versions.py")],
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
         [os.path.join("docs", "README.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
