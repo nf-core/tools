@@ -23,9 +23,9 @@ def files_exist(self):
         .markdownlint.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
-        .github/ISSUE_TEMPLATE/bug_report.md
+        .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
-        .github/ISSUE_TEMPLATE/feature_request.md
+        .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/ci.yml
@@ -36,7 +36,6 @@ def files_exist(self):
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo.png
         assets/sendmail_template.txt
-        bin/scrape_software_versions.py
         conf/modules.config
         conf/test.config
         conf/test_full.config
@@ -52,7 +51,6 @@ def files_exist(self):
         lib/NfcoreTemplate.groovy
         lib/Utils.groovy
         lib/WorkflowMain.groovy
-        modules/local/get_software_versions.nf
         nextflow_schema.json
         nextflow.config
         README.md
@@ -78,6 +76,7 @@ def files_exist(self):
         bin/markdown_to_html.r
         conf/aws.config
         .github/workflows/push_dockerhub.yml
+        .github/ISSUE_TEMPLATE/bug_report.md
 
     Files that *should not* be present:
 
@@ -109,9 +108,9 @@ def files_exist(self):
         ["README.md"],
         [os.path.join(".github", ".dockstore.yml")],
         [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
@@ -121,7 +120,6 @@ def files_exist(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("bin", "scrape_software_versions.py")],
         [os.path.join("conf", "modules.config")],
         [os.path.join("conf", "test.config")],
         [os.path.join("conf", "test_full.config")],
@@ -135,7 +133,6 @@ def files_exist(self):
         [os.path.join("lib", "NfcoreTemplate.groovy")],
         [os.path.join("lib", "Utils.groovy")],
         [os.path.join("lib", "WorkflowMain.groovy")],
-        [os.path.join("modules", "local", "get_software_versions.nf")],
     ]
 
     files_warn = [
@@ -156,6 +153,8 @@ def files_exist(self):
         os.path.join("bin", "markdown_to_html.r"),
         os.path.join("conf", "aws.config"),
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
+        os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
+        os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
     ]
     files_warn_ifexists = [".travis.yml"]
 
