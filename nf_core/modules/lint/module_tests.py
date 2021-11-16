@@ -27,17 +27,17 @@ def module_tests(module_lint_object, module):
     else:
         module.failed.append(("test_main_exists", "test `main.nf` does not exist", module.test_main_nf))
 
-    # Check that entry in pytest_software.yml exists
+    # Check that entry in pytest_modules.yml exists
     try:
-        pytest_yml_path = os.path.join(module.base_dir, "tests", "config", "pytest_software.yml")
+        pytest_yml_path = os.path.join(module.base_dir, "tests", "config", "pytest_modules.yml")
         with open(pytest_yml_path, "r") as fh:
             pytest_yml = yaml.safe_load(fh)
             if module.module_name in pytest_yml.keys():
-                module.passed.append(("test_pytest_yml", "correct entry in pytest_software.yml", pytest_yml_path))
+                module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
             else:
-                module.failed.append(("test_pytest_yml", "missing entry in pytest_software.yml", pytest_yml_path))
+                module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
     except FileNotFoundError as e:
-        module.failed.append(("test_pytest_yml", f"Could not open pytest_software.yml file", pytest_yml_path))
+        module.failed.append(("test_pytest_yml", f"Could not open pytest_modules.yml file", pytest_yml_path))
 
     # Lint the test.yml file
     try:

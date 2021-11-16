@@ -1,10 +1,81 @@
 # nf-core/tools: Changelog
 
-## v1.15dev
+## v2.2dev
+
+### Template
+
+* Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
+* Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
+* Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
+* Remove `params.hostnames` from the pipeline template ([#1304](https://github.com/nf-core/tools/issues/1304))
+* Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
+
+### General
+
+* Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
+* Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
+* Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
+* Update 'fix' message in `nf-core lint` to conform to the current command line options. ([#1259](https://github.com/nf-core/tools/issues/1259))
+* Fixed bug in `nf-core list` when `NXF_HOME` is set
+* Run CI test used to create and lint/run the pipeline template with minimum and latest edge release of NF ([#1304](https://github.com/nf-core/tools/issues/1304))
+
+### Modules
+
+* Fixed typo in `module_utils.py`.
+* Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
+* Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag
+
+## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
+
+### Template
+
+* Correct regex pattern for file names in `nextflow_schema.json`
+* Remove `.` from nf-core/tools command examples
+* Update Nextflow installation link in pipeline template ([#1201](https://github.com/nf-core/tools/issues/1201))
+* Command `hostname` is not portable [[#1212](https://github.com/nf-core/tools/pull/1212)]
+* Changed how singularity and docker links are written in template to avoid duplicate links
+
+### General
+
+* Changed names of some flags with `-r` as short options to make the flags more consistent between commands.
+
+### Modules
+
+* Added consistency checks between installed modules and `modules.json` ([#1199](https://github.com/nf-core/tools/issues/1199))
+* Added support excluding or specifying version of modules in `.nf-core.yml` when updating with `nf-core modules install --all` ([#1204](https://github.com/nf-core/tools/issues/1204))
+* Created `nf-core modules update` and removed updating options from `nf-core modules install`
+* Added missing function call to `nf-core lint` ([#1198](https://github.com/nf-core/tools/issues/1198))
+* Fix `nf-core lint` not filtering modules test when run with `--key` ([#1203](https://github.com/nf-core/tools/issues/1203))
+* Fixed `nf-core modules install` not working when installing from branch with `-b` ([#1218](https://github.com/nf-core/tools/issues/1218))
+* Added prompt to choose between updating all modules or named module in  `nf-core modules update`
+* Check if modules is installed before trying to update in `nf-core modules update`
+* Verify that a commit SHA provided with `--sha` exists for `install/update` commands
+* Add new-line to `main.nf` after `bump-versions` command to make ECLint happy
+
+## [v2.0.1 - Palladium Platypus Junior](https://github.com/nf-core/tools/releases/tag/2.0.1) - [2021-07-13]
+
+### Template
+
+* Critical tweak to add `--dir` declaration to `nf-core lint` GitHub Actions `linting.yml` workflow
+
+### General
+
+* Add `--dir` declaration to `nf-core sync` GitHub Actions `sync.yml` workflow
+
+## [v2.0 - Palladium Platypus](https://github.com/nf-core/tools/releases/tag/2.0) - [2021-07-13]
+
+### :warning: Major enhancements & breaking changes
+
+This marks the first Nextflow DSL2-centric release of `tools` which means that some commands won't work in full with DSL1 pipelines anymore. Please use a `v1.x` version of `tools` for such pipelines or better yet join us to improve our DSL2 efforts! Here are the most important changes:
+
+* The pipeline template has been completely re-written in DSL2
+* A module template has been added to auto-create best-practice DSL2 modules to speed up development
+* A whole suite of commands have been added to streamline the creation, installation, removal, linting and version bumping of DSL2 modules either installed within pipelines or the nf-core/modules repo
 
 ### Template
 
 * Move TODO item of `contains:` map in a YAML string [[#1082](https://github.com/nf-core/tools/issues/1082)]
+* Trigger AWS tests via Tower API [[#1160](https://github.com/nf-core/tools/pull/1160)]
 
 ### General
 
@@ -12,7 +83,10 @@
 * Regular release sync fix - this time it was to do with JSON serialisation [[#1072](https://github.com/nf-core/tools/pull/1072)]
 * Fixed bug in schema validation that ignores upper/lower-case typos in parameters [[#1087](https://github.com/nf-core/tools/issues/1087)]
 * Bugfix: Download should use path relative to workflow for configs
+* Remove lint checks for files related to conda and docker as not needed anymore for DSL2
 * Removed `params_used` lint check because of incompatibility with DSL2
+* Added`modules bump-versions` command to `README.md`
+* Update docs for v2.0 release
 
 ### Modules
 
@@ -33,6 +107,19 @@
 * Refactored passing of command line arguments to `nf-core` commands and subcommands ([#1139](https://github.com/nf-core/tools/issues/1139), [#1140](https://github.com/nf-core/tools/issues/1140))
 * Check for `modules.json` for entries of modules that are not actually installed in the pipeline [[#1141](https://github.com/nf-core/tools/issues/1141)]
 * Added `<keywords>` argument to `nf-core modules list` for filtering the listed modules. ([#1139](https://github.com/nf-core/tools/issues/1139)
+* Added support for a `bump-versions` configuration file [[#1142](https://github.com/nf-core/tools/issues/1142)]
+* Fixed `nf-core modules create-test-yml` so it doesn't break when the output directory is supplied [[#1148](https://github.com/nf-core/tools/issues/1148)]
+* Updated `nf-core modules lint` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
+* Updated `nf-core modules install` and `modules.json` to work with new directory structure ([#1159](https://github.com/nf-core/tools/issues/1159))
+* Updated `nf-core modules remove` to work with new directory structure [[#1159](https://github.com/nf-core/tools/issues/1159)]
+* Restructured code and removed old table style in `nf-core modules list`
+* Fixed bug causing `modules.json` creation to loop indefinitly
+* Added `--all` flag to `nf-core modules install`
+* Added `remote` and `local` subcommands to `nf-core modules list`
+* Fix bug due to restructuring in modules template
+* Added checks for verifying that the remote repository is well formed
+* Added checks to `ModulesCommand` for verifying validity of remote repositories
+* Misc. changes to `modules install`: check that module exist in remote, `--all` is has `--latest` by default.
 
 #### Sync
 
@@ -41,6 +128,7 @@
 #### Tests
 
 * Added a test for the `version_consistency` lint check
+* Refactored modules tests into separate files, and removed direct comparisons with number of tests in `lint` tests ([#1158](https://github.com/nf-core/tools/issues/1158))
 
 ## [v1.14 - Brass Chicken :chicken:](https://github.com/nf-core/tools/releases/tag/1.14) - [2021-05-11]
 
