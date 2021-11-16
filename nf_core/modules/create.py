@@ -282,10 +282,12 @@ class ModuleCreate(object):
             raise UserWarning(f"Could not find directory: {directory}")
 
         # Determine repository type
-        if os.path.exists(os.path.join(directory, "nextflow.config")):
-            return "pipeline"
-        elif os.path.exists(os.path.join(directory, "modules")):
-            return "modules"
+        if os.path.exists("README.md"):
+            with open("README.md") as fh:
+                if fh.readline().rstrip().startswith("# ![nf-core/modules]"):
+                    return "modules"
+                else:
+                    return "pipeline"
         else:
             raise UserWarning(
                 f"This directory does not look like a clone of nf-core/modules or an nf-core pipeline: '{directory}'"
