@@ -9,6 +9,7 @@
 * Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
 * Remove `params.hostnames` from the pipeline template ([#1304](https://github.com/nf-core/tools/issues/1304))
 * Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
+* New YAML issue templates for pipeline bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
 
 ### General
 
@@ -18,6 +19,7 @@
 * Update 'fix' message in `nf-core lint` to conform to the current command line options. ([#1259](https://github.com/nf-core/tools/issues/1259))
 * Fixed bug in `nf-core list` when `NXF_HOME` is set
 * Run CI test used to create and lint/run the pipeline template with minimum and latest edge release of NF ([#1304](https://github.com/nf-core/tools/issues/1304))
+* New YAML issue templates for tools bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
 
 ### Modules
 
