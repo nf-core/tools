@@ -597,7 +597,7 @@ class PipelineSchema(object):
                 ):
                     if "properties" not in self.schema:
                         self.schema["properties"] = {}
-                    self.schema["properties"][p_key] = self.load_lint_schema(p_val)
+                    self.schema["properties"][p_key] = self.build_schema_param(p_val)
                     log.debug("Adding '{}' to pipeline schema".format(p_key))
                     params_added.append(p_key)
 
