@@ -12,6 +12,10 @@
 
 ### General
 
+* Made lint check for parameters defaults stricter [[#992](https://github.com/nf-core/tools/issues/992)]
+    * Defaults must now match the variable type specified in the schema
+    * If you want the parameter to not have a default value, use `null`
+    * Strings set to `false` or an empty string in `nextflow.config` will now fail linting
 * Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
 * Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
 * Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
@@ -83,7 +87,6 @@ This marks the first Nextflow DSL2-centric release of `tools` which means that s
 * Regular release sync fix - this time it was to do with JSON serialisation [[#1072](https://github.com/nf-core/tools/pull/1072)]
 * Fixed bug in schema validation that ignores upper/lower-case typos in parameters [[#1087](https://github.com/nf-core/tools/issues/1087)]
 * Bugfix: Download should use path relative to workflow for configs
-* Added lint check for valid default parameters in `nextflow.config` [[#992](https://github.com/nf-core/tools/issues/992)]
 * Remove lint checks for files related to conda and docker as not needed anymore for DSL2
 * Removed `params_used` lint check because of incompatibility with DSL2
 * Added`modules bump-versions` command to `README.md`
