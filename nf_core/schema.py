@@ -38,7 +38,7 @@ class PipelineSchema(object):
         self.schema_params = []
         self.input_params = {}
         self.pipeline_params = {}
-        self.invalid_nextflow_config_default_parameters = []
+        self.invalid_nextflow_config_default_parameters = {}
         self.pipeline_manifest = {}
         self.schema_from_scratch = False
         self.no_prompts = False
@@ -83,7 +83,19 @@ class PipelineSchema(object):
             num_params = self.validate_schema()
             self.get_schema_defaults()
             self.validate_default_params()
-            log.info("[green][✓] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
+            if len(self.invalid_nextflow_config_default_parameters) > 0:
+                log.info(
+                    "[red][✗] Invalid default parameters found:\n  --{}\n\nNOTE: Use null in config for no default.".format(
+                        "\n  --".join(
+                            [
+                                f"{param}: {msg}"
+                                for param, msg in self.invalid_nextflow_config_default_parameters.items()
+                            ]
+                        )
+                    )
+                )
+            else:
+                log.info("[green][✓] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
         except json.decoder.JSONDecodeError as e:
             error_msg = "[bold red]Could not parse schema JSON:[/] {}".format(e)
             log.error(error_msg)
@@ -249,7 +261,7 @@ class PipelineSchema(object):
                         param, group_properties[param]["type"], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters.append(param)
+                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
 
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -262,7 +274,7 @@ class PipelineSchema(object):
                         param, ungrouped_properties[param]["type"], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters.append(param)
+                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
 
     def validate_config_default_parameter(self, param, schema_default_type, config_default):
         """
@@ -274,21 +286,29 @@ class PipelineSchema(object):
             return
         # else check for allowed defaults
         if schema_default_type == "string":
-            if config_default in ["false", "true", "''"]:
-                self.invalid_nextflow_config_default_parameters.append(param)
+            if str(config_default) in ["false", "true", "''"]:
+                self.invalid_nextflow_config_default_parameters[
+                    param
+                ] = f"String should not be set to `{config_default}`"
         if schema_default_type == "boolean":
-            if not config_default in ["false", "true"]:
-                self.invalid_nextflow_config_default_parameters.append(param)
+            if not str(config_default) in ["false", "true"]:
+                self.invalid_nextflow_config_default_parameters[
+                    param
+                ] = f"Booleans should only be true or false, not `{config_default}`"
         if schema_default_type == "integer":
             try:
                 int(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters.append(param)
+                self.invalid_nextflow_config_default_parameters[
+                    param
+                ] = f"Does not look like an integer: `{config_default}`"
         if schema_default_type == "number":
             try:
                 float(config_default)
             except ValueError:
-                self.invalid_nextflow_config_default_parameters.append(param)
+                self.invalid_nextflow_config_default_parameters[
+                    param
+                ] = f"Does not look like a number (float): `{config_default}`"
 
     def validate_schema(self, schema=None):
         """
@@ -577,7 +597,7 @@ class PipelineSchema(object):
                 ):
                     if "properties" not in self.schema:
                         self.schema["properties"] = {}
-                    self.schema["properties"][p_key] = self.build_schema_param(p_val)
+                    self.schema["properties"][p_key] = self.load_lint_schema(p_val)
                     log.debug("Adding '{}' to pipeline schema".format(p_key))
                     params_added.append(p_key)
 
@@ -603,17 +623,12 @@ class PipelineSchema(object):
         if p_val == "null":
             p_val = None
 
-        # NB: Only test "True" for booleans, as it is very common to initialise
-        # an empty param as false when really we expect a string at a later date..
-        if p_val == "True":
-            p_val = True
+        # Booleans
+        if p_val == "True" or p_val == "False":
+            p_val = p_val == "True"  # Convert to bool
             p_type = "boolean"
 
         p_schema = {"type": p_type, "default": p_val}
-
-        # Assume that false and empty strings shouldn't be a default
-        if p_val == "false" or p_val == "" or p_val is None:
-            del p_schema["default"]
 
         return p_schema
 
