@@ -23,27 +23,10 @@ jobs:
     strategy:
       matrix:
         # Nextflow versions: check pipeline minimum and current latest
-        nxf_ver: ['20.04.0', '']
+        nxf_ver: ['21.04.0', '']
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
-
-      - name: Check if Dockerfile or Conda environment changed
-        uses: technote-space/get-diff-action@v4
-        with:
-          FILES: |
-            Dockerfile
-            environment.yml
-
-      - name: Build new docker image
-        if: env.MATCHED_FILES
-        run: docker build --no-cache . -t {{ name_docker }}:dev
-
-      - name: Pull docker image
-        if: {% raw %}${{ !env.MATCHED_FILES }}{% endraw %}
-        run: |
-          docker pull {{ name_docker }}:dev
-          docker tag {{ name_docker }}:dev {{ name_docker }}:dev
 
       - name: Install Nextflow
         env:

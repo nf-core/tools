@@ -62,7 +62,7 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
-            "description": "The output directory where the results will be saved.",
+            "description": "Path to the output directory where the results will be saved.",
             "default": "./results",
             "fa_icon": "fas fa-folder-open",
         }
@@ -191,11 +191,11 @@ class TestLaunch(unittest.TestCase):
         """Check that we can properly sanitise results from the web"""
         self.launcher.get_pipeline_schema()
         self.launcher.nxf_flags["-name"] = ""
-        self.launcher.schema_obj.input_params["single_end"] = "true"
+        self.launcher.schema_obj.input_params["igenomes_ignore"] = "true"
         self.launcher.schema_obj.input_params["max_cpus"] = "12"
         self.launcher.sanitise_web_response()
         assert "-name" not in self.launcher.nxf_flags
-        assert self.launcher.schema_obj.input_params["single_end"] == True
+        assert self.launcher.schema_obj.input_params["igenomes_ignore"] == True
         assert self.launcher.schema_obj.input_params["max_cpus"] == 12
 
     def test_ob_to_questionary_bool(self):

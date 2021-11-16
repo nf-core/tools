@@ -4,9 +4,7 @@
 from __future__ import print_function
 from collections import OrderedDict
 
-import click
 import datetime
-import errno
 import git
 import json
 import logging
@@ -15,8 +13,6 @@ import re
 import requests
 import rich.console
 import rich.table
-import subprocess
-import sys
 
 import nf_core.utils
 
@@ -259,8 +255,14 @@ class Workflows(object):
             else:
                 table.add_row(*rowdata)
 
-        # Print summary table
-        return table
+        if len(filtered_workflows) > 0:
+            # Print summary table
+            return table
+        else:
+            return_str = f"No pipelines found using filter keywords: '{', '.join(self.keyword_filters)}'"
+            if self.keyword_filters == ("modules",):
+                return_str += "\n\n:bulb: Did you mean 'nf-core modules list' instead?"
+            return return_str
 
     def print_json(self):
         """Dump JSON of all parsed information"""
@@ -332,7 +334,7 @@ class LocalWorkflow(object):
             if len(os.environ.get("NXF_ASSETS", "")) > 0:
                 nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)
             elif len(os.environ.get("NXF_HOME", "")) > 0:
-                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets")
+                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets", self.full_name)
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):

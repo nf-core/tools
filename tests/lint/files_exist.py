@@ -29,7 +29,7 @@ def test_files_exist_missing_main(self):
     lint_obj._load()
 
     results = lint_obj.files_exist()
-    assert results["warned"] == ["File not found: `main.nf`"]
+    assert "File not found: `main.nf`" in results["warned"]
 
 
 def test_files_exist_depreciated_file(self):

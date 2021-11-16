@@ -11,9 +11,6 @@ def test_actions_ci_pass(self):
     results = self.lint_obj.actions_ci()
     assert results["passed"] == [
         "'.github/workflows/ci.yml' is triggered on expected events",
-        "CI is building the correct docker image: `docker build --no-cache . -t nfcore/testpipeline:dev`",
-        "CI is pulling the correct docker image: docker pull nfcore/testpipeline:dev",
-        "CI is tagging docker image correctly: docker tag nfcore/testpipeline:dev nfcore/testpipeline:dev",
         "'.github/workflows/ci.yml' checks minimum NF version",
     ]
     assert len(results.get("warned", [])) == 0

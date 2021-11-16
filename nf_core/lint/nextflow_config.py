@@ -80,12 +80,6 @@ def nextflow_config(self):
       * Default filenames for the timeline, trace and report
       * The DAG file path should end with ``.svg`` (If Graphviz is not installed, Nextflow will generate a ``.dot`` file instead)
 
-    * ``process.container``
-
-      * Docker Hub handle for a single default container for use by all processes.
-      * Must specify a tag that matches the pipeline version number if set.
-      * If the pipeline version number contains the string ``dev``, the DockerHub tag must be ``:dev``
-
     **The following variables are depreciated and fail the test if they are still present:**
 
     * ``params.version``: The old method for specifying the pipeline version. Replaced by ``manifest.version``
@@ -146,7 +140,6 @@ def nextflow_config(self):
         ["trace.file"],
         ["report.file"],
         ["dag.file"],
-        ["process.container"],
     ]
     # Old depreciated vars - fail if present
     config_fail_ifdefined = [
@@ -251,34 +244,6 @@ def nextflow_config(self):
                     self.nf_config.get("manifest.nextflowVersion", "")
                 ).strip("\"'")
             )
-
-    # Check that the process.container name is pulling the version tag or :dev
-    if self.nf_config.get("process.container"):
-        container_name = "{}:{}".format(
-            self.nf_config.get("manifest.name").replace("nf-core", "nfcore").strip("'"),
-            self.nf_config.get("manifest.version", "").strip("'"),
-        )
-        if "dev" in self.nf_config.get("manifest.version", "") or not self.nf_config.get("manifest.version"):
-            container_name = "{}:dev".format(
-                self.nf_config.get("manifest.name").replace("nf-core", "nfcore").strip("'")
-            )
-        try:
-            assert self.nf_config.get("process.container", "").strip("'") == container_name
-        except AssertionError:
-            if self.release_mode:
-                failed.append(
-                    "Config ``process.container`` looks wrong. Should be ``{}`` but is ``{}``".format(
-                        container_name, self.nf_config.get("process.container", "").strip("'")
-                    )
-                )
-            else:
-                warned.append(
-                    "Config ``process.container`` looks wrong. Should be ``{}`` but is ``{}``".format(
-                        container_name, self.nf_config.get("process.container", "").strip("'")
-                    )
-                )
-        else:
-            passed.append("Config ``process.container`` looks correct: ``{}``".format(container_name))
 
     # Check that the pipeline version contains ``dev``
     if not self.release_mode and "manifest.version" in self.nf_config:
