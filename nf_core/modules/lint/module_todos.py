@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import logging
-from nf_core.lint.pipeline_todos import pipeline_todos
+from nf_core.lint_utils import find_todos
 
 log = logging.getLogger(__name__)
 
@@ -12,6 +12,6 @@ def module_todos(module_lint_object, module):
     for a single module
     """
     module.wf_path = module.module_dir
-    results = pipeline_todos(module)
+    results = find_todos(module)
     for i, warning in enumerate(results["warned"]):
         module.warned.append(("module_todo", warning, results["file_paths"][i]))
