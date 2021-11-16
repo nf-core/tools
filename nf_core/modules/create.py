@@ -282,7 +282,7 @@ class ModuleCreate(object):
             raise UserWarning(f"Could not find directory: {directory}")
 
         # Determine repository type
-        if os.path.exists(os.path.join(directory, "main.nf")):
+        if os.path.exists(os.path.join(directory, "nextflow.config")):
             return "pipeline"
         elif os.path.exists(os.path.join(directory, "modules")):
             return "modules"
