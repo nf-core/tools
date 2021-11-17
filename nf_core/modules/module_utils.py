@@ -344,10 +344,12 @@ def get_repo_type(dir):
         raise LookupError("Could not find directory: {}".format(dir))
 
     # Determine repository type
-    if os.path.exists(os.path.join(dir, "main.nf")):
-        return "pipeline"
-    elif os.path.exists(os.path.join(dir, "modules")):
-        return "modules"
+    if os.path.exists("README.md"):
+        with open("README.md") as fh:
+            if fh.readline().rstrip().startswith("# ![nf-core/modules]"):
+                return "modules"
+            else:
+                return "pipeline"
     else:
         raise LookupError("Could not determine repository type of '{}'".format(dir))
 
