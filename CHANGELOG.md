@@ -4,6 +4,7 @@
 
 ### Template
 
+* Solve circular import when importing `nf_core.modules.lint`
 * Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
 * Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
