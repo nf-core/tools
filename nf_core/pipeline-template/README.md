@@ -42,6 +42,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
     ```console
     nextflow run {{ name }} -profile test,YOURPROFILE
     ```
+
     Note that some form of configuration will be needed so that Nextflow knows how to fetch the required software. This is usually done in the form of a config profile (`YOURPROFILE` in the example command above). You can chain multiple config profiles in a comma-separated string.
 
     > * The pipeline comes with config profiles called `docker`, `singularity`, `podman`, `shifter`, `charliecloud` and `conda` which instruct the pipeline to use the named tool for software management. For example, `-profile test,docker`.
