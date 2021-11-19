@@ -11,6 +11,7 @@
 * Remove `params.hostnames` from the pipeline template ([#1304](https://github.com/nf-core/tools/issues/1304))
 * Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
 * New YAML issue templates for pipeline bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
+* Update AWS test GitHub Actions to use v2 of [nf-core/tower-action](https://github.com/nf-core/tower-action)
 
 ### General
 
