@@ -30,6 +30,7 @@
 * Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
 * Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag
 * Check if README is from modules repo
+* Update module template to DSL2 v2.0 (remove `functions.nf` from modules template and updating `main.nf` ([#1289](https://github.com/nf-core/tools/pull/))
 
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 

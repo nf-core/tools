@@ -63,7 +63,6 @@ class ModuleCreate(object):
         modules/modules/tool/subtool/
             * main.nf
             * meta.yml
-            * functions.nf
         modules/tests/modules/tool/subtool/
             * main.nf
             * test.yml
@@ -355,7 +354,6 @@ class ModuleCreate(object):
                 )
 
             # Set file paths - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths[os.path.join("modules", "functions.nf")] = os.path.join(software_dir, "functions.nf")
             file_paths[os.path.join("modules", "main.nf")] = os.path.join(software_dir, "main.nf")
             file_paths[os.path.join("modules", "meta.yml")] = os.path.join(software_dir, "meta.yml")
             file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
