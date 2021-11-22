@@ -61,7 +61,6 @@ class ModuleLint(ModuleCommand):
 
     # Import lint functions
     from .main_nf import main_nf
-    from .functions_nf import functions_nf
     from .meta_yml import meta_yml
     from .module_changes import module_changes
     from .module_tests import module_tests
@@ -96,7 +95,7 @@ class ModuleLint(ModuleCommand):
 
     @staticmethod
     def _get_all_lint_tests():
-        return ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
+        return ["main_nf", "meta_yml", "module_changes", "module_todos"]
 
     def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
         """
@@ -231,7 +230,7 @@ class ModuleLint(ModuleCommand):
             # Filter local modules
             if os.path.exists(local_modules_dir):
                 local_modules = os.listdir(local_modules_dir)
-                local_modules = sorted([x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")])
+                local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
         # nf-core/modules
         if self.repo_type == "modules":
@@ -309,7 +308,6 @@ class ModuleLint(ModuleCommand):
         If the module is a nf-core module we check for existence of the files
         - main.nf
         - meta.yml
-        - functions.nf
         And verify that their content conform to the nf-core standards.
 
         If the linting is run for modules in the central nf-core/modules repo

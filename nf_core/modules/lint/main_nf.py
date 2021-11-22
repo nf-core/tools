@@ -27,12 +27,12 @@ def main_nf(module_lint_object, module):
         return
 
     # Check that options are defined
-    initoptions_re = re.compile(r"\s*options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
-    paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
-    if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
-        module.passed.append(("main_nf_options", "'options' variable specified", module.main_nf))
-    else:
-        module.warned.append(("main_nf_options", "'options' variable not specified", module.main_nf))
+    # initoptions_re = re.compile(r"\s*options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
+    # paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
+    # if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
+    #     module.passed.append(("main_nf_options", "'options' variable specified", module.main_nf))
+    # else:
+    #     module.warned.append(("main_nf_options", "'options' variable not specified", module.main_nf))
 
     # Go through module main.nf file and switch state according to current section
     # Perform section-specific linting
@@ -81,28 +81,28 @@ def main_nf(module_lint_object, module):
             module.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf))
 
         # if meta is specified, it should also be used as "saveAs ... meta:meta, publish_by_meta:['id']"
-        save_as = [pl for pl in process_lines if "saveAs" in pl]
-        if len(save_as) > 0 and re.search("\s*meta\s*:\s*meta", save_as[0]):
-            module.passed.append(("main_nf_meta_saveas", "'meta:meta' specified in saveAs function", module.main_nf))
-        else:
-            module.failed.append(("main_nf_meta_saveas", "'meta:meta' unspecified in saveAs function", module.main_nf))
+        # save_as = [pl for pl in process_lines if "saveAs" in pl]
+        # if len(save_as) > 0 and re.search("\s*meta\s*:\s*meta", save_as[0]):
+        #     module.passed.append(("main_nf_meta_saveas", "'meta:meta' specified in saveAs function", module.main_nf))
+        # else:
+        #     module.failed.append(("main_nf_meta_saveas", "'meta:meta' unspecified in saveAs function", module.main_nf))
 
-        if len(save_as) > 0 and re.search("\s*publish_by_meta\s*:\s*\['id'\]", save_as[0]):
-            module.passed.append(
-                (
-                    "main_nf_publish_meta_saveas",
-                    "'publish_by_meta:['id']' specified in saveAs function",
-                    module.main_nf,
-                )
-            )
-        else:
-            module.failed.append(
-                (
-                    "main_nf_publish_meta_saveas",
-                    "'publish_by_meta:['id']' unspecified in saveAs function",
-                    module.main_nf,
-                )
-            )
+        # if len(save_as) > 0 and re.search("\s*publish_by_meta\s*:\s*\['id'\]", save_as[0]):
+        #     module.passed.append(
+        #         (
+        #             "main_nf_publish_meta_saveas",
+        #             "'publish_by_meta:['id']' specified in saveAs function",
+        #             module.main_nf,
+        #         )
+        #     )
+        # else:
+        #     module.failed.append(
+        #         (
+        #             "main_nf_publish_meta_saveas",
+        #             "'publish_by_meta:['id']' unspecified in saveAs function",
+        #             module.main_nf,
+        #         )
+        #     )
 
     # Check that a software version is emitted
     if "version" in outputs:
