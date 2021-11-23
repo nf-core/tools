@@ -26,14 +26,6 @@ def main_nf(module_lint_object, module):
         module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
         return
 
-    # Check that options are defined
-    # initoptions_re = re.compile(r"\s*options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
-    # paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
-    # if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
-    #     module.passed.append(("main_nf_options", "'options' variable specified", module.main_nf))
-    # else:
-    #     module.warned.append(("main_nf_options", "'options' variable not specified", module.main_nf))
-
     # Go through module main.nf file and switch state according to current section
     # Perform section-specific linting
     state = "module"
