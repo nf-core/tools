@@ -230,7 +230,14 @@ class ModuleLint(ModuleCommand):
             # Filter local modules
             if os.path.exists(local_modules_dir):
                 local_modules = os.listdir(local_modules_dir)
-                local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
+                for m in sorted([m for m in local_modules if m.endswith(".nf")]):
+                    # Deprecation error if functions.nf is found
+                    if m == "functions.nf":
+                        raise ModuleLintException(
+                            f"File '{m}' found in '{local_modules_dir}'has been deprecated since DSL2 v2.0!"
+                    )
+                else:
+                    local_modules.append(m)
 
         # nf-core/modules
         if self.repo_type == "modules":
@@ -248,6 +255,11 @@ class ModuleLint(ModuleCommand):
                 if not "main.nf" in m_content:
                     for tool in m_content:
                         nfcore_modules.append(os.path.join(m, tool))
+                # Deprecation error if functions.nf is found
+                elif "functions.nf" in m_content:
+                    raise ModuleLintException(
+                        f"File 'functions.nf' found in '{m}' has been deprecated since DSL2 v2.0!"
+                    )
                 else:
                     nfcore_modules.append(m)
 
