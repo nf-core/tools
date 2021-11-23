@@ -6,7 +6,7 @@
 // TODO nf-core: A module file SHOULD only define input and output files as command-line parameters.
 //               All other parameters MUST be provided using "process.ext" directive, see here:
 //               https://www.nextflow.io/docs/latest/process.html#ext
-//               where "process.ext" is a Groovy Map that MUST be provided via the modules.config file.
+//               where "process.ext" is a Groovy map. 
 //               Any parameters that need to be evaluated in the context of a particular sample
 //               e.g. single-end/paired-end data MUST also be defined and evaluated appropriately.
 // TODO nf-core: Software that can be piped together SHOULD be added to separate module files

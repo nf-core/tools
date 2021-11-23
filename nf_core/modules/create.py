@@ -66,6 +66,7 @@ class ModuleCreate(object):
         modules/tests/modules/tool/subtool/
             * main.nf
             * test.yml
+            * nextflow.config
         tests/config/pytest_modules.yml
 
         The function will attempt to automatically find a Bioconda package called <tool>
