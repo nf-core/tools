@@ -33,7 +33,7 @@ ch_multiqc_custom_config = params.multiqc_config ? Channel.fromPath(params.multi
 */
 
 // Don't overwrite global params.modules, create a copy instead and use that within the main script.
-def modules = params.modules.clone()
+// def modules = params.modules.clone()
 
 //
 // SUBWORKFLOW: Consisting of a mix of local and nf-core/modules
@@ -46,15 +46,15 @@ include { INPUT_CHECK } from '../subworkflows/local/input_check' addParams( opti
 ========================================================================================
 */
 
-def multiqc_options   = modules['multiqc']
-multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
+// def multiqc_options   = modules['multiqc']
+// multiqc_options.args += params.multiqc_title ? Utils.joinModuleArgs(["--title \"$params.multiqc_title\""]) : ''
 
 //
 // MODULE: Installed directly from nf-core/modules
 //
-include { FASTQC  } from '../modules/nf-core/modules/fastqc/main'  addParams( options: modules['fastqc'] )
-include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' addParams( options: multiqc_options   )
-include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'  addParams( options: [publish_files : ['_versions.yml':'']] )
+include { FASTQC  } from '../modules/nf-core/modules/fastqc/main'  // addParams( options: modules['fastqc'] )
+include { MULTIQC } from '../modules/nf-core/modules/multiqc/main' // addParams( options: multiqc_options   )
+include { CUSTOM_DUMPSOFTWAREVERSIONS } from '../modules/nf-core/modules/custom/dumpsoftwareversions/main'  // addParams( options: [publish_files : ['_versions.yml':'']] )
 
 /*
 ========================================================================================
