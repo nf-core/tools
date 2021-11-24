@@ -359,5 +359,6 @@ class ModuleCreate(object):
             file_paths[os.path.join("modules", "meta.yml")] = os.path.join(software_dir, "meta.yml")
             file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
             file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
+            file_paths[os.path.join("tests", "nextflow.config")] = os.path.join(test_dir, "nextflow.config")
 
         return file_paths
