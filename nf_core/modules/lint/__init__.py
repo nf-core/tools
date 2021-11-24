@@ -234,7 +234,7 @@ class ModuleLint(ModuleCommand):
                     # Deprecation error if functions.nf is found
                     if m == "functions.nf":
                         raise ModuleLintException(
-                            f"File '{m}' found in '{local_modules_dir}'has been deprecated since DSL2 v2.0!"
+                            f"File '{m}' found in '{local_modules_dir}' has been deprecated since DSL2 v2.0!"
                     )
                 else:
                     local_modules.append(m)
