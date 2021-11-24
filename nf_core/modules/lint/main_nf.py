@@ -26,14 +26,14 @@ def main_nf(module_lint_object, module):
         module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
         return
 
-    deprecated_f = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName"] 
+    deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"] 
     lines_j = "\n".join(lines)
-    for f in deprecated_f:
-        if f in lines_j:
+    for i in deprecated_i:
+        if i in lines_j:
             module.failed.append(
                 (
                     "deprecated_dsl2",
-                    f"Function `{f}` has been deprecated since DSL2 v2.0",
+                    f"`{i}` has been deprecated since DSL2 v2.0",
                     module.main_nf,
                 )
             )
