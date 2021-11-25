@@ -234,7 +234,7 @@ class ModuleLint(ModuleCommand):
                     # Deprecation error if functions.nf is found
                     if m == "functions.nf":
                         raise ModuleLintException(
-                            f"File '{m}' found in '{local_modules_dir}' has been deprecated since DSL2 v2.0!"
+                            f"Deprecated file '{m}' found in '{local_modules_dir}' please delete it and update to latest syntax!"
                     )
                 else:
                     local_modules.append(m)
@@ -258,7 +258,7 @@ class ModuleLint(ModuleCommand):
                 # Deprecation error if functions.nf is found
                 elif "functions.nf" in m_content:
                     raise ModuleLintException(
-                        f"File 'functions.nf' found in '{m}' has been deprecated since DSL2 v2.0!"
+                        f"Deprecated file '{m}' found in '{local_modules_dir}' please delete it and update to latest syntax!"
                     )
                 else:
                     nfcore_modules.append(m)
