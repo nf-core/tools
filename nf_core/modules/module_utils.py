@@ -225,7 +225,7 @@ def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         are identical to remote files
     """
 
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    files_to_check = ["main.nf", "meta.yml"]
     local_file_contents = [None, None, None]
     for i, file in enumerate(files_to_check):
         try:
@@ -251,7 +251,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
         bool: Whether all local files are identical to remote version
     """
 
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    files_to_check = ["main.nf", "meta.yml"]
     files_are_equal = [False, False, False]
     remote_copies = [None, None, None]
 
@@ -304,7 +304,7 @@ def get_installed_modules(dir, repo_type="modules"):
         # Filter local modules
         if os.path.exists(local_modules_dir):
             local_modules = os.listdir(local_modules_dir)
-            local_modules = sorted([x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")])
+            local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
     # nf-core/modules
     if repo_type == "modules":
