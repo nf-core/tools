@@ -24,8 +24,7 @@ process {{ tool_name_underscore|upper }} {
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
     // TODO nf-core: See section in main README for further information regarding finding and adding container addresses to the section below.
     conda (params.enable_conda ? "{{ bioconda if bioconda else 'YOUR-TOOL-HERE' }}" : null)
-    container "${ workflow.containerEngine == 'singularity' &&
-        !task.ext.singularity_pull_docker_container ?
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         '{{ singularity_container if singularity_container else 'https://depot.galaxyproject.org/singularity/YOUR-TOOL-HERE' }}':
         '{{ docker_container if docker_container else 'quay.io/biocontainers/YOUR-TOOL-HERE' }}' }"
 
@@ -42,13 +41,13 @@ process {{ tool_name_underscore|upper }} {
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
     {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
     // TODO nf-core: List additional required output channels/values here
-    path "versions.yml"          , emit: versions
+    path "versions.yml"           , emit: versions
 
     script:
+    def args = task.ext.args ?: ''
     {% if has_meta -%}
     def prefix = task.ext.suffix ? "${meta.id}${task.ext.suffix}" : "${meta.id}"
     {%- endif %}
-    def args = task.ext.args ?: ''
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
     //               If the software is unable to output a version number on the command-line then it can be manually specified
     //               e.g. https://github.com/nf-core/modules/blob/master/modules/homer/annotatepeaks/main.nf
