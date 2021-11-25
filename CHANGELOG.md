@@ -5,6 +5,7 @@
 ### Template
 
 * Bump minimun Nextflow version to 21.10.3
+* Convert pipeline template to updated Nextflow DSL2 syntax
 * Solve circular import when importing `nf_core.modules.lint`
 * Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
