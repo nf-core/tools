@@ -281,9 +281,10 @@ class ModuleCreate(object):
         if dir is None or not os.path.exists(directory):
             raise UserWarning(f"Could not find directory: {directory}")
 
+        readme = os.path.join(directory, "README.md")
         # Determine repository type
-        if os.path.exists("README.md"):
-            with open("README.md") as fh:
+        if os.path.exists(readme):
+            with open(readme) as fh:
                 if fh.readline().rstrip().startswith("# ![nf-core/modules]"):
                     return "modules"
                 else:
