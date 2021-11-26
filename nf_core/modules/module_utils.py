@@ -57,7 +57,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     if modules_repo is None:
         modules_repo = ModulesRepo()
     api_url = f"https://api.github.com/repos/{modules_repo.name}/commits"
-    api_url += f"?sha{modules_repo.branch}"
+    api_url += f"?sha={modules_repo.branch}"
     if module_name is not None:
         api_url += f"&path=modules/{module_name}"
     api_url += f"&page={page_nbr}"
