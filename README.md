@@ -194,7 +194,7 @@ $ nf-core list
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -219,7 +219,7 @@ $ nf-core list rna rna-seq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name ┃ Stars ┃ Latest Release ┃     Released ┃ Last Pulled ┃ Have latest release? ┃
@@ -248,7 +248,7 @@ $ nf-core list -s stars
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -292,7 +292,7 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
@@ -372,7 +372,7 @@ $ nf-core download
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
@@ -504,7 +504,7 @@ $ nf-core licences rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.10
+    nf-core/tools version 2.2
 
   INFO     Fetching licence information for 25 tools
   INFO     Warning: This tool only prints licence information for the software tools packaged using conda.
@@ -558,7 +558,7 @@ $ nf-core create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
@@ -603,7 +603,7 @@ $ nf-core lint
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 INFO     Testing pipeline: .
 ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -713,7 +713,7 @@ $ nf-core schema validate rnaseq nf-params.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 
@@ -745,7 +745,7 @@ $ nf-core schema build nf-core-testpipeline
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
   INFO     [✓] Default parameters look valid
   INFO     [✓] Pipeline schema looks valid (found 25 params)
@@ -784,7 +784,7 @@ $ nf-core schema lint nextflow_schema.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
   ERROR    [✗] Pipeline schema does not follow nf-core specs:
             Definition subschema 'input_output_options' not included in schema 'allOf'
@@ -800,14 +800,14 @@ Usage is `nf-core bump-version <new_version>`, eg:
 
 ```console
 $ cd path/to/my_pipeline
-$ nf-core bump-version . 1.7
+$ nf-core bump-version 1.7
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 
@@ -862,7 +862,7 @@ $ nf-core sync my_pipeline/
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 
@@ -926,7 +926,7 @@ $ nf-core modules list remote
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     Modules available from nf-core/modules (master)
@@ -957,7 +957,7 @@ $ nf-core modules list local
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     Modules installed in '.':
@@ -983,7 +983,7 @@ $ nf-core modules install
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Tool name: cat/fastq
 INFO     Installing cat/fastq
@@ -1010,7 +1010,7 @@ $ nf-core modules update
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Tool name: fastqc
 INFO     Updating 'nf-core/modules/fastqc'
@@ -1072,7 +1072,7 @@ $ nf-core modules remove
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Tool name: star/align
 INFO     Removing star/align
@@ -1140,7 +1140,7 @@ $ nf-core modules create-test-yml
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses
@@ -1186,7 +1186,7 @@ $ nf-core modules lint
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Lint all modules or a single named module? Named module
 ? Tool name: star/align
@@ -1225,7 +1225,7 @@ $ nf-core modules bump-versions -d modules
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 

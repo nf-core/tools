@@ -38,7 +38,7 @@ def print_fixes(lint_obj, module_lint_obj):
     """Prints available and applied fixes"""
 
     if len(lint_obj.could_fix):
-        fix_cmd = "nf-core lint {}--fix {}".format(
+        fix_cmd = "nf-core lint {} --fix {}".format(
             "" if lint_obj.wf_path == "." else f"--dir {lint_obj.wf_path}", " --fix ".join(lint_obj.could_fix)
         )
         console.print(
