@@ -14,7 +14,7 @@ def module_deprecations(module_lint_object, module):
         module.failed.append(
             (
                 "module_deprecations",
-                f"Deprecated file 'functions.nf' found. No longer required for the latest nf-core/modules syntax!",
+                f"Deprecated file `functions.nf` found. No longer required for the latest nf-core/modules syntax!",
                 module.module_dir,
             )
         )
