@@ -33,7 +33,7 @@ def main_nf(module_lint_object, module):
             module.failed.append(
                 (
                     "deprecated_dsl2",
-                    f"`{i}` has been deprecated since DSL2 v2.0",
+                    f"`{i}` specified. No longer required for the latest nf-core/modules syntax!",
                     module.main_nf,
                 )
             )
