@@ -235,7 +235,7 @@ class ModuleLint(ModuleCommand):
                     if m == "functions.nf":
                         raise ModuleLintException(
                             f"Deprecated file '{m}' found in '{local_modules_dir}' please delete it and update to latest syntax!"
-                    )
+                        )
                 else:
                     local_modules.append(m)
 
