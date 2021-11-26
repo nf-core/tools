@@ -4,6 +4,8 @@
 
 ### Template
 
+* Bump minimun Nextflow version to 21.10.3
+* Convert pipeline template to updated Nextflow DSL2 syntax
 * Solve circular import when importing `nf_core.modules.lint`
 * Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
@@ -15,6 +17,7 @@
 
 ### General
 
+* Bump minimun Nextflow version to 21.10.3
 * Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
 * Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
 * Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
@@ -30,6 +33,8 @@
 * Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
 * Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag
 * Check if README is from modules repo
+* Update module template to DSL2 v2.0 (remove `functions.nf` from modules template and updating `main.nf` ([#1289](https://github.com/nf-core/tools/pull/))
+* Substitute get process/module name custom functions in module `main.nf` using template replacement ([#1284](https://github.com/nf-core/tools/issues/1284))
 
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 

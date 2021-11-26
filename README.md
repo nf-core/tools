@@ -1118,12 +1118,11 @@ INFO     Where applicable all sample-specific information e.g. 'id', 'single_end
          Groovy Map called 'meta'. This information may not be required in some instances, for example indexing reference genome files.
 Will the module require a meta map of sample information? (yes/no) [y/n] (y): y
 INFO     Created / edited following files:
-           ./software/star/align/functions.nf
            ./software/star/align/main.nf
            ./software/star/align/meta.yml
            ./tests/software/star/align/main.nf
            ./tests/software/star/align/test.yml
-           ./tests/config/pytest_software.yml
+           ./tests/config/pytest_modules.yml
 ```
 
 ### Create a module test config file
