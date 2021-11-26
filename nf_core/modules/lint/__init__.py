@@ -65,6 +65,7 @@ class ModuleLint(ModuleCommand):
     from .module_changes import module_changes
     from .module_tests import module_tests
     from .module_todos import module_todos
+    from .module_deprecations import module_deprecations
     from .module_version import module_version
 
     def __init__(self, dir):
@@ -95,7 +96,7 @@ class ModuleLint(ModuleCommand):
 
     @staticmethod
     def _get_all_lint_tests():
-        return ["main_nf", "meta_yml", "module_changes", "module_todos"]
+        return ["main_nf", "meta_yml", "module_changes", "module_todos", "module_deprecations"]
 
     def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
         """
@@ -229,15 +230,7 @@ class ModuleLint(ModuleCommand):
 
             # Filter local modules
             if os.path.exists(local_modules_dir):
-                local_modules = os.listdir(local_modules_dir)
-                for m in sorted([m for m in local_modules if m.endswith(".nf")]):
-                    # Deprecation error if functions.nf is found
-                    if m == "functions.nf":
-                        raise ModuleLintException(
-                            f"Deprecated file '{m}' found in '{local_modules_dir}' please delete it and update to latest syntax!"
-                        )
-                else:
-                    local_modules.append(m)
+                local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
         # nf-core/modules
         if self.repo_type == "modules":
@@ -245,21 +238,21 @@ class ModuleLint(ModuleCommand):
 
         # Get nf-core modules
         if os.path.exists(nfcore_modules_dir):
-            for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
+            for m in sorted(os.listdir(nfcore_modules_dir)):
                 if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
                     raise ModuleLintException(
                         f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
                     )
-                m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
+
+                module_dir = os.path.join(nfcore_modules_dir, m)
+                module_subdir = os.listdir(module_dir)
                 # Not a module, but contains sub-modules
-                if not "main.nf" in m_content:
-                    for tool in m_content:
-                        nfcore_modules.append(os.path.join(m, tool))
-                # Deprecation error if functions.nf is found
-                elif "functions.nf" in m_content:
-                    raise ModuleLintException(
-                        f"Deprecated file '{m}' found in '{local_modules_dir}' please delete it and update to latest syntax!"
-                    )
+                if "main.nf" not in module_subdir:
+                    for path in module_subdir:
+                        module_subdir_path = os.path.join(nfcore_modules_dir, m, path)
+                        if os.path.isdir(module_subdir_path):
+                            if os.path.exists(os.path.join(module_subdir_path, "main.nf")):
+                                nfcore_modules.append(os.path.join(m, path))
                 else:
                     nfcore_modules.append(m)
 
