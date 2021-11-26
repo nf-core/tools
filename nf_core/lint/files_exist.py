@@ -23,9 +23,9 @@ def files_exist(self):
         .markdownlint.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
-        .github/ISSUE_TEMPLATE/bug_report.md
+        .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
-        .github/ISSUE_TEMPLATE/feature_request.md
+        .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/ci.yml
@@ -76,6 +76,7 @@ def files_exist(self):
         bin/markdown_to_html.r
         conf/aws.config
         .github/workflows/push_dockerhub.yml
+        .github/ISSUE_TEMPLATE/bug_report.md
 
     Files that *should not* be present:
 
@@ -107,9 +108,9 @@ def files_exist(self):
         ["README.md"],
         [os.path.join(".github", ".dockstore.yml")],
         [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "ci.yml")],
@@ -152,6 +153,8 @@ def files_exist(self):
         os.path.join("bin", "markdown_to_html.r"),
         os.path.join("conf", "aws.config"),
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
+        os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
+        os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
     ]
     files_warn_ifexists = [".travis.yml"]
 

@@ -19,6 +19,8 @@ def create_modules_repo_dummy(tmp_dir):
     os.makedirs(os.path.join(root_dir, "tests", "config"))
     with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
         fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
+    with open(os.path.join(root_dir, "README.md"), "w") as fh:
+        fh.writelines(["# ![nf-core/modules](docs/images/nfcore-modules_logo.png)", "\n"])
 
     module_create = nf_core.modules.ModuleCreate(root_dir, "star/align", "@author", "process_medium", False, False)
     module_create.create()
