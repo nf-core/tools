@@ -33,10 +33,10 @@ jobs:
       - name: Install Nextflow
         env:
           CAPSULE_LOG: none
-          {% raw %-}
+          {% raw -%}
           NXF_VER: ${{ matrix.NXF_VER }}
           NXF_EDGE: ${{ matrix.NXF_EDGE }}
-          {-% endraw %}
+          {%- endraw %}
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
