@@ -35,7 +35,9 @@ jobs:
           CAPSULE_LOG: none
           {% raw -%}
           NXF_VER: ${{ matrix.NXF_VER }}
-          NXF_EDGE: ${{ matrix.NXF_EDGE }}
+          # Uncomment only if the edge release is more recent than the latest stable release
+          # See https://github.com/nextflow-io/nextflow/issues/2467
+          # NXF_EDGE: ${{ matrix.NXF_EDGE }}
           {%- endraw %}
         run: |
           wget -qO- get.nextflow.io | bash
