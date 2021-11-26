@@ -26,7 +26,6 @@ class NFCoreModule(object):
             # Initialize the important files
             self.main_nf = os.path.join(self.module_dir, "main.nf")
             self.meta_yml = os.path.join(self.module_dir, "meta.yml")
-            self.function_nf = os.path.join(self.module_dir, "functions.nf")
             if self.repo_type == "pipeline":
                 self.module_name = module_dir.split("nf-core/modules" + os.sep)[1]
             else:

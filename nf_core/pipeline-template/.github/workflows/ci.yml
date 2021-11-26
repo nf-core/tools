@@ -8,9 +8,6 @@ on:
   release:
     types: [published]
 
-# Uncomment if we need an edge release of Nextflow again
-# env: NXF_EDGE: 1
-
 jobs:
   test:
     name: Run workflow tests
@@ -18,12 +15,11 @@ jobs:
     if: {% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}
     runs-on: ubuntu-latest
     env:
-      NXF_VER: {% raw %}${{ matrix.nxf_ver }}{% endraw %}
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        # Nextflow versions: check pipeline minimum and current latest
-        nxf_ver: ['21.04.0', '']
+        # Nextflow versions: check pipeline minimum and latest edge version
+        nxf_ver: ['21.10.3', 'NXF_EDGE=1']
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -34,6 +30,8 @@ jobs:
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
+          export ${% raw %}{{ matrix.nxf_ver }}{% endraw %}
+          nextflow self-update
 
       - name: Run pipeline with test data
         # TODO nf-core: You can customise CI pipeline run tests as required

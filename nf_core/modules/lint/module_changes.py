@@ -11,12 +11,12 @@ def module_changes(module_lint_object, module):
     """
     Checks whether installed nf-core modules have changed compared to the
     original repository
-    Downloads the 'main.nf', 'functions.nf' and 'meta.yml' files for every module
+    Downloads the 'main.nf' and 'meta.yml' files for every module
     and compares them to the local copies
 
     If the module has a 'git_sha', the file content is checked against this sha
     """
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    files_to_check = ["main.nf", "meta.yml"]
 
     # Loop over nf-core modules
     module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module_lint_object.modules_repo.branch}/modules/{module.module_name}/"
