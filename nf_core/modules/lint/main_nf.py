@@ -26,7 +26,7 @@ def main_nf(module_lint_object, module):
         module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
         return
 
-    deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"] 
+    deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
     lines_j = "\n".join(lines)
     for i in deprecated_i:
         if i in lines_j:
@@ -101,7 +101,7 @@ def check_script_section(self, lines):
     script = "".join(lines)
 
     # check that process name is used for `versions.yml`
-    if re.search("\$\{\s*getProcessName\s*\(\s*task\.process\s*\)\s*\}", script):
+    if re.search("\$\{\s*task\.process\s*\}", script):
         self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
         self.failed.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
