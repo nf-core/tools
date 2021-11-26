@@ -30,7 +30,7 @@ jobs:
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-          export ${{ matrix.nxf_ver }}
+          export ${% raw %}{{ matrix.nxf_ver }}{% endraw %}
           nextflow self-update
 
       - name: Run pipeline with test data
