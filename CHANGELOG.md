@@ -30,6 +30,7 @@
 ### Modules
 
 * Fixed typo in `module_utils.py`.
+* Fixed failing lint test when process section was missing from module. Also added the local failing tests to the warned section of the output table. ([#1235](https://github.com/nf-core/tools/issues/1235))
 * Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
 * Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag
 * Check if README is from modules repo
