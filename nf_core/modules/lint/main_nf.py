@@ -104,7 +104,7 @@ def check_script_section(self, lines):
     if re.search("\$\{\s*task\.process\s*\}", script):
         self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
-        self.failed.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
+        self.warned.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
