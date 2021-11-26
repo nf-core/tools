@@ -933,9 +933,9 @@ and then call:
 gh auth login
 ```
 
-After that, you will be able to list and install your private modules without 
+After that, you will be able to list and install your private modules without
 providing your github credentials through command line, by using `--github-repository`
-and `--branch` options properly. 
+and `--branch` options properly.
 See the documentation on [gh auth login](https://cli.github.com/manual/gh_auth_login>)
 to get more information.
 
