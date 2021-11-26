@@ -7,3 +7,4 @@ markers = [
     "datafiles: load datafiles"
 ]
 testpaths = ["tests"]
+norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__', '.github', 'nf_core', 'docs']

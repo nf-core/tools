@@ -668,7 +668,7 @@ def build(dir, no_prompts, web_only, url):
         schema_obj = nf_core.schema.PipelineSchema()
         if schema_obj.build_schema(dir, no_prompts, web_only, url) is False:
             sys.exit(1)
-    except UserWarning as e:
+    except (UserWarning, AssertionError) as e:
         log.error(e)
         sys.exit(1)
 
