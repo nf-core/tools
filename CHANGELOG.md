@@ -4,6 +4,7 @@
 
 ### Template
 
+* Deal with authentication with private repositories
 * Bump minimun Nextflow version to 21.10.3
 * Convert pipeline template to updated Nextflow DSL2 syntax
 * Solve circular import when importing `nf_core.modules.lint`
