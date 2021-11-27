@@ -5,6 +5,7 @@
 ### Template
 
 * Erase temporary files and folders while performing tests
+* Deal with authentication with private repositories
 * Bump minimun Nextflow version to 21.10.3
 * Convert pipeline template to updated Nextflow DSL2 syntax
 * Solve circular import when importing `nf_core.modules.lint`
@@ -15,6 +16,7 @@
 * Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
 * New YAML issue templates for pipeline bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
 * Update AWS test GitHub Actions to use v2 of [nf-core/tower-action](https://github.com/nf-core/tower-action)
+* Post linting comment even when `linting.yml` fails
 
 ### General
 
@@ -31,6 +33,7 @@
 ### Modules
 
 * Fixed typo in `module_utils.py`.
+* Fixed failing lint test when process section was missing from module. Also added the local failing tests to the warned section of the output table. ([#1235](https://github.com/nf-core/tools/issues/1235))
 * Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
 * Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag
 * Check if README is from modules repo
