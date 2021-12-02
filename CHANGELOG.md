@@ -16,6 +16,8 @@
 * New YAML issue templates for pipeline bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
 * Update AWS test GitHub Actions to use v2 of [nf-core/tower-action](https://github.com/nf-core/tower-action)
 * Post linting comment even when `linting.yml` fails
+* Update `CONTRIBUTION.md` bullets to remove points related to `scrape_software_versions.py`
+* Update AWS test to set Nextflow version to 21.10.3
 
 ### General
 
