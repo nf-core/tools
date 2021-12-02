@@ -4,6 +4,7 @@
 
 ### Template
 
+* Update repo logos to utilize [GitHub's `#gh-light/dark-mode-only`](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#specifying-the-theme-an-image-is-shown-to), to switch between logos optimized for light or dark themes.
 * Solve circular import when importing `nf_core.modules.lint`
 * Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
 * Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
