@@ -108,7 +108,7 @@ def check_script_section(self, lines):
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
-        if re.search("\s*prefix\s*=\s*options.suffix", script):
+        if re.search("\s*prefix\s*=\s*task.ext.prefix", script):
             self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
         else:
             self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
