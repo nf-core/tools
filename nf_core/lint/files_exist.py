@@ -34,7 +34,8 @@ def files_exist(self):
         [LICENSE, LICENSE.md, LICENCE, LICENCE.md]  # NB: British / American spelling
         assets/email_template.html
         assets/email_template.txt
-        assets/nf-core-PIPELINE_logo.png
+        assets/nf-core-PIPELINE_logo_light.png
+        assets/nf-core-PIPELINE_logo_dark.png
         assets/sendmail_template.txt
         conf/modules.config
         conf/test.config
@@ -42,7 +43,8 @@ def files_exist(self):
         CHANGELOG.md
         CITATIONS.md
         CODE_OF_CONDUCT.md
-        docs/images/nf-core-PIPELINE_logo.png
+        docs/images/nf-core-PIPELINE_logo_light.png
+        docs/images/nf-core-PIPELINE_logo_dark.png
         docs/output.md
         docs/README.md
         docs/usage.md
@@ -119,11 +121,13 @@ def files_exist(self):
         [os.path.join("assets", "email_template.html")],
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
+        [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
+        [os.path.join("assets", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("conf", "modules.config")],
         [os.path.join("conf", "test.config")],
         [os.path.join("conf", "test_full.config")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_light.png")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("docs", "output.md")],
         [os.path.join("docs", "README.md")],
         [os.path.join("docs", "README.md")],

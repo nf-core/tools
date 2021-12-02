@@ -145,23 +145,22 @@ class PipelineCreate(object):
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
 
-        logo_url = f"https://nf-co.re/logo/{self.short_name}"
+        logo_url = f"https://nf-co.re/logo/{self.short_name}?theme=light"
         log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo.png"
+        email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo_light.png"
         os.makedirs(os.path.dirname(email_logo_path), exist_ok=True)
         log.debug(f"Writing logo to '{email_logo_path}'")
         r = requests.get(f"{logo_url}?w=400")
         with open(email_logo_path, "wb") as fh:
             fh.write(r.content)
-
-        readme_logo_path = f"{self.outdir}/docs/images/{self.name_noslash}_logo.png"
-
-        log.debug(f"Writing logo to '{readme_logo_path}'")
-        os.makedirs(os.path.dirname(readme_logo_path), exist_ok=True)
-        r = requests.get(f"{logo_url}?w=600")
-        with open(readme_logo_path, "wb") as fh:
-            fh.write(r.content)
+        for theme in ["dark", "light"]:
+            readme_logo_path = f"{self.outdir}/docs/images/{self.name_noslash}_logo_{theme}.png"
+            log.debug(f"Writing logo to '{readme_logo_path}'")
+            os.makedirs(os.path.dirname(readme_logo_path), exist_ok=True)
+            r = requests.get(f"{logo_url}?w=600&theme={theme}")
+            with open(readme_logo_path, "wb") as fh:
+                fh.write(r.content)
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit."""
