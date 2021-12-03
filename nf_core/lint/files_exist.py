@@ -79,6 +79,7 @@ def files_exist(self):
         conf/aws.config
         .github/workflows/push_dockerhub.yml
         .github/ISSUE_TEMPLATE/bug_report.md
+        docs/images/nf-core-PIPELINE_logo.png
 
     Files that *should not* be present:
 
@@ -159,6 +160,7 @@ def files_exist(self):
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
         os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
         os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
+        os.path.join("docs", "images", "nf-core-PIPELINE_logo.png"),
     ]
     files_warn_ifexists = [".travis.yml"]
 
