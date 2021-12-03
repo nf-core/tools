@@ -39,7 +39,7 @@ class ModulesRepo(object):
 
         # Check if repository exist
         api_url = f"https://api.github.com/repos/{self.name}/branches"
-        response = requests.get(api_url)
+        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
         if response.status_code == 200:
             branches = [branch["name"] for branch in response.json()]
             if self.branch not in branches:
@@ -48,7 +48,7 @@ class ModulesRepo(object):
             raise LookupError(f"Repository '{self.name}' is not available on GitHub")
 
         api_url = f"https://api.github.com/repos/{self.name}/contents?ref={self.branch}"
-        response = requests.get(api_url)
+        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
         if response.status_code == 200:
             dir_names = [entry["name"] for entry in response.json() if entry["type"] == "dir"]
             if "modules" not in dir_names:
