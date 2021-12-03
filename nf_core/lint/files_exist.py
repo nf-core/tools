@@ -35,7 +35,6 @@ def files_exist(self):
         assets/email_template.html
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo_light.png
-        assets/nf-core-PIPELINE_logo_dark.png
         assets/sendmail_template.txt
         conf/modules.config
         conf/test.config
@@ -123,7 +122,6 @@ def files_exist(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("conf", "modules.config")],
         [os.path.join("conf", "test.config")],
         [os.path.join("conf", "test_full.config")],
@@ -160,7 +158,7 @@ def files_exist(self):
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
         os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
         os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
-        os.path.join("docs", "images", "nf-core-PIPELINE_logo.png"),
+        os.path.join("docs", "images", f"nf-core-{short_name}_logo.png"),
     ]
     files_warn_ifexists = [".travis.yml"]
 

@@ -151,7 +151,7 @@ class PipelineCreate(object):
         email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo_light.png"
         os.makedirs(os.path.dirname(email_logo_path), exist_ok=True)
         log.debug(f"Writing logo to '{email_logo_path}'")
-        r = requests.get(f"{logo_url}?w=400")
+        r = requests.get(f"{logo_url}&w=400")
         with open(email_logo_path, "wb") as fh:
             fh.write(r.content)
         for theme in ["dark", "light"]:

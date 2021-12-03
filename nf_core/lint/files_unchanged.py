@@ -32,7 +32,6 @@ def files_unchanged(self):
         assets/email_template.html
         assets/email_template.txt
         assets/nf-core-PIPELINE_logo_light.png
-        assets/nf-core-PIPELINE_logo_dark.png
         assets/sendmail_template.txt
         CODE_OF_CONDUCT.md
         docs/images/nf-core-PIPELINE_logo_light.png
@@ -94,7 +93,6 @@ def files_unchanged(self):
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
         [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo_light.png")],
         [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("docs", "README.md")],
