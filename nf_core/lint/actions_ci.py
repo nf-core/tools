@@ -135,7 +135,9 @@ def actions_ci(self):
     except (KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' does not check minimum NF version")
     except AssertionError:
-        failed.append("Minimum NF version in '.github/workflows/ci.yml' is not tested")
+        failed.append(
+            f"Minimum pipeline NF version '{self.minNextflowVersion}' is not tested in '.github/workflows/ci.yml'"
+        )
     else:
         passed.append("'.github/workflows/ci.yml' checks minimum NF version")
 
