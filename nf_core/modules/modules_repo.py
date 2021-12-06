@@ -20,6 +20,10 @@ class ModulesRepo(object):
         self.name = repo
         self.branch = branch
 
+        # Don't bother fetching default branch if we're using nf-core
+        if not self.branch and self.name == "nf-core/modules":
+            self.branch = "master"
+
         # Verify that the repo seems to be correctly configured
         if self.name != "nf-core/modules" or self.branch:
 
