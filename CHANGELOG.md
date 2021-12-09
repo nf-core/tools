@@ -19,6 +19,7 @@
 * Post linting comment even when `linting.yml` fails
 * Update `CONTRIBUTION.md` bullets to remove points related to `scrape_software_versions.py`
 * Update AWS test to set Nextflow version to 21.10.3
+* When validating pipeline parameters, throw error instead of warning when an unexpected parameter is detected
 
 ### General
 
