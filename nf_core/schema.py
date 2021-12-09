@@ -258,9 +258,7 @@ class PipelineSchema(object):
                 if param in params_ignore:
                     continue
                 if param in self.pipeline_params:
-                    self.validate_config_default_parameter(
-                        param, group_properties[param]["type"], self.pipeline_params[param]
-                    )
+                    self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
                 else:
                     self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
 
@@ -272,38 +270,52 @@ class PipelineSchema(object):
                     continue
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(
-                        param, ungrouped_properties[param]["type"], self.pipeline_params[param]
+                        param, ungrouped_properties[param], self.pipeline_params[param]
                     )
                 else:
                     self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
 
-    def validate_config_default_parameter(self, param, schema_default_type, config_default):
+    def validate_config_default_parameter(self, param, schema_param, config_default):
         """
         Assure that default parameters in the nextflow.config are correctly set
         by comparing them to their type in the schema
         """
+
+        # If we have a default in the schema, check it matches the config
+        if "default" in schema_param and (
+            (schema_param["type"] == "boolean" and str(config_default).lower() != str(schema_param["default"]).lower())
+            and (str(schema_param["default"]) != str(config_default).strip('"').strip("'"))
+        ):
+            # Check that we are not deferring the execution of this parameter in the schema default with squiggly brakcets
+            if schema_param["type"] != "string" or "{" not in schema_param["default"]:
+                self.invalid_nextflow_config_default_parameters[
+                    param
+                ] = f"Schema default (`{schema_param['default']}`) does not match the config default (`{config_default}`)"
+                return
+
         # if default is null, we're good
         if config_default == "null":
             return
-        # else check for allowed defaults
-        if schema_default_type == "string":
+
+        # Check variable types in nextflow.config
+        if schema_param["type"] == "string":
             if str(config_default) in ["false", "true", "''"]:
                 self.invalid_nextflow_config_default_parameters[
                     param
                 ] = f"String should not be set to `{config_default}`"
-        if schema_default_type == "boolean":
+        if schema_param["type"] == "boolean":
             if not str(config_default) in ["false", "true"]:
                 self.invalid_nextflow_config_default_parameters[
                     param
                 ] = f"Booleans should only be true or false, not `{config_default}`"
-        if schema_default_type == "integer":
+        if schema_param["type"] == "integer":
             try:
                 int(config_default)
             except ValueError:
                 self.invalid_nextflow_config_default_parameters[
                     param
                 ] = f"Does not look like an integer: `{config_default}`"
-        if schema_default_type == "number":
+        if schema_param["type"] == "number":
             try:
                 float(config_default)
             except ValueError:
