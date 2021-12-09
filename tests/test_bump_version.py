@@ -73,7 +73,7 @@ def test_bump_nextflow_version(datafiles, tmp_path):
     # Check .github/workflows/ci.yml
     with open(new_pipeline_obj._fp(".github/workflows/ci.yml")) as fh:
         ci_yaml = yaml.safe_load(fh)
-    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"][0] == "NXF_VER=21.10.3"
+    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["include"][0]["NXF_VER"] == "21.10.3"
 
     # Check README.md
     with open(new_pipeline_obj._fp("README.md")) as fh:

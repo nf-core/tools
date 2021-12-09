@@ -31,4 +31,4 @@ jobs:
               "outdir": "s3://{% raw %}${{ secrets.AWS_S3_BUCKET }}{% endraw %}/{{ short_name }}/{% raw %}results-${{ github.sha }}{% endraw %}"
             }
           profiles: test_full,aws_tower
-
+          pre_run_script: 'export NXF_VER=21.10.3'
