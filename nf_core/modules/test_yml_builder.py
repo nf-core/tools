@@ -205,7 +205,11 @@ class ModulesTestYmlBuilder(object):
                 elem_md5 = self._md5(elem)
                 # Switch out the results directory path with the expected 'output' directory
                 elem = elem.replace(results_dir, "output")
-                test_files.append({"path": elem, "md5sum": elem_md5})
+                test_file = {"path": elem}
+                # Only add the md5 if it's not for an empty file / compressed empty file
+                if elem_md5 != "d41d8cd98f00b204e9800998ecf8427e" and elem_md5 != "7029066c27ac6f5ef18d660d5741979a":
+                    test_file["md5sum"] = elem_md5
+                test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
 
