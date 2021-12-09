@@ -18,7 +18,8 @@
 ### General
 
 * Made lint check for parameters defaults stricter [[#992](https://github.com/nf-core/tools/issues/992)]
-    * Defaults must now match the variable type specified in the schema
+    * Default values in `nextflow.config` must match the defaults given in the schema (anything with `{` in, or in `main.nf` is ignored)
+    * Defaults in `nextflow.config` must now match the variable _type_ specified in the schema
     * If you want the parameter to not have a default value, use `null`
     * Strings set to `false` or an empty string in `nextflow.config` will now fail linting
 * Bump minimun Nextflow version to 21.10.3
