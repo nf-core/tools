@@ -168,13 +168,14 @@ class NfcoreSchema {
         if (unexpectedParams.size() > 0) {
             Map colors = NfcoreTemplate.logColours(params.monochrome_logs)
             println ''
-            def warn_msg = 'Found unexpected parameters:'
+            def error_msg = 'Found unexpected parameters:'
             for (unexpectedParam in unexpectedParams) {
-                warn_msg = warn_msg + "\n* --${unexpectedParam}: ${params[unexpectedParam].toString()}"
+                error_msg = error_msg + "\n* --${unexpectedParam}: ${params[unexpectedParam].toString()}"
             }
-            log.warn warn_msg
-            log.info "- ${colors.dim}Ignore this warning: params.schema_ignore_params = \"${unexpectedParams.join(',')}\" ${colors.reset}"
+            log.error error_msg
+            log.info "- ${colors.dim}Ignore this error: params.schema_ignore_params = \"${unexpectedParams.join(',')}\" ${colors.reset}"
             println ''
+            has_error = true
         }
 
         if (has_error) {
