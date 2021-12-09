@@ -20,6 +20,11 @@
 
 ### General
 
+* Made lint check for parameters defaults stricter [[#992](https://github.com/nf-core/tools/issues/992)]
+    * Default values in `nextflow.config` must match the defaults given in the schema (anything with `{` in, or in `main.nf` is ignored)
+    * Defaults in `nextflow.config` must now match the variable _type_ specified in the schema
+    * If you want the parameter to not have a default value, use `null`
+    * Strings set to `false` or an empty string in `nextflow.config` will now fail linting
 * Bump minimun Nextflow version to 21.10.3
 * Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
 * Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
