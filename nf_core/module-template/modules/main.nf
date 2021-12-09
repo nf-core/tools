@@ -46,7 +46,7 @@ process {{ tool_name_underscore|upper }} {
     script:
     def args = task.ext.args ?: ''
     {% if has_meta -%}
-    def prefix = task.ext.suffix ? "${meta.id}${task.ext.suffix}" : "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     {%- endif %}
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
     //               If the software is unable to output a version number on the command-line then it can be manually specified

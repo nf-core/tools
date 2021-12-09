@@ -18,8 +18,14 @@ jobs:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        # Nextflow versions: check pipeline minimum and latest edge version
-        nxf_ver: ['21.10.3', 'NXF_EDGE=1']
+        # Nextflow versions
+        include:
+          # Test pipeline minimum Nextflow version
+          - NXF_VER: '21.10.3'
+            NXF_EDGE: ''
+          # Test latest edge release of Nextflow
+          - NXF_VER: ''
+            NXF_EDGE: '1'
     steps:
       - name: Check out pipeline code
         uses: actions/checkout@v2
@@ -27,10 +33,15 @@ jobs:
       - name: Install Nextflow
         env:
           CAPSULE_LOG: none
+          {% raw -%}
+          NXF_VER: ${{ matrix.NXF_VER }}
+          # Uncomment only if the edge release is more recent than the latest stable release
+          # See https://github.com/nextflow-io/nextflow/issues/2467
+          # NXF_EDGE: ${{ matrix.NXF_EDGE }}
+          {%- endraw %}
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-          export ${% raw %}{{ matrix.nxf_ver }}{% endraw %}
           nextflow self-update
 
       - name: Run pipeline with test data

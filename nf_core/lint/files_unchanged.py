@@ -31,10 +31,11 @@ def files_unchanged(self):
         .github/workflows/linting.yml
         assets/email_template.html
         assets/email_template.txt
-        assets/nf-core-PIPELINE_logo.png
+        assets/nf-core-PIPELINE_logo_light.png
         assets/sendmail_template.txt
         CODE_OF_CONDUCT.md
-        docs/images/nf-core-PIPELINE_logo.png
+        docs/images/nf-core-PIPELINE_logo_light.png
+        docs/images/nf-core-PIPELINE_logo_dark.png
         docs/README.md'
         lib/nfcore_external_java_deps.jar
         lib/NfcoreSchema.groovy
@@ -91,8 +92,9 @@ def files_unchanged(self):
         [os.path.join("assets", "email_template.html")],
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
+        [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_light.png")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("docs", "README.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
         [os.path.join("lib", "NfcoreSchema.groovy")],

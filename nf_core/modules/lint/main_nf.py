@@ -33,7 +33,7 @@ def main_nf(module_lint_object, module):
             module.failed.append(
                 (
                     "deprecated_dsl2",
-                    f"`{i}` has been deprecated since DSL2 v2.0",
+                    f"`{i}` specified. No longer required for the latest nf-core/modules syntax!",
                     module.main_nf,
                 )
             )
@@ -104,11 +104,11 @@ def check_script_section(self, lines):
     if re.search("\$\{\s*task\.process\s*\}", script):
         self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
-        self.failed.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
+        self.warned.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
-        if re.search("\s*prefix\s*=\s*options.suffix", script):
+        if re.search("\s*prefix\s*=\s*task.ext.prefix", script):
             self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
         else:
             self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
@@ -121,6 +121,13 @@ def check_process_section(self, lines):
     Specifically checks for correct software versions
     and containers
     """
+    # Check that we have a process section
+    if len(lines) == 0:
+        self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
+        return
+    else:
+        self.passed.append(("process_exist", "Process definition exists", self.main_nf))
+
     # Checks that build numbers of bioconda, singularity and docker container are matching
     build_id = "build"
     singularity_tag = "singularity"
