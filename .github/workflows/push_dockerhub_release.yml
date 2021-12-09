@@ -15,19 +15,17 @@ jobs:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASS: ${{ secrets.DOCKERHUB_PASS }}
     strategy:
-      matrix:
-        image: [base, tools]
       fail-fast: false
     steps:
       - name: Check out code
         uses: actions/checkout@v2
 
       - name: Build new docker image
-        run: docker build --no-cache . -t nfcore/${{ matrix.image }}:latest -f ${{ matrix.image }}.Dockerfile
+        run: docker build --no-cache . -t nfcore/tools:latest
 
       - name: Push Docker image to DockerHub (release)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
-          docker push nfcore/${{ matrix.image }}:latest
-          docker tag nfcore/${{ matrix.image }}:latest nfcore/${{ matrix.image }}:${{ github.event.release.tag_name }}
-          docker push nfcore/${{ matrix.image }}:${{ github.event.release.tag_name }}
+          docker push nfcore/tools:latest
+          docker tag nfcore/tools:latest nfcore/tools:${{ github.event.release.tag_name }}
+          docker push nfcore/tools:${{ github.event.release.tag_name }}
