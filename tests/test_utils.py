@@ -12,6 +12,9 @@ import pytest
 import requests
 import tempfile
 import unittest
+import shutil
+
+from .utils import with_temporary_folder
 
 
 class TestUtils(unittest.TestCase):
@@ -22,13 +25,18 @@ class TestUtils(unittest.TestCase):
 
         Use nf_core.create() to make a pipeline that we can use for testing
         """
-        self.test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        self.tmp_dir = tempfile.mkdtemp()
+        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
         )
         self.create_obj.init_pipeline()
         # Base Pipeline object on this directory
         self.pipeline_obj = nf_core.utils.Pipeline(self.test_pipeline_dir)
+
+    def tearDown(self):
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     def test_check_if_outdated_1(self):
         current_version = "1.0"
@@ -89,10 +97,10 @@ class TestUtils(unittest.TestCase):
         self.pipeline_obj._list_files()
         assert os.path.join(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
 
-    def test_list_files_no_git(self):
+    @with_temporary_folder
+    def test_list_files_no_git(self, tmpdir):
         """Test listing pipeline files without `git-ls`"""
-        # Create directory with a test file
-        tmpdir = tempfile.mkdtemp()
+        # Create a test file in a temporary directory
         tmp_fn = os.path.join(tmpdir, "testfile")
         open(tmp_fn, "a").close()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
