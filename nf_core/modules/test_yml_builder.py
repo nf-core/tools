@@ -197,8 +197,9 @@ class ModulesTestYmlBuilder(object):
         if os.path.getsize(fname) == 0:
             return True
         try:
-            with gzip.open(fname, "rb") as fh:
-                if fh.read() == b"":
+            with open(fname, "rb") as fh:
+                g_f = gzip.GzipFile(fileobj=fh, mode="rb")
+                if g_f.read() == b"":
                     return True
         except gzip.BadGzipFile:
             pass
