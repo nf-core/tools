@@ -40,6 +40,7 @@
 * Erase temporary files and folders while performing Python tests (pytest)
 * Remove base `Dockerfile` used for DSL1 pipeline container builds
 * Run tests with Python 3.10
+* [#1363](https://github.com/nf-core/tools/pull/1363) Fix tools CI workflow nextflow versions.
 
 ### Modules
 
