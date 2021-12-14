@@ -41,7 +41,7 @@ def test_modules_bump_versions_fail_unknown_version(self):
     main_nf_path = os.path.join(self.nfcore_modules, "modules", "bpipe", "test", "main.nf")
     with open(main_nf_path, "r") as fh:
         content = fh.read()
-    new_content = re.sub(r"bioconda::star=\d.\d.\d\D?", r"bioconda::star=xxx", content)
+    new_content = re.sub(r"bioconda::bpipe=\d.\d.\d\D?", r"bioconda::bpipe=xxx", content)
     with open(main_nf_path, "w") as fh:
         fh.write(new_content)
     version_bumper = nf_core.modules.ModuleVersionBumper(pipeline_dir=self.nfcore_modules)
