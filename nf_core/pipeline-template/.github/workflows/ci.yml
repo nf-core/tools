@@ -8,14 +8,16 @@ on:
   release:
     types: [published]
 
+env:
+  NXF_ANSI_LOG: false
+  CAPSULE_LOG: none
+
 jobs:
   test:
     name: Run workflow tests
     # Only run on push if this is the nf-core dev branch (merged PRs)
     if: {% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}
     runs-on: ubuntu-latest
-    env:
-      NXF_ANSI_LOG: false
     strategy:
       matrix:
         # Nextflow versions
@@ -32,7 +34,6 @@ jobs:
 
       - name: Install Nextflow
         env:
-          CAPSULE_LOG: none
           {% raw -%}
           NXF_VER: ${{ matrix.NXF_VER }}
           # Uncomment only if the edge release is more recent than the latest stable release
@@ -42,7 +43,6 @@ jobs:
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
-          nextflow self-update
 
       - name: Run pipeline with test data
         # TODO nf-core: You can customise CI pipeline run tests as required
