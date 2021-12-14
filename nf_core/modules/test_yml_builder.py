@@ -201,7 +201,15 @@ class ModulesTestYmlBuilder(object):
                 g_f = gzip.GzipFile(fileobj=fh, mode="rb")
                 if g_f.read() == b"":
                     return True
-        except gzip.BadGzipFile:
+        except Exception as e:
+            # Python 3.8+
+            if hasattr(gzip, "BadGzipFile"):
+                if isinstance(e, gzip.BadGzipFile):
+                    pass
+            # Python 3.7
+            else:
+                if isinstance(e, OSError):
+                    pass
             pass
         return False
 
