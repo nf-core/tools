@@ -16,12 +16,21 @@ class ModulesRepo(object):
     so that this can be used in the same way by all sub-commands.
     """
 
-    def __init__(self, repo="nf-core/modules", branch="master"):
+    def __init__(self, repo="nf-core/modules", branch=None):
         self.name = repo
         self.branch = branch
 
+        # Don't bother fetching default branch if we're using nf-core
+        if not self.branch and self.name == "nf-core/modules":
+            self.branch = "master"
+
         # Verify that the repo seems to be correctly configured
-        if self.name != "nf-core/modules" or self.branch != "master":
+        if self.name != "nf-core/modules" or self.branch:
+
+            # Get the default branch if not set
+            if not self.branch:
+                self.get_default_branch()
+
             try:
                 self.verify_modules_repo()
             except LookupError:
@@ -31,6 +40,16 @@ class ModulesRepo(object):
         self.modules_file_tree = {}
         self.modules_avail_module_names = []
 
+    def get_default_branch(self):
+        """Get the default branch for a GitHub repo"""
+        api_url = f"https://api.github.com/repos/{self.name}"
+        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+        if response.status_code == 200:
+            self.branch = response.json()["default_branch"]
+            log.debug(f"Found default branch to be '{self.branch}'")
+        else:
+            raise LookupError(f"Could not find repository '{self.name}' on GitHub")
+
     def verify_modules_repo(self):
 
         # Check if name seems to be well formed
@@ -39,7 +58,7 @@ class ModulesRepo(object):
 
         # Check if repository exist
         api_url = f"https://api.github.com/repos/{self.name}/branches"
-        response = requests.get(api_url)
+        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
         if response.status_code == 200:
             branches = [branch["name"] for branch in response.json()]
             if self.branch not in branches:
@@ -48,7 +67,7 @@ class ModulesRepo(object):
             raise LookupError(f"Repository '{self.name}' is not available on GitHub")
 
         api_url = f"https://api.github.com/repos/{self.name}/contents?ref={self.branch}"
-        response = requests.get(api_url)
+        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
         if response.status_code == 200:
             dir_names = [entry["name"] for entry in response.json() if entry["type"] == "dir"]
             if "modules" not in dir_names:

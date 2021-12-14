@@ -46,12 +46,12 @@ class ModuleRemove(ModuleCommand):
         else:
             repo_name = questionary.autocomplete(
                 "Repo name:", choices=self.module_names.keys(), style=nf_core.utils.nfcore_question_style
-            ).ask()
+            ).unsafe_ask()
 
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:", choices=self.module_names[repo_name], style=nf_core.utils.nfcore_question_style
-            ).ask()
+            ).unsafe_ask()
 
         # Set the remove folder based on the repository name
         remove_folder = os.path.split(repo_name)

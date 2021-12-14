@@ -46,6 +46,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     update breaking backwards compatibility.
     Args:
         module_name (str): Name of module
+        modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
         per_page (int): Number of commits per page returned by API
         page_nbr (int): Page number of the retrieved commits
         since (str): Only show commits later than this timestamp.
@@ -57,7 +58,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     if modules_repo is None:
         modules_repo = ModulesRepo()
     api_url = f"https://api.github.com/repos/{modules_repo.name}/commits"
-    api_url += f"?sha{modules_repo.branch}"
+    api_url += f"?sha={modules_repo.branch}"
     if module_name is not None:
         api_url += f"&path=modules/{module_name}"
     api_url += f"&page={page_nbr}"
@@ -84,19 +85,21 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
         )
 
 
-def get_commit_info(commit_sha):
+def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     """
     Fetches metadata about the commit (dates, message, etc.)
     Args:
-        module_name (str): Name of module
         commit_sha (str): The SHA of the requested commit
+        repo_name (str): module repos name (def. {0})
     Returns:
         message (str): The commit message for the requested commit
         date (str): The commit date for the requested commit
     Raises:
         LookupError: If the call to the API fails.
-    """
-    api_url = f"https://api.github.com/repos/nf-core/modules/commits/{commit_sha}?stats=false"
+    """.format(
+        repo_name
+    )
+    api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
@@ -225,7 +228,7 @@ def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         are identical to remote files
     """
 
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    files_to_check = ["main.nf", "meta.yml"]
     local_file_contents = [None, None, None]
     for i, file in enumerate(files_to_check):
         try:
@@ -251,7 +254,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
         bool: Whether all local files are identical to remote version
     """
 
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    files_to_check = ["main.nf", "meta.yml"]
     files_are_equal = [False, False, False]
     remote_copies = [None, None, None]
 
@@ -259,7 +262,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     for i, file in enumerate(files_to_check):
         # Download remote copy and compare
         api_url = f"{module_base_url}/{file}"
-        r = requests.get(url=api_url)
+        r = requests.get(url=api_url, auth=nf_core.utils.github_api_auto_auth())
         if r.status_code != 200:
             log.debug(f"Could not download remote copy of file module {module_name}/{file}")
             log.debug(api_url)
@@ -304,7 +307,7 @@ def get_installed_modules(dir, repo_type="modules"):
         # Filter local modules
         if os.path.exists(local_modules_dir):
             local_modules = os.listdir(local_modules_dir)
-            local_modules = sorted([x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")])
+            local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
     # nf-core/modules
     if repo_type == "modules":
@@ -344,10 +347,12 @@ def get_repo_type(dir):
         raise LookupError("Could not find directory: {}".format(dir))
 
     # Determine repository type
-    if os.path.exists(os.path.join(dir, "main.nf")):
-        return "pipeline"
-    elif os.path.exists(os.path.join(dir, "modules")):
-        return "modules"
+    if os.path.exists(os.path.join(dir, "README.md")):
+        with open(os.path.join(dir, "README.md")) as fh:
+            if fh.readline().rstrip().startswith("# ![nf-core/modules]"):
+                return "modules"
+            else:
+                return "pipeline"
     else:
         raise LookupError("Could not determine repository type of '{}'".format(dir))
 
@@ -365,7 +370,7 @@ def verify_pipeline_dir(dir):
         modules_is_software = False
         for repo_name in repo_names:
             api_url = f"https://api.github.com/repos/{repo_name}/contents"
-            response = requests.get(api_url)
+            response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
             if response.status_code == 404:
                 missing_remote.append(repo_name)
                 if repo_name == "nf-core/software":
@@ -396,7 +401,7 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
         log.warning(e)
         next_page_commits = None
 
-    while git_sha is "":
+    while git_sha == "":
         commits = next_page_commits
         try:
             next_page_commits = get_module_git_log(

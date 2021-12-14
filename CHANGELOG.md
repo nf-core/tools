@@ -1,5 +1,60 @@
 # nf-core/tools: Changelog
 
+## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
+
+### Template
+
+* Update repo logos to utilize [GitHub's `#gh-light/dark-mode-only`](https://docs.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github/basic-writing-and-formatting-syntax#specifying-the-theme-an-image-is-shown-to), to switch between logos optimized for light or dark themes. The old repo logos have to be removed (in `docs/images` and `assets/`).
+* Deal with authentication with private repositories
+* Bump minimun Nextflow version to 21.10.3
+* Convert pipeline template to updated Nextflow DSL2 syntax
+* Solve circular import when importing `nf_core.modules.lint`
+* Disable cache in `nf_core.utils.fetch_wf_config` while performing `test_wf_use_local_configs`.
+* Modify software version channel handling to support multiple software version emissions (e.g. from mulled containers), and multiple software versions.
+* Update `dumpsoftwareversion` module to correctly report versions with trailing zeros.
+* Remove `params.hostnames` from the pipeline template ([#1304](https://github.com/nf-core/tools/issues/1304))
+* Update `.gitattributes` to mark installed modules and subworkflows as `linguist-generated` ([#1311](https://github.com/nf-core/tools/issues/1311))
+* Adding support for [Julia](https://julialang.org) package environments to `nextflow.config`([#1317](https://github.com/nf-core/tools/pull/1317))
+* New YAML issue templates for pipeline bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
+* Update AWS test GitHub Actions to use v2 of [nf-core/tower-action](https://github.com/nf-core/tower-action)
+* Post linting comment even when `linting.yml` fails
+* Update `CONTRIBUTION.md` bullets to remove points related to `scrape_software_versions.py`
+* Update AWS test to set Nextflow version to 21.10.3
+
+### General
+
+* Made lint check for parameters defaults stricter [[#992](https://github.com/nf-core/tools/issues/992)]
+    * Default values in `nextflow.config` must match the defaults given in the schema (anything with `{` in, or in `main.nf` is ignored)
+    * Defaults in `nextflow.config` must now match the variable _type_ specified in the schema
+    * If you want the parameter to not have a default value, use `null`
+    * Strings set to `false` or an empty string in `nextflow.config` will now fail linting
+* Bump minimun Nextflow version to 21.10.3
+* Changed `questionary` `ask()` to `unsafe_ask()` to not catch `KeyboardInterupts` ([#1237](https://github.com/nf-core/tools/issues/1237))
+* Fixed bug in `nf-core launch` due to revisions specified with `-r` not being added to nextflow command. ([#1246](https://github.com/nf-core/tools/issues/1246))
+* Update regex in `readme` test of `nf-core lint` to agree with the pipeline template ([#1260](https://github.com/nf-core/tools/issues/1260))
+* Update 'fix' message in `nf-core lint` to conform to the current command line options. ([#1259](https://github.com/nf-core/tools/issues/1259))
+* Fixed bug in `nf-core list` when `NXF_HOME` is set
+* Run CI test used to create and lint/run the pipeline template with minimum and latest edge release of NF ([#1304](https://github.com/nf-core/tools/issues/1304))
+* New YAML issue templates for tools bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
+* Handle synax errors in Nextflow config nicely when running `nf-core schema build` ([#1267](https://github.com/nf-core/tools/pull/1267))
+* Erase temporary files and folders while performing Python tests (pytest)
+* Remove base `Dockerfile` used for DSL1 pipeline container builds
+* Run tests with Python 3.10
+* [#1363](https://github.com/nf-core/tools/pull/1363) Fix tools CI workflow nextflow versions.
+
+### Modules
+
+* Fixed typo in `module_utils.py`.
+* Fixed failing lint test when process section was missing from module. Also added the local failing tests to the warned section of the output table. ([#1235](https://github.com/nf-core/tools/issues/1235))
+* Added `--diff` flag to `nf-core modules update` which shows the diff between the installed files and the versions
+* Update `nf-core modules create` help texts which were not changed with the introduction of the `--dir` flag
+* Check if README is from modules repo
+* Update module template to DSL2 v2.0 (remove `functions.nf` from modules template and updating `main.nf` ([#1289](https://github.com/nf-core/tools/pull/))
+* Substitute get process/module name custom functions in module `main.nf` using template replacement ([#1284](https://github.com/nf-core/tools/issues/1284))
+* Linting now fails instead of warning if a local copy of a module does not match the remote ([#1313](https://github.com/nf-core/tools/issues/1313))
+* Check test YML file for md5sums corresponding to empty files ([#1302](https://github.com/nf-core/tools/issues/1302))
+* Exit with an error if empty files are found when generating the test YAML file ([#1302](https://github.com/nf-core/tools/issues/1302))
+
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
 ### Template

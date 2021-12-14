@@ -63,10 +63,10 @@ class ModuleCreate(object):
         modules/modules/tool/subtool/
             * main.nf
             * meta.yml
-            * functions.nf
         modules/tests/modules/tool/subtool/
             * main.nf
             * test.yml
+            * nextflow.config
         tests/config/pytest_modules.yml
 
         The function will attempt to automatically find a Bioconda package called <tool>
@@ -145,7 +145,9 @@ class ModuleCreate(object):
                 log.info(f"Using Bioconda package: '{self.bioconda}'")
                 break
             except (ValueError, LookupError) as e:
-                log.warning(f"Could not find Conda dependency using the Anaconda API: '{self.tool}'")
+                log.warning(
+                    f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.tool}'"
+                )
                 if rich.prompt.Confirm.ask(f"[violet]Do you want to enter a different Bioconda package name?"):
                     self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
                     continue
@@ -204,7 +206,7 @@ class ModuleCreate(object):
                 choices=process_label_defaults,
                 style=nf_core.utils.nfcore_question_style,
                 default="process_low",
-            ).ask()
+            ).unsafe_ask()
 
         if self.has_meta is None:
             log.info(
@@ -279,11 +281,14 @@ class ModuleCreate(object):
         if dir is None or not os.path.exists(directory):
             raise UserWarning(f"Could not find directory: {directory}")
 
+        readme = os.path.join(directory, "README.md")
         # Determine repository type
-        if os.path.exists(os.path.join(directory, "main.nf")):
-            return "pipeline"
-        elif os.path.exists(os.path.join(directory, "modules")):
-            return "modules"
+        if os.path.exists(readme):
+            with open(readme) as fh:
+                if fh.readline().rstrip().startswith("# ![nf-core/modules]"):
+                    return "modules"
+                else:
+                    return "pipeline"
         else:
             raise UserWarning(
                 f"This directory does not look like a clone of nf-core/modules or an nf-core pipeline: '{directory}'"
@@ -351,10 +356,10 @@ class ModuleCreate(object):
                 )
 
             # Set file paths - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths[os.path.join("modules", "functions.nf")] = os.path.join(software_dir, "functions.nf")
             file_paths[os.path.join("modules", "main.nf")] = os.path.join(software_dir, "main.nf")
             file_paths[os.path.join("modules", "meta.yml")] = os.path.join(software_dir, "meta.yml")
             file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
             file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
+            file_paths[os.path.join("tests", "nextflow.config")] = os.path.join(test_dir, "nextflow.config")
 
         return file_paths

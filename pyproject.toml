@@ -1,3 +1,10 @@
+[build-system]
+build-backend = 'setuptools.build_meta'
+requires = [
+  'setuptools>=40.6.0',
+  'wheel'
+]
+
 [tool.black]
 line-length = 120
 target_version = ['py36','py37','py38']
@@ -7,3 +14,4 @@ markers = [
     "datafiles: load datafiles"
 ]
 testpaths = ["tests"]
+norecursedirs = [ '.*', 'build', 'dist', '*.egg', 'data', '__pycache__', '.github', 'nf_core', 'docs']

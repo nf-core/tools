@@ -209,7 +209,7 @@ class Launch(object):
                     return False
 
                 self.pipeline_revision = nf_core.utils.prompt_pipeline_release_branch(wf_releases, wf_branches)
-                self.nextflow_cmd += " -r {}".format(self.pipeline_revision)
+            self.nextflow_cmd += " -r {}".format(self.pipeline_revision)
 
         # Get schema from name, load it and lint it
         try:
