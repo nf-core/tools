@@ -11,6 +11,8 @@ import shutil
 import tempfile
 import unittest
 
+from .utils import with_temporary_folder, with_temporary_file
+
 
 class TestLaunch(unittest.TestCase):
     """Class for launch tests"""
@@ -20,8 +22,20 @@ class TestLaunch(unittest.TestCase):
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.nf_params_fn = os.path.join(tempfile.mkdtemp(), "nf-params.json")
+        # cannot use a context manager here, since outside setUp the temporary
+        # file will never exists
+        self.tmp_dir = tempfile.mkdtemp()
+        self.nf_params_fn = os.path.join(self.tmp_dir, "nf-params.json")
         self.launcher = nf_core.launch.Launch(self.template_dir, params_out=self.nf_params_fn)
+
+    def tearDown(self):
+        """Clean up temporary files and folders"""
+
+        if os.path.exists(self.nf_params_fn):
+            os.remove(self.nf_params_fn)
+
+        if os.path.exists(self.tmp_dir):
+            os.rmdir(self.tmp_dir)
 
     @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
@@ -52,9 +66,10 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
 
-    def test_make_pipeline_schema(self):
+    @with_temporary_folder
+    def test_make_pipeline_schema(self, tmp_path):
         """Make a copy of the template workflow, but delete the schema file, then try to load it"""
-        test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "wf")
+        test_pipeline_dir = os.path.join(tmp_path, "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
         self.launcher = nf_core.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
@@ -74,12 +89,12 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.input_params) > 0
         assert self.launcher.schema_obj.input_params["outdir"] == "./results"
 
-    def test_get_pipeline_defaults_input_params(self):
+    @with_temporary_file
+    def test_get_pipeline_defaults_input_params(self, tmp_file):
         """Test fetching default inputs from the pipeline schema with an input params file supplied"""
-        tmp_filehandle, tmp_filename = tempfile.mkstemp()
-        with os.fdopen(tmp_filehandle, "w") as fh:
+        with open(tmp_file.name, "w") as fh:
             json.dump({"outdir": "fubar"}, fh)
-        self.launcher.params_in = tmp_filename
+        self.launcher.params_in = tmp_file.name
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
