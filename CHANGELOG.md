@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-09]
+## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-15]
 
 ### Template
 
