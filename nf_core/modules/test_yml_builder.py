@@ -192,9 +192,12 @@ class ModulesTestYmlBuilder(object):
         """Check if the file is empty, or compressed empty"""
         if os.path.getsize(fname) == 0:
             return True
-        with gzip.open(fname, "rb") as fh:
-            if fh.read() == b"":
-                return True
+        try:
+            with gzip.open(fname, "rb") as fh:
+                if fh.read() == b"":
+                    return True
+        except gzip.BadGzipFile:
+            pass
         return False
 
     def _md5(self, fname):
