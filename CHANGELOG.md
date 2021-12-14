@@ -38,6 +38,7 @@
 * New YAML issue templates for tools bug reports and feature requests, with a much richer interface ([#1165](https://github.com/nf-core/tools/pull/1165))
 * Handle synax errors in Nextflow config nicely when running `nf-core schema build` ([#1267](https://github.com/nf-core/tools/pull/1267))
 * Remove base `Dockerfile` used for DSL1 pipeline container builds
+* Run tests with Python 3.10
 
 ### Modules
 
