@@ -49,7 +49,7 @@ def module_changes(module_lint_object, module):
                 remote_copy = r.content.decode("utf-8")
 
                 if local_copy != remote_copy:
-                    module.failed.append(
+                    module.warned.append(
                         (
                             "check_local_copy",
                             "Local copy of module does not match remote",
