@@ -42,18 +42,18 @@ def test_modules_create_test_yml_get_md5(self, test_file_dir):
 
 def test_modules_create_test_yml_entry_points(self):
     """Test extracting test entry points from a main.nf file"""
-    meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
-    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "star", "align", "main.nf")
+    meta_builder = nf_core.modules.ModulesTestYmlBuilder("bpipe/test", False, "./", False, True)
+    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "bpipe", "test", "main.nf")
     meta_builder.scrape_workflow_entry_points()
-    assert meta_builder.entry_points[0] == "test_star_align"
+    assert meta_builder.entry_points[0] == "test_bpipe_test"
 
 
 def test_modules_create_test_yml_check_inputs(self):
     """Test the check_inputs() function - raise UserWarning because test.yml exists"""
     cwd = os.getcwd()
     os.chdir(self.nfcore_modules)
-    meta_builder = nf_core.modules.ModulesTestYmlBuilder("star/align", False, "./", False, True)
-    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "star", "align", "main.nf")
+    meta_builder = nf_core.modules.ModulesTestYmlBuilder("bpipe/test", False, "./", False, True)
+    meta_builder.module_test_main = os.path.join(self.nfcore_modules, "tests", "modules", "bpipe", "test", "main.nf")
     with pytest.raises(UserWarning) as excinfo:
         meta_builder.check_inputs()
     os.chdir(cwd)
