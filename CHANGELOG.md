@@ -49,6 +49,7 @@
 * Update module template to DSL2 v2.0 (remove `functions.nf` from modules template and updating `main.nf` ([#1289](https://github.com/nf-core/tools/pull/))
 * Substitute get process/module name custom functions in module `main.nf` using template replacement ([#1284](https://github.com/nf-core/tools/issues/1284))
 * Check test YML file for md5sums corresponding to empty files ([#1302](https://github.com/nf-core/tools/issues/1302))
+* Exit with an error if empty files are found when generating the test YAML file ([#1302](https://github.com/nf-core/tools/issues/1302))
 
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
