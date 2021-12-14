@@ -207,10 +207,10 @@ class ModulesTestYmlBuilder(object):
                 if isinstance(e, gzip.BadGzipFile):
                     pass
             # Python 3.7
+            elif isinstance(e, OSError):
+                pass
             else:
-                if isinstance(e, OSError):
-                    pass
-            pass
+                raise e
         return False
 
     def _md5(self, fname):
