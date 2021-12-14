@@ -8,8 +8,10 @@ from __future__ import print_function
 from rich.syntax import Syntax
 
 import errno
+import gzip
 import hashlib
 import logging
+import operator
 import os
 import questionary
 import re
@@ -18,7 +20,6 @@ import shlex
 import subprocess
 import tempfile
 import yaml
-import operator
 
 import nf_core.utils
 
@@ -187,6 +188,15 @@ class ModulesTestYmlBuilder(object):
 
         return ep_test
 
+    def check_if_empty_file(self, fname):
+        """Check if the file is empty, or compressed empty"""
+        if os.path.getsize(fname) == 0:
+            return True
+        with gzip.open(fname, "rb") as fh:
+            if fh.read() == b"":
+                return True
+        return False
+
     def _md5(self, fname):
         """Generate md5 sum for file"""
         hash_md5 = hashlib.md5()
@@ -202,14 +212,13 @@ class ModulesTestYmlBuilder(object):
         for root, dir, file in os.walk(results_dir):
             for elem in file:
                 elem = os.path.join(root, elem)
+                # Check that this isn't an empty file
+                if self.check_if_empty_file(elem):
+                    raise UserWarning(f"Empty file found: '{elem}'")
                 elem_md5 = self._md5(elem)
                 # Switch out the results directory path with the expected 'output' directory
                 elem = elem.replace(results_dir, "output")
-                test_file = {"path": elem}
-                # Only add the md5 if it's not for an empty file / compressed empty file
-                if elem_md5 != "d41d8cd98f00b204e9800998ecf8427e" and elem_md5 != "7029066c27ac6f5ef18d660d5741979a":
-                    test_file["md5sum"] = elem_md5
-                test_files.append(test_file)
+                test_files.append({"path": elem, "md5sum": elem_md5})
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
 
