@@ -52,11 +52,31 @@ def module_tests(module_lint_object, module):
                     if not tag in [module.module_name, module.module_name.split("/")[0]]:
                         all_tags_correct = False
 
+                # Look for md5sums of empty files
+                for tfile in test.get("files", []):
+                    if tfile.get("md5sum") == "d41d8cd98f00b204e9800998ecf8427e":
+                        module.warned.append(
+                            (
+                                "test_yml_md5sum",
+                                "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
+                                module.test_yml,
+                            )
+                        )
+                    if tfile.get("md5sum") == "7029066c27ac6f5ef18d660d5741979a":
+                        module.warned.append(
+                            (
+                                "test_yml_md5sum",
+                                "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",
+                                module.test_yml,
+                            )
+                        )
+
             if all_tags_correct:
                 module.passed.append(("test_yml_tags", "tags adhere to guidelines", module.test_yml))
             else:
                 module.failed.append(("test_yml_tags", "tags do not adhere to guidelines", module.test_yml))
 
+        # Test that the file exists
         module.passed.append(("test_yml_exists", "Test `test.yml` exists", module.test_yml))
     except FileNotFoundError:
         module.failed.append(("test_yml_exists", "Test `test.yml` does not exist", module.test_yml))
