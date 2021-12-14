@@ -47,6 +47,7 @@ class ModulesTestYmlBuilder(object):
         self.module_test_main = None
         self.entry_points = []
         self.tests = []
+        self.errors = []
 
     def run(self):
         """Run build steps"""
@@ -58,6 +59,9 @@ class ModulesTestYmlBuilder(object):
         self.scrape_workflow_entry_points()
         self.build_all_tests()
         self.print_test_yml()
+        if len(self.errors) > 0:
+            errors = "\n - ".join(self.errors)
+            raise UserWarning(f"Ran, but found errors:\n - {errors}")
 
     def check_inputs(self):
         """Do more complex checks about supplied flags."""
@@ -209,19 +213,23 @@ class ModulesTestYmlBuilder(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def create_test_file_dict(self, results_dir):
+    def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
         for root, dir, file in os.walk(results_dir):
             for elem in file:
                 elem = os.path.join(root, elem)
+                test_file = {"path": elem}
                 # Check that this isn't an empty file
                 if self.check_if_empty_file(elem):
-                    raise UserWarning(f"Empty file found: '{elem}'")
-                elem_md5 = self._md5(elem)
+                    if not is_repeat:
+                        self.errors.append(f"Empty file, skipping md5sum: '{os.path.basename(elem)}'")
+                else:
+                    elem_md5 = self._md5(elem)
+                    test_file["md5sum"] = elem_md5
                 # Switch out the results directory path with the expected 'output' directory
                 elem = elem.replace(results_dir, "output")
-                test_files.append({"path": elem, "md5sum": elem_md5})
+                test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
 
@@ -253,11 +261,11 @@ class ModulesTestYmlBuilder(object):
 
         # If test was repeated, compare the md5 sums
         if results_dir_repeat:
-            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
+            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat, is_repeat=True)
 
             # Compare both test.yml files
             for i in range(len(test_files)):
-                if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
+                if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
                     test_files[i].pop("md5sum")
                     test_files[i][
                         "contains"
