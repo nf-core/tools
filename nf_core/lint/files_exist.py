@@ -78,6 +78,7 @@ def files_exist(self):
         conf/aws.config
         .github/workflows/push_dockerhub.yml
         .github/ISSUE_TEMPLATE/bug_report.md
+        .github/ISSUE_TEMPLATE/feature_request.md
         docs/images/nf-core-PIPELINE_logo.png
 
     Files that *should not* be present:
