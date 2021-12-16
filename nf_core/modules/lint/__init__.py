@@ -93,10 +93,12 @@ class ModuleLint(ModuleCommand):
         if self.repo_type == "pipeline":
             # Add as first test to load git_sha before module_changes
             self.lint_tests.insert(0, "module_version")
+            # Only check if modules have been changed in pipelines
+            self.lint_tests.append("module_changes")
 
     @staticmethod
     def _get_all_lint_tests():
-        return ["main_nf", "meta_yml", "module_changes", "module_todos", "module_deprecations"]
+        return ["main_nf", "meta_yml", "module_todos", "module_deprecations"]
 
     def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
         """
