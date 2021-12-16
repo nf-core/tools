@@ -228,6 +228,8 @@ class ModulesTestYmlBuilder(object):
         for root, dir, file in os.walk(results_dir):
             for elem in file:
                 elem = os.path.join(root, elem)
+                # Switch out the results directory path with the expected 'output' directory
+                elem = elem.replace(results_dir, "output")
                 test_file = {"path": elem}
                 # Check that this isn't an empty file
                 if self.check_if_empty_file(elem):
@@ -236,8 +238,7 @@ class ModulesTestYmlBuilder(object):
                 else:
                     elem_md5 = self._md5(elem)
                     test_file["md5sum"] = elem_md5
-                # Switch out the results directory path with the expected 'output' directory
-                elem = elem.replace(results_dir, "output")
+
                 test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
