@@ -15,6 +15,8 @@ def module_changes(module_lint_object, module):
     and compares them to the local copies
 
     If the module has a 'git_sha', the file content is checked against this sha
+
+    Only runs when linting a pipeline, not the modules repository
     """
     files_to_check = ["main.nf", "meta.yml"]
 
@@ -49,7 +51,7 @@ def module_changes(module_lint_object, module):
                 remote_copy = r.content.decode("utf-8")
 
                 if local_copy != remote_copy:
-                    module.warned.append(
+                    module.failed.append(
                         (
                             "check_local_copy",
                             "Local copy of module does not match remote",
