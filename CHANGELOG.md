@@ -4,9 +4,11 @@
 
 ### Template
 
-### General
+* Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
 
 ### Modules
+
+* Fixed a linting bug where warning was incorrectly generated for `Module does not emit software version`
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 
