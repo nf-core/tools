@@ -85,7 +85,7 @@ def main_nf(module_lint_object, module):
             module.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf))
 
     # Check that a software version is emitted
-    if "version" in outputs:
+    if "versions" in outputs:
         module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
     else:
         module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
