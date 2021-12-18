@@ -4,6 +4,8 @@
 
 ### Template
 
+* Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
+
 ### General
 
 ### Modules
