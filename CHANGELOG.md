@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## [v2.2.1 - Lead Ligerito](https://github.com/nf-core/tools/releases/tag/2.2.1) - [2021-12-17]
+## v2.3dev
 
 ### Template
 
