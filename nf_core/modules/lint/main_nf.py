@@ -82,9 +82,13 @@ def main_nf(module_lint_object, module):
             module.has_meta = True
             if outputs:
                 if "meta" in outputs:
-                    module.passed.append(("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf))
+                    module.passed.append(
+                        ("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf)
+                    )
                 else:
-                    module.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf))
+                    module.failed.append(
+                        ("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf)
+                    )
 
     # Check that a software version is emitted
     if outputs:
@@ -164,22 +168,22 @@ def check_process_section(self, lines):
 
     for l in lines:
         l = l.strip()
-        l = l.replace('"','')
-        l = l.replace("'",'')
+        l = l.replace('"', "")
+        l = l.replace("'", "")
         if re.search("bioconda::", l):
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-        if l.startswith("https://containers") or l.startswith('https://depot'):
-            lspl = l.lstrip('https://').split(':')
+        if l.startswith("https://containers") or l.startswith("https://depot"):
+            lspl = l.lstrip("https://").split(":")
             if len(lspl) == 2:
                 ## e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
-                singularity_tag = '_'.join(lspl[0].split('/')[-1].strip().rstrip('.img').split('_')[1:])
+                singularity_tag = "_".join(lspl[0].split("/")[-1].strip().rstrip(".img").split("_")[1:])
             else:
                 ## e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
                 singularity_tag = lspl[-2].strip()
-        if l.startswith("biocontainers/") or l.startswith('quay.io/'):
+        if l.startswith("biocontainers/") or l.startswith("quay.io/"):
             ## e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
             ## e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
-            docker_tag = l.split(':')[-1].strip('}').strip()
+            docker_tag = l.split(":")[-1].strip("}").strip()
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -222,10 +226,10 @@ def _parse_input(self, line):
     if "tuple" in line:
         line = line.replace("tuple", "")
         line = line.replace(" ", "")
-        for idx, elem in enumerate(line.split(')')):
+        for idx, elem in enumerate(line.split(")")):
             if elem:
-                elem = elem.split('(')[1]
-                elem = elem.split(',')[0].strip()
+                elem = elem.split("(")[1]
+                elem = elem.split(",")[0].strip()
                 input.append(elem)
     else:
         if "(" in line:
