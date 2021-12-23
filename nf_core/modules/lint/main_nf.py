@@ -205,6 +205,7 @@ def check_process_section(self, lines):
 
 def _parse_input(self, line):
     input = []
+    line = line.strip()
     # more than one input
     if "tuple" in line:
         line = line.replace("tuple", "")
