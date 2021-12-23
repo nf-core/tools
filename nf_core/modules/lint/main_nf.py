@@ -163,11 +163,9 @@ def check_process_section(self, lines):
         if re.search("bioconda::", l):
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         if re.search("org/singularity", l):
-            singularity_tag = (
-                l.split()[0].split("/")[-1].split("/")[-1].replace('"', "").replace("'", "").split(":")[-1]
-            )
+            singularity_tag = l.split(':')[-2].strip().replace('"', "").replace("'", "")
         if re.search("biocontainers", l):
-            docker_tag = l.split()[0].split("/")[-1].split("/")[-1].replace('"', "").replace("'", "").split(":")[-1]
+            docker_tag = l.split(':')[-1].split('}')[0].strip().replace('"', "").replace("'", "")
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
