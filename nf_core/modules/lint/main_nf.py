@@ -46,13 +46,13 @@ def main_nf(module_lint_object, module):
     for l in lines:
         if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
             state = "process"
-        if re.search("input\s*:", l) and state == "process":
+        if re.search("input\s*:", l) and state in ["process"]:
             state = "input"
             continue
-        if re.search("output\s*:", l) and state == "input":
+        if re.search("output\s*:", l) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search("script\s*:", l) and state == "output":
+        if re.search("script\s*:", l) and state in ["input", "output", "process"]:
             state = "script"
             continue
 
@@ -77,18 +77,21 @@ def main_nf(module_lint_object, module):
     check_script_section(module, script_lines)
 
     # Check whether 'meta' is emitted when given as input
-    if "meta" in inputs:
-        module.has_meta = True
-        if "meta" in outputs:
-            module.passed.append(("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf))
-        else:
-            module.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf))
+    if inputs:
+        if "meta" in inputs:
+            module.has_meta = True
+            if outputs:
+                if "meta" in outputs:
+                    module.passed.append(("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf))
+                else:
+                    module.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf))
 
     # Check that a software version is emitted
-    if "versions" in outputs:
-        module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
-    else:
-        module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
+    if outputs:
+        if "versions" in outputs:
+            module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
+        else:
+            module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
 
     return inputs, outputs
 
