@@ -209,12 +209,11 @@ def _parse_input(self, line):
     if "tuple" in line:
         line = line.replace("tuple", "")
         line = line.replace(" ", "")
-        line = line.split(",")
-
-        for elem in line:
-            elem = elem.split("(")[1]
-            elem = elem.replace(")", "").strip()
-            input.append(elem)
+        for idx, elem in enumerate(line.split(')')):
+            if elem:
+                elem = elem.split('(')[1]
+                elem = elem.split(',')[0].strip()
+                input.append(elem)
     else:
         if "(" in line:
             input.append(line.split("(")[1].replace(")", ""))
