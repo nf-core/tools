@@ -5,6 +5,7 @@
 ### Template
 
 * Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
+* Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
 
 ### Modules
 
