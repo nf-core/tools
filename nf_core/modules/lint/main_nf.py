@@ -175,14 +175,14 @@ def check_process_section(self, lines):
         if l.startswith("https://containers") or l.startswith("https://depot"):
             lspl = l.lstrip("https://").split(":")
             if len(lspl) == 2:
-                ## e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
+                # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
                 singularity_tag = "_".join(lspl[0].split("/")[-1].strip().rstrip(".img").split("_")[1:])
             else:
-                ## e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
+                # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
                 singularity_tag = lspl[-2].strip()
         if l.startswith("biocontainers/") or l.startswith("quay.io/"):
-            ## e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
-            ## e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
+            # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
+            # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
             docker_tag = l.split(":")[-1].strip("}").strip()
 
     # Check that all bioconda packages have build numbers
@@ -222,8 +222,10 @@ def check_process_section(self, lines):
 def _parse_input(self, line):
     input = []
     line = line.strip()
-    # more than one input
     if "tuple" in line:
+        # If more than one elements in channel should work with both of:
+            # e.g. tuple val(meta), path(reads)
+            # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
         line = line.replace("tuple", "")
         line = line.replace(" ", "")
         for idx, elem in enumerate(line.split(")")):
