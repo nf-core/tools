@@ -224,8 +224,8 @@ def _parse_input(self, line):
     line = line.strip()
     if "tuple" in line:
         # If more than one elements in channel should work with both of:
-            # e.g. tuple val(meta), path(reads)
-            # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
+        # e.g. tuple val(meta), path(reads)
+        # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
         line = line.replace("tuple", "")
         line = line.replace(" ", "")
         for idx, elem in enumerate(line.split(")")):
