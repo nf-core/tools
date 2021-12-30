@@ -4,13 +4,18 @@
 
 ### Template
 
+* Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
 * Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
-
-### General
 
 ### Modules
 
 * Linting a pipeline now fails instead of warning if a local copy of a module does not match the remote ([#1313](https://github.com/nf-core/tools/issues/1313))
+* Fixed linting bugs where warning was incorrectly generated for:
+    * `Module does not emit software version`
+    * `Container versions do not match`
+    * `input:` / `output:` not being specified in module
+    * Allow for containers from other biocontainers resource as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L7-L8)
+* Fixed traceback when using `stageAs` syntax as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L11)
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 

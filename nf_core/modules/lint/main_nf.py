@@ -46,13 +46,13 @@ def main_nf(module_lint_object, module):
     for l in lines:
         if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
             state = "process"
-        if re.search("input\s*:", l) and state == "process":
+        if re.search("input\s*:", l) and state in ["process"]:
             state = "input"
             continue
-        if re.search("output\s*:", l) and state == "input":
+        if re.search("output\s*:", l) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search("script\s*:", l) and state == "output":
+        if re.search("script\s*:", l) and state in ["input", "output", "process"]:
             state = "script"
             continue
 
@@ -77,18 +77,25 @@ def main_nf(module_lint_object, module):
     check_script_section(module, script_lines)
 
     # Check whether 'meta' is emitted when given as input
-    if "meta" in inputs:
-        module.has_meta = True
-        if "meta" in outputs:
-            module.passed.append(("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf))
-        else:
-            module.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf))
+    if inputs:
+        if "meta" in inputs:
+            module.has_meta = True
+            if outputs:
+                if "meta" in outputs:
+                    module.passed.append(
+                        ("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf)
+                    )
+                else:
+                    module.failed.append(
+                        ("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf)
+                    )
 
     # Check that a software version is emitted
-    if "version" in outputs:
-        module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
-    else:
-        module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
+    if outputs:
+        if "versions" in outputs:
+            module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
+        else:
+            module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
 
     return inputs, outputs
 
@@ -160,12 +167,23 @@ def check_process_section(self, lines):
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
 
     for l in lines:
+        l = l.strip()
+        l = l.replace('"', "")
+        l = l.replace("'", "")
         if re.search("bioconda::", l):
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-        if re.search("org/singularity", l):
-            singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-        if re.search("biocontainers", l):
-            docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+        if l.startswith("https://containers") or l.startswith("https://depot"):
+            lspl = l.lstrip("https://").split(":")
+            if len(lspl) == 2:
+                # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
+                singularity_tag = "_".join(lspl[0].split("/")[-1].strip().rstrip(".img").split("_")[1:])
+            else:
+                # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
+                singularity_tag = lspl[-2].strip()
+        if l.startswith("biocontainers/") or l.startswith("quay.io/"):
+            # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
+            # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
+            docker_tag = l.split(":")[-1].strip("}").strip()
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -203,16 +221,18 @@ def check_process_section(self, lines):
 
 def _parse_input(self, line):
     input = []
-    # more than one input
+    line = line.strip()
     if "tuple" in line:
+        # If more than one elements in channel should work with both of:
+        # e.g. tuple val(meta), path(reads)
+        # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
         line = line.replace("tuple", "")
         line = line.replace(" ", "")
-        line = line.split(",")
-
-        for elem in line:
-            elem = elem.split("(")[1]
-            elem = elem.replace(")", "").strip()
-            input.append(elem)
+        for idx, elem in enumerate(line.split(")")):
+            if elem:
+                elem = elem.split("(")[1]
+                elem = elem.split(",")[0].strip()
+                input.append(elem)
     else:
         if "(" in line:
             input.append(line.split("(")[1].replace(")", ""))
