@@ -427,7 +427,7 @@ class PipelineSchema(object):
         else:
             self.print_documentation_markdown(sys.stdout, columns)
         
-    def print_documentation_markdown(self, file, columns_csv):
+    def print_documentation_markdown(self, file, columns_csv='parameter,description,type,default,required,hidden'):
         """
         Prints documentation for the schema in Markdown format to the given file-like object.
         """

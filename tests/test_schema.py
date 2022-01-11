@@ -95,6 +95,20 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
 
+    def test_schema_docs(self):
+        """Try to generate Markdown docs for a schema from a file"""
+        self.schema_obj.schema_filename = self.template_schema
+        self.schema_obj.load_schema()
+        import io
+        f = io.StringIO('')
+        self.schema_obj.print_documentation_markdown(f)
+        docs = f.getvalue()
+        assert self.schema_obj.schema['title'] in docs
+        assert self.schema_obj.schema['description'] in docs
+        for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
+            assert definition['title'] in docs
+            assert definition['description'] in docs
+            
     @with_temporary_file
     def test_save_schema(self, tmp_file):
         """Try to save a schema"""
