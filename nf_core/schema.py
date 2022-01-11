@@ -433,22 +433,24 @@ class PipelineSchema(object):
         """
         columns = columns_csv.split(",")
         out = lambda s: print(s, end="", file=file)
-        out(f"# {self.schema['title']}\n")
+        out(f"# {self.schema['title']}\n\n")
         out(f"{self.schema['description']}\n")
         for d_key, definition in self.schema.get("definitions", {}).items():
             out(f"\n## {definition.get('title', {})}")
-            out(f"\n{definition.get('description', '')}")
+            out(f"\n\n{definition.get('description', '')}")
             out("\n\n")
-            out("".join([f"| {column.title()} " for column in columns]))
+            out("".join([f"|{column.title()}" for column in columns]))
             out("\n")
             out("".join([f"|-----------" for columns in columns]))
             out("\n")
             for p_key, param in definition.get("properties", {}).items():
                 for column in columns:
                     if column == "parameter":
-                        out(f"| {p_key} ")
+                        out(f"|`{p_key}`")
+                    elif column == "type":
+                        out(f"|`{param.get('type', '')}`")
                     else:
-                        out(f"| {param.get(column, '')} ")
+                        out(f"|{param.get(column, '')}")
                 out("\n")
 
     def make_skeleton_schema(self):
