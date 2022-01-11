@@ -698,6 +698,26 @@ def lint(schema_path):
         sys.exit(1)
 
 
+@schema.command(help_priority=4)
+@click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
+@click.option("--markdown", type=str, metavar="<filename>", help="File to write documentation to in Markdown format")
+@click.option("--columns", type=str, metavar="<columns_list>", help="Columns to include in the parameter tables", default="parameter,description,type,default,required,hidden")
+def docs(schema_path, markdown, columns):
+    """
+    Outputs parameter documentation for a pipeline schema. 
+    """
+    schema_obj = nf_core.schema.PipelineSchema()
+    try:
+        schema_obj.get_schema_path(schema_path)
+        schema_obj.load_schema()
+        try:
+            schema_obj.print_documentation(markdown, columns)
+        except AssertionError as e:
+            log.warning(e)
+    except AssertionError as e:
+        sys.exit(1)
+
+
 @nf_core_cli.command("bump-version", help_priority=9)
 @click.argument("new_version", required=True, metavar="<new version>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")

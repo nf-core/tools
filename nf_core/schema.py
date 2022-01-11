@@ -416,6 +416,41 @@ class PipelineSchema(object):
                 desc_attr, self.schema["description"]
             )
 
+    def print_documentation(self, markdown, columns):
+        """
+        Prints documentation for the schema.
+        """
+        if (markdown):
+            with open(markdown, 'w') as file:
+                self.print_documentation_markdown(file, columns)
+                print(f"Documentation written to {markdown}")
+        else:
+            self.print_documentation_markdown(sys.stdout, columns)
+        
+    def print_documentation_markdown(self, file, columns_csv):
+        """
+        Prints documentation for the schema in Markdown format to the given file-like object.
+        """
+        columns = columns_csv.split(',')
+        out = lambda s: print(s, end='', file=file)
+        out(f"# {self.schema['title']}\n")
+        out(f"{self.schema['description']}\n")
+        for d_key, definition in self.schema.get("definitions", {}).items():
+            out(f"\n## {definition.get('title', {})}")
+            out(f"\n{definition.get('description', '')}")
+            out('\n\n')
+            out(''.join([f"| {column.title()} " for column in columns]))
+            out('\n')
+            out(''.join([f"|-----------" for columns in columns]))
+            out('\n')
+            for p_key, param in definition.get("properties", {}).items():
+                for column in columns:
+                    if (column == "parameter"):
+                        out(f"| {p_key} ")
+                    else:
+                        out(f"| {param.get(column, '')} ")
+                out('\n')            
+
     def make_skeleton_schema(self):
         """Make a new pipeline schema from the template"""
         self.schema_from_scratch = True
