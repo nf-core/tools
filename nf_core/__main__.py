@@ -701,10 +701,16 @@ def lint(schema_path):
 @schema.command(help_priority=4)
 @click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write documentation to in Markdown format")
-@click.option("--columns", type=str, metavar="<columns_list>", help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)", default="parameter,description,type,default,required,hidden")    
+@click.option(
+    "--columns",
+    type=str,
+    metavar="<columns_list>",
+    help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
+    default="parameter,description,type,default,required,hidden",
+)
 def docs(schema_path, markdown, columns):
     """
-    Outputs parameter documentation for a pipeline schema. 
+    Outputs parameter documentation for a pipeline schema.
     """
     schema_obj = nf_core.schema.PipelineSchema()
     try:
