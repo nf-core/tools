@@ -2,7 +2,7 @@ name: nf-core gitpod build and push
 # Builds the docker image for gitpod and pushes it to DockerHub
 
 on:
-  merge:
+  push:
     branches:
       - 'master'
     paths:
