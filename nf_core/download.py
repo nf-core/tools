@@ -460,23 +460,23 @@ class DownloadWorkflow(object):
                     with open(os.path.join(subdir, file), "r") as fh:
                         # Look for any lines with `container = "xxx"`
                         this_container = None
-                        contents = file.read()
+                        contents = fh.read()
                         matches = re.findall(r"container\s*\"([^\"]*)\"", contents, re.S)
                         if matches:
                             for match in matches:
                                 # Look for a http download URL.
                                 # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
                                 url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
-                                url_match = re.match(url_regex, match.group(1))
+                                url_match = re.search(url_regex, match, re.S)
                                 if url_match:
                                     this_container = url_match.group(0)
                                     break  # Prioritise http, exit loop as soon as we find it
 
-                                # No https download, is it a simple docker URI?
+                                # No https download, is the entire container string a docker URI?
                                 else:
                                     # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
                                     docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
-                                    docker_match = re.match(docker_regex, match.group(1).strip())
+                                    docker_match = re.match(docker_regex, match.strip(), re.S)
                                     if docker_match:
                                         this_container = docker_match.group(0)
 
