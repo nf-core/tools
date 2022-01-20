@@ -1,5 +1,9 @@
 image:
   file: .gitpod.Dockerfile
+task:
+  - name: install current state of nf-core/tools
+    init: |
+       pip install --upgrade -r requirements-dev.txt -e .
 github:
   prebuilds:
     # enable for the default branch (defaults to true)
