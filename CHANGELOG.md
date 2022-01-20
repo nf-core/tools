@@ -8,6 +8,10 @@
 * Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
 * Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
 
+## General
+
+* Updated `nf-core download` to work with latest DSL2 syntax for containers ([#1379](https://github.com/nf-core/tools/issues/1379))
+
 ### Modules
 
 * Linting a pipeline now fails instead of warning if a local copy of a module does not match the remote ([#1313](https://github.com/nf-core/tools/issues/1313))

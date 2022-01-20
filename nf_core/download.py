@@ -416,10 +416,30 @@ class DownloadWorkflow(object):
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
-        declarations. This works for DSL1.
+        declarations. This works for DSL1. It should return a simple string with resolved logic.
 
         Second, we look for DSL2 containers. These can't be found with
         `nextflow config` at the time of writing, so we scrape the pipeline files.
+        This returns raw source code that will likely need to be cleaned.
+
+        If multiple containers are found, prioritise any prefixed with http for direct download.
+
+        Example syntax:
+
+        Early DSL2:
+            if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
+                container "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0"
+            } else {
+                container "quay.io/biocontainers/fastqc:0.11.9--0"
+            }
+
+        Later DSL2:
+            container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+                'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
+                'quay.io/biocontainers/fastqc:0.11.9--0' }"
+
+        DSL1 / Special case DSL2:
+            container "nfcore/cellranger:6.0.2"
         """
 
         log.debug("Fetching container names for workflow")
@@ -439,35 +459,36 @@ class DownloadWorkflow(object):
                 if file.endswith(".nf"):
                     with open(os.path.join(subdir, file), "r") as fh:
                         # Look for any lines with `container = "xxx"`
-                        matches = []
-                        for line in fh:
-                            match = re.match(r"\s*container\s+[\"']([^\"']+)[\"']", line)
-                            if match:
-                                matches.append(match.group(1))
+                        this_container = None
+                        contents = fh.read()
+                        matches = re.findall(r"container\s*\"([^\"]*)\"", contents, re.S)
+                        if matches:
+                            for match in matches:
+                                # Look for a http download URL.
+                                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
+                                url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+                                url_match = re.search(url_regex, match, re.S)
+                                if url_match:
+                                    this_container = url_match.group(0)
+                                    break  # Prioritise http, exit loop as soon as we find it
 
-                        # If we have matches, save the first one that starts with http
-                        for m in matches:
-                            if m.startswith("http"):
-                                containers_raw.append(m.strip('"').strip("'"))
-                                break
-                        # If we get here then we didn't call break - just save the first match
-                        else:
-                            if len(matches) > 0:
-                                containers_raw.append(matches[0].strip('"').strip("'"))
+                                # No https download, is the entire container string a docker URI?
+                                else:
+                                    # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
+                                    docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
+                                    docker_match = re.match(docker_regex, match.strip(), re.S)
+                                    if docker_match:
+                                        this_container = docker_match.group(0)
+
+                                    # Don't recognise this, throw a warning
+                                    else:
+                                        log.error(f"[red]Cannot parse container string, skipping: [green]{match}")
+
+                        if this_container:
+                            containers_raw.append(this_container)
 
         # Remove duplicates and sort
-        containers_raw = sorted(list(set(containers_raw)))
-
-        # Strip any container names that have dynamic names - eg. {params.foo}
-        self.containers = []
-        for container in containers_raw:
-            if "{" in container and "}" in container:
-                log.error(
-                    f"[red]Container name [green]'{container}'[/] has dynamic Nextflow logic in name - skipping![/]"
-                )
-                log.info("Please use a 'nextflow run' command to fetch this container. Ask on Slack if you need help.")
-            else:
-                self.containers.append(container)
+        self.containers = sorted(list(set(containers_raw)))
 
         log.info("Found {} container{}".format(len(self.containers), "s" if len(self.containers) > 1 else ""))
 
