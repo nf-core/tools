@@ -2,14 +2,14 @@ image: nf-core/gitpod
 
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack
-    - codezombiech.gitignore
-    # - cssho.vscode-svgviewer
-    - davidanson.vscode-markdownlint
-    - eamodio.gitlens 
-    - EditorConfig.EditorConfig
-    - Gruntfuggly.todo-tree
-    - mechatroner.rainbow-csv
-    # - nextflow.nextflow
-    - oderwat.indent-rainbow
-    - redhat.vscode-yaml
-    - streetsidesoftware.code-spell-checker
+    - codezombiech.gitignore                 # Language support for .gitignore files
+    # - cssho.vscode-svgviewer                 # SVG viewer
+    - davidanson.vscode-markdownlint         # Markdown/CommonMark linting and style checking for Visual Studio Code
+    - eamodio.gitlens                        # Quickly glimpse into whom, why, and when a line or code block was changed
+    - EditorConfig.EditorConfig              # override user/workspace settings with settings found in .editorconfig files
+    - Gruntfuggly.todo-tree                  # Display TODO and FIXME in a tree view in the activity bar
+    - mechatroner.rainbow-csv                # Highlight columns in csv files in different colors
+    # - nextflow.nextflow                      # Nextflow syntax highlighting
+    - oderwat.indent-rainbow                 # Highlight indentation level
+    - redhat.vscode-yaml                     # YAML Language support
+    - streetsidesoftware.code-spell-checker  # Spelling checker for source code
