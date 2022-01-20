@@ -1,1 +1,15 @@
 image: nf-core/gitpod
+
+vscode:
+  extensions: # based on nf-core.nf-core-extensionpack
+    - codezombiech.gitignore
+    # - cssho.vscode-svgviewer
+    - davidanson.vscode-markdownlint
+    - eamodio.gitlens 
+    - EditorConfig.EditorConfig
+    - Gruntfuggly.todo-tree
+    - mechatroner.rainbow-csv
+    # - nextflow.nextflow
+    - oderwat.indent-rainbow
+    - redhat.vscode-yaml
+    - streetsidesoftware.code-spell-checker
