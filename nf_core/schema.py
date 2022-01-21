@@ -417,7 +417,7 @@ class PipelineSchema(object):
         output_fn=None,
         format="markdown",
         force=False,
-        columns=["parameter", "description", "type,", "efault", "required", "hidden"],
+        columns=["parameter", "description", "type,", "default", "required", "hidden"],
     ):
         """
         Prints documentation for the schema.
@@ -456,6 +456,10 @@ class PipelineSchema(object):
                 for column in columns:
                     if column == "parameter":
                         out += f"| `{p_key}` "
+                    elif column == "description":
+                        out += f"| {param.get('description', '')} "
+                        if param.get("help_text", "") != "":
+                            out += f"<details><summary>Help</summary><small>{param['help_text']}</small></details>"
                     elif column == "type":
                         out += f"| `{param.get('type', '')}` "
                     else:
