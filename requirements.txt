@@ -2,6 +2,7 @@ click
 GitPython
 jinja2
 jsonschema>=3.0
+markdown>=3.3
 packaging
 prompt_toolkit>=3.0.3
 pyyaml

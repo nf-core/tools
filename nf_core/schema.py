@@ -5,15 +5,15 @@ from __future__ import print_function
 from rich.prompt import Confirm
 
 import copy
+import copy
 import jinja2
 import json
 import jsonschema
 import logging
+import markdown
 import os
-import sys
 import webbrowser
 import yaml
-import copy
 
 import nf_core.list, nf_core.utils
 
@@ -414,22 +414,30 @@ class PipelineSchema(object):
 
     def print_documentation(
         self,
-        markdown_fn=None,
+        output_fn=None,
+        format="markdown",
         force=False,
         columns=["parameter", "description", "type,", "efault", "required", "hidden"],
     ):
         """
         Prints documentation for the schema.
         """
-        if markdown_fn:
-            if os.path.exists(markdown_fn) and not force:
-                log.error(f"Markdown file '{markdown_fn}' exists! Please delete first, or use '--force'")
+        output = self.schema_to_markdown(columns)
+        if format == "html":
+            output = self.markdown_to_html(output)
+
+        # Print to file
+        if output_fn:
+            if os.path.exists(output_fn) and not force:
+                log.error(f"File '{output_fn}' exists! Please delete first, or use '--force'")
                 return
-            with open(markdown_fn, "w") as file:
-                file.write(self.schema_to_markdown(columns))
-                log.info(f"Documentation written to '{markdown_fn}'")
+            with open(output_fn, "w") as file:
+                file.write(output)
+                log.info(f"Documentation written to '{output_fn}'")
+
+        # Print to stdout
         else:
-            print(self.schema_to_markdown(columns))
+            print(output)
 
     def schema_to_markdown(self, columns):
         """
@@ -438,23 +446,28 @@ class PipelineSchema(object):
         out = f"# {self.schema['title']}\n\n"
         out += f"{self.schema['description']}\n"
         for definition in self.schema.get("definitions", {}).values():
-            out += f"\n## {definition.get('title', {})}"
-            out += f"\n\n{definition.get('description', '')}"
-            out += "\n\n"
-            out += "".join([f"|{column.title()}" for column in columns])
-            out += "\n"
+            out += f"\n## {definition.get('title', {})}\n\n"
+            out += f"{definition.get('description', '')}\n\n"
+            out += "".join([f"| {column.title()} " for column in columns])
+            out += "|\n"
             out += "".join([f"|-----------" for columns in columns])
-            out += "\n"
+            out += "|\n"
             for p_key, param in definition.get("properties", {}).items():
                 for column in columns:
                     if column == "parameter":
-                        out += f"|`{p_key}`"
+                        out += f"| `{p_key}` "
                     elif column == "type":
-                        out += f"|`{param.get('type', '')}`"
+                        out += f"| `{param.get('type', '')}` "
                     else:
-                        out += f"|{param.get(column, '')}"
-                out += "\n"
+                        out += f"| {param.get(column, '')} "
+                out += "|\n"
         return out
+
+    def markdown_to_html(self, markdown_str):
+        """
+        Convert markdown to html
+        """
+        return markdown.markdown(markdown_str, extensions=["tables"])
 
     def make_skeleton_schema(self):
         """Make a new pipeline schema from the template"""
