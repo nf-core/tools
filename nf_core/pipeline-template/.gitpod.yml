@@ -1,4 +1,4 @@
-image: nfcore/gitpod
+image: nfcore/gitpod:latest
 
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack

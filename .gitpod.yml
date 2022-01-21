@@ -1,8 +1,10 @@
-image: nfcore/gitpod
+image: nfcore/gitpod:latest
 tasks:
   - name: install current state of nf-core/tools
-    init: |
-       pip install --upgrade -r requirements-dev.txt -e .
+    command: |
+      NFCORE_BUILD_PATH=$HOME/nf-core_build
+      pip install --upgrade -r requirements-dev.txt -e . -t $NFCORE_BUILD_PATH
+      PATH="$NFCORE_BUILD_PATH:$PATH"
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack
     - codezombiech.gitignore                 # Language support for .gitignore files
