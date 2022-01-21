@@ -14,6 +14,7 @@ RUN chown -R gitpod:gitpod /opt/conda
 USER gitpod
 
 # Install nextflow, nf-core, Mamba, and pytest-workflow
-RUN conda install nextflow nf-core pytest-workflow mamba -n base -c conda-forge -c bioconda && \
+RUN conda update -n base -c defaults conda && \
+    conda install nextflow nf-core pytest-workflow mamba -n base -c conda-forge -c bioconda && \
     nextflow self-update && \
     conda clean --all -f -y
