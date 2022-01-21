@@ -720,11 +720,9 @@ def docs(schema_path, markdown, force, columns):
     try:
         schema_obj.get_schema_path(schema_path)
         schema_obj.load_schema()
-        try:
-            schema_obj.print_documentation(markdown, force, columns.split(","))
-        except AssertionError as e:
-            log.warning(e)
+        schema_obj.print_documentation(markdown, force, columns.split(","))
     except AssertionError as e:
+        log.error(e)
         sys.exit(1)
 
 
