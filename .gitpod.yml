@@ -1,5 +1,5 @@
 image: nfcore/gitpod
-task:
+tasks:
   - name: install current state of nf-core/tools
     init: |
        pip install --upgrade -r requirements-dev.txt -e .
