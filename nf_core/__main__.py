@@ -700,15 +700,19 @@ def lint(schema_path):
 
 @schema.command(help_priority=4)
 @click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
-@click.option("--markdown", type=str, metavar="<filename>", help="File to write documentation to in Markdown format")
 @click.option(
+    "-m", "--markdown", type=str, metavar="<filename>", help="File to write documentation to in Markdown format"
+)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option(
+    "-c",
     "--columns",
     type=str,
     metavar="<columns_list>",
     help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
     default="parameter,description,type,default,required,hidden",
 )
-def docs(schema_path, markdown, columns):
+def docs(schema_path, markdown, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
@@ -717,7 +721,7 @@ def docs(schema_path, markdown, columns):
         schema_obj.get_schema_path(schema_path)
         schema_obj.load_schema()
         try:
-            schema_obj.print_documentation(markdown, columns)
+            schema_obj.print_documentation(markdown, force, columns.split(","))
         except AssertionError as e:
             log.warning(e)
     except AssertionError as e:
