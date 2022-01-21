@@ -1,4 +1,4 @@
-image: nf-core/gitpod
+image: nfcore/gitpod
 task:
   - name: install current state of nf-core/tools
     init: |
