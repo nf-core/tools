@@ -16,5 +16,4 @@ vscode:
     - mechatroner.rainbow-csv                # Highlight columns in csv files in different colors
     # - nextflow.nextflow                      # Nextflow syntax highlighting
     - oderwat.indent-rainbow                 # Highlight indentation level
-    - redhat.vscode-yaml                     # YAML Language support
     - streetsidesoftware.code-spell-checker  # Spelling checker for source code
