@@ -17,4 +17,7 @@ USER gitpod
 RUN conda update -n base -c defaults conda && \
     conda install nextflow nf-core pytest-workflow mamba -n base -c conda-forge -c bioconda && \
     nextflow self-update && \
+    conda config --add channels defaults && \
+    conda config --add channels bioconda && \
+    conda config --add channels conda-forge && \
     conda clean --all -f -y
