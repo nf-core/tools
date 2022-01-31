@@ -4,7 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 
-def summary_params = NfcoreSchema.paramsSummaryMap(workflow, params)
+def (summary_params, params_mqc_file) = NfcoreSchema.paramsSummaryMap(workflow, params)
 
 // Validate input parameters
 Workflow{{ short_name[0]|upper }}{{ short_name[1:] }}.initialise(params, log)
@@ -95,6 +95,7 @@ workflow {{ short_name|upper }} {
     ch_multiqc_files = ch_multiqc_files.mix(ch_workflow_summary.collectFile(name: 'workflow_summary_mqc.yaml'))
     ch_multiqc_files = ch_multiqc_files.mix(CUSTOM_DUMPSOFTWAREVERSIONS.out.mqc_yml.collect())
     ch_multiqc_files = ch_multiqc_files.mix(FASTQC.out.zip.collect{it[1]}.ifEmpty([]))
+    ch_multiqc_files = ch_multiqc_files.mix(Channel.from(file(params_mqc_file)))
 
     MULTIQC (
         ch_multiqc_files.collect()
