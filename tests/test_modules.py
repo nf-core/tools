@@ -19,8 +19,8 @@ def create_modules_repo_dummy(tmp_dir):
     os.makedirs(os.path.join(root_dir, "tests", "config"))
     with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
         fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
-    with open(os.path.join(root_dir, "README.md"), "w") as fh:
-        fh.writelines(["# ![nf-core/modules](docs/images/nfcore-modules_logo.png)", "\n"])
+    with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
+        fh.writelines(["repository_type: modules", "\n"])
 
     # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
     module_create = nf_core.modules.ModuleCreate(root_dir, "bpipe/test", "@author", "process_medium", False, False)
@@ -47,15 +47,10 @@ class TestModules(unittest.TestCase):
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
 
-        # TODO Remove comments once external repository to have same structure as nf-core/modules
-        # self.mods_install_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
-
         # Set up remove objects
         print("Setting up remove objects")
         self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
-        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
-        # TODO Remove comments once external repository to have same structure as nf-core/modules
-        # self.mods_remove_alt.modules_repo = nf_core.modules.ModulesRepo(repo="ewels/nf-core-modules", branch="master")
+        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
