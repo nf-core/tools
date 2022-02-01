@@ -50,7 +50,7 @@ class TestModules(unittest.TestCase):
         # Set up remove objects
         print("Setting up remove objects")
         self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
-        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir
+        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
