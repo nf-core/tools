@@ -294,20 +294,29 @@ class ModuleCreate(object):
 
         # Try to find the root directory
         base_dir = os.path.abspath(self.directory)
-        config_path = os.path.join(base_dir, ".nf-core.yml")
-        while not os.path.exists(config_path) and base_dir != os.path.dirname(base_dir):
+        config_path_yml = os.path.join(base_dir, ".nf-core.yml")
+        config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
+        while (
+            not os.path.exists(config_path_yml)
+            and not os.path.exists(config_path_yaml)
+            and base_dir != os.path.dirname(base_dir)
+        ):
             base_dir = os.path.dirname(base_dir)
-            config_path = os.path.join(base_dir, ".nf-core.yml")
+            config_path_yml = os.path.join(base_dir, ".nf-core.yml")
+            config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
             # Reset self.directory if we found the config file (will be an absolute path)
-            if os.path.exists(config_path):
+            if os.path.exists(config_path_yml) or os.path.exists(config_path_yaml):
                 self.directory = base_dir
 
         # Figure out the repository type from the .nf-core.yml config file if we can
-        if os.path.exists(config_path):
-            tools_config = nf_core.utils.load_tools_config(self.directory)
-            if tools_config.get("repository_type") in ["pipeline", "modules"]:
-                self.repo_type = tools_config["repository_type"]
-                return
+        tools_config = nf_core.utils.load_tools_config(self.directory)
+        if tools_config.get("repository_type") in ["pipeline", "modules"]:
+            if self.repo_type is not None and self.repo_type != tools_config["repository_type"]:
+                raise UserWarning(
+                    f"'--repo-type {self.repo_type}' conflicts with [i][red]repository_type[/]: [blue]pipeline[/][/] in '{os.path.relpath(config_path_yml)}'"
+                )
+            self.repo_type = tools_config["repository_type"]
+            return
 
         # Could be set on the command line - throw an error if not
         if not self.repo_type:
