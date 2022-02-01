@@ -1,0 +1,44 @@
+name: nf-core gitpod build and push
+# Builds the docker image for gitpod and pushes it to DockerHub
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - 'nf_core/gitpod/gitpod.Dockerfile'
+      - '.github/workflows/build_gitpod.yml'
+
+jobs:
+  push_to_registry:
+    name: Push Docker image to Docker Hub
+    runs-on: ubuntu-latest
+    # Only run for the nf-core repo, for releases and merged PRs
+    if: ${{ github.repository == 'nf-core/tools' }}
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASS  }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v3
+        with:
+          images: nfcore/gitpod
+          tags: |
+            type=semver,pattern={{version}}
+            type=raw,value=latest
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v2
+        with:
+          context: .
+          file: nf_core/gitpod/gitpod.Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
