@@ -25,7 +25,15 @@ log = logging.getLogger(__name__)
 
 class ModuleCreate(object):
     def __init__(
-        self, directory=".", tool="", author=None, process_label=None, has_meta=None, force=False, conda_name=None
+        self,
+        directory=".",
+        tool="",
+        author=None,
+        process_label=None,
+        has_meta=None,
+        force=False,
+        conda_name=None,
+        repo_type=None,
     ):
         self.directory = directory
         self.tool = tool
@@ -36,7 +44,7 @@ class ModuleCreate(object):
         self.subtool = None
         self.tool_conda_name = conda_name
         self.tool_licence = None
-        self.repo_type = None
+        self.repo_type = repo_type
         self.tool_licence = ""
         self.tool_description = ""
         self.tool_doc_url = ""
@@ -75,9 +83,12 @@ class ModuleCreate(object):
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
         try:
-            self.repo_type = self.get_repo_type(self.directory)
+            self.get_repo_type()
         except LookupError as e:
             raise UserWarning(e)
+        log.info(f"Repository type: [blue]{self.repo_type}")
+        if self.directory != ".":
+            log.info(f"Base directory: '{self.directory}'")
 
         log.info(
             "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
@@ -272,27 +283,37 @@ class ModuleCreate(object):
             template_stat = os.stat(os.path.join(os.path.dirname(nf_core.__file__), "module-template", template_fn))
             os.chmod(dest_fn, template_stat.st_mode)
 
-    def get_repo_type(self, directory):
+    def get_repo_type(self):
         """
         Determine whether this is a pipeline repository or a clone of
         nf-core/modules
         """
         # Verify that the pipeline dir exists
-        if dir is None or not os.path.exists(directory):
-            raise UserWarning(f"Could not find directory: {directory}")
+        if dir is None or not os.path.exists(self.directory):
+            raise UserWarning(f"Could not find directory: {self.directory}")
 
-        readme = os.path.join(directory, "README.md")
-        # Determine repository type
-        if os.path.exists(readme):
-            with open(readme) as fh:
-                if fh.readline().rstrip().startswith("# ![nf-core/modules]"):
-                    return "modules"
-                else:
-                    return "pipeline"
-        else:
+        # Try to find the root directory
+        base_dir = os.path.abspath(self.directory)
+        config_path = os.path.join(base_dir, ".nf-core.yml")
+        while not os.path.exists(config_path) and base_dir != os.path.dirname(base_dir):
+            base_dir = os.path.dirname(base_dir)
+            config_path = os.path.join(base_dir, ".nf-core.yml")
+            # Reset self.directory if we found the config file (will be an absolute path)
+            if os.path.exists(config_path):
+                self.directory = base_dir
+
+        # Figure out the repository type from the .nf-core.yml config file if we can
+        if os.path.exists(config_path):
+            tools_config = nf_core.utils.load_tools_config(self.directory)
+            if tools_config.get("repository_type") in ["pipeline", "modules"]:
+                self.repo_type = tools_config["repository_type"]
+                return
+
+        # Could be set on the command line - throw an error if not
+        if not self.repo_type:
             raise UserWarning(
-                f"This directory does not look like a clone of nf-core/modules or an nf-core pipeline: '{directory}'"
-                " Please point to a valid directory."
+                f"Can't find a '.nf-core.yml' file with 'repository_type' set to 'pipeline' or 'modules': '{self.directory}'"
+                "\nPlease use the '--repo-type' flag or create '.nf-core.yml'"
             )
 
     def get_module_dirs(self):
