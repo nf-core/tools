@@ -7,10 +7,12 @@
 * Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
 * Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
 * Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
+* Added `.nf-core.yml` file with `repository_type: pipeline` for modules commands
 
 ## General
 
 * Updated `nf-core download` to work with latest DSL2 syntax for containers ([#1379](https://github.com/nf-core/tools/issues/1379))
+* Made `nf-core modules create` detect repository type with explicit `.nf-core.yml` or `--repo-type`, instead of random readme stuff ([#1391](https://github.com/nf-core/tools/pull/1391))
 
 ### Modules
 
