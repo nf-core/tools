@@ -29,7 +29,7 @@ class ModuleCommand:
         self.module_names = []
         try:
             if self.dir:
-                self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
             else:
                 self.repo_type = None
         except LookupError as e:

@@ -19,6 +19,7 @@ import subprocess
 import yaml
 
 import nf_core.utils
+import nf_core.modules.module_utils
 
 log = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class ModuleCreate(object):
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
         try:
-            self.get_repo_type()
+            self.directory, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.directory, self.repo_type)
         except LookupError as e:
             raise UserWarning(e)
         log.info(f"Repository type: [blue]{self.repo_type}")
@@ -282,48 +283,6 @@ class ModuleCreate(object):
             # Mirror file permissions
             template_stat = os.stat(os.path.join(os.path.dirname(nf_core.__file__), "module-template", template_fn))
             os.chmod(dest_fn, template_stat.st_mode)
-
-    def get_repo_type(self):
-        """
-        Determine whether this is a pipeline repository or a clone of
-        nf-core/modules
-        """
-        # Verify that the pipeline dir exists
-        if dir is None or not os.path.exists(self.directory):
-            raise UserWarning(f"Could not find directory: {self.directory}")
-
-        # Try to find the root directory
-        base_dir = os.path.abspath(self.directory)
-        config_path_yml = os.path.join(base_dir, ".nf-core.yml")
-        config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
-        while (
-            not os.path.exists(config_path_yml)
-            and not os.path.exists(config_path_yaml)
-            and base_dir != os.path.dirname(base_dir)
-        ):
-            base_dir = os.path.dirname(base_dir)
-            config_path_yml = os.path.join(base_dir, ".nf-core.yml")
-            config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
-            # Reset self.directory if we found the config file (will be an absolute path)
-            if os.path.exists(config_path_yml) or os.path.exists(config_path_yaml):
-                self.directory = base_dir
-
-        # Figure out the repository type from the .nf-core.yml config file if we can
-        tools_config = nf_core.utils.load_tools_config(self.directory)
-        if tools_config.get("repository_type") in ["pipeline", "modules"]:
-            if self.repo_type is not None and self.repo_type != tools_config["repository_type"]:
-                raise UserWarning(
-                    f"'--repo-type {self.repo_type}' conflicts with [i][red]repository_type[/]: [blue]pipeline[/][/] in '{os.path.relpath(config_path_yml)}'"
-                )
-            self.repo_type = tools_config["repository_type"]
-            return
-
-        # Could be set on the command line - throw an error if not
-        if not self.repo_type:
-            raise UserWarning(
-                f"Can't find a '.nf-core.yml' file with 'repository_type' set to 'pipeline' or 'modules': '{self.directory}'"
-                "\nPlease use the '--repo-type' flag or create '.nf-core.yml'"
-            )
 
     def get_module_dirs(self):
         """Given a directory and a tool/subtool, set the file paths and check if they already exist
