@@ -131,6 +131,9 @@ def create_modules_json(pipeline_dir):
     modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
     modules_dir = f"{pipeline_dir}/modules"
 
+    if not os.path.exists(modules_dir):
+        raise UserWarning(f"Can't find a ./modules directory. Is this a DSL2 pipeline?")
+
     # Extract all modules repos in the pipeline directory
     repo_names = [
         f"{user_name}/{repo_name}"
