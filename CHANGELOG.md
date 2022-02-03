@@ -7,6 +7,7 @@
 * Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
 * Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
 * Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
+* Bumped `nf-core/tower-action` to `v3` and removed `pipeline` and `revision` from the AWS workflows, which were not needed
 
 ## General
 
