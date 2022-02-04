@@ -43,6 +43,7 @@ def main_nf(module_lint_object, module):
     state = "module"
     process_lines = []
     script_lines = []
+    when_lines = []
     for l in lines:
         if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
             state = "process"
@@ -52,7 +53,10 @@ def main_nf(module_lint_object, module):
         if re.search("output\s*:", l) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search("script\s*:", l) and state in ["input", "output", "process"]:
+        if re.search("when\s*:", l) and state in ["input", "output", "process"]:
+            state = "when"
+            continue
+        if re.search("script\s*:", l) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
 
@@ -64,6 +68,8 @@ def main_nf(module_lint_object, module):
         if state == "output" and not _is_empty(module, l):
             outputs += _parse_output(module, l)
             outputs = list(set(outputs))  # remove duplicate 'meta's
+        if state == "when" and not _is_empty(module, l):
+            when_lines.append(l)
         if state == "script" and not _is_empty(module, l):
             script_lines.append(l)
 
@@ -72,6 +78,9 @@ def main_nf(module_lint_object, module):
         module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
     else:
         module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
+
+    # Check the when statement
+    check_when_section(module, when_lines)
 
     # Check the script definition
     check_script_section(module, script_lines)
@@ -121,6 +130,28 @@ def check_script_section(self, lines):
             self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
 
 
+def check_when_section(self, lines):
+    """
+    Lint the when section
+    Checks whether the line is modified from 'task.ext.when == null || task.ext.when'
+    """
+    if len(lines) == 0:
+        self.failed.append(("when_exist", "When condition has been removed", self.main_nf))
+        return
+    elif len(lines) > 1:
+        self.failed.append(("when_exist", "When condition has too many lines", self.main_nf))
+        return
+    else:
+        self.passed.append(("when_exist", "When condition is present", self.main_nf))
+
+    # Check the condition hasn't been changed.
+    if lines[0].strip() != "task.ext.when == null || task.ext.when":
+        self.failed.append(("when_condition", "When condition has been altered", self.main_nf))
+        return
+    else:
+        self.passed.append(("when_condition", "When condition is unchanged", self.main_nf))
+
+
 def check_process_section(self, lines):
     """
     Lint the section of a module between the process definition
@@ -146,7 +177,7 @@ def check_process_section(self, lines):
     if all([x.upper() for x in self.process_name]):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:
-        self.failed.append(("process_capitals", "Process name is not in captial letters", self.main_nf))
+        self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
