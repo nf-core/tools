@@ -177,7 +177,7 @@ def check_process_section(self, lines):
     if all([x.upper() for x in self.process_name]):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:
-        self.failed.append(("process_capitals", "Process name is not in capitial letters", self.main_nf))
+        self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
