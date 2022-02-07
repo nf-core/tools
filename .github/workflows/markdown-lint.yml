@@ -9,7 +9,7 @@ jobs:
 
       - uses: actions/setup-node@v1
         with:
-          node-version: "10"
+          node-version: "16"
 
       - name: Install markdownlint
         run: npm install -g markdownlint-cli
