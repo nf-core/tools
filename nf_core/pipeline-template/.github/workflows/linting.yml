@@ -12,9 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16'
+      - uses: actions/setup-node@v2
       - name: Install markdownlint
         run: npm install -g markdownlint-cli
       - name: Run Markdownlint
@@ -51,9 +49,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16'
+      - uses: actions/setup-node@v2
 
       - name: Install editorconfig-checker
         run: npm install -g editorconfig-checker
@@ -65,9 +61,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - uses: actions/setup-node@v1
-        with:
-          node-version: '16'
+      - uses: actions/setup-node@v2
       - name: Install yaml-lint
         run: npm install -g yaml-lint
       - name: Run yaml-lint

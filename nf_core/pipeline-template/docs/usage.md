@@ -1,6 +1,6 @@
 # {{ name }}: Usage
 
-## :warning: Please read this documentation on the nf-core website: [<https://nf-co.re/>{{ short_name }}/usage](<https://nf-co.re/>{{ short_name }}/usage)
+## :warning: Please read this documentation on the nf-core website: [https://nf-co.re/{{ short_name }}/usage](https://nf-co.re/{{ short_name }}/usage)
 
 > _Documentation of pipeline parameters is generated automatically from the pipeline schema and can no longer be found in markdown files._
 
@@ -83,7 +83,7 @@ nextflow pull {{ name }}
 
 It is a good idea to specify a pipeline version when running the pipeline on your data. This ensures that a specific version of the pipeline code and software are used when you run your pipeline. If you keep using the same tag, you'll be running the same version of the pipeline, even if there have been changes to the code since.
 
-First, go to the [{{ name }} releases page](<https://github.com/>{{ name }}/releases) and find the latest version number - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`.
+First, go to the [{{ name }} releases page](https://github.com/{{ name }}/releases) and find the latest version number - numeric only (eg. `1.3.1`). Then specify this when running the pipeline with `-r` (one hyphen) - eg. `-r 1.3.1`.
 
 This version number will be logged in reports when you run the pipeline, so that you'll know what you used when you look back in the future.
 
