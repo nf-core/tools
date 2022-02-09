@@ -11,6 +11,8 @@ import rich.traceback
 from rich import print
 from rich.text import Text
 from rich.highlighter import RegexHighlighter
+from rich.align import Align
+from rich.padding import Padding
 from rich.panel import Panel
 from rich.table import Table
 from rich.theme import Theme
@@ -104,7 +106,22 @@ def rich_format_help(obj, ctx, formatter):
     )
 
     # Print usage
-    console.print(highlighter(" " + obj.get_usage(ctx) + "\n"), style="bold")
+    console.print(Padding(highlighter(obj.get_usage(ctx)), (0, 1, 1, 1)), style="bold")
+
+    # Print command / group help if we have some
+    if obj.help:
+        # Get the first line, remove single linebreaks
+        first_line = obj.help.split("\n\n")[0].replace("\n", " ")
+        helptext = Text(first_line)
+
+        # Get remaining lines, remove single line breaks and format as dim
+        remaining_lines = obj.help.split("\n\n")[1:]
+        if len(remaining_lines) > 0:
+            remaining_lines = "\n" + "\n".join([x.replace("\n", " ") for x in remaining_lines])
+            helptext.append(remaining_lines, style="dim")
+
+        # Print with a max width and some padding
+        console.print(Padding(Align(helptext, width=100, pad=False), (0, 1, 1, 1)))
 
     # Print the option flags
     options_table = Table(highlight=True, box=None, show_header=False)
