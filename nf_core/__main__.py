@@ -127,7 +127,13 @@ def rich_format_help(obj, ctx, formatter):
 
     # Print the option flags
     options_table = Table(highlight=True, box=None, show_header=False)
-    for param in obj.get_params(ctx)[1:]:
+    for param in obj.get_params(ctx):
+
+        # Skip positional arguments - they don't have opts or helptext and are covered in usage
+        # See https://click.palletsprojects.com/en/8.0.x/documentation/#documenting-arguments
+        if type(param) is click.core.Argument:
+            continue
+
         # Short and long form
         if len(param.opts) == 2:
             opt1 = highlighter(param.opts[1])
@@ -150,14 +156,15 @@ def rich_format_help(obj, ctx, formatter):
             help = Text.from_markup(param.get_help_record(ctx)[-1], emoji=False)
 
         options_table.add_row(highlighter(opt1), highlighter(opt2), metavar, highlighter(help))
-    console.print(Panel(options_table, border_style="dim", title="Options", title_align="left", width=100))
+
+    if options_table.row_count > 0:
+        console.print(Panel(options_table, border_style="dim", title="Options", title_align="left", width=100))
 
     # List click command groups
     if hasattr(obj, "list_commands"):
         commands_table = Table(highlight=False, box=None, show_header=False)
-        # Define formatting in columns, as commands don't match highlighter regex
-        commands_table.add_column("Command", style="bold cyan", no_wrap=True)
-        commands_table.add_column("Description")
+        # Define formatting in first column, as commands don't match highlighter regex
+        commands_table.add_column(style="bold cyan", no_wrap=True)
         for command in obj.list_commands(ctx):
             cmd = obj.get_command(ctx, command)
             commands_table.add_row(command, highlighter(cmd.help.split("\n")[0]))
