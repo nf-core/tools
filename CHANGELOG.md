@@ -13,11 +13,12 @@
 ## General
 
 * Updated `nf-core download` to work with latest DSL2 syntax for containers ([#1379](https://github.com/nf-core/tools/issues/1379))
-* [#1384](https://github.com/nf-core/tools/pull/1384) Adds Gitpod environment and Dockerfile.
+* Added a Gitpod environment and Dockerfile ([#1384](https://github.com/nf-core/tools/pull/1384))
     * Adds conda, Nextflow, nf-core, pytest-workflow, mamba, and pip to base Gitpod Docker image.
     * Adds GH action to build and push Gitpod Docker image.
     * Adds Gitpod environment to template.
     * Adds Gitpod environment to tools with auto build of nf-core tool.
+* Shiny new command-line help formatting ([#1403](https://github.com/nf-core/tools/pull/1403))
 
 ### Modules
 
