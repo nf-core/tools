@@ -100,7 +100,7 @@ def rich_format_help(obj, ctx, formatter):
             {
                 "option": "bold cyan",
                 "switch": "bold green",
-                "metavar": "bold magenta",
+                "metavar": "bold yellow",
                 "usage": "yellow",
             }
         ),
@@ -140,7 +140,7 @@ def rich_format_help(obj, ctx, formatter):
         # Column for a metavar, if we have one
         metavar = ""
         if param.metavar:
-            metavar = Text(f" {param.metavar}", style="bold magenta")
+            metavar = Text(f" {param.metavar}", style="bold yellow")
 
         # Help text
         help_record = param.get_help_record(ctx)
