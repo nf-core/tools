@@ -115,7 +115,11 @@ class CustomHelpOrder(click.Group):
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 def nf_core_cli(verbose, log_file):
+    """
+    nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
 
+    It is designed for both end-users running pipelines and also developers creating new pipelines.
+    """
     # Set the base logger to output DEBUG
     log.setLevel(logging.DEBUG)
 
