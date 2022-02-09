@@ -7,6 +7,8 @@
 * Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
 * Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
 * Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
+* Update igenomes path to the `BWAIndex` to fetch the whole `version0.6.0` folder instead of only the `genome.fa` file
+* Remove pinned Node version in the GitHub Actions workflows, to fix errors with `markdownlint`
 * Bumped `nf-core/tower-action` to `v3` and removed `pipeline` and `revision` from the AWS workflows, which were not needed
 
 ## General
@@ -27,6 +29,8 @@
     * `input:` / `output:` not being specified in module
     * Allow for containers from other biocontainers resource as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L7-L8)
 * Fixed traceback when using `stageAs` syntax as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L11)
+* Allow conditional process execution from the configuration file ([#1393](https://github.com/nf-core/tools/pull/1393))
+* Add linting for when condition([#1397](https://github.com/nf-core/tools/pull/1397))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 

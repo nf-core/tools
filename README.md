@@ -925,7 +925,7 @@ github.com:
     git_protocol: <ssh or https are valid choices>
 ```
 
-The easiest way to create this configuration file is through *GitHub CLI*: follow
+The easiest way to create this configuration file is through _GitHub CLI_: follow
 its [installation instructions](https://cli.github.com/manual/installation)
 and then call:
 
