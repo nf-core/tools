@@ -59,7 +59,7 @@ def run_nf_core():
             )
     except Exception as e:
         log.debug("Could not check latest version: {}".format(e))
-    stderr.print("\n\n")
+    stderr.print("\n")
 
     # Lanch the click cli
     nf_core_cli()
