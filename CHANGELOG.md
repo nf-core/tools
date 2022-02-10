@@ -19,6 +19,7 @@
     * Adds Gitpod environment to template.
     * Adds Gitpod environment to tools with auto build of nf-core tool.
 * Shiny new command-line help formatting ([#1403](https://github.com/nf-core/tools/pull/1403))
+* Call the command line help with `-h` as well as `--help` (was formerly just the latter) ([#1404](https://github.com/nf-core/tools/pull/1404))
 
 ### Modules
 

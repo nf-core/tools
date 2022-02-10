@@ -64,7 +64,6 @@ def run_nf_core():
     # Lanch the click cli
     nf_core_cli()
 
-
 # Customise the order of subcommands for --help
 # https://stackoverflow.com/a/47984810/713980
 class CustomHelpOrder(click.Group):
@@ -110,7 +109,7 @@ class CustomHelpOrder(click.Group):
         return decorator
 
 
-@click.group(cls=CustomHelpOrder)
+@click.group(cls=CustomHelpOrder, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
@@ -185,10 +184,10 @@ def list(keywords, sort, json, show_archived):
     "-a", "--save-all", is_flag=True, default=False, help="Save all parameters, even if unchanged from default"
 )
 @click.option(
-    "-h", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
+    "-x", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
 )
 @click.option(
-    "--url", type=str, default="https://nf-co.re/launch", help="Customise the builder URL (for development work)"
+    "-u", "--url", type=str, default="https://nf-co.re/launch", help="Customise the builder URL (for development work)"
 )
 def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
     """
