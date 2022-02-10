@@ -64,6 +64,7 @@ def run_nf_core():
     # Lanch the click cli
     nf_core_cli()
 
+
 # Customise the order of subcommands for --help
 # https://stackoverflow.com/a/47984810/713980
 class CustomHelpOrder(click.Group):
