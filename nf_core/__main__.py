@@ -136,8 +136,13 @@ def rich_format_help(obj, ctx, formatter):
 
         # Short and long form
         if len(param.opts) == 2:
-            opt1 = highlighter(param.opts[1])
-            opt2 = highlighter(param.opts[0])
+            # Always have the --long form first
+            if "--" in param.opts[0]:
+                opt1 = highlighter(param.opts[0])
+                opt2 = highlighter(param.opts[1])
+            else:
+                opt1 = highlighter(param.opts[1])
+                opt2 = highlighter(param.opts[0])
         # Just one form
         else:
             opt1 = highlighter(param.opts[0])
@@ -228,7 +233,7 @@ class RichCommand(click.Command):
         rich_format_help(self, ctx, formatter)
 
 
-@click.group(cls=CustomHelpOrder)
+@click.group(cls=CustomHelpOrder, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
@@ -299,10 +304,10 @@ def list(keywords, sort, json, show_archived):
     "-a", "--save-all", is_flag=True, default=False, help="Save all parameters, even if unchanged from default"
 )
 @click.option(
-    "-h", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
+    "-x", "--show-hidden", is_flag=True, default=False, help="Show hidden params which don't normally need changing"
 )
 @click.option(
-    "--url", type=str, default="https://nf-co.re/launch", help="Customise the builder URL (for development work)"
+    "-u", "--url", type=str, default="https://nf-co.re/launch", help="Customise the builder URL (for development work)"
 )
 def launch(pipeline, id, revision, command_only, params_in, params_out, save_all, show_hidden, url):
     """
