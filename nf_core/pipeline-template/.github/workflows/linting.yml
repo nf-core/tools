@@ -65,7 +65,7 @@ jobs:
       - name: Install yaml-lint
         run: npm install -g yaml-lint
       - name: Run yaml-lint
-        run: yamllint $(find ${GITHUB_WORKSPACE} -type f -name "*.yml" -o -name "*.yaml")
+        run: yamllint $(find ${GITHUB_WORKSPACE} -type f -name "*.yml" -o -name "*.yaml") -c ${GITHUB_WORKSPACE}/.markdownlint.yml
 
       # If the above check failed, post a comment on the PR explaining the failure
       - name: Post PR comment

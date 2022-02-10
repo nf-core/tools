@@ -9,6 +9,7 @@
 * Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
 * Update igenomes path to the `BWAIndex` to fetch the whole `version0.6.0` folder instead of only the `genome.fa` file
 * Remove pinned Node version in the GitHub Actions workflows, to fix errors with `markdownlint`
+* Add `.yamllint.yml` to avoid line length and document start errors ([#1407](https://github.com/nf-core/tools/issues/1407))
 
 ## General
 
