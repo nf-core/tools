@@ -29,6 +29,9 @@ import nf_core.utils
 # Submodules should all traverse back to this
 log = logging.getLogger()
 
+# Set up nicer formatting of click cli help messages
+rich_click.core.MAX_WIDTH = 100
+rich_click.core.USE_RICH_MARKUP = True
 click.Group.format_help = rich_click.rich_format_help
 click.Command.format_help = rich_click.rich_format_help
 
@@ -279,13 +282,12 @@ def validate_wf_name_prompt(ctx, opts, value):
     "-n",
     "--name",
     prompt="Workflow Name",
-    required=True,
     callback=validate_wf_name_prompt,
     type=str,
     help="The name of your new pipeline",
 )
-@click.option("-d", "--description", prompt=True, required=True, type=str, help="A short description of your pipeline")
-@click.option("-a", "--author", prompt=True, required=True, type=str, help="Name of the main author(s)")
+@click.option("-d", "--description", prompt=True, type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", prompt=True, type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
 @click.option("--no-git", is_flag=True, default=False, help="Do not initialise pipeline as new git repository")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
@@ -302,7 +304,13 @@ def create(name, description, author, version, no_git, force, outdir):
 
 
 @nf_core_cli.command(help_priority=6)
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory [dim]\[default: current working directory][/]",
+)
 @click.option(
     "--release",
     is_flag=True,
@@ -325,9 +333,9 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
 
     Runs a large number of automated tests to ensure that the supplied pipeline
     meets the nf-core guidelines. Documentation of all lint tests can be found
-    on the nf-core website: https://nf-co.re/tools-docs/
+    on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
 
-    You can ignore tests using a file called .nf-core-lint.yaml (if you have a good reason!).
+    You can ignore tests using a file called `.nf-core-lint.yaml` [i](if you have a good reason!)[/].
     See the documentation for details.
     """
 
