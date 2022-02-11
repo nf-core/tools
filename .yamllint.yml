@@ -1,5 +1,6 @@
 extends: default
-
+ignore: |
+    nf_core/*-template/
 rules:
     document-start: disable
     line-length: disable
