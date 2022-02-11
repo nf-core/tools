@@ -32,6 +32,28 @@ log = logging.getLogger()
 # Set up nicer formatting of click cli help messages
 rich_click.core.MAX_WIDTH = 100
 rich_click.core.USE_RICH_MARKUP = True
+rich_click.core.COMMAND_GROUPS = {
+    "nf-core": [
+        {
+            "name": "Commands for users",
+            "commands": ["list", "launch", "download", "licences"],
+        },
+        {
+            "name": "Commands for developers",
+            "commands": ["create", "lint", "modules", "schema", "bump-version", "sync"],
+        },
+    ],
+    "nf-core modules": [
+        {
+            "name": "For pipelines",
+            "commands": ["list", "install", "update", "remove"],
+        },
+        {
+            "name": "Developing new modules",
+            "commands": ["create", "create-test-yml", "lint", "bump-versions"],
+        },
+    ],
+}
 click.Group.format_help = rich_click.rich_format_help
 click.Command.format_help = rich_click.rich_format_help
 
