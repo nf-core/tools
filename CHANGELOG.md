@@ -9,6 +9,7 @@
 * Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
 * Update igenomes path to the `BWAIndex` to fetch the whole `version0.6.0` folder instead of only the `genome.fa` file
 * Remove pinned Node version in the GitHub Actions workflows, to fix errors with `markdownlint`
+* Add `.yamllint.yml` to avoid line length and document start errors ([#1407](https://github.com/nf-core/tools/issues/1407))
 
 ## General
 
@@ -20,6 +21,7 @@
     * Adds Gitpod environment to tools with auto build of nf-core tool.
 * Shiny new command-line help formatting ([#1403](https://github.com/nf-core/tools/pull/1403))
 * Call the command line help with `-h` as well as `--help` (was formerly just the latter) ([#1404](https://github.com/nf-core/tools/pull/1404))
+* Add `.yamllint.yml` config file to avoid line length and document start errors in the tools repo itself.
 
 ### Modules
 
