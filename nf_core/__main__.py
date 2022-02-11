@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
+from rich import print
 import click
 import logging
 import os
@@ -8,14 +9,7 @@ import re
 import rich.console
 import rich.logging
 import rich.traceback
-from rich import print
-from rich.text import Text
-from rich.highlighter import RegexHighlighter
-from rich.align import Align
-from rich.padding import Padding
-from rich.panel import Panel
-from rich.table import Table
-from rich.theme import Theme
+import rich_click
 import sys
 
 import nf_core
@@ -34,6 +28,9 @@ import nf_core.utils
 # Set up logging as the root logger
 # Submodules should all traverse back to this
 log = logging.getLogger()
+
+click.Group.format_help = rich_click.rich_format_help
+click.Command.format_help = rich_click.rich_format_help
 
 
 def run_nf_core():
@@ -62,119 +59,10 @@ def run_nf_core():
             )
     except Exception as e:
         log.debug("Could not check latest version: {}".format(e))
-    stderr.print("\n\n")
+    stderr.print("\n")
 
     # Lanch the click cli
     nf_core_cli()
-
-
-def rich_format_help(obj, ctx, formatter):
-    """
-    Print nicely formatted help text using rich
-
-    This code was shamelessly stolen from rich-cli, the
-    original author was @willmcgugan - thanks Will!
-
-    I've modified it a little to work with click groups
-    and to spit out output in a style that fits well with our tool.
-
-    If this the rich-click plugin gets made, we can probably strip
-    this out and just use that instead.
-
-    Original source:
-    https://github.com/Textualize/rich-cli/blob/8a2767c7a340715fc6fbf4930ace717b9b2fc5e5/src/rich_cli/__main__.py#L162-L236
-    """
-
-    class OptionHighlighter(RegexHighlighter):
-        highlights = [
-            r"(?P<switch>\-\w)(?!\S)",
-            r"(?P<option>\-\-[\w\-]+)(?!\S)",
-            r"(?P<metavar>\<[^\>]+\>)",
-            r"(?P<usage>Usage: )",
-        ]
-
-    highlighter = OptionHighlighter()
-
-    console = rich.console.Console(
-        theme=Theme(
-            {
-                "option": "bold cyan",
-                "switch": "bold green",
-                "metavar": "bold yellow",
-                "usage": "yellow",
-            }
-        ),
-        highlighter=highlighter,
-    )
-
-    # Print usage
-    console.print(Padding(highlighter(obj.get_usage(ctx)), (0, 1, 1, 1)), style="bold")
-
-    # Print command / group help if we have some
-    if obj.help:
-        # Get the first line, remove single linebreaks
-        first_line = obj.help.split("\n\n")[0].replace("\n", " ")
-        helptext = Text(first_line)
-
-        # Get remaining lines, remove single line breaks and format as dim
-        remaining_lines = obj.help.split("\n\n")[1:]
-        if len(remaining_lines) > 0:
-            remaining_lines = "\n" + "\n".join([x.replace("\n", " ") for x in remaining_lines])
-            helptext.append(remaining_lines, style="dim")
-
-        # Print with a max width and some padding
-        console.print(Padding(Align(helptext, width=100, pad=False), (0, 1, 1, 1)))
-
-    # Print the option flags
-    options_table = Table(highlight=True, box=None, show_header=False)
-    for param in obj.get_params(ctx):
-
-        # Skip positional arguments - they don't have opts or helptext and are covered in usage
-        # See https://click.palletsprojects.com/en/8.0.x/documentation/#documenting-arguments
-        if type(param) is click.core.Argument:
-            continue
-
-        # Short and long form
-        if len(param.opts) == 2:
-            # Always have the --long form first
-            if "--" in param.opts[0]:
-                opt1 = highlighter(param.opts[0])
-                opt2 = highlighter(param.opts[1])
-            else:
-                opt1 = highlighter(param.opts[1])
-                opt2 = highlighter(param.opts[0])
-        # Just one form
-        else:
-            opt1 = highlighter(param.opts[0])
-            opt2 = Text("")
-
-        # Column for a metavar, if we have one
-        metavar = ""
-        if param.metavar:
-            metavar = Text(f" {param.metavar}", style="bold yellow")
-
-        # Help text
-        help_record = param.get_help_record(ctx)
-        if help_record is None:
-            help = ""
-        else:
-            help = Text.from_markup(param.get_help_record(ctx)[-1], emoji=False)
-
-        options_table.add_row(highlighter(opt1), highlighter(opt2), metavar, highlighter(help))
-
-    if options_table.row_count > 0:
-        console.print(Panel(options_table, border_style="dim", title="Options", title_align="left", width=100))
-
-    # List click command groups
-    if hasattr(obj, "list_commands"):
-        commands_table = Table(highlight=False, box=None, show_header=False)
-        # Define formatting in first column, as commands don't match highlighter regex
-        commands_table.add_column(style="bold cyan", no_wrap=True)
-        for command in obj.list_commands(ctx):
-            cmd = obj.get_command(ctx, command)
-            commands_table.add_row(command, highlighter(cmd.help.split("\n")[0]))
-
-        console.print(Panel(commands_table, border_style="dim", title="Commands", title_align="left", width=100))
 
 
 # Customise the order of subcommands for --help
@@ -221,24 +109,17 @@ class CustomHelpOrder(click.Group):
 
         return decorator
 
-    def format_help(self, ctx, formatter):
-        """Override the click help output with nice formatting from Rich."""
-        rich_format_help(self, ctx, formatter)
-
-
-class RichCommand(click.Command):
-    """Override the click help output with nice formatting from Rich."""
-
-    def format_help(self, ctx, formatter):
-        rich_format_help(self, ctx, formatter)
-
 
 @click.group(cls=CustomHelpOrder, context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
 def nf_core_cli(verbose, log_file):
+    """
+    nf-core/tools provides a set of helper tools for use with nf-core Nextflow pipelines.
 
+    It is designed for both end-users running pipelines and also developers creating new pipelines.
+    """
     # Set the base logger to output DEBUG
     log.setLevel(logging.DEBUG)
 
@@ -261,7 +142,7 @@ def nf_core_cli(verbose, log_file):
 
 
 # nf-core list
-@nf_core_cli.command(help_priority=1, cls=RichCommand)
+@nf_core_cli.command(help_priority=1)
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option(
     "-s",
@@ -283,7 +164,7 @@ def list(keywords, sort, json, show_archived):
 
 
 # nf-core launch
-@nf_core_cli.command(help_priority=2, cls=RichCommand)
+@nf_core_cli.command(help_priority=2)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
 @click.option("-i", "--id", help="ID for web-gui launch parameter set")
@@ -333,7 +214,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 # nf-core download
 
 
-@nf_core_cli.command(help_priority=3, cls=RichCommand)
+@nf_core_cli.command(help_priority=3)
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--revision", type=str, help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
@@ -363,7 +244,7 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
 
 
 # nf-core licences
-@nf_core_cli.command(help_priority=4, cls=RichCommand)
+@nf_core_cli.command(help_priority=4)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.option("--json", is_flag=True, default=False, help="Print output in JSON")
 def licences(pipeline, json):
@@ -393,7 +274,7 @@ def validate_wf_name_prompt(ctx, opts, value):
     return value
 
 
-@nf_core_cli.command(help_priority=5, cls=RichCommand)
+@nf_core_cli.command(help_priority=5)
 @click.option(
     "-n",
     "--name",
@@ -420,7 +301,7 @@ def create(name, description, author, version, no_git, force, outdir):
     create_obj.init_pipeline()
 
 
-@nf_core_cli.command(help_priority=6, cls=RichCommand)
+@nf_core_cli.command(help_priority=6)
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option(
     "--release",
@@ -508,7 +389,7 @@ def list(ctx):
     pass
 
 
-@list.command(help_priority=1, cls=RichCommand)
+@list.command(help_priority=1)
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -525,7 +406,7 @@ def remote(ctx, keywords, json):
         sys.exit(1)
 
 
-@list.command(help_priority=2, cls=RichCommand)
+@list.command(help_priority=2)
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -543,7 +424,7 @@ def local(ctx, keywords, json, dir):
         sys.exit(1)
 
 
-@modules.command(help_priority=2, cls=RichCommand)
+@modules.command(help_priority=2)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -567,7 +448,7 @@ def install(ctx, tool, dir, prompt, force, sha):
         sys.exit(1)
 
 
-@modules.command(help_priority=3, cls=RichCommand)
+@modules.command(help_priority=3)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -597,7 +478,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, diff):
         sys.exit(1)
 
 
-@modules.command(help_priority=4, cls=RichCommand)
+@modules.command(help_priority=4)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -614,7 +495,7 @@ def remove(ctx, dir, tool):
         sys.exit(1)
 
 
-@modules.command("create", help_priority=5, cls=RichCommand)
+@modules.command("create", help_priority=5)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
@@ -652,7 +533,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
         sys.exit(1)
 
 
-@modules.command("create-test-yml", help_priority=6, cls=RichCommand)
+@modules.command("create-test-yml", help_priority=6)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
@@ -674,7 +555,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
-@modules.command(help_priority=7, cls=RichCommand)
+@modules.command(help_priority=7)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
@@ -706,7 +587,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
         sys.exit(1)
 
 
-@modules.command(help_priority=8, cls=RichCommand)
+@modules.command(help_priority=8)
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
@@ -740,7 +621,7 @@ def schema():
     pass
 
 
-@schema.command(help_priority=1, cls=RichCommand)
+@schema.command(help_priority=1)
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
 def validate(pipeline, params):
@@ -768,7 +649,7 @@ def validate(pipeline, params):
         sys.exit(1)
 
 
-@schema.command(help_priority=2, cls=RichCommand)
+@schema.command(help_priority=2)
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
 @click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
@@ -799,7 +680,7 @@ def build(dir, no_prompts, web_only, url):
         sys.exit(1)
 
 
-@schema.command(help_priority=3, cls=RichCommand)
+@schema.command(help_priority=3)
 @click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
 def lint(schema_path):
     """
@@ -824,7 +705,7 @@ def lint(schema_path):
         sys.exit(1)
 
 
-@nf_core_cli.command("bump-version", help_priority=9, cls=RichCommand)
+@nf_core_cli.command("bump-version", help_priority=9)
 @click.argument("new_version", required=True, metavar="<new version>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option(
@@ -861,7 +742,7 @@ def bump_version(new_version, dir, nextflow):
         sys.exit(1)
 
 
-@nf_core_cli.command("sync", help_priority=10, cls=RichCommand)
+@nf_core_cli.command("sync", help_priority=10)
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
