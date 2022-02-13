@@ -2,14 +2,13 @@
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
 from rich import print
-import click
 import logging
 import os
 import re
 import rich.console
 import rich.logging
 import rich.traceback
-import rich_click
+import rich_click as click
 import sys
 
 import nf_core
@@ -30,9 +29,9 @@ import nf_core.utils
 log = logging.getLogger()
 
 # Set up nicer formatting of click cli help messages
-rich_click.core.MAX_WIDTH = 100
-rich_click.core.USE_RICH_MARKUP = True
-rich_click.core.COMMAND_GROUPS = {
+click.rich_click.MAX_WIDTH = 100
+click.rich_click.USE_RICH_MARKUP = True
+click.rich_click.COMMAND_GROUPS = {
     "nf-core": [
         {
             "name": "Commands for users",
@@ -54,8 +53,8 @@ rich_click.core.COMMAND_GROUPS = {
         },
     ],
 }
-click.Group.format_help = rich_click.rich_format_help
-click.Command.format_help = rich_click.rich_format_help
+# click.Group.format_help = rich_click.rich_format_help
+# click.Command.format_help = rich_click.rich_format_help
 
 
 def run_nf_core():
@@ -90,52 +89,7 @@ def run_nf_core():
     nf_core_cli()
 
 
-# Customise the order of subcommands for --help
-# https://stackoverflow.com/a/47984810/713980
-class CustomHelpOrder(click.Group):
-    def __init__(self, *args, **kwargs):
-        self.help_priorities = {}
-        super(CustomHelpOrder, self).__init__(*args, **kwargs)
-
-    def get_help(self, ctx):
-        self.list_commands = self.list_commands_for_help
-        return super(CustomHelpOrder, self).get_help(ctx)
-
-    def list_commands_for_help(self, ctx):
-        """reorder the list of commands when listing the help"""
-        commands = super(CustomHelpOrder, self).list_commands(ctx)
-        return (c[1] for c in sorted((self.help_priorities.get(command, 1000), command) for command in commands))
-
-    def command(self, *args, **kwargs):
-        """Behaves the same as `click.Group.command()` except capture
-        a priority for listing command names in help.
-        """
-        help_priority = kwargs.pop("help_priority", 1000)
-        help_priorities = self.help_priorities
-
-        def decorator(f):
-            cmd = super(CustomHelpOrder, self).command(*args, **kwargs)(f)
-            help_priorities[cmd.name] = help_priority
-            return cmd
-
-        return decorator
-
-    def group(self, *args, **kwargs):
-        """Behaves the same as `click.Group.group()` except capture
-        a priority for listing command names in help.
-        """
-        help_priority = kwargs.pop("help_priority", 1000)
-        help_priorities = self.help_priorities
-
-        def decorator(f):
-            cmd = super(CustomHelpOrder, self).command(*args, **kwargs)(f)
-            help_priorities[cmd.name] = help_priority
-            return cmd
-
-        return decorator
-
-
-@click.group(cls=CustomHelpOrder, context_settings=dict(help_option_names=["-h", "--help"]))
+@click.group(context_settings=dict(help_option_names=["-h", "--help"]))
 @click.version_option(nf_core.__version__)
 @click.option("-v", "--verbose", is_flag=True, default=False, help="Print verbose output to the console.")
 @click.option("-l", "--log-file", help="Save a verbose log to a file.", metavar="<filename>")
@@ -167,7 +121,7 @@ def nf_core_cli(verbose, log_file):
 
 
 # nf-core list
-@nf_core_cli.command(help_priority=1)
+@nf_core_cli.command()
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option(
     "-s",
@@ -189,7 +143,7 @@ def list(keywords, sort, json, show_archived):
 
 
 # nf-core launch
-@nf_core_cli.command(help_priority=2)
+@nf_core_cli.command()
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--revision", help="Release/branch/SHA of the project to run (if remote)")
 @click.option("-i", "--id", help="ID for web-gui launch parameter set")
@@ -239,7 +193,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 # nf-core download
 
 
-@nf_core_cli.command(help_priority=3)
+@nf_core_cli.command()
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--revision", type=str, help="Pipeline release")
 @click.option("-o", "--outdir", type=str, help="Output directory")
@@ -269,7 +223,7 @@ def download(pipeline, revision, outdir, compress, force, container, singularity
 
 
 # nf-core licences
-@nf_core_cli.command(help_priority=4)
+@nf_core_cli.command()
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.option("--json", is_flag=True, default=False, help="Print output in JSON")
 def licences(pipeline, json):
@@ -299,7 +253,7 @@ def validate_wf_name_prompt(ctx, opts, value):
     return value
 
 
-@nf_core_cli.command(help_priority=5)
+@nf_core_cli.command()
 @click.option(
     "-n",
     "--name",
@@ -325,7 +279,7 @@ def create(name, description, author, version, no_git, force, outdir):
     create_obj.init_pipeline()
 
 
-@nf_core_cli.command(help_priority=6)
+@nf_core_cli.command()
 @click.option(
     "-d",
     "--dir",
@@ -384,7 +338,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
 
 
 ## nf-core module subcommands
-@nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
+@nf_core_cli.group()
 @click.option(
     "-g",
     "--github-repository",
@@ -410,7 +364,7 @@ def modules(ctx, github_repository, branch):
         sys.exit(1)
 
 
-@modules.group(cls=CustomHelpOrder, help_priority=1)
+@modules.group()
 @click.pass_context
 def list(ctx):
     """
@@ -419,7 +373,7 @@ def list(ctx):
     pass
 
 
-@list.command(help_priority=1)
+@list.command()
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -436,7 +390,7 @@ def remote(ctx, keywords, json):
         sys.exit(1)
 
 
-@list.command(help_priority=2)
+@list.command()
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
@@ -454,7 +408,7 @@ def local(ctx, keywords, json, dir):
         sys.exit(1)
 
 
-@modules.command(help_priority=2)
+@modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -478,7 +432,7 @@ def install(ctx, tool, dir, prompt, force, sha):
         sys.exit(1)
 
 
-@modules.command(help_priority=3)
+@modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -508,7 +462,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, diff):
         sys.exit(1)
 
 
-@modules.command(help_priority=4)
+@modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -525,7 +479,7 @@ def remove(ctx, dir, tool):
         sys.exit(1)
 
 
-@modules.command("create", help_priority=5)
+@modules.command("create")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<directory>")
@@ -563,7 +517,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
         sys.exit(1)
 
 
-@modules.command("create-test-yml", help_priority=6)
+@modules.command("create-test-yml")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-t", "--run-tests", is_flag=True, default=False, help="Run the test workflows")
@@ -585,7 +539,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
-@modules.command(help_priority=7)
+@modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
@@ -617,7 +571,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
         sys.exit(1)
 
 
-@modules.command(help_priority=8)
+@modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<nf-core/modules directory>")
@@ -640,7 +594,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
 
 
 ## nf-core schema subcommands
-@nf_core_cli.group(cls=CustomHelpOrder, help_priority=7)
+@nf_core_cli.group()
 def schema():
     """
     Suite of tools for developers to manage pipeline schema.
@@ -651,7 +605,7 @@ def schema():
     pass
 
 
-@schema.command(help_priority=1)
+@schema.command()
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
 def validate(pipeline, params):
@@ -679,7 +633,7 @@ def validate(pipeline, params):
         sys.exit(1)
 
 
-@schema.command(help_priority=2)
+@schema.command()
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
 @click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
@@ -710,7 +664,7 @@ def build(dir, no_prompts, web_only, url):
         sys.exit(1)
 
 
-@schema.command(help_priority=3)
+@schema.command()
 @click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
 def lint(schema_path):
     """
@@ -735,7 +689,7 @@ def lint(schema_path):
         sys.exit(1)
 
 
-@nf_core_cli.command("bump-version", help_priority=9)
+@nf_core_cli.command("bump-version")
 @click.argument("new_version", required=True, metavar="<new version>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option(
@@ -772,7 +726,7 @@ def bump_version(new_version, dir, nextflow):
         sys.exit(1)
 
 
-@nf_core_cli.command("sync", help_priority=10)
+@nf_core_cli.command("sync")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
