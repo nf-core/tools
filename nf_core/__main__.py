@@ -53,8 +53,6 @@ click.rich_click.COMMAND_GROUPS = {
         },
     ],
 }
-# click.Group.format_help = rich_click.rich_format_help
-# click.Command.format_help = rich_click.rich_format_help
 
 
 def run_nf_core():
