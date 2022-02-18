@@ -1,5 +1,13 @@
 name: Lint YAML
-on: [push, pull_request]
+on:
+  push:
+    # Ignore YAML files in the template, as they contain Jinja2 template strings
+    paths-ignore:
+      - 'nf_core/pipeline-template/**'
+  pull_request:
+    # Ignore YAML files in the template, as they contain Jinja2 template strings
+    paths-ignore:
+      - 'nf_core/pipeline-template/**'
 jobs:
   YAML:
     runs-on: ubuntu-latest
