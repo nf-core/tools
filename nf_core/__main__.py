@@ -189,8 +189,6 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
 
 
 # nf-core download
-
-
 @nf_core_cli.command()
 @click.argument("pipeline", required=False, metavar="<pipeline name>")
 @click.option("-r", "--revision", type=str, help="Pipeline release")
@@ -241,16 +239,16 @@ def licences(pipeline, json):
         sys.exit(1)
 
 
-# nf-core create
 def validate_wf_name_prompt(ctx, opts, value):
     """Force the workflow name to meet the nf-core requirements"""
     if not re.match(r"^[a-z]+$", value):
-        click.echo("Invalid workflow name: must be lowercase without punctuation.")
+        log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
         value = click.prompt(opts.prompt)
         return validate_wf_name_prompt(ctx, opts, value)
     return value
 
 
+# nf-core create
 @nf_core_cli.command()
 @click.option(
     "-n",
@@ -277,6 +275,7 @@ def create(name, description, author, version, no_git, force, outdir):
     create_obj.init_pipeline()
 
 
+# nf-core lint
 @nf_core_cli.command()
 @click.option(
     "-d",
@@ -309,7 +308,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
     meets the nf-core guidelines. Documentation of all lint tests can be found
     on the nf-core website: [link=https://nf-co.re/tools-docs/]https://nf-co.re/tools-docs/[/]
 
-    You can ignore tests using a file called `.nf-core-lint.yaml` [i](if you have a good reason!)[/].
+    You can ignore tests using a file called [blue].nf-core-lint.yaml[/] [i](if you have a good reason!)[/].
     See the documentation for details.
     """
 
@@ -335,7 +334,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
         sys.exit(1)
 
 
-## nf-core module subcommands
+# nf-core modules subcommands
 @nf_core_cli.group()
 @click.option(
     "-g",
@@ -362,6 +361,7 @@ def modules(ctx, github_repository, branch):
         sys.exit(1)
 
 
+# nf-core modules list subcommands
 @modules.group()
 @click.pass_context
 def list(ctx):
@@ -371,6 +371,7 @@ def list(ctx):
     pass
 
 
+# nf-core modules list remote
 @list.command()
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
@@ -388,6 +389,7 @@ def remote(ctx, keywords, json):
         sys.exit(1)
 
 
+# nf-core modules list local
 @list.command()
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
@@ -406,6 +408,7 @@ def local(ctx, keywords, json, dir):
         sys.exit(1)
 
 
+# nf-core modules install
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
@@ -430,6 +433,7 @@ def install(ctx, tool, dir, prompt, force, sha):
         sys.exit(1)
 
 
+# nf-core modules update
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
@@ -460,6 +464,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, diff):
         sys.exit(1)
 
 
+# nf-core modules remove
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
@@ -477,6 +482,7 @@ def remove(ctx, dir, tool):
         sys.exit(1)
 
 
+# nf-core modules create
 @modules.command("create")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
@@ -515,6 +521,7 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
         sys.exit(1)
 
 
+# nf-core modules create-test-yml
 @modules.command("create-test-yml")
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
@@ -537,6 +544,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         sys.exit(1)
 
 
+# nf-core modules lint
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
@@ -569,6 +577,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
         sys.exit(1)
 
 
+# nf-core modules bump-versions
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
@@ -591,7 +600,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
         sys.exit(1)
 
 
-## nf-core schema subcommands
+# nf-core schema subcommands
 @nf_core_cli.group()
 def schema():
     """
@@ -603,6 +612,7 @@ def schema():
     pass
 
 
+# nf-core schema validate
 @schema.command()
 @click.argument("pipeline", required=True, metavar="<pipeline name>")
 @click.argument("params", type=click.Path(exists=True), required=True, metavar="<JSON params file>")
@@ -631,6 +641,7 @@ def validate(pipeline, params):
         sys.exit(1)
 
 
+# nf-core schema build
 @schema.command()
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
@@ -662,6 +673,7 @@ def build(dir, no_prompts, web_only, url):
         sys.exit(1)
 
 
+# nf-core schema lint
 @schema.command()
 @click.argument("schema_path", type=click.Path(exists=True), required=True, metavar="<pipeline schema>")
 def lint(schema_path):
@@ -687,6 +699,7 @@ def lint(schema_path):
         sys.exit(1)
 
 
+# nf-core bump-version
 @nf_core_cli.command("bump-version")
 @click.argument("new_version", required=True, metavar="<new version>")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
@@ -724,6 +737,7 @@ def bump_version(new_version, dir, nextflow):
         sys.exit(1)
 
 
+# nf-core sync
 @nf_core_cli.command("sync")
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
@@ -758,5 +772,6 @@ def sync(dir, from_branch, pull_request, github_repository, username):
         sys.exit(1)
 
 
+# Main script is being run - launch the CLI
 if __name__ == "__main__":
     run_nf_core()
