@@ -9,6 +9,6 @@ pyyaml
 questionary>=1.8.0
 requests
 requests_cache
-rich-click
+rich-click>=1.0.0
 rich>=10.0.0
 tabulate
