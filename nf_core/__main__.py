@@ -53,6 +53,9 @@ click.rich_click.COMMAND_GROUPS = {
         },
     ],
 }
+click.rich_click.OPTION_GROUPS = {
+    "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
+}
 
 
 def run_nf_core():
@@ -347,7 +350,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
 @click.pass_context
 def modules(ctx, github_repository, branch):
     """
-    Tools to manage Nextflow DSL2 modules as hosted on nf-core/modules.
+    Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
     # ensure that ctx.obj exists and is a dict (in case `cli()` is called
     # by means other than the `if` block below)
@@ -366,7 +369,7 @@ def modules(ctx, github_repository, branch):
 @click.pass_context
 def list(ctx):
     """
-    List modules in a local pipeline or remote repo e.g nf-core/modules.
+    List modules in a local pipeline or remote repository.
     """
     pass
 
@@ -378,7 +381,7 @@ def list(ctx):
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
 def remote(ctx, keywords, json):
     """
-    List all modules in a remote GitHub repo e.g. nf-core/modules
+    List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
     try:
         module_list = nf_core.modules.ModuleList(None, remote=True)
@@ -394,10 +397,16 @@ def remote(ctx, keywords, json):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: Current working directory][/]",
+)
 def local(ctx, keywords, json, dir):
     """
-    List all modules installed locally in a pipeline
+    List modules installed locally in a pipeline
     """
     try:
         module_list = nf_core.modules.ModuleList(dir, remote=False)
@@ -412,7 +421,13 @@ def local(ctx, keywords, json, dir):
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-f", "--force", is_flag=True, default=False, help="Force reinstallation of module if it already exists")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
@@ -437,7 +452,13 @@ def install(ctx, tool, dir, prompt, force, sha):
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
@@ -468,7 +489,13 @@ def update(ctx, tool, dir, force, prompt, sha, all, diff):
 @modules.command()
 @click.pass_context
 @click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: current working directory][/]",
+)
 def remove(ctx, dir, tool):
     """
     Remove a module from a pipeline.
@@ -643,7 +670,13 @@ def validate(pipeline, params):
 
 # nf-core schema build
 @schema.command()
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
 @click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
 @click.option(
@@ -702,7 +735,13 @@ def lint(schema_path):
 # nf-core bump-version
 @nf_core_cli.command("bump-version")
 @click.argument("new_version", required=True, metavar="<new version>")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: current working directory][/]",
+)
 @click.option(
     "-n", "--nextflow", is_flag=True, default=False, help="Bump required nextflow version instead of pipeline version"
 )
@@ -739,23 +778,29 @@ def bump_version(new_version, dir, nextflow):
 
 # nf-core sync
 @nf_core_cli.command("sync")
-@click.option("-d", "--dir", type=click.Path(exists=True), default=".", help="Pipeline directory. Defaults to CWD")
-@click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow vars.")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: current working directory][/]",
+)
+@click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow variables.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")
 @click.option("-g", "--github-repository", type=str, help="GitHub PR: target repository.")
 @click.option("-u", "--username", type=str, help="GitHub PR: auth username.")
 def sync(dir, from_branch, pull_request, github_repository, username):
     """
-    Sync a pipeline TEMPLATE branch with the nf-core template.
+    Sync a pipeline [cyan i]TEMPLATE[/] branch with the nf-core template.
 
     To keep nf-core pipelines up to date with improvements in the main
     template, we use a method of synchronisation that uses a special
-    git branch called TEMPLATE.
+    git branch called [cyan i]TEMPLATE[/].
 
-    This command updates the TEMPLATE branch with the latest version of
+    This command updates the [cyan i]TEMPLATE[/] branch with the latest version of
     the nf-core template, so that these updates can be synchronised with
     the pipeline. It is run automatically for all pipelines when ever a
-    new release of nf-core/tools (and the included template) is made.
+    new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
     # Check if pipeline directory contains necessary files
     try:
