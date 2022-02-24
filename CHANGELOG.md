@@ -11,6 +11,7 @@
 * Remove pinned Node version in the GitHub Actions workflows, to fix errors with `markdownlint`
 * Add yamllint GitHub Action.
 * Add `.yamllint.yml` to avoid line length and document start errors ([#1407](https://github.com/nf-core/tools/issues/1407))
+* Add `--publish_dir_mode` back into the pipeline template ([nf-core/rnaseq#752](https://github.com/nf-core/rnaseq/issues/752#issuecomment-1039451607))
 
 ## General
 
