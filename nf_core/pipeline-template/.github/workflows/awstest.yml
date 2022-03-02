@@ -11,14 +11,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Launch workflow via tower
-        uses: nf-core/tower-action@v2
+        uses: nf-core/tower-action@v3
         {% raw %}
         with:
           workspace_id: ${{ secrets.TOWER_WORKSPACE_ID }}
           access_token: ${{ secrets.TOWER_ACCESS_TOKEN }}
           compute_env: ${{ secrets.TOWER_COMPUTE_ENV }}
-          pipeline: ${{ github.repository }}
-          revision: ${{ github.sha }}
           workdir: s3://${{ secrets.AWS_S3_BUCKET }}{% endraw %}/work/{{ short_name }}/{% raw %}work-${{ github.sha }}{% endraw %}
           parameters: |
             {

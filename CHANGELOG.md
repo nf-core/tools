@@ -10,6 +10,7 @@
 * Added `.nf-core.yml` file with `repository_type: pipeline` for modules commands
 * Update igenomes path to the `BWAIndex` to fetch the whole `version0.6.0` folder instead of only the `genome.fa` file
 * Remove pinned Node version in the GitHub Actions workflows, to fix errors with `markdownlint`
+* Bumped `nf-core/tower-action` to `v3` and removed `pipeline` and `revision` from the AWS workflows, which were not needed
 * Add yamllint GitHub Action.
 * Add `.yamllint.yml` to avoid line length and document start errors ([#1407](https://github.com/nf-core/tools/issues/1407))
 * Add `--publish_dir_mode` back into the pipeline template ([nf-core/rnaseq#752](https://github.com/nf-core/rnaseq/issues/752#issuecomment-1039451607))
