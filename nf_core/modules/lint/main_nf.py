@@ -132,24 +132,24 @@ def check_script_section(self, lines):
 
 def check_when_section(self, lines):
     """
-    Lint the when section
+    Lint the when: section
     Checks whether the line is modified from 'task.ext.when == null || task.ext.when'
     """
     if len(lines) == 0:
-        self.failed.append(("when_exist", "When condition has been removed", self.main_nf))
+        self.failed.append(("when_exist", "when: condition has been removed", self.main_nf))
         return
     elif len(lines) > 1:
-        self.failed.append(("when_exist", "When condition has too many lines", self.main_nf))
+        self.failed.append(("when_exist", "when: condition has too many lines", self.main_nf))
         return
     else:
-        self.passed.append(("when_exist", "When condition is present", self.main_nf))
+        self.passed.append(("when_exist", "when: condition is present", self.main_nf))
 
     # Check the condition hasn't been changed.
     if lines[0].strip() != "task.ext.when == null || task.ext.when":
-        self.failed.append(("when_condition", "When condition has been altered", self.main_nf))
+        self.failed.append(("when_condition", "when: condition has been altered", self.main_nf))
         return
     else:
-        self.passed.append(("when_condition", "When condition is unchanged", self.main_nf))
+        self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
 def check_process_section(self, lines):

@@ -1,4 +1,4 @@
-FROM gitpod/workspace-full
+FROM gitpod/workspace-base
 
 USER root
 
@@ -15,7 +15,7 @@ USER gitpod
 
 # Install nextflow, nf-core, Mamba, and pytest-workflow
 RUN conda update -n base -c defaults conda && \
-    conda install nextflow nf-core pytest-workflow mamba pip -n base -c conda-forge -c bioconda && \
+    conda install nextflow nf-core pytest-workflow mamba pip black yamllint -n base -c conda-forge -c bioconda && \
     nextflow self-update && \
     conda config --add channels defaults && \
     conda config --add channels bioconda && \
