@@ -7,6 +7,7 @@
 * Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
 * Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
 * Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
+* Added `.nf-core.yml` file with `repository_type: pipeline` for modules commands
 * Update igenomes path to the `BWAIndex` to fetch the whole `version0.6.0` folder instead of only the `genome.fa` file
 * Remove pinned Node version in the GitHub Actions workflows, to fix errors with `markdownlint`
 * Add yamllint GitHub Action.
@@ -16,6 +17,7 @@
 ## General
 
 * Updated `nf-core download` to work with latest DSL2 syntax for containers ([#1379](https://github.com/nf-core/tools/issues/1379))
+* Made `nf-core modules create` detect repository type with explicit `.nf-core.yml` or `--repo-type`, instead of random readme stuff ([#1391](https://github.com/nf-core/tools/pull/1391))
 * Added a Gitpod environment and Dockerfile ([#1384](https://github.com/nf-core/tools/pull/1384))
     * Adds conda, Nextflow, nf-core, pytest-workflow, mamba, and pip to base Gitpod Docker image.
     * Adds GH action to build and push Gitpod Docker image.
