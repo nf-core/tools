@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - 'master'
+      - 'dev'
     paths:
       - 'nf_core/gitpod/gitpod.Dockerfile'
       - '.github/workflows/build_gitpod.yml'
