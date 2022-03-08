@@ -55,11 +55,7 @@ On release, automated continuous integration tests run the pipeline on a full-si
     <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
     ```console
-    nextflow run {{ name }} \
-        --input samplesheet.csv \
-        --outdir <OUTDIR> \
-        --genome GRCh37 \
-        -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
+    nextflow run {{ name }} --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
     ```
 
 ## Documentation
