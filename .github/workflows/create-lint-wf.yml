@@ -1,12 +1,25 @@
 name: Create a pipeline and lint it
 on: [push, pull_request]
 
-# Uncomment if we need an edge release of Nextflow again
-# env: NXF_EDGE: 1
+env:
+  NXF_ANSI_LOG: false
+  CAPSULE_LOG: none
 
 jobs:
   MakeTestWorkflow:
     runs-on: ubuntu-latest
+    env:
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions
+        include:
+          # Test pipeline minimum Nextflow version
+          - NXF_VER: '21.10.3'
+            NXF_EDGE: ''
+          # Test latest edge release of Nextflow
+          - NXF_VER: ''
+            NXF_EDGE: '1'
     steps:
       - uses: actions/checkout@v2
         name: Check out source-code repository
@@ -23,7 +36,10 @@ jobs:
 
       - name: Install Nextflow
         env:
-          CAPSULE_LOG: none
+          NXF_VER: ${{ matrix.NXF_VER }}
+          # Uncomment only if the edge release is more recent than the latest stable release
+          # See https://github.com/nextflow-io/nextflow/issues/2467
+          # NXF_EDGE: ${{ matrix.NXF_EDGE }}
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
