@@ -185,37 +185,44 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         # Ask if we should show the diffs (unless a filename was already given on the command line)
-        if not self.show_diff:
-            self.show_diff = questionary.confirm(
-                "Do you want to preview the changes that will be applied, in the terminal?",
+        if not self.save_diff_fn:
+            diff_type = questionary.select(
+                "Do you want to view diffs of the proposed changes?",
+                choices=[
+                    {"name": "No previews, just update everything", "value": 0},
+                    {"name": "Preview diff in terminal, choose whether to update files", "value": 1},
+                    {"name": "Just write diffs to a patch file", "value": 2},
+                ],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-        if self.save_diff_fn is None:
-            if questionary.confirm(
-                "Do you want to save changes to a '.diff' file instead of applying them directly to the files?",
-                style=nf_core.utils.nfcore_question_style,
-            ).unsafe_ask():
+            self.show_diff = diff_type == 1
+            self.save_diff_fn = diff_type == 2
+
+        # Set up file to save diff
+        if self.save_diff_fn:  # True or a string
+            # From questionary - no filename yet
+            if self.save_diff_fn is True:
                 self.save_diff_fn = questionary.text(
                     "Enter the filename: ", style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
-                while os.path.exists(self.save_diff_fn):
-                    if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
-                        os.remove(self.save_diff_fn)
-                        break
-                    self.save_diff_fn = questionary.text(
-                        f"Enter a new filename: ",
-                        style=nf_core.utils.nfcore_question_style,
-                    ).unsafe_ask()
-        elif os.path.exists(self.save_diff_fn):
-            # Since we append to the file later, it should be empty to begin with
-            os.remove(
-                self.save_diff_fn,
-            )
+            # Check if filename already exists (questionary or cli)
+            while os.path.exists(self.save_diff_fn):
+                if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
+                    os.remove(self.save_diff_fn)
+                    break
+                self.save_diff_fn = questionary.text(
+                    f"Enter a new filename: ",
+                    style=nf_core.utils.nfcore_question_style,
+                ).unsafe_ask()
 
         exit_value = True
         for modules_repo, module, sha in repos_mods_shas:
+
+            # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
+
+            # Check if the module we've been asked to update actually exists
             if not module_exist_in_repo(module, modules_repo):
                 warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
                 if self.update_all:
@@ -368,7 +375,7 @@ class ModuleUpdate(ModuleCommand):
                                 fh.write("\n")
 
                         fh.write("*" * 60 + "\n")
-                else:
+                elif self.show_diff:
                     console = Console(force_terminal=nf_core.utils.rich_force_colors())
                     log.info(
                         f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
