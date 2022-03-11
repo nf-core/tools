@@ -15,6 +15,7 @@
 * Add `.yamllint.yml` to avoid line length and document start errors ([#1407](https://github.com/nf-core/tools/issues/1407))
 * Add `--publish_dir_mode` back into the pipeline template ([nf-core/rnaseq#752](https://github.com/nf-core/rnaseq/issues/752#issuecomment-1039451607))
 * Add optional loading of of pipeline-specific institutional configs to `nextflow.config`
+* Make `--outdir` a mandatory parameter ([nf-core/tools#1415](https://github.com/nf-core/tools/issues/1415))
 
 ## General
 
@@ -39,9 +40,11 @@
     * `input:` / `output:` not being specified in module
     * Allow for containers from other biocontainers resource as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L7-L8)
 * Fixed traceback when using `stageAs` syntax as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L11)
+* Added `nf-core schema docs` command to output pipline parameter documentation in Markdown format for inclusion in GitHub and other documentation systems ([#741](https://github.com/nf-core/tools/issues/741))
 * Allow conditional process execution from the configuration file ([#1393](https://github.com/nf-core/tools/pull/1393))
 * Add linting for when condition([#1397](https://github.com/nf-core/tools/pull/1397))
 * Added modules ignored table to `nf-core modules bump-versions`. ([#1234](https://github.com/nf-core/tools/issues/1234))
+* Added `--conda-package-version` flag for specifying version of conda package in `nf-core modules create`. ([#1238](https://github.com/nf-core/tools/issues/1238))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 

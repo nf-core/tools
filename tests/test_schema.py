@@ -95,6 +95,18 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
 
+    def test_schema_docs(self):
+        """Try to generate Markdown docs for a schema from a file"""
+        self.schema_obj.schema_filename = self.template_schema
+        self.schema_obj.load_schema()
+        docs = self.schema_obj.print_documentation()
+        print(docs)
+        assert self.schema_obj.schema["title"] in docs
+        assert self.schema_obj.schema["description"] in docs
+        for definition in self.schema_obj.schema.get("definitions", {}).values():
+            assert definition["title"] in docs
+            assert definition["description"] in docs
+
     @with_temporary_file
     def test_save_schema(self, tmp_file):
         """Try to save a schema"""
@@ -132,7 +144,7 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.input_params = {"input": "fubar.csv"}
+        self.schema_obj.input_params = {"input": "fubar.csv", "outdir": "results/"}
         assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):

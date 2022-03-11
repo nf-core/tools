@@ -520,8 +520,9 @@ def remove(ctx, dir, tool):
 @click.option("-n", "--no-meta", is_flag=True, default=False, help="Don't use meta map for sample information")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite any files if they already exist")
 @click.option("-c", "--conda-name", type=str, default=None, help="Name of the conda package to use")
+@click.option("-p", "--conda-package-version", type=str, default=None, help="Version of conda package to use")
 @click.option("-r", "--repo-type", type=click.Choice(["pipeline", "modules"]), default=None, help="Type of repository")
-def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name, repo_type):
+def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_name, conda_package_version, repo_type):
     """
     Create a new DSL2 module from the nf-core template.
 
@@ -542,7 +543,9 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
 
     # Run function
     try:
-        module_create = nf_core.modules.ModuleCreate(dir, tool, author, label, has_meta, force, conda_name, repo_type)
+        module_create = nf_core.modules.ModuleCreate(
+            dir, tool, author, label, has_meta, force, conda_name, conda_package_version, repo_type
+        )
         module_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -730,6 +733,43 @@ def lint(schema_path):
         except AssertionError as e:
             log.warning(e)
     except AssertionError as e:
+        sys.exit(1)
+
+
+@schema.command()
+@click.argument("schema_path", type=click.Path(exists=True), required=False, metavar="<pipeline schema>")
+@click.option("-o", "--output", type=str, metavar="<filename>", help="Output filename. Defaults to standard out.")
+@click.option(
+    "-x", "--format", type=click.Choice(["markdown", "html"]), default="markdown", help="Format to output docs in."
+)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option(
+    "-c",
+    "--columns",
+    type=str,
+    metavar="<columns_list>",
+    help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
+    default="parameter,description,type,default,required,hidden",
+)
+def docs(schema_path, output, format, force, columns):
+    """
+    Outputs parameter documentation for a pipeline schema.
+    """
+    schema_obj = nf_core.schema.PipelineSchema()
+    try:
+        # Assume we're in a pipeline dir root if schema path not set
+        if schema_path is None:
+            schema_path = "nextflow_schema.json"
+            assert os.path.exists(
+                schema_path
+            ), "Could not find 'nextflow_schema.json' in current directory. Please specify a path."
+        schema_obj.get_schema_path(schema_path)
+        schema_obj.load_schema()
+        docs = schema_obj.print_documentation(output, format, force, columns.split(","))
+        if not output:
+            print(docs)
+    except AssertionError as e:
+        log.error(e)
         sys.exit(1)
 
 

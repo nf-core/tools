@@ -34,6 +34,7 @@ class ModuleCreate(object):
         has_meta=None,
         force=False,
         conda_name=None,
+        conda_version=None,
         repo_type=None,
     ):
         self.directory = directory
@@ -44,6 +45,7 @@ class ModuleCreate(object):
         self.force_overwrite = force
         self.subtool = None
         self.tool_conda_name = conda_name
+        self.tool_conda_version = conda_version
         self.tool_licence = None
         self.repo_type = repo_type
         self.tool_licence = ""
@@ -143,9 +145,14 @@ class ModuleCreate(object):
                     anaconda_response = nf_core.utils.anaconda_package(self.tool_conda_name, ["bioconda"])
                 else:
                     anaconda_response = nf_core.utils.anaconda_package(self.tool, ["bioconda"])
-                version = anaconda_response.get("latest_version")
-                if not version:
-                    version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+
+                if not self.tool_conda_version:
+                    version = anaconda_response.get("latest_version")
+                    if not version:
+                        version = str(max([parse_version(v) for v in anaconda_response["versions"]]))
+                else:
+                    version = self.tool_conda_version
+
                 self.tool_licence = nf_core.utils.parse_anaconda_licence(anaconda_response, version)
                 self.tool_description = anaconda_response.get("summary", "")
                 self.tool_doc_url = anaconda_response.get("doc_url", "")
