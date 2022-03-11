@@ -41,6 +41,7 @@
 * Fixed traceback when using `stageAs` syntax as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L11)
 * Allow conditional process execution from the configuration file ([#1393](https://github.com/nf-core/tools/pull/1393))
 * Add linting for when condition([#1397](https://github.com/nf-core/tools/pull/1397))
+* Added modules ignored table to `nf-core modules bump-versions`. ([#1234](https://github.com/nf-core/tools/issues/1234))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 
@@ -95,7 +96,6 @@
 * Substitute get process/module name custom functions in module `main.nf` using template replacement ([#1284](https://github.com/nf-core/tools/issues/1284))
 * Check test YML file for md5sums corresponding to empty files ([#1302](https://github.com/nf-core/tools/issues/1302))
 * Exit with an error if empty files are found when generating the test YAML file ([#1302](https://github.com/nf-core/tools/issues/1302))
-* Added modules ignored table to `nf-core modules bump-versions`. ([#1234](https://github.com/nf-core/tools/issues/1234))
 
 ## [v2.1 - Zinc Zebra](https://github.com/nf-core/tools/releases/tag/2.1) - [2021-07-27]
 
