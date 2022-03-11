@@ -43,6 +43,7 @@
 * Added `nf-core schema docs` command to output pipline parameter documentation in Markdown format for inclusion in GitHub and other documentation systems ([#741](https://github.com/nf-core/tools/issues/741))
 * Allow conditional process execution from the configuration file ([#1393](https://github.com/nf-core/tools/pull/1393))
 * Add linting for when condition([#1397](https://github.com/nf-core/tools/pull/1397))
+* Added `--conda-package-version` flag for specifying version of conda package in `nf-core modules create`. ([#1238](https://github.com/nf-core/tools/issues/1238))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 
