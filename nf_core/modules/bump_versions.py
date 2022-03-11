@@ -15,8 +15,6 @@ from rich.table import Table
 from rich.markdown import Markdown
 import rich
 from nf_core.utils import rich_force_colors
-import sys
-import yaml
 
 import nf_core.utils
 import nf_core.modules.module_utils
@@ -52,10 +50,11 @@ class ModuleVersionBumper(ModuleCommand):
         self.up_to_date = []
         self.updated = []
         self.failed = []
+        self.ignored = []
         self.show_up_to_date = show_uptodate
 
         # Verify that this is not a pipeline
-        repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+        self.dir, repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
         if not repo_type == "modules":
             raise nf_core.modules.module_utils.ModuleException(
                 "This command only works on the nf-core/modules repository, not on pipelines!"
@@ -64,7 +63,7 @@ class ModuleVersionBumper(ModuleCommand):
         # Get list of all modules
         _, nfcore_modules = nf_core.modules.module_utils.get_installed_modules(self.dir)
 
-        # Load the .nf-core-tools.config
+        # Load the .nf-core.yml config
         self.tools_config = nf_core.utils.load_tools_config(self.dir)
 
         # Prompt for module or all
@@ -132,7 +131,7 @@ class ModuleVersionBumper(ModuleCommand):
         if module.module_name in self.bump_versions_config:
             config_version = self.bump_versions_config[module.module_name]
             if not config_version:
-                self.up_to_date.append((f"Omitting module due to config: {module.module_name}", module.module_name))
+                self.ignored.append((f"Omitting module due to config.", module.module_name))
                 return False
 
         # check for correct version and newer versions
@@ -332,4 +331,17 @@ class ModuleVersionBumper(ModuleCommand):
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("Update message")
             table = format_result(self.failed, table)
+            console.print(table)
+
+        # Table of modules ignored due to `.nf-core.yml`
+        if len(self.ignored) > 0:
+            console.print(
+                rich.panel.Panel(
+                    r"[!] {} Module update{} ignored".format(len(self.ignored), _s(self.ignored)), style="grey58"
+                )
+            )
+            table = Table(style="grey58", box=rich.box.ROUNDED)
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("Update message")
+            table = format_result(self.ignored, table)
             console.print(table)

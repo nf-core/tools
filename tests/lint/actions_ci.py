@@ -23,7 +23,7 @@ def test_actions_ci_fail_wrong_nf(self):
     self.lint_obj._load()
     self.lint_obj.minNextflowVersion = "1.2.3"
     results = self.lint_obj.actions_ci()
-    assert results["failed"] == ["Minimum NF version in '.github/workflows/ci.yml' different to pipeline's manifest"]
+    assert results["failed"] == ["Minimum pipeline NF version '1.2.3' is not tested in '.github/workflows/ci.yml'"]
 
 
 def test_actions_ci_fail_wrong_docker_ver(self):

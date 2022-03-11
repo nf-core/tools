@@ -29,7 +29,7 @@ class ModuleCommand:
         self.module_names = []
         try:
             if self.dir:
-                self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
             else:
                 self.repo_type = None
         except LookupError as e:
@@ -161,6 +161,7 @@ class ModuleCommand:
                     modules_repo.get_modules_file_tree()
                     install_folder = [modules_repo.owner, modules_repo.repo]
                 except LookupError as e:
+                    log.warn(f"Could not get module's file tree for '{repo}': {e}")
                     remove_from_mod_json[repo] = list(modules.keys())
                     continue
 
@@ -169,6 +170,9 @@ class ModuleCommand:
                     if sha is None:
                         if repo not in remove_from_mod_json:
                             remove_from_mod_json[repo] = []
+                        log.warn(
+                            f"Could not find git SHA for module '{module}' in '{repo}' - removing from modules.json"
+                        )
                         remove_from_mod_json[repo].append(module)
                         continue
                     module_dir = os.path.join(self.dir, "modules", *install_folder, module)
@@ -228,8 +232,8 @@ class ModuleCommand:
                     return "" if len(some_list) == 1 else "s"
 
                 log.info(
-                    f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: '{', '.join(failed_to_find_commit_sha)}'."
-                    f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'}  module{_s(failed_to_find_commit_sha)}."
+                    f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: {', '.join(failed_to_find_commit_sha)}."
+                    f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'} module{_s(failed_to_find_commit_sha)}."
                 )
 
         self.dump_modules_json(fresh_mod_json)

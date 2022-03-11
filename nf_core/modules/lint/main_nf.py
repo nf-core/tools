@@ -26,29 +26,37 @@ def main_nf(module_lint_object, module):
         module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
         return
 
-    # Check that options are defined
-    initoptions_re = re.compile(r"\s*options\s*=\s*initOptions\s*\(\s*params\.options\s*\)\s*")
-    paramsoptions_re = re.compile(r"\s*params\.options\s*=\s*\[:\]\s*")
-    if any(initoptions_re.match(l) for l in lines) and any(paramsoptions_re.match(l) for l in lines):
-        module.passed.append(("main_nf_options", "'options' variable specified", module.main_nf))
-    else:
-        module.warned.append(("main_nf_options", "'options' variable not specified", module.main_nf))
+    deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
+    lines_j = "\n".join(lines)
+    for i in deprecated_i:
+        if i in lines_j:
+            module.failed.append(
+                (
+                    "deprecated_dsl2",
+                    f"`{i}` specified. No longer required for the latest nf-core/modules syntax!",
+                    module.main_nf,
+                )
+            )
 
     # Go through module main.nf file and switch state according to current section
     # Perform section-specific linting
     state = "module"
     process_lines = []
     script_lines = []
+    when_lines = []
     for l in lines:
         if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
             state = "process"
-        if re.search("input\s*:", l) and state == "process":
+        if re.search("input\s*:", l) and state in ["process"]:
             state = "input"
             continue
-        if re.search("output\s*:", l) and state == "input":
+        if re.search("output\s*:", l) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search("script\s*:", l) and state == "output":
+        if re.search("when\s*:", l) and state in ["input", "output", "process"]:
+            state = "when"
+            continue
+        if re.search("script\s*:", l) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
 
@@ -60,6 +68,8 @@ def main_nf(module_lint_object, module):
         if state == "output" and not _is_empty(module, l):
             outputs += _parse_output(module, l)
             outputs = list(set(outputs))  # remove duplicate 'meta's
+        if state == "when" and not _is_empty(module, l):
+            when_lines.append(l)
         if state == "script" and not _is_empty(module, l):
             script_lines.append(l)
 
@@ -69,46 +79,32 @@ def main_nf(module_lint_object, module):
     else:
         module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
 
+    # Check the when statement
+    check_when_section(module, when_lines)
+
     # Check the script definition
     check_script_section(module, script_lines)
 
     # Check whether 'meta' is emitted when given as input
-    if "meta" in inputs:
-        module.has_meta = True
-        if "meta" in outputs:
-            module.passed.append(("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf))
-        else:
-            module.failed.append(("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf))
-
-        # if meta is specified, it should also be used as "saveAs ... meta:meta, publish_by_meta:['id']"
-        save_as = [pl for pl in process_lines if "saveAs" in pl]
-        if len(save_as) > 0 and re.search("\s*meta\s*:\s*meta", save_as[0]):
-            module.passed.append(("main_nf_meta_saveas", "'meta:meta' specified in saveAs function", module.main_nf))
-        else:
-            module.failed.append(("main_nf_meta_saveas", "'meta:meta' unspecified in saveAs function", module.main_nf))
-
-        if len(save_as) > 0 and re.search("\s*publish_by_meta\s*:\s*\['id'\]", save_as[0]):
-            module.passed.append(
-                (
-                    "main_nf_publish_meta_saveas",
-                    "'publish_by_meta:['id']' specified in saveAs function",
-                    module.main_nf,
-                )
-            )
-        else:
-            module.failed.append(
-                (
-                    "main_nf_publish_meta_saveas",
-                    "'publish_by_meta:['id']' unspecified in saveAs function",
-                    module.main_nf,
-                )
-            )
+    if inputs:
+        if "meta" in inputs:
+            module.has_meta = True
+            if outputs:
+                if "meta" in outputs:
+                    module.passed.append(
+                        ("main_nf_meta_output", "'meta' map emitted in output channel(s)", module.main_nf)
+                    )
+                else:
+                    module.failed.append(
+                        ("main_nf_meta_output", "'meta' map not emitted in output channel(s)", module.main_nf)
+                    )
 
     # Check that a software version is emitted
-    if "version" in outputs:
-        module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
-    else:
-        module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
+    if outputs:
+        if "versions" in outputs:
+            module.passed.append(("main_nf_version_emitted", "Module emits software version", module.main_nf))
+        else:
+            module.warned.append(("main_nf_version_emitted", "Module does not emit software version", module.main_nf))
 
     return inputs, outputs
 
@@ -116,22 +112,44 @@ def main_nf(module_lint_object, module):
 def check_script_section(self, lines):
     """
     Lint the script section
-    Checks whether 'def sotware' and 'def prefix' are defined
+    Checks whether 'def prefix'  is defined and whether getProcessName is used for `versions.yml`.
     """
     script = "".join(lines)
 
-    # check for software
-    if re.search("\s*def\s*software\s*=\s*getSoftwareName", script):
-        self.passed.append(("main_nf_version_script", "Software version specified in script section", self.main_nf))
+    # check that process name is used for `versions.yml`
+    if re.search("\$\{\s*task\.process\s*\}", script):
+        self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
-        self.warned.append(("main_nf_version_script", "Software version unspecified in script section", self.main_nf))
+        self.warned.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
-        if re.search("\s*prefix\s*=\s*options.suffix", script):
+        if re.search("\s*prefix\s*=\s*task.ext.prefix", script):
             self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
         else:
             self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
+
+
+def check_when_section(self, lines):
+    """
+    Lint the when: section
+    Checks whether the line is modified from 'task.ext.when == null || task.ext.when'
+    """
+    if len(lines) == 0:
+        self.failed.append(("when_exist", "when: condition has been removed", self.main_nf))
+        return
+    elif len(lines) > 1:
+        self.failed.append(("when_exist", "when: condition has too many lines", self.main_nf))
+        return
+    else:
+        self.passed.append(("when_exist", "when: condition is present", self.main_nf))
+
+    # Check the condition hasn't been changed.
+    if lines[0].strip() != "task.ext.when == null || task.ext.when":
+        self.failed.append(("when_condition", "when: condition has been altered", self.main_nf))
+        return
+    else:
+        self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
 def check_process_section(self, lines):
@@ -141,6 +159,13 @@ def check_process_section(self, lines):
     Specifically checks for correct software versions
     and containers
     """
+    # Check that we have a process section
+    if len(lines) == 0:
+        self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
+        return
+    else:
+        self.passed.append(("process_exist", "Process definition exists", self.main_nf))
+
     # Checks that build numbers of bioconda, singularity and docker container are matching
     build_id = "build"
     singularity_tag = "singularity"
@@ -152,7 +177,7 @@ def check_process_section(self, lines):
     if all([x.upper() for x in self.process_name]):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:
-        self.failed.append(("process_capitals", "Process name is not in captial letters", self.main_nf))
+        self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
@@ -173,12 +198,23 @@ def check_process_section(self, lines):
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
 
     for l in lines:
+        l = l.strip()
+        l = l.replace('"', "")
+        l = l.replace("'", "")
         if re.search("bioconda::", l):
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-        if re.search("org/singularity", l):
-            singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-        if re.search("biocontainers", l):
-            docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
+        if l.startswith("https://containers") or l.startswith("https://depot"):
+            lspl = l.lstrip("https://").split(":")
+            if len(lspl) == 2:
+                # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
+                singularity_tag = "_".join(lspl[0].split("/")[-1].strip().rstrip(".img").split("_")[1:])
+            else:
+                # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
+                singularity_tag = lspl[-2].strip()
+        if l.startswith("biocontainers/") or l.startswith("quay.io/"):
+            # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
+            # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
+            docker_tag = l.split(":")[-1].strip("}").strip()
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -216,16 +252,18 @@ def check_process_section(self, lines):
 
 def _parse_input(self, line):
     input = []
-    # more than one input
+    line = line.strip()
     if "tuple" in line:
+        # If more than one elements in channel should work with both of:
+        # e.g. tuple val(meta), path(reads)
+        # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
         line = line.replace("tuple", "")
         line = line.replace(" ", "")
-        line = line.split(",")
-
-        for elem in line:
-            elem = elem.split("(")[1]
-            elem = elem.replace(")", "").strip()
-            input.append(elem)
+        for idx, elem in enumerate(line.split(")")):
+            if elem:
+                elem = elem.split("(")[1]
+                elem = elem.split(",")[0].strip()
+                input.append(elem)
     else:
         if "(" in line:
             input.append(line.split("(")[1].replace(")", ""))
