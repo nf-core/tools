@@ -733,6 +733,41 @@ def lint(schema_path):
         sys.exit(1)
 
 
+@schema.command()
+@click.argument("schema_path", type=click.Path(exists=True), required=False, metavar="<pipeline schema>")
+@click.option("-o", "--output", type=str, metavar="<filename>", help="Output filename. Defaults to standard out.")
+@click.option(
+    "-x", "--format", type=click.Choice(["markdown", "html"]), default="markdown", help="Format to output docs in."
+)
+@click.option("-f", "--force", is_flag=True, default=False, help="Overwrite existing files")
+@click.option(
+    "-c",
+    "--columns",
+    type=str,
+    metavar="<columns_list>",
+    help="CSV list of columns to include in the parameter tables (parameter,description,type,default,required,hidden)",
+    default="parameter,description,type,default,required,hidden",
+)
+def docs(schema_path, output, format, force, columns):
+    """
+    Outputs parameter documentation for a pipeline schema.
+    """
+    schema_obj = nf_core.schema.PipelineSchema()
+    try:
+        # Assume we're in a pipeline dir root if schema path not set
+        if schema_path is None:
+            schema_path = "nextflow_schema.json"
+            assert os.path.exists(
+                schema_path
+            ), "Could not find 'nextflow_schema.json' in current directory. Please specify a path."
+        schema_obj.get_schema_path(schema_path)
+        schema_obj.load_schema()
+        schema_obj.print_documentation(output, format, force, columns.split(","))
+    except AssertionError as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core bump-version
 @nf_core_cli.command("bump-version")
 @click.argument("new_version", required=True, metavar="<new version>")
