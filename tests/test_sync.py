@@ -79,7 +79,7 @@ class TestModules(unittest.TestCase):
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.SyncException as e:
             # Check that we did actually get some config back
-            assert psync.wf_config["params.outdir"] == "'./results'"
+            assert psync.wf_config["params.validate_params"] == "true"
             # Check that we raised because of the missing fake config var
             assert e.args[0] == "Workflow config variable `fakethisdoesnotexist` not found!"
 
