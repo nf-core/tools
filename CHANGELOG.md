@@ -6,6 +6,30 @@
 
 * Removed mention of `--singularity_pull_docker_container` in pipeline `README.md`
 * Replaced equals with ~ in nf-core headers, to stop false positive unresolved conflict errors when committing with VSCode.
+* Add retry strategy for AWS megatests after releasing [nf-core/tower-action v2.2](https://github.com/nf-core/tower-action/releases/tag/v2.2)
+* Added `.nf-core.yml` file with `repository_type: pipeline` for modules commands
+* Update igenomes path to the `BWAIndex` to fetch the whole `version0.6.0` folder instead of only the `genome.fa` file
+* Remove pinned Node version in the GitHub Actions workflows, to fix errors with `markdownlint`
+* Bumped `nf-core/tower-action` to `v3` and removed `pipeline` and `revision` from the AWS workflows, which were not needed
+* Add yamllint GitHub Action.
+* Add `.yamllint.yml` to avoid line length and document start errors ([#1407](https://github.com/nf-core/tools/issues/1407))
+* Add `--publish_dir_mode` back into the pipeline template ([nf-core/rnaseq#752](https://github.com/nf-core/rnaseq/issues/752#issuecomment-1039451607))
+* Add optional loading of of pipeline-specific institutional configs to `nextflow.config`
+* Make `--outdir` a mandatory parameter ([nf-core/tools#1415](https://github.com/nf-core/tools/issues/1415))
+
+## General
+
+* Updated `nf-core download` to work with latest DSL2 syntax for containers ([#1379](https://github.com/nf-core/tools/issues/1379))
+* Made `nf-core modules create` detect repository type with explicit `.nf-core.yml` or `--repo-type`, instead of random readme stuff ([#1391](https://github.com/nf-core/tools/pull/1391))
+* Added a Gitpod environment and Dockerfile ([#1384](https://github.com/nf-core/tools/pull/1384))
+    * Adds conda, Nextflow, nf-core, pytest-workflow, mamba, and pip to base Gitpod Docker image.
+    * Adds GH action to build and push Gitpod Docker image.
+    * Adds Gitpod environment to template.
+    * Adds Gitpod environment to tools with auto build of nf-core tool.
+* Shiny new command-line help formatting ([#1403](https://github.com/nf-core/tools/pull/1403))
+* Call the command line help with `-h` as well as `--help` (was formerly just the latter) ([#1404](https://github.com/nf-core/tools/pull/1404))
+* Add `.yamllint.yml` config file to avoid line length and document start errors in the tools repo itself.
+* Switch to `yamllint-github-action`to be able to configure yaml lint exceptions ([#1404](https://github.com/nf-core/tools/issues/1413))
 
 ### Modules
 
@@ -17,6 +41,8 @@
     * Allow for containers from other biocontainers resource as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L7-L8)
 * Fixed traceback when using `stageAs` syntax as defined [here](https://github.com/nf-core/modules/blob/cde237e7cec07798e5754b72aeca44efe89fc6db/modules/cat/fastq/main.nf#L11)
 * Added `nf-core schema docs` command to output pipline parameter documentation in Markdown format for inclusion in GitHub and other documentation systems ([#741](https://github.com/nf-core/tools/issues/741))
+* Allow conditional process execution from the configuration file ([#1393](https://github.com/nf-core/tools/pull/1393))
+* Add linting for when condition([#1397](https://github.com/nf-core/tools/pull/1397))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 
