@@ -1,10 +1,12 @@
-import os
-import shutil
-import questionary
-import logging
-import tempfile
+import copy
 import difflib
 import enum
+import json
+import logging
+import os
+import questionary
+import shutil
+import tempfile
 from questionary import question
 from rich.console import Console
 from rich.syntax import Syntax
@@ -181,6 +183,7 @@ class ModuleUpdate(ModuleCommand):
 
         # Load 'modules.json'
         modules_json = self.load_modules_json()
+        old_modules_json = copy.deepcopy(modules_json)  # Deep copy to avoid mutability
         if not modules_json:
             return False
 
@@ -332,8 +335,8 @@ class ModuleUpdate(ModuleCommand):
                             diff = difflib.unified_diff(
                                 old_lines,
                                 new_lines,
-                                fromfile=f"{os.path.join(module, file)} (installed)",
-                                tofile=f"{os.path.join(module, file)} (new)",
+                                fromfile=os.path.join(module_dir, file),
+                                tofile=os.path.join(module_dir, file),
                             )
                             diffs[file] = (DiffEnum.CHANGED, diff)
 
@@ -356,19 +359,19 @@ class ModuleUpdate(ModuleCommand):
                             diff_status, diff = d
                             if diff_status == DiffEnum.UNCHANGED:
                                 # The files are identical
-                                fh.write(f"'{os.path.join(module, file)}' is unchanged\n")
+                                fh.write(f"'{os.path.join(module_dir, file)}' is unchanged\n")
 
                             elif diff_status == DiffEnum.CREATED:
                                 # The file was created between the commits
-                                fh.write(f"'{os.path.join(module, file)}' was created\n")
+                                fh.write(f"'{os.path.join(module_dir, file)}' was created\n")
 
                             elif diff_status == DiffEnum.REMOVED:
                                 # The file was removed between the commits
-                                fh.write(f"'{os.path.join(module, file)}' was removed\n")
+                                fh.write(f"'{os.path.join(module_dir, file)}' was removed\n")
 
                             else:
                                 # The file has changed
-                                fh.write(f"Changes in '{os.path.join(module, file)}':\n")
+                                fh.write(f"Changes in '{os.path.join(module_dir, file)}':\n")
                                 # Write the diff lines to the file
                                 for line in diff:
                                     fh.write(line)
@@ -400,7 +403,7 @@ class ModuleUpdate(ModuleCommand):
 
                     # Ask the user if they want to install the module
                     dry_run = not questionary.confirm(
-                        "Update module?", default=False, style=nf_core.utils.nfcore_question_style
+                        f"Update module '{module}'?", default=False, style=nf_core.utils.nfcore_question_style
                     ).unsafe_ask()
                     if not dry_run:
                         # The new module files are already installed.
@@ -415,16 +418,37 @@ class ModuleUpdate(ModuleCommand):
                         log.info(f"Updating '{modules_repo.name}/{module}'")
                         log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
 
+            # Update modules.json with newly installed module
             if not dry_run:
-                # Update module.json with newly installed module
                 self.update_modules_json(modules_json, modules_repo.name, module, version)
+
+            # Don't save to a file, just iteratively update the variable
+            else:
+                modules_json = self.update_modules_json(
+                    modules_json, modules_repo.name, module, version, write_file=False
+                )
+
+        if self.save_diff_fn:
+            # Compare the new modules.json and build a diff
+            modules_json_diff = difflib.unified_diff(
+                json.dumps(old_modules_json, indent=4).splitlines(keepends=True),
+                json.dumps(modules_json, indent=4).splitlines(keepends=True),
+                fromfile=os.path.join(self.dir, "modules.json"),
+                tofile=os.path.join(self.dir, "modules.json"),
+            )
+
+            # Save diff for modules.json to file
+            with open(self.save_diff_fn, "a") as fh:
+                fh.write(f"Changes in './modules.json'\n")
+                for line in modules_json_diff:
+                    fh.write(line)
+                fh.write("*" * 60 + "\n")
 
         log.info("Updates complete :sparkles:")
 
-        # TODO: This would be a great feature to add. Needs a little work to fix the format of the diff file, but not much..
-        # if self.save_diff_fn:
-        #    log.info(
-        #        f"If you are happy with the changes in '{self.save_diff_fn}', you can apply them by running the command: [magenta]git apply {self.save_diff_fn}"
-        #    )
+        if self.save_diff_fn:
+            log.info(
+                f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you can apply them by running the command :point_right:  [bold magenta italic]git apply {self.save_diff_fn}"
+            )
 
         return exit_value
