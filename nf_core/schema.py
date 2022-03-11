@@ -445,6 +445,7 @@ class PipelineSchema(object):
         """
         out = f"# {self.schema['title']}\n\n"
         out += f"{self.schema['description']}\n"
+        # Grouped parameters
         for definition in self.schema.get("definitions", {}).values():
             out += f"\n## {definition.get('title', {})}\n\n"
             out += f"{definition.get('description', '')}\n\n"
@@ -465,7 +466,30 @@ class PipelineSchema(object):
                     else:
                         out += f"| {param.get(column, '')} "
                 out += "|\n"
-        return out
+
+        # Top-level ungrouped parameters
+        if len(self.schema.get("properties", {})) > 0:
+            out += f"\n## Other parameters\n\n"
+            out += "".join([f"| {column.title()} " for column in columns])
+            out += "|\n"
+            out += "".join([f"|-----------" for columns in columns])
+            out += "|\n"
+
+            for p_key, param in self.schema.get("properties", {}).items():
+                for column in columns:
+                    if column == "parameter":
+                        out += f"| `{p_key}` "
+                    elif column == "description":
+                        out += f"| {param.get('description', '')} "
+                        if param.get("help_text", "") != "":
+                            out += f"<details><summary>Help</summary><small>{param['help_text']}</small></details>"
+                    elif column == "type":
+                        out += f"| `{param.get('type', '')}` "
+                    else:
+                        out += f"| {param.get(column, '')} "
+                out += "|\n"
+
+            return out
 
     def markdown_to_html(self, markdown_str):
         """
