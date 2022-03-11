@@ -37,7 +37,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
 
       - name: Test with pytest
-        run: python3 -m pytest --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
+        run: python3 -m pytest tests/ --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
 
       - uses: codecov/codecov-action@v1
         name: Upload code coverage report
