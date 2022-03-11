@@ -19,6 +19,7 @@ import subprocess
 import yaml
 
 import nf_core.utils
+import nf_core.modules.module_utils
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +35,7 @@ class ModuleCreate(object):
         force=False,
         conda_name=None,
         conda_version=None,
+        repo_type=None,
     ):
         self.directory = directory
         self.tool = tool
@@ -45,7 +47,7 @@ class ModuleCreate(object):
         self.tool_conda_name = conda_name
         self.tool_conda_version = conda_version
         self.tool_licence = None
-        self.repo_type = None
+        self.repo_type = repo_type
         self.tool_licence = ""
         self.tool_description = ""
         self.tool_doc_url = ""
@@ -72,10 +74,10 @@ class ModuleCreate(object):
         modules/modules/tool/subtool/
             * main.nf
             * meta.yml
-            * functions.nf
         modules/tests/modules/tool/subtool/
             * main.nf
             * test.yml
+            * nextflow.config
         tests/config/pytest_modules.yml
 
         The function will attempt to automatically find a Bioconda package called <tool>
@@ -84,9 +86,12 @@ class ModuleCreate(object):
 
         # Check whether the given directory is a nf-core pipeline or a clone of nf-core/modules
         try:
-            self.repo_type = self.get_repo_type(self.directory)
+            self.directory, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.directory, self.repo_type)
         except LookupError as e:
             raise UserWarning(e)
+        log.info(f"Repository type: [blue]{self.repo_type}")
+        if self.directory != ".":
+            log.info(f"Base directory: '{self.directory}'")
 
         log.info(
             "[yellow]Press enter to use default values [cyan bold](shown in brackets)[/] [yellow]or type your own responses. "
@@ -159,7 +164,9 @@ class ModuleCreate(object):
                 log.info(f"Using Bioconda package: '{self.bioconda}'")
                 break
             except (ValueError, LookupError) as e:
-                log.warning(f"Could not find Conda dependency using the Anaconda API: '{self.tool}'")
+                log.warning(
+                    f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.tool}'"
+                )
                 if rich.prompt.Confirm.ask(f"[violet]Do you want to enter a different Bioconda package name?"):
                     self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
                     continue
@@ -284,26 +291,6 @@ class ModuleCreate(object):
             template_stat = os.stat(os.path.join(os.path.dirname(nf_core.__file__), "module-template", template_fn))
             os.chmod(dest_fn, template_stat.st_mode)
 
-    def get_repo_type(self, directory):
-        """
-        Determine whether this is a pipeline repository or a clone of
-        nf-core/modules
-        """
-        # Verify that the pipeline dir exists
-        if dir is None or not os.path.exists(directory):
-            raise UserWarning(f"Could not find directory: {directory}")
-
-        # Determine repository type
-        if os.path.exists(os.path.join(directory, "main.nf")):
-            return "pipeline"
-        elif os.path.exists(os.path.join(directory, "modules")):
-            return "modules"
-        else:
-            raise UserWarning(
-                f"This directory does not look like a clone of nf-core/modules or an nf-core pipeline: '{directory}'"
-                " Please point to a valid directory."
-            )
-
     def get_module_dirs(self):
         """Given a directory and a tool/subtool, set the file paths and check if they already exist
 
@@ -365,10 +352,10 @@ class ModuleCreate(object):
                 )
 
             # Set file paths - can be tool/ or tool/subtool/ so can't do in template directory structure
-            file_paths[os.path.join("modules", "functions.nf")] = os.path.join(software_dir, "functions.nf")
             file_paths[os.path.join("modules", "main.nf")] = os.path.join(software_dir, "main.nf")
             file_paths[os.path.join("modules", "meta.yml")] = os.path.join(software_dir, "meta.yml")
             file_paths[os.path.join("tests", "main.nf")] = os.path.join(test_dir, "main.nf")
             file_paths[os.path.join("tests", "test.yml")] = os.path.join(test_dir, "test.yml")
+            file_paths[os.path.join("tests", "nextflow.config")] = os.path.join(test_dir, "nextflow.config")
 
         return file_paths

@@ -29,7 +29,7 @@ class ModuleCommand:
         self.module_names = []
         try:
             if self.dir:
-                self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
             else:
                 self.repo_type = None
         except LookupError as e:
@@ -161,6 +161,7 @@ class ModuleCommand:
                     modules_repo.get_modules_file_tree()
                     install_folder = [modules_repo.owner, modules_repo.repo]
                 except LookupError as e:
+                    log.warn(f"Could not get module's file tree for '{repo}': {e}")
                     remove_from_mod_json[repo] = list(modules.keys())
                     continue
 
@@ -169,6 +170,9 @@ class ModuleCommand:
                     if sha is None:
                         if repo not in remove_from_mod_json:
                             remove_from_mod_json[repo] = []
+                        log.warn(
+                            f"Could not find git SHA for module '{module}' in '{repo}' - removing from modules.json"
+                        )
                         remove_from_mod_json[repo].append(module)
                         continue
                     module_dir = os.path.join(self.dir, "modules", *install_folder, module)
@@ -228,8 +232,8 @@ class ModuleCommand:
                     return "" if len(some_list) == 1 else "s"
 
                 log.info(
-                    f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: '{', '.join(failed_to_find_commit_sha)}'."
-                    f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'}  module{_s(failed_to_find_commit_sha)}."
+                    f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: {', '.join(failed_to_find_commit_sha)}."
+                    f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'} module{_s(failed_to_find_commit_sha)}."
                 )
 
         self.dump_modules_json(fresh_mod_json)
@@ -253,19 +257,20 @@ class ModuleCommand:
             log.error("Could not remove module: {}".format(e))
             return False
 
-    def download_module_file(self, module_name, module_version, modules_repo, install_folder, module_dir):
+    def download_module_file(self, module_name, module_version, modules_repo, install_folder, dry_run=False):
         """Downloads the files of a module from the remote repo"""
         files = modules_repo.get_module_file_urls(module_name, module_version)
         log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
         for filename, api_url in files.items():
             split_filename = filename.split("/")
-            dl_filename = os.path.join(self.dir, "modules", *install_folder, *split_filename[1:])
+            dl_filename = os.path.join(*install_folder, *split_filename[1:])
             try:
                 self.modules_repo.download_gh_file(dl_filename, api_url)
             except (SystemError, LookupError) as e:
                 log.error(e)
                 return False
-        log.info("Downloaded {} files to {}".format(len(files), module_dir))
+        if not dry_run:
+            log.info("Downloaded {} files to {}".format(len(files), os.path.join(*install_folder, module_name)))
         return True
 
     def load_modules_json(self):

@@ -22,19 +22,20 @@ def files_unchanged(self):
         .markdownlint.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
-        .github/ISSUE_TEMPLATE/bug_report.md
+        .github/ISSUE_TEMPLATE/bug_report.yml
         .github/ISSUE_TEMPLATE/config.yml
-        .github/ISSUE_TEMPLATE/feature_request.md
+        .github/ISSUE_TEMPLATE/feature_request.yml
         .github/PULL_REQUEST_TEMPLATE.md
         .github/workflows/branch.yml
         .github/workflows/linting_comment.yml
         .github/workflows/linting.yml
         assets/email_template.html
         assets/email_template.txt
-        assets/nf-core-PIPELINE_logo.png
+        assets/nf-core-PIPELINE_logo_light.png
         assets/sendmail_template.txt
         CODE_OF_CONDUCT.md
-        docs/images/nf-core-PIPELINE_logo.png
+        docs/images/nf-core-PIPELINE_logo_light.png
+        docs/images/nf-core-PIPELINE_logo_dark.png
         docs/README.md'
         lib/nfcore_external_java_deps.jar
         lib/NfcoreSchema.groovy
@@ -81,9 +82,9 @@ def files_unchanged(self):
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
         [os.path.join(".github", ".dockstore.yml")],
         [os.path.join(".github", "CONTRIBUTING.md")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.yml")],
         [os.path.join(".github", "ISSUE_TEMPLATE", "config.yml")],
-        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md")],
+        [os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.yml")],
         [os.path.join(".github", "PULL_REQUEST_TEMPLATE.md")],
         [os.path.join(".github", "workflows", "branch.yml")],
         [os.path.join(".github", "workflows", "linting_comment.yml")],
@@ -91,9 +92,9 @@ def files_unchanged(self):
         [os.path.join("assets", "email_template.html")],
         [os.path.join("assets", "email_template.txt")],
         [os.path.join("assets", "sendmail_template.txt")],
-        [os.path.join("assets", f"nf-core-{short_name}_logo.png")],
-        [os.path.join("bin", "scrape_software_versions.py")],
-        [os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")],
+        [os.path.join("assets", f"nf-core-{short_name}_logo_light.png")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_light.png")],
+        [os.path.join("docs", "images", f"nf-core-{short_name}_logo_dark.png")],
         [os.path.join("docs", "README.md")],
         [os.path.join("lib", "nfcore_external_java_deps.jar")],
         [os.path.join("lib", "NfcoreSchema.groovy")],
@@ -108,7 +109,9 @@ def files_unchanged(self):
     logging.getLogger("nf_core.create").setLevel(logging.ERROR)
 
     # Generate a new pipeline with nf-core create that we can compare to
-    test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-{}".format(short_name))
+    tmp_dir = tempfile.mkdtemp()
+
+    test_pipeline_dir = os.path.join(tmp_dir, "nf-core-{}".format(short_name))
     create_obj = nf_core.create.PipelineCreate(
         self.nf_config["manifest.name"].strip("\"'"),
         self.nf_config["manifest.description"].strip("\"'"),
@@ -192,5 +195,8 @@ def files_unchanged(self):
                             could_fix = True
                 except FileNotFoundError:
                     pass
+
+    # cleaning up temporary dir
+    shutil.rmtree(tmp_dir)
 
     return {"passed": passed, "failed": failed, "ignored": ignored, "fixed": fixed, "could_fix": could_fix}

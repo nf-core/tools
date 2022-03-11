@@ -1,6 +1,11 @@
 import os
+import shutil
 import questionary
 import logging
+import tempfile
+import difflib
+from rich.console import Console
+from rich.syntax import Syntax
 
 import nf_core.utils
 import nf_core.modules.module_utils
@@ -13,12 +18,13 @@ log = logging.getLogger(__name__)
 
 
 class ModuleUpdate(ModuleCommand):
-    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False):
+    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, diff=False):
         super().__init__(pipeline_dir)
         self.force = force
         self.prompt = prompt
         self.sha = sha
         self.update_all = update_all
+        self.diff = diff
 
     def update(self, module):
         if self.repo_type == "modules":
@@ -94,12 +100,15 @@ class ModuleUpdate(ModuleCommand):
                         log.info("Module's update entry in '.nf-core.yml' is set to False")
                         return False
                     elif isinstance(config_entry, str):
+                        sha = config_entry
                         if self.sha:
                             log.warning(
-                                "Found entry in '.nf-core.yml' for module "
+                                f"Found entry in '.nf-core.yml' for module '{module}' "
                                 "which will override version specified with '--sha'"
                             )
-                        sha = config_entry
+                        else:
+                            log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
+                        log.info(f"Updating module to ({sha})")
                     else:
                         log.error("Module's update entry in '.nf-core.yml' is of wrong type")
                         return False
@@ -173,6 +182,7 @@ class ModuleUpdate(ModuleCommand):
 
         exit_value = True
         for modules_repo, module, sha in repos_mods_shas:
+            dry_run = self.diff
             if not module_exist_in_repo(module, modules_repo):
                 warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
                 if self.update_all:
@@ -187,10 +197,10 @@ class ModuleUpdate(ModuleCommand):
                 current_entry = None
 
             # Set the install folder based on the repository name
-            install_folder = [modules_repo.owner, modules_repo.repo]
+            install_folder = [self.dir, "modules", modules_repo.owner, modules_repo.repo]
 
             # Compute the module directory
-            module_dir = os.path.join(self.dir, "modules", *install_folder, module)
+            module_dir = os.path.join(*install_folder, module)
 
             if sha:
                 version = sha
@@ -225,17 +235,78 @@ class ModuleUpdate(ModuleCommand):
                         log.info(f"'{modules_repo.name}/{module}' is already up to date")
                     continue
 
-            log.info(f"Updating '{modules_repo.name}/{module}'")
-            log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
+            if not dry_run:
+                log.info(f"Updating '{modules_repo.name}/{module}'")
+                log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
 
-            log.debug(f"Removing old version of module '{module}'")
-            self.clear_module_dir(module, module_dir)
+                log.debug(f"Removing old version of module '{module}'")
+                self.clear_module_dir(module, module_dir)
+
+            if dry_run:
+                # Set the install folder to a temporary directory
+                install_folder = ["/tmp", next(tempfile._get_candidate_names())]
 
             # Download module files
-            if not self.download_module_file(module, version, modules_repo, install_folder, module_dir):
+            if not self.download_module_file(module, version, modules_repo, install_folder, dry_run=dry_run):
                 exit_value = False
                 continue
 
-            # Update module.json with newly installed module
-            self.update_modules_json(modules_json, modules_repo.name, module, version)
+            if dry_run:
+                console = Console(force_terminal=nf_core.utils.rich_force_colors())
+                files = os.listdir(os.path.join(*install_folder, module))
+                temp_folder = os.path.join(*install_folder, module)
+                log.info(
+                    f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
+                )
+
+                for file in files:
+                    temp_path = os.path.join(temp_folder, file)
+                    curr_path = os.path.join(module_dir, file)
+                    if os.path.exists(temp_path) and os.path.exists(curr_path):
+                        with open(temp_path, "r") as fh:
+                            new_lines = fh.readlines()
+                        with open(curr_path, "r") as fh:
+                            old_lines = fh.readlines()
+                        if new_lines == old_lines:
+                            # The files are identical
+                            log.info(f"'{os.path.join(module, file)}' is unchanged")
+                        else:
+                            log.info(f"Changes in '{os.path.join(module, file)}':")
+                            # Compute the diff
+                            diff = difflib.unified_diff(
+                                old_lines,
+                                new_lines,
+                                fromfile=f"{os.path.join(module, file)} (installed)",
+                                tofile=f"{os.path.join(module, file)} (new)",
+                            )
+
+                            # Pretty print the diff using the pygments diff lexer
+                            console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
+
+                    elif os.path.exists(temp_path):
+                        # The file was created between the commits
+                        log.info(f"Created file '{file}'")
+
+                    elif os.path.exists(curr_path):
+                        # The file was removed between the commits
+                        log.info(f"Removed file '{file}'")
+
+                # Ask the user if they want to install the module
+                dry_run = not questionary.confirm("Update module?", default=False).unsafe_ask()
+                if not dry_run:
+                    # The new module files are already installed
+                    # we just need to clear the directory and move the
+                    # new files from the temporary directory
+                    self.clear_module_dir(module, module_dir)
+                    os.mkdir(module_dir)
+                    for file in files:
+                        path = os.path.join(temp_folder, file)
+                        if os.path.exists(path):
+                            shutil.move(path, os.path.join(module_dir, file))
+                    log.info(f"Updating '{modules_repo.name}/{module}'")
+                    log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
+
+            if not dry_run:
+                # Update module.json with newly installed module
+                self.update_modules_json(modules_json, modules_repo.name, module, version)
         return exit_value
