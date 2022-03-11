@@ -20,16 +20,14 @@ log = logging.getLogger(__name__)
 
 
 class ModuleUpdate(ModuleCommand):
-    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, diff=False, diff_file=None):
+    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, save_diff_fn=None):
         super().__init__(pipeline_dir)
         self.force = force
         self.prompt = prompt
         self.sha = sha
         self.update_all = update_all
-        self.diff = diff
-        self.diff_file = diff_file
-        if self.diff_file is not None:
-            self.diff = True
+        self.show_diff = False
+        self.save_diff_fn = save_diff_fn
 
     def update(self, module):
         if self.repo_type == "modules":
@@ -186,39 +184,38 @@ class ModuleUpdate(ModuleCommand):
         if not modules_json:
             return False
 
-        if self.diff:
-            if self.diff_file is None:
-                # Ask the user whether the diffs should be written to a file or
-                # or displayed in the terminal directly
-                self.diff_file = questionary.select(
-                    "How should the diffs be handled?",
-                    choices=[
-                        {"name": "Display in terminal", "value": False},
-                        {"name": "Write to file", "value": True},
-                    ],
-                    style=nf_core.utils.nfcore_question_style,
+        # Ask if we should show the diffs (unless a filename was already given on the command line)
+        if not self.show_diff:
+            self.show_diff = questionary.confirm(
+                "Do you want to preview the changes that will be applied, in the terminal?",
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+
+        if self.save_diff_fn is None:
+            if questionary.confirm(
+                "Do you want to save changes to a '.diff' file instead of applying them directly to the files?",
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask():
+                self.save_diff_fn = questionary.text(
+                    "Enter the filename: ", style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
-                if self.diff_file:
-                    self.diff_file = questionary.text(
-                        "Enter the filename: ", style=nf_core.utils.nfcore_question_style
+                while os.path.exists(self.save_diff_fn):
+                    if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
+                        os.remove(self.save_diff_fn)
+                        break
+                    self.save_diff_fn = questionary.text(
+                        f"Enter a new filename: ",
+                        style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
-                    while os.path.exists(self.diff_file):
-                        if questionary.confirm(f"'{self.diff_file}' exists. Remove file?"):
-                            os.remove(self.diff_file)
-                            break
-                        self.diff_file = questionary.text(
-                            f"Enter a new filename: ",
-                            style=nf_core.utils.nfcore_question_style,
-                        ).unsafe_ask()
-            elif os.path.exists(self.diff_file):
-                # Since we append to the file later, it should be empty to begin with
-                os.remove(
-                    self.diff_file,
-                )
+        elif os.path.exists(self.save_diff_fn):
+            # Since we append to the file later, it should be empty to begin with
+            os.remove(
+                self.save_diff_fn,
+            )
 
         exit_value = True
         for modules_repo, module, sha in repos_mods_shas:
-            dry_run = self.diff
+            dry_run = self.show_diff or self.save_diff_fn
             if not module_exist_in_repo(module, modules_repo):
                 warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
                 if self.update_all:
@@ -314,7 +311,7 @@ class ModuleUpdate(ModuleCommand):
                 for file in files:
                     temp_path = os.path.join(temp_folder, file)
                     curr_path = os.path.join(module_dir, file)
-                    if os.path.exists(temp_path) and os.path.exists(curr_path):
+                    if os.path.exists(temp_path) and os.path.exists(curr_path) and os.path.isfile(temp_path):
                         with open(temp_path, "r") as fh:
                             new_lines = fh.readlines()
                         with open(curr_path, "r") as fh:
@@ -341,9 +338,9 @@ class ModuleUpdate(ModuleCommand):
                         # The file was removed
                         diffs[file] = (DiffEnum.REMOVED, ())
 
-                if self.diff_file:
-                    log.info(f"Writing diff of '{module}' to file")
-                    with open(self.diff_file, "a") as fh:
+                if self.save_diff_fn:
+                    log.info(f"Writing diff of '{module}' to '{self.save_diff_fn}'")
+                    with open(self.save_diff_fn, "a") as fh:
                         fh.write(
                             f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})\n"
                         )
@@ -403,7 +400,7 @@ class ModuleUpdate(ModuleCommand):
                         # We just need to clear the directory and move the
                         # new files from the temporary directory
                         self.clear_module_dir(module, module_dir)
-                        os.mkdir(module_dir)
+                        os.makedirs(module_dir)
                         for file in files:
                             path = os.path.join(temp_folder, file)
                             if os.path.exists(path):
@@ -414,4 +411,13 @@ class ModuleUpdate(ModuleCommand):
             if not dry_run:
                 # Update module.json with newly installed module
                 self.update_modules_json(modules_json, modules_repo.name, module, version)
+
+        log.info("Updates complete :sparkles:")
+
+        # TODO: This would be a great feature to add. Needs a little work to fix the format of the diff file, but not much..
+        # if self.save_diff_fn:
+        #    log.info(
+        #        f"If you are happy with the changes in '{self.save_diff_fn}', you can apply them by running the command: [magenta]git apply {self.save_diff_fn}"
+        #    )
+
         return exit_value
