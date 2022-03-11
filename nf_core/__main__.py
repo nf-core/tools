@@ -765,7 +765,9 @@ def docs(schema_path, output, format, force, columns):
             ), "Could not find 'nextflow_schema.json' in current directory. Please specify a path."
         schema_obj.get_schema_path(schema_path)
         schema_obj.load_schema()
-        schema_obj.print_documentation(output, format, force, columns.split(","))
+        docs = schema_obj.print_documentation(output, format, force, columns.split(","))
+        if not output:
+            print(docs)
     except AssertionError as e:
         log.error(e)
         sys.exit(1)

@@ -77,8 +77,8 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
-            "description": "Path to the output directory where the results will be saved.",
-            "default": "./results",
+            "format": "directory-path",
+            "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
             "fa_icon": "fas fa-folder-open",
         }
 
@@ -87,7 +87,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
-        assert self.launcher.schema_obj.input_params["outdir"] == "./results"
+        assert self.launcher.schema_obj.input_params["validate_params"] == True
 
     @with_temporary_file
     def test_get_pipeline_defaults_input_params(self, tmp_file):

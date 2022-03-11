@@ -99,14 +99,11 @@ class TestSchema(unittest.TestCase):
         """Try to generate Markdown docs for a schema from a file"""
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        import io
-
-        f = io.StringIO("")
-        self.schema_obj.print_documentation_markdown(f)
-        docs = f.getvalue()
+        docs = self.schema_obj.print_documentation()
+        print(docs)
         assert self.schema_obj.schema["title"] in docs
         assert self.schema_obj.schema["description"] in docs
-        for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
+        for definition in self.schema_obj.schema.get("definitions", {}).values():
             assert definition["title"] in docs
             assert definition["description"] in docs
 
@@ -147,7 +144,7 @@ class TestSchema(unittest.TestCase):
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.input_params = {"input": "fubar.csv"}
+        self.schema_obj.input_params = {"input": "fubar.csv", "outdir": "results/"}
         assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):

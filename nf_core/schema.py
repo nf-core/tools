@@ -435,9 +435,8 @@ class PipelineSchema(object):
                 file.write(output)
                 log.info(f"Documentation written to '{output_fn}'")
 
-        # Print to stdout
-        else:
-            print(output)
+        # Return as a string
+        return output
 
     def schema_to_markdown(self, columns):
         """
@@ -489,7 +488,7 @@ class PipelineSchema(object):
                         out += f"| {param.get(column, '')} "
                 out += "|\n"
 
-            return out
+        return out
 
     def markdown_to_html(self, markdown_str):
         """
