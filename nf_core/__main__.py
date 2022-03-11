@@ -464,9 +464,14 @@ def install(ctx, tool, dir, prompt, force, sha):
 @click.option("-s", "--sha", type=str, metavar="<commit sha>", help="Install module at commit SHA")
 @click.option("-a", "--all", is_flag=True, default=False, help="Update all modules installed in pipeline")
 @click.option(
-    "-c", "--diff", is_flag=True, default=False, help="Show differences between module versions before updating"
+    "-x",
+    "--save-diff",
+    type=str,
+    metavar="<filename>",
+    default=None,
+    help="Save diffs to a file instead of updating in place",
 )
-def update(ctx, tool, dir, force, prompt, sha, all, diff):
+def update(ctx, tool, dir, force, prompt, sha, all, save_diff):
     """
     Update DSL2 modules within a pipeline.
 
@@ -474,7 +479,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, diff):
     """
     try:
         module_install = nf_core.modules.ModuleUpdate(
-            dir, force=force, prompt=prompt, sha=sha, update_all=all, diff=diff
+            dir, force=force, prompt=prompt, sha=sha, update_all=all, save_diff_fn=save_diff
         )
         module_install.modules_repo = ctx.obj["modules_repo_obj"]
         exit_status = module_install.update(tool)

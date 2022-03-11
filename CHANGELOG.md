@@ -45,6 +45,7 @@
 * Add linting for when condition([#1397](https://github.com/nf-core/tools/pull/1397))
 * Added modules ignored table to `nf-core modules bump-versions`. ([#1234](https://github.com/nf-core/tools/issues/1234))
 * Added `--conda-package-version` flag for specifying version of conda package in `nf-core modules create`. ([#1238](https://github.com/nf-core/tools/issues/1238))
+* Add option of writing diffs to file in `nf-core modules update` using either interactive prompts or the new `--diff-file` flag.
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 
