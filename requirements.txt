@@ -2,12 +2,14 @@ click
 GitPython
 jinja2
 jsonschema>=3.0
+markdown>=3.3
 packaging
 prompt_toolkit>=3.0.3
-pyyaml
 pytest-workflow
+pyyaml
 questionary>=1.8.0
-requests_cache
 requests
+requests_cache
+rich-click>=1.0.0
 rich>=10.0.0
 tabulate

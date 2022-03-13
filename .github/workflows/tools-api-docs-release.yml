@@ -9,9 +9,9 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        dir: 
-            - latest
-            - ${{ github.event.release.tag_name }}
+        dir:
+          - latest
+          - ${{ github.event.release.tag_name }}
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v2
