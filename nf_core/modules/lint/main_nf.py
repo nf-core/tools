@@ -276,9 +276,9 @@ def _parse_output(self, line):
     output = []
     if "meta" in line:
         output.append("meta")
-    if not "emit" in line:
+    if not "emit:" in line:
         self.failed.append(("missing_emit", f"Missing emit statement: {line.strip()}", self.main_nf))
-    if "emit" in line:
+    else:
         output.append(line.split("emit:")[1].strip())
 
     return output

@@ -30,6 +30,7 @@
 * Call the command line help with `-h` as well as `--help` (was formerly just the latter) ([#1404](https://github.com/nf-core/tools/pull/1404))
 * Add `.yamllint.yml` config file to avoid line length and document start errors in the tools repo itself.
 * Switch to `yamllint-github-action`to be able to configure yaml lint exceptions ([#1404](https://github.com/nf-core/tools/issues/1413))
+* Prevent module linting KeyError edge case ([#1321](https://github.com/nf-core/tools/issues/1321))
 
 ### Modules
 
