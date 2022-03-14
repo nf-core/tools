@@ -85,9 +85,7 @@ class RowChecker:
 
     def _validate_first(self, row):
         """Assert that the first FASTQ entry is non-empty and has the right format."""
-        assert (
-            len(row[self._first_col]) > 0
-        ), "At least the first FASTQ file is required."
+        assert len(row[self._first_col]) > 0, "At least the first FASTQ file is required."
         self._validate_fastq_format(row[self._first_col])
 
     def _validate_second(self, row):
@@ -100,8 +98,7 @@ class RowChecker:
         if row[self._first_col] and row[self._second_col]:
             row[self._single_col] = False
             assert (
-                Path(row[self._first_col]).suffixes
-                == Path(row[self._second_col]).suffixes
+                Path(row[self._first_col]).suffixes == Path(row[self._second_col]).suffixes
             ), "FASTQ pairs must have the same file extensions."
         else:
             row[self._single_col] = True
@@ -121,9 +118,7 @@ class RowChecker:
         FASTQ file combination exists.
 
         """
-        assert len(self._seen) == len(
-            self.modified
-        ), "The pair of sample name and FASTQ must be unique."
+        assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
         if len({pair[0] for pair in self._seen}) < len(self._seen):
             counts = Counter(pair[0] for pair in self._seen)
             seen = Counter()
@@ -191,10 +186,7 @@ def check_samplesheet(file_in, file_out):
         reader = csv.DictReader(in_handle, dialect=sniff_format(in_handle))
         # Validate the existence of the expected header columns.
         if not required_columns.issubset(reader.fieldnames):
-            logger.critical(
-                f"The sample sheet **must** contain the column headers: "
-                f"{', '.join(required_columns)}."
-            )
+            logger.critical(f"The sample sheet **must** contain the column headers: {', '.join(required_columns)}.")
             sys.exit(1)
         # Validate each row.
         checker = RowChecker()
