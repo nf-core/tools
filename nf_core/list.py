@@ -378,7 +378,7 @@ class LocalWorkflow(object):
                 log.error(
                     f"Could not fetch status of local Nextflow copy of '{self.full_name}':"
                     f"\n   [red]{type(e).__name__}:[/] {str(e)}"
-                    "\n\nIt's probably a good idea to delete this local copy and pull again:"
+                    "\n\nThis git repository looks broken. It's probably a good idea to delete this local copy and pull again:"
                     f"\n   [magenta]rm -rf {self.local_path}"
                     f"\n   [magenta]nextflow pull {self.full_name}",
                 )
