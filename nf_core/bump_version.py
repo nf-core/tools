@@ -158,7 +158,7 @@ def update_file_version(filename, pipeline_obj, patterns):
                 newcontent.append(line)
 
         if found_match:
-            content = "\n".join(newcontent)
+            content = "\n".join(newcontent) + "\n"
         else:
             log.error("Could not find version number in {}: '{}'".format(filename, pattern))
 
