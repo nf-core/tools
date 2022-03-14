@@ -52,6 +52,7 @@
 * Tweak handling of empty files when generating the test YAML ([#1376](https://github.com/nf-core/tools/issues/1376))
     * Fail linting if a md5sum for an empty file is found (instead of a warning)
     * Don't skip the md5 when generating a test file if an empty file is found (so that linting fails and can be manually checked)
+* Linting checks test files for `TODO` statements as well as the main module code ([#1271](https://github.com/nf-core/tools/issues/1271))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 
