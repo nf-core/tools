@@ -8,7 +8,7 @@ import fnmatch
 log = logging.getLogger(__name__)
 
 
-def pipeline_todos(self, root_dir = None):
+def pipeline_todos(self, root_dir=None):
     """Check for nf-core *TODO* lines.
 
     The nf-core workflow template contains a number of comment lines to help developers
