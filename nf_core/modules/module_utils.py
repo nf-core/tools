@@ -367,14 +367,9 @@ def get_repo_type(dir, repo_type=None):
 
     # Figure out the repository type from the .nf-core.yml config file if we can
     tools_config = nf_core.utils.load_tools_config(dir)
-    if tools_config.get("repository_type") in ["pipeline", "modules"]:
-        if repo_type is not None and repo_type != tools_config["repository_type"]:
-            raise UserWarning(
-                f"'--repo-type {repo_type}' conflicts with [i][red]repository_type[/]: [blue]pipeline[/][/] in '{os.path.relpath(config_path_yml)}'"
-            )
-        return [dir, tools_config["repository_type"]]
+    repo_type = tools_config.get("repository_type", None)
 
-    # Could be set on the command line - throw an error if not
+    # If not set, prompt the user
     if not repo_type:
         log.warning(f"Can't find a '.nf-core.yml' file that defines 'repository_type'")
         repo_type = questionary.select(
@@ -385,11 +380,17 @@ def get_repo_type(dir, repo_type=None):
             ],
             style=nf_core.utils.nfcore_question_style,
         ).unsafe_ask()
+
+        # Save the choice in the config file
         log.info("To avoid this prompt in the future, add the 'repository_type' key to a root '.nf-core.yml' file.")
         if questionary.confirm(f"Would you like me to add this config now?").unsafe_ask():
             with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
                 fh.write(f"repository_type: {repo_type}\n")
                 log.info("Config added to '.nf-core.yml'")
+
+    # Check if it's a valid answer
+    if not repo_type in ["pipeline", "modules"]:
+        raise UserWarning(f"Invalid repository type: '{repo_type}'")
 
     # It was set on the command line, return what we were given
     return [dir, repo_type]
