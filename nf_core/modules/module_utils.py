@@ -376,10 +376,20 @@ def get_repo_type(dir, repo_type=None):
 
     # Could be set on the command line - throw an error if not
     if not repo_type:
-        raise UserWarning(
-            f"Can't find a '.nf-core.yml' file with 'repository_type' set to 'pipeline' or 'modules': '{dir}'"
-            "\nPlease use the '--repo-type' flag or create '.nf-core.yml'"
-        )
+        log.warning(f"Can't find a '.nf-core.yml' file that defines 'repository_type'")
+        repo_type = questionary.select(
+            "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
+            choices=[
+                {"name": "Pipeline", "value": "pipeline"},
+                {"name": "nf-core/modules", "value": "modules"},
+            ],
+            style=nf_core.utils.nfcore_question_style,
+        ).unsafe_ask()
+        log.info("To avoid this prompt in the future, add the 'repository_type' key to a root '.nf-core.yml' file.")
+        if questionary.confirm(f"Would you like me to add this config now?").unsafe_ask():
+            with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
+                fh.write(f"repository_type: {repo_type}\n")
+                log.info("Config added to '.nf-core.yml'")
 
     # It was set on the command line, return what we were given
     return [dir, repo_type]
