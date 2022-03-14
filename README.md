@@ -1151,7 +1151,7 @@ INFO     Provide an appropriate resource label for the process, taken from the n
 ? Process resource label: process_high
 INFO     Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' MUST be provided as an input via a
          Groovy Map called 'meta'. This information may not be required in some instances, for example indexing reference genome files.
-Will the module require a meta map of sample information? (yes/no) [y/n] (y): y
+Will the module require a meta map of sample information? [y/n] (y): y
 INFO     Created / edited following files:
            ./software/star/align/main.nf
            ./software/star/align/meta.yml

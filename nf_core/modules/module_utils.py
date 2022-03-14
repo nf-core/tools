@@ -383,7 +383,7 @@ def get_repo_type(dir, repo_type=None):
 
         # Save the choice in the config file
         log.info("To avoid this prompt in the future, add the 'repository_type' key to a root '.nf-core.yml' file.")
-        if questionary.confirm(f"Would you like me to add this config now?").unsafe_ask():
+        if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
             with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
                 fh.write(f"repository_type: {repo_type}\n")
                 log.info("Config added to '.nf-core.yml'")
