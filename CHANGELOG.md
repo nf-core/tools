@@ -36,6 +36,7 @@
 
 ### Modules
 
+* New command `nf-core modules info` that prints nice documentation about a module to the terminal :sparkles: ([#1427](https://github.com/nf-core/tools/issues/1427))
 * Linting a pipeline now fails instead of warning if a local copy of a module does not match the remote ([#1313](https://github.com/nf-core/tools/issues/1313))
 * Fixed linting bugs where warning was incorrectly generated for:
     * `Module does not emit software version`
