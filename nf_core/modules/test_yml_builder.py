@@ -232,10 +232,12 @@ class ModulesTestYmlBuilder(object):
                 # Check that this isn't an empty file
                 if self.check_if_empty_file(elem):
                     if not is_repeat:
-                        self.errors.append(f"Empty file, skipping md5sum: '{os.path.basename(elem)}'")
-                else:
-                    elem_md5 = self._md5(elem)
-                    test_file["md5sum"] = elem_md5
+                        self.errors.append(f"Empty file found! '{os.path.basename(elem)}'")
+                # Add the md5 anyway, linting should fail later and can be manually removed if needed.
+                #  Originally we skipped this if empty, but then it's too easy to miss the warning.
+                #  Equally, if a file is legitimately empty we don't want to prevent this from working.
+                elem_md5 = self._md5(elem)
+                test_file["md5sum"] = elem_md5
                 # Switch out the results directory path with the expected 'output' directory
                 test_file["path"] = elem.replace(results_dir, "output")
                 test_files.append(test_file)
