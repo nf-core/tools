@@ -128,7 +128,7 @@ class ModulesRepo(object):
         """
         results = {}
         for f in self.modules_file_tree:
-            if not f["path"].startswith("modules/{}".format(module)):
+            if not f["path"].startswith("modules/{}/".format(module)):
                 continue
             if f["type"] != "blob":
                 continue
