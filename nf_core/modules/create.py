@@ -236,7 +236,7 @@ class ModuleCreate(object):
             )
         while self.has_meta is None:
             self.has_meta = rich.prompt.Confirm.ask(
-                "[violet]Will the module require a meta map of sample information? (yes/no)", default=True
+                "[violet]Will the module require a meta map of sample information?", default=True
             )
 
         # Create module template with cokiecutter
