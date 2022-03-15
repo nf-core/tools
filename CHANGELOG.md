@@ -34,6 +34,7 @@
 * Bump-versions: Don't trim the trailing newline on files, causes editorconfig linting to fail ([#1265](https://github.com/nf-core/tools/issues/1265))
 * Handle exception in `nf-core list` when a broken git repo is found ([#1273](https://github.com/nf-core/tools/issues/1273))
 * Updated URL for pipeline lint test docs ([#1348](https://github.com/nf-core/tools/issues/1348))
+* Updated `nf-core create` to tolerate failures and retry when fetching pipeline logos from the website ([#1369](https://github.com/nf-core/tools/issues/1369))
 
 ### Modules
 
@@ -56,6 +57,7 @@
     * Fail linting if a md5sum for an empty file is found (instead of a warning)
     * Don't skip the md5 when generating a test file if an empty file is found (so that linting fails and can be manually checked)
 * Linting checks test files for `TODO` statements as well as the main module code ([#1271](https://github.com/nf-core/tools/issues/1271))
+* Handle error if `manifest` isn't set in `nextflow.config` ([#1418](https://github.com/nf-core/tools/issues/1418))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 

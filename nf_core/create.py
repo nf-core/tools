@@ -4,13 +4,16 @@ organization's specification based on a template.
 """
 from genericpath import exists
 import git
+import imghdr
 import jinja2
 import logging
 import os
 import pathlib
+import random
 import requests
 import shutil
 import sys
+import time
 
 import nf_core
 
@@ -149,18 +152,52 @@ class PipelineCreate(object):
         log.debug(f"Fetching logo from {logo_url}")
 
         email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo_light.png"
-        os.makedirs(os.path.dirname(email_logo_path), exist_ok=True)
-        log.debug(f"Writing logo to '{email_logo_path}'")
-        r = requests.get(f"{logo_url}&w=400")
-        with open(email_logo_path, "wb") as fh:
-            fh.write(r.content)
+        self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
         for theme in ["dark", "light"]:
+            readme_logo_url = f"{logo_url}?w=600&theme={theme}"
             readme_logo_path = f"{self.outdir}/docs/images/{self.name_noslash}_logo_{theme}.png"
-            log.debug(f"Writing logo to '{readme_logo_path}'")
-            os.makedirs(os.path.dirname(readme_logo_path), exist_ok=True)
-            r = requests.get(f"{logo_url}?w=600&theme={theme}")
-            with open(readme_logo_path, "wb") as fh:
+            self.download_pipeline_logo(readme_logo_url, readme_logo_path)
+
+    def download_pipeline_logo(self, url, img_fn):
+        """Attempt to download a logo from the website. Retry if it fails."""
+        os.makedirs(os.path.dirname(img_fn), exist_ok=True)
+        attempt = 0
+        max_attempts = 10
+        retry_delay = 0  # x up to 10 each time, so first delay will be 1-100 seconds
+        while attempt < max_attempts:
+            # If retrying, wait a while
+            if retry_delay > 0:
+                log.info(f"Waiting {retry_delay} seconds before next image fetch attempt")
+                time.sleep(retry_delay)
+
+            attempt += 1
+            # Use a random number to avoid the template sync hitting the website simultaneously for all pipelines
+            retry_delay = random.randint(1, 100) * attempt
+            log.debug(f"Fetching logo '{img_fn}' (attempt {attempt})")
+            try:
+                # Try to fetch the logo from the website
+                r = requests.get(url, timeout=180)
+                if r.status_code != 200:
+                    raise UserWarning(f"Got status code {r.status_code}")
+                # Check that the returned image looks right
+
+            except (ConnectionError, UserWarning) as e:
+                # Something went wrong - try again
+                log.warning(e)
+                log.error(f"Connection error - retrying")
+                continue
+
+            # Write the new logo to the file
+            with open(img_fn, "wb") as fh:
                 fh.write(r.content)
+            # Check that the file looks valid
+            image_type = imghdr.what(img_fn)
+            if image_type != "png":
+                log.error(f"Logo from the website didn't look like an image: '{image_type}'")
+                continue
+
+            # Got this far, presumably it's good - break the retry loop
+            break
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit."""
