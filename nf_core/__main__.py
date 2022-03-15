@@ -45,7 +45,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core modules": [
         {
             "name": "For pipelines",
-            "commands": ["list", "install", "update", "remove"],
+            "commands": ["list", "info", "install", "update", "remove"],
         },
         {
             "name": "Developing new modules",
@@ -609,6 +609,38 @@ def lint(ctx, tool, dir, key, all, local, passed):
         sys.exit(1)
     except UserWarning as e:
         log.critical(e)
+        sys.exit(1)
+
+
+# nf-core modules info
+@modules.command()
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help="Pipeline directory. [dim]\[default: Current working directory][/]",
+)
+def info(ctx, tool, dir):
+    """
+    Show developer usage information about a given module.
+
+    Parses information from a module's [i]meta.yml[/] and renders help
+    on the command line. A handy equivalent to searching the
+    [link=https://nf-co.re/modules]nf-core website[/].
+
+    If run from a pipeline and a local copy of the module is found, the command
+    will print this usage info.
+    If not, usage from the remote modules repo will be shown.
+    """
+    try:
+        module_info = nf_core.modules.ModuleInfo(dir, tool)
+        module_info.modules_repo = ctx.obj["modules_repo_obj"]
+        print(module_info.get_module_info())
+    except UserWarning as e:
+        log.error(e)
         sys.exit(1)
 
 

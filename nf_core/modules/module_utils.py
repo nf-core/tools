@@ -340,7 +340,7 @@ def get_installed_modules(dir, repo_type="modules"):
     return local_modules, nfcore_modules
 
 
-def get_repo_type(dir, repo_type=None):
+def get_repo_type(dir, repo_type=None, use_prompt=True):
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
@@ -370,7 +370,7 @@ def get_repo_type(dir, repo_type=None):
     repo_type = tools_config.get("repository_type", None)
 
     # If not set, prompt the user
-    if not repo_type:
+    if not repo_type and use_prompt:
         log.warning(f"Can't find a '.nf-core.yml' file that defines 'repository_type'")
         repo_type = questionary.select(
             "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
@@ -387,6 +387,10 @@ def get_repo_type(dir, repo_type=None):
             with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
                 fh.write(f"repository_type: {repo_type}\n")
                 log.info("Config added to '.nf-core.yml'")
+
+    # Not set and not allowed to ask
+    elif not repo_type:
+        raise UserWarning("Repository type could not be established")
 
     # Check if it's a valid answer
     if not repo_type in ["pipeline", "modules"]:

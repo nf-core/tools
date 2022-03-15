@@ -6,8 +6,7 @@ import nf_core.utils
 import nf_core.modules.module_utils
 
 from .modules_command import ModuleCommand
-from .module_utils import get_installed_modules, get_module_git_log, module_exist_in_repo
-from .modules_repo import ModulesRepo
+from .module_utils import get_module_git_log, module_exist_in_repo
 
 log = logging.getLogger(__name__)
 
