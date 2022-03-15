@@ -33,6 +33,7 @@
 * Prevent module linting KeyError edge case ([#1321](https://github.com/nf-core/tools/issues/1321))
 * Bump-versions: Don't trim the trailing newline on files, causes editorconfig linting to fail ([#1265](https://github.com/nf-core/tools/issues/1265))
 * Handle exception in `nf-core list` when a broken git repo is found ([#1273](https://github.com/nf-core/tools/issues/1273))
+* Updated URL for pipeline lint test docs ([#1348](https://github.com/nf-core/tools/issues/1348))
 * Updated `nf-core create` to tolerate failures and retry when fetching pipeline logos from the website ([#1369](https://github.com/nf-core/tools/issues/1369))
 
 ### Modules
