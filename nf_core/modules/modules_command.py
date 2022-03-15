@@ -207,7 +207,7 @@ class ModuleCommand:
                 log.info(f"Recomputing commit SHA for module {format_missing[0]} which was missing from 'modules.json'")
             else:
                 log.info(
-                    f"Recomputing commit SHAs for modules which which were were missing from 'modules.json': {', '.join(format_missing)}"
+                    f"Recomputing commit SHAs for modules which were missing from 'modules.json': {', '.join(format_missing)}"
                 )
             failed_to_find_commit_sha = []
             for repo, modules in missing_from_modules_json.items():
