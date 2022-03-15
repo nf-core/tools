@@ -1,6 +1,6 @@
 # nf-core/tools: Changelog
 
-## v2.3dev
+## [v2.3 - Mercury Vulture](https://github.com/nf-core/tools/releases/tag/2.3) - [2022-03-15]
 
 ### Template
 
