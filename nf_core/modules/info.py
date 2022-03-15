@@ -7,6 +7,7 @@ import yaml
 from rich import box
 from rich.text import Text
 from rich.console import Group
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
 
@@ -65,12 +66,15 @@ class ModuleInfo(ModuleCommand):
 
         # Try to find and load the meta.yml file
         module_base_path = f"{self.dir}/modules/"
+        if self.repo_type == "modules":
+            module_base_path = f"{self.dir}/"
         for dir, mods in self.module_names.items():
             for mod in mods:
                 if mod == self.module:
                     mod_dir = os.path.join(module_base_path, dir, mod)
                     meta_fn = os.path.join(mod_dir, "meta.yml")
                     if os.path.exists(meta_fn):
+                        log.debug(f"Found local file: {meta_fn}")
                         with open(meta_fn, "r") as fh:
                             self.local_path = mod_dir
                             return yaml.safe_load(fh)
@@ -156,7 +160,7 @@ class ModuleInfo(ModuleCommand):
                 for key, info in input.items():
                     inputs_table.add_row(
                         f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        info["description"].replace("\n", " "),
+                        Markdown(info["description"]),
                         info.get("pattern", ""),
                     )
 
@@ -172,7 +176,7 @@ class ModuleInfo(ModuleCommand):
                 for key, info in output.items():
                     outputs_table.add_row(
                         f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        info["description"].replace("\n", " "),
+                        Markdown(info["description"]),
                         info.get("pattern", ""),
                     )
 
