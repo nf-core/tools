@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v2.4dev
+
+### Template
+
+### General
+
+### Modules
+
 ## [v2.3 - Mercury Vulture](https://github.com/nf-core/tools/releases/tag/2.3) - [2022-03-15]
 
 ### Template
@@ -17,7 +25,7 @@
 * Add optional loading of of pipeline-specific institutional configs to `nextflow.config`
 * Make `--outdir` a mandatory parameter ([nf-core/tools#1415](https://github.com/nf-core/tools/issues/1415))
 
-## General
+### General
 
 * Updated `nf-core download` to work with latest DSL2 syntax for containers ([#1379](https://github.com/nf-core/tools/issues/1379))
 * Made `nf-core modules create` detect repository type with explicit `.nf-core.yml` instead of random readme stuff ([#1391](https://github.com/nf-core/tools/pull/1391))

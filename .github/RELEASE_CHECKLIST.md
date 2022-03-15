@@ -9,7 +9,9 @@
 7. Make sure all CI tests are passing again (additional tests are run on PRs to `master`)
 8. Request review (2 approvals required)
 9. Merge the PR into `master`
-10. Once CI tests on commit have passed, create a new release copying the `CHANGELOG` for that release into the description section.
+10. Wait for CI tests on the commit to passed
+11. (Optional but a good idea) Run a manual sync on `nf-core/testpipeline` and check that CI is passing on the resulting PR.
+12. Create a new release copying the `CHANGELOG` for that release into the description section.
 
 ## After release
 
