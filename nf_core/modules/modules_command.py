@@ -29,7 +29,7 @@ class ModuleCommand:
         self.module_names = []
         try:
             if self.dir:
-                self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+                self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
             else:
                 self.repo_type = None
         except LookupError as e:
@@ -207,7 +207,7 @@ class ModuleCommand:
                 log.info(f"Recomputing commit SHA for module {format_missing[0]} which was missing from 'modules.json'")
             else:
                 log.info(
-                    f"Recomputing commit SHAs for modules which which were were missing from 'modules.json': {', '.join(format_missing)}"
+                    f"Recomputing commit SHAs for modules which were missing from 'modules.json': {', '.join(format_missing)}"
                 )
             failed_to_find_commit_sha = []
             for repo, modules in missing_from_modules_json.items():
@@ -284,18 +284,21 @@ class ModuleCommand:
             modules_json = None
         return modules_json
 
-    def update_modules_json(self, modules_json, repo_name, module_name, module_version):
+    def update_modules_json(self, modules_json, repo_name, module_name, module_version, write_file=True):
         """Updates the 'module.json' file with new module info"""
         if repo_name not in modules_json["repos"]:
             modules_json["repos"][repo_name] = dict()
         modules_json["repos"][repo_name][module_name] = {"git_sha": module_version}
-        self.dump_modules_json(modules_json)
-
-    def dump_modules_json(self, modules_json):
-        modules_json_path = os.path.join(self.dir, "modules.json")
         # Sort the 'modules.json' repo entries
         modules_json["repos"] = nf_core.utils.sort_dictionary(modules_json["repos"])
+        if write_file:
+            self.dump_modules_json(modules_json)
+        else:
+            return modules_json
 
+    def dump_modules_json(self, modules_json):
+        """Build filename for modules.json and write to file."""
+        modules_json_path = os.path.join(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
 

@@ -55,7 +55,7 @@ def module_tests(module_lint_object, module):
                 # Look for md5sums of empty files
                 for tfile in test.get("files", []):
                     if tfile.get("md5sum") == "d41d8cd98f00b204e9800998ecf8427e":
-                        module.warned.append(
+                        module.failed.append(
                             (
                                 "test_yml_md5sum",
                                 "md5sum for empty file found: d41d8cd98f00b204e9800998ecf8427e",
@@ -63,7 +63,7 @@ def module_tests(module_lint_object, module):
                             )
                         )
                     if tfile.get("md5sum") == "7029066c27ac6f5ef18d660d5741979a":
-                        module.warned.append(
+                        module.failed.append(
                             (
                                 "test_yml_md5sum",
                                 "md5sum for compressed empty file found: 7029066c27ac6f5ef18d660d5741979a",

@@ -126,10 +126,13 @@ def create_modules_json(pipeline_dir):
         pipeline_dir (str): The directory where the `modules.json` should be created
     """
     pipeline_config = nf_core.utils.fetch_wf_config(pipeline_dir)
-    pipeline_name = pipeline_config["manifest.name"]
-    pipeline_url = pipeline_config["manifest.homePage"]
+    pipeline_name = pipeline_config.get("manifest.name", "")
+    pipeline_url = pipeline_config.get("manifest.homePage", "")
     modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
     modules_dir = f"{pipeline_dir}/modules"
+
+    if not os.path.exists(modules_dir):
+        raise UserWarning(f"Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
     # Extract all modules repos in the pipeline directory
     repo_names = [
@@ -337,24 +340,64 @@ def get_installed_modules(dir, repo_type="modules"):
     return local_modules, nfcore_modules
 
 
-def get_repo_type(dir):
+def get_repo_type(dir, repo_type=None, use_prompt=True):
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
     """
     # Verify that the pipeline dir exists
     if dir is None or not os.path.exists(dir):
-        raise LookupError("Could not find directory: {}".format(dir))
+        raise UserWarning(f"Could not find directory: {dir}")
 
-    # Determine repository type
-    if os.path.exists(os.path.join(dir, "README.md")):
-        with open(os.path.join(dir, "README.md")) as fh:
-            if fh.readline().rstrip().startswith("# ![nf-core/modules]"):
-                return "modules"
-            else:
-                return "pipeline"
-    else:
-        raise LookupError("Could not determine repository type of '{}'".format(dir))
+    # Try to find the root directory
+    base_dir = os.path.abspath(dir)
+    config_path_yml = os.path.join(base_dir, ".nf-core.yml")
+    config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
+    while (
+        not os.path.exists(config_path_yml)
+        and not os.path.exists(config_path_yaml)
+        and base_dir != os.path.dirname(base_dir)
+    ):
+        base_dir = os.path.dirname(base_dir)
+        config_path_yml = os.path.join(base_dir, ".nf-core.yml")
+        config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
+        # Reset dir if we found the config file (will be an absolute path)
+        if os.path.exists(config_path_yml) or os.path.exists(config_path_yaml):
+            dir = base_dir
+
+    # Figure out the repository type from the .nf-core.yml config file if we can
+    tools_config = nf_core.utils.load_tools_config(dir)
+    repo_type = tools_config.get("repository_type", None)
+
+    # If not set, prompt the user
+    if not repo_type and use_prompt:
+        log.warning(f"Can't find a '.nf-core.yml' file that defines 'repository_type'")
+        repo_type = questionary.select(
+            "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
+            choices=[
+                {"name": "Pipeline", "value": "pipeline"},
+                {"name": "nf-core/modules", "value": "modules"},
+            ],
+            style=nf_core.utils.nfcore_question_style,
+        ).unsafe_ask()
+
+        # Save the choice in the config file
+        log.info("To avoid this prompt in the future, add the 'repository_type' key to a root '.nf-core.yml' file.")
+        if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
+            with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
+                fh.write(f"repository_type: {repo_type}\n")
+                log.info("Config added to '.nf-core.yml'")
+
+    # Not set and not allowed to ask
+    elif not repo_type:
+        raise UserWarning("Repository type could not be established")
+
+    # Check if it's a valid answer
+    if not repo_type in ["pipeline", "modules"]:
+        raise UserWarning(f"Invalid repository type: '{repo_type}'")
+
+    # It was set on the command line, return what we were given
+    return [dir, repo_type]
 
 
 def verify_pipeline_dir(dir):

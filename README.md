@@ -925,7 +925,7 @@ github.com:
     git_protocol: <ssh or https are valid choices>
 ```
 
-The easiest way to create this configuration file is through *GitHub CLI*: follow
+The easiest way to create this configuration file is through _GitHub CLI_: follow
 its [installation instructions](https://cli.github.com/manual/installation)
 and then call:
 
@@ -943,7 +943,7 @@ to get more information.
 
 The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
 
-### List remote modules
+#### List remote modules
 
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
 `nf-core modules list remote`, which will print all available modules to the terminal.
@@ -975,7 +975,7 @@ INFO     Modules available from nf-core/modules (master)
 └────────────────────────────────┘
 ```
 
-### List installed modules
+#### List installed modules
 
 To list modules installed in a local pipeline directory you can use `nf-core modules list local`. This will list the modules install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
 
@@ -998,6 +998,54 @@ INFO     Modules installed in '.':
 │ fastqc      │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
 │ multiqc     │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
 └─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
+```
+
+## Show information about a module
+
+For quick help about how a module works, use `nf-core modules info <tool>`.
+This shows documentation about the module on the command line, similar to what's available on the
+[nf-core website](https://nf-co.re/modules).
+
+```console
+$ nf-core modules info fastqc
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.3.dev0 - https://nf-co.re
+
+
+╭─ Module: fastqc  ───────────────────────────────────────────────────────────────────────────────────────╮
+│ 🌐 Repository: nf-core/modules                                                                          │
+│ 🔧 Tools: fastqc                                                                                        │
+│ 📖 Description: Run FastQC on sequenced reads                                                           │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+               ╷                                                                                  ╷
+ 📥 Inputs     │Description                                                                       │Pattern
+╺━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━╸
+  meta  (map)  │Groovy Map containing sample information e.g. [ id:'test', single_end:false ]     │
+╶──────────────┼──────────────────────────────────────────────────────────────────────────────────┼───────╴
+  reads  (file)│List of input FastQ files of size 1 and 2 for single-end and paired-end data,     │
+               │respectively.                                                                     │
+               ╵                                                                                  ╵
+                  ╷                                                                       ╷
+ 📤 Outputs       │Description                                                            │        Pattern
+╺━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━╸
+  meta  (map)     │Groovy Map containing sample information e.g. [ id:'test',             │
+                  │single_end:false ]                                                     │
+╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
+  html  (file)    │FastQC report                                                          │*_{fastqc.html}
+╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
+  zip  (file)     │FastQC report archive                                                  │ *_{fastqc.zip}
+╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
+  versions  (file)│File containing software versions                                      │   versions.yml
+                  ╵                                                                       ╵
+
+ 💻  Installation command: nf-core modules install fastqc
+
 ```
 
 ### Install modules in a pipeline
@@ -1055,6 +1103,7 @@ There are five additional flags that you can use with this command:
 * `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
 * `--diff`: Show the diff between the installed files and the new version before installing.
+* `--diff-file <filename>`: Specify where the diffs between the local and remote versions of a module should be written
 * `--all`: Use this flag to run the command on all modules in the pipeline.
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
@@ -1116,11 +1165,15 @@ This command creates a new nf-core module from the nf-core module template.
 This ensures that your module follows the nf-core guidelines.
 The template contains extensive `TODO` messages to walk you through the changes you need to make to the template.
 
-You can create a new module using `nf-core modules create`. This will create the new module in the current working directory. To specify another directory, use `--dir <directory>`.
+You can create a new module using `nf-core modules create`.
 
-If writing a module for the shared [nf-core/modules](https://github.com/nf-core/modules) repository, the `<directory>` argument should be the path to the clone of your fork of the modules repository.
+This command can be used both when writing a module for the shared [nf-core/modules](https://github.com/nf-core/modules) repository,
+and also when creating local modules for a pipeline.
 
-Alternatively, if writing a more niche module that does not make sense to share, `<directory>` should be the path to your pipeline.
+Which type of repository you are working in is detected by the `repository_type` flag in a `.nf-core.yml` file in the root directory,
+set to either `pipeline` or `modules`.
+The command will automatically look through parent directories for this file to set the root path, so that you can run the command in a subdirectory.
+It will start in the current working directory, or whatever is specified with `--dir <directory>`.
 
 The `nf-core modules create` command will prompt you with the relevant questions in order to create all of the necessary module files.
 
@@ -1146,7 +1199,7 @@ INFO     Provide an appropriate resource label for the process, taken from the n
 ? Process resource label: process_high
 INFO     Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' MUST be provided as an input via a
          Groovy Map called 'meta'. This information may not be required in some instances, for example indexing reference genome files.
-Will the module require a meta map of sample information? (yes/no) [y/n] (y): y
+Will the module require a meta map of sample information? [y/n] (y): y
 INFO     Created / edited following files:
            ./software/star/align/main.nf
            ./software/star/align/meta.yml

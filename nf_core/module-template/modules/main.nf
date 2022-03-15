@@ -5,7 +5,7 @@
 // TODO nf-core: A module file SHOULD only define input and output files as command-line parameters.
 //               All other parameters MUST be provided using the "task.ext" directive, see here:
 //               https://www.nextflow.io/docs/latest/process.html#ext
-//               where "task.ext" is a string. 
+//               where "task.ext" is a string.
 //               Any parameters that need to be evaluated in the context of a particular sample
 //               e.g. single-end/paired-end data MUST also be defined and evaluated appropriately.
 // TODO nf-core: Software that can be piped together SHOULD be added to separate module files
@@ -18,7 +18,7 @@
 process {{ tool_name_underscore|upper }} {
     tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
     label '{{ process_label }}'
-    
+
     // TODO nf-core: List required Conda package(s).
     //               Software MUST be pinned to channel (i.e. "bioconda"), version (i.e. "1.10").
     //               For Conda, the build (i.e. "h9402c20_2") must be EXCLUDED to support installation on different operating systems.
@@ -42,6 +42,9 @@ process {{ tool_name_underscore|upper }} {
     {{ 'tuple val(meta), path("*.bam")' if has_meta else 'path "*.bam"' }}, emit: bam
     // TODO nf-core: List additional required output channels/values here
     path "versions.yml"           , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

@@ -47,7 +47,7 @@ jobs:
       - name: Run nf-core/tools
         run: |
           nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
-          nextflow run nf-core-testpipeline -profile test,docker
+          nextflow run nf-core-testpipeline -profile test,docker --outdir ./results
 
       - name: Upload log file artifact
         if: ${{ always() }}
