@@ -12,15 +12,14 @@ import datetime
 import git
 import json
 import logging
-import os
 import re
 import rich
 import rich.progress
-import yaml
 
 import nf_core.utils
 import nf_core.lint_utils
 import nf_core.modules.lint
+from nf_core import __version__
 from nf_core.lint_utils import console
 
 log = logging.getLogger(__name__)
@@ -331,7 +330,14 @@ class PipelineLint(nf_core.utils.Pipeline):
             string for the terminal with appropriate ASCII colours.
             """
             for eid, msg in test_results:
-                table.add_row(Markdown("[{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html): {1}".format(eid, msg)))
+                tools_version = __version__
+                if "dev" in __version__:
+                    tools_version = "latest"
+                table.add_row(
+                    Markdown(
+                        f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
+                    )
+                )
             return table
 
         def _s(some_list):
