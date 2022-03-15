@@ -55,6 +55,7 @@
     * Fail linting if a md5sum for an empty file is found (instead of a warning)
     * Don't skip the md5 when generating a test file if an empty file is found (so that linting fails and can be manually checked)
 * Linting checks test files for `TODO` statements as well as the main module code ([#1271](https://github.com/nf-core/tools/issues/1271))
+* Handle error if `manifest` isn't set in `nextflow.config` ([#1418](https://github.com/nf-core/tools/issues/1418))
 
 ## [v2.2 - Lead Liger](https://github.com/nf-core/tools/releases/tag/2.2) - [2021-12-14]
 

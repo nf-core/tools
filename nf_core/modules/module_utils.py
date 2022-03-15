@@ -126,8 +126,8 @@ def create_modules_json(pipeline_dir):
         pipeline_dir (str): The directory where the `modules.json` should be created
     """
     pipeline_config = nf_core.utils.fetch_wf_config(pipeline_dir)
-    pipeline_name = pipeline_config["manifest.name"]
-    pipeline_url = pipeline_config["manifest.homePage"]
+    pipeline_name = pipeline_config.get("manifest.name", "")
+    pipeline_url = pipeline_config.get("manifest.homePage", "")
     modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
     modules_dir = f"{pipeline_dir}/modules"
 
