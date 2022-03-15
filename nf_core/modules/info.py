@@ -160,7 +160,7 @@ class ModuleInfo(ModuleCommand):
                 for key, info in input.items():
                     inputs_table.add_row(
                         f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"]),
+                        Markdown(info["description"] if info["description"] else ""),
                         info.get("pattern", ""),
                     )
 
@@ -176,7 +176,7 @@ class ModuleInfo(ModuleCommand):
                 for key, info in output.items():
                     outputs_table.add_row(
                         f"[orange1 on black] {key} [/][dim i] ({info['type']})",
-                        Markdown(info["description"]),
+                        Markdown(info["description"] if info["description"] else ""),
                         info.get("pattern", ""),
                     )
 
