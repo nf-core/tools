@@ -13,12 +13,10 @@ api/index.rst
 
 This documentation is for the `nf-core/tools` package.
 
-Primarily, it describes the different [code lint tests](lint_tests/index.html)
-run by `nf-core lint` (typically visited by a developer when their pipeline fails a given
-test), and also reference for the `nf_core` [Python package API](api/index.html).
+## Contents
 
-## Indices and tables
-
+- [Pipeline code lint tests](pipeline_lint_tests/index.md) (run by `nf-core lint`)
+- [Module code lint tests](module_lint_tests/index.md) (run by `nf-core modules lint`)
+- [nf-core/tools Python package API reference](api/index.md)
 - {ref}`genindex`
 - {ref}`modindex`
-- {ref}`search`
