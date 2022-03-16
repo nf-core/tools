@@ -1,8 +1,9 @@
-nf_core.launch
-==============
+# nf_core.utils
 
-.. automodule:: nf_core.launch
+```{eval-rst}
+.. automodule:: nf_core.utils
     :members:
     :undoc-members:
     :show-inheritance:
     :private-members:
+```
