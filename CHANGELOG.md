@@ -8,6 +8,7 @@
 
 * Convert nf-core/tools API / lint test documentation to MyST ([#1245](https://github.com/nf-core/tools/pull/1245))
 * Build documentation for the `nf-core modules lint` tests ([#1250](https://github.com/nf-core/tools/pull/1250))
+* Install tools inside GitPod Docker using the repo itself and not from Conda.
 
 ### Modules
 
