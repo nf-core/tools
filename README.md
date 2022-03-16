@@ -1,4 +1,4 @@
-# ![nf-core/tools](docs/images/nfcore-tools_logo.png) <!-- omit in toc -->
+# ![nf-core/tools](docs/images/nfcore-tools_logo_light.png#gh-light-mode-only) ![nf-core/tools](docs/images/nfcore-tools_logo_dark.png#gh-dark-mode-only) <!-- omit in toc -->
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
@@ -194,7 +194,7 @@ $ nf-core list
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -219,7 +219,7 @@ $ nf-core list rna rna-seq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name ┃ Stars ┃ Latest Release ┃     Released ┃ Last Pulled ┃ Have latest release? ┃
@@ -248,7 +248,7 @@ $ nf-core list -s stars
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
 ┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
@@ -292,7 +292,7 @@ $ nf-core launch rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
@@ -372,7 +372,7 @@ $ nf-core download
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
@@ -504,7 +504,7 @@ $ nf-core licences rnaseq
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 1.10
+    nf-core/tools version 2.2
 
   INFO     Fetching licence information for 25 tools
   INFO     Warning: This tool only prints licence information for the software tools packaged using conda.
@@ -558,7 +558,7 @@ $ nf-core create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 Workflow Name: nextbigthing
 Description: This pipeline analyses data from the next big 'omics technique
@@ -603,7 +603,7 @@ $ nf-core lint
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 INFO     Testing pipeline: .
 ╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
@@ -713,7 +713,7 @@ $ nf-core schema validate rnaseq nf-params.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 
@@ -745,7 +745,7 @@ $ nf-core schema build nf-core-testpipeline
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
   INFO     [✓] Default parameters look valid
   INFO     [✓] Pipeline schema looks valid (found 25 params)
@@ -784,7 +784,7 @@ $ nf-core schema lint nextflow_schema.json
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
   ERROR    [✗] Pipeline schema does not follow nf-core specs:
             Definition subschema 'input_output_options' not included in schema 'allOf'
@@ -800,14 +800,14 @@ Usage is `nf-core bump-version <new_version>`, eg:
 
 ```console
 $ cd path/to/my_pipeline
-$ nf-core bump-version . 1.7
+$ nf-core bump-version 1.7
                                           ,--./,-.
           ___     __   __   __   ___     /,-._.--~\
     |\ | |__  __ /  ` /  \ |__) |__         }  {
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 
@@ -862,7 +862,7 @@ $ nf-core sync my_pipeline/
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 
@@ -902,6 +902,8 @@ This allows multiple pipelines to use the same code for share tools and gives a 
 
 The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
+### Custom remote modules
+
 The modules supercommand comes with two flags for specifying a custom remote:
 
 * `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
@@ -909,11 +911,39 @@ The modules supercommand comes with two flags for specifying a custom remote:
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
+### Private remote modules
+
+In order to get access to your private modules repo, you need to create
+the `~/.config/gh/hosts.yml` file, which is the same file required by
+[GitHub CLI](https://cli.github.com/) to deal with private repositories.
+Such file is structured as follow:
+
+```conf
+github.com:
+    oauth_token: <your github access token>
+    user: <your github user>
+    git_protocol: <ssh or https are valid choices>
+```
+
+The easiest way to create this configuration file is through _GitHub CLI_: follow
+its [installation instructions](https://cli.github.com/manual/installation)
+and then call:
+
+```bash
+gh auth login
+```
+
+After that, you will be able to list and install your private modules without
+providing your github credentials through command line, by using `--github-repository`
+and `--branch` options properly.
+See the documentation on [gh auth login](https://cli.github.com/manual/gh_auth_login>)
+to get more information.
+
 ### List modules
 
 The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
 
-### List remote modules
+#### List remote modules
 
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
 `nf-core modules list remote`, which will print all available modules to the terminal.
@@ -926,7 +956,7 @@ $ nf-core modules list remote
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     Modules available from nf-core/modules (master)
@@ -945,7 +975,7 @@ INFO     Modules available from nf-core/modules (master)
 └────────────────────────────────┘
 ```
 
-### List installed modules
+#### List installed modules
 
 To list modules installed in a local pipeline directory you can use `nf-core modules list local`. This will list the modules install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
 
@@ -957,7 +987,7 @@ $ nf-core modules list local
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     Modules installed in '.':
@@ -968,6 +998,54 @@ INFO     Modules installed in '.':
 │ fastqc      │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
 │ multiqc     │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
 └─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
+```
+
+## Show information about a module
+
+For quick help about how a module works, use `nf-core modules info <tool>`.
+This shows documentation about the module on the command line, similar to what's available on the
+[nf-core website](https://nf-co.re/modules).
+
+```console
+$ nf-core modules info fastqc
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.3.dev0 - https://nf-co.re
+
+
+╭─ Module: fastqc  ───────────────────────────────────────────────────────────────────────────────────────╮
+│ 🌐 Repository: nf-core/modules                                                                          │
+│ 🔧 Tools: fastqc                                                                                        │
+│ 📖 Description: Run FastQC on sequenced reads                                                           │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+               ╷                                                                                  ╷
+ 📥 Inputs     │Description                                                                       │Pattern
+╺━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━╸
+  meta  (map)  │Groovy Map containing sample information e.g. [ id:'test', single_end:false ]     │
+╶──────────────┼──────────────────────────────────────────────────────────────────────────────────┼───────╴
+  reads  (file)│List of input FastQ files of size 1 and 2 for single-end and paired-end data,     │
+               │respectively.                                                                     │
+               ╵                                                                                  ╵
+                  ╷                                                                       ╷
+ 📤 Outputs       │Description                                                            │        Pattern
+╺━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━╸
+  meta  (map)     │Groovy Map containing sample information e.g. [ id:'test',             │
+                  │single_end:false ]                                                     │
+╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
+  html  (file)    │FastQC report                                                          │*_{fastqc.html}
+╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
+  zip  (file)     │FastQC report archive                                                  │ *_{fastqc.zip}
+╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
+  versions  (file)│File containing software versions                                      │   versions.yml
+                  ╵                                                                       ╵
+
+ 💻  Installation command: nf-core modules install fastqc
+
 ```
 
 ### Install modules in a pipeline
@@ -983,7 +1061,7 @@ $ nf-core modules install
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Tool name: cat/fastq
 INFO     Installing cat/fastq
@@ -1010,7 +1088,7 @@ $ nf-core modules update
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Tool name: fastqc
 INFO     Updating 'nf-core/modules/fastqc'
@@ -1019,11 +1097,13 @@ INFO     Downloaded 3 files to ./modules/nf-core/modules/fastqc
 
 You can pass the module name as an optional argument to `nf-core modules update` instead of using the cli prompt, eg: `nf-core modules update fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
-There are four additional flags that you can use with this command:
+There are five additional flags that you can use with this command:
 
 * `--force`: Reinstall module even if it appears to be up to date
 * `--prompt`: Select the module version using a cli prompt.
 * `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+* `--diff`: Show the diff between the installed files and the new version before installing.
+* `--diff-file <filename>`: Specify where the diffs between the local and remote versions of a module should be written
 * `--all`: Use this flag to run the command on all modules in the pipeline.
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
@@ -1071,7 +1151,7 @@ $ nf-core modules remove
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Tool name: star/align
 INFO     Removing star/align
@@ -1085,11 +1165,15 @@ This command creates a new nf-core module from the nf-core module template.
 This ensures that your module follows the nf-core guidelines.
 The template contains extensive `TODO` messages to walk you through the changes you need to make to the template.
 
-You can create a new module using `nf-core modules create`. This will create the new module in the current working directory. To specify another directory, use `--dir <directory>`.
+You can create a new module using `nf-core modules create`.
 
-If writing a module for the shared [nf-core/modules](https://github.com/nf-core/modules) repository, the `<directory>` argument should be the path to the clone of your fork of the modules repository.
+This command can be used both when writing a module for the shared [nf-core/modules](https://github.com/nf-core/modules) repository,
+and also when creating local modules for a pipeline.
 
-Alternatively, if writing a more niche module that does not make sense to share, `<directory>` should be the path to your pipeline.
+Which type of repository you are working in is detected by the `repository_type` flag in a `.nf-core.yml` file in the root directory,
+set to either `pipeline` or `modules`.
+The command will automatically look through parent directories for this file to set the root path, so that you can run the command in a subdirectory.
+It will start in the current working directory, or whatever is specified with `--dir <directory>`.
 
 The `nf-core modules create` command will prompt you with the relevant questions in order to create all of the necessary module files.
 
@@ -1102,7 +1186,7 @@ $ nf-core modules create
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses. ctrl+click underlined text to open links.
@@ -1115,14 +1199,13 @@ INFO     Provide an appropriate resource label for the process, taken from the n
 ? Process resource label: process_high
 INFO     Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' MUST be provided as an input via a
          Groovy Map called 'meta'. This information may not be required in some instances, for example indexing reference genome files.
-Will the module require a meta map of sample information? (yes/no) [y/n] (y): y
+Will the module require a meta map of sample information? [y/n] (y): y
 INFO     Created / edited following files:
-           ./software/star/align/functions.nf
            ./software/star/align/main.nf
            ./software/star/align/meta.yml
            ./tests/software/star/align/main.nf
            ./tests/software/star/align/test.yml
-           ./tests/config/pytest_software.yml
+           ./tests/config/pytest_modules.yml
 ```
 
 ### Create a module test config file
@@ -1140,7 +1223,7 @@ $ nf-core modules create-test-yml
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 INFO     Press enter to use default values (shown in brackets) or type your own responses
@@ -1186,7 +1269,7 @@ $ nf-core modules lint
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 ? Lint all modules or a single named module? Named module
 ? Tool name: star/align
@@ -1225,7 +1308,7 @@ $ nf-core modules bump-versions -d modules
     | \| |       \__, \__/ |  \ |___     \`-._,-`-,
                                           `._,._,'
 
-    nf-core/tools version 2.0
+    nf-core/tools version 2.2
 
 
 

@@ -334,7 +334,7 @@ class LocalWorkflow(object):
             if len(os.environ.get("NXF_ASSETS", "")) > 0:
                 nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)
             elif len(os.environ.get("NXF_HOME", "")) > 0:
-                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets")
+                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets", self.full_name)
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):
@@ -374,13 +374,13 @@ class LocalWorkflow(object):
                         self.active_tag = str(tag)
 
             # I'm not sure that we need this any more, it predated the self.branch catch above for detacted HEAD
-            except TypeError as e:
+            except (TypeError, git.InvalidGitRepositoryError) as e:
                 log.error(
-                    "Could not fetch status of local Nextflow copy of {}:".format(self.full_name)
-                    + "\n   {}".format(str(e))
-                    + "\n\nIt's probably a good idea to delete this local copy and pull again:".format(self.local_path)
-                    + "\n   rm -rf {}".format(self.local_path)
-                    + "\n   nextflow pull {}".format(self.full_name)
+                    f"Could not fetch status of local Nextflow copy of '{self.full_name}':"
+                    f"\n   [red]{type(e).__name__}:[/] {str(e)}"
+                    "\n\nThis git repository looks broken. It's probably a good idea to delete this local copy and pull again:"
+                    f"\n   [magenta]rm -rf {self.local_path}"
+                    f"\n   [magenta]nextflow pull {self.full_name}",
                 )
 
 

@@ -10,16 +10,17 @@ from nf_core.modules.lint import LintResult
 def module_changes(module_lint_object, module):
     """
     Checks whether installed nf-core modules have changed compared to the
-    original repository.
+    original repository
 
-    Downloads the ``main.nf``, ``functions.nf`` and ``meta.yml`` files from the remote
-    for every module and compares them to the local copies.
+    Downloads the ``main.nf`` and ``meta.yml`` files for every module
+    and compares them to the local copies
 
     If the module has a commit SHA entry in the ``modules.json``, the file content is
     compared against the files in the remote at this SHA.
-    """
 
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    Only runs when linting a pipeline, not the modules repository
+    """
+    files_to_check = ["main.nf", "meta.yml"]
 
     # Loop over nf-core modules
     module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module_lint_object.modules_repo.branch}/modules/{module.module_name}/"
@@ -52,10 +53,10 @@ def module_changes(module_lint_object, module):
                 remote_copy = r.content.decode("utf-8")
 
                 if local_copy != remote_copy:
-                    module.warned.append(
+                    module.failed.append(
                         (
                             "check_local_copy",
-                            "Local copy of module outdated",
+                            "Local copy of module does not match remote",
                             f"{os.path.join(module.module_dir, f)}",
                         )
                     )

@@ -81,9 +81,9 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                # example: nxf_ver: ['20.04.0', '']
-                r"nxf_ver: \[[\'\"]{}[\'\"], [\'\"][\'\"]\]".format(current_version.replace(".", r"\.")),
-                "nxf_ver: ['{}', '']".format(new_version),
+                # example: - NXF_VER: '20.04.0'
+                r"- NXF_VER: [\'\"]{}[\'\"]".format(current_version.replace(".", r"\.")),
+                "- NXF_VER: '{}'".format(new_version),
             )
         ],
     )
@@ -98,13 +98,10 @@ def bump_nextflow_version(pipeline_obj, new_version):
                 "nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(new_version),
             ),
             (
-                # Replace links to 'nf-co.re' installation page with links to Nextflow installation page
-                r"https://nf-co.re/usage/installation",
-                "https://www.nextflow.io/docs/latest/getstarted.html#installation",
-            ),
-            (
                 # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
-                r"1\.\s*Install\s*\[`Nextflow`\]\(y\)\s*\(`>={}`\)".format(current_version.replace(".", r"\.")),
+                r"1\.\s*Install\s*\[`Nextflow`\]\(https:\/\/www\.nextflow\.io\/docs\/latest\/getstarted\.html#installation\)\s*\(`>={}`\)".format(
+                    current_version.replace(".", r"\.")
+                ),
                 "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={}`)".format(
                     new_version
                 ),
@@ -161,7 +158,7 @@ def update_file_version(filename, pipeline_obj, patterns):
                 newcontent.append(line)
 
         if found_match:
-            content = "\n".join(newcontent)
+            content = "\n".join(newcontent) + "\n"
         else:
             log.error("Could not find version number in {}: '{}'".format(filename, pattern))
 

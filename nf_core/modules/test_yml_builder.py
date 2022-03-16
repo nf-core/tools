@@ -8,8 +8,10 @@ from __future__ import print_function
 from rich.syntax import Syntax
 
 import errno
+import gzip
 import hashlib
 import logging
+import operator
 import os
 import questionary
 import re
@@ -18,7 +20,6 @@ import shlex
 import subprocess
 import tempfile
 import yaml
-import operator
 
 import nf_core.utils
 
@@ -46,6 +47,7 @@ class ModulesTestYmlBuilder(object):
         self.module_test_main = None
         self.entry_points = []
         self.tests = []
+        self.errors = []
 
     def run(self):
         """Run build steps"""
@@ -57,6 +59,9 @@ class ModulesTestYmlBuilder(object):
         self.scrape_workflow_entry_points()
         self.build_all_tests()
         self.print_test_yml()
+        if len(self.errors) > 0:
+            errors = "\n - ".join(self.errors)
+            raise UserWarning(f"Ran, but found errors:\n - {errors}")
 
     def check_inputs(self):
         """Do more complex checks about supplied flags."""
@@ -187,6 +192,27 @@ class ModulesTestYmlBuilder(object):
 
         return ep_test
 
+    def check_if_empty_file(self, fname):
+        """Check if the file is empty, or compressed empty"""
+        if os.path.getsize(fname) == 0:
+            return True
+        try:
+            with open(fname, "rb") as fh:
+                g_f = gzip.GzipFile(fileobj=fh, mode="rb")
+                if g_f.read() == b"":
+                    return True
+        except Exception as e:
+            # Python 3.8+
+            if hasattr(gzip, "BadGzipFile"):
+                if isinstance(e, gzip.BadGzipFile):
+                    pass
+            # Python 3.7
+            elif isinstance(e, OSError):
+                pass
+            else:
+                raise e
+        return False
+
     def _md5(self, fname):
         """Generate md5 sum for file"""
         hash_md5 = hashlib.md5()
@@ -196,16 +222,25 @@ class ModulesTestYmlBuilder(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def create_test_file_dict(self, results_dir):
+    def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
         for root, dir, file in os.walk(results_dir):
             for elem in file:
                 elem = os.path.join(root, elem)
+                test_file = {"path": elem}  # add the key here so that it comes first in the dict
+                # Check that this isn't an empty file
+                if self.check_if_empty_file(elem):
+                    if not is_repeat:
+                        self.errors.append(f"Empty file found! '{os.path.basename(elem)}'")
+                # Add the md5 anyway, linting should fail later and can be manually removed if needed.
+                #  Originally we skipped this if empty, but then it's too easy to miss the warning.
+                #  Equally, if a file is legitimately empty we don't want to prevent this from working.
                 elem_md5 = self._md5(elem)
+                test_file["md5sum"] = elem_md5
                 # Switch out the results directory path with the expected 'output' directory
-                elem = elem.replace(results_dir, "output")
-                test_files.append({"path": elem, "md5sum": elem_md5})
+                test_file["path"] = elem.replace(results_dir, "output")
+                test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
 
@@ -237,11 +272,11 @@ class ModulesTestYmlBuilder(object):
 
         # If test was repeated, compare the md5 sums
         if results_dir_repeat:
-            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
+            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat, is_repeat=True)
 
             # Compare both test.yml files
             for i in range(len(test_files)):
-                if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
+                if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
                     test_files[i].pop("md5sum")
                     test_files[i][
                         "contains"
