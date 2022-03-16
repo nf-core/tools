@@ -21,7 +21,6 @@ RUN conda update -n base -c defaults conda && \
     conda install \
         openjdk=11.0.13 \
         nextflow=21.10.6 \
-        nf-core=2.2 \
         pytest-workflow=1.6.0 \
         mamba=0.22.1 \
         pip=22.0.4 \
@@ -30,3 +29,10 @@ RUN conda update -n base -c defaults conda && \
         -n base && \
     nextflow self-update && \
     conda clean --all -f -y
+
+# Add the nf-core source files to the image
+COPY . /usr/src/nf_core
+WORKDIR /usr/src/nf_core
+
+# Install nf-core
+RUN python -m pip install .
