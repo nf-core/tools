@@ -8,3 +8,4 @@ from .list import ModuleList
 from .install import ModuleInstall
 from .update import ModuleUpdate
 from .remove import ModuleRemove
+from .info import ModuleInfo

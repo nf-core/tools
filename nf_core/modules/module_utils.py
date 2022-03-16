@@ -46,6 +46,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     update breaking backwards compatibility.
     Args:
         module_name (str): Name of module
+        modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
         per_page (int): Number of commits per page returned by API
         page_nbr (int): Page number of the retrieved commits
         since (str): Only show commits later than this timestamp.
@@ -57,7 +58,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     if modules_repo is None:
         modules_repo = ModulesRepo()
     api_url = f"https://api.github.com/repos/{modules_repo.name}/commits"
-    api_url += f"?sha{modules_repo.branch}"
+    api_url += f"?sha={modules_repo.branch}"
     if module_name is not None:
         api_url += f"&path=modules/{module_name}"
     api_url += f"&page={page_nbr}"
@@ -84,19 +85,21 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
         )
 
 
-def get_commit_info(commit_sha):
+def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     """
     Fetches metadata about the commit (dates, message, etc.)
     Args:
-        module_name (str): Name of module
         commit_sha (str): The SHA of the requested commit
+        repo_name (str): module repos name (def. {0})
     Returns:
         message (str): The commit message for the requested commit
         date (str): The commit date for the requested commit
     Raises:
         LookupError: If the call to the API fails.
-    """
-    api_url = f"https://api.github.com/repos/nf-core/modules/commits/{commit_sha}?stats=false"
+    """.format(
+        repo_name
+    )
+    api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
     response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
     if response.status_code == 200:
@@ -123,10 +126,13 @@ def create_modules_json(pipeline_dir):
         pipeline_dir (str): The directory where the `modules.json` should be created
     """
     pipeline_config = nf_core.utils.fetch_wf_config(pipeline_dir)
-    pipeline_name = pipeline_config["manifest.name"]
-    pipeline_url = pipeline_config["manifest.homePage"]
+    pipeline_name = pipeline_config.get("manifest.name", "")
+    pipeline_url = pipeline_config.get("manifest.homePage", "")
     modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
     modules_dir = f"{pipeline_dir}/modules"
+
+    if not os.path.exists(modules_dir):
+        raise UserWarning(f"Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
     # Extract all modules repos in the pipeline directory
     repo_names = [
@@ -225,7 +231,7 @@ def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         are identical to remote files
     """
 
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    files_to_check = ["main.nf", "meta.yml"]
     local_file_contents = [None, None, None]
     for i, file in enumerate(files_to_check):
         try:
@@ -251,7 +257,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
         bool: Whether all local files are identical to remote version
     """
 
-    files_to_check = ["main.nf", "functions.nf", "meta.yml"]
+    files_to_check = ["main.nf", "meta.yml"]
     files_are_equal = [False, False, False]
     remote_copies = [None, None, None]
 
@@ -259,7 +265,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     for i, file in enumerate(files_to_check):
         # Download remote copy and compare
         api_url = f"{module_base_url}/{file}"
-        r = requests.get(url=api_url)
+        r = requests.get(url=api_url, auth=nf_core.utils.github_api_auto_auth())
         if r.status_code != 200:
             log.debug(f"Could not download remote copy of file module {module_name}/{file}")
             log.debug(api_url)
@@ -304,7 +310,7 @@ def get_installed_modules(dir, repo_type="modules"):
         # Filter local modules
         if os.path.exists(local_modules_dir):
             local_modules = os.listdir(local_modules_dir)
-            local_modules = sorted([x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")])
+            local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
     # nf-core/modules
     if repo_type == "modules":
@@ -334,22 +340,64 @@ def get_installed_modules(dir, repo_type="modules"):
     return local_modules, nfcore_modules
 
 
-def get_repo_type(dir):
+def get_repo_type(dir, repo_type=None, use_prompt=True):
     """
     Determine whether this is a pipeline repository or a clone of
     nf-core/modules
     """
     # Verify that the pipeline dir exists
     if dir is None or not os.path.exists(dir):
-        raise LookupError("Could not find directory: {}".format(dir))
+        raise UserWarning(f"Could not find directory: {dir}")
 
-    # Determine repository type
-    if os.path.exists(os.path.join(dir, "main.nf")):
-        return "pipeline"
-    elif os.path.exists(os.path.join(dir, "modules")):
-        return "modules"
-    else:
-        raise LookupError("Could not determine repository type of '{}'".format(dir))
+    # Try to find the root directory
+    base_dir = os.path.abspath(dir)
+    config_path_yml = os.path.join(base_dir, ".nf-core.yml")
+    config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
+    while (
+        not os.path.exists(config_path_yml)
+        and not os.path.exists(config_path_yaml)
+        and base_dir != os.path.dirname(base_dir)
+    ):
+        base_dir = os.path.dirname(base_dir)
+        config_path_yml = os.path.join(base_dir, ".nf-core.yml")
+        config_path_yaml = os.path.join(base_dir, ".nf-core.yaml")
+        # Reset dir if we found the config file (will be an absolute path)
+        if os.path.exists(config_path_yml) or os.path.exists(config_path_yaml):
+            dir = base_dir
+
+    # Figure out the repository type from the .nf-core.yml config file if we can
+    tools_config = nf_core.utils.load_tools_config(dir)
+    repo_type = tools_config.get("repository_type", None)
+
+    # If not set, prompt the user
+    if not repo_type and use_prompt:
+        log.warning(f"Can't find a '.nf-core.yml' file that defines 'repository_type'")
+        repo_type = questionary.select(
+            "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
+            choices=[
+                {"name": "Pipeline", "value": "pipeline"},
+                {"name": "nf-core/modules", "value": "modules"},
+            ],
+            style=nf_core.utils.nfcore_question_style,
+        ).unsafe_ask()
+
+        # Save the choice in the config file
+        log.info("To avoid this prompt in the future, add the 'repository_type' key to a root '.nf-core.yml' file.")
+        if rich.prompt.Confirm.ask("[bold][blue]?[/] Would you like me to add this config now?", default=True):
+            with open(os.path.join(dir, ".nf-core.yml"), "a+") as fh:
+                fh.write(f"repository_type: {repo_type}\n")
+                log.info("Config added to '.nf-core.yml'")
+
+    # Not set and not allowed to ask
+    elif not repo_type:
+        raise UserWarning("Repository type could not be established")
+
+    # Check if it's a valid answer
+    if not repo_type in ["pipeline", "modules"]:
+        raise UserWarning(f"Invalid repository type: '{repo_type}'")
+
+    # It was set on the command line, return what we were given
+    return [dir, repo_type]
 
 
 def verify_pipeline_dir(dir):
@@ -365,7 +413,7 @@ def verify_pipeline_dir(dir):
         modules_is_software = False
         for repo_name in repo_names:
             api_url = f"https://api.github.com/repos/{repo_name}/contents"
-            response = requests.get(api_url)
+            response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
             if response.status_code == 404:
                 missing_remote.append(repo_name)
                 if repo_name == "nf-core/software":

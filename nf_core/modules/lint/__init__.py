@@ -61,17 +61,17 @@ class ModuleLint(ModuleCommand):
 
     # Import lint functions
     from .main_nf import main_nf
-    from .functions_nf import functions_nf
     from .meta_yml import meta_yml
     from .module_changes import module_changes
     from .module_tests import module_tests
     from .module_todos import module_todos
+    from .module_deprecations import module_deprecations
     from .module_version import module_version
 
     def __init__(self, dir):
         self.dir = dir
         try:
-            self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
+            self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
         except LookupError as e:
             raise UserWarning(e)
 
@@ -93,10 +93,12 @@ class ModuleLint(ModuleCommand):
         if self.repo_type == "pipeline":
             # Add as first test to load git_sha before module_changes
             self.lint_tests.insert(0, "module_version")
+            # Only check if modules have been changed in pipelines
+            self.lint_tests.append("module_changes")
 
     @staticmethod
     def _get_all_lint_tests():
-        return ["main_nf", "functions_nf", "meta_yml", "module_changes", "module_todos"]
+        return ["main_nf", "meta_yml", "module_todos", "module_deprecations"]
 
     def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
         """
@@ -230,8 +232,7 @@ class ModuleLint(ModuleCommand):
 
             # Filter local modules
             if os.path.exists(local_modules_dir):
-                local_modules = os.listdir(local_modules_dir)
-                local_modules = sorted([x for x in local_modules if (x.endswith(".nf") and not x == "functions.nf")])
+                local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
         # nf-core/modules
         if self.repo_type == "modules":
@@ -239,16 +240,21 @@ class ModuleLint(ModuleCommand):
 
         # Get nf-core modules
         if os.path.exists(nfcore_modules_dir):
-            for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
+            for m in sorted(os.listdir(nfcore_modules_dir)):
                 if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
                     raise ModuleLintException(
                         f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
                     )
-                m_content = os.listdir(os.path.join(nfcore_modules_dir, m))
+
+                module_dir = os.path.join(nfcore_modules_dir, m)
+                module_subdir = os.listdir(module_dir)
                 # Not a module, but contains sub-modules
-                if not "main.nf" in m_content:
-                    for tool in m_content:
-                        nfcore_modules.append(os.path.join(m, tool))
+                if "main.nf" not in module_subdir:
+                    for path in module_subdir:
+                        module_subdir_path = os.path.join(nfcore_modules_dir, m, path)
+                        if os.path.isdir(module_subdir_path):
+                            if os.path.exists(os.path.join(module_subdir_path, "main.nf")):
+                                nfcore_modules.append(os.path.join(m, path))
                 else:
                     nfcore_modules.append(m)
 
@@ -309,7 +315,6 @@ class ModuleLint(ModuleCommand):
         If the module is a nf-core module we check for existence of the files
         - main.nf
         - meta.yml
-        - functions.nf
         And verify that their content conform to the nf-core standards.
 
         If the linting is run for modules in the central nf-core/modules repo
@@ -321,7 +326,7 @@ class ModuleLint(ModuleCommand):
         if local:
             self.main_nf(mod)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
-            self.warned += [LintResult(mod, *m) for m in mod.warned]
+            self.warned += [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
 
         # Otherwise run all the lint tests
         else:

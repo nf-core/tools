@@ -6,8 +6,7 @@ import nf_core.utils
 import nf_core.modules.module_utils
 
 from .modules_command import ModuleCommand
-from .module_utils import get_installed_modules, get_module_git_log, module_exist_in_repo
-from .modules_repo import ModulesRepo
+from .module_utils import get_module_git_log, module_exist_in_repo
 
 log = logging.getLogger(__name__)
 
@@ -82,10 +81,10 @@ class ModuleInstall(ModuleCommand):
             current_entry = None
 
         # Set the install folder based on the repository name
-        install_folder = [self.modules_repo.owner, self.modules_repo.repo]
+        install_folder = [self.dir, "modules", self.modules_repo.owner, self.modules_repo.repo]
 
         # Compute the module directory
-        module_dir = os.path.join(self.dir, "modules", *install_folder, module)
+        module_dir = os.path.join(*install_folder, module)
 
         # Check that the module is not already installed
         if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
@@ -128,7 +127,7 @@ class ModuleInstall(ModuleCommand):
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.name}")
 
         # Download module files
-        if not self.download_module_file(module, version, self.modules_repo, install_folder, module_dir):
+        if not self.download_module_file(module, version, self.modules_repo, install_folder):
             return False
 
         # Update module.json with newly installed module
