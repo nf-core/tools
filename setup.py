@@ -2,7 +2,13 @@
 
 from setuptools import setup, find_packages
 
-version = "2.4dev"
+versionfile = "autowrap/version.py"
+try:
+    execfile(versionfile)
+except:
+    exec(open(versionfile).read())
+
+version = __version__
 
 with open("README.md") as f:
     readme = f.read()
