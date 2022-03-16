@@ -1,8 +1,9 @@
-nf_core.bump_version
-====================
+# nf_core.create
 
-.. automodule:: nf_core.bump_version
+```{eval-rst}
+.. automodule:: nf_core.create
     :members:
     :undoc-members:
     :show-inheritance:
     :private-members:
+```

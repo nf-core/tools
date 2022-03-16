@@ -1,8 +1,9 @@
-nf_core.modules
-===============
+# nf_core.list
 
-.. automodule:: nf_core.modules
+```{eval-rst}
+.. automodule:: nf_core.list
     :members:
     :undoc-members:
     :show-inheritance:
     :private-members:
+```

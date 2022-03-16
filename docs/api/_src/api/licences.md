@@ -1,8 +1,9 @@
-nf_core.schema
-==============
+# nf_core.licences
 
-.. automodule:: nf_core.schema
+```{eval-rst}
+.. automodule:: nf_core.licences
     :members:
     :undoc-members:
     :show-inheritance:
     :private-members:
+```

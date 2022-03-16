@@ -1,8 +1,9 @@
-nf_core.sync
-==============
+# nf_core.modules
 
-.. automodule:: nf_core.sync
+```{eval-rst}
+.. automodule:: nf_core.modules
     :members:
     :undoc-members:
     :show-inheritance:
     :private-members:
+```
