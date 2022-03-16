@@ -1,7 +1,7 @@
 # nf_core.lint
 
 :::{seealso}
-See the [Lint Tests](../lint_tests/index.html) docs for information about specific linting functions.
+See the [Lint Tests](../pipeline_lint_tests/index.md) docs for information about specific linting functions.
 :::
 
 ```{eval-rst}
