@@ -88,9 +88,11 @@ def actions_ci(self):
         # NB: YAML dict key 'on' is evaluated to a Python dict key True
         assert "dev" in ciwf[True]["push"]["branches"]
         pr_subtree = ciwf[True]["pull_request"]
-        assert pr_subtree == None or \
-            ("branches" in pr_subtree and "dev" in pr_subtree["branches"]) or \
-            ("ignore_branches" in pr_subtree and not "dev" in pr_subtree["ignore_branches"])
+        assert (
+            pr_subtree == None
+            or ("branches" in pr_subtree and "dev" in pr_subtree["branches"])
+            or ("ignore_branches" in pr_subtree and not "dev" in pr_subtree["ignore_branches"])
+        )
         assert "published" in ciwf[True]["release"]["types"]
     except (AssertionError, KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' is not triggered on expected events")
