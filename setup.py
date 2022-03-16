@@ -2,7 +2,7 @@
 
 from setuptools import setup, find_packages
 
-versionfile = "autowrap/version.py"
+versionfile = "nf_core/version.py"
 try:
     execfile(versionfile)
 except:
