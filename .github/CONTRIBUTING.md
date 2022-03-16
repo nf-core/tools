@@ -75,7 +75,7 @@ New features should also come with new tests, to keep the test-coverage high (we
 You can try running the tests locally before pushing code using the following command:
 
 ```bash
-pytest --color=yes tests/
+pytest --color=yes
 ```
 
 ### Lint Tests
