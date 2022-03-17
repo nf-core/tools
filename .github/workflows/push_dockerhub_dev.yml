@@ -21,9 +21,12 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build new docker image
-        run: docker build --no-cache . -t nfcore/tools:dev
+        run: |
+          docker build --no-cache . -t nfcore/tools:dev
+          docker build --no-cache nf_core/gitpod/gitpod.Dockerfile -t nfcore/gitpod:dev
 
       - name: Push Docker image to DockerHub (dev)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push nfcore/tools:dev
+          docker push nfcore/gitpod:dev
