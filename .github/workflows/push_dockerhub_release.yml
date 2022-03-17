@@ -21,7 +21,9 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build new docker image
-        run: docker build --no-cache . -t nfcore/tools:latest
+        run: |
+          docker build --no-cache . -t nfcore/tools:latest
+          docker build --no-cache nf_core/gitpod/gitpod.Dockerfile -t nfcore/gitpod:latest
 
       - name: Push Docker image to DockerHub (release)
         run: |
@@ -29,3 +31,6 @@ jobs:
           docker push nfcore/tools:latest
           docker tag nfcore/tools:latest nfcore/tools:${{ github.event.release.tag_name }}
           docker push nfcore/tools:${{ github.event.release.tag_name }}
+          docker push nfcore/gitpod:latest
+          docker tag nfcore/gitpod:latest nfcore/tools:${{ github.event.release.tag_name }}
+          docker push nfcore/gitpod:${{ github.event.release.tag_name }}
