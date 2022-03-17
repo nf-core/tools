@@ -72,11 +72,13 @@ versions_by_module["Workflow"] = {
 }
 
 versions_mqc = {
-    "id": "software_versions",
-    "section_name": "${workflow.manifest.name} Software Versions",
+    "parent_id": "${workflow.manifest.name.replace('/','-')}_run_details",
+    "parent_name": "${workflow.manifest.name} Run Details",
+    "section_id": "sofware_versions",
+    "section_name": "Software Versions",
     "section_href": "https://github.com/${workflow.manifest.name}",
     "plot_type": "html",
-    "description": "are collected at run time from the software output.",
+    "description": "These software version numbers are collected directly from each tool, at run time.",
     "data": _make_versions_html(versions_by_module),
 }
 

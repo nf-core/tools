@@ -33,8 +33,8 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
             }
         }
 
-        String yaml_file_text  = "id: '${workflow.manifest.name.replace('/','-')}-summary'\n"
-        yaml_file_text        += "description: ' - this information is collected when the pipeline is started.'\n"
+        String yaml_file_text  = "parent_id: '${workflow.manifest.name.replace('/','-')}_run_details'\n"
+        yaml_file_text        += "id: '${workflow.manifest.name.replace('/','-')}_run_summary'\n"
         yaml_file_text        += "section_name: '${workflow.manifest.name} Workflow Summary'\n"
         yaml_file_text        += "section_href: 'https://github.com/${workflow.manifest.name}'\n"
         yaml_file_text        += "plot_type: 'html'\n"

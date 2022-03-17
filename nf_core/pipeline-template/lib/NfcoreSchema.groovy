@@ -242,7 +242,7 @@ class NfcoreSchema {
     //
     // Groovy Map summarising parameters/workflow options used by the pipeline
     //
-    public static LinkedHashMap paramsSummaryMap(workflow, params, schema_filename='nextflow_schema.json') {
+    public static List paramsSummaryMap(workflow, params, schema_filename='nextflow_schema.json') {
         // Get a selection of core Nextflow workflow options
         def Map workflow_summary = [:]
         if (workflow.revision) {
@@ -264,6 +264,30 @@ class NfcoreSchema {
 
         // Get pipeline parameters defined in JSON Schema
         def Map params_summary = [:]
+        def LinkedHashMap params_mqc = [:]
+        params_mqc['parent_id'] = 'nf-core-{{short_name}}_run_details'
+        params_mqc['parent_name'] = '{{name}} Run Details'
+        params_mqc['id'] = 'nextflow_params'
+        params_mqc['section_name'] = 'Pipeline Parameters'
+        params_mqc['description'] = 'Lists all pipeline parameters used to control how the pipeline was run, including those not modified from the defaults.'
+        params_mqc['plot_type'] = 'table'
+        params_mqc['pconfig'] = [:]
+        params_mqc['pconfig']['id'] = 'nextflow_params_table'
+        params_mqc['pconfig']['title'] = 'Nextflow Pipeline Parameters'
+        params_mqc['pconfig']['namespace'] = 'Nextflow Pipeline'
+        params_mqc['headers'] = [:]
+        params_mqc['headers']['value'] = [:]
+        params_mqc['headers']['value']['title'] = 'Value'
+        params_mqc['headers']['value']['description'] = 'Defined value in the pipeline run'
+        params_mqc['headers']['value']['scale'] = false
+        params_mqc['headers']['value']['format'] = '{}'
+        params_mqc['headers']['default'] = [:]
+        params_mqc['headers']['default']['title'] = 'Default'
+        params_mqc['headers']['default']['description'] = 'Default value in the pipeline'
+        params_mqc['headers']['default']['scale'] = false
+        params_mqc['headers']['default']['format'] = '{}'
+        params_mqc['data'] = [:]
+
         def params_map = paramsLoad(getSchemaPath(workflow, schema_filename=schema_filename))
         for (group in params_map.keySet()) {
             def sub_params = new LinkedHashMap()
@@ -300,11 +324,23 @@ class NfcoreSchema {
                     else if (schema_value == null && params_value != "" && params_value != null && params_value != false) {
                         sub_params.put(param, params_value)
                     }
+
+                    // Add to MultiQC map
+                    params_mqc['data'][param] = [:]
+                    params_mqc['data'][param]['value'] = '<code>'+params_value+'</code>'
+                    params_mqc['data'][param]['default'] = '<code>'+schema_value+'</code>'
                 }
             }
             params_summary.put(group, sub_params)
         }
-        return [ 'Core Nextflow options' : workflow_summary ] << params_summary
+
+        // Convert MultiQC table map to JSONObject
+        def json_params_mqc = new JsonBuilder(params_mqc)
+        JSONObject json_params_mqc_string = new JSONObject(json_params_mqc.toString())
+        File params_mqc_file = File.createTempFile("pipeline_params", "_mqc.json")
+        params_mqc_file << json_params_mqc_string
+
+        return [[ 'Core Nextflow options' : workflow_summary ] << params_summary, params_mqc_file.absolutePath]
     }
 
     //
@@ -313,7 +349,7 @@ class NfcoreSchema {
     public static String paramsSummaryLog(workflow, params) {
         Map colors = NfcoreTemplate.logColours(params.monochrome_logs)
         String output  = ''
-        def params_map = paramsSummaryMap(workflow, params)
+        def (params_map, params_mqc_file) = paramsSummaryMap(workflow, params)
         def max_chars  = paramsMaxChars(params_map)
         for (group in params_map.keySet()) {
             def group_params = params_map.get(group)  // This gets the parameters of that particular group
