@@ -57,6 +57,10 @@ jobs:
       - name: nf-core create
         run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
+      # Try syncing it before we change anything
+      - name: nf-core sync
+        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
+
       # Build a module from the template
       - name: nf-core modules create
         run: nf-core --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
@@ -79,9 +83,6 @@ jobs:
 
       # - name: nf-core licences
       #   run: nf-core --log-file log.txt licences nf-core-testpipeline
-
-      - name: nf-core sync
-        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
 
       - name: nf-core schema
         run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts
