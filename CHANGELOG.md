@@ -47,6 +47,7 @@
 * Handle exception in `nf-core list` when a broken git repo is found ([#1273](https://github.com/nf-core/tools/issues/1273))
 * Updated URL for pipeline lint test docs ([#1348](https://github.com/nf-core/tools/issues/1348))
 * Updated `nf-core create` to tolerate failures and retry when fetching pipeline logos from the website ([#1369](https://github.com/nf-core/tools/issues/1369))
+* Modified the CSS overriding `sphinx_rtd_theme` default colors to fix some glitches in the API documentation ([#1294](https://github.com/nf-core/tools/issues/1294))
 
 ### Modules
 
