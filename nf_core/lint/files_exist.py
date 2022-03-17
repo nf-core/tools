@@ -103,7 +103,7 @@ def files_exist(self):
         [".gitattributes"],
         [".gitignore"],
         [".nf-core.yml"],
-        [".prettierrc.yaml"],
+        [".prettierrc.yml"],
         ["CHANGELOG.md"],
         ["CITATIONS.md"],
         ["CODE_OF_CONDUCT.md"],
