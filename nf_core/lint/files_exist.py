@@ -102,7 +102,7 @@ def files_exist(self):
     files_fail = [
         [".gitattributes"],
         [".gitignore"],
-        [".nf-core.yaml"],
+        [".nf-core.yml"],
         [".prettierrc.yaml"],
         ["CHANGELOG.md"],
         ["CITATIONS.md"],
