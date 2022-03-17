@@ -11,7 +11,7 @@ If you'd like to write some code for nf-core/tools, the standard workflow
 is as follows:
 
 1. Check that there isn't [already an issue](https://github.com/nf-core/tools/issues) about your idea to avoid duplicating work.
-    * If there isn't one already, please create one so that others know you're working on this
+   - If there isn't one already, please create one so that others know you're working on this
 2. Fork the [nf-core/tools repository](https://github.com/nf-core/tools) to your GitHub account
 3. Make the necessary changes / additions within your forked repository
 4. Submit a Pull Request against the `dev` branch and wait for the code to be reviewed and merged.

@@ -4,11 +4,11 @@ name: nf-core gitpod build and push
 on:
   push:
     branches:
-      - 'master'
-      - 'dev'
+      - "master"
+      - "dev"
     paths:
-      - 'nf_core/gitpod/gitpod.Dockerfile'
-      - '.github/workflows/build_gitpod.yml'
+      - "nf_core/gitpod/gitpod.Dockerfile"
+      - ".github/workflows/build_gitpod.yml"
 
 jobs:
   push_to_registry:

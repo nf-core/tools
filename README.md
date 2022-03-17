@@ -14,29 +14,30 @@ A python package with helper tools for the nf-core community.
 
 ## Table of contents <!-- omit in toc -->
 
-* [`nf-core` tools installation](#installation)
-* [`nf-core list` - List available pipelines](#listing-pipelines)
-* [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
-* [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
-* [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
-* [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
-* [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
-* [`nf-core schema` - Work with pipeline schema files](#pipeline-schema)
-* [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
-* [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
-* [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
-    * [`modules list` - List available modules](#list-modules)
-        * [`modules list remote` - List remote modules](#list-remote-modules)
-        * [`modules list local` - List installed modules](#list-installed-modules)
-    * [`modules install` - Install modules in a pipeline](#install-modules-in-a-pipeline)
-    * [`modules update` - Update modules in a pipeline](#update-modules-in-a-pipeline)
-    * [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
-    * [`modules create` - Create a module from the template](#create-a-new-module)
-    * [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
-    * [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
-    * [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
+- [`nf-core` tools installation](#installation)
+- [`nf-core list` - List available pipelines](#listing-pipelines)
+- [`nf-core launch` - Run a pipeline with interactive parameter prompts](#launch-a-pipeline)
+- [`nf-core download` - Download pipeline for offline use](#downloading-pipelines-for-offline-use)
+- [`nf-core licences` - List software licences in a pipeline](#pipeline-software-licences)
+- [`nf-core create` - Create a new pipeline with the nf-core template](#creating-a-new-pipeline)
+- [`nf-core lint` - Check pipeline code against nf-core guidelines](#linting-a-workflow)
+- [`nf-core schema` - Work with pipeline schema files](#pipeline-schema)
+- [`nf-core bump-version` - Update nf-core pipeline version number](#bumping-a-pipeline-version-number)
+- [`nf-core sync` - Synchronise pipeline TEMPLATE branches](#sync-a-pipeline-with-the-template)
+- [`nf-core modules` - commands for dealing with DSL2 modules](#modules)
 
-* [Citation](#citation)
+  - [`modules list` - List available modules](#list-modules)
+    - [`modules list remote` - List remote modules](#list-remote-modules)
+    - [`modules list local` - List installed modules](#list-installed-modules)
+  - [`modules install` - Install modules in a pipeline](#install-modules-in-a-pipeline)
+  - [`modules update` - Update modules in a pipeline](#update-modules-in-a-pipeline)
+  - [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
+  - [`modules create` - Create a module from the template](#create-a-new-module)
+  - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
+  - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
+  - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
+
+- [Citation](#citation)
 
 The nf-core tools package is written in Python and can be imported and used within other packages.
 For documentation of the internal Python functions, please refer to the [Tools Python API docs](https://nf-co.re/tools-docs/).
@@ -80,10 +81,10 @@ You can use this container on the command line as follows:
 docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools
 ```
 
-* `-i` and `-t` are needed for the interactive cli prompts to work (this tells Docker to use a pseudo-tty with stdin attached)
-* The `-v` argument tells Docker to bind your current working directory (`pwd`) to the same path inside the container, so that files created there will be saved to your local file system outside of the container.
-* `-w` sets the working directory in the container to this path, so that it's the same as your working directory outside of the container.
-* `-u` sets your local user account as the user inside the container, so that any files created have the correct ownership permissions
+- `-i` and `-t` are needed for the interactive cli prompts to work (this tells Docker to use a pseudo-tty with stdin attached)
+- The `-v` argument tells Docker to bind your current working directory (`pwd`) to the same path inside the container, so that files created there will be saved to your local file system outside of the container.
+- `-w` sets the working directory in the container to this path, so that it's the same as your working directory outside of the container.
+- `-u` sets your local user account as the user inside the container, so that any files created have the correct ownership permissions
 
 After the above base command, you can use the regular command line flags that you would use with other types of installation.
 For example, to launch the `viralrecon` pipeline:
@@ -181,7 +182,7 @@ export NFCORE_NO_VERSION_CHECK=1
 
 ## Listing pipelines
 
-The command `nf-core list` shows all available nf-core pipelines along with their latest version,  when that was published and how recently the pipeline code was pulled to your local system (if at all).
+The command `nf-core list` shows all available nf-core pipelines along with their latest version, when that was published and how recently the pipeline code was pulled to your local system (if at all).
 
 An example of the output from the command is as follows:
 
@@ -331,25 +332,25 @@ Do you want to run this command now?  [y/n]:
 
 ### Launch tool options
 
-* `-r`, `--revision`
-    * Specify a pipeline release (or branch / git commit sha) of the project to run
-* `-i`, `--id`
-    * You can use the web GUI for nf-core pipelines by clicking _"Launch"_ on the website. Once filled in you will be given an ID to use with this command which is used to retrieve your inputs.
-* `-c`, `--command-only`
-    * If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
-* `-p`, `--params-in PATH`
-    * To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
-    * This will overwrite the pipeline schema defaults before the wizard is launched.
-* `-o`, `--params-out PATH`
-    * Path to save parameters JSON file to. (Default: `nf-params.json`)
-* `-a`, `--save-all`
-    * Without this option the pipeline will ignore any values that match the pipeline schema defaults.
-    * This option saves _all_ parameters found to the JSON file.
-* `-h`, `--show-hidden`
-    * A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
-    * This option forces the wizard to show all parameters, including those labelled as 'hidden'.
-* `--url`
-    * Change the URL used for the graphical interface, useful for development work on the website.
+- `-r`, `--revision`
+  - Specify a pipeline release (or branch / git commit sha) of the project to run
+- `-i`, `--id`
+  - You can use the web GUI for nf-core pipelines by clicking _"Launch"_ on the website. Once filled in you will be given an ID to use with this command which is used to retrieve your inputs.
+- `-c`, `--command-only`
+  - If you prefer not to save your inputs in a JSON file and use `-params-file`, this option will specify all entered params directly in the nextflow command.
+- `-p`, `--params-in PATH`
+  - To use values entered in a previous pipeline run, you can supply the `nf-params.json` file previously generated.
+  - This will overwrite the pipeline schema defaults before the wizard is launched.
+- `-o`, `--params-out PATH`
+  - Path to save parameters JSON file to. (Default: `nf-params.json`)
+- `-a`, `--save-all`
+  - Without this option the pipeline will ignore any values that match the pipeline schema defaults.
+  - This option saves _all_ parameters found to the JSON file.
+- `-h`, `--show-hidden`
+  - A pipeline JSON schema can define some parameters as 'hidden' if they are rarely used or for internal pipeline use only.
+  - This option forces the wizard to show all parameters, including those labelled as 'hidden'.
+- `--url`
+  - Change the URL used for the graphical interface, useful for development work on the website.
 
 ## Downloading pipelines for offline use
 
@@ -482,7 +483,7 @@ Once a full list of containers is found, they are processed in the following ord
 2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` is _not_ specified, they are copied to the output directory
 3. If they start with `http` they are downloaded directly within Python (default 4 at a time, you can customise this with `--parallel-downloads`)
 4. If they look like a Docker image name, they are fetched using a `singularity pull` command
-    * This requires Singularity to be installed on the system and is substantially slower
+   - This requires Singularity to be installed on the system and is substantially slower
 
 Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
 
@@ -641,7 +642,7 @@ You can use the `-k` / `--key` flag to run only named tests for faster debugging
 ### Linting documentation
 
 Each test result name on the left is a terminal hyperlink.
-In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd>  ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
+In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd> ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
 links to open documentation specific to this test in your browser.
 
 Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find your test to read more.
@@ -656,8 +657,8 @@ Here you can list the names of any tests that you would like to disable and set 
 
 ```yaml
 lint:
-    actions_awsfulltest: False
-    pipeline_todos: False
+  actions_awsfulltest: False
+  pipeline_todos: False
 ```
 
 Some lint tests allow greater granularity, for example skipping a test only for a specific file.
@@ -665,9 +666,9 @@ This is documented in the test-specific docs but generally involves passing a li
 
 ```yaml
 lint:
-    files_exist:
+  files_exist:
     - CODE_OF_CONDUCT.md
-    files_unchanged:
+  files_unchanged:
     - assets/email_template.html
     - CODE_OF_CONDUCT.md
 ```
@@ -693,9 +694,9 @@ Pipeline schema files are built according to the [JSONSchema specification](http
 
 To help developers working with pipeline schema, nf-core tools has three `schema` sub-commands:
 
-* `nf-core schema validate`
-* `nf-core schema build`
-* `nf-core schema lint`
+- `nf-core schema validate`
+- `nf-core schema build`
+- `nf-core schema lint`
 
 ### Validate pipeline parameters
 
@@ -763,10 +764,10 @@ $ nf-core schema build nf-core-testpipeline
 
 There are four flags that you can use with this command:
 
-* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory
-* `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
-* `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
-* `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
+- `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory
+- `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
+- `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
+- `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
 
 ### Linting a pipeline schema
 
@@ -906,8 +907,8 @@ The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
 The modules supercommand comes with two flags for specifying a custom remote:
 
-* `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
-* `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
+- `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
+- `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
@@ -1072,9 +1073,9 @@ You can pass the module name as an optional argument to `nf-core modules install
 
 There are three additional flags that you can use when installing a module:
 
-* `--force`: Overwrite a previously installed version of the module.
-* `--prompt`: Select the module version using a cli prompt.
-* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+- `--force`: Overwrite a previously installed version of the module.
+- `--prompt`: Select the module version using a cli prompt.
+- `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
 
 ### Update modules in a pipeline
 
@@ -1099,12 +1100,12 @@ You can pass the module name as an optional argument to `nf-core modules update`
 
 There are five additional flags that you can use with this command:
 
-* `--force`: Reinstall module even if it appears to be up to date
-* `--prompt`: Select the module version using a cli prompt.
-* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
-* `--diff`: Show the diff between the installed files and the new version before installing.
-* `--diff-file <filename>`: Specify where the diffs between the local and remote versions of a module should be written
-* `--all`: Use this flag to run the command on all modules in the pipeline.
+- `--force`: Reinstall module even if it appears to be up to date
+- `--prompt`: Select the module version using a cli prompt.
+- `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+- `--diff`: Show the diff between the installed files and the new version before installing.
+- `--diff-file <filename>`: Specify where the diffs between the local and remote versions of a module should be written
+- `--all`: Use this flag to run the command on all modules in the pipeline.
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
 
