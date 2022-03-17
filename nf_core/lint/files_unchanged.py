@@ -19,7 +19,7 @@ def files_unchanged(self):
     Files that must be unchanged::
 
         .gitattributes
-        .markdownlint.yml
+        .prettierrc.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
@@ -75,7 +75,7 @@ def files_unchanged(self):
     # List of lists. Passes if any of the files in the sublist are found.
     files_exact = [
         [".gitattributes"],
-        [".markdownlint.yml"],
+        [".prettierrc.yml"],
         ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
         [os.path.join(".github", ".dockstore.yml")],
