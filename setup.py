@@ -2,13 +2,7 @@
 
 from setuptools import setup, find_packages
 
-versionfile = "nf_core/version.py"
-try:
-    execfile(versionfile)
-except:
-    exec(open(versionfile).read())
-
-version = __version__
+version = "2.4dev"
 
 with open("README.md") as f:
     readme = f.read()
