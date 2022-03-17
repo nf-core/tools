@@ -4,14 +4,14 @@ description: write your description here
 keywords:
   - sort
 tools:
-  - { { tool } }:
+  - "{{ tool }}":
       ## TODO nf-core: Add a description and other details for the software below
-      description: { { tool_description } }
-      homepage: { { tool_doc_url } }
-      documentation: { { tool_doc_url } }
-      tool_dev_url: { { tool_dev_url } }
+      description: "{{ tool_description }}"
+      homepage: "{{ tool_doc_url }}"
+      documentation: "{{ tool_doc_url }}"
+      tool_dev_url: "{{ tool_dev_url }}"
       doi: ""
-      licence: { { tool_licence } }
+      licence: "{{ tool_licence }}"
 
 ## TODO nf-core: Add a description of all of the variables used as input
 input:
