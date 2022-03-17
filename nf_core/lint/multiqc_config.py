@@ -26,7 +26,7 @@ def multiqc_config(self):
 
     # Return a failed status if we can't find the file
     if not os.path.isfile(fn):
-        return {"failed": ["'assets/multiqc_config.yaml' not found"]}
+        return {"ignored": ["'assets/multiqc_config.yaml' not found"]}
 
     try:
         with open(fn, "r") as fh:
@@ -38,7 +38,7 @@ def multiqc_config(self):
     try:
         assert "report_section_order" in mqc_yml
         orders = dict()
-        summary_plugin_name = "nf-core-" + self.pipeline_name + "-summary"
+        summary_plugin_name = f"nf-core-{self.pipeline_name}-summary"
         min_plugins = ["software_versions", summary_plugin_name]
         for plugin in min_plugins:
             assert plugin in mqc_yml["report_section_order"]
@@ -53,9 +53,9 @@ def multiqc_config(self):
         assert orders[summary_plugin_name] == min(orders.values())
         orders.pop(summary_plugin_name)
         assert orders["software_versions"] == min(orders.values())
-    except (AssertionError, KeyError, TypeError):
+    except (AssertionError, KeyError, TypeError) as e:
         failed.append(
-            "'assets/multiqc_config.yaml' does not follow the ordering scheme of the minimally required plugins."
+            f"'assets/multiqc_config.yaml' does not meet requirements: {e}"
         )
     else:
         passed.append("'assets/multiqc_config.yaml' follows the ordering scheme of the minimally required plugins.")
@@ -75,7 +75,7 @@ def multiqc_config(self):
             )
         )
     except (AssertionError, KeyError, TypeError):
-        failed.append("'assets/multiqc_config.yaml' does not contain a matching report_comment.")
+        warned.append("'assets/multiqc_config.yaml' does not contain a matching report_comment.")
     else:
         passed.append("'assets/multiqc_config.yaml' contains a matching report_comment.")
 
