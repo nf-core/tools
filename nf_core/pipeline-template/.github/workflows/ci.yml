@@ -25,7 +25,7 @@ jobs:
           # Test pipeline minimum Nextflow version
           - NXF_VER: "21.10.3"
             NXF_EDGE: ""
-          # Test latest edge release of Nextflow {% raw %}
+          # Test latest edge release of Nextflow {%- raw %}
           - NXF_VER: ""
             NXF_EDGE: "1"
     steps:
@@ -48,3 +48,5 @@ jobs:
         # Remember that you can parallelise this by using strategy.matrix
         run: |
           nextflow run ${GITHUB_WORKSPACE} -profile test,docker --outdir ./results
+
+# {%- endraw %}
