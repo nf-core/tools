@@ -1,4 +1,4 @@
-# ![{{ name }}](docs/images/{{ name_noslash }}_logo_light.png#gh-light-mode-only) ![{{ name }}](docs/images/{{ name_noslash }}_logo_dark.png#gh-dark-mode-only)
+# ![{{ name }}](docs/images/{{ logo_light }}#gh-light-mode-only) ![{{ name }}](docs/images/{{ logo_dark }}#gh-dark-mode-only)
 
 [![GitHub Actions CI Status](https://github.com/{{ name }}/workflows/nf-core%20CI/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+CI%22)
 [![GitHub Actions Linting Status](https://github.com/{{ name }}/workflows/nf-core%20linting/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+linting%22)
