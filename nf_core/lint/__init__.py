@@ -153,6 +153,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .files_unchanged import files_unchanged
     from .merge_markers import merge_markers
     from .modules_json import modules_json
+    from .multiqc_config import multiqc_config
     from .nextflow_config import nextflow_config
     from .pipeline_name_conventions import pipeline_name_conventions
     from .pipeline_todos import pipeline_todos
@@ -205,6 +206,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "actions_schema_validation",
             "merge_markers",
             "modules_json",
+            "multiqc_config",
         ] + (["version_consistency"] if release_mode else [])
 
     def _load(self):

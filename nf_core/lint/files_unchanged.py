@@ -45,7 +45,6 @@ def files_unchanged(self):
     Files that can have additional content but must include the template contents::
 
         .gitignore
-        assets/multiqc_config.yaml
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your linting config file. For example:
@@ -54,7 +53,6 @@ def files_unchanged(self):
 
                 files_unchanged:
                   - .github/workflows/branch.yml
-                  - assets/multiqc_config.yaml
 
     """
 
@@ -102,7 +100,6 @@ def files_unchanged(self):
     ]
     files_partial = [
         [".gitignore", "foo"],
-        [os.path.join("assets", "multiqc_config.yaml")],
     ]
 
     # Only show error messages from pipeline creation
