@@ -1,4 +1,4 @@
-name: Create a pipeline and run `nf-core lint``
+name: Create a pipeline and run nf-core linting
 on: [push, pull_request]
 
 env:
