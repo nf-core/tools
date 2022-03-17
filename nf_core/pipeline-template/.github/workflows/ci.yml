@@ -11,13 +11,12 @@ on:
 env:
   NXF_ANSI_LOG: false
   CAPSULE_LOG: none
-  REPO_NAME: "{{ name }}"
 
 jobs:
   test:
     name: Run pipeline with test data
-    # Only run on push if this is the nf-core dev branch (merged PRs) {% raw %}
-    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == env.REPO_NAME) }}
+    # Only run on push if this is the nf-core dev branch (merged PRs)
+    if: "{% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}"
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -26,7 +25,7 @@ jobs:
           # Test pipeline minimum Nextflow version
           - NXF_VER: "21.10.3"
             NXF_EDGE: ""
-          # Test latest edge release of Nextflow
+          # Test latest edge release of Nextflow {% raw %}
           - NXF_VER: ""
             NXF_EDGE: "1"
     steps:

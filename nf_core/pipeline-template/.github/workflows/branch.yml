@@ -5,20 +5,17 @@ on:
   pull_request_target:
     branches: [master]
 
-env:
-  REPO_NAME: "{{ name }}"
-
 jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      # PRs to the nf-core repo master branch are only ok if coming from the nf-core repo `dev` or any `patch` branches. {% raw %}
+      # PRs to the nf-core repo master branch are only ok if coming from the nf-core repo `dev` or any `patch` branches
       - name: Check PRs
-        if: github.repository == env.REPO_NAME
+        if: github.repository == '{{ name }}'
         run: |
-          { [[ ${{github.event.pull_request.head.repo.full_name }} == env.REPO_NAME ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+          "{ [[ {% raw %}${{github.event.pull_request.head.repo.full_name }}{% endraw %} == {{ name }} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]"
 
-      # If the above check failed, post a comment on the PR explaining the failure
+      # If the above check failed, post a comment on the PR explaining the failure {% raw %}
       # NOTE - this doesn't currently work if the PR is coming from a fork, due to limitations in GitHub actions secrets
       - name: Post PR comment
         if: failure()
