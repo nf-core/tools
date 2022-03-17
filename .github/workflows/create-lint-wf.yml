@@ -59,17 +59,19 @@ jobs:
 
       # Build a module from the template
       - name: nf-core modules create
-        run: nf-core --log-file log.txt modules create bpipe --author @nf-core-bot --label process_low --meta
+        run: nf-core --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
 
       # Run all the linters
       - name: nf-core lint
         run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored
 
       - name: Run Prettier --check
-        run: prettier --check ${GITHUB_WORKSPACE}
+        run: prettier --check nf-core-testpipeline
 
       - name: Check code lints with Black
         uses: psf/black@stable
+        with:
+          src: "./nf-core-testpipeline"
 
       # Run the other nf-core commands
       - name: nf-core list
