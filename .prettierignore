@@ -1,7 +1,3 @@
 docs/api/_build
 testing
 
-# Skip the templates as the Jinja2 tags confuse prettier
-# Don't worry - we run prettier on the compiled pipeline in create-lint-wf.yml
-nf_core/pipeline-template/
-nf_core/module-template/

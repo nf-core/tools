@@ -11,12 +11,13 @@ on:
 env:
   NXF_ANSI_LOG: false
   CAPSULE_LOG: none
+  REPO_NAME: "{{ name }}"
 
 jobs:
   test:
     name: Run pipeline with test data
-    # Only run on push if this is the nf-core dev branch (merged PRs)
-    if: {% raw %}${{{% endraw %} github.event_name != 'push' || (github.event_name == 'push' && github.repository == '{{ name }}') {% raw %}}}{% endraw %}
+    # Only run on push if this is the nf-core dev branch (merged PRs) {% raw %}
+    if: ${{ github.event_name != 'push' || (github.event_name == 'push' && github.repository == env.REPO_NAME) }}
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -34,12 +35,10 @@ jobs:
 
       - name: Install Nextflow
         env:
-          {% raw -%}
           NXF_VER: ${{ matrix.NXF_VER }}
           # Uncomment only if the edge release is more recent than the latest stable release
           # See https://github.com/nextflow-io/nextflow/issues/2467
           # NXF_EDGE: ${{ matrix.NXF_EDGE }}
-          {%- endraw %}
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/

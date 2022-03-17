@@ -5,7 +5,7 @@ report_comment: >
 report_section_order:
   software_versions:
     order: -1000
-  {{ name.lower().replace('/', '-') }}-summary:
+  "{{ name.lower().replace('/', '-') }}-summary":
     order: -1001
 
 export_plots: true

@@ -1,6 +1,7 @@
-{% raw %}name: nf-core linting
+name: nf-core linting
 # This workflow is triggered on pushes and PRs to the repository.
-# It runs the `nf-core lint` and markdown lint tests to ensure that the code meets the nf-core guidelines
+# It runs the `nf-core lint` and markdown lint tests to ensure
+# that the code meets the nf-core guidelines. {% raw %}
 on:
   push:
   pull_request:
@@ -8,7 +9,6 @@ on:
     types: [published]
 
 jobs:
-
   EditorConfig:
     runs-on: ubuntu-latest
     steps:
@@ -78,4 +78,3 @@ jobs:
             lint_log.txt
             lint_results.md
             PR_number.txt
-{%- endraw %}
