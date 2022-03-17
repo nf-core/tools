@@ -53,9 +53,13 @@ jobs:
       - name: Install Prettier
         run: npm install -g prettier
 
-      # Built a pipeline from the template
+      # Build a pipeline from the template
       - name: nf-core create
         run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+
+      # Build a module from the template
+      - name: nf-core modules create
+        run: nf-core --log-file log.txt modules create bpipe --author @nf-core-bot --label process_low --meta
 
       # Run all the linters
       - name: nf-core lint
