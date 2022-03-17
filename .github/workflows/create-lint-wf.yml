@@ -61,14 +61,9 @@ jobs:
       - name: nf-core modules create
         run: nf-core --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
 
-      # Run code style linters
+      # Run code style linting
       - name: Run Prettier --check
         run: prettier --check nf-core-testpipeline
-
-      - name: Check code lints with Black
-        uses: psf/black@stable
-        with:
-          src: "./nf-core-testpipeline"
 
       # Update modules to the latest version
       - name: nf-core modules update
