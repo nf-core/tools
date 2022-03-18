@@ -1,9 +1,10 @@
 ---
 title: Creating a new pipeline
-subtitle: 
+subtitle:
 ---
 
 # Creating a new pipeline
+
 The `create` subcommand makes a new pipeline using the nf-core base template.
 With a given pipeline name, description and author, it makes a starter pipeline which follows nf-core best practices.
 

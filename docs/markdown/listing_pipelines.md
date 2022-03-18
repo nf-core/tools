@@ -1,11 +1,11 @@
 ---
 title: Listing pipelines
-subtitle: 
+subtitle:
 ---
 
 # Listing pipelines
 
-The command `nf-core list` shows all available nf-core pipelines along with their latest version,  when that was published and how recently the pipeline code was pulled to your local system (if at all).
+The command `nf-core list` shows all available nf-core pipelines along with their latest version, when that was published and how recently the pipeline code was pulled to your local system (if at all).
 
 An example of the output from the command is as follows:
 

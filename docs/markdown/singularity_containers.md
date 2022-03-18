@@ -48,7 +48,7 @@ Once a full list of containers is found, they are processed in the following ord
 2. If found in `$NXF_SINGULARITY_CACHEDIR` and `--singularity-cache-only` is _not_ specified, they are copied to the output directory
 3. If they start with `http` they are downloaded directly within Python (default 4 at a time, you can customise this with `--parallel-downloads`)
 4. If they look like a Docker image name, they are fetched using a `singularity pull` command
-    * This requires Singularity to be installed on the system and is substantially slower
+   - This requires Singularity to be installed on the system and is substantially slower
 
 Note that compressing many GBs of binary files can be slow, so specifying `--compress none` is recommended when downloading Singularity images.
 

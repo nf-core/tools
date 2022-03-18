@@ -1,6 +1,6 @@
 ---
 title: Installation
-subtitle: 
+subtitle:
 ---
 
 # Bioconda
@@ -40,10 +40,10 @@ You can use this container on the command line as follows:
 docker run -itv `pwd`:`pwd` -w `pwd` -u $(id -u):$(id -g) nfcore/tools
 ```
 
-* `-i` and `-t` are needed for the interactive cli prompts to work (this tells Docker to use a pseudo-tty with stdin attached)
-* The `-v` argument tells Docker to bind your current working directory (`pwd`) to the same path inside the container, so that files created there will be saved to your local file system outside of the container.
-* `-w` sets the working directory in the container to this path, so that it's the same as your working directory outside of the container.
-* `-u` sets your local user account as the user inside the container, so that any files created have the correct ownership permissions
+- `-i` and `-t` are needed for the interactive cli prompts to work (this tells Docker to use a pseudo-tty with stdin attached)
+- The `-v` argument tells Docker to bind your current working directory (`pwd`) to the same path inside the container, so that files created there will be saved to your local file system outside of the container.
+- `-w` sets the working directory in the container to this path, so that it's the same as your working directory outside of the container.
+- `-u` sets your local user account as the user inside the container, so that any files created have the correct ownership permissions
 
 After the above base command, you can use the regular command line flags that you would use with other types of installation.
 For example, to launch the `viralrecon` pipeline:

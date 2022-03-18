@@ -3,7 +3,6 @@ title: Modules
 subtitle: Check a module against nf-core guidelines
 ---
 
-
 # Check a module against nf-core guidelines
 
 Run the `nf-core modules lint` command to check modules in the current working directory (pipeline or nf-core/modules clone) against nf-core guidelines.

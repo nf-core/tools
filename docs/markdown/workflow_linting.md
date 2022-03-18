@@ -1,9 +1,10 @@
 ---
 title: Linting a workflow
-subtitle: 
+subtitle:
 ---
 
 # Linting a workflow
+
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
 This is the same test that is used on the automated continuous integration tests.
 
@@ -55,7 +56,7 @@ You can use the `-k` / `--key` flag to run only named tests for faster debugging
 ## Linting documentation
 
 Each test result name on the left is a terminal hyperlink.
-In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd>  ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
+In most terminals you can <kbd>ctrl</kbd> + <kbd>click</kbd> ( <kbd>cmd</kbd> + <kbd>click</kbd>) these
 links to open documentation specific to this test in your browser.
 
 Alternatively visit <https://nf-co.re/tools-docs/lint_tests/index.html> and find your test to read more.
@@ -70,8 +71,8 @@ Here you can list the names of any tests that you would like to disable and set 
 
 ```yaml
 lint:
-    actions_awsfulltest: False
-    pipeline_todos: False
+  actions_awsfulltest: False
+  pipeline_todos: False
 ```
 
 Some lint tests allow greater granularity, for example skipping a test only for a specific file.
@@ -79,9 +80,9 @@ This is documented in the test-specific docs but generally involves passing a li
 
 ```yaml
 lint:
-    files_exist:
+  files_exist:
     - CODE_OF_CONDUCT.md
-    files_unchanged:
+  files_unchanged:
     - assets/email_template.html
     - CODE_OF_CONDUCT.md
 ```

@@ -4,6 +4,7 @@ subtitle: List modules
 ---
 
 # List modules
+
 The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
 
 ## List remote modules

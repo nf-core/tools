@@ -1,5 +1,5 @@
 ---
-title: Modules 
+title: Modules
 subtitle: Install modules in a pipeline
 ---
 
@@ -27,6 +27,6 @@ You can pass the module name as an optional argument to `nf-core modules install
 
 There are three additional flags that you can use when installing a module:
 
-* `--force`: Overwrite a previously installed version of the module.
-* `--prompt`: Select the module version using a cli prompt.
-* `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+- `--force`: Overwrite a previously installed version of the module.
+- `--prompt`: Select the module version using a cli prompt.
+- `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.

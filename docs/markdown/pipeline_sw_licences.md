@@ -1,6 +1,6 @@
 ---
 title: Pipeline software licences
-subtitle: 
+subtitle:
 ---
 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.

@@ -1,6 +1,6 @@
 ---
 title: Pipeline schema
-subtitle: 
+subtitle:
 ---
 
 # Pipeline schema
@@ -11,9 +11,9 @@ Pipeline schema files are built according to the [JSONSchema specification](http
 
 To help developers working with pipeline schema, nf-core tools has three `schema` sub-commands:
 
-* `nf-core schema validate`
-* `nf-core schema build`
-* `nf-core schema lint`
+- `nf-core schema validate`
+- `nf-core schema build`
+- `nf-core schema lint`
 
 ## Validate pipeline parameters
 
@@ -81,10 +81,10 @@ $ nf-core schema build nf-core-testpipeline
 
 There are four flags that you can use with this command:
 
-* `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory
-* `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
-* `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
-* `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
+- `--dir <pipeline_dir>`: Specify a pipeline directory other than the current working directory
+- `--no-prompts`: Make changes without prompting for confirmation each time. Does not launch web tool.
+- `--web-only`: Skips comparison of the schema against the pipeline parameters and only launches the web tool.
+- `--url <web_address>`: Supply a custom URL for the online tool. Useful when testing locally.
 
 ## Linting a pipeline schema
 

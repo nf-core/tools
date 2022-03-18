@@ -1,5 +1,5 @@
 ---
-title: Modules 
+title: Modules
 subtitle: Show information about a module
 ---
 

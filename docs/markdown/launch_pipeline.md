@@ -1,6 +1,6 @@
 ---
 title: Launch a pipeline
-subtitle: 
+subtitle:
 ---
 
 Some nextflow pipelines have a considerable number of command line flags that can be used.

@@ -1,5 +1,5 @@
 ---
-title: Modules 
+title: Modules
 subtitle: Create a module test config file
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: Downloading pipelines for offline use
-subtitle: 
+subtitle:
 ---
 
 # Downloading pipelines for offline use
