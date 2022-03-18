@@ -74,7 +74,7 @@ jobs:
         run: prettier --check nf-core-testpipeline
 
       - name: Run ECLint check
-        run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css')
+        run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow')
 
       # Update modules to the latest version
       - name: nf-core modules update
