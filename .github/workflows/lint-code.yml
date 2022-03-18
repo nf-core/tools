@@ -14,7 +14,7 @@ jobs:
 
       # Run editor config check only on files not covered by a linter
       - name: Run ECLint check
-        run: editorconfig-checker -exclude README.md $(git ls-files | grep -v 'test\|.py\|md\|json\|yml\|yaml\|html\|css')
+        run: editorconfig-checker -exclude README.md $(git ls-files | grep -v 'test\|.py\|md\|json\|yml\|yaml\|html\|css\|Makefile')
 
   Prettier:
     runs-on: ubuntu-latest
