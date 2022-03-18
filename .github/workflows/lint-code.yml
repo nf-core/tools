@@ -1,14 +1,21 @@
-name: Lint Python
-on:
-  push:
-    paths:
-      - '**.py'
-  pull_request:
-    paths:
-      - '**.py'
+name: Lint tools code formatting
+on: [push, pull_request]
 
 jobs:
-  PythonLint:
+  Prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/setup-node@v2
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      - name: Run Prettier --check
+        run: prettier --check ${GITHUB_WORKSPACE}
+
+  PythonBlack:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2

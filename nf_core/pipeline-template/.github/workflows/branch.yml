@@ -13,10 +13,9 @@ jobs:
       - name: Check PRs
         if: github.repository == '{{ name }}'
         run: |
-          { [[ {% raw %}${{github.event.pull_request.head.repo.full_name }}{% endraw %} == {{ name }} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]
+          "{ [[ {% raw %}${{github.event.pull_request.head.repo.full_name }}{% endraw %} == {{ name }} ]] && [[ $GITHUB_HEAD_REF = "dev" ]]; } || [[ $GITHUB_HEAD_REF == "patch" ]]"
 
-{% raw %}
-      # If the above check failed, post a comment on the PR explaining the failure
+      # If the above check failed, post a comment on the PR explaining the failure {%- raw %}
       # NOTE - this doesn't currently work if the PR is coming from a fork, due to limitations in GitHub actions secrets
       - name: Post PR comment
         if: failure()
@@ -43,4 +42,4 @@ jobs:
             Thanks again for your contribution!
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           allow-repeats: false
-{%- endraw %}
+# {%- endraw %}
