@@ -47,11 +47,15 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
-      # Install the Prettier linting stuff
+      # Install the Prettier linting tools
       - uses: actions/setup-node@v2
 
       - name: Install Prettier
         run: npm install -g prettier
+
+      # Install the editorconfig linting tools
+      - name: Install editorconfig-checker
+        run: npm install -g editorconfig-checker
 
       # Build a pipeline from the template
       - name: nf-core create
@@ -68,6 +72,9 @@ jobs:
       # Run code style linting
       - name: Run Prettier --check
         run: prettier --check nf-core-testpipeline
+
+      - name: Run ECLint check
+        run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
 
       # Update modules to the latest version
       - name: nf-core modules update
