@@ -12,8 +12,9 @@ jobs:
       - name: Install editorconfig-checker
         run: npm install -g editorconfig-checker
 
+      # Run editor config check only on files not covered by a linter
       - name: Run ECLint check
-        run: editorconfig-checker -exclude README.md $(git ls-files | grep -v test)
+        run: editorconfig-checker -exclude README.md $(git ls-files | grep -v 'test\|.py\|md\|json\|yml\|yaml\|html\|css')
 
   Prettier:
     runs-on: ubuntu-latest
