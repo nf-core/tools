@@ -20,12 +20,13 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v2
 
-      - name: Build new docker image
-        run: |
-          docker build --no-cache . -t nfcore/tools:latest
-          docker build --no-cache nf_core/gitpod/gitpod.Dockerfile -t nfcore/gitpod:latest
+      - name: Build nfcore/tools:latest docker image
+        run: docker build --no-cache . -t nfcore/tools:latest
 
-      - name: Push Docker image to DockerHub (release)
+      - name: Build nfcore/gitpod:latest docker image
+        run: docker build --no-cache . --file nf_core/gitpod/gitpod.Dockerfile -t nfcore/gitpod:latest
+
+      - name: Push Docker images to DockerHub (release)
         run: |
           echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
           docker push nfcore/tools:latest
