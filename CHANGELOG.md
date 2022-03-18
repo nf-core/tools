@@ -4,6 +4,8 @@
 
 ### Template
 
+- Replace `markdownlint` and `yamllint` with [_Prettier_](https://prettier.io) for linting formatting / whitespace.
+
 ### General
 
 - Convert nf-core/tools API / lint test documentation to MyST ([#1245](https://github.com/nf-core/tools/pull/1245))
