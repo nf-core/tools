@@ -1,4 +1,4 @@
-name: Create a pipeline and lint it
+name: Create a pipeline and run nf-core linting
 on: [push, pull_request]
 
 env:
@@ -15,15 +15,17 @@ jobs:
         # Nextflow versions
         include:
           # Test pipeline minimum Nextflow version
-          - NXF_VER: '21.10.3'
-            NXF_EDGE: ''
+          - NXF_VER: "21.10.3"
+            NXF_EDGE: ""
           # Test latest edge release of Nextflow
-          - NXF_VER: ''
-            NXF_EDGE: '1'
+          - NXF_VER: ""
+            NXF_EDGE: "1"
     steps:
+      # Get the repo code
       - uses: actions/checkout@v2
         name: Check out source-code repository
 
+      # Set up nf-core/tools
       - name: Set up Python 3.8
         uses: actions/setup-python@v1
         with:
@@ -34,6 +36,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
 
+      # Set up Nextflow
       - name: Install Nextflow
         env:
           NXF_VER: ${{ matrix.NXF_VER }}
@@ -44,20 +47,42 @@ jobs:
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
+      # Install the Prettier linting stuff
+      - uses: actions/setup-node@v2
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      # Build a pipeline from the template
       - name: nf-core create
         run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
+      # Try syncing it before we change anything
+      - name: nf-core sync
+        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
+
+      # Build a module from the template
+      - name: nf-core modules create
+        run: nf-core --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
+
+      # Run code style linting
+      - name: Run Prettier --check
+        run: prettier --check nf-core-testpipeline
+
+      # Update modules to the latest version
+      - name: nf-core modules update
+        run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
+
+      # Run nf-core linting
       - name: nf-core lint
         run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored
 
+      # Run the other nf-core commands
       - name: nf-core list
         run: nf-core --log-file log.txt list
 
       # - name: nf-core licences
       #   run: nf-core --log-file log.txt licences nf-core-testpipeline
-
-      - name: nf-core sync
-        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
 
       - name: nf-core schema
         run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts

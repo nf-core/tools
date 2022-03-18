@@ -11,7 +11,7 @@ Learn more about contributing: https://github.com/nf-core/tools/tree/master/.git
 
 ## PR checklist
 
- - [ ] This comment contains a description of changes (with reason)
- - [ ] `CHANGELOG.md` is updated
- - [ ] If you've fixed a bug or added code that should be tested, add tests!
- - [ ] Documentation in `docs` is updated
+- [ ] This comment contains a description of changes (with reason)
+- [ ] `CHANGELOG.md` is updated
+- [ ] If you've fixed a bug or added code that should be tested, add tests!
+- [ ] Documentation in `docs` is updated
