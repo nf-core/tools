@@ -62,7 +62,7 @@ def files_exist(self):
     .. code-block:: bash
 
         main.nf
-        assets/multiqc_config.yaml
+        assets/multiqc_config.yml
         conf/base.config
         conf/igenomes.config
         .github/workflows/awstest.yml
@@ -144,7 +144,7 @@ def files_exist(self):
 
     files_warn = [
         ["main.nf"],
-        [os.path.join("assets", "multiqc_config.yaml")],
+        [os.path.join("assets", "multiqc_config.yml")],
         [os.path.join("conf", "base.config")],
         [os.path.join("conf", "igenomes.config")],
         [os.path.join(".github", "workflows", "awstest.yml")],

@@ -73,7 +73,7 @@ If you wish to contribute a new step, please use the following coding standards:
 6. Add sanity checks and validation for all relevant parameters.
 7. Perform local tests to validate that the new code works as expected.
 8. If applicable, add a new test command in `.github/workflow/ci.yml`.
-9. Update MultiQC config `assets/multiqc_config.yaml` so relevant suffixes, file name clean up and module plots are in the appropriate order. If applicable, add a [MultiQC](https://https://multiqc.info/) module.
+9. Update MultiQC config `assets/multiqc_config.yml` so relevant suffixes, file name clean up and module plots are in the appropriate order. If applicable, add a [MultiQC](https://https://multiqc.info/) module.
 10. Add a description of the output files and if relevant any appropriate images from the MultiQC report to `docs/output.md`.
 
 ### Default values
