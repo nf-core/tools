@@ -9,8 +9,14 @@ RUN wget https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh &
 
 ENV PATH="/opt/conda/bin:$PATH"
 
-RUN chown -R gitpod:gitpod /opt/conda
+# Add the nf-core source files to the image
+COPY . /usr/src/nf_core
+WORKDIR /usr/src/nf_core
 
+# Change ownership for gitpod
+RUN chown -R gitpod:gitpod /opt/conda /usr/src/nf_core
+
+# Change user to gitpod
 USER gitpod
 
 # Install nextflow, nf-core, Mamba, and pytest-workflow
@@ -25,14 +31,9 @@ RUN conda update -n base -c defaults conda && \
     mamba=0.22.1 \
     pip=22.0.4 \
     black=22.1.0 \
-    yamllint=1.26.3 \
     -n base && \
     nextflow self-update && \
     conda clean --all -f -y
-
-# Add the nf-core source files to the image
-COPY . /usr/src/nf_core
-WORKDIR /usr/src/nf_core
 
 # Install nf-core
 RUN python -m pip install .
