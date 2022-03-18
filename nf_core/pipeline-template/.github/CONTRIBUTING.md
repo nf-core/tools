@@ -15,8 +15,7 @@ Contributions to the code are even more welcome ;)
 
 If you'd like to write some code for {{ name }}, the standard workflow is as follows:
 
-1. Check that there isn't already an issue about your idea in the [{{ name }} issues](https://github.com/{{ name }}/issues) to avoid duplicating work
-   - If there isn't one already, please create one so that others know you're working on this
+1. Check that there isn't already an issue about your idea in the [{{ name }} issues](https://github.com/{{ name }}/issues) to avoid duplicating work. If there isn't one already, please create one so that others know you're working on this
 2. [Fork](https://help.github.com/en/github/getting-started-with-github/fork-a-repo) the [{{ name }} repository](https://github.com/{{ name }}) to your GitHub account
 3. Make the necessary changes / additions within your forked repository following [Pipeline conventions](#pipeline-contribution-conventions)
 4. Use `nf-core schema build` and add any new parameters to the pipeline JSON schema (requires [nf-core tools](https://github.com/nf-core/tools) >= 1.10).
