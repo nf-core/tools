@@ -5,6 +5,7 @@
 ### Template
 
 - Replace `markdownlint` and `yamllint` with [_Prettier_](https://prettier.io) for linting formatting / whitespace.
+- Add md5sum check of `versions.yml` to `test.yml` on the modules template.
 
 ### General
 
