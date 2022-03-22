@@ -9,11 +9,24 @@ import nf_core
 
 def main_nf(module_lint_object, module):
     """
-    Lint a single main.nf module file
+    Lint a ``main.nf`` module file
+
     Can also be used to lint local module files,
-    in which case failures should be interpreted
-    as warnings
+    in which case failures will be reported as
+    warnings.
+
+    The test checks for the following:
+
+    * Software versions and containers are valid
+    * The module has a process label and it is among
+      the standard ones.
+    * If a ``meta`` map is defined as one of the modules
+      inputs it should be defined as one of the outputs,
+      and be correctly configured in the ``saveAs`` function.
+    * The module script section should contain definitions
+      of ``software`` and ``prefix``
     """
+
     inputs = []
     outputs = []
 
@@ -112,7 +125,7 @@ def main_nf(module_lint_object, module):
 def check_script_section(self, lines):
     """
     Lint the script section
-    Checks whether 'def prefix'  is defined and whether getProcessName is used for `versions.yml`.
+    Checks whether `def prefix` is defined and whether getProcessName is used for `versions.yml`.
     """
     script = "".join(lines)
 

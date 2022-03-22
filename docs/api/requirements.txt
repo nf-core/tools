@@ -1,3 +1,4 @@
 Sphinx>=3.3.1
 sphinxcontrib-napoleon
 sphinx_rtd_theme>=0.5.0
+myst-parser

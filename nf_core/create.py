@@ -39,6 +39,8 @@ class PipelineCreate(object):
         self.name = f"nf-core/{self.short_name}"
         self.name_noslash = self.name.replace("/", "-")
         self.name_docker = self.name.replace("nf-core", "nfcore")
+        self.logo_light = f"{self.name}_logo_light.png"
+        self.logo_dark = f"{self.name}_logo_dark.png"
         self.description = description
         self.author = author
         self.version = version

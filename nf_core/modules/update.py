@@ -22,13 +22,15 @@ log = logging.getLogger(__name__)
 
 
 class ModuleUpdate(ModuleCommand):
-    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, save_diff_fn=None):
+    def __init__(
+        self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, show_diff=None, save_diff_fn=None
+    ):
         super().__init__(pipeline_dir)
         self.force = force
         self.prompt = prompt
         self.sha = sha
         self.update_all = update_all
-        self.show_diff = False
+        self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
 
     def update(self, module):
@@ -187,8 +189,12 @@ class ModuleUpdate(ModuleCommand):
         if not modules_json:
             return False
 
+        # If --preview is true, don't save to a patch file
+        if self.show_diff:
+            self.show_diff_fn = False
+
         # Ask if we should show the diffs (unless a filename was already given on the command line)
-        if not self.save_diff_fn:
+        if not self.save_diff_fn and self.show_diff is None:
             diff_type = questionary.select(
                 "Do you want to view diffs of the proposed changes?",
                 choices=[

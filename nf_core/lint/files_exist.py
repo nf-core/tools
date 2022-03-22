@@ -20,7 +20,8 @@ def files_exist(self):
 
         .gitattributes
         .gitignore
-        .markdownlint.yml
+        .nf-core.yml
+        .prettierrc.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
@@ -61,7 +62,7 @@ def files_exist(self):
     .. code-block:: bash
 
         main.nf
-        assets/multiqc_config.yaml
+        assets/multiqc_config.yml
         conf/base.config
         conf/igenomes.config
         .github/workflows/awstest.yml
@@ -80,6 +81,7 @@ def files_exist(self):
         .github/ISSUE_TEMPLATE/bug_report.md
         .github/ISSUE_TEMPLATE/feature_request.md
         docs/images/nf-core-PIPELINE_logo.png
+        .markdownlint.yml
 
     Files that *should not* be present:
 
@@ -100,7 +102,8 @@ def files_exist(self):
     files_fail = [
         [".gitattributes"],
         [".gitignore"],
-        [".markdownlint.yml"],
+        [".nf-core.yml"],
+        [".prettierrc.yml"],
         ["CHANGELOG.md"],
         ["CITATIONS.md"],
         ["CODE_OF_CONDUCT.md"],
@@ -141,7 +144,7 @@ def files_exist(self):
 
     files_warn = [
         ["main.nf"],
-        [os.path.join("assets", "multiqc_config.yaml")],
+        [os.path.join("assets", "multiqc_config.yml")],
         [os.path.join("conf", "base.config")],
         [os.path.join("conf", "igenomes.config")],
         [os.path.join(".github", "workflows", "awstest.yml")],
@@ -160,6 +163,7 @@ def files_exist(self):
         os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
         os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
         os.path.join("docs", "images", f"nf-core-{short_name}_logo.png"),
+        ".markdownlint.yml",
     ]
     files_warn_ifexists = [".travis.yml"]
 
