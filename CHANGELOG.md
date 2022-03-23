@@ -4,6 +4,8 @@
 
 ### Template
 
+- Updated the AWS GitHub actions to let nf-core/tower-action use it's defaults for pipeline and git sha.
+
 ### General
 
 ### Modules
