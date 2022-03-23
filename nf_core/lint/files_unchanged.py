@@ -19,7 +19,7 @@ def files_unchanged(self):
     Files that must be unchanged::
 
         .gitattributes
-        .markdownlint.yml
+        .prettierrc.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
         .github/ISSUE_TEMPLATE/bug_report.yml
@@ -45,7 +45,6 @@ def files_unchanged(self):
     Files that can have additional content but must include the template contents::
 
         .gitignore
-        assets/multiqc_config.yaml
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your linting config file. For example:
@@ -54,7 +53,6 @@ def files_unchanged(self):
 
                 files_unchanged:
                   - .github/workflows/branch.yml
-                  - assets/multiqc_config.yaml
 
     """
 
@@ -77,7 +75,7 @@ def files_unchanged(self):
     # List of lists. Passes if any of the files in the sublist are found.
     files_exact = [
         [".gitattributes"],
-        [".markdownlint.yml"],
+        [".prettierrc.yml"],
         ["CODE_OF_CONDUCT.md"],
         ["LICENSE", "LICENSE.md", "LICENCE", "LICENCE.md"],  # NB: British / American spelling
         [os.path.join(".github", ".dockstore.yml")],
@@ -102,7 +100,6 @@ def files_unchanged(self):
     ]
     files_partial = [
         [".gitignore", "foo"],
-        [os.path.join("assets", "multiqc_config.yaml")],
     ]
 
     # Only show error messages from pipeline creation
