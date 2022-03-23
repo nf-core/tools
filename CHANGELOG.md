@@ -1,17 +1,25 @@
 # nf-core/tools: Changelog
 
-## v2.4dev
+## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 
 ### Template
 
-- Replace `markdownlint` and `yamllint` with [_Prettier_](https://prettier.io) for linting formatting / whitespace.
+- Replace `markdownlint` and `yamllint` with [_Prettier_](https://prettier.io) for linting formatting / whitespace ([#1470](https://github.com/nf-core/tools/pull/1470))
+- Add CI test using `editorconfig-checker` for other file types to look for standardised indentation and formatting ([#1476](https://github.com/nf-core/tools/pull/1476))
 - Add md5sum check of `versions.yml` to `test.yml` on the modules template.
+- Update bundled module wrappers to latest versions ([#1462](https://github.com/nf-core/tools/pull/1462))
+- Renamed `assets/multiqc_config.yaml` to `assets/multiqc_config.yml` (`yml` not `yaml`) ([#1471](https://github.com/nf-core/tools/pull/1471))
 
 ### General
 
 - Convert nf-core/tools API / lint test documentation to MyST ([#1245](https://github.com/nf-core/tools/pull/1245))
 - Build documentation for the `nf-core modules lint` tests ([#1250](https://github.com/nf-core/tools/pull/1250))
+- Fix some colours in the nf-core/tools API docs ([#1467](https://github.com/nf-core/tools/pull/1467))
 - Install tools inside GitPod Docker using the repo itself and not from Conda.
+- Rewrite GitHub Actions workflow for publishing the GitPod Docker image.
+- Improve config for PyTest so that you can run `pytest` instead of `pytest tests/` ([#1461](https://github.com/nf-core/tools/pull/1461))
+- New pipeline lint test `multiqc_config` that checks YAML structure instead of basic file contents ([#1461](https://github.com/nf-core/tools/pull/1461))
+- Updates to the GitPod docker image to install the latest version of nf-core/tools
 
 ### Modules
 
