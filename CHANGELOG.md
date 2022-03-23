@@ -6,7 +6,7 @@ This patch release is primarily to address problems that we had in the v2.3 rele
 Instead of resolving those specific issues, we chose to replace the linting tools (`markdownlint`, `yamllint`) with a new tool: [_Prettier_](https://prettier.io)
 
 This is a fairly major change and affects a lot of files. However, it will hopefully simplify future usage.
-Prettier can auto-format many different file formats (for pipelines the most relevant are markdown and YAML) and is extensible with plugins (Nextflow, anyone?).
+Prettier can auto-format many different file formats (for pipelines the most relevant are markdown and YAML) and is extensible with plugins ([Nextflow](https://github.com/nf-core/prettier-plugin-nextflow), anyone?).
 It tends to be a bit less strict than `markdownlint` and `yamllint` and importantly _can fix files for you_ rather than just complaining.
 
 The sync PR may be a little big because of many major changes (whitespace, quotation mark styles etc).
