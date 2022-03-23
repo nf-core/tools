@@ -161,7 +161,7 @@ def files_exist(self):
         os.path.join(".github", "workflows", "push_dockerhub.yml"),
         os.path.join(".github", "ISSUE_TEMPLATE", "bug_report.md"),
         os.path.join(".github", "ISSUE_TEMPLATE", "feature_request.md"),
-        os.path.join("docs", "images", f"nf-core-{short_name}_logo.png")
+        os.path.join("docs", "images", f"nf-core-{short_name}_logo.png"),
     ]
     files_warn_ifexists = [".travis.yml"]
 
