@@ -2,6 +2,29 @@
 
 ## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 
+This patch release is primarily to address problems that we had in the v2.3 release with code linting.
+Instead of resolving those specific issues, we chose to replace the linting tools (`markdownlint`, `yamllint`) with a new tool: [_Prettier_](https://prettier.io)
+
+This is a fairly major change and affects a lot of files. However, it will hopefully simplify future usage.
+Prettier can auto-format many different file formats (for pipelines the most relevant are markdown and YAML) and is extensible with plugins (Nextflow, anyone?).
+It tends to be a bit less strict than `markdownlint` and `yamllint` and importantly _can fix files for you_ rather than just complaining.
+
+The sync PR may be a little big because of many major changes (whitespace, quotation mark styles etc).
+To help with the merge, _**we highly recommend running Prettier on your pipeline's codebase before attempting the template merge**_.
+If you take this approach, please copy `.editorconfig` and `.prettierrc.yml` from the template to your pipeline root first,
+as they configure the behaviour of Prettier.
+
+To run Prettier, go to the base of the repository where `.editorconfig` and `.prettierrc.yml` are located.
+Make sure your `git status` is clean so that the changes don't affect anything you're working on and run:
+
+```bash
+prettier --write .
+```
+
+This runs Prettier and tells it to fix any issues it finds in place.
+
+Please note that there are many excellent integrations for Prettier available, for example VSCode can be set up to automatically format files on save.
+
 ### Template
 
 - Replace `markdownlint` and `yamllint` with [_Prettier_](https://prettier.io) for linting formatting / whitespace ([#1470](https://github.com/nf-core/tools/pull/1470))
