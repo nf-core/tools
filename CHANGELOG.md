@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v2.4dev
+
+### Template
+
+### General
+
+### Modules
+
 ## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 
 This patch release is primarily to address problems that we had in the v2.3 release with code linting.
@@ -43,8 +51,6 @@ Please note that there are many excellent integrations for Prettier available, f
 - Improve config for PyTest so that you can run `pytest` instead of `pytest tests/` ([#1461](https://github.com/nf-core/tools/pull/1461))
 - New pipeline lint test `multiqc_config` that checks YAML structure instead of basic file contents ([#1461](https://github.com/nf-core/tools/pull/1461))
 - Updates to the GitPod docker image to install the latest version of nf-core/tools
-
-### Modules
 
 ## [v2.3 - Mercury Vulture](https://github.com/nf-core/tools/releases/tag/2.3) - [2022-03-15]
 
