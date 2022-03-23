@@ -10,8 +10,6 @@ Remember that PRs should be made against the dev branch, unless you're preparing
 
 Learn more about contributing: [CONTRIBUTING.md](https://github.com/{{ name }}/tree/master/.github/CONTRIBUTING.md)
 -->
-<!-- markdownlint-disable ul-indent -->
-
 ## PR checklist
 
 - [ ] This comment contains a description of changes (with reason).
