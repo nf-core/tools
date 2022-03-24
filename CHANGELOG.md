@@ -4,7 +4,10 @@
 
 ### Template
 
-- Updated the AWS GitHub actions to let nf-core/tower-action use it's defaults for pipeline and git sha.
+- Updated the AWS GitHub actions to let nf-core/tower-action use it's defaults for pipeline and git sha ([#1488](https://github.com/nf-core/tools/pull/1488))
+- Add prettier editor extension to `gitpod.yml` in template ([#1485](https://github.com/nf-core/tools/pull/1485))
+- Remove traces of markdownlint in the template ([#1486](https://github.com/nf-core/tools/pull/1486)
+- Remove accidentally added line in `CHANGELOG.md` in the template ([#1487](https://github.com/nf-core/tools/pull/1487))
 
 ### General
 
