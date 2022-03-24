@@ -21,6 +21,7 @@ def files_exist(self):
         .gitattributes
         .gitignore
         .nf-core.yml
+        .editorconfig
         .prettierrc.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
@@ -104,6 +105,7 @@ def files_exist(self):
         [".gitattributes"],
         [".gitignore"],
         [".nf-core.yml"],
+        [".editorconfig"],
         [".prettierrc.yml"],
         ["CHANGELOG.md"],
         ["CITATIONS.md"],
