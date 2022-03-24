@@ -1,6 +1,8 @@
 # nf-core/tools: Changelog
 
-## v2.4dev
+## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
+
+Very minor patch release to fix the full size AWS tests and re-run the template sync, which partially failed due to GitHub pull-requests being down at the time of release.
 
 ### Template
 
@@ -8,10 +10,6 @@
 - Add prettier editor extension to `gitpod.yml` in template ([#1485](https://github.com/nf-core/tools/pull/1485))
 - Remove traces of markdownlint in the template ([#1486](https://github.com/nf-core/tools/pull/1486)
 - Remove accidentally added line in `CHANGELOG.md` in the template ([#1487](https://github.com/nf-core/tools/pull/1487))
-
-### General
-
-### Modules
 
 ## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 
