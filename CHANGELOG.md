@@ -4,6 +4,8 @@
 
 ### Template
 
+- Fix bug in pipeline readme logo URL
+
 ### General
 
 ### Modules
