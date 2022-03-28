@@ -8,6 +8,8 @@
 
 ### General
 
+- Bumped the minimum version of `rich` from `v10` to `v10.7.0`
+
 ### Modules
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
