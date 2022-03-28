@@ -98,7 +98,7 @@ class RowChecker:
         if row[self._first_col] and row[self._second_col]:
             row[self._single_col] = False
             assert (
-                Path(row[self._first_col]).suffixes == Path(row[self._second_col]).suffixes
+                Path(row[self._first_col]).suffixes[-2:] == Path(row[self._second_col]).suffixes[-2:]
             ), "FASTQ pairs must have the same file extensions."
         else:
             row[self._single_col] = True
