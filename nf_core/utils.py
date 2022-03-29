@@ -15,6 +15,7 @@ import mimetypes
 import os
 import prompt_toolkit
 import questionary
+import random
 import re
 import requests
 import requests_cache
@@ -77,17 +78,6 @@ def rich_force_colors():
     """
     if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
         return True
-    return None
-
-
-def github_api_auto_auth():
-    try:
-        with open(os.path.join(os.path.expanduser("~/.config/gh/hosts.yml")), "r") as fh:
-            auth = yaml.safe_load(fh)
-            log.debug("Auto-authenticating GitHub API as '@{}'".format(auth["github.com"]["user"]))
-            return requests.auth.HTTPBasicAuth(auth["github.com"]["user"], auth["github.com"]["oauth_token"])
-    except Exception as e:
-        log.debug(f"Couldn't auto-auth for GitHub: [red]{e}")
     return None
 
 
@@ -386,6 +376,91 @@ def poll_nfcore_web_api(api_url, post_data=None):
                     return web_response
 
 
+def call_github_api(url, post_data=None, return_ok=[200, 201], return_retry=[], auth=None, raise_error=True):
+    """
+    Send a request to the GitHub API.
+    Uses authentication (to avoid rate limiting) if available.
+
+    Args:
+        url (str): The full URL of the GitHub API request.
+
+    Returns:
+        data (dict): The JSON response from the GitHub API.
+    """
+    # Class for Bearer token authentication
+    # https://stackoverflow.com/a/58055668/713980
+    class BearerAuth(requests.auth.AuthBase):
+        def __init__(self, token):
+            self.token = token
+
+        def __call__(self, r):
+            r.headers["authorization"] = f"Bearer {self.token}"
+            return r
+
+    # Default auth if we're running and the gh CLI tool is installed
+    if auth is None:
+        try:
+            with open(os.path.join(os.path.expanduser("~/.config/gh/hosts.yml")), "r") as fh:
+                gh_cli_config = yaml.safe_load(fh)
+                log.debug("Auto-authenticating GitHub API as '@{}'".format(gh_cli_config["github.com"]["user"]))
+                auth = requests.auth.HTTPBasicAuth(
+                    gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
+                )
+        except Exception as e:
+            log.debug(f"Couldn't auto-auth for GitHub: [red]{e}")
+
+    # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
+    if os.environ.get("GITHUB_TOKEN") is not None and auth is None:
+        auth = BearerAuth(os.environ["GITHUB_TOKEN"])
+
+    # Start the loop for a retry mechanism
+    while True:
+        # GET request
+        if post_data is None:
+            r = requests.get(url, auth=auth)
+        # POST request
+        else:
+            r = requests.post(url, json=post_data, auth=auth)
+
+        try:
+            r_headers_pp = json.dumps(dict(r.headers), indent=4)
+            r_data_pp = json.dumps(dict(r.json()), indent=4)
+        except Exception as e:
+            log.debug(r.headers)
+            log.debug(r.content)
+            if raise_error:
+                raise AssertionError(f"Could not parse JSON response from GitHub API! {e}")
+            else:
+                return r
+
+        # Failed but expected - try again
+        # Added due to 403 error: too many simultaneous requests
+        # See https://github.com/nf-core/tools/issues/911
+        if r.status_code in return_retry:
+            log.debug(f"GitHub API PR failed - got return code {r.status_code}")
+            log.debug(r_headers_pp)
+            log.debug(r_data_pp)
+            wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
+            if wait_time == 0:
+                log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
+                wait_time = random.randrange(10, 60)
+            log.warning(f"Got API return code {r.status_code}. Trying again after {wait_time} seconds..")
+            time.sleep(wait_time)
+
+        # Unexpected error - raise
+        elif r.status_code not in return_ok:
+            log.debug(r_headers_pp)
+            log.debug(r_data_pp)
+            if raise_error:
+                raise AssertionError(f"GitHub API PR failed - got return code {r.status_code} from {url}")
+            else:
+                return r
+
+        # Success!
+        else:
+            return r
+
+
 def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
     """Query conda package information.
 
@@ -627,9 +702,9 @@ def prompt_remote_pipeline_name(wfs):
     else:
         if pipeline.count("/") == 1:
             try:
-                gh_response = requests.get(f"https://api.github.com/repos/{pipeline}")
-                assert gh_response.json().get("message") != "Not Found"
-            except AssertionError:
+                nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}")
+            except Exception:
+                # No repo found - pass and raise error at the end
                 pass
             else:
                 return pipeline
@@ -706,7 +781,7 @@ def get_repo_releases_branches(pipeline, wfs):
             )
 
             # Get releases from GitHub API
-            rel_r = requests.get(f"https://api.github.com/repos/{pipeline}/releases")
+            rel_r = nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}/releases")
 
             # Check that this repo existed
             try:
@@ -714,13 +789,13 @@ def get_repo_releases_branches(pipeline, wfs):
             except AssertionError:
                 raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
-                # When things are working we get a list, which doesn't work with .get()
+                # Success! We have a list, which doesn't work with .get() which is looking for a dict key
                 wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
 
                 # Get release tag commit hashes
                 if len(wf_releases) > 0:
                     # Get commit hash information for each release
-                    tags_r = requests.get(f"https://api.github.com/repos/{pipeline}/tags")
+                    tags_r = nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}/tags")
                     for tag in tags_r.json():
                         for release in wf_releases:
                             if tag["name"] == release["tag_name"]:
@@ -731,7 +806,7 @@ def get_repo_releases_branches(pipeline, wfs):
             raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
     # Get branch information from github api - should be no need to check if the repo exists again
-    branch_response = requests.get(f"https://api.github.com/repos/{pipeline}/branches")
+    branch_response = nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}/branches")
     for branch in branch_response.json():
         if (
             branch["name"] != "TEMPLATE"

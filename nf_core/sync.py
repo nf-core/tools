@@ -316,75 +316,31 @@ class PipelineSync(object):
         ).format(tag=nf_core.__version__)
 
         # Make new pull-request
-        pr_content = {
-            "title": pr_title,
-            "body": pr_body_text,
-            "maintainer_can_modify": True,
-            "head": self.merge_branch,
-            "base": self.from_branch,
-        }
-
         stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
-
-        while True:
+        log.debug("Submitting PR to GitHub API")
+        with requests_cache.disabled():
             try:
-                log.debug("Submitting PR to GitHub API")
-                returned_data_prettyprint = ""
-                r_headers_pp = ""
-                with requests_cache.disabled():
-                    r = requests.post(
-                        url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-                        data=json.dumps(pr_content),
-                        auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-                    )
-                try:
-                    self.gh_pr_returned_data = json.loads(r.content)
-                    returned_data_prettyprint = json.dumps(dict(self.gh_pr_returned_data), indent=4)
-                    r_headers_pp = json.dumps(dict(r.headers), indent=4)
-                except:
-                    self.gh_pr_returned_data = r.content
-                    returned_data_prettyprint = r.content
-                    r_headers_pp = r.headers
-                    log.error("Could not parse JSON response from GitHub API!")
-                    stderr.print_exception()
-
-                # Dump the responses to the log just in case..
-                log.debug(f"PR response from GitHub. Data:\n{returned_data_prettyprint}\n\nHeaders:\n{r_headers_pp}")
-
-                # PR worked
-                if r.status_code == 201:
-                    self.pr_url = self.gh_pr_returned_data["html_url"]
-                    log.debug(f"GitHub API PR worked, return code 201")
-                    log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
-                    break
-
-                # Returned 403 error - too many simultaneous requests
-                # https://github.com/nf-core/tools/issues/911
-                if r.status_code == 403:
-                    log.debug(f"GitHub API PR failed with 403 error")
-                    wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
-                    if wait_time == 0:
-                        log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
-                        wait_time = random.randrange(10, 60)
-                    log.warning(
-                        f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds.."
-                    )
-                    time.sleep(wait_time)
-
-                # Something went wrong
-                else:
-                    raise PullRequestException(
-                        f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
-                    )
-            # Don't catch the PullRequestException that we raised inside
-            except PullRequestException:
-                raise
-            # Do catch any other exceptions that we hit
-            except Exception as e:
-                stderr.print_exception()
-                raise PullRequestException(
-                    f"Something went badly wrong - {e}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
+                r = nf_core.utils.call_github_api(
+                    f"https://api.github.com/repos/{self.gh_repo}/pulls",
+                    post_data={
+                        "title": pr_title,
+                        "body": pr_body_text,
+                        "maintainer_can_modify": True,
+                        "head": self.merge_branch,
+                        "base": self.from_branch,
+                    },
+                    auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
+                    return_ok=[201],
+                    return_retry=[403],
                 )
+            except Exception as e:
+                stderr.print_exception(e)
+                raise PullRequestException(f"Something went badly wrong - {e}")
+            else:
+                self.gh_pr_returned_data = r.json()
+                self.pr_url = self.gh_pr_returned_data["html_url"]
+                log.debug(f"GitHub API PR worked, return code 201")
+                log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
 
     def close_open_template_merge_prs(self):
         """Get all template merging branches (starting with 'nf-core-template-merge-')
