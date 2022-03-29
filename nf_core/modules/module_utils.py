@@ -35,7 +35,7 @@ def module_exist_in_repo(module_name, modules_repo):
     api_url = (
         f"https://api.github.com/repos/{modules_repo.name}/contents/modules/{module_name}?ref={modules_repo.branch}"
     )
-    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    response = nf_core.utils.call_github_api(api_url, raise_error=False)
     return not (response.status_code == 404)
 
 
@@ -65,7 +65,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     api_url += f"&since={since}"
 
     log.debug(f"Fetching commit history of module '{module_name}' from github API")
-    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    response = nf_core.utils.call_github_api(api_url, raise_error=False)
     if response.status_code == 200:
         commits = response.json()
 
@@ -101,7 +101,7 @@ def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     )
     api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
-    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    response = nf_core.utils.call_github_api(api_url, raise_error=False)
     if response.status_code == 200:
         commit = response.json()
         message = commit["commit"]["message"].partition("\n")[0]
@@ -266,7 +266,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     for i, file in enumerate(files_to_check):
         # Download remote copy and compare
         api_url = f"{module_base_url}/{file}"
-        r = requests.get(url=api_url, auth=nf_core.utils.github_api_auto_auth())
+        r = nf_core.utils.call_github_api(api_url, raise_error=False)
         if r.status_code != 200:
             log.debug(f"Could not download remote copy of file module {module_name}/{file}")
             log.debug(api_url)
@@ -414,7 +414,7 @@ def verify_pipeline_dir(dir):
         modules_is_software = False
         for repo_name in repo_names:
             api_url = f"https://api.github.com/repos/{repo_name}/contents"
-            response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+            response = nf_core.utils.call_github_api(api_url, raise_error=False)
             if response.status_code == 404:
                 missing_remote.append(repo_name)
                 if repo_name == "nf-core/software":
