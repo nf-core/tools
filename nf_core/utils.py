@@ -424,7 +424,7 @@ def call_github_api(url, post_data=None, return_ok=[200, 201], return_retry=[], 
 
         try:
             r_headers_pp = json.dumps(dict(r.headers), indent=4)
-            r_data_pp = json.dumps(dict(r.json()), indent=4)
+            r_data_pp = json.dumps(r.json(), indent=4)
         except Exception as e:
             log.debug(r.headers)
             log.debug(r.content)
