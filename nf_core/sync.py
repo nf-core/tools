@@ -334,7 +334,7 @@ class PipelineSync(object):
                     return_retry=[403],
                 )
             except Exception as e:
-                stderr.print_exception(e)
+                stderr.print_exception()
                 raise PullRequestException(f"Something went badly wrong - {e}")
             else:
                 self.gh_pr_returned_data = r.json()

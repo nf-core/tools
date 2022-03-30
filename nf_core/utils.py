@@ -417,10 +417,10 @@ def call_github_api(url, post_data=None, return_ok=[200, 201], return_retry=[], 
     while True:
         # GET request
         if post_data is None:
-            r = requests.get(url, auth=auth)
+            r = requests.get(url=url, auth=auth)
         # POST request
         else:
-            r = requests.post(url, json=post_data, auth=auth)
+            r = requests.post(url=url, json=post_data, auth=auth)
 
         try:
             r_headers_pp = json.dumps(dict(r.headers), indent=4)

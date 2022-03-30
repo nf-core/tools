@@ -200,6 +200,9 @@ class TestModules(unittest.TestCase):
                 self.content = json.dumps(data)
                 self.headers = {"content-encoding": "test", "connection": "fake"}
 
+            def json(self):
+                return json.loads(self.content)
+
         if kwargs["url"] == "https://api.github.com/repos/no_existing_pr/response/pulls":
             response_data = {"html_url": "great_success"}
             return MockResponse(response_data, 201)
@@ -229,4 +232,4 @@ class TestModules(unittest.TestCase):
             psync.make_pull_request()
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.PullRequestException as e:
-            assert e.args[0].startswith("GitHub API returned code 404:")
+            assert e.args[0].startswith("Something went badly wrong - GitHub API PR failed - got return code 404")
