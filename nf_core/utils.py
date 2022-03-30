@@ -387,6 +387,11 @@ def call_github_api(url, post_data=None, return_ok=[200, 201], return_retry=[], 
     Returns:
         data (dict): The JSON response from the GitHub API.
     """
+
+    auth_mode = None
+    if auth is not None:
+        auth_mode = "supplied to function"
+
     # Class for Bearer token authentication
     # https://stackoverflow.com/a/58055668/713980
     class BearerAuth(requests.auth.AuthBase):
@@ -398,20 +403,24 @@ def call_github_api(url, post_data=None, return_ok=[200, 201], return_retry=[], 
             return r
 
     # Default auth if we're running and the gh CLI tool is installed
-    if auth is None:
+    gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
+    if auth is None and os.path.exists(gh_cli_config_fn):
         try:
-            with open(os.path.join(os.path.expanduser("~/.config/gh/hosts.yml")), "r") as fh:
+            with open(gh_cli_config_fn, "r") as fh:
                 gh_cli_config = yaml.safe_load(fh)
-                log.debug("Auto-authenticating GitHub API as '@{}'".format(gh_cli_config["github.com"]["user"]))
                 auth = requests.auth.HTTPBasicAuth(
                     gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
                 )
+                auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
         except Exception as e:
-            log.debug(f"Couldn't auto-auth for GitHub: [red]{e}")
+            log.debug(f"Couldn't auto-auth with GitHub CLI auth: [red]{e}")
 
     # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
     if os.environ.get("GITHUB_TOKEN") is not None and auth is None:
+        auth_mode = "GITHUB_TOKEN"
         auth = BearerAuth(os.environ["GITHUB_TOKEN"])
+
+    log.debug(f"Fetching GitHub API: {url} (auth: {auth_mode})")
 
     # Start the loop for a retry mechanism
     while True:
@@ -702,7 +711,7 @@ def prompt_remote_pipeline_name(wfs):
     else:
         if pipeline.count("/") == 1:
             try:
-                nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}")
+                call_github_api(f"https://api.github.com/repos/{pipeline}")
             except Exception:
                 # No repo found - pass and raise error at the end
                 pass
@@ -781,7 +790,7 @@ def get_repo_releases_branches(pipeline, wfs):
             )
 
             # Get releases from GitHub API
-            rel_r = nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}/releases")
+            rel_r = call_github_api(f"https://api.github.com/repos/{pipeline}/releases")
 
             # Check that this repo existed
             try:
@@ -795,7 +804,7 @@ def get_repo_releases_branches(pipeline, wfs):
                 # Get release tag commit hashes
                 if len(wf_releases) > 0:
                     # Get commit hash information for each release
-                    tags_r = nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}/tags")
+                    tags_r = call_github_api(f"https://api.github.com/repos/{pipeline}/tags")
                     for tag in tags_r.json():
                         for release in wf_releases:
                             if tag["name"] == release["tag_name"]:
@@ -806,7 +815,7 @@ def get_repo_releases_branches(pipeline, wfs):
             raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
     # Get branch information from github api - should be no need to check if the repo exists again
-    branch_response = nf_core.utils.call_github_api(f"https://api.github.com/repos/{pipeline}/branches")
+    branch_response = call_github_api(f"https://api.github.com/repos/{pipeline}/branches")
     for branch in branch_response.json():
         if (
             branch["name"] != "TEMPLATE"
