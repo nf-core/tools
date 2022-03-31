@@ -79,4 +79,5 @@ jobs:
             lint_results.md
             PR_number.txt
 
-# {%- endraw %}
+# prettier-ignore
+{%- endraw %}

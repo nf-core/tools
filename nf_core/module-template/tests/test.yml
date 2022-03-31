@@ -4,9 +4,11 @@
   command: nextflow run ./tests/modules/{{ tool_dir }} -entry test_{{ tool_name_underscore }} -c ./tests/config/nextflow.config -c ./tests/modules/{{ tool_dir }}/nextflow.config
   tags:
     - "{{ tool }}"
-    # {%- if subtool %}
+    # prettier-ignore
+    {%- if subtool %}
     - "{{ tool }}/{{ subtool }}"
-    # {%- endif %}
+    # prettier-ignore
+    {%- endif %}
   files:
     - path: "output/{{ tool }}/test.bam"
       md5sum: e667c7caad0bc4b7ac383fd023c654fc
