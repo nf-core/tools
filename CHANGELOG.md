@@ -6,6 +6,7 @@
 
 - Fix bug in pipeline readme logo URL
 - Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
+- Add `.prettierignore` file to stop Prettier linting tests from running over test files
 
 ### General
 
