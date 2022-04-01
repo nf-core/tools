@@ -12,6 +12,8 @@
 
 ### Modules
 
+- Add an empty line at the end of the `modules.json` when dumping it to avoid prettier error.
+
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
 Very minor patch release to fix the full size AWS tests and re-run the template sync, which partially failed due to GitHub pull-requests being down at the time of release.
