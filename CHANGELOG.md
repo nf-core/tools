@@ -10,10 +10,10 @@
 ### General
 
 - Bumped the minimum version of `rich` from `v10` to `v10.7.0`
+- Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
 
 ### Modules
 
-- Add an empty line at the end of the `modules.json` when dumping it to avoid prettier error.
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
