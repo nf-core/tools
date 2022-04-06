@@ -5,6 +5,7 @@
 ### Template
 
 - Fix bug in pipeline readme logo URL
+- Fix Prettier formatting bug in completion email HTML template ([#1509](https://github.com/nf-core/tools/issues/1509))
 - Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
 - Add `.prettierignore` file to stop Prettier linting tests from running over test files
 
