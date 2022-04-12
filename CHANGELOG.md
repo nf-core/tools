@@ -11,6 +11,7 @@ Very minor patch release to fix the full size AWS tests and re-run the template 
 - Remove traces of markdownlint in the template ([#1486](https://github.com/nf-core/tools/pull/1486)
 - Remove accidentally added line in `CHANGELOG.md` in the template ([#1487](https://github.com/nf-core/tools/pull/1487))
 - Update linting to check that `.editorconfig` is there and `.yamllint.yml` isn't.
+- Remove md5sum for versions.yml
 
 ## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 
