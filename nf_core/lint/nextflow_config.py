@@ -229,7 +229,7 @@ def nextflow_config(self):
 
     # Check that the DAG filename ends in ``.svg``
     if "dag.file" in self.nf_config:
-        dag_file_suffix = os.path.splitext(self.nf_config["dag.file"].strip("'\""))
+        _, dag_file_suffix = os.path.splitext(self.nf_config["dag.file"].strip("'\""))
         allowed_dag_file_suffixes = [".dot", ".html", ".pdf", ".png", ".svg", ".gexf"]
         if dag_file_suffix in allowed_dag_file_suffixes:
             passed.append(f"Config ``dag.file`` ended with ``.{dag_file_suffix}``")
