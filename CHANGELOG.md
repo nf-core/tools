@@ -1,10 +1,25 @@
 # nf-core/tools: Changelog
 
-## dev
+## v2.4dev
 
 This patch release to removes the Graphviz dependency from default pipeline template.
 
+### Template
+
 - Set the default DAG graphic output to HTML to have a default that does not depend on Graphviz being installed on the host system.
+- Fix bug in pipeline readme logo URL
+- Fix Prettier formatting bug in completion email HTML template ([#1509](https://github.com/nf-core/tools/issues/1509))
+- Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
+- Add `.prettierignore` file to stop Prettier linting tests from running over test files
+
+### General
+
+- Bumped the minimum version of `rich` from `v10` to `v10.7.0`
+- Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
+
+### Modules
+
+- Escaped test run output before logging it, to avoid a rich ` MarkupError`
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 

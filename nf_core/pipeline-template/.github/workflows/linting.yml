@@ -77,6 +77,4 @@ jobs:
           path: |
             lint_log.txt
             lint_results.md
-            PR_number.txt
-
-# {%- endraw %}
+            PR_number.txt {%- endraw %}
