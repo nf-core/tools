@@ -234,7 +234,9 @@ def nextflow_config(self):
         if dag_file_suffix in allowed_dag_file_suffixes:
             passed.append(f"Config ``dag.file`` ended with ``.{dag_file_suffix}``")
         else:
-            failed.append(f"Config ``dag.file`` ended with ``.{dag_file_suffix}`` but needs to be one of {allowed_dag_file_suffixes!r}")
+            failed.append(
+                f"Config ``dag.file`` ended with ``.{dag_file_suffix}`` but needs to be one of {allowed_dag_file_suffixes!r}"
+            )
 
     # Check that the minimum nextflowVersion is set properly
     if "manifest.nextflowVersion" in self.nf_config:
