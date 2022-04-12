@@ -2,10 +2,13 @@
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
-Very minor patch release to fix the full size AWS tests and re-run the template sync, which partially failed due to GitHub pull-requests being down at the time of release.
+This patch release to removes the Graphviz dependency from default pipeline template.
+
+Also included are patches to fix the full size AWS tests and re-run the template sync, which partially failed due to GitHub pull-requests being down at the time of release.
 
 ### Template
 
+- Set the default DAG graphic output to HTML to have a default that does not depend on Graphviz being installed on the host system.
 - Updated the AWS GitHub actions to let nf-core/tower-action use it's defaults for pipeline and git sha ([#1488](https://github.com/nf-core/tools/pull/1488))
 - Add prettier editor extension to `gitpod.yml` in template ([#1485](https://github.com/nf-core/tools/pull/1485))
 - Remove traces of markdownlint in the template ([#1486](https://github.com/nf-core/tools/pull/1486)
