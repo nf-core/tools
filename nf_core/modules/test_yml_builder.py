@@ -236,7 +236,11 @@ class ModulesTestYmlBuilder(object):
         for root, dir, files in os.walk(results_dir):
             for filename in files:
                 # Check that the file is not versions.yml
+<<<<<<< HEAD
                 if filename == "versions.yml":
+=======
+                if elem == "versions.yml":
+>>>>>>> 6d4b103035b5f533b8b8bf7a74326dd8b7fa2074
                     continue
                 file_path = os.path.join(root, filename)
                 # add the key here so that it comes first in the dict
