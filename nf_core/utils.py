@@ -452,7 +452,10 @@ class GitHub_API_Session(requests_cache.CachedSession):
         """
         Try to dump everything to the console, useful when things go wrong.
         """
-        rich.inspect(request)
+        log.debug(f"Requested URL: {request.url}")
+        log.debug(f"From requests cache: {request.from_cache}")
+        log.debug(f"Request status code: {request.status_code}")
+        log.debug(f"Request reason: {request.reason}")
         try:
             log.debug(json.dumps(dict(request.headers), indent=4))
             log.debug(json.dumps(request.json(), indent=4))
@@ -481,7 +484,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
             self.lazy_init()
         return super().get(url, **kwargs)
 
-    def get_retry(self, url, post_data=None):
+    def request_retry(self, url, post_data=None):
         """
         Try to fetch a URL, keep retrying if we get a certain return code.
 

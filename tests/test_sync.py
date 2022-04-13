@@ -162,69 +162,90 @@ class TestModules(unittest.TestCase):
         except nf_core.sync.PullRequestException as e:
             assert e.args[0].startswith("Could not push TEMPLATE branch")
 
-    def mocked_requests_get(**kwargs):
+    def mocked_requests_get(url, **kwargs):
         """Helper function to emulate POST requests responses from the web"""
 
         class MockResponse:
             def __init__(self, data, status_code):
+                self.url = kwargs.get("url")
                 self.status_code = status_code
-                self.content = json.dumps(data)
-
-        url_template = "https://api.github.com/repos/{}/response/pulls?head=TEMPLATE&base=None"
-        if kwargs["url"] == url_template.format("no_existing_pr"):
-            response_data = []
-            return MockResponse(response_data, 200)
-
-        return MockResponse({"get_url": kwargs["url"]}, 404)
-
-    def mocked_requests_patch(**kwargs):
-        """Helper function to emulate POST requests responses from the web"""
-
-        class MockResponse:
-            def __init__(self, data, status_code):
-                self.status_code = status_code
-                self.content = json.dumps(data)
-
-        if kwargs["url"] == "url_to_update_pr":
-            response_data = {"html_url": "great_success"}
-            return MockResponse(response_data, 200)
-
-        return MockResponse({"patch_url": kwargs["url"]}, 404)
-
-    def mocked_requests_post(**kwargs):
-        """Helper function to emulate POST requests responses from the web"""
-
-        class MockResponse:
-            def __init__(self, data, status_code):
-                self.status_code = status_code
+                self.from_cache = False
+                self.reason = "Mocked response"
+                self.data = data
                 self.content = json.dumps(data)
                 self.headers = {"content-encoding": "test", "connection": "fake"}
 
             def json(self):
-                return json.loads(self.content)
+                return self.data
 
-        if kwargs["url"] == "https://api.github.com/repos/no_existing_pr/response/pulls":
+        url_template = "https://api.github.com/repos/{}/response/pulls?head=TEMPLATE&base=None"
+        if url == url_template.format("no_existing_pr"):
+            response_data = []
+            return MockResponse(response_data, 200)
+
+        return MockResponse({"html_url": url}, 404)
+
+    def mocked_requests_patch(url, **kwargs):
+        """Helper function to emulate POST requests responses from the web"""
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.url = kwargs.get("url")
+                self.status_code = status_code
+                self.from_cache = False
+                self.reason = "Mocked"
+                self.content = json.dumps(data)
+                self.headers = {"content-encoding": "test", "connection": "fake"}
+
+        if url == "url_to_update_pr":
+            response_data = {"html_url": "great_success"}
+            return MockResponse(response_data, 200)
+
+        return MockResponse({"patch_url": url}, 404)
+
+    def mocked_requests_post(url, **kwargs):
+        """Helper function to emulate POST requests responses from the web"""
+
+        class MockResponse:
+            def __init__(self, data, status_code):
+                self.url = kwargs.get("url")
+                self.status_code = status_code
+                self.from_cache = False
+                self.reason = "Mocked"
+                self.data = data
+                self.content = json.dumps(data)
+                self.headers = {"content-encoding": "test", "connection": "fake"}
+
+            def json(self):
+                return self.data
+
+        if url == "https://api.github.com/repos/no_existing_pr/response/pulls":
             response_data = {"html_url": "great_success"}
             return MockResponse(response_data, 201)
 
-        return MockResponse({"post_url": kwargs["url"]}, 404)
+        response_data = {}
+        return MockResponse(response_data, 404)
 
-    @mock.patch("requests.get", side_effect=mocked_requests_get)
-    @mock.patch("requests.post", side_effect=mocked_requests_post)
+    @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
+    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     def test_make_pull_request_success(self, mock_get, mock_post):
         """Try making a PR - successful response"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_api.get = mock_get
+        psync.gh_api.post = mock_post
         psync.gh_username = "no_existing_pr"
         psync.gh_repo = "no_existing_pr/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
         psync.make_pull_request()
         assert psync.gh_pr_returned_data["html_url"] == "great_success"
 
-    @mock.patch("requests.get", side_effect=mocked_requests_get)
-    @mock.patch("requests.post", side_effect=mocked_requests_post)
+    @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
+    @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
     def test_make_pull_request_bad_response(self, mock_get, mock_post):
         """Try making a PR and getting a 404 error"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
+        psync.gh_api.get = mock_get
+        psync.gh_api.post = mock_post
         psync.gh_username = "bad_url"
         psync.gh_repo = "bad_url/response"
         os.environ["GITHUB_AUTH_TOKEN"] = "test"
