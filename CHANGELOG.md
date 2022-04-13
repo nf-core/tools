@@ -7,11 +7,13 @@
 - Fix bug in pipeline readme logo URL
 - Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
 - Add `.prettierignore` file to stop Prettier linting tests from running over test files
+- Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
 
 ### General
 
 - Bumped the minimum version of `rich` from `v10` to `v10.7.0`
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
+- Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
 
 ### Modules
 
