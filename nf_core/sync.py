@@ -76,6 +76,11 @@ class PipelineSync(object):
         self.gh_repo = gh_repo
         self.pr_url = ""
 
+        self.gh_api = nf_core.utils.gh_api
+        self.gh_api.auth = requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
+        self.gh_api.return_ok = [201]
+        self.gh_api.lazy_init()
+
     def sync(self):
         """Find workflow attributes, create a new template pipeline on TEMPLATE"""
 
@@ -315,12 +320,9 @@ class PipelineSync(object):
         # Make new pull-request
         stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
         log.debug("Submitting PR to GitHub API")
-        gh_api = nf_core.utils.gh_api
-        gh_api.auth = requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
-        gh_api.return_ok = [201]
-        with gh_api.disabled():
+        with self.gh_api.cache_disabled():
             try:
-                r = gh_api.get_retry(
+                r = self.gh_api.get_retry(
                     f"https://api.github.com/repos/{self.gh_repo}/pulls",
                     post_data={
                         "title": pr_title,
@@ -348,11 +350,8 @@ class PipelineSync(object):
 
         # Look for existing pull-requests
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
-        with requests_cache.disabled():
-            list_prs_request = requests.get(
-                url=list_prs_url,
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
+        with self.gh_api.cache_disabled():
+            list_prs_request = self.gh_api.get(list_prs_url)
         try:
             list_prs_json = json.loads(list_prs_request.content)
             list_prs_pp = json.dumps(list_prs_json, indent=4)
@@ -390,20 +389,12 @@ class PipelineSync(object):
             f"This pull-request is now outdated and has been closed in favour of {self.pr_url}\n\n"
             f"Please use {self.pr_url} to merge in the new changes from the nf-core template as soon as possible."
         )
-        with requests_cache.disabled():
-            comment_request = requests.post(
-                url=pr["comments_url"],
-                data=json.dumps({"body": comment_text}),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
+        with self.gh_api.cache_disabled():
+            self.gh_api.post(url=pr["comments_url"], data=json.dumps({"body": comment_text}))
 
         # Update the PR status to be closed
-        with requests_cache.disabled():
-            pr_request = requests.patch(
-                url=pr["url"],
-                data=json.dumps({"state": "closed"}),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
+        with self.gh_api.cache_disabled():
+            pr_request = self.gh_api.patch(url=pr["url"], data=json.dumps({"state": "closed"}))
         try:
             pr_request_json = json.loads(pr_request.content)
             pr_request_pp = json.dumps(pr_request_json, indent=4)
