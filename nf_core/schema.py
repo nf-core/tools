@@ -171,6 +171,7 @@ class PipelineSchema(object):
         log.info("Writing schema with {} params: '{}'".format(num_params, self.schema_filename))
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
+            fh.write("\n")
 
     def load_input_params(self, params_path):
         """Load a given a path to a parameters file (JSON/YAML)

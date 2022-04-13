@@ -236,11 +236,7 @@ class ModulesTestYmlBuilder(object):
         for root, dir, files in os.walk(results_dir):
             for filename in files:
                 # Check that the file is not versions.yml
-<<<<<<< HEAD
                 if filename == "versions.yml":
-=======
-                if elem == "versions.yml":
->>>>>>> 6d4b103035b5f533b8b8bf7a74326dd8b7fa2074
                     continue
                 file_path = os.path.join(root, filename)
                 # add the key here so that it comes first in the dict
@@ -353,13 +349,13 @@ class ModulesTestYmlBuilder(object):
                     "It looks like Nextflow is not installed. It is required for most nf-core functions."
                 )
         except subprocess.CalledProcessError as e:
-            raise UserWarning(
-                f"Error running test workflow (exit code {e.returncode})\n[red]{e.output.decode()}")
+            output = rich.markup.escape(e.output.decode())
+            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{output}")
         except Exception as e:
             raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
-            log.debug(nfconfig_raw)
+            log.debug(rich.markup.escape(nfconfig_raw))
 
         return tmp_dir, tmp_dir_repeat
 

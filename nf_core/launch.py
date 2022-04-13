@@ -692,6 +692,7 @@ class Launch(object):
             if self.use_params_file:
                 with open(self.params_out, "w") as fp:
                     json.dump(self.schema_obj.input_params, fp, indent=4)
+                    fp.write("\n")
                 self.nextflow_cmd += ' {} "{}"'.format("-params-file", os.path.relpath(self.params_out))
 
             # Call nextflow with a list of command line flags
