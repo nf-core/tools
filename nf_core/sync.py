@@ -77,7 +77,8 @@ class PipelineSync(object):
         self.pr_url = ""
 
         self.gh_api = nf_core.utils.gh_api
-        self.gh_api.auth = requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
+        if self.gh_username and "GITHUB_AUTH_TOKEN" in os.environ:
+            self.gh_api.auth = requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
         self.gh_api.return_ok = [201]
         self.gh_api.lazy_init()
 
@@ -322,7 +323,7 @@ class PipelineSync(object):
         log.debug("Submitting PR to GitHub API")
         with self.gh_api.cache_disabled():
             try:
-                r = self.gh_api.get_retry(
+                r = self.gh_api.request_retry(
                     f"https://api.github.com/repos/{self.gh_repo}/pulls",
                     post_data={
                         "title": pr_title,
