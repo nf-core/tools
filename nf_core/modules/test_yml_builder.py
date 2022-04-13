@@ -228,7 +228,7 @@ class ModulesTestYmlBuilder(object):
         for root, dir, file in os.walk(results_dir):
             for elem in file:
                 # Check that the file is not versions.yml
-                if elem = "versions.yml":
+                if elem == "versions.yml":
                     continue
 
                 elem = os.path.join(root, elem)
