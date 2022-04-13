@@ -6,13 +6,10 @@ import git
 import json
 import logging
 import os
-import random
-import re
 import requests
 import requests_cache
 import rich
 import shutil
-import time
 
 import nf_core
 import nf_core.create
@@ -318,9 +315,12 @@ class PipelineSync(object):
         # Make new pull-request
         stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
         log.debug("Submitting PR to GitHub API")
-        with requests_cache.disabled():
+        gh_api = nf_core.utils.gh_api
+        gh_api.auth = requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
+        gh_api.return_ok = [201]
+        with gh_api.disabled():
             try:
-                r = nf_core.utils.call_github_api(
+                r = gh_api.get_retry(
                     f"https://api.github.com/repos/{self.gh_repo}/pulls",
                     post_data={
                         "title": pr_title,
@@ -329,9 +329,6 @@ class PipelineSync(object):
                         "head": self.merge_branch,
                         "base": self.from_branch,
                     },
-                    auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-                    return_ok=[201],
-                    return_retry=[403],
                 )
             except Exception as e:
                 stderr.print_exception()
