@@ -2,8 +2,6 @@
 
 ## v2.4dev
 
-This patch release to removes the Graphviz dependency from default pipeline template by setting the defaul DAG format to HTML. To keep the previous behaviour, the "dag.file" file extension needs to be changed to ".svg" in the nextflow.config.
-
 ### Template
 
 - Set the default DAG graphic output to HTML to have a default that does not depend on Graphviz being installed on the host system ([#1512](https://github.com/nf-core/tools/pull/1512)).
