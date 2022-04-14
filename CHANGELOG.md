@@ -18,6 +18,7 @@ This patch release to removes the Graphviz dependency from default pipeline temp
 - Bumped the minimum version of `rich` from `v10` to `v10.7.0`
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
+- Linting: Don't allow a `.nf-core.yaml` file, should be `.yml` ([#1515](https://github.com/nf-core/tools/pull/1515)).
 
 ### Modules
 
