@@ -334,12 +334,13 @@ class ModulesTestYmlBuilder(object):
                     "It looks like Nextflow is not installed. It is required for most nf-core functions."
                 )
         except subprocess.CalledProcessError as e:
-            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{e.output.decode()}")
+            output = rich.markup.escape(e.output.decode())
+            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{output}")
         except Exception as e:
             raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
-            log.debug(nfconfig_raw)
+            log.debug(rich.markup.escape(nfconfig_raw))
 
         return tmp_dir, tmp_dir_repeat
 
