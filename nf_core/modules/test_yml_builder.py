@@ -225,21 +225,25 @@ class ModulesTestYmlBuilder(object):
     def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
-        for root, dir, file in os.walk(results_dir):
-            for elem in file:
-                elem = os.path.join(root, elem)
-                test_file = {"path": elem}  # add the key here so that it comes first in the dict
+        for root, dir, files in os.walk(results_dir):
+            for filename in files:
+                # Check that the file is not versions.yml
+                if filename == "versions.yml":
+                    continue
+                file_path = os.path.join(root, filename)
+                # add the key here so that it comes first in the dict
+                test_file = {"path": file_path}
                 # Check that this isn't an empty file
-                if self.check_if_empty_file(elem):
+                if self.check_if_empty_file(file_path):
                     if not is_repeat:
-                        self.errors.append(f"Empty file found! '{os.path.basename(elem)}'")
+                        self.errors.append(f"Empty file found! '{os.path.basename(file_path)}'")
                 # Add the md5 anyway, linting should fail later and can be manually removed if needed.
                 #  Originally we skipped this if empty, but then it's too easy to miss the warning.
                 #  Equally, if a file is legitimately empty we don't want to prevent this from working.
-                elem_md5 = self._md5(elem)
-                test_file["md5sum"] = elem_md5
+                file_md5 = self._md5(file_path)
+                test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
-                test_file["path"] = elem.replace(results_dir, "output")
+                test_file["path"] = file_path.replace(results_dir, "output")
                 test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
