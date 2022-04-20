@@ -49,7 +49,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions"],
+            "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled"],
         },
     ],
 }
@@ -672,6 +672,24 @@ def bump_versions(ctx, tool, dir, all, show_all):
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
+
+
+# nf-core modules mulled
+@modules.command()
+@click.argument("tools", required=True, nargs=-1, metavar="<tool==version> <...>")
+def mulled(tools):
+    """
+    Generate the name of a BioContainers mulled image version 2.
+
+    When you know the specific dependencies and their versions of a multi-tool container image and you need the name of
+    that image, this command can generate it for you.
+
+    """
+    print(
+        nf_core.modules.mulled.MulledImageNameGenerator.generate_image_name(
+            nf_core.modules.mulled.MulledImageNameGenerator.parse_targets(tools)
+        )
+    )
 
 
 # nf-core schema subcommands
