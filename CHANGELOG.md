@@ -53,6 +53,7 @@
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
 - Remove empty JSON schema definition groups to avoid usage errors ([#1419](https://github.com/nf-core/tools/issues/1419))
 - Bumped the minimum version of `rich` from `v10` to `v10.7.0`
+- Fix bug in modules.json when a module is not updated ([#1518](https://github.com/nf-core/tools/pull/1518))
 
 ### Modules
 
