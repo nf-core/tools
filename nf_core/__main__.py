@@ -1,10 +1,10 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
-
 from rich import print
 import logging
 import os
 import re
+import requests
 import rich.console
 import rich.logging
 import rich.traceback
@@ -697,6 +697,13 @@ def mulled(specifications, build_number):
         nf_core.modules.mulled.MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
     )
     print(image_name)
+    response = requests.get(f"https://quay.io/biocontainers/{image_name}/", allow_redirects=True)
+    if response.status_code != 200:
+        log.error(
+            "The generated multi-tool container image does not seem to exist yet. Are you sure that you provided the "
+            "right combination of tools and versions?"
+        )
+        sys.exit(1)
 
 
 # nf-core schema subcommands
