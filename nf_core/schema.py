@@ -624,13 +624,13 @@ class PipelineSchema(object):
         ## Identify and remove empty definitions from the schema
         empty_definitions = []
         for d_key, d_schema in list(schema_no_empty_definitions.get("definitions", {}).items()):
-            if not d_schema['properties']:
+            if not d_schema["properties"]:
                 del schema_no_empty_definitions["definitions"][d_key]
                 empty_definitions.append(d_key)
 
         # Remove "allOf" group with empty definitions from the schema
         for d_key in empty_definitions:
-            allOf = {'$ref': "#/definitions/{}".format(d_key)}
+            allOf = {"$ref": "#/definitions/{}".format(d_key)}
             if allOf in schema_no_empty_definitions["allOf"]:
                 schema_no_empty_definitions["allOf"].remove(allOf)
 
