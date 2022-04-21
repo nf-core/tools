@@ -47,12 +47,13 @@ class MulledImageNameGenerator:
         return result
 
     @classmethod
-    def generate_image_name(cls, targets: Iterable[Tuple[str, str]]) -> str:
+    def generate_image_name(cls, targets: Iterable[Tuple[str, str]], build_number: int = 0) -> str:
         """
         Generate the name of a BioContainers mulled image version 2.
 
         Args:
             targets: One or more tool, version pairs of the multi-tool container image.
+            build_number: The build number for this image. This is an incremental value that starts at zero.
 
         """
-        return v2_image_name([build_target(name, version) for name, version in targets])
+        return v2_image_name([build_target(name, version) for name, version in targets], image_build=str(build_number))

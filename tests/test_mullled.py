@@ -48,11 +48,15 @@ def test_noncompliant_version(specs):
     [
         (
             [("chromap", "0.2.1"), ("samtools", "1.15")],
-            "mulled-v2-1f09f39f20b1c4ee36581dc81cc323c70e661633:bd74d08a359024829a7aec1638a28607bbcd8a58",
+            "mulled-v2-1f09f39f20b1c4ee36581dc81cc323c70e661633:bd74d08a359024829a7aec1638a28607bbcd8a58-0",
         ),
         (
             [("pysam", "0.16.0.1"), ("biopython", "1.78")],
-            "mulled-v2-3a59640f3fe1ed11819984087d31d68600200c3f:185a25ca79923df85b58f42deb48f5ac4481e91f",
+            "mulled-v2-3a59640f3fe1ed11819984087d31d68600200c3f:185a25ca79923df85b58f42deb48f5ac4481e91f-0",
+        ),
+        (
+            [("samclip", "0.4.0"), ("samtools", "1.15")],
+            "mulled-v2-d057255d4027721f3ab57f6a599a2ae81cb3cbe3:13051b049b6ae536d76031ba94a0b8e78e364815-0",
         ),
     ],
 )
