@@ -130,6 +130,14 @@ class ModuleInstall(ModuleCommand):
         if not self.download_module_file(module, version, self.modules_repo, install_folder):
             return False
 
+        # Print include statement
+        if module == "stringtie/stringtie":
+            # Only with stringtie the process name is STRINGTIE instead of STRINGTIE_STRINGTIE
+            module_name = module.upper().split("/")[0]
+        else:
+            module_name = "_".join(module.upper().split("/"))
+        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main’")
+
         # Update module.json with newly installed module
         self.update_modules_json(modules_json, self.modules_repo.name, module, version)
         return True
