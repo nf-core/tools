@@ -8,12 +8,12 @@
 - Fix Prettier formatting bug in completion email HTML template ([#1509](https://github.com/nf-core/tools/issues/1509))
 - Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
 - Add `.prettierignore` file to stop Prettier linting tests from running over test files
-- Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 
 ### General
 
 - Bumped the minimum version of `rich` from `v10` to `v10.7.0`
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
+- Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 
 ### Modules
 
