@@ -6,6 +6,7 @@ import re
 from packaging.version import Version, InvalidVersion
 from typing import Iterable, Tuple, List
 
+import requests
 from galaxy.tool_util.deps.mulled.util import build_target, v2_image_name
 
 
@@ -57,3 +58,10 @@ class MulledImageNameGenerator:
 
         """
         return v2_image_name([build_target(name, version) for name, version in targets], image_build=str(build_number))
+
+    @classmethod
+    def image_exists(cls, image_name: str) -> bool:
+        """Check whether a given BioContainers image name exists via a call to the quay.io API."""
+        response = requests.get(f"https://quay.io/biocontainers/{image_name}/", allow_redirects=True)
+        log.debug(response.text)
+        return response.status_code == 200

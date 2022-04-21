@@ -4,7 +4,6 @@ from rich import print
 import logging
 import os
 import re
-import requests
 import rich.console
 import rich.logging
 import rich.traceback
@@ -693,15 +692,19 @@ def mulled(specifications, build_number):
     that image, this command can generate it for you.
 
     """
-    image_name = nf_core.modules.mulled.MulledImageNameGenerator.generate_image_name(
-        nf_core.modules.mulled.MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
+    from nf_core.modules.mulled import MulledImageNameGenerator
+
+    image_name = MulledImageNameGenerator.generate_image_name(
+        MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
     )
     print(image_name)
-    response = requests.get(f"https://quay.io/biocontainers/{image_name}/", allow_redirects=True)
-    if response.status_code != 200:
+    if not MulledImageNameGenerator.image_exists(image_name):
         log.error(
-            "The generated multi-tool container image does not seem to exist yet. Are you sure that you provided the "
-            "right combination of tools and versions?"
+            "The generated multi-tool container image name does not seem to exist yet. Please double check that your "
+            "provided combination of tools and versions exists in the file:\n"
+            "https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv\n"
+            "If it does not, please add your desired combination as detailed at:\n"
+            "https://github.com/BioContainers/multi-package-containers\n"
         )
         sys.exit(1)
 
