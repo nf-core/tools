@@ -613,6 +613,29 @@ class PipelineSchema(object):
                 )
             )
 
+    def remove_schema_empty_definitions(self):
+        """
+        Go through top-level schema remove definitions that don't have
+        any property attributes
+        """
+        # Make copy of schema
+        schema_no_empty_definitions = copy.deepcopy(self.schema)
+
+        ## Identify and remove empty definitions from the schema
+        empty_definitions = []
+        for d_key, d_schema in list(schema_no_empty_definitions.get("definitions", {}).items()):
+            if not d_schema['properties']:
+                del schema_no_empty_definitions["definitions"][d_key]
+                empty_definitions.append(d_key)
+
+        # Remove "allOf" group with empty definitions from the schema
+        for d_key in empty_definitions:
+            allOf = {'$ref': "#/definitions/{}".format(d_key)}
+            if allOf in schema_no_empty_definitions["allOf"]:
+                schema_no_empty_definitions["allOf"].remove(allOf)
+
+        self.schema = schema_no_empty_definitions
+
     def remove_schema_notfound_configs(self):
         """
         Go through top-level schema and all definitions sub-schemas to remove
@@ -625,6 +648,8 @@ class PipelineSchema(object):
             cleaned_schema, p_removed = self.remove_schema_notfound_configs_single_schema(definition)
             self.schema["definitions"][d_key] = cleaned_schema
             params_removed.extend(p_removed)
+        self.remove_schema_empty_definitions()
+
         return params_removed
 
     def remove_schema_notfound_configs_single_schema(self, schema):

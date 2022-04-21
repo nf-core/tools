@@ -17,6 +17,7 @@
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
 - Linting: Don't allow a `.nf-core.yaml` file, should be `.yml` ([#1515](https://github.com/nf-core/tools/pull/1515)).
+- Not all definitions in JSON schema have a "properties", leading to an error ([#1419](https://github.com/nf-core/tools/issues/1419))
 
 ### Modules
 
