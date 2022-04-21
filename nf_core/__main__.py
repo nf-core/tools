@@ -676,8 +676,8 @@ def bump_versions(ctx, tool, dir, all, show_all):
 
 # nf-core modules mulled
 @modules.command()
-@click.argument("tools", required=True, nargs=-1, metavar="<tool==version> <...>")
-def mulled(tools):
+@click.argument("specifications", required=True, nargs=-1, metavar="<tool==version> <...>")
+def mulled(specifications):
     """
     Generate the name of a BioContainers mulled image version 2.
 
@@ -687,7 +687,7 @@ def mulled(tools):
     """
     print(
         nf_core.modules.mulled.MulledImageNameGenerator.generate_image_name(
-            nf_core.modules.mulled.MulledImageNameGenerator.parse_targets(tools)
+            nf_core.modules.mulled.MulledImageNameGenerator.parse_targets(specifications)
         )
     )
 

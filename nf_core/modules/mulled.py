@@ -23,16 +23,16 @@ class MulledImageNameGenerator:
     _split_pattern = re.compile(r"==?")
 
     @classmethod
-    def parse_targets(cls, tools: Iterable[str]) -> List[Tuple[str, str]]:
+    def parse_targets(cls, specifications: Iterable[str]) -> List[Tuple[str, str]]:
         """
-        Parse tool, version pairs from two or more version strings.
+        Parse tool, version pairs from specification strings.
 
         Args:
-            tools: An iterable of strings that contain tools and their versions.
+            specifications: An iterable of strings that contain tools and their versions.
 
         """
         result = []
-        for spec in tools:
+        for spec in specifications:
             try:
                 tool, version = cls._split_pattern.split(spec, maxsplit=1)
             except ValueError:
