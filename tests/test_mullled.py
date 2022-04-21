@@ -13,7 +13,7 @@ from nf_core.modules import MulledImageNameGenerator
     ],
 )
 def test_target_parsing(specs, expected):
-    """"""
+    """Test that valid specifications are correctly parsed into tool, version pairs."""
     assert MulledImageNameGenerator.parse_targets(specs) == expected
 
 
@@ -25,7 +25,7 @@ def test_target_parsing(specs, expected):
     ],
 )
 def test_wrong_specification(specs):
-    """"""
+    """Test that unexpected version constraints fail."""
     with pytest.raises(ValueError, match="expected format"):
         MulledImageNameGenerator.parse_targets(specs)
 
@@ -38,7 +38,7 @@ def test_wrong_specification(specs):
     ],
 )
 def test_noncompliant_version(specs):
-    """"""
+    """Test that version string that do not comply with PEP440 fail."""
     with pytest.raises(ValueError, match="PEP440"):
         MulledImageNameGenerator.parse_targets(specs)
 
@@ -57,4 +57,5 @@ def test_noncompliant_version(specs):
     ],
 )
 def test_generate_image_name(specs, expected):
+    """Test that a known image name is generated from given targets."""
     assert MulledImageNameGenerator.generate_image_name(specs) == expected
