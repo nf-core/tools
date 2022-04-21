@@ -27,7 +27,7 @@ jobs:
 
       # Set up nf-core/tools
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
 
