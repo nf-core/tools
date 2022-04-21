@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
-
 from rich import print
 import logging
 import os
@@ -49,7 +48,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions"],
+            "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled"],
         },
     ],
 }
@@ -671,6 +670,42 @@ def bump_versions(ctx, tool, dir, all, show_all):
         sys.exit(1)
     except UserWarning as e:
         log.critical(e)
+        sys.exit(1)
+
+
+# nf-core modules mulled
+@modules.command()
+@click.argument("specifications", required=True, nargs=-1, metavar="<tool==version> <...>")
+@click.option(
+    "--build-number",
+    type=int,
+    default=0,
+    show_default=True,
+    metavar="<number>",
+    help="The build number for this image. This is an incremental value that starts at zero.",
+)
+def mulled(specifications, build_number):
+    """
+    Generate the name of a BioContainers mulled image version 2.
+
+    When you know the specific dependencies and their versions of a multi-tool container image and you need the name of
+    that image, this command can generate it for you.
+
+    """
+    from nf_core.modules.mulled import MulledImageNameGenerator
+
+    image_name = MulledImageNameGenerator.generate_image_name(
+        MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
+    )
+    print(image_name)
+    if not MulledImageNameGenerator.image_exists(image_name):
+        log.error(
+            "The generated multi-tool container image name does not seem to exist yet. Please double check that your "
+            "provided combination of tools and versions exists in the file:\n"
+            "https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv\n"
+            "If it does not, please add your desired combination as detailed at:\n"
+            "https://github.com/BioContainers/multi-package-containers\n"
+        )
         sys.exit(1)
 
 
