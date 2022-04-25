@@ -48,7 +48,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled"],
+            "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled", "test"],
         },
     ],
 }
@@ -706,6 +706,24 @@ def mulled(specifications, build_number):
             "If it does not, please add your desired combination as detailed at:\n"
             "https://github.com/BioContainers/multi-package-containers\n"
         )
+
+
+# nf-core modules test
+@modules.command("test")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+def test_module(ctx, tool, no_prompts):
+    """
+    Run module tests locally.
+
+    Given the name of a module, runs the Nextflow test command.
+    """
+    try:
+        meta_builder = nf_core.modules.ModulesTest(tool, no_prompts)
+        meta_builder.run()
+    except UserWarning as e:
+        log.critical(e)
         sys.exit(1)
 
 
