@@ -49,7 +49,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions"],
+            "commands": ["create", "create-test-yml", "lint", "bump-versions", "test"],
         },
     ],
 }
@@ -669,6 +669,25 @@ def bump_versions(ctx, tool, dir, all, show_all):
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+# nf-core modules test
+@modules.command("test")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+def test_module(ctx, tool, no_prompts):
+    """
+    Run module tests locally.
+
+    Given the name of a module, runs the Nextflow test command.
+    """
+    try:
+        meta_builder = nf_core.modules.ModulesTest(tool, no_prompts)
+        meta_builder.run()
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
