@@ -4,6 +4,7 @@ import pytest
 
 import nf_core.modules
 
+
 def test_modules_test_check_inputs(self):
     """Test the check_inputs() function - raise UserWarning because module doesn't exist"""
     cwd = os.getcwd()
