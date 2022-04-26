@@ -137,7 +137,7 @@ def actions_ci(self):
     # Check that we are testing the minimum nextflow version
     try:
         matrix = ciwf["jobs"]["test"]["strategy"]["matrix"]["include"]
-        assert any([i["NXF_VER"] == self.minNextflowVersion for i in matrix])
+        assert any([i.get("NXF_VER") == self.minNextflowVersion for i in matrix])
     except (KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' does not check minimum NF version")
     except AssertionError:
