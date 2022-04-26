@@ -1,5 +1,28 @@
 # nf-core/tools: Changelog
 
+## v2.4dev
+
+### Template
+
+- Set the default DAG graphic output to HTML to have a default that does not depend on Graphviz being installed on the host system ([#1512](https://github.com/nf-core/tools/pull/1512)).
+- Fix bug in pipeline readme logo URL
+- Fix Prettier formatting bug in completion email HTML template ([#1509](https://github.com/nf-core/tools/issues/1509))
+- Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
+- Add `.prettierignore` file to stop Prettier linting tests from running over test files
+- Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
+
+### General
+
+- Bumped the minimum version of `rich` from `v10` to `v10.7.0`
+- Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
+- Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
+- Linting: Don't allow a `.nf-core.yaml` file, should be `.yml` ([#1515](https://github.com/nf-core/tools/pull/1515)).
+
+### Modules
+
+- Escaped test run output before logging it, to avoid a rich ` MarkupError`
+- Add a new command `nf-core modules mulled` which can generate the name for a multi-tool container image.
+
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
 Very minor patch release to fix the full size AWS tests and re-run the template sync, which partially failed due to GitHub pull-requests being down at the time of release.
@@ -11,6 +34,7 @@ Very minor patch release to fix the full size AWS tests and re-run the template 
 - Remove traces of markdownlint in the template ([#1486](https://github.com/nf-core/tools/pull/1486)
 - Remove accidentally added line in `CHANGELOG.md` in the template ([#1487](https://github.com/nf-core/tools/pull/1487))
 - Update linting to check that `.editorconfig` is there and `.yamllint.yml` isn't.
+- Don't save md5sum for `versions.yml` when running `nf-core modules create-test-yml` ([#1511](https://github.com/nf-core/tools/pull/1511))
 
 ## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 

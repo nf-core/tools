@@ -188,6 +188,7 @@ def create_modules_json(pipeline_dir):
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
+        fh.write("\n")
 
 
 def find_correct_commit_sha(module_name, module_path, modules_repo):
