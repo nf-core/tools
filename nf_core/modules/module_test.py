@@ -17,6 +17,31 @@ log = logging.getLogger(__name__)
 
 
 class ModulesTest(object):
+    """
+        Class to run module pytests.
+
+        ...
+
+        Attributes
+        ----------
+        module_name : str
+            name of the tool to run tests for
+        no_prompts : bool
+            flat indicating if prompts are used
+        pytest_args : tuple
+            additional arguments passed to pytest command
+
+        Methods
+        -------
+        run():
+            Run test steps
+        __check_inputs():
+            Check inputs. Ask for module_name if not provided and check that the directory exists
+        __set_profile():
+            Set software profile
+        __run_pytests(self):
+            Run pytest
+        """
     def __init__(
         self,
         module_name=None,
@@ -34,15 +59,17 @@ class ModulesTest(object):
             log.info(
                 "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
             )
-        self.check_inputs()
-        self.set_profile()
-        self.run_pytests()
+        self.__check_inputs()
+        self.__set_profile()
+        self.__run_pytests()
 
-    def check_inputs(self):
+    def __check_inputs(self):
         """Do more complex checks about supplied flags."""
 
         # Get the tool name if not specified
         if self.module_name is None:
+            if self.no_prompts:
+                raise UserWarning(f"Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL.")
             modules_repo = ModulesRepo()
             modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
@@ -56,7 +83,7 @@ class ModulesTest(object):
         if not os.path.isdir(self.module_dir):
             raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
 
-    def set_profile(self):
+    def __set_profile(self):
         """Set $PROFILE env variable.
         The config expects $PROFILE and Nextflow fails if it's not set.
         """
@@ -81,7 +108,7 @@ class ModulesTest(object):
                     os.environ["PROFILE"] = profile
                     log.info(f"Setting env var '$PROFILE' to '{profile}'")
 
-    def run_pytests(self):
+    def __run_pytests(self):
         """Given a module name, run tests."""
         # Print nice divider line
         console = rich.console.Console()
