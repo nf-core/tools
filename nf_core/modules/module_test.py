@@ -15,6 +15,7 @@ from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
+
 class ModulesTest(object):
     def __init__(
         self,
