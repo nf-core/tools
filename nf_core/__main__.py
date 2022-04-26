@@ -708,7 +708,7 @@ def mulled(specifications, build_number):
         )
         sys.exit(1)
 
-        
+
 # nf-core modules test
 @modules.command("test")
 @click.pass_context

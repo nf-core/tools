@@ -18,30 +18,31 @@ log = logging.getLogger(__name__)
 
 class ModulesTest(object):
     """
-        Class to run module pytests.
+    Class to run module pytests.
 
-        ...
+    ...
 
-        Attributes
-        ----------
-        module_name : str
-            name of the tool to run tests for
-        no_prompts : bool
-            flat indicating if prompts are used
-        pytest_args : tuple
-            additional arguments passed to pytest command
+    Attributes
+    ----------
+    module_name : str
+        name of the tool to run tests for
+    no_prompts : bool
+        flat indicating if prompts are used
+    pytest_args : tuple
+        additional arguments passed to pytest command
 
-        Methods
-        -------
-        run():
-            Run test steps
-        __check_inputs():
-            Check inputs. Ask for module_name if not provided and check that the directory exists
-        __set_profile():
-            Set software profile
-        __run_pytests(self):
-            Run pytest
-        """
+    Methods
+    -------
+    run():
+        Run test steps
+    __check_inputs():
+        Check inputs. Ask for module_name if not provided and check that the directory exists
+    __set_profile():
+        Set software profile
+    __run_pytests(self):
+        Run pytest
+    """
+
     def __init__(
         self,
         module_name=None,
@@ -69,7 +70,9 @@ class ModulesTest(object):
         # Get the tool name if not specified
         if self.module_name is None:
             if self.no_prompts:
-                raise UserWarning(f"Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL.")
+                raise UserWarning(
+                    f"Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
+                )
             modules_repo = ModulesRepo()
             modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
