@@ -6,45 +6,25 @@ The ModulesTest class runs the tests locally
 import logging
 import questionary
 import os
-
-"""from __future__ import print_function
-from rich.syntax import Syntax
-
-import errno
-import gzip
-import hashlib
-import operator
-
-
-import re
+import pytest
+import sys
 import rich
-import shlex
-import subprocess
-import tempfile
-import yaml
 
-"""
 import nf_core.utils
 from .modules_repo import ModulesRepo
-from .test_yml_builder import ModulesTestYmlBuilder
 
 log = logging.getLogger(__name__)
 
-
-class ModulesTest(ModulesTestYmlBuilder):
+class ModulesTest(object):
     def __init__(
         self,
         module_name=None,
         no_prompts=False,
+        pytest_args="",
     ):
-        self.run_tests = True
         self.module_name = module_name
         self.no_prompts = no_prompts
-        self.module_dir = None
-        self.module_test_main = None
-        self.entry_points = []
-        self.tests = []
-        self.errors = []
+        self.pytest_args = pytest_args
 
     def run(self):
         """Run test steps"""
@@ -52,14 +32,11 @@ class ModulesTest(ModulesTestYmlBuilder):
             log.info(
                 "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
             )
-        self.check_inputs_test()
-        self.scrape_workflow_entry_points()
-        self.build_all_tests()
-        if len(self.errors) > 0:
-            errors = "\n - ".join(self.errors)
-            raise UserWarning(f"Ran, but found errors:\n - {errors}")
+        self.check_inputs()
+        self.set_profile()
+        self.run_pytests()
 
-    def check_inputs_test(self):
+    def check_inputs(self):
         """Do more complex checks about supplied flags."""
 
         # Get the tool name if not specified
@@ -79,3 +56,42 @@ class ModulesTest(ModulesTestYmlBuilder):
             raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
         if not os.path.exists(self.module_test_main):
             raise UserWarning(f"Cannot find module test workflow '{self.module_test_main}'")
+
+    def set_profile(self):
+        """Set $PROFILE env variable.
+        The config expects $PROFILE and Nextflow fails if it's not set.
+        """
+        if os.environ.get("PROFILE") is None:
+            os.environ["PROFILE"] = ""
+            if self.no_prompts:
+                log.info(
+                    "Setting env var '$PROFILE' to an empty string as not set.\n"
+                    "Tests will run with Docker by default. "
+                    "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
+                )
+            else:
+                question = {
+                    "type": "list",
+                    "name": "profile",
+                    "message": "Choose software profile",
+                    "choices": ["Docker", "Singularity", "Conda"],
+                }
+                answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
+                profile = answer["profile"].lower()
+                if profile in ["singularity", "conda"]:
+                    os.environ["PROFILE"] = profile
+                    log.info(f"Setting env var '$PROFILE' to '{profile}'")
+
+    def run_pytests(self):
+        """Given a module name, run tests."""
+        # Print nice divider line
+        console = rich.console.Console()
+        console.print("[black]" + "─" * console.width)
+
+        # Set pytest arguments
+        command_args = ["--tag", f"{self.module_name}", "--symlink", "--keep-workflow-wd"]
+        command_args += self.pytest_args
+
+        # Run pytest
+        log.info(f"Running pytest for module '{self.module_name}'")
+        sys.exit(pytest.main(command_args))
