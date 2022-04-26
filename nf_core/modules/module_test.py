@@ -25,6 +25,7 @@ class ModulesTest(object):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
+        self.module_dir = None
 
     def run(self):
         """Run test steps"""
@@ -49,13 +50,10 @@ class ModulesTest(object):
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
         self.module_dir = os.path.join("modules", *self.module_name.split("/"))
-        self.module_test_main = os.path.join("tests", "modules", *self.module_name.split("/"), "main.nf")
 
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.module_dir):
             raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
-        if not os.path.exists(self.module_test_main):
-            raise UserWarning(f"Cannot find module test workflow '{self.module_test_main}'")
 
     def set_profile(self):
         """Set $PROFILE env variable.
