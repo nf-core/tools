@@ -113,3 +113,7 @@ class TestModules(unittest.TestCase):
         test_modules_bump_versions_fail,
         test_modules_bump_versions_fail_unknown_version,
     )
+
+    from .modules.module_test import (
+        test_modules_test_check_inputs,
+    )
