@@ -116,4 +116,5 @@ class TestModules(unittest.TestCase):
 
     from .modules.module_test import (
         test_modules_test_check_inputs,
+        test_modules_test_no_name_no_prompts,
     )
