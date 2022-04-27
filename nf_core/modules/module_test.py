@@ -71,7 +71,7 @@ class ModulesTest(object):
         if self.module_name is None:
             if self.no_prompts:
                 raise UserWarning(
-                    f"Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
+                    "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
                 )
             modules_repo = ModulesRepo()
             modules_repo.get_modules_file_tree()
