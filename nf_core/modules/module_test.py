@@ -94,7 +94,7 @@ class ModulesTest(object):
             os.environ["PROFILE"] = ""
             if self.no_prompts:
                 log.info(
-                    "Setting env var '$PROFILE' to an empty string as not set.\n"
+                    "Setting environment variable '$PROFILE' to an empty string as not set.\n"
                     "Tests will run with Docker by default. "
                     "To use Singularity set 'export PROFILE=singularity' in your shell before running this command."
                 )
@@ -108,7 +108,7 @@ class ModulesTest(object):
                 answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
                 profile = answer["profile"].lower()
                 os.environ["PROFILE"] = profile
-                log.info(f"Setting env var '$PROFILE' to '{profile}'")
+                log.info(f"Setting environment variable '$PROFILE' to '{profile}'")
 
     def _run_pytests(self):
         """Given a module name, run tests."""
