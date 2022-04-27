@@ -107,9 +107,8 @@ class ModulesTest(object):
                 }
                 answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
                 profile = answer["profile"].lower()
-                if profile in ["singularity", "conda"]:
-                    os.environ["PROFILE"] = profile
-                    log.info(f"Setting env var '$PROFILE' to '{profile}'")
+                os.environ["PROFILE"] = profile
+                log.info(f"Setting env var '$PROFILE' to '{profile}'")
 
     def _run_pytests(self):
         """Given a module name, run tests."""
