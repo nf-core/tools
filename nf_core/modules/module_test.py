@@ -35,11 +35,11 @@ class ModulesTest(object):
     -------
     run():
         Run test steps
-    __check_inputs():
+    _check_inputs():
         Check inputs. Ask for module_name if not provided and check that the directory exists
-    __set_profile():
+    _set_profile():
         Set software profile
-    __run_pytests(self):
+    _run_pytests(self):
         Run pytest
     """
 
@@ -60,11 +60,11 @@ class ModulesTest(object):
             log.info(
                 "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
             )
-        self.__check_inputs()
-        self.__set_profile()
-        self.__run_pytests()
+        self._check_inputs()
+        self._set_profile()
+        self._run_pytests()
 
-    def __check_inputs(self):
+    def _check_inputs(self):
         """Do more complex checks about supplied flags."""
 
         # Get the tool name if not specified
@@ -86,7 +86,7 @@ class ModulesTest(object):
         if not os.path.isdir(self.module_dir):
             raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
 
-    def __set_profile(self):
+    def _set_profile(self):
         """Set $PROFILE env variable.
         The config expects $PROFILE and Nextflow fails if it's not set.
         """
@@ -111,7 +111,7 @@ class ModulesTest(object):
                     os.environ["PROFILE"] = profile
                     log.info(f"Setting env var '$PROFILE' to '{profile}'")
 
-    def __run_pytests(self):
+    def _run_pytests(self):
         """Given a module name, run tests."""
         # Print nice divider line
         console = rich.console.Console()
