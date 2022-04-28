@@ -9,6 +9,7 @@ import os
 import pytest
 import sys
 import rich
+from pathlib import Path
 
 import nf_core.utils
 from .modules_repo import ModulesRepo
@@ -52,7 +53,6 @@ class ModulesTest(object):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
-        self.module_dir = None
 
     def run(self):
         """Run test steps"""
@@ -80,11 +80,11 @@ class ModulesTest(object):
                 choices=modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
-        self.module_dir = os.path.join("modules", *self.module_name.split("/"))
+        module_dir = Path("modules") / self.module_name
 
         # First, sanity check that the module directory exists
-        if not os.path.isdir(self.module_dir):
-            raise UserWarning(f"Cannot find directory '{self.module_dir}'. Should be TOOL/SUBTOOL or TOOL")
+        if not module_dir.is_dir():
+            raise UserWarning(f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL")
 
     def _set_profile(self):
         """Set $PROFILE env variable.
@@ -117,7 +117,7 @@ class ModulesTest(object):
         console.print("[black]" + "─" * console.width)
 
         # Set pytest arguments
-        command_args = ["--tag", f"{self.module_name}", "--symlink", "--keep-workflow-wd"]
+        command_args = ["--tag", f"{self.module_name}", "--symlink", "--keep-workflow-wd", "--git-aware"]
         command_args += self.pytest_args
 
         # Run pytest
