@@ -7,7 +7,6 @@ import os
 import questionary
 import shutil
 import tempfile
-from questionary import question
 from rich.console import Console
 from rich.syntax import Syntax
 
