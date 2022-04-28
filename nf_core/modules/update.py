@@ -220,7 +220,7 @@ class ModuleUpdate(ModuleCommand):
                     os.remove(self.save_diff_fn)
                     break
                 self.save_diff_fn = questionary.text(
-                    f"Enter a new filename: ",
+                    "Enter a new filename: ",
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
 
@@ -444,7 +444,7 @@ class ModuleUpdate(ModuleCommand):
 
             # Save diff for modules.json to file
             with open(self.save_diff_fn, "a") as fh:
-                fh.write(f"Changes in './modules.json'\n")
+                fh.write("Changes in './modules.json'\n")
                 for line in modules_json_diff:
                     fh.write(line)
                 fh.write("*" * 60 + "\n")
