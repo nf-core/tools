@@ -105,19 +105,19 @@ class ModuleUpdate(ModuleCommand):
                     if config_entry is False:
                         log.info("Module's update entry in '.nf-core.yml' is set to False")
                         return False
-                    elif isinstance(config_entry, str):
-                        sha = config_entry
-                        if self.sha:
-                            log.warning(
-                                f"Found entry in '.nf-core.yml' for module '{module}' "
-                                "which will override version specified with '--sha'"
-                            )
-                        else:
-                            log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
-                        log.info(f"Updating module to ({sha})")
-                    else:
+                    if not isinstance(config_entry, str):
                         log.error("Module's update entry in '.nf-core.yml' is of wrong type")
                         return False
+
+                    sha = config_entry
+                    if self.sha:
+                        log.warning(
+                            f"Found entry in '.nf-core.yml' for module '{module}' "
+                            "which will override version specified with '--sha'"
+                        )
+                    else:
+                        log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
+                    log.info(f"Updating module to ({sha})")
 
             # Check that the supplied name is an available module
             if module and module not in self.modules_repo.modules_avail_module_names:
