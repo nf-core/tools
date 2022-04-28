@@ -190,7 +190,7 @@ class ModuleUpdate(ModuleCommand):
 
         # If --preview is true, don't save to a patch file
         if self.show_diff:
-            self.show_diff_fn = False
+            self.save_diff_fn = False
 
         # Ask if we should show the diffs (unless a filename was already given on the command line)
         if not self.save_diff_fn and self.show_diff is None:
