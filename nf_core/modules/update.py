@@ -360,8 +360,7 @@ class ModuleUpdate(ModuleCommand):
                             f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})\n"
                         )
 
-                        for file, d in diffs.items():
-                            diff_status, diff = d
+                        for file, (diff_status, diff) in diffs.items():
                             if diff_status == DiffEnum.UNCHANGED:
                                 # The files are identical
                                 fh.write(f"'{os.path.join(module_dir, file)}' is unchanged\n")
@@ -389,8 +388,7 @@ class ModuleUpdate(ModuleCommand):
                         f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
                     )
 
-                    for file, d in diffs.items():
-                        diff_status, diff = d
+                    for file, (diff_status, diff) in diffs.items():
                         if diff_status == DiffEnum.UNCHANGED:
                             # The files are identical
                             log.info(f"'{os.path.join(module, file)}' is unchanged")
