@@ -32,7 +32,21 @@ class ModuleUpdate(ModuleCommand):
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
 
+    def _parameter_compatibility_check(self):
+        """Check the compatibilty of the supplied parameters.
+
+        Checks:
+            - Either `--preview` or `--save_diff` can be specified, not both.
+        """
+
+        # Can't this be handled by click with mutually exclusive parameters?
+        if self.save_diff_fn and self.show_diff:
+            raise UserWarning("Either `--preview` or `--save_diff` can be specified, not both.")
+
     def update(self, module):
+
+        self._parameter_compatibility_check()
+
         if self.repo_type == "modules":
             log.error("You cannot update a module in a clone of nf-core/modules")
             return False
@@ -185,10 +199,6 @@ class ModuleUpdate(ModuleCommand):
         old_modules_json = copy.deepcopy(modules_json)  # Deep copy to avoid mutability
         if not modules_json:
             return False
-
-        # If --preview is true, don't save to a patch file
-        if self.show_diff:
-            self.save_diff_fn = False
 
         # Ask if we should show the diffs (unless a filename was already given on the command line)
         if not self.save_diff_fn and self.show_diff is None:
