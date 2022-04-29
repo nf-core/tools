@@ -117,7 +117,9 @@ class ModulesTest(object):
         """Check if profile is available"""
         profile = os.environ.get("PROFILE")
         try:
-            profile_check = subprocess.check_output(shlex.split(f"{profile} --help"), stderr=subprocess.STDOUT, shell=True)
+            profile_check = subprocess.check_output(
+                shlex.split(f"{profile} --help"), stderr=subprocess.STDOUT, shell=True
+            )
         except subprocess.CalledProcessError as e:
             raise UserWarning(f"Error with profile {profile} (exit code {e.returncode})\n[red]{e.output.decode()}")
 
