@@ -9,6 +9,8 @@ import os
 import pytest
 import sys
 import rich
+import subprocess
+import shlex
 from pathlib import Path
 
 import nf_core.utils
@@ -62,6 +64,7 @@ class ModulesTest(object):
             )
         self._check_inputs()
         self._set_profile()
+        self._check_profile()
         self._run_pytests()
 
     def _check_inputs(self):
@@ -109,6 +112,14 @@ class ModulesTest(object):
                 profile = answer["profile"].lower()
                 os.environ["PROFILE"] = profile
                 log.info(f"Setting environment variable '$PROFILE' to '{profile}'")
+
+    def _check_profile(self):
+        """Check if profile is available"""
+        profile = os.environ.get("PROFILE")
+        try:
+            profile_check = subprocess.check_output(shlex.split(f"{profile} --help"), stderr=subprocess.STDOUT, shell=True)
+        except subprocess.CalledProcessError as e:
+            raise UserWarning(f"Error with profile {profile} (exit code {e.returncode})\n[red]{e.output.decode()}")
 
     def _run_pytests(self):
         """Given a module name, run tests."""
