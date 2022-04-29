@@ -49,6 +49,8 @@ class ModuleUpdate(ModuleCommand):
     def update(self, module):
 
         self._parameter_compatibility_check()
+        if self.update_all and self.module:
+            raise UserWarning("Either a module or the '--all' flag can be specified, not both.")
 
         if self.repo_type == "modules":
             log.error("You cannot update a module in a clone of nf-core/modules")
@@ -143,8 +145,6 @@ class ModuleUpdate(ModuleCommand):
             repos_mods_shas = [(self.modules_repo, module, sha)]
 
         else:
-            if module:
-                raise UserWarning("You cannot specify a module and use the '--all' flag at the same time")
 
             self.get_pipeline_modules()
 
