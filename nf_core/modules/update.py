@@ -59,6 +59,8 @@ class ModuleUpdate(ModuleCommand):
 
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json_up_to_date()
+        if self.prompt and self.sha is not None:
+            raise UserWarning("Cannot use '--sha' and '--prompt' at the same time.")
 
         tool_config = nf_core.utils.load_tools_config()
         update_config = tool_config.get("update", {})
@@ -72,10 +74,6 @@ class ModuleUpdate(ModuleCommand):
                 ).unsafe_ask()
                 == "All modules"
             )
-
-        if self.prompt and self.sha is not None:
-            log.error("Cannot use '--sha' and '--prompt' at the same time!")
-            return False
 
         # Verify that the provided SHA exists in the repo
         if self.sha:
