@@ -451,13 +451,14 @@ class ModuleUpdate(ModuleCommand):
                     fh.write(line)
                 fh.write("*" * 60 + "\n")
 
-        log.info("Updates complete :sparkles:")
-
-        if self.save_diff_fn:
             log.info(
                 f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
                 "can apply them by running the command :point_right:"
                 f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
             )
+
+        else:
+
+            log.info("Updates complete :sparkles:")
 
         return exit_value
