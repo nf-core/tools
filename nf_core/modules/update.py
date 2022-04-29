@@ -16,6 +16,7 @@ import nf_core.utils
 
 from .module_utils import get_module_git_log
 from .module_utils import module_exist_in_repo
+from .module_utils import sha_exists
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
@@ -79,7 +80,7 @@ class ModuleUpdate(ModuleCommand):
         # Verify that the provided SHA exists in the repo
         if self.sha:
             try:
-                nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
+                sha_exists(self.sha, self.modules_repo)
             except UserWarning:
                 log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.name}'")
                 return False
