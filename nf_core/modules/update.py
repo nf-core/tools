@@ -53,11 +53,10 @@ class ModuleUpdate(ModuleCommand):
             raise UserWarning("Either a module or the '--all' flag can be specified, not both.")
 
         if self.repo_type == "modules":
-            log.error("You cannot update a module in a clone of nf-core/modules")
-            return False
-        # Check whether pipelines is valid
+            raise UserWarning("Modules in clones of nf-core/modules can not be updated.")
+
         if not self.has_valid_directory():
-            return False
+            raise UserWarning("The command was not run in a valid pipeline directory.")
 
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json_up_to_date()
