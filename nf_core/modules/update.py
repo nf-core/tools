@@ -11,7 +11,6 @@ import questionary
 from rich.console import Console
 from rich.syntax import Syntax
 
-import nf_core.modules.module_utils
 import nf_core.utils
 
 from .module_utils import get_module_git_log
