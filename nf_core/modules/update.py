@@ -301,7 +301,7 @@ class ModuleUpdate(ModuleCommand):
 
             if dry_run:
                 # Set the install folder to a temporary directory
-                install_folder = ["/tmp", next(tempfile._get_candidate_names())]
+                install_folder = [tempfile.mkdtemp()]
 
             # Download module files
             if not self.download_module_file(module, version, modules_repo, install_folder, dry_run=dry_run):
