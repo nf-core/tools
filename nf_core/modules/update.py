@@ -173,9 +173,7 @@ class ModuleUpdate(ModuleCommand):
                 elif isinstance(update_config[repo_name], str):
                     # If a string is given it is the commit SHA to which we should update to
                     custom_sha = update_config[repo_name]
-                    repos_mods_shas[repo_name] = []
-                    for module in modules:
-                        repos_mods_shas[repo_name].append((module, custom_sha))
+                    repos_mods_shas[repo_name] = [(module_name, custom_sha) for module_name in modules]
                 else:
                     skipped_repos.append(repo_name)
 
