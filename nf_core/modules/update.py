@@ -139,9 +139,7 @@ class ModuleUpdate(ModuleCommand):
             repos_mods_shas = {}
             for repo_name, modules in self.module_names.items():
                 if repo_name not in update_config or update_config[repo_name] is True:
-                    repos_mods_shas[repo_name] = []
-                    for module in modules:
-                        repos_mods_shas[repo_name].append((module, self.sha))
+                    repos_mods_shas[repo_name] = [(module, self.sha) for module in modules]
                 elif isinstance(update_config[repo_name], dict):
                     repo_config = update_config[repo_name]
                     repos_mods_shas[repo_name] = []
