@@ -357,7 +357,9 @@ class ModuleUpdate(ModuleCommand):
                     log.info(f"Writing diff of '{module}' to '{self.save_diff_fn}'")
                     with open(self.save_diff_fn, "a") as fh:
                         fh.write(
-                            f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})\n"
+                            f"Changes in module '{module}' between"
+                            f" ({current_entry['git_sha'] if current_entry is not None else '?'}) and"
+                            f" ({version if version is not None else 'latest'})\n"
                         )
 
                         for file, (diff_status, diff) in diffs.items():
@@ -385,7 +387,9 @@ class ModuleUpdate(ModuleCommand):
                 elif self.show_diff:
                     console = Console(force_terminal=nf_core.utils.rich_force_colors())
                     log.info(
-                        f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
+                        f"Changes in module '{module}' between"
+                        f" ({current_entry['git_sha'] if current_entry is not None else '?'}) and"
+                        f" ({version if version is not None else 'latest'})"
                     )
 
                     for file, (diff_status, diff) in diffs.items():
@@ -451,7 +455,9 @@ class ModuleUpdate(ModuleCommand):
 
         if self.save_diff_fn:
             log.info(
-                f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you can apply them by running the command :point_right:  [bold magenta italic]git apply {self.save_diff_fn}"
+                f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
+                "can apply them by running the command :point_right:"
+                f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
             )
 
         return exit_value
