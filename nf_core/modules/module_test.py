@@ -87,7 +87,9 @@ class ModulesTest(object):
 
         # First, sanity check that the module directory exists
         if not module_dir.is_dir():
-            raise UserWarning(f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?")
+            raise UserWarning(
+                f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+            )
 
     def _set_profile(self):
         """Set $PROFILE env variable.
@@ -117,7 +119,6 @@ class ModulesTest(object):
         """Check if profile is available"""
         profile = os.environ.get("PROFILE")
         try:
-
             # Make sure the profile read from the environment is a valid Nextflow profile.
             valid_nextflow_profiles = ["docker", "singularity", "podman", "shifter", "charliecloud", "conda"]
             if profile in valid_nextflow_profiles:
