@@ -9,8 +9,6 @@ import os
 import pytest
 import sys
 import rich
-import subprocess
-import shlex
 from pathlib import Path
 from shutil import which
 
