@@ -117,9 +117,16 @@ class ModulesTest(object):
         """Check if profile is available"""
         profile = os.environ.get("PROFILE")
         try:
-            profile_check = subprocess.check_output(
-                shlex.split(f"{profile} --help"), stderr=subprocess.STDOUT, shell=True
-            )
+
+            # Make sure the profile read from the environment is a valid Nextflow profile.
+            valid_nextflow_profiles = ["docker", "singularity", "podman", "shifter", "charliecloud", "conda"]
+            if profile in valid_nextflow_profiles:
+                profile_check = subprocess.check_output([profile, "--help"], stderr=subprocess.STDOUT)
+            else:
+                raise UserWarning(
+                    f"The profile '{profile}' set in the shell environment is not a valid.\n"
+                    f"Valid Nextflow profiles are {valid_nextflow_profiles}."
+                )
         except subprocess.CalledProcessError as e:
             raise UserWarning(f"Error with profile {profile} (exit code {e.returncode})\n[red]{e.output.decode()}")
 
