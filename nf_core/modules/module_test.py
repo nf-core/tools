@@ -12,6 +12,7 @@ import rich
 import subprocess
 import shlex
 from pathlib import Path
+from shutil import which
 
 import nf_core.utils
 from .modules_repo import ModulesRepo
@@ -118,18 +119,16 @@ class ModulesTest(object):
     def _check_profile(self):
         """Check if profile is available"""
         profile = os.environ.get("PROFILE")
-        try:
-            # Make sure the profile read from the environment is a valid Nextflow profile.
-            valid_nextflow_profiles = ["docker", "singularity", "podman", "shifter", "charliecloud", "conda"]
-            if profile in valid_nextflow_profiles:
-                profile_check = subprocess.check_output([profile, "--help"], stderr=subprocess.STDOUT)
-            else:
-                raise UserWarning(
-                    f"The profile '{profile}' set in the shell environment is not a valid.\n"
-                    f"Valid Nextflow profiles are {valid_nextflow_profiles}."
-                )
-        except subprocess.CalledProcessError as e:
-            raise UserWarning(f"Error with profile {profile} (exit code {e.returncode})\n[red]{e.output.decode()}")
+        # Make sure the profile read from the environment is a valid Nextflow profile.
+        valid_nextflow_profiles = ["docker", "singularity", "podman", "shifter", "charliecloud", "conda"]
+        if profile in valid_nextflow_profiles:
+            if not which(profile):
+                raise UserWarning(f"The PROFILE '{profile}' set in the shell environment is not available.")
+        else:
+            raise UserWarning(
+                f"The PROFILE '{profile}' set in the shell environment is not valid.\n"
+                f"Valid Nextflow profiles are {valid_nextflow_profiles}."
+            )
 
     def _run_pytests(self):
         """Given a module name, run tests."""
