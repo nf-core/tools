@@ -87,7 +87,7 @@ class ModulesTest(object):
 
         # First, sanity check that the module directory exists
         if not module_dir.is_dir():
-            raise UserWarning(f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL")
+            raise UserWarning(f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?")
 
     def _set_profile(self):
         """Set $PROFILE env variable.
