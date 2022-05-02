@@ -120,21 +120,21 @@ class ModulesTest(object):
         """Check if profile is available"""
         profile = os.environ.get("PROFILE")
         # Make sure the profile read from the environment is a valid Nextflow profile.
-        valid_nextflow_profiles = ["docker", "singularity", "podman", "shifter", "charliecloud", "conda"]
+        valid_nextflow_profiles = ["docker", "singularity", "conda"]
         if profile in valid_nextflow_profiles:
             if not which(profile):
-                raise UserWarning(f"The PROFILE '{profile}' set in the shell environment is not available.")
+                raise UserWarning(f"Command '{profile}' not found - is it installed?")
         else:
             raise UserWarning(
                 f"The PROFILE '{profile}' set in the shell environment is not valid.\n"
-                f"Valid Nextflow profiles are {valid_nextflow_profiles}."
+                f"Valid Nextflow profiles are '{', '.join(valid_nextflow_profiles)}'."
             )
 
     def _run_pytests(self):
         """Given a module name, run tests."""
         # Print nice divider line
         console = rich.console.Console()
-        console.print("[black]" + "─" * console.width)
+        console.rule(self.module_name, style="black")
 
         # Set pytest arguments
         command_args = ["--tag", f"{self.module_name}", "--symlink", "--keep-workflow-wd", "--git-aware"]
