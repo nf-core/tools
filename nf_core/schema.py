@@ -620,26 +620,19 @@ class PipelineSchema(object):
         Go through top-level schema remove definitions that don't have
         any property attributes
         """
-        # Make copy of schema
-        schema_no_empty_definitions = copy.deepcopy(self.schema)
-
-        ## Identify and remove empty definitions from the schema
+        # Identify and remove empty definitions from the schema
         empty_definitions = []
-        for d_key, d_schema in list(schema_no_empty_definitions.get("definitions", {}).items()):
+        for d_key, d_schema in list(self.schema.get("definitions", {}).items()):
             if not d_schema.get("properties"):
-                del schema_no_empty_definitions["definitions"][d_key]
+                del self.schema["definitions"][d_key]
                 empty_definitions.append(d_key)
-
-        if len(empty_definitions):
-            log.warning(f"Removing empty group: '{', '.join(empty_definitions)}'")
+                log.warning(f"Removing empty group: '{d_key}'")
 
         # Remove "allOf" group with empty definitions from the schema
         for d_key in empty_definitions:
             allOf = {"$ref": "#/definitions/{}".format(d_key)}
-            if allOf in schema_no_empty_definitions["allOf"]:
-                schema_no_empty_definitions["allOf"].remove(allOf)
-
-        self.schema = schema_no_empty_definitions
+            if allOf in self.schema.get("allOf", []):
+                self.schema["allOf"].remove(allOf)
 
     def remove_schema_notfound_configs(self):
         """
