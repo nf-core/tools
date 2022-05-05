@@ -9,3 +9,5 @@ from .install import ModuleInstall
 from .update import ModuleUpdate
 from .remove import ModuleRemove
 from .info import ModuleInfo
+from .mulled import MulledImageNameGenerator
+from .module_test import ModulesTest
