@@ -536,6 +536,7 @@ class PipelineSchema(object):
             self.get_wf_params()
             self.make_skeleton_schema()
             self.remove_schema_notfound_configs()
+            self.remove_schema_empty_definitions()
             self.add_schema_found_configs()
             try:
                 self.validate_schema()
@@ -555,6 +556,7 @@ class PipelineSchema(object):
         if not self.web_only:
             self.get_wf_params()
             self.remove_schema_notfound_configs()
+            self.remove_schema_empty_definitions()
             self.add_schema_found_configs()
             self.save_schema()
 
@@ -624,9 +626,12 @@ class PipelineSchema(object):
         ## Identify and remove empty definitions from the schema
         empty_definitions = []
         for d_key, d_schema in list(schema_no_empty_definitions.get("definitions", {}).items()):
-            if not d_schema["properties"]:
+            if not d_schema.get("properties"):
                 del schema_no_empty_definitions["definitions"][d_key]
                 empty_definitions.append(d_key)
+
+        if len(empty_definitions):
+            log.warning(f"Removing empty group: '{', '.join(empty_definitions)}'")
 
         # Remove "allOf" group with empty definitions from the schema
         for d_key in empty_definitions:
@@ -648,7 +653,6 @@ class PipelineSchema(object):
             cleaned_schema, p_removed = self.remove_schema_notfound_configs_single_schema(definition)
             self.schema["definitions"][d_key] = cleaned_schema
             params_removed.extend(p_removed)
-        self.remove_schema_empty_definitions()
 
         return params_removed
 
@@ -797,6 +801,7 @@ class PipelineSchema(object):
             log.info("Found saved status from nf-core schema builder")
             try:
                 self.schema = web_response["schema"]
+                self.remove_schema_empty_definitions()
                 self.validate_schema()
             except AssertionError as e:
                 raise AssertionError("Response from schema builder did not pass validation:\n {}".format(e))
