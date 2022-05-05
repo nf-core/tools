@@ -630,7 +630,7 @@ class PipelineSchema(object):
 
         # Remove "allOf" group with empty definitions from the schema
         for d_key in empty_definitions:
-            allOf = {"$ref": "#/definitions/{}".format(d_key)}
+            allOf = {"$ref": f"#/definitions/{d_key}"}
             if allOf in self.schema.get("allOf", []):
                 self.schema["allOf"].remove(allOf)
 
