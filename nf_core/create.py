@@ -34,11 +34,12 @@ class PipelineCreate(object):
         outdir (str): Path to the local output directory.
     """
 
-    def __init__(self, name, description, author, version="1.0dev", no_git=False, force=False, outdir=None):
-        self.short_name = name.lower().replace(r"/\s+/", "-").replace("nf-core/", "").replace("/", "-")
-        self.name = f"nf-core/{self.short_name}"
+    def __init__(self, name, description, author, prefix="nf-core", version="1.0dev", no_git=False, force=False, outdir=None):
+        self.short_name = name.lower().replace(r"/\s+/", "-").replace(f"{prefix}/", "").replace("/", "-")
+        self.name = f"{prefix}/{self.short_name}"
         self.name_noslash = self.name.replace("/", "-")
-        self.name_docker = self.name.replace("nf-core", "nfcore")
+        self.prefix_nodash = prefix.replace("-","")
+        self.name_docker = self.name.replace(prefix, self.prefix_nodash)
         self.logo_light = f"{self.name}_logo_light.png"
         self.logo_dark = f"{self.name}_logo_dark.png"
         self.description = description
@@ -47,6 +48,7 @@ class PipelineCreate(object):
         self.no_git = no_git
         self.force = force
         self.outdir = outdir
+        self.branded = prefix == "nf-core"
         if not self.outdir:
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
