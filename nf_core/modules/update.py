@@ -41,7 +41,6 @@ class ModuleUpdate(ModuleCommand):
             - Either `--preview` or `--save_diff` can be specified, not both.
         """
 
-        # Can't this be handled by click with mutually exclusive parameters?
         if self.save_diff_fn and self.show_diff:
             raise UserWarning("Either `--preview` or `--save_diff` can be specified, not both.")
 
