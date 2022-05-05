@@ -420,7 +420,7 @@ class Launch(object):
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
-            log.error("'–-{}' is required".format(param_id))
+            log.error("'--{}' is required".format(param_id))
             answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
         # Ignore if empty

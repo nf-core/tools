@@ -17,11 +17,14 @@
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
 - Linting: Don't allow a `.nf-core.yaml` file, should be `.yml` ([#1515](https://github.com/nf-core/tools/pull/1515)).
-- Not all definitions in JSON schema have a "properties", leading to an error ([#1419](https://github.com/nf-core/tools/issues/1419))
+- Remove empty JSON schema definition groups to avoid usage errors ([#1419](https://github.com/nf-core/tools/issues/1419))
+- Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 
 ### Modules
 
 - Escaped test run output before logging it, to avoid a rich ` MarkupError`
+- Add a new command `nf-core modules mulled` which can generate the name for a multi-tool container image.
+- Add a new command `nf-core modules test` which runs pytests locally.
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
