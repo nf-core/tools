@@ -1,8 +1,9 @@
 # ![{{ name }}](docs/images/{{ logo_light }}#gh-light-mode-only) ![{{ name }}](docs/images/{{ logo_dark }}#gh-dark-mode-only)
 
+{% if branded -%}
 [![GitHub Actions CI Status](https://github.com/{{ name }}/workflows/nf-core%20CI/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+CI%22)
 [![GitHub Actions Linting Status](https://github.com/{{ name }}/workflows/nf-core%20linting/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+linting%22)
-[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results)
+[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results){% endif %}
 [![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)
@@ -10,9 +11,11 @@
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed?labelColor=000000&logo=docker)](https://www.docker.com/)
 [![run with singularity](https://img.shields.io/badge/run%20with-singularity-1d355c.svg?labelColor=000000)](https://sylabs.io/docs/)
 
+{% if branded -%}
 [![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23{{ short_name }}-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/{{ short_name }})
 [![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core)
 [![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
+{% endif -%}
 
 ## Introduction
 
@@ -60,9 +63,13 @@ On release, automated continuous integration tests run the pipeline on a full-si
    nextflow run {{ name }} --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
    ```
 
+{% if branded -%}
+
 ## Documentation
 
 The {{ name }} pipeline comes with documentation about the pipeline [usage](https://nf-co.re/{{ short_name }}/usage), [parameters](https://nf-co.re/{{ short_name }}/parameters) and [output](https://nf-co.re/{{ short_name }}/output).
+
+{% endif -%}
 
 ## Credits
 
@@ -76,7 +83,10 @@ We thank the following people for their extensive assistance in the development 
 
 If you would like to contribute to this pipeline, please see the [contributing guidelines](.github/CONTRIBUTING.md).
 
+{% if branded -%}
 For further information or help, don't hesitate to get in touch on the [Slack `#{{ short_name }}` channel](https://nfcore.slack.com/channels/{{ short_name }}) (you can join with [this invite](https://nf-co.re/join/slack)).
+
+{% endif -%}
 
 ## Citations
 
@@ -87,7 +97,11 @@ For further information or help, don't hesitate to get in touch on the [Slack `#
 
 An extensive list of references for the tools used by the pipeline can be found in the [`CITATIONS.md`](CITATIONS.md) file.
 
+{% if branded -%}
 You can cite the `nf-core` publication as follows:
+{% else -%}
+This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
+{% endif -%}
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
 >
