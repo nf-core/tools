@@ -36,6 +36,7 @@ A python package with helper tools for the nf-core community.
   - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
   - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
+  - [`modules mulled` - Generate the name for a multi-tool container image](#generate the name for a multi-tool container image)
 
 - [Citation](#citation)
 
@@ -1337,6 +1338,25 @@ If you want this module to be updated only to a specific version (or downgraded)
 ```yaml
 bump-versions:
   star/align: "2.6.1d"
+```
+
+### Generate the name for a multi-tool container image
+
+When you want to use an image of a multi-tool container, and you know the specific dependencies and their versions of that container, you can use the `nf-core modules mulled` helper tool. This tool generates the name of a BioContainers mulled image.
+
+```console
+$ nf-core modules mulled pysam==0.16.0.1 biopython==1.78
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.4
+
+
+mulled-v2-3a59640f3fe1ed11819984087d31d68600200c3f:185a25ca79923df85b58f42deb48f5ac4481e91f-0
 ```
 
 ## Citation
