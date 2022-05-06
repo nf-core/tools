@@ -35,8 +35,9 @@ A python package with helper tools for the nf-core community.
   - [`modules create` - Create a module from the template](#create-a-new-module)
   - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
+  - [`modules test` - Run the tests for a module](#run-the-tests-for-a-module-using-pytest)
   - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
-  - [`modules mulled` - Generate the name for a multi-tool container image](#generate the name for a multi-tool container image)
+  - [`modules mulled` - Generate the name for a multi-tool container image](#generate-the-name-for-a-multi-tool-container-image)
 
 - [Citation](#citation)
 
@@ -1295,6 +1296,57 @@ INFO     Linting module: star/align
 │ [!]   1 Test Warning │
 │ [✗]   0 Test Failed  │
 ╰──────────────────────╯
+```
+
+### Run the tests for a module using pytest
+
+To run unit tests of a module that you have installed or the test created by the command [`nf-core mdoules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
+
+You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
+
+```console
+$ nf-core modules test fastqc
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.4
+
+? Choose software profile Docker
+INFO     Setting environment variable '$PROFILE' to 'docker'
+INFO     Running pytest for module 'fastqc'
+
+=============================================================== test session starts ================================================================
+platform darwin -- Python 3.9.12, pytest-7.1.2, pluggy-1.0.0
+rootdir: ~/modules, configfile: pytest.ini
+plugins: workflow-1.6.0
+collecting ...
+collected 761 items
+
+fastqc single-end:
+        command:   nextflow run ./tests/modules/fastqc/ -entry test_fastqc_single_end -c ./tests/config/nextflow.config -c ./tests/modules/fastqc/nextflow.config -c ./tests/modules/fastqc/nextflow.config
+        directory: /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end
+        stdout:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end/log.out
+        stderr:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end/log.err
+'fastqc single-end' done.
+
+fastqc paired-end:
+        command:   nextflow run ./tests/modules/fastqc/ -entry test_fastqc_paired_end -c ./tests/config/nextflow.config -c ./tests/modules/fastqc/nextflow.config -c ./tests/modules/fastqc/nextflow.config
+        directory: /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end
+        stdout:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end/log.out
+        stderr:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end/log.err
+'fastqc paired-end' done.
+
+tests/test_versions_yml.py sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 17%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 38%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 59%]
+sssssssssssssssssssssssssssssssssssssssssssssssssssssssssss..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss ssss [ 80%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss     [ 98%]
+tests/modules/fastqc/test.yml ........
+Keeping temporary directories and logs. Use '--kwd' or '--keep-workflow-wd' to disable this behaviour.
+=================================================== 10 passed, 751 skipped, 479 warnings in 50.76s ===================================================
 ```
 
 ### Bump bioconda and container versions of modules in
