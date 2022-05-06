@@ -1394,7 +1394,7 @@ bump-versions:
 
 ### Generate the name for a multi-tool container image
 
-When you want to use an image of a multi-tool container, and you know the specific dependencies and their versions of that container, you can use the `nf-core modules mulled` helper tool. This tool generates the name of a BioContainers mulled image.
+When you want to use an image of a multi-tool container and you know the specific dependencies and their versions of that container, for example, by looking them up in the [BioContainers hash.tsv](https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv), you can use the `nf-core modules mulled` helper tool. This tool generates the name of a BioContainers mulled image.
 
 ```console
 $ nf-core modules mulled pysam==0.16.0.1 biopython==1.78
