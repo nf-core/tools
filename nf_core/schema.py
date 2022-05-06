@@ -171,6 +171,7 @@ class PipelineSchema(object):
         log.info("Writing schema with {} params: '{}'".format(num_params, self.schema_filename))
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
+            fh.write("\n")
 
     def load_input_params(self, params_path):
         """Load a given a path to a parameters file (JSON/YAML)
@@ -535,6 +536,7 @@ class PipelineSchema(object):
             self.get_wf_params()
             self.make_skeleton_schema()
             self.remove_schema_notfound_configs()
+            self.remove_schema_empty_definitions()
             self.add_schema_found_configs()
             try:
                 self.validate_schema()
@@ -554,6 +556,7 @@ class PipelineSchema(object):
         if not self.web_only:
             self.get_wf_params()
             self.remove_schema_notfound_configs()
+            self.remove_schema_empty_definitions()
             self.add_schema_found_configs()
             self.save_schema()
 
@@ -612,6 +615,25 @@ class PipelineSchema(object):
                 )
             )
 
+    def remove_schema_empty_definitions(self):
+        """
+        Go through top-level schema remove definitions that don't have
+        any property attributes
+        """
+        # Identify and remove empty definitions from the schema
+        empty_definitions = []
+        for d_key, d_schema in list(self.schema.get("definitions", {}).items()):
+            if not d_schema.get("properties"):
+                del self.schema["definitions"][d_key]
+                empty_definitions.append(d_key)
+                log.warning(f"Removing empty group: '{d_key}'")
+
+        # Remove "allOf" group with empty definitions from the schema
+        for d_key in empty_definitions:
+            allOf = {"$ref": f"#/definitions/{d_key}"}
+            if allOf in self.schema.get("allOf", []):
+                self.schema["allOf"].remove(allOf)
+
     def remove_schema_notfound_configs(self):
         """
         Go through top-level schema and all definitions sub-schemas to remove
@@ -624,6 +646,7 @@ class PipelineSchema(object):
             cleaned_schema, p_removed = self.remove_schema_notfound_configs_single_schema(definition)
             self.schema["definitions"][d_key] = cleaned_schema
             params_removed.extend(p_removed)
+
         return params_removed
 
     def remove_schema_notfound_configs_single_schema(self, schema):
@@ -771,6 +794,7 @@ class PipelineSchema(object):
             log.info("Found saved status from nf-core schema builder")
             try:
                 self.schema = web_response["schema"]
+                self.remove_schema_empty_definitions()
                 self.validate_schema()
             except AssertionError as e:
                 raise AssertionError("Response from schema builder did not pass validation:\n {}".format(e))
