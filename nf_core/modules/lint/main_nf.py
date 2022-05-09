@@ -196,7 +196,7 @@ def check_process_section(self, lines):
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
     process_label = [l for l in lines if "label" in l]
     if len(process_label) > 0:
-        process_label = process_label[0].split()[1].strip().strip("'").strip('"')
+        process_label = re.search("process_[A-Za-z]*", process_label[0]).group(0)
         if not process_label in correct_process_labels:
             self.warned.append(
                 (
@@ -220,14 +220,14 @@ def check_process_section(self, lines):
             lspl = l.lstrip("https://").split(":")
             if len(lspl) == 2:
                 # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
-                singularity_tag = "_".join(lspl[0].split("/")[-1].strip().rstrip(".img").split("_")[1:])
+                singularity_tag = re.search("biocontainers_(.*).img", lspl[0]).group(1)
             else:
                 # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
                 singularity_tag = lspl[-2].strip()
         if l.startswith("biocontainers/") or l.startswith("quay.io/"):
             # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
             # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
-            docker_tag = l.split(":")[-1].strip("}").strip()
+            docker_tag = re.search("\:(.*) \}", l).group(1)
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
