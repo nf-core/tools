@@ -220,14 +220,18 @@ def check_process_section(self, lines):
             lspl = l.lstrip("https://").split(":")
             if len(lspl) == 2:
                 # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
-                singularity_tag = re.search("biocontainers_(.*).img", lspl[0]).group(1)
+                if "YOUR-TOOL-HERE" not in lspl[0]:
+                    # Get singularity container version when a container is provided
+                    singularity_tag = re.search("biocontainers_(.*).img", lspl[0]).group(1)
             else:
                 # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
                 singularity_tag = lspl[-2].strip()
         if l.startswith("biocontainers/") or l.startswith("quay.io/"):
             # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
             # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
-            docker_tag = re.search("\:(.*) \}", l).group(1)
+            if "YOUR-TOOL-HERE" not in l:
+                # Get docker container version when a container is provided
+                docker_tag = re.search("\:(.*) \}", l).group(1)
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
