@@ -49,6 +49,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
+NFCORE_CONFIG_DIR = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")),
+    "nf-core",
+)
+
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
     """
@@ -296,13 +301,13 @@ def setup_requests_cachedir():
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
-    a .nfcore_cache subdir.
+    a .config/nf-core/cache_* subdir.
 
     Uses requests_cache monkey patching.
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
+    cachedir = os.path.join(NFCORE_CONFIG_DIR, f"cache_{pyversion}")
 
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
