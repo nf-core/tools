@@ -438,8 +438,9 @@ class GitHub_API_Session(requests_cache.CachedSession):
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
             except Exception as e:
-                output = rich.markup.escape(e.output.decode())
-                log.debug(f"Couldn't auto-auth with GitHub CLI auth: [red]{output}")
+                ex_type, ex_value, ex_traceback = sys.exc_info()
+                output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
+                log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
         # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
         if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
