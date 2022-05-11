@@ -228,7 +228,7 @@ class TestModules(unittest.TestCase):
 
     @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
-    def test_make_pull_request_success(self, mock_get, mock_post):
+    def test_make_pull_request_success(self, mock_post, mock_get):
         """Try making a PR - successful response"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_api.get = mock_get
@@ -241,7 +241,7 @@ class TestModules(unittest.TestCase):
 
     @mock.patch("nf_core.utils.gh_api.get", side_effect=mocked_requests_get)
     @mock.patch("nf_core.utils.gh_api.post", side_effect=mocked_requests_post)
-    def test_make_pull_request_bad_response(self, mock_get, mock_post):
+    def test_make_pull_request_bad_response(self, mock_post, mock_get):
         """Try making a PR and getting a 404 error"""
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         psync.gh_api.get = mock_get
