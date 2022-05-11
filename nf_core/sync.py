@@ -79,7 +79,7 @@ class PipelineSync(object):
         self.gh_api = nf_core.utils.gh_api
         if self.gh_username and "GITHUB_AUTH_TOKEN" in os.environ:
             self.gh_api.auth = requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
-        self.gh_api.return_ok = [201]
+        self.gh_api.return_ok = [200, 201]
         self.gh_api.lazy_init()
 
     def sync(self):
