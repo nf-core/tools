@@ -213,7 +213,6 @@ def check_process_section(self, lines):
     for l in lines:
         if re.search("bioconda::", l):
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-        l = l.strip()
         l = l.strip(" '\"")
         if l.startswith("https://containers") or l.startswith("https://depot"):
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
