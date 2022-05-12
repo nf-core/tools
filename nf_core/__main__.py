@@ -701,16 +701,19 @@ def mulled(specifications, build_number):
     except ValueError as e:
         log.error(e)
         sys.exit(1)
-    print(image_name)
     if not MulledImageNameGenerator.image_exists(image_name):
-        log.error(
-            "The generated multi-tool container image name does not seem to exist yet. Please double check that your "
-            "provided combination of tools and versions exists in the file:\n"
-            "https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv\n"
-            "If it does not, please add your desired combination as detailed at:\n"
-            "https://github.com/BioContainers/multi-package-containers\n"
+        log.error("The generated multi-tool container image name does not seem to exist yet.")
+        log.info(
+            "Please double check that your provided combination of tools and versions exists in the file: "
+            "[link=https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv]BioContainers/multi-package-containers 'combinations/hash.tsv'[/link]"
+        )
+        log.info(
+            "If it does not, please add your desired combination as detailed at: "
+            "https://github.com/BioContainers/multi-package-containers"
         )
         sys.exit(1)
+    log.info("Mulled container hash:")
+    print(image_name)
 
 
 # nf-core modules test
