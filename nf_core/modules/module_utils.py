@@ -1,6 +1,7 @@
 import glob
 import json
 import os
+from itertools import count
 import datetime
 import logging
 
@@ -481,11 +482,32 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
 
 
 def sha_exists(sha, modules_repo):
-    i = 1
-    while True:
+    """Test if a commit hash exists in a modules repository on GitHub.
+
+    Parameters
+    ----------
+    sha : str
+        A full length git commit hash.
+    modules_repo : str
+        The name of a repository on GitHub containing the module.
+
+    Returns
+    -------
+    bool
+        True if the commit hash has been found in the modules repository.
+    """
+
+    sha_found = False
+
+    for page_number in count(1):
         try:
-            if sha in {commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=i)}:
-                return True
-            i += 1
-        except (UserWarning, LookupError):
-            raise
+            sha_found = sha in {
+                commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=page_number)
+            }
+            if sha_found:
+                break
+        except UserWarning:
+            # get_module_git_log raises a UserWarning when it reaches the end of the commit history
+            break
+
+    return sha_found
