@@ -728,6 +728,26 @@ def test_module(ctx, tool, no_prompts, pytest_args):
         sys.exit(1)
 
 
+# nf-core modules test
+@modules.command("test")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
+def test_module(ctx, tool, no_prompts, pytest_args):
+    """
+    Run module tests locally.
+
+    Given the name of a module, runs the Nextflow test command.
+    """
+    try:
+        meta_builder = nf_core.modules.ModulesTest(tool, no_prompts, pytest_args)
+        meta_builder.run()
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
+
+
 # nf-core schema subcommands
 @nf_core_cli.group()
 def schema():

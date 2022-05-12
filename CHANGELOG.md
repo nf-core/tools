@@ -10,7 +10,6 @@
 - Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
 - Add `.prettierignore` file to stop Prettier linting tests from running over test files
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
-- Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 
 ### General
 
@@ -18,7 +17,6 @@
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
 - Linting: Don't allow a `.nf-core.yaml` file, should be `.yml` ([#1515](https://github.com/nf-core/tools/pull/1515)).
-- Not all definitions in JSON schema have a "properties", leading to an error ([#1419](https://github.com/nf-core/tools/issues/1419))
 - Remove empty JSON schema definition groups to avoid usage errors ([#1419](https://github.com/nf-core/tools/issues/1419))
 - Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 - Use [`$XDG_CONFIG_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.config/nf-core` instead of `~/.nfcore` for API cache (the latter can be safely deleted)
