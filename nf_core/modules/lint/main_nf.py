@@ -211,18 +211,17 @@ def check_process_section(self, lines):
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
 
     for l in lines:
-        l = l.strip()
-        l = l.lstrip('"')
-        l = l.lstrip("'")
         if re.search("bioconda::", l):
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+        l = l.strip()
+        l = l.strip(" '\"")
         if l.startswith("https://containers") or l.startswith("https://depot"):
-            # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
-            # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
+            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
+            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
             singularity_tag = re.search("(?:\/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_\.]+)(?:\.img)?['\"]", l).group(1)
         if l.startswith("biocontainers/") or l.startswith("quay.io/"):
-            # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
-            # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
+            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
+            # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
             docker_tag = re.search("(?:[\/])?(?::)?([A-Za-z\d\-_\.]+)['\"]", l).group(1)
 
     # Check that all bioconda packages have build numbers
