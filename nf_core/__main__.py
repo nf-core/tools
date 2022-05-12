@@ -694,9 +694,13 @@ def mulled(specifications, build_number):
     """
     from nf_core.modules.mulled import MulledImageNameGenerator
 
-    image_name = MulledImageNameGenerator.generate_image_name(
-        MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
-    )
+    try:
+        image_name = MulledImageNameGenerator.generate_image_name(
+            MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
+        )
+    except ValueError as e:
+        log.error(e)
+        sys.exit(1)
     print(image_name)
     if not MulledImageNameGenerator.image_exists(image_name):
         log.error(

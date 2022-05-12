@@ -43,7 +43,7 @@ class MulledImageNameGenerator:
             try:
                 Version(version)
             except InvalidVersion:
-                raise ValueError(f"{version} in {spec} is not a PEP440 compliant version specification.") from None
+                raise ValueError(f"Not a PEP440 version spec: '{version}' in '{spec}'") from None
             result.append((tool.strip(), version.strip()))
         return result
 
