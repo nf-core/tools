@@ -72,6 +72,9 @@ def main_nf(module_lint_object, module):
         if re.search("script\s*:", l) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
+        if re.search("shell\s*:", l) and state in ["input", "output", "when", "process"]:
+            state = "shell"
+            continue
 
         # Perform state-specific linting checks
         if state == "process" and not _is_empty(module, l):
