@@ -701,7 +701,6 @@ def mulled(specifications, build_number):
     except ValueError as e:
         log.error(e)
         sys.exit(1)
-    print(image_name)
     if not MulledImageNameGenerator.image_exists(image_name):
         log.error(
             "The generated multi-tool container image name does not seem to exist yet. Please double check that your "
@@ -711,6 +710,8 @@ def mulled(specifications, build_number):
             "https://github.com/BioContainers/multi-package-containers\n"
         )
         sys.exit(1)
+    log.info("Mulled container hash:")
+    print(image_name)
 
 
 # nf-core modules test
