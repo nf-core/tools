@@ -80,7 +80,7 @@ def main_nf(module_lint_object, module):
         if state == "process" and not _is_empty(module, l):
             process_lines.append(l)
         if state == "input" and not _is_empty(module, l):
-            inputs += _parse_input(module, l)
+            inputs.extend(_parse_input(module, l))
         if state == "output" and not _is_empty(module, l):
             outputs += _parse_output(module, l)
             outputs = list(set(outputs))  # remove duplicate 'meta's
@@ -242,7 +242,9 @@ def check_process_section(self, lines):
         else:
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
-                self.failed.append(("bioconda_version", "Conda package had unknown version: `{}`", self.main_nf))
+                self.failed.append(
+                    ("bioconda_version", f"Conda package had unknown version: `{bioconda_version}`", self.main_nf)
+                )
                 continue  # No need to test for latest version, continue linting
             # Check version is latest available
             last_ver = response.get("latest_version")
@@ -260,26 +262,41 @@ def check_process_section(self, lines):
         return False
 
 
-def _parse_input(self, line):
-    input = []
+def _parse_input(self, line_raw):
+    """
+    Return list of input channel names from an input line.
+
+    If more than one elements in channel should work with both of:
+        tuple val(meta), path(reads)
+        tuple val(meta), path(reads, stageAs: "input*/*")
+
+    If using a tuple, channel names must be in (parentheses)
+    """
+    inputs = []
+    # Remove comments and trailing whitespace
+    line, *_ = line_raw.partition("//")
     line = line.strip()
+    # Tuples with multiple elements
     if "tuple" in line:
-        # If more than one elements in channel should work with both of:
-        # e.g. tuple val(meta), path(reads)
-        # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
-        line = line.replace("tuple", "")
-        line = line.replace(" ", "")
-        for idx, elem in enumerate(line.split(")")):
-            if elem:
-                elem = elem.split("(")[1]
-                elem = elem.split(",")[0].strip()
-                input.append(elem)
+        matches = re.findall("\((\w+)\)", line)
+        if matches:
+            inputs.extend(matches)
+        else:
+            self.failed.append(
+                (
+                    "main_nf_input_tuple",
+                    f"Found tuple but no channel names: `{line}`",
+                    self.main_nf,
+                )
+            )
+    # Single element inputs
     else:
         if "(" in line:
-            input.append(line.split("(")[1].replace(")", ""))
+            match = re.search("\((\w+)\)", line)
+            inputs.append(match.group(1))
         else:
-            input.append(line.split()[1])
-    return input
+            inputs.append(line.split()[1])
+    return inputs
 
 
 def _parse_output(self, line):

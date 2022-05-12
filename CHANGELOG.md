@@ -29,6 +29,7 @@
 - Add a new command `nf-core modules mulled` which can generate the name for a multi-tool container image.
 - Add a new command `nf-core modules test` which runs pytests locally.
 - Linting now recognised `shell` blocks to avoid error `when: condition has too many lines` ([#1557](https://github.com/nf-core/tools/issues/1557))
+- Linting: fix error when using comments after `input` tuple lines ([#1542](https://github.com/nf-core/tools/issues/1542))
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
