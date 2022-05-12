@@ -341,9 +341,9 @@ class ModulesTestYmlBuilder(object):
         else:
             log.info("Test workflow finished!")
             try:
-                        log.debug(rich.markup.escape(nfconfig_raw))
+                log.debug(rich.markup.escape(nfconfig_raw))
             except TypeError:
-                        log.debug(rich.markup.escape(nfconfig_raw.decode("utf-8")))
+                log.debug(rich.markup.escape(nfconfig_raw.decode("utf-8")))
 
         return tmp_dir, tmp_dir_repeat
 
