@@ -1,11 +1,11 @@
 import glob
 import json
 import os
-import logging
-import rich
 import datetime
-import questionary
+import logging
 
+import questionary
+import rich
 
 import nf_core.utils
 
