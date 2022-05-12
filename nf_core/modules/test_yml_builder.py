@@ -340,7 +340,10 @@ class ModulesTestYmlBuilder(object):
             raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
-            log.debug(rich.markup.escape(nfconfig_raw))
+            try:
+                log.debug(rich.markup.escape(nfconfig_raw))
+            except TypeError:
+                log.debug(rich.markup.escape(nfconfig_raw.decode("utf-8")))
 
         return tmp_dir, tmp_dir_repeat
 
