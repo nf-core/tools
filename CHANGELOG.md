@@ -30,6 +30,7 @@
 - Add a new command `nf-core modules test` which runs pytests locally.
 - Allow follow links when generating `test.yml` file with `nf-core modules create-test-yml` ([1570](https://github.com/nf-core/tools/pull/1570))
 - Linting now recognised `shell` blocks to avoid error `when: condition has too many lines` ([#1557](https://github.com/nf-core/tools/issues/1557))
+- Linting: fix error when using comments after `input` tuple lines ([#1542](https://github.com/nf-core/tools/issues/1542))
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
