@@ -287,16 +287,15 @@ class ModuleUpdate(ModuleCommand):
                         log.info(f"'{modules_repo.name}/{module}' is already up to date")
                     continue
 
-            if not dry_run:
+            if dry_run:
+                # Set the install folder to a temporary directory
+                install_folder = [tempfile.mkdtemp()]
+            else:
                 log.info(f"Updating '{modules_repo.name}/{module}'")
                 log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
 
                 log.debug(f"Removing old version of module '{module}'")
                 self.clear_module_dir(module, module_dir)
-
-            if dry_run:
-                # Set the install folder to a temporary directory
-                install_folder = [tempfile.mkdtemp()]
 
             # Download module files
             if not self.download_module_file(module, version, modules_repo, install_folder, dry_run=dry_run):
