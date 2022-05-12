@@ -165,7 +165,7 @@ class ModulesTestYmlBuilder(object):
 
         while ep_test["command"] == "":
             default_val = (
-                f"nextflow run tests/modules/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
+                f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config"
             )
             if self.no_prompts:
                 ep_test["command"] = default_val
