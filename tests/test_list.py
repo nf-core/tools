@@ -2,19 +2,19 @@
 """ Tests covering the workflow listing code.
 """
 
-import nf_core.list
-
 import json
-import mock
 import os
-import pytest
 import tempfile
 import time
 import unittest
+from datetime import datetime
 from pathlib import Path
+
+import mock
+import pytest
 from rich.console import Console
 
-from datetime import datetime
+import nf_core.list
 
 # create a temporary directory that can be used by the tests in this file
 tmp_nxf = Path(tempfile.mkdtemp()) / "nxf"
