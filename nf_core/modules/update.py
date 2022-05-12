@@ -33,8 +33,9 @@ class ModuleUpdate(ModuleCommand):
         self.update_all = update_all
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
+        self.module = None
 
-    def _parameter_compatibility_check(self):
+    def _parameter_checks(self):
         """Check the compatibilty of the supplied parameters.
 
         Checks:
@@ -44,22 +45,26 @@ class ModuleUpdate(ModuleCommand):
         if self.save_diff_fn and self.show_diff:
             raise UserWarning("Either `--preview` or `--save_diff` can be specified, not both.")
 
-    def update(self, module):
-
-        self._parameter_compatibility_check()
         if self.update_all and self.module:
             raise UserWarning("Either a module or the '--all' flag can be specified, not both.")
 
         if self.repo_type == "modules":
             raise UserWarning("Modules in clones of nf-core/modules can not be updated.")
 
+        if self.prompt and self.sha is not None:
+            raise UserWarning("Cannot use '--sha' and '--prompt' at the same time.")
+
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
+    def update(self, module):
+
+        self.module = module
+
+        self._parameter_checks()
+
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json_up_to_date()
-        if self.prompt and self.sha is not None:
-            raise UserWarning("Cannot use '--sha' and '--prompt' at the same time.")
 
         tool_config = nf_core.utils.load_tools_config()
         update_config = tool_config.get("update", {})
