@@ -274,7 +274,7 @@ def _parse_input(self, line_raw):
     """
     inputs = []
     # Remove comments and trailing whitespace
-    line, *_ = line_raw.partition("//")
+    line = line_raw.split("//")[0]
     line = line.strip()
     # Tuples with multiple elements
     if "tuple" in line:
