@@ -10,6 +10,7 @@
 - Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
 - Add `.prettierignore` file to stop Prettier linting tests from running over test files
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
+- Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 
 ### General
 
