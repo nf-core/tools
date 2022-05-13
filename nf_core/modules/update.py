@@ -8,6 +8,7 @@ import questionary
 import shutil
 import tempfile
 from questionary import question
+from requests.exceptions import ConnectionError
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -69,6 +70,9 @@ class ModuleUpdate(ModuleCommand):
                     log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.name}'")
                     return False
             except LookupError as e:
+                log.error(e)
+                return False
+            except ConnectionError:
                 log.error(e)
                 return False
 
