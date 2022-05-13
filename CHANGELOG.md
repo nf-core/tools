@@ -22,6 +22,7 @@
 - Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 - Use [`$XDG_CONFIG_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.config/nf-core` instead of `~/.nfcore` for API cache (the latter can be safely deleted)
 - Consolidate GitHub API calls into a shared function that uses authentication from the [`gh` GitHub cli tool](https://cli.github.com/) or `GITHUB_AUTH_TOKEN` to avoid rate limiting ([#1499](https://github.com/nf-core/tools/pull/1499))
+- Tweaks to CLI output display of lint results
 
 ### Modules
 
