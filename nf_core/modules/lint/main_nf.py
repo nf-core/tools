@@ -99,7 +99,8 @@ def main_nf(module_lint_object, module):
     check_when_section(module, when_lines)
 
     # Check the script definition
-    check_script_section(module, script_lines)
+    if len(script_lines):
+        check_script_section(module, script_lines)
 
     # Check whether 'meta' is emitted when given as input
     if inputs:
