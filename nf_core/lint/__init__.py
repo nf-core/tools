@@ -8,6 +8,7 @@ the nf-core community guidelines.
 from rich.markdown import Markdown
 from rich.table import Table
 from rich.panel import Panel
+from rich.console import group
 import datetime
 import git
 import json
@@ -323,10 +324,14 @@ class PipelineLint(nf_core.utils.Pipeline):
         summarising the linting results.
         """
 
+        # Spacing from log messages above
+        console.print("")
+
         log.debug("Printing final results")
 
         # Helper function to format test links nicely
-        def format_result(test_results, table):
+        @group()
+        def format_result(test_results):
             """
             Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
@@ -335,55 +340,74 @@ class PipelineLint(nf_core.utils.Pipeline):
                 tools_version = __version__
                 if "dev" in __version__:
                     tools_version = "latest"
-                table.add_row(
-                    Markdown(
-                        f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
-                    )
+                yield Markdown(
+                    f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
                 )
-            return table
 
         def _s(some_list):
             if len(some_list) != 1:
                 return "s"
             return ""
 
-        # Print lint results header
-        console.print(Panel("[magenta]General lint results"))
-
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
-            table = Table(style="green", box=rich.box.ROUNDED)
-            table.add_column(r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
-            table = format_result(self.passed, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    format_result(self.passed),
+                    title=r"[bold][✔] {} Pipeline Test{} Passed".format(len(self.passed), _s(self.passed)),
+                    title_align="left",
+                    style="green",
+                    padding=1,
+                )
+            )
 
         # Table of fixed tests
         if len(self.fixed) > 0:
-            table = Table(style="bright_blue", box=rich.box.ROUNDED)
-            table.add_column(r"[?] {} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), no_wrap=True)
-            table = format_result(self.fixed, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    format_result(self.fixed),
+                    title=r"[bold][?] {} Pipeline Test{} Fixed".format(len(self.fixed), _s(self.fixed)),
+                    title_align="left",
+                    style="bright_blue",
+                    padding=1,
+                )
+            )
 
         # Table of ignored tests
         if len(self.ignored) > 0:
-            table = Table(style="grey58", box=rich.box.ROUNDED)
-            table.add_column(r"[?] {} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True)
-            table = format_result(self.ignored, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    format_result(self.ignored),
+                    title=r"[bold][?] {} Pipeline Test{} Ignored".format(len(self.ignored), _s(self.ignored)),
+                    title_align="left",
+                    style="grey58",
+                    padding=1,
+                )
+            )
 
         # Table of warning tests
         if len(self.warned) > 0:
-            table = Table(style="yellow", box=rich.box.ROUNDED)
-            table.add_column(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
-            table = format_result(self.warned, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    format_result(self.warned),
+                    title=r"[bold][!] {} Pipeline Test Warning{}".format(len(self.warned), _s(self.warned)),
+                    title_align="left",
+                    style="yellow",
+                    padding=1,
+                )
+            )
 
         # Table of failing tests
         if len(self.failed) > 0:
-            table = Table(style="red", box=rich.box.ROUNDED)
-            table.add_column(r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
-            table = format_result(self.failed, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    format_result(self.failed),
+                    title=r"[bold][✗] {} Pipeline Test{} Failed".format(len(self.failed), _s(self.failed)),
+                    title_align="left",
+                    style="red",
+                    padding=1,
+                )
+            )
 
     def _print_summary(self):
         def _s(some_list):
