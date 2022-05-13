@@ -17,7 +17,8 @@ from rich.console import Console
 import nf_core.list
 
 # create a temporary directory that can be used by the tests in this file
-tmp_nxf = Path(tempfile.mkdtemp()) / "nxf"
+tmp = Path(tempfile.mkdtemp())
+tmp_nxf = tmp / "nxf"
 tmp_nxf_str = str(tmp_nxf)
 
 
@@ -136,7 +137,7 @@ class TestLint(unittest.TestCase):
     @mock.patch("git.Repo")
     def test_local_workflow_investigation(self, mock_repo, mock_stat):
         local_wf = nf_core.list.LocalWorkflow("dummy")
-        local_wf.local_path = tmp_nxf
+        local_wf.local_path = tmp
         mock_repo.head.commit.hexsha = "h00r4y"
         mock_stat.st_mode = 1
         local_wf.get_local_nf_workflow_details()
