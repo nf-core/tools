@@ -32,7 +32,6 @@ RUN conda update -n base -c defaults conda && \
         pip=22.0.4 \
         black=22.1.0 \
         -n base && \
-    nextflow self-update && \
     conda clean --all -f -y
 
 # Install nf-core
