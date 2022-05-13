@@ -11,6 +11,7 @@
 - Add `.prettierignore` file to stop Prettier linting tests from running over test files
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
 - Made module template test command match the default used in `nf-core modules create-test-yml` ([#1562](https://github.com/nf-core/tools/issues/1562))
+- Removed black background from Readme badges now that GitHub has a dark mode, added Tower launch badge.
 
 ### General
 
