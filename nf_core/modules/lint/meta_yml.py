@@ -20,7 +20,7 @@ def meta_yml(module_lint_object, module):
     ``meta.yml`` and the ``main.nf``.
 
     """
-    required_keys = ["name"]
+    required_keys = ["name", "output"]
     required_keys_lists = ["input", "output"]
     try:
         with open(module.meta_yml, "r") as fh:
