@@ -92,6 +92,12 @@ def main_nf(module_lint_object, module):
         if state == "shell" and not _is_empty(module, l):
             shell_lines.append(l)
 
+    # Check that we have required sections
+    if not len(outputs):
+        module.failed.append(("main_nf_script_outputs", "No process 'output' block found", module.main_nf))
+    else:
+        module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
+
     # Check the process definitions
     if check_process_section(module, process_lines):
         module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
