@@ -392,51 +392,54 @@ class ModuleLint(ModuleCommand):
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
-            inner_table = Table(style="green", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            inner_table.add_column("Module name", width=max_mod_name_len)
-            inner_table.add_column("File path")
-            inner_table.add_column("Test message")
-            inner_table = format_result(self.passed, inner_table)
-
-            wrapper_table = Table(style="green", box=rich.box.ROUNDED)
-            wrapper_table.add_column(
-                r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True
+            table = Table(style="green", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("File path")
+            table.add_column("Test message")
+            table = format_result(self.passed, table)
+            console.print(
+                rich.panel.Panel(
+                    table,
+                    title=r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)),
+                    title_align="left",
+                    style="green",
+                    padding=0,
+                )
             )
-            wrapper_table.add_row(inner_table, style="green")
-
-            console.print(wrapper_table)
 
         # Table of warning tests
         if len(self.warned) > 0:
-            inner_table = Table(style="yellow", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            inner_table.add_column("Module name", width=max_mod_name_len)
-            inner_table.add_column("File path")
-            inner_table.add_column("Test message")
-            inner_table = format_result(self.warned, inner_table)
-
-            wrapper_table = Table(style="yellow", box=rich.box.ROUNDED)
-            wrapper_table.add_column(
-                r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True
+            table = Table(style="yellow", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("File path")
+            table.add_column("Test message")
+            table = format_result(self.warned, table)
+            console.print(
+                rich.panel.Panel(
+                    table,
+                    title=r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)),
+                    title_align="left",
+                    style="yellow",
+                    padding=0,
+                )
             )
-            wrapper_table.add_row(inner_table, style="yellow")
-
-            console.print(wrapper_table)
 
         # Table of failing tests
         if len(self.failed) > 0:
-            inner_table = Table(style="red", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            inner_table.add_column("Module name", width=max_mod_name_len)
-            inner_table.add_column("File path")
-            inner_table.add_column("Test message")
-            inner_table = format_result(self.failed, inner_table)
-
-            wrapper_table = Table(style="red", box=rich.box.ROUNDED)
-            wrapper_table.add_column(
-                r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True
+            table = Table(style="red", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
+            table.add_column("Module name", width=max_mod_name_len)
+            table.add_column("File path")
+            table.add_column("Test message")
+            table = format_result(self.failed, table)
+            console.print(
+                rich.panel.Panel(
+                    table,
+                    title=r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)),
+                    title_align="left",
+                    style="red",
+                    padding=0,
+                )
             )
-            wrapper_table.add_row(inner_table, style="red")
-
-            console.print(wrapper_table)
 
     def print_summary(self):
         def _s(some_list):
