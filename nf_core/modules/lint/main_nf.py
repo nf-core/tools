@@ -56,6 +56,7 @@ def main_nf(module_lint_object, module):
     state = "module"
     process_lines = []
     script_lines = []
+    shell_lines = []
     when_lines = []
     for l in lines:
         if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
@@ -88,6 +89,8 @@ def main_nf(module_lint_object, module):
             when_lines.append(l)
         if state == "script" and not _is_empty(module, l):
             script_lines.append(l)
+        if state == "shell" and not _is_empty(module, l):
+            shell_lines.append(l)
 
     # Check the process definitions
     if check_process_section(module, process_lines):
@@ -98,9 +101,20 @@ def main_nf(module_lint_object, module):
     # Check the when statement
     check_when_section(module, when_lines)
 
+    # Check that we have script or shell, not both
+    if len(script_lines) and len(shell_lines):
+        module.failed.append(("main_nf_script_shell", "Script and Shell found, should use only one", module.main_nf))
+
     # Check the script definition
     if len(script_lines):
         check_script_section(module, script_lines)
+
+    # Check that shell uses a template
+    if len(shell_lines):
+        if any("template" in l for l in shell_lines):
+            module.passed.append(("main_nf_shell_template", "`template` found in `shell` block", module.main_nf))
+        else:
+            module.failed.append(("main_nf_shell_template", "No `template` found in `shell` block", module.main_nf))
 
     # Check whether 'meta' is emitted when given as input
     if inputs:
