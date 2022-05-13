@@ -4,20 +4,23 @@ import enum
 import json
 import logging
 import os
-import questionary
 import shutil
 import tempfile
+
+import questionary
 from questionary import question
 from requests.exceptions import ConnectionError
 from rich.console import Console
 from rich.syntax import Syntax
 
-import nf_core.utils
 import nf_core.modules.module_utils
+import nf_core.utils
 
-from .modules_command import ModuleCommand
-from .module_utils import get_installed_modules, get_module_git_log, module_exist_in_repo
+from .module_utils import get_installed_modules
+from .module_utils import get_module_git_log
+from .module_utils import module_exist_in_repo
 from .module_utils import sha_exists
+from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
