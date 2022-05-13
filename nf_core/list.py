@@ -249,7 +249,7 @@ class Workflows(object):
             # Handle archived pipelines
             if wf.archived:
                 rowdata[1] = "archived"
-                rowdata = [re.sub("\[\w+\]", "", k) for k in rowdata]
+                rowdata = [re.sub(r"\[\w+\]", "", k) for k in rowdata]
                 table.add_row(*rowdata, style="dim")
             else:
                 table.add_row(*rowdata)
