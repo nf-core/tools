@@ -57,9 +57,9 @@ def meta_yml(module_lint_object, module):
             meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
             for output in module.outputs:
                 if output in meta_output:
-                    module.passed.append(("meta_output", "`{output}` specified", module.meta_yml))
+                    module.passed.append(("meta_output", f"`{output}` specified", module.meta_yml))
                 else:
-                    module.failed.append(("meta_output", "`{output}` missing in `meta.yml`", module.meta_yml))
+                    module.failed.append(("meta_output", f"`{output}` missing in `meta.yml`", module.meta_yml))
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == module.process_name:
