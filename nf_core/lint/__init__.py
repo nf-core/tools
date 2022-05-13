@@ -326,7 +326,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         log.debug("Printing final results")
 
         # Helper function to format test links nicely
-        def format_result(test_results, table):
+        def format_result(test_results, table, row_style=None):
             """
             Given an list of error message IDs and the message texts, return a nicely formatted
             string for the terminal with appropriate ASCII colours.
@@ -338,7 +338,8 @@ class PipelineLint(nf_core.utils.Pipeline):
                 table.add_row(
                     Markdown(
                         f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
-                    )
+                    ),
+                    style=row_style,
                 )
             return table
 
@@ -347,42 +348,41 @@ class PipelineLint(nf_core.utils.Pipeline):
                 return "s"
             return ""
 
-        # Print lint results header
-        console.print(Panel("[magenta]General lint results"))
-
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             table = Table(style="green", box=rich.box.ROUNDED)
-            table.add_column(r"[✔] {} Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
-            table = format_result(self.passed, table)
+            table.add_column(r"[✔] {} Pipeline Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True)
+            table = format_result(self.passed, table, "green")
             console.print(table)
 
         # Table of fixed tests
         if len(self.fixed) > 0:
             table = Table(style="bright_blue", box=rich.box.ROUNDED)
-            table.add_column(r"[?] {} Test{} Fixed".format(len(self.fixed), _s(self.fixed)), no_wrap=True)
-            table = format_result(self.fixed, table)
+            table.add_column(r"[?] {} Pipeline Test{} Fixed".format(len(self.fixed), _s(self.fixed)), no_wrap=True)
+            table = format_result(self.fixed, table, "bright blue")
             console.print(table)
 
         # Table of ignored tests
         if len(self.ignored) > 0:
             table = Table(style="grey58", box=rich.box.ROUNDED)
-            table.add_column(r"[?] {} Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True)
-            table = format_result(self.ignored, table)
+            table.add_column(
+                r"[?] {} Pipeline Test{} Ignored".format(len(self.ignored), _s(self.ignored)), no_wrap=True
+            )
+            table = format_result(self.ignored, table, "grey58")
             console.print(table)
 
         # Table of warning tests
         if len(self.warned) > 0:
             table = Table(style="yellow", box=rich.box.ROUNDED)
-            table.add_column(r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
-            table = format_result(self.warned, table)
+            table.add_column(r"[!] {} Pipeline Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True)
+            table = format_result(self.warned, table, "yellow")
             console.print(table)
 
         # Table of failing tests
         if len(self.failed) > 0:
             table = Table(style="red", box=rich.box.ROUNDED)
-            table.add_column(r"[✗] {} Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
-            table = format_result(self.failed, table)
+            table.add_column(r"[✗] {} Pipeline Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True)
+            table = format_result(self.failed, table, "red")
             console.print(table)
 
     def _print_summary(self):

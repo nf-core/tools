@@ -353,7 +353,7 @@ class ModuleLint(ModuleCommand):
 
         # Find maximum module name length
         max_mod_name_len = 40
-        for idx, tests in enumerate([self.passed, self.warned, self.failed]):
+        for tests in [self.passed, self.warned, self.failed]:
             try:
                 for lint_result in tests:
                     max_mod_name_len = max(len(lint_result.module_name), max_mod_name_len)
@@ -369,19 +369,16 @@ class ModuleLint(ModuleCommand):
             # TODO: Row styles don't work current as table-level style overrides.
             # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
             last_modname = False
-            row_style = None
+            even_row = False
             for lint_result in test_results:
                 if last_modname and lint_result.module_name != last_modname:
-                    if row_style:
-                        row_style = None
-                    else:
-                        row_style = "magenta"
+                    even_row = not even_row
                 last_modname = lint_result.module_name
                 table.add_row(
                     Markdown(f"{lint_result.module_name}"),
                     os.path.relpath(lint_result.file_path, self.dir),
                     Markdown(f"{lint_result.message}"),
-                    style=row_style,
+                    style="dim" if even_row else None,
                 )
             return table
 
@@ -395,54 +392,51 @@ class ModuleLint(ModuleCommand):
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
-            table = Table(style="green", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path")
-            table.add_column("Test message")
-            table = format_result(self.passed, table)
-            console.print(
-                rich.panel.Panel(
-                    table,
-                    title=r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)),
-                    title_align="left",
-                    style="green",
-                    padding=0,
-                )
+            inner_table = Table(style="green", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
+            inner_table.add_column("Module name", width=max_mod_name_len)
+            inner_table.add_column("File path")
+            inner_table.add_column("Test message")
+            inner_table = format_result(self.passed, inner_table)
+
+            wrapper_table = Table(style="green", box=rich.box.ROUNDED)
+            wrapper_table.add_column(
+                r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)), no_wrap=True
             )
+            wrapper_table.add_row(inner_table, style="green")
+
+            console.print(wrapper_table)
 
         # Table of warning tests
         if len(self.warned) > 0:
-            table = Table(style="yellow", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path")
-            table.add_column("Test message")
-            table = format_result(self.warned, table)
-            console.print(
-                rich.panel.Panel(
-                    table,
-                    title=r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)),
-                    title_align="left",
-                    style="yellow",
-                    padding=0,
-                )
+            inner_table = Table(style="yellow", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
+            inner_table.add_column("Module name", width=max_mod_name_len)
+            inner_table.add_column("File path")
+            inner_table.add_column("Test message")
+            inner_table = format_result(self.warned, inner_table)
+
+            wrapper_table = Table(style="yellow", box=rich.box.ROUNDED)
+            wrapper_table.add_column(
+                r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)), no_wrap=True
             )
+            wrapper_table.add_row(inner_table, style="yellow")
+
+            console.print(wrapper_table)
 
         # Table of failing tests
         if len(self.failed) > 0:
-            table = Table(style="red", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
-            table.add_column("Module name", width=max_mod_name_len)
-            table.add_column("File path")
-            table.add_column("Test message")
-            table = format_result(self.failed, table)
-            console.print(
-                rich.panel.Panel(
-                    table,
-                    title=r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)),
-                    title_align="left",
-                    style="red",
-                    padding=0,
-                )
+            inner_table = Table(style="red", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
+            inner_table.add_column("Module name", width=max_mod_name_len)
+            inner_table.add_column("File path")
+            inner_table.add_column("Test message")
+            inner_table = format_result(self.failed, inner_table)
+
+            wrapper_table = Table(style="red", box=rich.box.ROUNDED)
+            wrapper_table.add_column(
+                r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)), no_wrap=True
             )
+            wrapper_table.add_row(inner_table, style="red")
+
+            console.print(wrapper_table)
 
     def print_summary(self):
         def _s(some_list):
