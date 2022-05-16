@@ -13,6 +13,7 @@
 - Add `.prettierignore` file to stop Prettier linting tests from running over test files
 - Made module template test command match the default used in `nf-core modules create-test-yml` ([#1562](https://github.com/nf-core/tools/issues/1562))
 - Removed black background from Readme badges now that GitHub has a dark mode, added Tower launch badge.
+- Don't save md5sum for `versions.yml` when running `nf-core modules create-test-yml` ([#1511](https://github.com/nf-core/tools/pull/1511))
 
 ### General
 
@@ -51,7 +52,6 @@ Very minor patch release to fix the full size AWS tests and re-run the template 
 - Remove traces of markdownlint in the template ([#1486](https://github.com/nf-core/tools/pull/1486)
 - Remove accidentally added line in `CHANGELOG.md` in the template ([#1487](https://github.com/nf-core/tools/pull/1487))
 - Update linting to check that `.editorconfig` is there and `.yamllint.yml` isn't.
-- Don't save md5sum for `versions.yml` when running `nf-core modules create-test-yml` ([#1511](https://github.com/nf-core/tools/pull/1511))
 
 ## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 
