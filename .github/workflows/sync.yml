@@ -20,7 +20,7 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          if [ "${{ github.event.inputs.use-emoji }}" == "true" ]; then
+          if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
             echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
           else
             curl -O https://nf-co.re/pipeline_names.json
