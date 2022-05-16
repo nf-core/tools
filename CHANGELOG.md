@@ -4,6 +4,7 @@
 
 ### Template
 
+- Read entire lines when sniffing the samplesheet format (fix [#1561](https://github.com/nf-core/tools/issues/1561))
 - Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
 - Fix Prettier formatting bug in completion email HTML template ([#1509](https://github.com/nf-core/tools/issues/1509))
 - Fix bug in pipeline readme logo URL
