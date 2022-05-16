@@ -454,7 +454,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
         log.debug(f"Using GitHub auth: {self.auth_mode}")
 
-    def log_content_headers(self, request, post_data):
+    def log_content_headers(self, request, post_data=None):
         """
         Try to dump everything to the console, useful when things go wrong.
         """
@@ -462,6 +462,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
         log.debug(f"From requests cache: {request.from_cache}")
         log.debug(f"Request status code: {request.status_code}")
         log.debug(f"Request reason: {request.reason}")
+        if post_data is None:
+            post_data = {}
         try:
             log.debug(json.dumps(dict(request.headers), indent=4))
             log.debug(json.dumps(request.json(), indent=4))
