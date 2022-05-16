@@ -1,7 +1,8 @@
 import json
-from os import pipe
-import rich
 import logging
+from os import pipe
+
+import rich
 
 import nf_core.modules.module_utils
 

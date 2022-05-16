@@ -2,9 +2,8 @@
 """Lists available nf-core pipelines and versions."""
 
 from __future__ import print_function
-from collections import OrderedDict
 
-import datetime
+from datetime import datetime
 import git
 import json
 import logging
@@ -175,7 +174,7 @@ class Workflows(object):
             for k in self.keyword_filters:
                 in_name = k in wf.name if wf.name else False
                 in_desc = k in wf.description if wf.description else False
-                in_topics = any([k in t for t in wf.topics])
+                in_topics = any(k in t for t in wf.topics)
                 if not in_name and not in_desc and not in_topics:
                     break
             else:
@@ -250,7 +249,7 @@ class Workflows(object):
             # Handle archived pipelines
             if wf.archived:
                 rowdata[1] = "archived"
-                rowdata = [re.sub("\[\w+\]", "", k) for k in rowdata]
+                rowdata = [re.sub(r"\[\w+\]", "", k) for k in rowdata]
                 table.add_row(*rowdata, style="dim")
             else:
                 table.add_row(*rowdata)
@@ -302,10 +301,10 @@ class RemoteWorkflow(object):
         # Beautify date
         for release in self.releases:
             release["published_at_pretty"] = pretty_date(
-                datetime.datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ")
+                datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ")
             )
             release["published_at_timestamp"] = int(
-                datetime.datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ").strftime("%s")
+                datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ").strftime("%s")
             )
 
 
@@ -358,7 +357,7 @@ class LocalWorkflow(object):
                 self.commit_sha = str(repo.head.commit.hexsha)
                 self.remote_url = str(repo.remotes.origin.url)
                 self.last_pull = os.stat(os.path.join(self.local_path, ".git", "FETCH_HEAD")).st_mtime
-                self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
+                self.last_pull_date = datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
                 self.last_pull_pretty = pretty_date(self.last_pull)
 
                 # Get the checked out branch if we can
@@ -392,7 +391,6 @@ def pretty_date(time):
     Based on https://stackoverflow.com/a/1551394/713980
     Adapted by sven1103
     """
-    from datetime import datetime
 
     now = datetime.now()
     if isinstance(time, datetime):
@@ -402,23 +400,27 @@ def pretty_date(time):
     second_diff = diff.seconds
     day_diff = diff.days
 
-    pretty_msg = OrderedDict()
-    pretty_msg[0] = [(float("inf"), 1, "from the future")]
-    pretty_msg[1] = [
-        (10, 1, "just now"),
-        (60, 1, "{sec:.0f} seconds ago"),
-        (120, 1, "a minute ago"),
-        (3600, 60, "{sec:.0f} minutes ago"),
-        (7200, 1, "an hour ago"),
-        (86400, 3600, "{sec:.0f} hours ago"),
-    ]
-    pretty_msg[2] = [(float("inf"), 1, "yesterday")]
-    pretty_msg[7] = [(float("inf"), 1, "{days:.0f} day{day_s} ago")]
-    pretty_msg[31] = [(float("inf"), 7, "{days:.0f} week{day_s} ago")]
-    pretty_msg[365] = [(float("inf"), 30, "{days:.0f} months ago")]
-    pretty_msg[float("inf")] = [(float("inf"), 365, "{days:.0f} year{day_s} ago")]
+    pretty_msg = (
+        (0, ((float("inf"), 1, "from the future"),)),
+        (
+            1,
+            (
+                (10, 1, "just now"),
+                (60, 1, "{sec:.0f} seconds ago"),
+                (120, 1, "a minute ago"),
+                (3600, 60, "{sec:.0f} minutes ago"),
+                (7200, 1, "an hour ago"),
+                (86400, 3600, "{sec:.0f} hours ago"),
+            ),
+        ),
+        (2, ((float("inf"), 1, "yesterday"),)),
+        (7, ((float("inf"), 1, "{days:.0f} day{day_s} ago"),)),
+        (31, ((float("inf"), 7, "{days:.0f} week{day_s} ago"),)),
+        (365, ((float("inf"), 30, "{days:.0f} months ago"),)),
+        (float("inf"), ((float("inf"), 365, "{days:.0f} year{day_s} ago"),)),
+    )
 
-    for days, seconds in pretty_msg.items():
+    for days, seconds in pretty_msg:
         if day_diff < days:
             for sec in seconds:
                 if second_diff < sec[0]:

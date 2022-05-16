@@ -454,7 +454,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
         log.debug(f"Using GitHub auth: {self.auth_mode}")
 
-    def log_content_headers(self, request):
+    def log_content_headers(self, request, post_data=None):
         """
         Try to dump everything to the console, useful when things go wrong.
         """
@@ -462,13 +462,17 @@ class GitHub_API_Session(requests_cache.CachedSession):
         log.debug(f"From requests cache: {request.from_cache}")
         log.debug(f"Request status code: {request.status_code}")
         log.debug(f"Request reason: {request.reason}")
+        if post_data is None:
+            post_data = {}
         try:
             log.debug(json.dumps(dict(request.headers), indent=4))
             log.debug(json.dumps(request.json(), indent=4))
+            log.debug(json.dumps(post_data, indent=4))
         except Exception as e:
             log.debug(f"Could not parse JSON response from GitHub API! {e}")
             log.debug(request.headers)
             log.debug(request.content)
+            log.debug(post_data)
 
     def safe_get(self, url):
         """
@@ -504,14 +508,16 @@ class GitHub_API_Session(requests_cache.CachedSession):
         while True:
             # GET request
             if post_data is None:
+                log.debug(f"Seding GET request to {url}")
                 r = self.get(url=url)
             # POST request
             else:
+                log.debug(f"Seding POST request to {url}")
                 r = self.post(url=url, json=post_data)
 
             # Failed but expected - try again
             if r.status_code in self.return_retry:
-                self.log_content_headers(r)
+                self.log_content_headers(r, post_data)
                 log.debug(f"GitHub API PR failed - got return code {r.status_code}")
                 wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
                 if wait_time == 0:
@@ -522,8 +528,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
 
             # Unexpected error - raise
             elif r.status_code not in self.return_ok:
-                self.log_content_headers(r)
-                raise AssertionError(f"GitHub API PR failed - got return code {r.status_code} from {url}")
+                self.log_content_headers(r, post_data)
+                raise RuntimeError(f"GitHub API PR failed - got return code {r.status_code} from {url}")
 
             # Success!
             else:
