@@ -420,7 +420,7 @@ class Launch(object):
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
-            log.error("'–-{}' is required".format(param_id))
+            log.error("'--{}' is required".format(param_id))
             answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
         # Ignore if empty
@@ -692,6 +692,7 @@ class Launch(object):
             if self.use_params_file:
                 with open(self.params_out, "w") as fp:
                     json.dump(self.schema_obj.input_params, fp, indent=4)
+                    fp.write("\n")
                 self.nextflow_cmd += ' {} "{}"'.format("-params-file", os.path.relpath(self.params_out))
 
             # Call nextflow with a list of command line flags

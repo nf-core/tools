@@ -229,10 +229,11 @@ def nextflow_config(self):
 
     # Check that the DAG filename ends in ``.svg``
     if "dag.file" in self.nf_config:
-        if self.nf_config["dag.file"].strip("'\"").endswith(".svg"):
-            passed.append("Config ``dag.file`` ended with ``.svg``")
+        default_dag_format = ".html"
+        if self.nf_config["dag.file"].strip("'\"").endswith(default_dag_format):
+            passed.append(f"Config ``dag.file`` ended with ``{default_dag_format}``")
         else:
-            failed.append("Config ``dag.file`` did not end with ``.svg``")
+            failed.append(f"Config ``dag.file`` did not end with ``{default_dag_format}``")
 
     # Check that the minimum nextflowVersion is set properly
     if "manifest.nextflowVersion" in self.nf_config:

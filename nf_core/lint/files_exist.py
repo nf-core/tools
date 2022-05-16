@@ -76,6 +76,7 @@ def files_exist(self):
 
         Singularity
         parameters.settings.json
+        .nf-core.yaml  # NB: Should be yml, not yaml
         bin/markdown_to_html.r
         conf/aws.config
         .github/workflows/push_dockerhub.yml
@@ -90,6 +91,15 @@ def files_exist(self):
     .. code-block:: bash
 
         .travis.yml
+
+    .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
+            the ``files_exist`` key as follows in your ``.nf-core.yml`` config file. For example:
+
+            .. code-block:: yaml
+
+            lint:
+                files_exist:
+                    - assets/multiqc_config.yml
     """
 
     passed = []
@@ -160,6 +170,7 @@ def files_exist(self):
     files_fail_ifexists = [
         "Singularity",
         "parameters.settings.json",
+        ".nf-core.yaml",  # yml not yaml
         os.path.join("bin", "markdown_to_html.r"),
         os.path.join("conf", "aws.config"),
         os.path.join(".github", "workflows", "push_dockerhub.yml"),

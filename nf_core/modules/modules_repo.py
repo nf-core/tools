@@ -1,9 +1,7 @@
 import os
-import requests
 import base64
-import sys
 import logging
-import nf_core.utils
+from nf_core.utils import gh_api
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +41,7 @@ class ModulesRepo(object):
     def get_default_branch(self):
         """Get the default branch for a GitHub repo"""
         api_url = f"https://api.github.com/repos/{self.name}"
-        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+        response = gh_api.get(api_url)
         if response.status_code == 200:
             self.branch = response.json()["default_branch"]
             log.debug(f"Found default branch to be '{self.branch}'")
@@ -58,7 +56,7 @@ class ModulesRepo(object):
 
         # Check if repository exist
         api_url = f"https://api.github.com/repos/{self.name}/branches"
-        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+        response = gh_api.get(api_url)
         if response.status_code == 200:
             branches = [branch["name"] for branch in response.json()]
             if self.branch not in branches:
@@ -67,7 +65,7 @@ class ModulesRepo(object):
             raise LookupError(f"Repository '{self.name}' is not available on GitHub")
 
         api_url = f"https://api.github.com/repos/{self.name}/contents?ref={self.branch}"
-        response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+        response = gh_api.get(api_url)
         if response.status_code == 200:
             dir_names = [entry["name"] for entry in response.json() if entry["type"] == "dir"]
             if "modules" not in dir_names:
@@ -86,7 +84,7 @@ class ModulesRepo(object):
              self.modules_avail_module_names
         """
         api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.name, self.branch)
-        r = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+        r = gh_api.get(api_url)
         if r.status_code == 404:
             raise LookupError("Repository / branch not found: {} ({})\n{}".format(self.name, self.branch, api_url))
         elif r.status_code != 200:
@@ -157,7 +155,7 @@ class ModulesRepo(object):
             os.makedirs(dl_directory)
 
         # Call the GitHub API
-        r = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+        r = gh_api.get(api_url)
         if r.status_code != 200:
             raise LookupError("Could not fetch {} file: {}\n {}".format(self.name, r.status_code, api_url))
         result = r.json()

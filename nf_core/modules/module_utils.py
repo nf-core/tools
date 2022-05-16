@@ -1,7 +1,6 @@
 import glob
 import json
 import os
-import requests
 import logging
 import rich
 import datetime
@@ -14,6 +13,8 @@ from .modules_repo import ModulesRepo
 from .nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)
+
+gh_api = nf_core.utils.gh_api
 
 
 class ModuleException(Exception):
@@ -35,7 +36,7 @@ def module_exist_in_repo(module_name, modules_repo):
     api_url = (
         f"https://api.github.com/repos/{modules_repo.name}/contents/modules/{module_name}?ref={modules_repo.branch}"
     )
-    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    response = gh_api.get(api_url)
     return not (response.status_code == 404)
 
 
@@ -65,7 +66,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     api_url += f"&since={since}"
 
     log.debug(f"Fetching commit history of module '{module_name}' from github API")
-    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    response = gh_api.get(api_url)
     if response.status_code == 200:
         commits = response.json()
 
@@ -80,6 +81,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     elif response.status_code == 404:
         raise LookupError(f"Module '{module_name}' not found in '{modules_repo.name}'\n{api_url}")
     else:
+        gh_api.log_content_headers(response)
         raise LookupError(
             f"Unable to fetch commit SHA for module {module_name}. API responded with '{response.status_code}'"
         )
@@ -101,7 +103,7 @@ def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     )
     api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
-    response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+    response = gh_api.get(api_url)
     if response.status_code == 200:
         commit = response.json()
         message = commit["commit"]["message"].partition("\n")[0]
@@ -115,6 +117,7 @@ def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     elif response.status_code == 404:
         raise LookupError(f"Commit '{commit_sha}' not found in 'nf-core/modules/'\n{api_url}")
     else:
+        gh_api.log_content_headers(response)
         raise LookupError(f"Unable to fetch metadata for commit SHA {commit_sha}")
 
 
@@ -188,6 +191,7 @@ def create_modules_json(pipeline_dir):
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
         json.dump(modules_json, fh, indent=4)
+        fh.write("\n")
 
 
 def find_correct_commit_sha(module_name, module_path, modules_repo):
@@ -265,10 +269,12 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     for i, file in enumerate(files_to_check):
         # Download remote copy and compare
         api_url = f"{module_base_url}/{file}"
-        r = requests.get(url=api_url, auth=nf_core.utils.github_api_auto_auth())
+        r = gh_api.get(api_url)
+        # TODO: Remove debugging
+        gh_api.log_content_headers(r)
         if r.status_code != 200:
+            gh_api.log_content_headers(r)
             log.debug(f"Could not download remote copy of file module {module_name}/{file}")
-            log.debug(api_url)
         else:
             try:
                 remote_copies[i] = r.content.decode("utf-8")
@@ -413,7 +419,7 @@ def verify_pipeline_dir(dir):
         modules_is_software = False
         for repo_name in repo_names:
             api_url = f"https://api.github.com/repos/{repo_name}/contents"
-            response = requests.get(api_url, auth=nf_core.utils.github_api_auto_auth())
+            response = gh_api.get(api_url)
             if response.status_code == 404:
                 missing_remote.append(repo_name)
                 if repo_name == "nf-core/software":
