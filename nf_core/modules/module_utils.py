@@ -500,14 +500,10 @@ def sha_exists(sha, modules_repo):
     sha_found = False
 
     for page_number in count(1):
-        try:
-            sha_found = sha in {
-                commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=page_number)
-            }
-            if sha_found:
-                break
-        except UserWarning:
-            # get_module_git_log raises a UserWarning when it reaches the end of the commit history
+        sha_found = sha in {
+            commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=page_number)
+        }
+        if sha_found:
             break
 
     return sha_found
