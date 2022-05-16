@@ -527,7 +527,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
             # Unexpected error - raise
             elif r.status_code not in self.return_ok:
                 self.log_content_headers(r, post_data)
-                raise AssertionError(f"GitHub API PR failed - got return code {r.status_code} from {url}")
+                raise RuntimeError(f"GitHub API PR failed - got return code {r.status_code} from {url}")
 
             # Success!
             else:
