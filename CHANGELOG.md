@@ -1,5 +1,13 @@
 # nf-core/tools: Changelog
 
+## v2.5dev
+
+### Template
+
+### General
+
+### Modules
+
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
 - Patch release to try to fix the template sync ([#1585](https://github.com/nf-core/tools/pull/1585))
