@@ -5,11 +5,7 @@ Verify that a module has a correct entry in the modules.json file
 
 import logging
 import os
-import json
-import re
-import questionary
 import nf_core
-import sys
 
 import nf_core.modules.module_utils
 

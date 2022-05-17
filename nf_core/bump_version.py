@@ -7,7 +7,6 @@ import logging
 import os
 import re
 import rich.console
-import sys
 import nf_core.utils
 
 log = logging.getLogger(__name__)

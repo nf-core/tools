@@ -1,5 +1,3 @@
-from posixpath import dirname
-from nf_core import modules
 import os
 import glob
 import shutil

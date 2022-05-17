@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from logging import warn
 from nf_core.modules.modules_command import ModuleCommand
 
 

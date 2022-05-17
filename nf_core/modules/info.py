@@ -12,8 +12,7 @@ from rich.panel import Panel
 from rich.table import Table
 
 from .modules_command import ModuleCommand
-from .module_utils import get_repo_type, get_installed_modules, get_module_git_log, module_exist_in_repo
-from .modules_repo import ModulesRepo
+from .module_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 

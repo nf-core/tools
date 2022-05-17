@@ -1,6 +1,4 @@
 import os
-import sys
-import json
 import questionary
 import logging
 

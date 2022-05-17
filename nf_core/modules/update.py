@@ -7,7 +7,6 @@ import os
 import questionary
 import shutil
 import tempfile
-from questionary import question
 from rich.console import Console
 from rich.syntax import Syntax
 
@@ -15,7 +14,7 @@ import nf_core.utils
 import nf_core.modules.module_utils
 
 from .modules_command import ModuleCommand
-from .module_utils import get_installed_modules, get_module_git_log, module_exist_in_repo
+from .module_utils import get_module_git_log, module_exist_in_repo
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)

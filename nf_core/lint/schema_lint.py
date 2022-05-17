@@ -2,7 +2,6 @@
 
 import logging
 import nf_core.schema
-import jsonschema
 
 
 def schema_lint(self):

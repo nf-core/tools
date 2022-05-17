@@ -7,7 +7,6 @@ or for a single module
 from __future__ import print_function
 import logging
 import questionary
-import os
 import re
 import rich
 from rich.console import Console

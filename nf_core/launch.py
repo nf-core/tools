@@ -14,7 +14,6 @@ import questionary
 import re
 import subprocess
 import webbrowser
-import requests
 
 import nf_core.schema, nf_core.utils
 
