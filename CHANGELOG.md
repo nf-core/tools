@@ -1,5 +1,9 @@
 # nf-core/tools: Changelog
 
+## v2.4.2dev
+
+- Add `fix` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
+
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
 - Patch release to try to fix the template sync ([#1585](https://github.com/nf-core/tools/pull/1585))
@@ -29,7 +33,6 @@
 - Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
 - Remove empty JSON schema definition groups to avoid usage errors ([#1419](https://github.com/nf-core/tools/issues/1419))
 - Bumped the minimum version of `rich` from `v10` to `v10.7.0`
-
 
 ### Modules
 
