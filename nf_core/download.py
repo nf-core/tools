@@ -3,22 +3,23 @@
 
 from __future__ import print_function
 
-from io import BytesIO
-import logging
+import concurrent.futures
 import hashlib
+import logging
 import os
-import questionary
 import re
-import requests
-import requests_cache
 import shutil
 import subprocess
 import sys
 import tarfile
-import concurrent.futures
+from io import BytesIO
+from zipfile import ZipFile
+
+import questionary
+import requests
+import requests_cache
 import rich
 import rich.progress
-from zipfile import ZipFile
 
 import nf_core
 import nf_core.list

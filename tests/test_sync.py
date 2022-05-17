@@ -2,16 +2,17 @@
 """ Tests covering the sync command
 """
 
-import nf_core.create
-import nf_core.sync
-
-import git
 import json
-import mock
 import os
 import shutil
 import tempfile
 import unittest
+
+import git
+import mock
+
+import nf_core.create
+import nf_core.sync
 
 from .utils import with_temporary_folder
 

@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 
-from rich import print
 import logging
 import os
 import re
+import sys
+
 import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
-import sys
+from rich import print
 
 import nf_core
 import nf_core.bump_version

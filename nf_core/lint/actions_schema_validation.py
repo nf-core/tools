@@ -1,12 +1,13 @@
 #!/usr/bin/env python
 
-import logging
-import yaml
-import json
-import jsonschema
-import os
 import glob
+import json
+import logging
+import os
+
+import jsonschema
 import requests
+import yaml
 
 
 def actions_schema_validation(self):

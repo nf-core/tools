@@ -3,14 +3,15 @@
 Verify that a module has a correct entry in the modules.json file
 """
 
+import json
 import logging
 import os
-import json
 import re
-import questionary
-import nf_core
 import sys
 
+import questionary
+
+import nf_core
 import nf_core.modules.module_utils
 
 log = logging.getLogger(__name__)

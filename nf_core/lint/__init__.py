@@ -5,20 +5,21 @@ Tests Nextflow-based pipelines to check that they adhere to
 the nf-core community guidelines.
 """
 
-from rich.markdown import Markdown
-from rich.table import Table
-from rich.panel import Panel
 import datetime
-import git
 import json
 import logging
 import re
+
+import git
 import rich
 import rich.progress
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.table import Table
 
-import nf_core.utils
 import nf_core.lint_utils
 import nf_core.modules.lint
+import nf_core.utils
 from nf_core import __version__
 from nf_core.lint_utils import console
 
@@ -158,9 +159,9 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .pipeline_name_conventions import pipeline_name_conventions
     from .pipeline_todos import pipeline_todos
     from .readme import readme
+    from .schema_description import schema_description
     from .schema_lint import schema_lint
     from .schema_params import schema_params
-    from .schema_description import schema_description
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 

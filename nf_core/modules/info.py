@@ -1,18 +1,19 @@
 import base64
 import logging
 import os
+
 import requests
 import yaml
-
 from rich import box
-from rich.text import Text
 from rich.console import Group
 from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.table import Table
+from rich.text import Text
 
+from .module_utils import (get_installed_modules, get_module_git_log,
+                           get_repo_type, module_exist_in_repo)
 from .modules_command import ModuleCommand
-from .module_utils import get_repo_type, get_installed_modules, get_module_git_log, module_exist_in_repo
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)

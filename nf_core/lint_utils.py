@@ -1,7 +1,8 @@
+import logging
+
 import rich
 from rich.console import Console
 from rich.table import Table
-import logging
 
 import nf_core.utils
 

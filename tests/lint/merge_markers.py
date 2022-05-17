@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import os
+
 import yaml
+
 import nf_core.lint
 
 

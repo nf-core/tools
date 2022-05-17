@@ -2,21 +2,23 @@
 """ Launch a pipeline, interactively collecting params """
 
 from __future__ import print_function
-from rich.console import Console
-from rich.markdown import Markdown
-from rich.prompt import Confirm
 
 import copy
 import json
 import logging
 import os
-import questionary
 import re
 import subprocess
 import webbrowser
-import requests
 
-import nf_core.schema, nf_core.utils
+import questionary
+import requests
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.prompt import Confirm
+
+import nf_core.schema
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 

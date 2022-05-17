@@ -1,8 +1,10 @@
-import os
-import requests
 import base64
-import sys
 import logging
+import os
+import sys
+
+import requests
+
 import nf_core.utils
 
 log = logging.getLogger(__name__)

@@ -2,17 +2,17 @@
 """ Tests covering the workflow listing code.
 """
 
-import nf_core.list
-
 import json
-import mock
 import os
-import pytest
 import time
 import unittest
+from datetime import datetime
+
+import mock
+import pytest
 from rich.console import Console
 
-from datetime import datetime
+import nf_core.list
 
 
 class TestLint(unittest.TestCase):

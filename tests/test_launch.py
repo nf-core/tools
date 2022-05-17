@@ -2,16 +2,17 @@
 """ Tests covering the pipeline launch code.
 """
 
-import nf_core.launch
-
 import json
-import mock
 import os
 import shutil
 import tempfile
 import unittest
 
-from .utils import with_temporary_folder, with_temporary_file
+import mock
+
+import nf_core.launch
+
+from .utils import with_temporary_file, with_temporary_folder
 
 
 class TestLaunch(unittest.TestCase):

@@ -1,15 +1,16 @@
-from posixpath import dirname
-from nf_core import modules
-import os
-import glob
-import shutil
 import copy
+import glob
 import json
 import logging
+import os
+import shutil
+from posixpath import dirname
+
 import yaml
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core import modules
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)

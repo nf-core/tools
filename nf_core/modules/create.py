@@ -4,22 +4,23 @@ The ModuleCreate class handles generating of module templates
 """
 
 from __future__ import print_function
-from packaging.version import parse as parse_version
 
 import glob
-import jinja2
 import json
 import logging
-import nf_core
 import os
-import questionary
 import re
-import rich
 import subprocess
-import yaml
 
-import nf_core.utils
+import jinja2
+import questionary
+import rich
+import yaml
+from packaging.version import parse as parse_version
+
+import nf_core
 import nf_core.modules.module_utils
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 

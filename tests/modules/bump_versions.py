@@ -1,5 +1,6 @@
 import os
 import re
+
 import pytest
 
 import nf_core.modules

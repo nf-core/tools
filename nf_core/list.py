@@ -2,14 +2,15 @@
 """Lists available nf-core pipelines and versions."""
 
 from __future__ import print_function
-from collections import OrderedDict
 
 import datetime
-import git
 import json
 import logging
 import os
 import re
+from collections import OrderedDict
+
+import git
 import requests
 import rich.console
 import rich.table

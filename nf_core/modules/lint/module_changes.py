@@ -2,8 +2,10 @@
 Check whether the content of a module has changed compared to the original repository
 """
 import os
+
 import requests
 import rich
+
 from nf_core.modules.lint import LintResult
 
 
