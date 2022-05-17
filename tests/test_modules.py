@@ -75,28 +75,43 @@ class TestModules(unittest.TestCase):
         test_modules_bump_versions_all_modules,
         test_modules_bump_versions_fail,
         test_modules_bump_versions_fail_unknown_version,
-        test_modules_bump_versions_single_module)
-    from .modules.create import (test_modules_create_fail_exists,
-                                 test_modules_create_nfcore_modules,
-                                 test_modules_create_nfcore_modules_subtool,
-                                 test_modules_create_succeed)
+        test_modules_bump_versions_single_module,
+    )
+    from .modules.create import (
+        test_modules_create_fail_exists,
+        test_modules_create_nfcore_modules,
+        test_modules_create_nfcore_modules_subtool,
+        test_modules_create_succeed,
+    )
     from .modules.create_test_yml import (
         test_modules_create_test_yml_check_inputs,
         test_modules_create_test_yml_entry_points,
-        test_modules_create_test_yml_get_md5, test_modules_custom_yml_dumper,
-        test_modules_test_file_dict)
-    from .modules.install import (test_modules_install_emptypipeline,
-                                  test_modules_install_nomodule,
-                                  test_modules_install_nopipeline,
-                                  test_modules_install_trimgalore,
-                                  test_modules_install_trimgalore_twice)
-    from .modules.lint import (test_modules_lint_empty,
-                               test_modules_lint_new_modules,
-                               test_modules_lint_trimgalore)
-    from .modules.list import (test_modules_install_and_list_pipeline,
-                               test_modules_list_pipeline,
-                               test_modules_list_remote)
-    from .modules.module_test import (test_modules_test_check_inputs,
-                                      test_modules_test_no_name_no_prompts)
-    from .modules.remove import (test_modules_remove_trimgalore,
-                                 test_modules_remove_trimgalore_uninstalled)
+        test_modules_create_test_yml_get_md5,
+        test_modules_custom_yml_dumper,
+        test_modules_test_file_dict,
+    )
+    from .modules.install import (
+        test_modules_install_emptypipeline,
+        test_modules_install_nomodule,
+        test_modules_install_nopipeline,
+        test_modules_install_trimgalore,
+        test_modules_install_trimgalore_twice,
+    )
+    from .modules.lint import (
+        test_modules_lint_empty,
+        test_modules_lint_new_modules,
+        test_modules_lint_trimgalore,
+    )
+    from .modules.list import (
+        test_modules_install_and_list_pipeline,
+        test_modules_list_pipeline,
+        test_modules_list_remote,
+    )
+    from .modules.module_test import (
+        test_modules_test_check_inputs,
+        test_modules_test_no_name_no_prompts,
+    )
+    from .modules.remove import (
+        test_modules_remove_trimgalore,
+        test_modules_remove_trimgalore_uninstalled,
+    )

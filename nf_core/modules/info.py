@@ -11,8 +11,12 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .module_utils import (get_installed_modules, get_module_git_log,
-                           get_repo_type, module_exist_in_repo)
+from .module_utils import (
+    get_installed_modules,
+    get_module_git_log,
+    get_repo_type,
+    module_exist_in_repo,
+)
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 

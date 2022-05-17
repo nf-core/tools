@@ -15,8 +15,11 @@ from rich.syntax import Syntax
 import nf_core.modules.module_utils
 import nf_core.utils
 
-from .module_utils import (get_installed_modules, get_module_git_log,
-                           module_exist_in_repo)
+from .module_utils import (
+    get_installed_modules,
+    get_module_git_log,
+    module_exist_in_repo,
+)
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
