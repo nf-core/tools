@@ -2,31 +2,32 @@
 """
 Common utility functions for the nf-core python package.
 """
-import nf_core
-
-from distutils import version
 import datetime
 import errno
-import git
 import hashlib
 import json
 import logging
 import mimetypes
 import os
-import prompt_toolkit
-import questionary
 import random
 import re
-import requests
-import requests_cache
-import rich
 import shlex
 import subprocess
 import sys
 import time
+from distutils import version
+
+import git
+import prompt_toolkit
+import questionary
+import requests
+import requests_cache
+import rich
 import yaml
 from rich.live import Live
 from rich.spinner import Spinner
+
+import nf_core
 
 log = logging.getLogger(__name__)
 

@@ -3,12 +3,13 @@
 
 from __future__ import print_function
 
-from datetime import datetime
-import git
 import json
 import logging
 import os
 import re
+from datetime import datetime
+
+import git
 import requests
 import rich.console
 import rich.table
