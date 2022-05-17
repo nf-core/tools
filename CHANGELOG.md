@@ -30,6 +30,7 @@
 - Remove empty JSON schema definition groups to avoid usage errors ([#1419](https://github.com/nf-core/tools/issues/1419))
 - Bumped the minimum version of `rich` from `v10` to `v10.7.0`
 
+
 ### Modules
 
 - Add a new command `nf-core modules mulled` which can generate the name for a multi-tool container image.
