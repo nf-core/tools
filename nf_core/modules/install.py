@@ -131,6 +131,10 @@ class ModuleInstall(ModuleCommand):
         if not self.download_module_file(module, version, self.modules_repo, install_folder):
             return False
 
+        # Print include statement
+        module_name = "_".join(module.upper().split("/"))
+        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main’")
+
         # Update module.json with newly installed module
         self.update_modules_json(modules_json, self.modules_repo.name, module, version)
         return True

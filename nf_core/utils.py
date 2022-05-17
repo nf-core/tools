@@ -2,30 +2,31 @@
 """
 Common utility functions for the nf-core python package.
 """
+import nf_core
+
+from distutils import version
 import datetime
 import errno
+import git
 import hashlib
 import json
 import logging
 import mimetypes
 import os
+import prompt_toolkit
+import questionary
+import random
 import re
+import requests
+import requests_cache
+import rich
 import shlex
 import subprocess
 import sys
 import time
-from distutils import version
-
-import git
-import prompt_toolkit
-import questionary
-import requests
-import requests_cache
 import yaml
 from rich.live import Live
 from rich.spinner import Spinner
-
-import nf_core
 
 log = logging.getLogger(__name__)
 
@@ -46,6 +47,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
         ("choice-default-changed", "fg:ansiyellow"),
         ("choice-required", "fg:ansired"),
     ]
+)
+
+NFCORE_CONFIG_DIR = os.path.join(
+    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")),
+    "nf-core",
 )
 
 
@@ -78,17 +84,6 @@ def rich_force_colors():
     """
     if os.getenv("GITHUB_ACTIONS") or os.getenv("FORCE_COLOR") or os.getenv("PY_COLORS"):
         return True
-    return None
-
-
-def github_api_auto_auth():
-    try:
-        with open(os.path.join(os.path.expanduser("~/.config/gh/hosts.yml")), "r") as fh:
-            auth = yaml.safe_load(fh)
-            log.debug("Auto-authenticating GitHub API as '@{}'".format(auth["github.com"]["user"]))
-            return requests.auth.HTTPBasicAuth(auth["github.com"]["user"], auth["github.com"]["oauth_token"])
-    except Exception as e:
-        log.debug(f"Couldn't auto-auth for GitHub: [red]{e}")
     return None
 
 
@@ -306,21 +301,28 @@ def setup_requests_cachedir():
     """Sets up local caching for faster remote HTTP requests.
 
     Caching directory will be set up in the user's home directory under
-    a .nfcore_cache subdir.
+    a .config/nf-core/cache_* subdir.
+
+    Uses requests_cache monkey patching.
+    Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(os.getenv("HOME"), os.path.join(".nfcore", "cache_" + pyversion))
+    cachedir = os.path.join(NFCORE_CONFIG_DIR, f"cache_{pyversion}")
+
+    config = {
+        "cache_name": os.path.join(cachedir, "github_info"),
+        "expire_after": datetime.timedelta(hours=1),
+        "backend": "sqlite",
+    }
 
     try:
         if not os.path.exists(cachedir):
             os.makedirs(cachedir)
-        requests_cache.install_cache(
-            os.path.join(cachedir, "github_info"),
-            expire_after=datetime.timedelta(hours=1),
-            backend="sqlite",
-        )
+        requests_cache.install_cache(**config)
     except PermissionError:
         pass
+
+    return config
 
 
 def wait_cli_function(poll_func, poll_every=20):
@@ -385,6 +387,157 @@ def poll_nfcore_web_api(api_url, post_data=None):
                     )
                 else:
                     return web_response
+
+
+class GitHub_API_Session(requests_cache.CachedSession):
+    """
+    Class to provide a single session for interacting with the GitHub API for a run.
+    Inherits the requests_cache.CachedSession and adds additional functionality,
+    such as automatically setting up GitHub authentication if we can.
+    """
+
+    def __init__(self):
+        self.auth_mode = None
+        self.return_ok = [200, 201]
+        self.return_retry = [403]
+        self.has_init = False
+
+    def lazy_init(self):
+        """
+        Initialise the object.
+
+        Only do this when it's actually being used (due to global import)
+        """
+        log.debug("Initialising GitHub API requests session")
+        cache_config = setup_requests_cachedir()
+        super().__init__(**cache_config)
+        self.setup_github_auth()
+        self.has_init = True
+
+    def setup_github_auth(self, auth=None):
+        """
+        Try to automatically set up GitHub authentication
+        """
+        if auth is not None:
+            self.auth = auth
+            self.auth_mode = "supplied to function"
+
+        # Class for Bearer token authentication
+        # https://stackoverflow.com/a/58055668/713980
+        class BearerAuth(requests.auth.AuthBase):
+            def __init__(self, token):
+                self.token = token
+
+            def __call__(self, r):
+                r.headers["authorization"] = f"Bearer {self.token}"
+                return r
+
+        # Default auth if we're running and the gh CLI tool is installed
+        gh_cli_config_fn = os.path.expanduser("~/.config/gh/hosts.yml")
+        if self.auth is None and os.path.exists(gh_cli_config_fn):
+            try:
+                with open(gh_cli_config_fn, "r") as fh:
+                    gh_cli_config = yaml.safe_load(fh)
+                    self.auth = requests.auth.HTTPBasicAuth(
+                        gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
+                    )
+                    self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
+            except Exception as e:
+                ex_type, ex_value, ex_traceback = sys.exc_info()
+                output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
+                log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
+
+        # Default auth if we have a GitHub Token (eg. GitHub Actions CI)
+        if os.environ.get("GITHUB_TOKEN") is not None and self.auth is None:
+            self.auth_mode = "Bearer token with GITHUB_TOKEN"
+            self.auth = BearerAuth(os.environ["GITHUB_TOKEN"])
+
+        log.debug(f"Using GitHub auth: {self.auth_mode}")
+
+    def log_content_headers(self, request, post_data=None):
+        """
+        Try to dump everything to the console, useful when things go wrong.
+        """
+        log.debug(f"Requested URL: {request.url}")
+        log.debug(f"From requests cache: {request.from_cache}")
+        log.debug(f"Request status code: {request.status_code}")
+        log.debug(f"Request reason: {request.reason}")
+        if post_data is None:
+            post_data = {}
+        try:
+            log.debug(json.dumps(dict(request.headers), indent=4))
+            log.debug(json.dumps(request.json(), indent=4))
+            log.debug(json.dumps(post_data, indent=4))
+        except Exception as e:
+            log.debug(f"Could not parse JSON response from GitHub API! {e}")
+            log.debug(request.headers)
+            log.debug(request.content)
+            log.debug(post_data)
+
+    def safe_get(self, url):
+        """
+        Run a GET request, raise a nice exception with lots of logging if it fails.
+        """
+        if not self.has_init:
+            self.lazy_init()
+        request = self.get(url)
+        if request.status_code not in self.return_ok:
+            self.log_content_headers(request)
+            raise AssertionError(f"GitHub API PR failed - got return code {request.status_code} from {url}")
+        return request
+
+    def get(self, url, **kwargs):
+        """
+        Initialise the session if we haven't already, then call the superclass get method.
+        """
+        if not self.has_init:
+            self.lazy_init()
+        return super().get(url, **kwargs)
+
+    def request_retry(self, url, post_data=None):
+        """
+        Try to fetch a URL, keep retrying if we get a certain return code.
+
+        Used in nf-core sync code because we get 403 errors: too many simultaneous requests
+        See https://github.com/nf-core/tools/issues/911
+        """
+        if not self.has_init:
+            self.lazy_init()
+
+        # Start the loop for a retry mechanism
+        while True:
+            # GET request
+            if post_data is None:
+                log.debug(f"Seding GET request to {url}")
+                r = self.get(url=url)
+            # POST request
+            else:
+                log.debug(f"Seding POST request to {url}")
+                r = self.post(url=url, json=post_data)
+
+            # Failed but expected - try again
+            if r.status_code in self.return_retry:
+                self.log_content_headers(r, post_data)
+                log.debug(f"GitHub API PR failed - got return code {r.status_code}")
+                wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
+                if wait_time == 0:
+                    log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
+                    wait_time = random.randrange(10, 60)
+                log.warning(f"Got API return code {r.status_code}. Trying again after {wait_time} seconds..")
+                time.sleep(wait_time)
+
+            # Unexpected error - raise
+            elif r.status_code not in self.return_ok:
+                self.log_content_headers(r, post_data)
+                raise RuntimeError(f"GitHub API PR failed - got return code {r.status_code} from {url}")
+
+            # Success!
+            else:
+                return r
+
+
+# Single session object to use for entire codebase. Not sure if there's a better way to do this?
+gh_api = GitHub_API_Session()
 
 
 def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
@@ -628,9 +781,9 @@ def prompt_remote_pipeline_name(wfs):
     else:
         if pipeline.count("/") == 1:
             try:
-                gh_response = requests.get(f"https://api.github.com/repos/{pipeline}")
-                assert gh_response.json().get("message") != "Not Found"
-            except AssertionError:
+                gh_api.get(f"https://api.github.com/repos/{pipeline}")
+            except Exception:
+                # No repo found - pass and raise error at the end
                 pass
             else:
                 return pipeline
@@ -707,7 +860,7 @@ def get_repo_releases_branches(pipeline, wfs):
             )
 
             # Get releases from GitHub API
-            rel_r = requests.get(f"https://api.github.com/repos/{pipeline}/releases")
+            rel_r = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/releases")
 
             # Check that this repo existed
             try:
@@ -715,13 +868,13 @@ def get_repo_releases_branches(pipeline, wfs):
             except AssertionError:
                 raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
-                # When things are working we get a list, which doesn't work with .get()
+                # Success! We have a list, which doesn't work with .get() which is looking for a dict key
                 wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
 
                 # Get release tag commit hashes
                 if len(wf_releases) > 0:
                     # Get commit hash information for each release
-                    tags_r = requests.get(f"https://api.github.com/repos/{pipeline}/tags")
+                    tags_r = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/tags")
                     for tag in tags_r.json():
                         for release in wf_releases:
                             if tag["name"] == release["tag_name"]:
@@ -732,7 +885,7 @@ def get_repo_releases_branches(pipeline, wfs):
             raise AssertionError(f"Not able to find pipeline '{pipeline}'")
 
     # Get branch information from github api - should be no need to check if the repo exists again
-    branch_response = requests.get(f"https://api.github.com/repos/{pipeline}/branches")
+    branch_response = gh_api.safe_get(f"https://api.github.com/repos/{pipeline}/branches")
     for branch in branch_response.json():
         if (
             branch["name"] != "TEMPLATE"

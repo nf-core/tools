@@ -57,6 +57,7 @@ def main_nf(module_lint_object, module):
     state = "module"
     process_lines = []
     script_lines = []
+    shell_lines = []
     when_lines = []
     for l in lines:
         if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
@@ -73,12 +74,15 @@ def main_nf(module_lint_object, module):
         if re.search("script\s*:", l) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
+        if re.search("shell\s*:", l) and state in ["input", "output", "when", "process"]:
+            state = "shell"
+            continue
 
         # Perform state-specific linting checks
         if state == "process" and not _is_empty(module, l):
             process_lines.append(l)
         if state == "input" and not _is_empty(module, l):
-            inputs += _parse_input(module, l)
+            inputs.extend(_parse_input(module, l))
         if state == "output" and not _is_empty(module, l):
             outputs += _parse_output(module, l)
             outputs = list(set(outputs))  # remove duplicate 'meta's
@@ -86,6 +90,14 @@ def main_nf(module_lint_object, module):
             when_lines.append(l)
         if state == "script" and not _is_empty(module, l):
             script_lines.append(l)
+        if state == "shell" and not _is_empty(module, l):
+            shell_lines.append(l)
+
+    # Check that we have required sections
+    if not len(outputs):
+        module.failed.append(("main_nf_script_outputs", "No process 'output' block found", module.main_nf))
+    else:
+        module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
     if check_process_section(module, process_lines):
@@ -96,8 +108,20 @@ def main_nf(module_lint_object, module):
     # Check the when statement
     check_when_section(module, when_lines)
 
+    # Check that we have script or shell, not both
+    if len(script_lines) and len(shell_lines):
+        module.failed.append(("main_nf_script_shell", "Script and Shell found, should use only one", module.main_nf))
+
     # Check the script definition
-    check_script_section(module, script_lines)
+    if len(script_lines):
+        check_script_section(module, script_lines)
+
+    # Check that shell uses a template
+    if len(shell_lines):
+        if any("template" in l for l in shell_lines):
+            module.passed.append(("main_nf_shell_template", "`template` found in `shell` block", module.main_nf))
+        else:
+            module.failed.append(("main_nf_shell_template", "No `template` found in `shell` block", module.main_nf))
 
     # Check whether 'meta' is emitted when given as input
     if inputs:
@@ -197,7 +221,7 @@ def check_process_section(self, lines):
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
     process_label = [l for l in lines if "label" in l]
     if len(process_label) > 0:
-        process_label = process_label[0].split()[1].strip().strip("'").strip('"')
+        process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
         if not process_label in correct_process_labels:
             self.warned.append(
                 (
@@ -212,23 +236,17 @@ def check_process_section(self, lines):
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
 
     for l in lines:
-        l = l.strip()
-        l = l.replace('"', "")
-        l = l.replace("'", "")
         if re.search("bioconda::", l):
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+        l = l.strip(" '\"")
         if l.startswith("https://containers") or l.startswith("https://depot"):
-            lspl = l.lstrip("https://").split(":")
-            if len(lspl) == 2:
-                # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
-                singularity_tag = "_".join(lspl[0].split("/")[-1].strip().rstrip(".img").split("_")[1:])
-            else:
-                # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
-                singularity_tag = lspl[-2].strip()
+            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
+            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
+            singularity_tag = re.search("(?:\/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_\.]+)(?:\.img)?['\"]", l).group(1)
         if l.startswith("biocontainers/") or l.startswith("quay.io/"):
-            # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
-            # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
-            docker_tag = l.split(":")[-1].strip("}").strip()
+            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
+            # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
+            docker_tag = re.search("(?:[\/])?(?::)?([A-Za-z\d\-_\.]+)['\"]", l).group(1)
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -246,7 +264,9 @@ def check_process_section(self, lines):
         else:
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
-                self.failed.append(("bioconda_version", "Conda package had unknown version: `{}`", self.main_nf))
+                self.failed.append(
+                    ("bioconda_version", f"Conda package had unknown version: `{bioconda_version}`", self.main_nf)
+                )
                 continue  # No need to test for latest version, continue linting
             # Check version is latest available
             last_ver = response.get("latest_version")
@@ -264,26 +284,41 @@ def check_process_section(self, lines):
         return False
 
 
-def _parse_input(self, line):
-    input = []
+def _parse_input(self, line_raw):
+    """
+    Return list of input channel names from an input line.
+
+    If more than one elements in channel should work with both of:
+        tuple val(meta), path(reads)
+        tuple val(meta), path(reads, stageAs: "input*/*")
+
+    If using a tuple, channel names must be in (parentheses)
+    """
+    inputs = []
+    # Remove comments and trailing whitespace
+    line = line_raw.split("//")[0]
     line = line.strip()
+    # Tuples with multiple elements
     if "tuple" in line:
-        # If more than one elements in channel should work with both of:
-        # e.g. tuple val(meta), path(reads)
-        # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
-        line = line.replace("tuple", "")
-        line = line.replace(" ", "")
-        for idx, elem in enumerate(line.split(")")):
-            if elem:
-                elem = elem.split("(")[1]
-                elem = elem.split(",")[0].strip()
-                input.append(elem)
+        matches = re.findall("\((\w+)\)", line)
+        if matches:
+            inputs.extend(matches)
+        else:
+            self.failed.append(
+                (
+                    "main_nf_input_tuple",
+                    f"Found tuple but no channel names: `{line}`",
+                    self.main_nf,
+                )
+            )
+    # Single element inputs
     else:
         if "(" in line:
-            input.append(line.split("(")[1].replace(")", ""))
+            match = re.search("\((\w+)\)", line)
+            inputs.append(match.group(1))
         else:
-            input.append(line.split()[1])
-    return input
+            inputs.append(line.split()[1])
+    return inputs
 
 
 def _parse_output(self, line):

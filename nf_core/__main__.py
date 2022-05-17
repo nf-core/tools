@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
-
+from rich import print
 import logging
 import os
 import re
-import sys
-
 import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
-from rich import print
+import sys
 
 import nf_core
 import nf_core.bump_version
@@ -50,7 +48,7 @@ click.rich_click.COMMAND_GROUPS = {
         },
         {
             "name": "Developing new modules",
-            "commands": ["create", "create-test-yml", "lint", "bump-versions"],
+            "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled", "test"],
         },
     ],
 }
@@ -670,6 +668,69 @@ def bump_versions(ctx, tool, dir, all, show_all):
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
+    except UserWarning as e:
+        log.critical(e)
+        sys.exit(1)
+
+
+# nf-core modules mulled
+@modules.command()
+@click.argument("specifications", required=True, nargs=-1, metavar="<tool==version> <...>")
+@click.option(
+    "--build-number",
+    type=int,
+    default=0,
+    show_default=True,
+    metavar="<number>",
+    help="The build number for this image. This is an incremental value that starts at zero.",
+)
+def mulled(specifications, build_number):
+    """
+    Generate the name of a BioContainers mulled image version 2.
+
+    When you know the specific dependencies and their versions of a multi-tool container image and you need the name of
+    that image, this command can generate it for you.
+
+    """
+    from nf_core.modules.mulled import MulledImageNameGenerator
+
+    try:
+        image_name = MulledImageNameGenerator.generate_image_name(
+            MulledImageNameGenerator.parse_targets(specifications), build_number=build_number
+        )
+    except ValueError as e:
+        log.error(e)
+        sys.exit(1)
+    if not MulledImageNameGenerator.image_exists(image_name):
+        log.error("The generated multi-tool container image name does not seem to exist yet.")
+        log.info(
+            "Please double check that your provided combination of tools and versions exists in the file: "
+            "[link=https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv]BioContainers/multi-package-containers 'combinations/hash.tsv'[/link]"
+        )
+        log.info(
+            "If it does not, please add your desired combination as detailed at: "
+            "https://github.com/BioContainers/multi-package-containers"
+        )
+        sys.exit(1)
+    log.info("Mulled container hash:")
+    print(image_name)
+
+
+# nf-core modules test
+@modules.command("test")
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option("-p", "--no-prompts", is_flag=True, default=False, help="Use defaults without prompting")
+@click.option("-a", "--pytest_args", type=str, required=False, multiple=True, help="Additional pytest arguments")
+def test_module(ctx, tool, no_prompts, pytest_args):
+    """
+    Run module tests locally.
+
+    Given the name of a module, runs the Nextflow test command.
+    """
+    try:
+        meta_builder = nf_core.modules.ModulesTest(tool, no_prompts, pytest_args)
+        meta_builder.run()
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)

@@ -302,6 +302,7 @@ class ModuleCommand:
         modules_json_path = os.path.join(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
+            fh.write("\n")
 
     def load_lint_config(self):
         """Parse a pipeline lint config file.

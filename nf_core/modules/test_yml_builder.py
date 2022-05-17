@@ -164,9 +164,9 @@ class ModulesTestYmlBuilder(object):
                 ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
 
         while ep_test["command"] == "":
-            default_val = (
-                f"nextflow run tests/modules/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
-            )
+            # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
+            # See https://github.com/nf-core/tools/issues/1562
+            default_val = f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config  -c ./tests/modules/{self.module_name}/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -225,21 +225,25 @@ class ModulesTestYmlBuilder(object):
     def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
-        for root, dir, file in os.walk(results_dir):
-            for elem in file:
-                elem = os.path.join(root, elem)
-                test_file = {"path": elem}  # add the key here so that it comes first in the dict
+        for root, dir, files in os.walk(results_dir, followlinks=True):
+            for filename in files:
+                # Check that the file is not versions.yml
+                if filename == "versions.yml":
+                    continue
+                file_path = os.path.join(root, filename)
+                # add the key here so that it comes first in the dict
+                test_file = {"path": file_path}
                 # Check that this isn't an empty file
-                if self.check_if_empty_file(elem):
+                if self.check_if_empty_file(file_path):
                     if not is_repeat:
-                        self.errors.append(f"Empty file found! '{os.path.basename(elem)}'")
+                        self.errors.append(f"Empty file found! '{os.path.basename(file_path)}'")
                 # Add the md5 anyway, linting should fail later and can be manually removed if needed.
                 #  Originally we skipped this if empty, but then it's too easy to miss the warning.
                 #  Equally, if a file is legitimately empty we don't want to prevent this from working.
-                elem_md5 = self._md5(elem)
-                test_file["md5sum"] = elem_md5
+                file_md5 = self._md5(file_path)
+                test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
-                test_file["path"] = elem.replace(results_dir, "output")
+                test_file["path"] = file_path.replace(results_dir, "output")
                 test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
@@ -330,12 +334,16 @@ class ModulesTestYmlBuilder(object):
                     "It looks like Nextflow is not installed. It is required for most nf-core functions."
                 )
         except subprocess.CalledProcessError as e:
-            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{e.output.decode()}")
+            output = rich.markup.escape(e.output.decode())
+            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{output}")
         except Exception as e:
             raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
-            log.debug(nfconfig_raw)
+            try:
+                log.debug(rich.markup.escape(nfconfig_raw))
+            except TypeError:
+                log.debug(rich.markup.escape(nfconfig_raw.decode("utf-8")))
 
         return tmp_dir, tmp_dir_repeat
 

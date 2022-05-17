@@ -353,7 +353,7 @@ class ModuleLint(ModuleCommand):
 
         # Find maximum module name length
         max_mod_name_len = 40
-        for idx, tests in enumerate([self.passed, self.warned, self.failed]):
+        for tests in [self.passed, self.warned, self.failed]:
             try:
                 for lint_result in tests:
                     max_mod_name_len = max(len(lint_result.module_name), max_mod_name_len)
@@ -369,19 +369,16 @@ class ModuleLint(ModuleCommand):
             # TODO: Row styles don't work current as table-level style overrides.
             # I'd like to make an issue about this on the rich repo so leaving here in case there is a future fix
             last_modname = False
-            row_style = None
+            even_row = False
             for lint_result in test_results:
                 if last_modname and lint_result.module_name != last_modname:
-                    if row_style:
-                        row_style = None
-                    else:
-                        row_style = "magenta"
+                    even_row = not even_row
                 last_modname = lint_result.module_name
                 table.add_row(
                     Markdown(f"{lint_result.module_name}"),
                     os.path.relpath(lint_result.file_path, self.dir),
                     Markdown(f"{lint_result.message}"),
-                    style=row_style,
+                    style="dim" if even_row else None,
                 )
             return table
 
@@ -390,46 +387,59 @@ class ModuleLint(ModuleCommand):
                 return "s"
             return ""
 
-        # Print module linting results header
-        console.print(Panel("[magenta]Module lint results"))
+        # Print blank line for spacing
+        console.print("")
 
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
-            console.print(
-                rich.panel.Panel(r"[!] {} Test{} Passed".format(len(self.passed), _s(self.passed)), style="bold green")
-            )
-            table = Table(style="green", box=rich.box.ROUNDED)
+            table = Table(style="green", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("File path")
             table.add_column("Test message")
             table = format_result(self.passed, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    table,
+                    title=r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)),
+                    title_align="left",
+                    style="green",
+                    padding=0,
+                )
+            )
 
         # Table of warning tests
         if len(self.warned) > 0:
-            console.print(
-                rich.panel.Panel(
-                    r"[!] {} Test Warning{}".format(len(self.warned), _s(self.warned)), style="bold yellow"
-                )
-            )
-            table = Table(style="yellow", box=rich.box.ROUNDED)
+            table = Table(style="yellow", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("File path")
             table.add_column("Test message")
             table = format_result(self.warned, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    table,
+                    title=r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)),
+                    title_align="left",
+                    style="yellow",
+                    padding=0,
+                )
+            )
 
         # Table of failing tests
         if len(self.failed) > 0:
-            console.print(
-                rich.panel.Panel(r"[!] {} Test{} Failed".format(len(self.failed), _s(self.failed)), style="bold red")
-            )
-            table = Table(style="red", box=rich.box.ROUNDED)
+            table = Table(style="red", box=rich.box.MINIMAL, pad_edge=False, border_style="dim")
             table.add_column("Module name", width=max_mod_name_len)
             table.add_column("File path")
             table.add_column("Test message")
             table = format_result(self.failed, table)
-            console.print(table)
+            console.print(
+                rich.panel.Panel(
+                    table,
+                    title=r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)),
+                    title_align="left",
+                    style="red",
+                    padding=0,
+                )
+            )
 
     def print_summary(self):
         def _s(some_list):
