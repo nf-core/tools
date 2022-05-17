@@ -14,7 +14,7 @@ import nf_core.modules.module_utils
 log = logging.getLogger(__name__)
 
 
-def main_nf(module_lint_object, module, fix_version):
+def main_nf(module_lint_object, module, fix_version, progress_bar):
     """
     Lint a ``main.nf`` module file
 
@@ -106,7 +106,7 @@ def main_nf(module_lint_object, module, fix_version):
         module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines, fix_version):
+    if check_process_section(module, process_lines, fix_version, progress_bar):
         module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
     else:
         module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
@@ -196,7 +196,7 @@ def check_when_section(self, lines):
         self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines, fix_version):
+def check_process_section(self, lines, fix_version, progress_bar):
     """
     Lint the section of a module between the process definition
     and the 'input:' definition
@@ -281,7 +281,7 @@ def check_process_section(self, lines, fix_version):
                 # If a new version is available and fix is True, update the version
                 if fix_version:
                     if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
-                        log.info(f"Updating package {package} `{ver}` -> `{last_ver}`")
+                        progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
                         log.debug(f"Updating package {package} `{ver}` -> `{last_ver}`")
                         self.passed.append(
                             (
@@ -291,7 +291,7 @@ def check_process_section(self, lines, fix_version):
                             )
                         )
                     else:
-                        log.debug(f"Unable to updating package {package} `{ver}` -> `{last_ver}`")
+                        log.debug(f"Unable to update package {package} `{ver}` -> `{last_ver}`")
                         self.warned.append(
                             ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
                         )
