@@ -6,6 +6,7 @@ Lint the main.nf file of a module
 import re
 
 from galaxy.tool_util.deps.mulled.util import build_target
+import nf_core.modules.module_utils
 
 import nf_core
 
@@ -282,11 +283,10 @@ def check_process_section(self, lines, fix_version):
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
-    print(docker_tag, singularity_tag)
     if docker_tag == singularity_tag:
         # If linting was successful and a new version is available and fix is True
         if fix_version and update:
-            _fix_module_version(self, bioconda_version, last_ver, singularity_tag)
+            _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
         return True
     else:
         return False
@@ -351,22 +351,37 @@ def _is_empty(self, line):
     return empty
 
 
-def _fix_module_version(self, current_version, latest_version, singularity_tag):
+def _fix_module_version(self, current_version, latest_version, singularity_tag, response):
     """Updates the module version"""
     # Get target object from the latest version
-    target = build_target(self.module_name, latest_version)
+    build = _get_build(response)
 
-    with open(module.main_nf, "r") as source:
+    with open(self.main_nf, "r") as source:
         lines = source.readlines()
     # Replace outdated versions by the latest one
-    with open(module.main_nf, "w") as source:
+    with open(self.main_nf, "w") as source:
         for line in lines:
-            line = line.strip(" '\"")
-            build_type = _container_type(line)
+            l = line.strip(" '\"")
+            build_type = _container_type(l)
             if build_type == "bioconda":
                 source.write(re.sub(rf"{current_version}", f"{latest_version}", line))
             elif build_type == "singularity" or build_type == "docker":
-                source.write(re.sub(rf"{singularity_tag}", f"{target.build}", line))
+                source.write(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
+            else:
+                source.write(line)
+        ### CHECK URLS BEFORE WRITING
+        ### MOVE FUNCTION CALL UPPER TO WRITE LOG & DEBUG MESSAGES
+
+
+def _get_build(response):
+    """Get the build of the container version"""
+    build_times = []
+    latest_v = response.get("latest_version")
+    files = response.get("files")
+    for f in files:
+        if f.get("version") == latest_v:
+            build_times.append((f.get("upload_time"), f.get("attrs").get("build")))
+    return sorted(build_times, key=lambda tup: tup[0], reverse=True)[0][1]
 
 
 def _container_type(line):
