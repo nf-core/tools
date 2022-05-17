@@ -1,6 +1,5 @@
 # nf-core/tools: Changelog
 
-
 ## v2.5dev
 
 ### Template
