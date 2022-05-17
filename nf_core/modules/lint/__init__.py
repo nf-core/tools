@@ -306,6 +306,7 @@ class ModuleLint(ModuleCommand):
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
+            console=console,
         )
         with progress_bar:
             lint_progress = progress_bar.add_task(
@@ -316,9 +317,9 @@ class ModuleLint(ModuleCommand):
 
             for mod in modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
-                self.lint_module(mod, local=local, fix_version=fix_version)
+                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
 
-    def lint_module(self, mod, local=False, fix_version=False):
+    def lint_module(self, mod, progress_bar, local=False, fix_version=False):
         """
         Perform linting on one module
 
@@ -337,7 +338,7 @@ class ModuleLint(ModuleCommand):
 
         # Only check the main script in case of a local module
         if local:
-            self.main_nf(mod, fix_version)
+            self.main_nf(mod, fix_version, progress_bar)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             self.warned += [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
 
@@ -345,7 +346,7 @@ class ModuleLint(ModuleCommand):
         else:
             for test_name in self.lint_tests:
                 if test_name == "main_nf":
-                    getattr(self, test_name)(mod, fix_version)
+                    getattr(self, test_name)(mod, fix_version, progress_bar)
                 else:
                     getattr(self, test_name)(mod)
 
