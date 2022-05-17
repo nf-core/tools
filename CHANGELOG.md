@@ -4,6 +4,8 @@
 
 ### Template
 
+- Fix bug in pipeline readme logo URL ([#1589](https://github.com/nf-core/tools/issues/1589))
+
 ### General
 
 ### Modules
