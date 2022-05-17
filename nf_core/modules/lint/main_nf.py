@@ -5,9 +5,13 @@ Lint the main.nf file of a module
 
 import re
 import nf_core
+import logging
+import requests
 
 from galaxy.tool_util.deps.mulled.util import build_target
 import nf_core.modules.module_utils
+
+log = logging.getLogger(__name__)
 
 
 def main_nf(module_lint_object, module, fix_version):
@@ -211,7 +215,6 @@ def check_process_section(self, lines, fix_version):
     singularity_tag = "singularity"
     docker_tag = "docker"
     bioconda_packages = []
-    update = False
 
     # Process name should be all capital letters
     self.process_name = lines[0].split()[1]
@@ -275,17 +278,31 @@ def check_process_section(self, lines, fix_version):
             last_ver = response.get("latest_version")
             if last_ver is not None and last_ver != bioconda_version:
                 package, ver = bp.split("=", 1)
-                self.warned.append(
-                    ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                )
-                update = True
+                # If a new version is available and fix is True, update the version
+                if fix_version:
+                    if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
+                        log.info(f"Updating package {package} `{ver}` -> `{last_ver}`")
+                        log.debug(f"Updating package {package} `{ver}` -> `{last_ver}`")
+                        self.passed.append(
+                            (
+                                "bioconda_latest",
+                                f"Conda package has been updated to the latest available: `{bp}`",
+                                self.main_nf,
+                            )
+                        )
+                    else:
+                        log.debug(f"Unable to updating package {package} `{ver}` -> `{last_ver}`")
+                        self.warned.append(
+                            ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                        )
+                else:
+                    self.warned.append(
+                        ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                    )
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
     if docker_tag == singularity_tag:
-        # If linting was successful and a new version is available and fix is True
-        if fix_version and update:
-            _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
         return True
     else:
         return False
@@ -357,19 +374,34 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
 
     with open(self.main_nf, "r") as source:
         lines = source.readlines()
+
+    # Check if the new version + build exist and replace
+    new_lines = []
+    for line in lines:
+        l = line.strip(" '\"")
+        build_type = _container_type(l)
+        if build_type == "bioconda":
+            new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
+        elif build_type == "singularity" or build_type == "docker":
+            # Check that the new url is valid
+            new_url = re.search(
+                "(?:')(.+)(?:')", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
+            ).group(1)
+            response_new_container = requests.get(
+                "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
+            )
+            if response_new_container.status_code != 200:
+                return False
+            new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
+        else:
+            new_lines.append(line)
+
     # Replace outdated versions by the latest one
     with open(self.main_nf, "w") as source:
-        for line in lines:
-            l = line.strip(" '\"")
-            build_type = _container_type(l)
-            if build_type == "bioconda":
-                source.write(re.sub(rf"{current_version}", f"{latest_version}", line))
-            elif build_type == "singularity" or build_type == "docker":
-                source.write(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
-            else:
-                source.write(line)
-        ### CHECK URLS BEFORE WRITING
-        ### MOVE FUNCTION CALL UPPER TO WRITE LOG & DEBUG MESSAGES
+        for line in new_lines:
+            source.write(line)
+
+    return True
 
 
 def _get_build(response):
