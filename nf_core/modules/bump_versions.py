@@ -12,7 +12,6 @@ import rich
 from rich.console import Console
 from rich.table import Table
 from rich.markdown import Markdown
-import rich
 from nf_core.utils import rich_force_colors
 
 import nf_core.utils

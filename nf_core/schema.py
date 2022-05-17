@@ -5,7 +5,6 @@ from __future__ import print_function
 from rich.prompt import Confirm
 
 import copy
-import copy
 import jinja2
 import json
 import jsonschema

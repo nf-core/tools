@@ -21,7 +21,6 @@ import json
 from rich.table import Table
 from rich.markdown import Markdown
 from rich.panel import Panel
-import rich
 from nf_core.utils import rich_force_colors
 from nf_core.lint.pipeline_todos import pipeline_todos
 import sys
