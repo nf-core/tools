@@ -375,8 +375,14 @@ def _is_empty(self, line):
 
 
 def _fix_module_version(self, current_version, latest_version, singularity_tag, response):
-    """Updates the module version"""
-    # Get target object from the latest version
+    """Updates the module version
+
+    Changes the bioconda current version by the latest version.
+    Obtains the latest build from bioconda response
+    Checks that the new URLs for docker and singularity with the tag [version]--[build] are valid
+    Changes the docker and singularity URLs
+    """
+    # Get latest build
     build = _get_build(response)
 
     with open(self.main_nf, "r") as source:
@@ -412,7 +418,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
 
 
 def _get_build(response):
-    """Get the build of the container version"""
+    """Get the latest build of the container version"""
     build_times = []
     latest_v = response.get("latest_version")
     files = response.get("files")
