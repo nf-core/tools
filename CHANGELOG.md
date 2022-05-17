@@ -1,6 +1,13 @@
 # nf-core/tools: Changelog
 
-## v2.4.2dev
+
+## v2.5dev
+
+### Template
+
+### General
+
+### Modules
 
 - Add `fix` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
 
