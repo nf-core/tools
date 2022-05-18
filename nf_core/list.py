@@ -223,7 +223,7 @@ class Workflows(object):
         table.add_column("Last Pulled", justify="right")
         table.add_column("Have latest release?")
         for wf in filtered_workflows:
-            wf_name = "[bold][link=https://nf-co.re/{0}]{0}[/link]".format(wf.name, wf.full_name)
+            wf_name = "[bold][link=https://nf-co.re/{0}]{0}[/link]".format(wf.name)
             version = "[yellow]dev"
             if len(wf.releases) > 0:
                 version = "[blue]{}".format(wf.releases[-1]["tag_name"])
