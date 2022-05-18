@@ -82,7 +82,7 @@ jobs:
 
       # Run nf-core linting
       - name: nf-core lint
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned
 
       # Run the other nf-core commands
       - name: nf-core list
