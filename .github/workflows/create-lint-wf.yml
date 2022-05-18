@@ -61,6 +61,10 @@ jobs:
       - name: nf-core create
         run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
+      # Remove TODO statements
+      - name: remove TODO
+        run: find nf-core-testpipeline -type f -exec sed -i '/^\s*\/\/ TODO nf-core:/d' {} \;
+
       # Try syncing it before we change anything
       - name: nf-core sync
         run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
