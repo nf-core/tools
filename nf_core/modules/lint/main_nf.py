@@ -241,7 +241,7 @@ def check_process_section(self, lines):
         if l.startswith("https://containers") or l.startswith("https://depot"):
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
-            singularity_tag = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+)(?:\.img)?['\"]", l).group(1)
+            singularity_tag = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+)?(?:\.img)?['\"]", l).group(1)
         if l.startswith("biocontainers/") or l.startswith("quay.io/"):
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
