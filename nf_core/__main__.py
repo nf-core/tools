@@ -300,9 +300,10 @@ def create(name, description, author, version, no_git, force, outdir):
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
+def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -324,7 +325,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
     # Run the lint tests!
     try:
         lint_obj, module_lint_obj = nf_core.lint.run_linting(
-            dir, release, fix, key, show_passed, fail_ignored, markdown, json
+            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json
         )
         if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
             sys.exit(1)
