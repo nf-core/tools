@@ -11,7 +11,7 @@ def test_actions_schema_validation_missing_jobs(self):
 
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "r") as fh:
         awstest_yml = yaml.safe_load(fh)
-    awstest_yml["not_jobs"] = awstest_yml.pop("jobs")
+    awstest_yml.pop("jobs")
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:
         yaml.dump(awstest_yml, fh)
 
@@ -29,7 +29,7 @@ def test_actions_schema_validation_missing_on(self):
 
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "r") as fh:
         awstest_yml = yaml.safe_load(fh)
-    awstest_yml["not_on"] = awstest_yml.pop(True)
+    awstest_yml.pop(True)
     with open(os.path.join(new_pipeline, ".github", "workflows", "awstest.yml"), "w") as fh:
         yaml.dump(awstest_yml, fh)
 
