@@ -449,7 +449,7 @@ class ModuleLint(ModuleCommand):
 
         # Summary table
         table = Table(box=rich.box.ROUNDED)
-        table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
         table.add_row(
             r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
             style="green",
