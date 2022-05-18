@@ -63,7 +63,7 @@ jobs:
 
       # Remove TODO statements
       - name: remove TODO
-        run: find nf-core-testpipeline -type f -exec sed -i '/^\s*\/\/ TODO nf-core:/d' {} \;
+        run: find nf-core-testpipeline -type f -exec sed -i '/^\s*\/\/ TODO nf-core:/d' {} \; && git add . && git commit -a -m "remove todo statements"
 
       # Try syncing it before we change anything
       - name: nf-core sync
