@@ -451,7 +451,7 @@ class PipelineSchema(object):
             out += f"{definition.get('description', '')}\n\n"
             out += "".join([f"| {column.title()} " for column in columns])
             out += "|\n"
-            out += "".join([f"|-----------" for columns in columns])
+            out += "".join(["|-----------" for columns in columns])
             out += "|\n"
             for p_key, param in definition.get("properties", {}).items():
                 for column in columns:
@@ -469,10 +469,10 @@ class PipelineSchema(object):
 
         # Top-level ungrouped parameters
         if len(self.schema.get("properties", {})) > 0:
-            out += f"\n## Other parameters\n\n"
+            out += "\n## Other parameters\n\n"
             out += "".join([f"| {column.title()} " for column in columns])
             out += "|\n"
-            out += "".join([f"|-----------" for columns in columns])
+            out += "".join(["|-----------" for columns in columns])
             out += "|\n"
 
             for p_key, param in self.schema.get("properties", {}).items():

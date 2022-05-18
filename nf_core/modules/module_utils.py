@@ -135,7 +135,7 @@ def create_modules_json(pipeline_dir):
     modules_dir = f"{pipeline_dir}/modules"
 
     if not os.path.exists(modules_dir):
-        raise UserWarning(f"Can't find a ./modules directory. Is this a DSL2 pipeline?")
+        raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
     # Extract all modules repos in the pipeline directory
     repo_names = [
@@ -377,7 +377,7 @@ def get_repo_type(dir, repo_type=None, use_prompt=True):
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
-        log.warning(f"Can't find a '.nf-core.yml' file that defines 'repository_type'")
+        log.warning("Can't find a '.nf-core.yml' file that defines 'repository_type'")
         repo_type = questionary.select(
             "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
             choices=[

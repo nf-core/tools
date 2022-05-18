@@ -167,7 +167,7 @@ class ModuleCreate(object):
                 log.warning(
                     f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.tool}'"
                 )
-                if rich.prompt.Confirm.ask(f"[violet]Do you want to enter a different Bioconda package name?"):
+                if rich.prompt.Confirm.ask("[violet]Do you want to enter a different Bioconda package name?"):
                     self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
                     continue
                 else:
@@ -261,7 +261,7 @@ class ModuleCreate(object):
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
-                raise UserWarning(f"Could not open 'tests/config/pytest_modules.yml' file!")
+                raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())
         if self.repo_type == "modules":

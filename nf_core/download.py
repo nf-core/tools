@@ -262,7 +262,7 @@ class DownloadWorkflow(object):
                     ).unsafe_ask()
                     cachedir_path = os.path.abspath(os.path.expanduser(prompt_cachedir_path))
                     if prompt_cachedir_path == "":
-                        log.error(f"Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
+                        log.error("Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
                         cachedir_path = False
                     elif not os.path.isdir(cachedir_path):
                         log.error(f"'{cachedir_path}' is not a directory.")
@@ -311,7 +311,7 @@ class DownloadWorkflow(object):
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
             self.singularity_cache_only = rich.prompt.Confirm.ask(
-                f"[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
+                "[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
             )
 
         # Sanity check, for when passed as a cli flag
@@ -546,7 +546,7 @@ class DownloadWorkflow(object):
                     progress.update(task, advance=1)
 
                 for container in containers_cache:
-                    progress.update(task, description=f"Copying singularity images from cache")
+                    progress.update(task, description="Copying singularity images from cache")
                     self.singularity_copy_cache_image(*container)
                     progress.update(task, advance=1)
 

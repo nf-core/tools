@@ -24,7 +24,7 @@ def print_joint_summary(lint_obj, module_lint_obj):
 
     summary_colour = "red" if nbr_failed > 0 else "green"
     table = Table(box=rich.box.ROUNDED, style=summary_colour)
-    table.add_column(f"LINT RESULTS SUMMARY".format(nbr_passed), no_wrap=True)
+    table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
     table.add_row(r"[green][✔] {:>3} Test{} Passed".format(nbr_passed, _s(nbr_passed)))
     if nbr_fixed:
         table.add_row(r"[bright blue][?] {:>3} Test{} Fixed".format(nbr_fixed, _s(nbr_fixed)))

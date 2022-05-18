@@ -123,7 +123,7 @@ class ModuleVersionBumper(ModuleCommand):
 
         # If multiple versions - don't update! (can't update mulled containers)
         if not bioconda_packages or len(bioconda_packages) > 1:
-            self.failed.append((f"Ignoring mulled container", module.module_name))
+            self.failed.append(("Ignoring mulled container", module.module_name))
             return False
 
         # Don't update if blocked in blacklist
@@ -131,7 +131,7 @@ class ModuleVersionBumper(ModuleCommand):
         if module.module_name in self.bump_versions_config:
             config_version = self.bump_versions_config[module.module_name]
             if not config_version:
-                self.ignored.append((f"Omitting module due to config.", module.module_name))
+                self.ignored.append(("Omitting module due to config.", module.module_name))
                 return False
 
         # check for correct version and newer versions

@@ -337,7 +337,7 @@ class PipelineSync(object):
             else:
                 self.gh_pr_returned_data = r.json()
                 self.pr_url = self.gh_pr_returned_data["html_url"]
-                log.debug(f"GitHub API PR worked, return code 201")
+                log.debug(f"GitHub API PR worked, return code {r.status_code}")
                 log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
 
     def close_open_template_merge_prs(self):

@@ -59,7 +59,7 @@ def multiqc_config(self):
         orders.pop(summary_plugin_name)
         assert orders["software_versions"] == min(
             orders.values()
-        ), f"Section software_versions should have the second lowest order"
+        ), "Section software_versions should have the second lowest order"
     except (AssertionError, KeyError, TypeError) as e:
         failed.append(f"'assets/multiqc_config.yml' does not meet requirements: {e}")
     else:

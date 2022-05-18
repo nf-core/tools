@@ -89,7 +89,7 @@ class ModuleInstall(ModuleCommand):
         # Check that the module is not already installed
         if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
 
-            log.error(f"Module is already installed.")
+            log.error("Module is already installed.")
             repo_flag = "" if self.modules_repo.name == "nf-core/modules" else f"-g {self.modules_repo.name} "
             branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 

@@ -918,7 +918,7 @@ def load_tools_config(dir="."):
 
     if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
         log.error(
-            f"Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
+            "Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
         )
         return {}
 

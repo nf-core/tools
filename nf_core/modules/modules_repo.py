@@ -88,16 +88,14 @@ class ModulesRepo(object):
         if r.status_code == 404:
             raise LookupError(f"Repository / branch not found: {self.name} ({self.branch})\n{api_url}")
         elif r.status_code != 200:
-            raise LookupError(
-                f"Could not fetch {self.name} ({self.branch}) tree: {r.status_code}\n{api_url}"
-            )
+            raise LookupError(f"Could not fetch {self.name} ({self.branch}) tree: {r.status_code}\n{api_url}")
 
         result = r.json()
         assert result["truncated"] == False
 
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
-            if f["path"].startswith(f"modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
+            if f["path"].startswith("modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
                 # remove modules/ and /main.nf
                 self.modules_avail_module_names.append(f["path"].replace("modules/", "").replace("/main.nf", ""))
         if len(self.modules_avail_module_names) == 0:

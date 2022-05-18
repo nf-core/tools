@@ -418,7 +418,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Summary table
         summary_colour = "red" if len(self.failed) > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)
-        table.add_column(f"LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
         table.add_row(r"[green][✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)))
         if len(self.fix):
             table.add_row(r"[bright blue][?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)))
