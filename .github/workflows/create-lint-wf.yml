@@ -61,10 +61,6 @@ jobs:
       - name: nf-core create
         run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
-      # Remove TODO statements
-      - name: remove TODO
-        run: find nf-core-testpipeline -type f -exec sed -i '/^\s*\/\/ TODO nf-core:/d' {} \; && git add . && git commit -a -m "remove todo statements"
-
       # Try syncing it before we change anything
       - name: nf-core sync
         run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
@@ -83,6 +79,10 @@ jobs:
       # Update modules to the latest version
       - name: nf-core modules update
         run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
+
+       # Remove TODO statements
+      - name: remove TODO
+        run: find nf-core-testpipeline -type f -exec sed -i '/^\s*\/\/ TODO nf-core:/d' {} \;
 
       # Run nf-core linting
       - name: nf-core lint
