@@ -39,7 +39,7 @@ def bump_pipeline_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                fr"version\s*=\s*[\'\"]?{re.escape(current_version)}[\'\"]?",
+                rf"version\s*=\s*[\'\"]?{re.escape(current_version)}[\'\"]?",
                 f"version = '{new_version}'",
             )
         ],
@@ -69,7 +69,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                fr"nextflowVersion\s*=\s*[\'\"]?!>={re.escape(current_version)}[\'\"]?",
+                rf"nextflowVersion\s*=\s*[\'\"]?!>={re.escape(current_version)}[\'\"]?",
                 f"nextflowVersion = '!>={new_version}'",
             )
         ],
@@ -82,7 +82,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
         [
             (
                 # example: - NXF_VER: '20.04.0'
-                fr"- NXF_VER: [\'\"]{re.escape(current_version)}[\'\"]",
+                rf"- NXF_VER: [\'\"]{re.escape(current_version)}[\'\"]",
                 f"- NXF_VER: '{new_version}'",
             )
         ],
@@ -94,12 +94,12 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                fr"nextflow%20DSL2-%E2%89%A5{re.escape(current_version)}-23aa62.svg",
+                rf"nextflow%20DSL2-%E2%89%A5{re.escape(current_version)}-23aa62.svg",
                 f"nextflow%20DSL2-%E2%89%A5{new_version}-23aa62.svg",
             ),
             (
                 # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
-                fr"1\.\s*Install\s*\[`Nextflow`\]\(https:\/\/www\.nextflow\.io\/docs\/latest\/getstarted\.html#installation\)\s*\(`>={re.escape(current_version)}`\)",
+                rf"1\.\s*Install\s*\[`Nextflow`\]\(https:\/\/www\.nextflow\.io\/docs\/latest\/getstarted\.html#installation\)\s*\(`>={re.escape(current_version)}`\)",
                 f"1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={new_version}`)",
             ),
         ],

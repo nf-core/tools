@@ -249,9 +249,7 @@ def nextflow_config(self):
     # Check that the pipeline version contains ``dev``
     if not self.release_mode and "manifest.version" in self.nf_config:
         if self.nf_config["manifest.version"].strip(" '\"").endswith("dev"):
-            passed.append(
-                f"Config ``manifest.version`` ends in ``dev``: ``{self.nf_config['manifest.version']}``"
-            )
+            passed.append(f"Config ``manifest.version`` ends in ``dev``: ``{self.nf_config['manifest.version']}``")
         else:
             warned.append(
                 f"Config ``manifest.version`` should end in ``dev``: ``{self.nf_config['manifest.version']}``"
