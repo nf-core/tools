@@ -34,11 +34,11 @@ def schema_params(self):
 
     if len(removed_params) > 0:
         for param in removed_params:
-            warned.append("Schema param `{}` not found from nextflow config".format(param))
+            warned.append(f"Schema param `{param}` not found from nextflow config")
 
     if len(added_params) > 0:
         for param in added_params:
-            failed.append("Param `{}` from `nextflow config` not found in nextflow_schema.json".format(param))
+            failed.append(f"Param `{param}` from `nextflow config` not found in nextflow_schema.json")
 
     if len(removed_params) == 0 and len(added_params) == 0:
         passed.append("Schema matched params returned from nextflow config")

@@ -363,4 +363,4 @@ class ModulesTestYmlBuilder(object):
             with open(self.test_yml_output_path, "w") as fh:
                 yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
         except FileNotFoundError as e:
-            raise UserWarning("Could not create test.yml file: '{}'".format(e))
+            raise UserWarning(f"Could not create test.yml file: '{e}'")

@@ -129,9 +129,7 @@ class DownloadWorkflow(object):
 
         summary_log = [f"Pipeline revision: '{self.revision}'", f"Pull containers: '{self.container}'"]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
-            summary_log.append(
-                "Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
-            )
+            summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}")
 
         # Set an output filename now that we have the outdir
         if self.compress_type is not None:
@@ -222,16 +220,14 @@ class DownloadWorkflow(object):
                     )
                 )
                 log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
-                raise AssertionError(
-                    "Not able to find revision / branch '{}' for {}".format(self.revision, self.pipeline)
-                )
+                raise AssertionError(f"Not able to find revision / branch '{self.revision}' for {self.pipeline}")
 
         # Set the outdir
         if not self.outdir:
-            self.outdir = "{}-{}".format(self.pipeline.replace("/", "-").lower(), self.revision)
+            self.outdir = f"{self.pipeline.replace('/', '-').lower()}-{self.revision}"
 
         # Set the download URL and return
-        self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.wf_sha)
+        self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{self.wf_sha}.zip"
 
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
@@ -256,7 +252,7 @@ class DownloadWorkflow(object):
                 "This allows downloaded images to be cached in a central location."
             )
             if rich.prompt.Confirm.ask(
-                f"[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
+                "[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
                 # Prompt user for a cache directory path
                 cachedir_path = None
@@ -349,7 +345,7 @@ class DownloadWorkflow(object):
 
     def download_wf_files(self):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
-        log.debug("Downloading {}".format(self.wf_download_url))
+        log.debug(f"Downloading {self.wf_download_url}")
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
@@ -357,7 +353,7 @@ class DownloadWorkflow(object):
         zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
-        gh_name = "{}-{}".format(self.pipeline, self.wf_sha).split("/")[-1]
+        gh_name = f"{self.pipeline}-{self.wf_sha}".split("/")[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, "workflow"))
 
         # Make downloaded files executable
@@ -369,7 +365,7 @@ class DownloadWorkflow(object):
         """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`."""
         configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
         configs_local_dir = "configs-master"
-        log.debug("Downloading {}".format(configs_zip_url))
+        log.debug(f"Downloading {configs_zip_url}")
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
@@ -389,7 +385,7 @@ class DownloadWorkflow(object):
         nfconfig_fn = os.path.join(self.outdir, "workflow", "nextflow.config")
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
         repl_str = "${projectDir}/../configs/"
-        log.debug("Editing 'params.custom_config_base' in '{}'".format(nfconfig_fn))
+        log.debug(f"Editing 'params.custom_config_base' in '{nfconfig_fn}'")
 
         # Load the nextflow.config file into memory
         with open(nfconfig_fn, "r") as nfconfig_fh:
@@ -490,7 +486,7 @@ class DownloadWorkflow(object):
         # Remove duplicates and sort
         self.containers = sorted(list(set(containers_raw)))
 
-        log.info("Found {} container{}".format(len(self.containers), "s" if len(self.containers) > 1 else ""))
+        log.info(f"Found {len(self.containers)} container{'s' if len(self.containers) > 1 else ''}")
 
     def get_singularity_images(self):
         """Loop through container names and download Singularity images"""
@@ -648,7 +644,7 @@ class DownloadWorkflow(object):
         """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
         # Copy to destination folder if we have a cached version
         if cache_path and os.path.exists(cache_path):
-            log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+            log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             shutil.copyfile(cache_path, out_path)
 
     def singularity_download_image(self, container, out_path, cache_path, progress):
@@ -702,7 +698,7 @@ class DownloadWorkflow(object):
 
             # Copy cached download if we are using the cache
             if cache_path:
-                log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+                log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from cache to target directory")
                 shutil.copyfile(cache_path, out_path)
 
@@ -736,10 +732,10 @@ class DownloadWorkflow(object):
         output_path = cache_path or out_path
 
         # Pull using singularity
-        address = "docker://{}".format(container.replace("docker://", ""))
+        address = f"docker://{container.replace('docker://', '')}"
         singularity_command = ["singularity", "pull", "--name", output_path, address]
-        log.debug("Building singularity image: {}".format(address))
-        log.debug("Singularity command: {}".format(" ".join(singularity_command)))
+        log.debug(f"Building singularity image: {address}")
+        log.debug(f"Singularity command: {' '.join(singularity_command)}")
 
         # Progress bar to show that something is happening
         task = progress.add_task(container, start=False, total=False, progress_type="singularity_pull", current_log="")
@@ -758,7 +754,7 @@ class DownloadWorkflow(object):
 
         # Copy cached download if we are using the cache
         if cache_path:
-            log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+            log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             progress.update(task, current_log="Copying from cache to target directory")
             shutil.copyfile(cache_path, out_path)
 
@@ -766,12 +762,12 @@ class DownloadWorkflow(object):
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
-        log.debug("Creating archive: {}".format(self.output_filename))
+        log.debug(f"Creating archive: {self.output_filename}")
 
         # .tar.gz and .tar.bz2 files
         if self.compress_type == "tar.gz" or self.compress_type == "tar.bz2":
             ctype = self.compress_type.split(".")[1]
-            with tarfile.open(self.output_filename, "w:{}".format(ctype)) as tar:
+            with tarfile.open(self.output_filename, f"w:{ctype}") as tar:
                 tar.add(self.outdir, arcname=os.path.basename(self.outdir))
             tar_flags = "xzf" if ctype == "gz" else "xjf"
             log.info(f"Command to extract files: [bright_magenta]tar -{tar_flags} {self.output_filename}[/]")
@@ -805,7 +801,7 @@ class DownloadWorkflow(object):
         Raises:
             IOError, if the md5sum does not match the remote sum.
         """
-        log.debug("Validating image hash: {}".format(fname))
+        log.debug(f"Validating image hash: {fname}")
 
         # Calculate the md5 for the file on disk
         hash_md5 = hashlib.md5()
@@ -815,9 +811,9 @@ class DownloadWorkflow(object):
         file_hash = hash_md5.hexdigest()
 
         if expected is None:
-            log.info("MD5 checksum for '{}': [blue]{}[/]".format(fname, file_hash))
+            log.info(f"MD5 checksum for '{fname}': [blue]{file_hash}[/]")
         else:
             if file_hash == expected:
-                log.debug("md5 sum of image matches expected: {}".format(expected))
+                log.debug(f"md5 sum of image matches expected: {expected}")
             else:
-                raise IOError("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))
+                raise IOError(f"{fname} md5 does not match remote: {expected} - {file_hash}")

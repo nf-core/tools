@@ -198,7 +198,7 @@ class ModuleCreate(object):
         try:
             with open(os.devnull, "w") as devnull:
                 gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=devnull))
-            author_default = "@{}".format(gh_auth_user["login"])
+            author_default = f"@{gh_auth_user['login']}"
         except Exception as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
 
@@ -208,7 +208,7 @@ class ModuleCreate(object):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a valid GitHub username (must start with an '@')!")
             self.author = rich.prompt.Prompt.ask(
-                "[violet]GitHub Username:[/]{}".format(" (@author)" if author_default is None else ""),
+                f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
                 default=author_default,
             )
 
@@ -345,7 +345,7 @@ class ModuleCreate(object):
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob("{}/*/main.nf".format(os.path.join(self.directory, "modules", self.tool)))
+            tool_glob = glob.glob(f"{os.path.join(self.directory, 'modules', self.tool)}/*/main.nf")
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.tool_name}'"

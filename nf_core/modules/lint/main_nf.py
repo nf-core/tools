@@ -59,21 +59,21 @@ def main_nf(module_lint_object, module):
     shell_lines = []
     when_lines = []
     for l in lines:
-        if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
+        if re.search(r"^\s*process\s*\w*\s*{", l) and state == "module":
             state = "process"
-        if re.search("input\s*:", l) and state in ["process"]:
+        if re.search(r"input\s*:", l) and state in ["process"]:
             state = "input"
             continue
-        if re.search("output\s*:", l) and state in ["input", "process"]:
+        if re.search(r"output\s*:", l) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search("when\s*:", l) and state in ["input", "output", "process"]:
+        if re.search(r"when\s*:", l) and state in ["input", "output", "process"]:
             state = "when"
             continue
-        if re.search("script\s*:", l) and state in ["input", "output", "when", "process"]:
+        if re.search(r"script\s*:", l) and state in ["input", "output", "when", "process"]:
             state = "script"
             continue
-        if re.search("shell\s*:", l) and state in ["input", "output", "when", "process"]:
+        if re.search(r"shell\s*:", l) and state in ["input", "output", "when", "process"]:
             state = "shell"
             continue
 
@@ -154,14 +154,14 @@ def check_script_section(self, lines):
     script = "".join(lines)
 
     # check that process name is used for `versions.yml`
-    if re.search("\$\{\s*task\.process\s*\}", script):
+    if re.search(r"\$\{\s*task\.process\s*\}", script):
         self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
         self.warned.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
-        if re.search("\s*prefix\s*=\s*task.ext.prefix", script):
+        if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
             self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
         else:
             self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
@@ -299,7 +299,7 @@ def _parse_input(self, line_raw):
     line = line.strip()
     # Tuples with multiple elements
     if "tuple" in line:
-        matches = re.findall("\((\w+)\)", line)
+        matches = re.findall(r"\((\w+)\)", line)
         if matches:
             inputs.extend(matches)
         else:
@@ -313,7 +313,7 @@ def _parse_input(self, line_raw):
     # Single element inputs
     else:
         if "(" in line:
-            match = re.search("\((\w+)\)", line)
+            match = re.search(r"\((\w+)\)", line)
             inputs.append(match.group(1))
         else:
             inputs.append(line.split()[1])

@@ -309,7 +309,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == "nextflow run {}".format(self.template_dir)
+        assert self.launcher.nextflow_cmd == f"nextflow run {self.template_dir}"
 
     def test_build_command_nf(self):
         """Test the functionality to build a nextflow command - core nf customised"""
@@ -318,7 +318,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.nxf_flags["-name"] = "Test_Workflow"
         self.launcher.nxf_flags["-resume"] = True
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == 'nextflow run {} -name "Test_Workflow" -resume'.format(self.template_dir)
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.template_dir} -name "Test_Workflow" -resume'
 
     def test_build_command_params(self):
         """Test the functionality to build a nextflow command - params supplied"""
@@ -340,4 +340,4 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == 'nextflow run {} --input "custom_input"'.format(self.template_dir)
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.template_dir} --input "custom_input"'

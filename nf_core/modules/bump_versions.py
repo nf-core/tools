@@ -168,9 +168,9 @@ class ModuleVersionBumper(ModuleCommand):
 
             patterns = [
                 (bioconda_packages[0], f"'bioconda::{bioconda_tool_name}={last_ver}'"),
-                (r"quay.io/biocontainers/{}:[^'\"\s]+".format(bioconda_tool_name), docker_img),
+                (rf"quay.io/biocontainers/{bioconda_tool_name}:[^'\"\s]+", docker_img),
                 (
-                    r"https://depot.galaxyproject.org/singularity/{}:[^'\"\s]+".format(bioconda_tool_name),
+                    rf"https://depot.galaxyproject.org/singularity/{bioconda_tool_name}:[^'\"\s]+",
                     singularity_img,
                 ),
             ]
@@ -185,7 +185,7 @@ class ModuleVersionBumper(ModuleCommand):
                 for line in content.splitlines():
 
                     # Match the pattern
-                    matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
+                    matches_pattern = re.findall(rf"^.*{pattern[0]}.*$", line)
                     if matches_pattern:
                         found_match = True
 
@@ -295,9 +295,7 @@ class ModuleVersionBumper(ModuleCommand):
         if len(self.up_to_date) > 0 and self.show_up_to_date:
             console.print(
                 rich.panel.Panel(
-                    r"[!] {} Module{} version{} up to date.".format(
-                        len(self.up_to_date), _s(self.up_to_date), _s(self.up_to_date)
-                    ),
+                    rf"[!] {len(self.up_to_date)} Module{_s(self.up_to_date)} version{_s(self.up_to_date)} up to date.",
                     style="bold green",
                 )
             )
@@ -310,9 +308,7 @@ class ModuleVersionBumper(ModuleCommand):
         # Table of updated modules
         if len(self.updated) > 0:
             console.print(
-                rich.panel.Panel(
-                    r"[!] {} Module{} updated".format(len(self.updated), _s(self.updated)), style="bold yellow"
-                )
+                rich.panel.Panel(rf"[!] {len(self.updated)} Module{_s(self.updated)} updated", style="bold yellow")
             )
             table = Table(style="yellow", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
@@ -323,9 +319,7 @@ class ModuleVersionBumper(ModuleCommand):
         # Table of modules that couldn't be updated
         if len(self.failed) > 0:
             console.print(
-                rich.panel.Panel(
-                    r"[!] {} Module update{} failed".format(len(self.failed), _s(self.failed)), style="bold red"
-                )
+                rich.panel.Panel(rf"[!] {len(self.failed)} Module update{_s(self.failed)} failed", style="bold red")
             )
             table = Table(style="red", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)
@@ -336,9 +330,7 @@ class ModuleVersionBumper(ModuleCommand):
         # Table of modules ignored due to `.nf-core.yml`
         if len(self.ignored) > 0:
             console.print(
-                rich.panel.Panel(
-                    r"[!] {} Module update{} ignored".format(len(self.ignored), _s(self.ignored)), style="grey58"
-                )
+                rich.panel.Panel(rf"[!] {len(self.ignored)} Module update{_s(self.ignored)} ignored", style="grey58")
             )
             table = Table(style="grey58", box=rich.box.ROUNDED)
             table.add_column("Module name", width=max_mod_name_len)

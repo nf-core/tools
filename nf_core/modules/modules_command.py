@@ -88,7 +88,7 @@ class ModuleCommand:
         if self.repo_type == "modules":
             return True
         if self.dir is None or not os.path.exists(self.dir):
-            log.error("Could not find pipeline: {}".format(self.dir))
+            log.error(f"Could not find pipeline: {self.dir}")
             return False
         main_nf = os.path.join(self.dir, "main.nf")
         nf_config = os.path.join(self.dir, "nextflow.config")
@@ -251,10 +251,10 @@ class ModuleCommand:
                     log.debug(f"Parent directory not empty: '{parent_dir}'")
                 else:
                     log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
-            log.debug("Successfully removed {} module".format(module_name))
+            log.debug(f"Successfully removed {module_name} module")
             return True
         except OSError as e:
-            log.error("Could not remove module: {}".format(e))
+            log.error(f"Could not remove module: {e}")
             return False
 
     def download_module_file(self, module_name, module_version, modules_repo, install_folder, dry_run=False):
@@ -270,7 +270,7 @@ class ModuleCommand:
                 log.error(e)
                 return False
         if not dry_run:
-            log.info("Downloaded {} files to {}".format(len(files), os.path.join(*install_folder, module_name)))
+            log.info(f"Downloaded {len(files)} files to {os.path.join(*install_folder, module_name)}")
         return True
 
     def load_modules_json(self):
@@ -323,4 +323,4 @@ class ModuleCommand:
             with open(config_fn, "r") as fh:
                 self.lint_config = yaml.safe_load(fh)
         except FileNotFoundError:
-            log.debug("No lint config file found: {}".format(config_fn))
+            log.debug(f"No lint config file found: {config_fn}")

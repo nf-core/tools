@@ -109,7 +109,7 @@ def files_unchanged(self):
     # Generate a new pipeline with nf-core create that we can compare to
     tmp_dir = tempfile.mkdtemp()
 
-    test_pipeline_dir = os.path.join(tmp_dir, "nf-core-{}".format(short_name))
+    test_pipeline_dir = os.path.join(tmp_dir, f"nf-core-{short_name}")
     create_obj = nf_core.create.PipelineCreate(
         self.nf_config["manifest.name"].strip("\"'"),
         self.nf_config["manifest.description"].strip("\"'"),
@@ -133,11 +133,11 @@ def files_unchanged(self):
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):
-            ignored.append("File ignored due to lint config: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
         elif not any([os.path.isfile(_pf(f)) for f in files]):
-            ignored.append("File does not exist: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file has an identical match
         else:
@@ -163,11 +163,11 @@ def files_unchanged(self):
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):
-            ignored.append("File ignored due to lint config: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
         elif not any([os.path.isfile(_pf(f)) for f in files]):
-            ignored.append("File does not exist: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file contains the template file contents
         else:

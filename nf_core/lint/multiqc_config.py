@@ -35,7 +35,7 @@ def multiqc_config(self):
         with open(fn, "r") as fh:
             mqc_yml = yaml.safe_load(fh)
     except Exception as e:
-        return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
+        return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
     # Check that the report_comment exists and matches
     try:
