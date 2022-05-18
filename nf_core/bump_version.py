@@ -39,7 +39,7 @@ def bump_pipeline_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"version\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace(".", r"\.")),
+                r"version\s*=\s*[\'\"]?{}[\'\"]?".format(re.escape(current_version)),
                 "version = '{}'".format(new_version),
             )
         ],
@@ -69,7 +69,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflowVersion\s*=\s*[\'\"]?!>={}[\'\"]?".format(current_version.replace(".", r"\.")),
+                r"nextflowVersion\s*=\s*[\'\"]?!>={}[\'\"]?".format(re.escape(current_version)),
                 "nextflowVersion = '!>={}'".format(new_version),
             )
         ],
@@ -82,7 +82,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
         [
             (
                 # example: - NXF_VER: '20.04.0'
-                r"- NXF_VER: [\'\"]{}[\'\"]".format(current_version.replace(".", r"\.")),
+                r"- NXF_VER: [\'\"]{}[\'\"]".format(re.escape(current_version)),
                 "- NXF_VER: '{}'".format(new_version),
             )
         ],
@@ -94,13 +94,13 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(current_version.replace(".", r"\.")),
+                r"nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(re.escape(current_version)),
                 "nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(new_version),
             ),
             (
                 # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
                 r"1\.\s*Install\s*\[`Nextflow`\]\(https:\/\/www\.nextflow\.io\/docs\/latest\/getstarted\.html#installation\)\s*\(`>={}`\)".format(
-                    current_version.replace(".", r"\.")
+                    re.escape(current_version)
                 ),
                 "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={}`)".format(
                     new_version
