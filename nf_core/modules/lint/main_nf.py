@@ -283,7 +283,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 if fix_version:
                     if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
                         progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
-                        log.debug(f"Updating package {package} `{ver}` -> `{last_ver}`")
+                        log.debug(f"Updating package {package} {ver} -> {last_ver}")
                         self.passed.append(
                             (
                                 "bioconda_latest",
@@ -292,7 +292,10 @@ def check_process_section(self, lines, fix_version, progress_bar):
                             )
                         )
                     else:
-                        log.debug(f"Unable to update package {package} `{ver}` -> `{last_ver}`")
+                        progress_bar.print(
+                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                        )
+                        log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
                         self.warned.append(
                             ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
                         )
@@ -396,6 +399,9 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
             ).group(1)
             response_new_container = requests.get(
                 "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
+            )
+            log.debug(
+                f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
             )
             if response_new_container.status_code != 200:
                 return False
