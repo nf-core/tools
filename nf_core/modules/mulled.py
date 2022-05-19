@@ -3,11 +3,15 @@
 
 import logging
 import re
-from typing import Iterable, List, Tuple
+from typing import Iterable
+from typing import List
+from typing import Tuple
 
 import requests
-from galaxy.tool_util.deps.mulled.util import build_target, v2_image_name
-from packaging.version import InvalidVersion, Version
+from galaxy.tool_util.deps.mulled.util import build_target
+from galaxy.tool_util.deps.mulled.util import v2_image_name
+from packaging.version import InvalidVersion
+from packaging.version import Version
 
 log = logging.getLogger(__name__)
 

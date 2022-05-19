@@ -12,7 +12,8 @@ import mock
 
 import nf_core.launch
 
-from .utils import with_temporary_file, with_temporary_folder
+from .utils import with_temporary_file
+from .utils import with_temporary_folder
 
 
 class TestLaunch(unittest.TestCase):

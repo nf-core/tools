@@ -59,7 +59,7 @@ jobs:
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           allow-repeats: false
 
-  Isort:
+  isort:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source-code repository
@@ -73,7 +73,6 @@ jobs:
       - name: Install python dependencies
         run: |
           python -m pip install --upgrade pip -r requirements-dev.txt
-          pip install -e .
 
       - name: Install isort
         run: pip install isort
@@ -82,5 +81,4 @@ jobs:
         uses: isort/isort-action@v0.1.0
         with:
           isortVersion: "latest"
-          configuration: "--profile black"
           requirementsFiles: "requirements.txt requirements-dev.txt"
