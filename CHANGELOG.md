@@ -6,6 +6,10 @@
 
 - Fix bug in pipeline readme logo URL ([#1589](https://github.com/nf-core/tools/issues/1589))
 
+### Linting
+
+- Check that the `.prettierignore` file exists and that starts with the same content.
+
 ### General
 
 ### Modules
