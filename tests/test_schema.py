@@ -16,8 +16,7 @@ import yaml
 
 import nf_core.schema
 
-from .utils import with_temporary_file
-from .utils import with_temporary_folder
+from .utils import with_temporary_file, with_temporary_folder
 
 
 class TestSchema(unittest.TestCase):

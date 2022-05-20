@@ -15,8 +15,7 @@ import nf_core.create
 import nf_core.utils
 from nf_core.download import DownloadWorkflow
 
-from .utils import with_temporary_file
-from .utils import with_temporary_folder
+from .utils import with_temporary_file, with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):
