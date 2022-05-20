@@ -38,16 +38,6 @@ jobs:
           # Override to remove the default --check flag so that we make changes
           options: "--color"
 
-      - name: Commit & push changes
-        run: |
-          git config user.email "core@nf-co.re"
-          git config user.name "nf-core-bot"
-          git config push.default upstream
-          git add .
-          git status
-          git commit -m "[automated] Fix linting with Prettier"
-          git push
-
       - name: Set up Python 3.8
         uses: actions/setup-python@v2
         with:
@@ -62,3 +52,13 @@ jobs:
           isortVersion: "latest"
           requirementsFiles: "requirements.txt requirements-dev.txt"
           configuration: "--profile black --multi-line 3 --project nf-core"
+
+      - name: Commit & push changes
+        run: |
+          git config user.email "core@nf-co.re"
+          git config user.name "nf-core-bot"
+          git config push.default upstream
+          git add .
+          git status
+          git commit -m "[automated] Fix linting with Prettier"
+          git push
