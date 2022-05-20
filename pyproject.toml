@@ -19,4 +19,4 @@ norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__", ".githu
 [tool.isort]
 profile = "black"
 known_first_party = ["nf_core"]
-force_single_line = true
+multi_line_output = 3
