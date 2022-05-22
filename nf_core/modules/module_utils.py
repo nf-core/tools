@@ -92,15 +92,13 @@ def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     Fetches metadata about the commit (dates, message, etc.)
     Args:
         commit_sha (str): The SHA of the requested commit
-        repo_name (str): module repos name (def. {0})
+        repo_name (str): module repos name (def. nf-core/modules)
     Returns:
         message (str): The commit message for the requested commit
         date (str): The commit date for the requested commit
     Raises:
         LookupError: If the call to the API fails.
-    """.format(
-        repo_name
-    )
+    """
     api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
     response = gh_api.get(api_url)
