@@ -36,10 +36,7 @@ class ModuleCommand:
             raise UserWarning(e)
 
         if self.repo_type == "pipeline":
-            try:
-                nf_core.modules.module_utils.verify_pipeline_dir(self.dir)
-            except UserWarning:
-                raise
+            nf_core.modules.module_utils.verify_pipeline_dir(self.dir)
 
     def get_pipeline_modules(self):
         """
@@ -94,21 +91,16 @@ class ModuleCommand:
         nf_config = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
-        try:
-            self.has_modules_file()
-            return True
-        except UserWarning as e:
-            raise
+
+        self.has_modules_file()
+        return True
 
     def has_modules_file(self):
         """Checks whether a module.json file has been created and creates one if it is missing"""
         modules_json_path = os.path.join(self.dir, "modules.json")
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
-            try:
-                nf_core.modules.module_utils.create_modules_json(self.dir)
-            except UserWarning as e:
-                raise
+            nf_core.modules.module_utils.create_modules_json(self.dir)
 
     def modules_json_up_to_date(self):
         """

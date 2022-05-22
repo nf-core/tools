@@ -204,22 +204,19 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
     Returns:
         commit_sha (str): The latest commit SHA where local files are identical to remote files
     """
-    try:
-        # Find the correct commit SHA for the local files.
-        # We iterate over the commit log pages until we either
-        # find a matching commit or we reach the end of the commits
-        correct_commit_sha = None
-        commit_page_nbr = 1
-        while correct_commit_sha is None:
-            commit_shas = [
-                commit["git_sha"]
-                for commit in get_module_git_log(module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr)
-            ]
-            correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
-            commit_page_nbr += 1
-        return correct_commit_sha
-    except (UserWarning, LookupError) as e:
-        raise
+    # Find the correct commit SHA for the local files.
+    # We iterate over the commit log pages until we either
+    # find a matching commit or we reach the end of the commits
+    correct_commit_sha = None
+    commit_page_nbr = 1
+    while correct_commit_sha is None:
+        commit_shas = [
+            commit["git_sha"]
+            for commit in get_module_git_log(module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr)
+        ]
+        correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
+        commit_page_nbr += 1
+    return correct_commit_sha
 
 
 def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas):
@@ -483,9 +480,6 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
 def sha_exists(sha, modules_repo):
     i = 1
     while True:
-        try:
-            if sha in {commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=i)}:
-                return True
-            i += 1
-        except (UserWarning, LookupError):
-            raise
+        if sha in {commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=i)}:
+            return True
+        i += 1

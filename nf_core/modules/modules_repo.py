@@ -29,10 +29,7 @@ class ModulesRepo(object):
             if not self.branch:
                 self.get_default_branch()
 
-            try:
-                self.verify_modules_repo()
-            except LookupError:
-                raise
+            self.verify_modules_repo()
 
         self.owner, self.repo = self.name.split("/")
         self.modules_file_tree = {}
