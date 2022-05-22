@@ -22,6 +22,7 @@ import nf_core.lint_utils
 import nf_core.modules.lint
 from nf_core import __version__
 from nf_core.lint_utils import console
+from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ def run_linting(
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
-                    "s" if len(bad_keys) > 1 else "",
+                    _s(bad_keys),
                     "', '".join(bad_keys),
                 )
             )
@@ -259,7 +260,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
-                    "s" if len(bad_keys) > 1 else "",
+                    _s(bad_keys),
                     "', '".join(bad_keys),
                 )
             )
@@ -345,11 +346,6 @@ class PipelineLint(nf_core.utils.Pipeline):
                     f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
                 )
 
-        def _s(some_list):
-            if len(some_list) != 1:
-                return "s"
-            return ""
-
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             console.print(
@@ -411,10 +407,6 @@ class PipelineLint(nf_core.utils.Pipeline):
             )
 
     def _print_summary(self):
-        def _s(some_list):
-            if len(some_list) != 1:
-                return "s"
-            return ""
 
         # Summary table
         summary_colour = "red" if len(self.failed) > 0 else "green"

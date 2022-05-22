@@ -17,6 +17,7 @@ import rich
 from nf_core.utils import rich_force_colors
 
 import nf_core.utils
+from nf_core.utils import plural_s as _s
 import nf_core.modules.module_utils
 from nf_core.modules.nfcore_module import NFCoreModule
 from .modules_command import ModuleCommand
@@ -263,11 +264,6 @@ class ModuleVersionBumper(ModuleCommand):
                 max_mod_name_len = max(len(m[2]), max_mod_name_len)
             except:
                 pass
-
-        def _s(some_list):
-            if len(some_list) > 1:
-                return "s"
-            return ""
 
         def format_result(module_updates, table):
             """

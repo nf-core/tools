@@ -29,6 +29,7 @@ import sys
 import nf_core.utils
 import nf_core.modules.module_utils
 
+from nf_core.utils import plural_s as _s
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.lint_utils import console
@@ -201,7 +202,7 @@ class ModuleLint(ModuleCommand):
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
-                    "s" if len(bad_keys) > 1 else "",
+                    _s(bad_keys),
                     "', '".join(bad_keys),
                 )
             )
@@ -383,11 +384,6 @@ class ModuleLint(ModuleCommand):
                 )
             return table
 
-        def _s(some_list):
-            if len(some_list) > 1:
-                return "s"
-            return ""
-
         # Print blank line for spacing
         console.print("")
 
@@ -443,11 +439,6 @@ class ModuleLint(ModuleCommand):
             )
 
     def print_summary(self):
-        def _s(some_list):
-            if len(some_list) > 1:
-                return "s"
-            return ""
-
         """Print a summary table to the console."""
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)

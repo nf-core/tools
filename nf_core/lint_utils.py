@@ -4,6 +4,7 @@ from rich.table import Table
 import logging
 
 import nf_core.utils
+from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
@@ -18,9 +19,6 @@ def print_joint_summary(lint_obj, module_lint_obj):
     nbr_fixed = len(lint_obj.fixed)
     nbr_warned = len(lint_obj.warned) + len(module_lint_obj.warned)
     nbr_failed = len(lint_obj.failed) + len(module_lint_obj.failed)
-
-    def _s(some_length):
-        return "" if some_length == 1 else "s"
 
     summary_colour = "red" if nbr_failed > 0 else "green"
     table = Table(box=rich.box.ROUNDED, style=summary_colour)

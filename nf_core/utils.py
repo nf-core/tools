@@ -945,3 +945,9 @@ def sort_dictionary(d):
         else:
             result[k] = v
     return result
+
+
+def plural_s(list_or_int):
+    """Return an s if the input is not one or has not the length of one."""
+    length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
+    return "s" * (length != 1)

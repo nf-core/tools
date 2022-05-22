@@ -10,6 +10,7 @@ import yaml
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core.utils import plural_s as _s
 from nf_core.modules.modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -227,10 +228,6 @@ class ModuleCommand:
                         failed_to_find_commit_sha.append(f"'{repo}/{module}'")
 
             if len(failed_to_find_commit_sha) > 0:
-
-                def _s(some_list):
-                    return "" if len(some_list) == 1 else "s"
-
                 log.info(
                     f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: {', '.join(failed_to_find_commit_sha)}."
                     f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'} module{_s(failed_to_find_commit_sha)}."
