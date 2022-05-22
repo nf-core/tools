@@ -243,7 +243,8 @@ class ModuleLint(ModuleCommand):
             for m in sorted(os.listdir(nfcore_modules_dir)):
                 if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
                     raise ModuleLintException(
-                        f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
+                        f"File found in '{nfcore_modules_dir}': '{m}'! "
+                        "This directory should only contain module directories."
                     )
 
                 module_dir = os.path.join(nfcore_modules_dir, m)
@@ -400,7 +401,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)),
+                    title=rf"[bold][✔] {len(self.passed)} Module Test{_s(self.passed)} Passed",
                     title_align="left",
                     style="green",
                     padding=0,
@@ -417,7 +418,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)),
+                    title=rf"[bold][!] {len(self.warned)} Module Test Warning{_s(self.warned)}",
                     title_align="left",
                     style="yellow",
                     padding=0,
@@ -434,7 +435,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)),
+                    title=rf"[bold][✗] {len(self.failed)} Module Test{_s(self.failed)} Failed",
                     title_align="left",
                     style="red",
                     padding=0,
@@ -447,13 +448,13 @@ class ModuleLint(ModuleCommand):
                 return "s"
             return ""
 
-        # Summary table
+        """Print a summary table to the console."""
         table = Table(box=rich.box.ROUNDED)
         table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
         table.add_row(
-            r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            rf"[✔] {len(self.passed):>3} Test{_s(self.passed)} Passed",
             style="green",
         )
-        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        table.add_row(rf"[!] {len(self.warned):>3} Test Warning{_s(self.warned)}", style="yellow")
+        table.add_row(rf"[✗] {len(self.failed):>3} Test{_s(self.failed)} Failed", style="red")
         console.print(table)

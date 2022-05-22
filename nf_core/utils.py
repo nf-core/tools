@@ -381,9 +381,8 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
                     log.debug(f"Response content:\n{response.content}")
                     raise AssertionError(
-                        "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
-                            api_url
-                        )
+                        f"nf-core website API results response not recognised: {api_url}\n "
+                        "See verbose log for full response"
                     )
                 else:
                     return web_response
@@ -581,9 +580,8 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
                 return response.json()
             elif response.status_code != 404:
                 raise LookupError(
-                    "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
-                        response.status_code, anaconda_api_url, response
-                    )
+                    f"Anaconda API returned unexpected response code `{response.status_code}` for: "
+                    f"{anaconda_api_url}\n{response}"
                 )
             elif response.status_code == 404:
                 log.debug(f"Could not find `{dep}` in conda channel `{ch}`")

@@ -306,9 +306,8 @@ class Launch(object):
         except AssertionError:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
-                "Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(
-                    self.web_schema_launch_url
-                )
+                f"Web launch response not recognised: {self.web_schema_launch_url}\n "
+                "See verbose log for full response (nf-core -v launch)"
             )
         else:
             self.web_schema_launch_web_url = web_response["web_url"]
@@ -354,9 +353,8 @@ class Launch(object):
         else:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
-                "Web launch GUI returned unexpected status ({}): {}\n See verbose log for full response".format(
-                    web_response["status"], self.web_schema_launch_api_url
-                )
+                f"Web launch GUI returned unexpected status ({web_response['status']}): "
+                f"{self.web_schema_launch_api_url}\n See verbose log for full response"
             )
 
     def sanitise_web_response(self):

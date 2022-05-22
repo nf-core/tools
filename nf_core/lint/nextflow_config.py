@@ -241,9 +241,8 @@ def nextflow_config(self):
             passed.append("Config variable ``manifest.nextflowVersion`` started with >= or !>=")
         else:
             failed.append(
-                "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : ``{}``".format(
-                    self.nf_config.get("manifest.nextflowVersion", "")
-                ).strip("\"'")
+                "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : "
+                f"``{self.nf_config.get('manifest.nextflowVersion', '')}``".strip("\"'")
             )
 
     # Check that the pipeline version contains ``dev``
@@ -257,15 +256,13 @@ def nextflow_config(self):
     elif "manifest.version" in self.nf_config:
         if "dev" in self.nf_config["manifest.version"]:
             failed.append(
-                "Config ``manifest.version`` should not contain ``dev`` for a release: ``{}``".format(
-                    self.nf_config["manifest.version"]
-                )
+                "Config ``manifest.version`` should not contain ``dev`` for a release: "
+                f"``{self.nf_config['manifest.version']}``"
             )
         else:
             passed.append(
-                "Config ``manifest.version`` does not contain ``dev`` for release: ``{}``".format(
-                    self.nf_config["manifest.version"]
-                )
+                "Config ``manifest.version`` does not contain ``dev`` for release: "
+                f"``{self.nf_config['manifest.version']}``"
             )
 
     # Check if custom profile params are set correctly

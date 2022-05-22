@@ -326,8 +326,9 @@ class TestLaunch(unittest.TestCase):
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
         # Check command
-        assert self.launcher.nextflow_cmd == 'nextflow run {} -params-file "{}"'.format(
-            self.template_dir, os.path.relpath(self.nf_params_fn)
+        assert (
+            self.launcher.nextflow_cmd
+            == f'nextflow run {self.template_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
         )
         # Check saved parameters file
         with open(self.nf_params_fn, "r") as fh:

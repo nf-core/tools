@@ -194,9 +194,7 @@ class PipelineSchema(object):
                     self.input_params.update(params)
                     log.debug(f"Loaded YAML input params: {params_path}")
             except Exception as yaml_e:
-                error_msg = "Could not load params file as either JSON or YAML:\n JSON: {}\n YAML: {}".format(
-                    json_e, yaml_e
-                )
+                error_msg = f"Could not load params file as either JSON or YAML:\n JSON: {json_e}\n YAML: {yaml_e}"
                 log.error(error_msg)
                 raise AssertionError(error_msg)
 
@@ -347,9 +345,9 @@ class PipelineSchema(object):
 
             for d_param_id in d_schema.get("properties", {}):
                 # Check that we don't have any duplicate parameter IDs in different definitions
-                assert d_param_id not in param_keys, "Duplicate parameter found in schema `definitions`: `{}`".format(
-                    d_param_id
-                )
+                assert (
+                    d_param_id not in param_keys
+                ), f"Duplicate parameter found in schema `definitions`: `{d_param_id}`"
                 param_keys.append(d_param_id)
                 num_params += 1
 
@@ -357,9 +355,7 @@ class PipelineSchema(object):
         for allOf in schema.get("allOf", []):
             assert "definitions" in schema, "Schema has allOf, but no definitions"
             def_key = allOf["$ref"][14:]
-            assert def_key in schema["definitions"], "Subschema `{}` found in `allOf` but not `definitions`".format(
-                def_key
-            )
+            assert def_key in schema["definitions"], f"Subschema `{def_key}` found in `allOf` but not `definitions`"
 
         # Check that the schema describes at least one parameter
         assert num_params > 0, "No parameters found in schema"
@@ -379,9 +375,9 @@ class PipelineSchema(object):
 
         assert "$schema" in self.schema, "Schema missing top-level `$schema` attribute"
         schema_attr = "http://json-schema.org/draft-07/schema"
-        assert self.schema["$schema"] == schema_attr, "Schema `$schema` should be `{}`\n Found `{}`".format(
-            schema_attr, self.schema["$schema"]
-        )
+        assert (
+            self.schema["$schema"] == schema_attr
+        ), f"Schema `$schema` should be `{schema_attr}`\n Found `{self.schema['$schema']}`"
 
         if self.pipeline_manifest == {}:
             self.get_wf_params()
@@ -395,23 +391,21 @@ class PipelineSchema(object):
             id_attr = "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(
                 self.pipeline_manifest["name"].strip("\"'")
             )
-            assert self.schema["$id"] == id_attr, "Schema `$id` should be `{}`\n Found `{}`".format(
-                id_attr, self.schema["$id"]
-            )
+            assert self.schema["$id"] == id_attr, f"Schema `$id` should be `{id_attr}`\n Found `{self.schema['$id']}`"
 
             title_attr = "{} pipeline parameters".format(self.pipeline_manifest["name"].strip("\"'"))
-            assert self.schema["title"] == title_attr, "Schema `title` should be `{}`\n Found: `{}`".format(
-                title_attr, self.schema["title"]
-            )
+            assert (
+                self.schema["title"] == title_attr
+            ), f"Schema `title` should be `{title_attr}`\n Found: `{self.schema['title']}`"
 
         if "description" not in self.pipeline_manifest:
             log.debug("Pipeline manifest 'description' not known - skipping validation of schema description")
         else:
             assert "description" in self.schema, "Schema missing top-level 'description' attribute"
             desc_attr = self.pipeline_manifest["description"].strip("\"'")
-            assert self.schema["description"] == desc_attr, "Schema 'description' should be '{}'\n Found: '{}'".format(
-                desc_attr, self.schema["description"]
-            )
+            assert (
+                self.schema["description"] == desc_attr
+            ), f"Schema 'description' should be '{desc_attr}'\n Found: '{self.schema['description']}'"
 
     def print_documentation(
         self,
@@ -706,9 +700,8 @@ class PipelineSchema(object):
                     self.no_prompts
                     or self.schema_from_scratch
                     or Confirm.ask(
-                        ":sparkles: Found [bold]'params.{}'[/] in the pipeline config, but not in the schema. [blue]Add to pipeline schema?".format(
-                            p_key
-                        )
+                        f":sparkles: Found [bold]'params.{p_key}'[/] in the pipeline config, but not in the schema. "
+                        "[blue]Add to pipeline schema?"
                     )
                 ):
                     if "properties" not in self.schema:
@@ -768,9 +761,8 @@ class PipelineSchema(object):
         except (AssertionError) as e:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
-                "Pipeline schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(
-                    self.web_schema_build_url
-                )
+                f"Pipeline schema builder response not recognised: {self.web_schema_build_url}\n"
+                " See verbose log for full response (nf-core -v schema)"
             )
         else:
             self.web_schema_build_web_url = web_response["web_url"]
@@ -804,7 +796,6 @@ class PipelineSchema(object):
         else:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
-                "Pipeline schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(
-                    web_response["status"], self.web_schema_build_api_url
-                )
+                f"Pipeline schema builder returned unexpected status ({web_response['status']}): "
+                f"{self.web_schema_build_api_url}\n See verbose log for full response"
             )
