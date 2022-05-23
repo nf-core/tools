@@ -78,4 +78,3 @@ jobs:
         with:
           isortVersion: "latest"
           requirementsFiles: "requirements.txt requirements-dev.txt"
-          configuration: "--profile black --multi-line 3 --project nf-core --check-only --diff"
