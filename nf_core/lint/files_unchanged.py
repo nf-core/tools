@@ -64,12 +64,10 @@ def files_unchanged(self):
     could_fix = False
 
     # Check that we have the minimum required config
-    try:
-        self.nf_config["manifest.name"]
-        self.nf_config["manifest.description"]
-        self.nf_config["manifest.author"]
-    except KeyError as e:
-        return {"ignored": [f"Required pipeline config not found - {e}"]}
+    required_pipeline_config = {"manifest.name", "manifest.description", "manifest.author"}
+    missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
+    if missing_pipeline_config:
+        return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
     short_name = self.nf_config["manifest.name"].strip("\"'").replace("nf-core/", "")
 
     # NB: Should all be files, not directories
