@@ -418,11 +418,14 @@ class PipelineSchema(object):
         output_fn=None,
         format="markdown",
         force=False,
-        columns=["parameter", "description", "type,", "default", "required", "hidden"],
+        columns=None,
     ):
         """
         Prints documentation for the schema.
         """
+        if columns is None:
+            columns = ["parameter", "description", "type,", "default", "required", "hidden"]
+
         output = self.schema_to_markdown(columns)
         if format == "html":
             output = self.markdown_to_html(output)
