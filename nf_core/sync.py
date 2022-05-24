@@ -15,7 +15,6 @@ import rich
 import nf_core
 import nf_core.create
 import nf_core.list
-import nf_core.sync
 import nf_core.utils
 
 log = logging.getLogger(__name__)

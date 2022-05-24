@@ -22,6 +22,7 @@ def files_exist(self):
         .gitignore
         .nf-core.yml
         .editorconfig
+        .prettierignore
         .prettierrc.yml
         .github/.dockstore.yml
         .github/CONTRIBUTING.md
@@ -116,6 +117,7 @@ def files_exist(self):
         [".gitignore"],
         [".nf-core.yml"],
         [".editorconfig"],
+        [".prettierignore"],
         [".prettierrc.yml"],
         ["CHANGELOG.md"],
         ["CITATIONS.md"],

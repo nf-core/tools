@@ -206,6 +206,7 @@ class TestLint(unittest.TestCase):
     from .lint.actions_schema_validation import (
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
+        test_actions_schema_validation_fails_for_additional_property,
     )
     from .lint.files_exist import (
         test_files_exist_depreciated_file,
