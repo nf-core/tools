@@ -59,7 +59,6 @@ class DownloadTest(unittest.TestCase):
             == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
         )
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_release_hash_non_existent_release(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
@@ -70,7 +69,8 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_revisions,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_revision_hash()
+        with pytest.raises(AssertionError):
+            download_obj.get_revision_hash()
 
     #
     # Tests for 'download_wf_files'
@@ -149,7 +149,6 @@ class DownloadTest(unittest.TestCase):
         download_obj.validate_md5(tmpfile.name, val_hash)
 
     @with_temporary_file
-    @pytest.mark.xfail(raises=IOError, strict=True)
     def test_mismatching_md5sums(self, tmpfile):
         download_obj = DownloadWorkflow(pipeline="dummy")
         test_hash = hashlib.md5()
@@ -159,7 +158,8 @@ class DownloadTest(unittest.TestCase):
         with open(tmpfile.name, "w") as f:
             f.write("test")
 
-        download_obj.validate_md5(tmpfile.name, val_hash)
+        with pytest.raises(IOError):
+            download_obj.validate_md5(tmpfile.name, val_hash)
 
     #
     # Tests for 'singularity_pull_image'

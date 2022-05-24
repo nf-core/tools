@@ -41,20 +41,18 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.get_schema_path(self.template_dir)
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existant file is given"""
-        self.schema_obj.get_schema_path("fake_file")
-        self.schema_obj.load_lint_schema()
+        with pytest.raises(AssertionError):
+            self.schema_obj.get_schema_path("fake_file")
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_notjson(self):
         """Check that linting raises properly if a non-JSON file is given"""
         self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
-        self.schema_obj.load_lint_schema()
+        with pytest.raises(AssertionError):
+            self.schema_obj.load_lint_schema()
 
     @with_temporary_file
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_noparams(self, tmp_file):
         """
         Check that linting raises properly if a JSON file is given without any params
@@ -63,7 +61,8 @@ class TestSchema(unittest.TestCase):
         with open(tmp_file.name, "w") as fh:
             json.dump({"type": "fubar"}, fh)
         self.schema_obj.get_schema_path(tmp_file.name)
-        self.schema_obj.load_lint_schema()
+        with pytest.raises(AssertionError):
+            self.schema_obj.load_lint_schema()
 
     def test_get_schema_path_dir(self):
         """Get schema file from directory"""
@@ -73,22 +72,22 @@ class TestSchema(unittest.TestCase):
         """Get schema file from a path"""
         self.schema_obj.get_schema_path(self.template_schema)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_path_notexist(self):
         """Get schema file from a path"""
-        self.schema_obj.get_schema_path("fubar", local_only=True)
+        with pytest.raises(AssertionError):
+            self.schema_obj.get_schema_path("fubar", local_only=True)
 
     def test_get_schema_path_name(self):
         """Get schema file from the name of a remote pipeline"""
         self.schema_obj.get_schema_path("atacseq")
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_name_notexist(self):
         """
         Get schema file from the name of a remote pipeline
         that doesn't have a schema file
         """
-        self.schema_obj.get_schema_path("exoseq")
+        with pytest.raises(AssertionError):
+            self.schema_obj.get_schema_path("exoseq")
 
     def test_load_schema(self):
         """Try to load a schema from a file"""
@@ -134,10 +133,10 @@ class TestSchema(unittest.TestCase):
             yaml.dump({"input": "fubar"}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_input_params_invalid(self):
         """Check failure when a non-existent file params file is loaded"""
-        self.schema_obj.load_input_params("fubar")
+        with pytest.raises(AssertionError):
+            self.schema_obj.load_input_params("fubar")
 
     def test_validate_params_pass(self):
         """Try validating a set of parameters against a schema"""
@@ -162,11 +161,11 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_validate_schema_fail_noparams(self):
         """Check that the schema validation fails when no params described"""
         self.schema_obj.schema = {"type": "invalidthing"}
-        self.schema_obj.validate_schema(self.schema_obj.schema)
+        with pytest.raises(AssertionError):
+            self.schema_obj.validate_schema(self.schema_obj.schema)
 
     def test_validate_schema_fail_duplicate_ids(self):
         """
@@ -326,37 +325,37 @@ class TestSchema(unittest.TestCase):
 
         param = self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_timeout(self, mock_post):
         """Mock launching the web builder, but timeout on the request"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.Timeout()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_connection_error(self, mock_post):
         """Mock launching the web builder, but get a connection error"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.ConnectionError()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_timeout(self, mock_post):
         """Mock checking for a web builder response, but timeout on the request"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.Timeout()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_connection_error(self, mock_post):
         """Mock checking for a web builder response, but get a connection error"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.ConnectionError()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
     def mocked_requests_post(**kwargs):
         """Helper function to emulate POST requests responses from the web"""
