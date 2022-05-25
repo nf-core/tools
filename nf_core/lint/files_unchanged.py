@@ -45,6 +45,7 @@ def files_unchanged(self):
     Files that can have additional content but must include the template contents::
 
         .gitignore
+        .prettierignore
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -100,7 +101,7 @@ def files_unchanged(self):
         [os.path.join("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
-        [".gitignore", "foo"],
+        [".gitignore", ".prettierignore"],
     ]
 
     # Only show error messages from pipeline creation

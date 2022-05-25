@@ -209,6 +209,7 @@ class TestLint(unittest.TestCase):
     from .lint.actions_schema_validation import (
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
+        test_actions_schema_validation_fails_for_additional_property,
     )
 
     from .lint.merge_markers import test_merge_markers_found

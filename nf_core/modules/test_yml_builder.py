@@ -164,9 +164,9 @@ class ModulesTestYmlBuilder(object):
                 ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
 
         while ep_test["command"] == "":
-            default_val = (
-                f"nextflow run tests/modules/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
-            )
+            # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
+            # See https://github.com/nf-core/tools/issues/1562
+            default_val = f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config  -c ./tests/modules/{self.module_name}/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -225,7 +225,7 @@ class ModulesTestYmlBuilder(object):
     def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
-        for root, dir, files in os.walk(results_dir):
+        for root, dir, files in os.walk(results_dir, followlinks=True):
             for filename in files:
                 # Check that the file is not versions.yml
                 if filename == "versions.yml":
@@ -340,7 +340,10 @@ class ModulesTestYmlBuilder(object):
             raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
-            log.debug(rich.markup.escape(nfconfig_raw))
+            try:
+                log.debug(rich.markup.escape(nfconfig_raw))
+            except TypeError:
+                log.debug(rich.markup.escape(nfconfig_raw.decode("utf-8")))
 
         return tmp_dir, tmp_dir_repeat
 
