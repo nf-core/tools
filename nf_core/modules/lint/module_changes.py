@@ -44,7 +44,7 @@ def module_changes(module_lint_object, module):
             module.warned.append(
                 (
                     "check_local_copy",
-                    f"Could not fetch remote copy, skipping comparison.",
+                    "Could not fetch remote copy, skipping comparison.",
                     f"{os.path.join(module.module_dir, f)}",
                 )
             )
