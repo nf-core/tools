@@ -31,6 +31,7 @@ from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
+from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
@@ -201,7 +202,7 @@ class ModuleLint(ModuleCommand):
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
-                    "s" if len(bad_keys) > 1 else "",
+                    _s(bad_keys),
                     "', '".join(bad_keys),
                 )
             )
@@ -243,7 +244,8 @@ class ModuleLint(ModuleCommand):
             for m in sorted(os.listdir(nfcore_modules_dir)):
                 if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
                     raise ModuleLintException(
-                        f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
+                        f"File found in '{nfcore_modules_dir}': '{m}'! "
+                        "This directory should only contain module directories."
                     )
 
                 module_dir = os.path.join(nfcore_modules_dir, m)
@@ -382,11 +384,6 @@ class ModuleLint(ModuleCommand):
                 )
             return table
 
-        def _s(some_list):
-            if len(some_list) > 1:
-                return "s"
-            return ""
-
         # Print blank line for spacing
         console.print("")
 
@@ -400,7 +397,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)),
+                    title=rf"[bold][✔] {len(self.passed)} Module Test{_s(self.passed)} Passed",
                     title_align="left",
                     style="green",
                     padding=0,
@@ -417,7 +414,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)),
+                    title=rf"[bold][!] {len(self.warned)} Module Test Warning{_s(self.warned)}",
                     title_align="left",
                     style="yellow",
                     padding=0,
@@ -434,7 +431,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)),
+                    title=rf"[bold][✗] {len(self.failed)} Module Test{_s(self.failed)} Failed",
                     title_align="left",
                     style="red",
                     padding=0,
@@ -442,18 +439,13 @@ class ModuleLint(ModuleCommand):
             )
 
     def print_summary(self):
-        def _s(some_list):
-            if len(some_list) > 1:
-                return "s"
-            return ""
-
-        # Summary table
+        """Print a summary table to the console."""
         table = Table(box=rich.box.ROUNDED)
-        table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
         table.add_row(
-            r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            rf"[✔] {len(self.passed):>3} Test{_s(self.passed)} Passed",
             style="green",
         )
-        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        table.add_row(rf"[!] {len(self.warned):>3} Test Warning{_s(self.warned)}", style="yellow")
+        table.add_row(rf"[✗] {len(self.failed):>3} Test{_s(self.failed)} Failed", style="red")
         console.print(table)

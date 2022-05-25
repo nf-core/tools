@@ -15,7 +15,7 @@ def make_docs(docs_basedir, lint_tests, md_template):
             existing_docs.append(os.path.join(docs_basedir, fn))
 
     for test_name in lint_tests:
-        fn = os.path.join(docs_basedir, "{}.md".format(test_name))
+        fn = os.path.join(docs_basedir, f"{test_name}.md")
         if os.path.exists(fn):
             existing_docs.remove(fn)
         else:

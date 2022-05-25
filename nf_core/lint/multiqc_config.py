@@ -36,7 +36,7 @@ def multiqc_config(self):
         with open(fn, "r") as fh:
             mqc_yml = yaml.safe_load(fh)
     except Exception as e:
-        return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
+        return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
     # Check that the report_comment exists and matches
     try:
@@ -60,7 +60,7 @@ def multiqc_config(self):
         orders.pop(summary_plugin_name)
         assert orders["software_versions"] == min(
             orders.values()
-        ), f"Section software_versions should have the second lowest order"
+        ), "Section software_versions should have the second lowest order"
     except (AssertionError, KeyError, TypeError) as e:
         failed.append(f"'assets/multiqc_config.yml' does not meet requirements: {e}")
     else:

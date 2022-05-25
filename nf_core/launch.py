@@ -57,8 +57,8 @@ class Launch(object):
         self.web_schema_launch_api_url = None
         self.web_id = web_id
         if self.web_id:
-            self.web_schema_launch_web_url = "{}?id={}".format(self.web_schema_launch_url, web_id)
-            self.web_schema_launch_api_url = "{}?id={}&api=true".format(self.web_schema_launch_url, web_id)
+            self.web_schema_launch_web_url = f"{self.web_schema_launch_url}?id={web_id}"
+            self.web_schema_launch_api_url = f"{self.web_schema_launch_url}?id={web_id}&api=true"
         self.nextflow_cmd = None
 
         # Fetch remote workflows
@@ -121,10 +121,10 @@ class Launch(object):
 
         # Check if the output file exists already
         if os.path.exists(self.params_out):
-            log.warning("Parameter output file already exists! {}".format(os.path.relpath(self.params_out)))
+            log.warning(f"Parameter output file already exists! {os.path.relpath(self.params_out)}")
             if Confirm.ask("[yellow]Do you want to overwrite this file?"):
                 os.remove(self.params_out)
-                log.info("Deleted {}\n".format(self.params_out))
+                log.info(f"Deleted {self.params_out}\n")
             else:
                 log.info("Exiting. Use --params-out to specify a custom filename.")
                 return False
@@ -141,7 +141,7 @@ class Launch(object):
                     log.info(
                         "Waiting for form to be completed in the browser. Remember to click Finished when you're done."
                     )
-                    log.info("URL: {}".format(self.web_schema_launch_web_url))
+                    log.info(f"URL: {self.web_schema_launch_web_url}")
                     nf_core.utils.wait_cli_function(self.get_web_launch_response)
             except AssertionError as e:
                 log.error(e.args[0])
@@ -199,7 +199,7 @@ class Launch(object):
             # Assume nf-core if no org given
             if self.pipeline.count("/") == 0:
                 self.pipeline = f"nf-core/{self.pipeline}"
-            self.nextflow_cmd = "nextflow run {}".format(self.pipeline)
+            self.nextflow_cmd = f"nextflow run {self.pipeline}"
 
             if not self.pipeline_revision:
                 try:
@@ -211,7 +211,7 @@ class Launch(object):
                     return False
 
                 self.pipeline_revision = nf_core.utils.prompt_pipeline_release_branch(wf_releases, wf_branches)
-            self.nextflow_cmd += " -r {}".format(self.pipeline_revision)
+            self.nextflow_cmd += f" -r {self.pipeline_revision}"
 
         # Get schema from name, load it and lint it
         try:
@@ -221,7 +221,7 @@ class Launch(object):
             # No schema found
             # Check that this was actually a pipeline
             if self.schema_obj.pipeline_dir is None or not os.path.exists(self.schema_obj.pipeline_dir):
-                log.error("Could not find pipeline: {} ({})".format(self.pipeline, self.schema_obj.pipeline_dir))
+                log.error(f"Could not find pipeline: {self.pipeline} ({self.schema_obj.pipeline_dir})")
                 return False
             if not os.path.exists(os.path.join(self.schema_obj.pipeline_dir, "nextflow.config")) and not os.path.exists(
                 os.path.join(self.schema_obj.pipeline_dir, "main.nf")
@@ -238,7 +238,7 @@ class Launch(object):
                 self.schema_obj.add_schema_found_configs()
                 self.schema_obj.get_schema_defaults()
             except AssertionError as e:
-                log.error("Could not build pipeline schema: {}".format(e))
+                log.error(f"Could not build pipeline schema: {e}")
                 return False
 
     def set_schema_inputs(self):
@@ -252,7 +252,7 @@ class Launch(object):
 
         # If we have a params_file, load and validate it against the schema
         if self.params_in:
-            log.info("Loading {}".format(self.params_in))
+            log.info(f"Loading {self.params_in}")
             self.schema_obj.load_input_params(self.params_in)
             self.schema_obj.validate_params()
 
@@ -306,18 +306,17 @@ class Launch(object):
             # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
             assert web_response["status"] == "recieved"
         except AssertionError:
-            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
-                "Web launch response not recognised: {}\n See verbose log for full response (nf-core -v launch)".format(
-                    self.web_schema_launch_url
-                )
+                f"Web launch response not recognised: {self.web_schema_launch_url}\n "
+                "See verbose log for full response (nf-core -v launch)"
             )
         else:
             self.web_schema_launch_web_url = web_response["web_url"]
             self.web_schema_launch_api_url = web_response["api_url"]
 
         # Launch the web GUI
-        log.info("Opening URL: {}".format(self.web_schema_launch_web_url))
+        log.info(f"Opening URL: {self.web_schema_launch_web_url}")
         webbrowser.open(self.web_schema_launch_web_url)
         log.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n")
         nf_core.utils.wait_cli_function(self.get_web_launch_response)
@@ -328,7 +327,7 @@ class Launch(object):
         """
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_api_url)
         if web_response["status"] == "error":
-            raise AssertionError("Got error from launch API ({})".format(web_response.get("message")))
+            raise AssertionError(f"Got error from launch API ({web_response.get('message')})")
         elif web_response["status"] == "waiting_for_user":
             return False
         elif web_response["status"] == "launch_params_complete":
@@ -348,19 +347,16 @@ class Launch(object):
                 # Sanitise form inputs, set proper variable types etc
                 self.sanitise_web_response()
             except KeyError as e:
-                raise AssertionError("Missing return key from web API: {}".format(e))
+                raise AssertionError(f"Missing return key from web API: {e}")
             except Exception as e:
                 log.debug(web_response)
-                raise AssertionError(
-                    "Unknown exception ({}) - see verbose log for details. {}".format(type(e).__name__, e)
-                )
+                raise AssertionError(f"Unknown exception ({type(e).__name__}) - see verbose log for details. {e}")
             return True
         else:
-            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
-                "Web launch GUI returned unexpected status ({}): {}\n See verbose log for full response".format(
-                    web_response["status"], self.web_schema_launch_api_url
-                )
+                f"Web launch GUI returned unexpected status ({web_response['status']}): "
+                f"{self.web_schema_launch_api_url}\n See verbose log for full response"
             )
 
     def sanitise_web_response(self):
@@ -422,7 +418,7 @@ class Launch(object):
 
         # If required and got an empty reponse, ask again
         while type(answer[param_id]) is str and answer[param_id].strip() == "" and is_required:
-            log.error("'--{}' is required".format(param_id))
+            log.error(f"'--{param_id}' is required")
             answer = questionary.unsafe_prompt([question], style=nf_core.utils.nfcore_question_style)
 
         # Ignore if empty
@@ -477,13 +473,13 @@ class Launch(object):
 
             for param_id, param in group_obj["properties"].items():
                 if not param.get("hidden", False) or self.show_hidden:
-                    q_title = [("", "{}  ".format(param_id))]
+                    q_title = [("", f"{param_id}  ")]
                     # If already filled in, show value
                     if param_id in answers and answers.get(param_id) != param.get("default"):
-                        q_title.append(("class:choice-default-changed", "[{}]".format(answers[param_id])))
+                        q_title.append(("class:choice-default-changed", f"[{answers[param_id]}]"))
                     # If the schema has a default, show default
                     elif "default" in param:
-                        q_title.append(("class:choice-default", "[{}]".format(param["default"])))
+                        q_title.append(("class:choice-default", f"[{param['default']}]"))
                     # Show that it's required if not filled in and no default
                     elif param_id in group_obj.get("required", []):
                         q_title.append(("class:choice-required", "(required)"))
@@ -529,7 +525,7 @@ class Launch(object):
 
         # Print the name, description & help text
         if print_help:
-            nice_param_id = "--{}".format(param_id) if not param_id.startswith("-") else param_id
+            nice_param_id = f"--{param_id}" if not param_id.startswith("-") else param_id
             self.print_param_header(nice_param_id, param_obj)
 
         if param_obj.get("type") == "boolean":
@@ -577,9 +573,9 @@ class Launch(object):
                         return True
                     fval = float(val)
                     if "minimum" in param_obj and fval < float(param_obj["minimum"]):
-                        return "Must be greater than or equal to {}".format(param_obj["minimum"])
+                        return f"Must be greater than or equal to {param_obj['minimum']}"
                     if "maximum" in param_obj and fval > float(param_obj["maximum"]):
-                        return "Must be less than or equal to {}".format(param_obj["maximum"])
+                        return f"Must be less than or equal to {param_obj['maximum']}"
                 except ValueError:
                     return "Must be a number"
                 else:
@@ -630,7 +626,7 @@ class Launch(object):
                     return True
                 if re.search(param_obj["pattern"], val) is not None:
                     return True
-                return "Must match pattern: {}".format(param_obj["pattern"])
+                return f"Must match pattern: {param_obj['pattern']}"
 
             question["validate"] = validate_pattern
 
@@ -641,7 +637,7 @@ class Launch(object):
             return
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         console.print("\n")
-        console.print("[bold blue]?[/] [bold on black] {} [/]".format(param_obj.get("title", param_id)))
+        console.print(f"[bold blue]?[/] [bold on black] {param_obj.get('title', param_id)} [/]")
         if "description" in param_obj:
             md = Markdown(param_obj["description"])
             console.print(md)
@@ -682,7 +678,7 @@ class Launch(object):
         for flag, val in self.nxf_flags.items():
             # Boolean flags like -resume
             if isinstance(val, bool) and val:
-                self.nextflow_cmd += " {}".format(flag)
+                self.nextflow_cmd += f" {flag}"
             # String values
             elif not isinstance(val, bool):
                 self.nextflow_cmd += ' {} "{}"'.format(flag, val.replace('"', '\\"'))
@@ -695,14 +691,14 @@ class Launch(object):
                 with open(self.params_out, "w") as fp:
                     json.dump(self.schema_obj.input_params, fp, indent=4)
                     fp.write("\n")
-                self.nextflow_cmd += ' {} "{}"'.format("-params-file", os.path.relpath(self.params_out))
+                self.nextflow_cmd += f' -params-file "{os.path.relpath(self.params_out)}"'
 
             # Call nextflow with a list of command line flags
             else:
                 for param, val in self.schema_obj.input_params.items():
                     # Boolean flags like --saveTrimmed
                     if isinstance(val, bool) and val:
-                        self.nextflow_cmd += " --{}".format(param)
+                        self.nextflow_cmd += f" --{param}"
                     # No quotes for numbers
                     elif (isinstance(val, int) or isinstance(val, float)) and val:
                         self.nextflow_cmd += " --{} {}".format(param, str(val).replace('"', '\\"'))
@@ -712,7 +708,7 @@ class Launch(object):
 
     def launch_workflow(self):
         """Launch nextflow if required"""
-        log.info("[bold underline]Nextflow command:[/]\n[magenta]{}\n\n".format(self.nextflow_cmd))
+        log.info(f"[bold underline]Nextflow command:[/]\n[magenta]{self.nextflow_cmd}\n\n")
 
         if Confirm.ask("Do you want to run this command now? "):
             log.info("Launching workflow! :rocket:")

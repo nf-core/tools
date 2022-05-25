@@ -69,7 +69,7 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     current_version = re.sub(r"[^0-9\.]", "", current_version)
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
-    source_url = "{}?v={}".format(source_url, current_version)
+    source_url = f"{source_url}?v={current_version}"
     # Fetch and clean up the remote version
     if remote_version == None:
         response = requests.get(source_url, timeout=3)
@@ -122,7 +122,7 @@ class Pipeline(object):
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
         except:
-            log.debug("Could not find git hash for pipeline: {}".format(self.wf_path))
+            log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
@@ -145,10 +145,10 @@ class Pipeline(object):
                 if os.path.isfile(full_fn):
                     self.files.append(full_fn)
                 else:
-                    log.debug("`git ls-files` returned '{}' but could not open it!".format(full_fn))
+                    log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
-            log.debug("Couldn't call 'git ls-files': {}".format(e))
+            log.debug(f"Couldn't call 'git ls-files': {e}")
             self.files = []
             for subdir, dirs, files in os.walk(self.wf_path):
                 for fn in files:
@@ -238,12 +238,12 @@ def fetch_wf_config(wf_path, cache_config=True):
     # Hash the hash
     if len(concat_hash) > 0:
         bighash = hashlib.sha256(concat_hash.encode("utf-8")).hexdigest()
-        cache_fn = "wf-config-cache-{}.json".format(bighash[:25])
+        cache_fn = f"wf-config-cache-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
         if os.path.isfile(cache_path):
-            log.debug("Found a config cache, loading: {}".format(cache_path))
+            log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path, "r") as fh:
                 config = json.load(fh)
             return config
@@ -257,7 +257,7 @@ def fetch_wf_config(wf_path, cache_config=True):
             k, v = ul.split(" = ", 1)
             config[k] = v
         except ValueError:
-            log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
+            log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -269,7 +269,7 @@ def fetch_wf_config(wf_path, cache_config=True):
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
-        log.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
+        log.debug(f"Could not open {main_nf} to look for parameter declarations - {e}")
 
     # If we can, save a cached copy
     # HINT: during testing phase (in test_download, for example) we don't want
@@ -277,7 +277,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     # will fail after the first attempt. It's better to not save temporary data
     # in others folders than tmp when doing tests in general
     if cache_path and cache_config:
-        log.debug("Saving config cache: {}".format(cache_path))
+        log.debug(f"Saving config cache: {cache_path}")
         with open(cache_path, "w") as fh:
             json.dump(config, fh, indent=4)
 
@@ -366,25 +366,24 @@ def poll_nfcore_web_api(api_url, post_data=None):
             else:
                 response = requests.post(url=api_url, data=post_data)
         except (requests.exceptions.Timeout):
-            raise AssertionError("URL timed out: {}".format(api_url))
+            raise AssertionError(f"URL timed out: {api_url}")
         except (requests.exceptions.ConnectionError):
-            raise AssertionError("Could not connect to URL: {}".format(api_url))
+            raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200:
-                log.debug("Response content:\n{}".format(response.content))
+                log.debug(f"Response content:\n{response.content}")
                 raise AssertionError(
-                    "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
+                    f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
             else:
                 try:
                     web_response = json.loads(response.content)
                     assert "status" in web_response
                 except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
-                    log.debug("Response content:\n{}".format(response.content))
+                    log.debug(f"Response content:\n{response.content}")
                     raise AssertionError(
-                        "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
-                            api_url
-                        )
+                        f"nf-core website API results response not recognised: {api_url}\n "
+                        "See verbose log for full response"
                     )
                 else:
                     return web_response
@@ -570,11 +569,11 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
         depname = depname.split("::")[1]
 
     for ch in dep_channels:
-        anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format(ch, depname)
+        anaconda_api_url = f"https://api.anaconda.org/package/{ch}/{depname}"
         try:
             response = requests.get(anaconda_api_url, timeout=10)
         except (requests.exceptions.Timeout):
-            raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
+            raise LookupError(f"Anaconda API timed out: {anaconda_api_url}")
         except (requests.exceptions.ConnectionError):
             raise LookupError("Could not connect to Anaconda API")
         else:
@@ -582,12 +581,11 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
                 return response.json()
             elif response.status_code != 404:
                 raise LookupError(
-                    "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
-                        response.status_code, anaconda_api_url, response
-                    )
+                    f"Anaconda API returned unexpected response code `{response.status_code}` for: "
+                    f"{anaconda_api_url}\n{response}"
                 )
             elif response.status_code == 404:
-                log.debug("Could not find `{}` in conda channel `{}`".format(dep, ch))
+                log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
     else:
         # We have looped through each channel and had a 404 response code on everything
         raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
@@ -640,18 +638,18 @@ def pip_package(dep):
         A ValueError, if the package name can not be found
     """
     pip_depname, pip_depver = dep.split("=", 1)
-    pip_api_url = "https://pypi.python.org/pypi/{}/json".format(pip_depname)
+    pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
         response = requests.get(pip_api_url, timeout=10)
     except (requests.exceptions.Timeout):
-        raise LookupError("PyPI API timed out: {}".format(pip_api_url))
+        raise LookupError(f"PyPI API timed out: {pip_api_url}")
     except (requests.exceptions.ConnectionError):
-        raise LookupError("PyPI API Connection error: {}".format(pip_api_url))
+        raise LookupError(f"PyPI API Connection error: {pip_api_url}")
     else:
         if response.status_code == 200:
             return response.json()
         else:
-            raise ValueError("Could not find pip dependency using the PyPI API: `{}`".format(dep))
+            raise ValueError(f"Could not find pip dependency using the PyPI API: `{dep}`")
 
 
 def get_biocontainer_tag(package, version):
@@ -919,7 +917,7 @@ def load_tools_config(dir="."):
 
     if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
         log.error(
-            f"Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
+            "Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
         )
         return {}
 
@@ -948,3 +946,9 @@ def sort_dictionary(d):
         else:
             result[k] = v
     return result
+
+
+def plural_s(list_or_int):
+    """Return an s if the input is not one or has not the length of one."""
+    length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
+    return "s" * (length != 1)

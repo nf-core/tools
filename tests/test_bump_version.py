@@ -63,25 +63,24 @@ def test_bump_nextflow_version(datafiles, tmp_path):
     pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
     pipeline_obj._load()
 
-    # Bump the version number
-    nf_core.bump_version.bump_nextflow_version(pipeline_obj, "21.10.3")
+    # Bump the version number to a specific version
+    version = "21.10.3"
+    nf_core.bump_version.bump_nextflow_version(pipeline_obj, version)
     new_pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
 
     # Check nextflow.config
     new_pipeline_obj._load_pipeline_config()
-    assert new_pipeline_obj.nf_config["manifest.nextflowVersion"].strip("'\"") == "!>=21.10.3"
+    assert new_pipeline_obj.nf_config["manifest.nextflowVersion"].strip("'\"") == f"!>={version}"
 
     # Check .github/workflows/ci.yml
     with open(new_pipeline_obj._fp(".github/workflows/ci.yml")) as fh:
         ci_yaml = yaml.safe_load(fh)
-    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["include"][0]["NXF_VER"] == "21.10.3"
+    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["include"][0]["NXF_VER"] == version
 
     # Check README.md
     with open(new_pipeline_obj._fp("README.md")) as fh:
         readme = fh.read().splitlines()
     assert (
-        "[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A5{}-23aa62.svg)](https://www.nextflow.io/)".format(
-            "21.10.3"
-        )
-        in readme
+        f"[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A5{version}-23aa62.svg)]"
+        "(https://www.nextflow.io/)" in readme
     )

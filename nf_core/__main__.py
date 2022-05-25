@@ -66,10 +66,10 @@ def run_nf_core():
     rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header
-    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
+    stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
-    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
-    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
+    stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
+    stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
     stderr.print("[green]                                          `._,._,'\n", highlight=False)
     stderr.print(
         f"[grey39]    nf-core/tools version {nf_core.__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
@@ -79,11 +79,11 @@ def run_nf_core():
         is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
         if is_outdated:
             stderr.print(
-                "[bold bright_yellow]    There is a new version of nf-core/tools available! ({})".format(remote_vers),
+                f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
                 highlight=False,
             )
     except Exception as e:
-        log.debug("Could not check latest version: {}".format(e))
+        log.debug(f"Could not check latest version: {e}")
     stderr.print("\n")
 
     # Lanch the click cli
@@ -285,7 +285,7 @@ def create(name, description, author, version, no_git, force, outdir):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory [dim]\[default: current working directory][/]",
 )
 @click.option(
     "--release",
@@ -402,7 +402,7 @@ def remote(ctx, keywords, json):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: Current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
 def local(ctx, keywords, json, dir):
     """
@@ -426,7 +426,7 @@ def local(ctx, keywords, json, dir):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-f", "--force", is_flag=True, default=False, help="Force reinstallation of module if it already exists")
@@ -457,7 +457,7 @@ def install(ctx, tool, dir, prompt, force, sha):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
@@ -506,7 +506,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 def remove(ctx, dir, tool):
     """
@@ -628,7 +628,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: Current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
 def info(ctx, tool, dir):
     """
@@ -785,7 +785,7 @@ def validate(pipeline, params):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
 @click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
@@ -887,7 +887,7 @@ def docs(schema_path, output, format, force, columns):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option(
     "-n", "--nextflow", is_flag=True, default=False, help="Bump required nextflow version instead of pipeline version"
@@ -930,7 +930,7 @@ def bump_version(new_version, dir, nextflow):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow variables.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")

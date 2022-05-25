@@ -40,9 +40,9 @@ def template_strings(self):
                 cc_matches = re.findall(r"[^$]{{[^:}]*}}", l)
                 if len(cc_matches) > 0:
                     for cc_match in cc_matches:
-                        failed.append("Found a Jinja template string in `{}` L{}: {}".format(fn, lnum, cc_match))
+                        failed.append(f"Found a Jinja template string in `{fn}` L{lnum}: {cc_match}")
                         num_matches += 1
     if num_matches == 0:
-        passed.append("Did not find any Jinja template strings ({} files)".format(len(self.files)))
+        passed.append(f"Did not find any Jinja template strings ({len(self.files)} files)")
 
     return {"passed": passed, "failed": failed}

@@ -39,7 +39,7 @@ def test_files_exist_depreciated_file(self):
     new_pipeline = self._make_pipeline_copy()
 
     nf = os.path.join(new_pipeline, "parameters.settings.json")
-    os.system("touch {}".format(nf))
+    os.system(f"touch {nf}")
 
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()

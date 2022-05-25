@@ -23,6 +23,7 @@ import nf_core.modules.lint
 import nf_core.utils
 from nf_core import __version__
 from nf_core.lint_utils import console
+from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
@@ -52,7 +53,7 @@ def run_linting(
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
-                    "s" if len(bad_keys) > 1 else "",
+                    _s(bad_keys),
                     "', '".join(bad_keys),
                 )
             )
@@ -93,7 +94,7 @@ def run_linting(
     try:
         lint_obj._lint_pipeline()
     except AssertionError as e:
-        log.critical("Critical error: {}".format(e))
+        log.critical(f"Critical error: {e}")
         log.info("Stopping tests...")
         return lint_obj, module_lint_obj
 
@@ -111,7 +112,7 @@ def run_linting(
 
     # Save results to Markdown file
     if md_fn is not None:
-        log.info("Writing lint results to {}".format(md_fn))
+        log.info(f"Writing lint results to {md_fn}")
         markdown = lint_obj._get_results_md()
         with open(md_fn, "w") as fh:
             fh.write(markdown)
@@ -233,7 +234,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         # Check if we have any keys that don't match lint test names
         for k in self.lint_config:
             if k not in self.lint_tests:
-                log.warning("Found unrecognised test name '{}' in pipeline lint config".format(k))
+                log.warning(f"Found unrecognised test name '{k}' in pipeline lint config")
 
     def _lint_pipeline(self):
         """Main linting function.
@@ -251,7 +252,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(unrecognised_fixes):
             raise AssertionError(
                 "Unrecognised lint test{} for '--fix': '{}'".format(
-                    "s" if len(unrecognised_fixes) > 1 else "", "', '".join(unrecognised_fixes)
+                    _s(unrecognised_fixes), "', '".join(unrecognised_fixes)
                 )
             )
 
@@ -260,7 +261,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
-                    "s" if len(bad_keys) > 1 else "",
+                    _s(bad_keys),
                     "', '".join(bad_keys),
                 )
             )
@@ -276,7 +277,8 @@ class PipelineLint(nf_core.utils.Pipeline):
                 repo = git.Repo(self.wf_path)
             except git.exc.InvalidGitRepositoryError as e:
                 raise AssertionError(
-                    f"'{self.wf_path}' does not appear to be a git repository, this is required when running with '--fix'"
+                    f"'{self.wf_path}' does not appear to be a git repository, "
+                    "this is required when running with '--fix'"
                 )
             # Check that we have no uncommitted changes
             if repo.is_dirty(untracked_files=True):
@@ -296,11 +298,11 @@ class PipelineLint(nf_core.utils.Pipeline):
             )
             for test_name in self.lint_tests:
                 if self.lint_config.get(test_name, {}) is False:
-                    log.debug("Skipping lint test '{}'".format(test_name))
+                    log.debug(f"Skipping lint test '{test_name}'")
                     self.ignored.append((test_name, test_name))
                     continue
                 self.progress_bar.update(lint_progress, advance=1, test_name=test_name)
-                log.debug("Running lint test: {}".format(test_name))
+                log.debug(f"Running lint test: {test_name}")
                 test_results = getattr(self, test_name)()
                 for test in test_results.get("passed", []):
                     self.passed.append((test_name, test))
@@ -345,17 +347,12 @@ class PipelineLint(nf_core.utils.Pipeline):
                     f"[{eid}](https://nf-co.re/tools/docs/{tools_version}/pipeline_lint_tests/{eid}.html): {msg}"
                 )
 
-        def _s(some_list):
-            if len(some_list) != 1:
-                return "s"
-            return ""
-
         # Table of passed tests
         if len(self.passed) > 0 and show_passed:
             console.print(
                 rich.panel.Panel(
                     format_result(self.passed),
-                    title=r"[bold][✔] {} Pipeline Test{} Passed".format(len(self.passed), _s(self.passed)),
+                    title=rf"[bold][✔] {len(self.passed)} Pipeline Test{_s(self.passed)} Passed",
                     title_align="left",
                     style="green",
                     padding=1,
@@ -367,7 +364,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             console.print(
                 rich.panel.Panel(
                     format_result(self.fixed),
-                    title=r"[bold][?] {} Pipeline Test{} Fixed".format(len(self.fixed), _s(self.fixed)),
+                    title=rf"[bold][?] {len(self.fixed)} Pipeline Test{_s(self.fixed)} Fixed",
                     title_align="left",
                     style="bright_blue",
                     padding=1,
@@ -379,7 +376,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             console.print(
                 rich.panel.Panel(
                     format_result(self.ignored),
-                    title=r"[bold][?] {} Pipeline Test{} Ignored".format(len(self.ignored), _s(self.ignored)),
+                    title=rf"[bold][?] {len(self.ignored)} Pipeline Test{_s(self.ignored)} Ignored",
                     title_align="left",
                     style="grey58",
                     padding=1,
@@ -391,7 +388,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             console.print(
                 rich.panel.Panel(
                     format_result(self.warned),
-                    title=r"[bold][!] {} Pipeline Test Warning{}".format(len(self.warned), _s(self.warned)),
+                    title=rf"[bold][!] {len(self.warned)} Pipeline Test Warning{_s(self.warned)}",
                     title_align="left",
                     style="yellow",
                     padding=1,
@@ -403,7 +400,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             console.print(
                 rich.panel.Panel(
                     format_result(self.failed),
-                    title=r"[bold][✗] {} Pipeline Test{} Failed".format(len(self.failed), _s(self.failed)),
+                    title=rf"[bold][✗] {len(self.failed)} Pipeline Test{_s(self.failed)} Failed",
                     title_align="left",
                     style="red",
                     padding=1,
@@ -411,21 +408,17 @@ class PipelineLint(nf_core.utils.Pipeline):
             )
 
     def _print_summary(self):
-        def _s(some_list):
-            if len(some_list) != 1:
-                return "s"
-            return ""
 
         # Summary table
         summary_colour = "red" if len(self.failed) > 0 else "green"
         table = Table(box=rich.box.ROUNDED, style=summary_colour)
-        table.add_column(f"LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
-        table.add_row(r"[green][✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)))
+        table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
+        table.add_row(rf"[green][✔] {len(self.passed):>3} Test{_s(self.passed)} Passed")
         if len(self.fix):
-            table.add_row(r"[bright blue][?] {:>3} Test{} Fixed".format(len(self.fixed), _s(self.fixed)))
-        table.add_row(r"[grey58][?] {:>3} Test{} Ignored".format(len(self.ignored), _s(self.ignored)))
-        table.add_row(r"[yellow][!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)))
-        table.add_row(r"[red][✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)))
+            table.add_row(rf"[bright blue][?] {len(self.fixed):>3} Test{_s(self.fixed)} Fixed")
+        table.add_row(rf"[grey58][?] {len(self.ignored):>3} Test{_s(self.ignored)} Ignored")
+        table.add_row(rf"[yellow][!] {len(self.warned):>3} Test Warning{_s(self.warned)}")
+        table.add_row(rf"[red][✗] {len(self.failed):>3} Test{_s(self.failed)} Failed")
         console.print(table)
 
     def _get_results_md(self):
@@ -446,13 +439,12 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_failure_count = ""
         test_failures = ""
         if len(self.failed) > 0:
-            test_failure_count = "\n-| ❌ {:3d} tests failed       |-".format(len(self.failed))
+            test_failure_count = f"\n-| ❌ {len(self.failed):3d} tests failed       |-"
             test_failures = "### :x: Test failures:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
-                            eid, self._strip_ansi_codes(msg, "`")
-                        )
+                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"{self._strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.failed
                     ]
                 )
@@ -461,13 +453,12 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_ignored_count = ""
         test_ignored = ""
         if len(self.ignored) > 0:
-            test_ignored_count = "\n#| ❔ {:3d} tests were ignored |#".format(len(self.ignored))
+            test_ignored_count = f"\n#| ❔ {len(self.ignored):3d} tests were ignored |#"
             test_ignored = "### :grey_question: Tests ignored:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
-                            eid, self._strip_ansi_codes(msg, "`")
-                        )
+                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"{self._strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.ignored
                     ]
                 )
@@ -476,13 +467,12 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_fixed_count = ""
         test_fixed = ""
         if len(self.fixed) > 0:
-            test_fixed_count = "\n#| ❔ {:3d} tests had warnings |#".format(len(self.fixed))
+            test_fixed_count = f"\n#| ❔ {len(self.fixed):3d} tests had warnings |#"
             test_fixed = "### :grey_question: Tests fixed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
-                            eid, self._strip_ansi_codes(msg, "`")
-                        )
+                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"{self._strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.fixed
                     ]
                 )
@@ -491,13 +481,12 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_warning_count = ""
         test_warnings = ""
         if len(self.warned) > 0:
-            test_warning_count = "\n!| ❗ {:3d} tests had warnings |!".format(len(self.warned))
+            test_warning_count = f"\n!| ❗ {len(self.warned):3d} tests had warnings |!"
             test_warnings = "### :heavy_exclamation_mark: Test warnings:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
-                            eid, self._strip_ansi_codes(msg, "`")
-                        )
+                        f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
+                        f"{self._strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.warned
                     ]
                 )
@@ -506,12 +495,13 @@ class PipelineLint(nf_core.utils.Pipeline):
         test_passed_count = ""
         test_passes = ""
         if len(self.passed) > 0:
-            test_passed_count = "\n+| ✅ {:3d} tests passed       |+".format(len(self.passed))
+            test_passed_count = f"\n+| ✅ {len(self.passed):3d} tests passed       |+"
             test_passes = "### :white_check_mark: Tests passed:\n\n{}\n\n".format(
                 "\n".join(
                     [
-                        "* [{0}](https://nf-co.re/tools-docs/lint_tests/{0}.html) - {1}".format(
-                            eid, self._strip_ansi_codes(msg, "`")
+                        (
+                            f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html)"
+                            f" - {self._strip_ansi_codes(msg, '`')}"
                         )
                         for eid, msg in self.passed
                     ]
@@ -520,13 +510,13 @@ class PipelineLint(nf_core.utils.Pipeline):
 
         now = datetime.datetime.now()
 
-        comment_body_text = "Posted for pipeline commit {}".format(self.git_sha[:7]) if self.git_sha is not None else ""
+        comment_body_text = f"Posted for pipeline commit {self.git_sha[:7]}" if self.git_sha is not None else ""
         timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
         markdown = (
             f"## `nf-core lint` overall result: {overall_result}\n\n"
             f"{comment_body_text}\n\n"
-            f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}\n"
-            "```\n\n"
+            f"```diff{test_passed_count}{test_ignored_count}{test_fixed_count}{test_warning_count}{test_failure_count}"
+            "\n```\n\n"
             "<details>\n\n"
             f"{test_failures}{test_warnings}{test_ignored}{test_fixed}{test_passes}### Run details\n\n"
             f"* nf-core/tools version {nf_core.__version__}\n"
@@ -544,7 +534,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             json_fn (str): File path to write JSON to.
         """
 
-        log.info("Writing lint results to {}".format(json_fn))
+        log.info(f"Writing lint results to {json_fn}")
         now = datetime.datetime.now()
         results = {
             "nf_core_tools_version": nf_core.__version__,
@@ -584,7 +574,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         """
         if not isinstance(files, list):
             files = [files]
-        bfiles = ["`{}`".format(f) for f in files]
+        bfiles = [f"`{f}`" for f in files]
         return " or ".join(bfiles)
 
     def _strip_ansi_codes(self, string, replace_with=""):

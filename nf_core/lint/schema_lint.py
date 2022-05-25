@@ -78,7 +78,7 @@ def schema_lint(self):
         self.schema_obj.load_lint_schema()
         passed.append("Schema lint passed")
     except AssertionError as e:
-        failed.append("Schema lint failed: {}".format(e))
+        failed.append(f"Schema lint failed: {e}")
 
     # Check the title and description - gives warnings instead of fail
     if self.schema_obj.schema is not None:

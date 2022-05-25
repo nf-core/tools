@@ -84,21 +84,19 @@ class ModulesRepo(object):
         Sets self.modules_file_tree
              self.modules_avail_module_names
         """
-        api_url = "https://api.github.com/repos/{}/git/trees/{}?recursive=1".format(self.name, self.branch)
+        api_url = f"https://api.github.com/repos/{self.name}/git/trees/{self.branch}?recursive=1"
         r = gh_api.get(api_url)
         if r.status_code == 404:
-            raise LookupError("Repository / branch not found: {} ({})\n{}".format(self.name, self.branch, api_url))
+            raise LookupError(f"Repository / branch not found: {self.name} ({self.branch})\n{api_url}")
         elif r.status_code != 200:
-            raise LookupError(
-                "Could not fetch {} ({}) tree: {}\n{}".format(self.name, self.branch, r.status_code, api_url)
-            )
+            raise LookupError(f"Could not fetch {self.name} ({self.branch}) tree: {r.status_code}\n{api_url}")
 
         result = r.json()
         assert result["truncated"] == False
 
         self.modules_file_tree = result["tree"]
         for f in result["tree"]:
-            if f["path"].startswith(f"modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
+            if f["path"].startswith("modules/") and f["path"].endswith("/main.nf") and "/test/" not in f["path"]:
                 # remove modules/ and /main.nf
                 self.modules_avail_module_names.append(f["path"].replace("modules/", "").replace("/main.nf", ""))
         if len(self.modules_avail_module_names) == 0:
@@ -127,7 +125,7 @@ class ModulesRepo(object):
         """
         results = {}
         for f in self.modules_file_tree:
-            if not f["path"].startswith("modules/{}/".format(module)):
+            if not f["path"].startswith(f"modules/{module}/"):
                 continue
             if f["type"] != "blob":
                 continue
@@ -158,7 +156,7 @@ class ModulesRepo(object):
         # Call the GitHub API
         r = gh_api.get(api_url)
         if r.status_code != 200:
-            raise LookupError("Could not fetch {} file: {}\n {}".format(self.name, r.status_code, api_url))
+            raise LookupError(f"Could not fetch {self.name} file: {r.status_code}\n {api_url}")
         result = r.json()
         file_contents = base64.b64decode(result["content"])
 

@@ -62,7 +62,7 @@ class ModuleInstall(ModuleCommand):
 
         # Check that the supplied name is an available module
         if module and module not in self.modules_repo.modules_avail_module_names:
-            log.error("Module '{}' not found in list of available modules.".format(module))
+            log.error(f"Module '{module}' not found in list of available modules.")
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
 
@@ -90,7 +90,7 @@ class ModuleInstall(ModuleCommand):
         # Check that the module is not already installed
         if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
 
-            log.error(f"Module is already installed.")
+            log.error("Module is already installed.")
             repo_flag = "" if self.modules_repo.name == "nf-core/modules" else f"-g {self.modules_repo.name} "
             branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 

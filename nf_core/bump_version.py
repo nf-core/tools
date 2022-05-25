@@ -33,7 +33,7 @@ def bump_pipeline_version(pipeline_obj, new_version):
     if not current_version:
         raise UserWarning("Could not find config variable 'manifest.version'")
 
-    log.info("Changing version number from '{}' to '{}'".format(current_version, new_version))
+    log.info(f"Changing version number from '{current_version}' to '{new_version}'")
 
     # nextflow.config - workflow manifest version
     update_file_version(
@@ -41,8 +41,8 @@ def bump_pipeline_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"version\s*=\s*[\'\"]?{}[\'\"]?".format(current_version.replace(".", r"\.")),
-                "version = '{}'".format(new_version),
+                rf"version\s*=\s*[\'\"]?{re.escape(current_version)}[\'\"]?",
+                f"version = '{new_version}'",
             )
         ],
     )
@@ -63,7 +63,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
     new_version = re.sub(r"^[^0-9\.]*", "", new_version)
     if not current_version:
         raise UserWarning("Could not find config variable 'manifest.nextflowVersion'")
-    log.info("Changing Nextlow version number from '{}' to '{}'".format(current_version, new_version))
+    log.info(f"Changing Nextlow version number from '{current_version}' to '{new_version}'")
 
     # nextflow.config - manifest minimum nextflowVersion
     update_file_version(
@@ -71,8 +71,8 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflowVersion\s*=\s*[\'\"]?!>={}[\'\"]?".format(current_version.replace(".", r"\.")),
-                "nextflowVersion = '!>={}'".format(new_version),
+                rf"nextflowVersion\s*=\s*[\'\"]?!>={re.escape(current_version)}[\'\"]?",
+                f"nextflowVersion = '!>={new_version}'",
             )
         ],
     )
@@ -84,8 +84,8 @@ def bump_nextflow_version(pipeline_obj, new_version):
         [
             (
                 # example: - NXF_VER: '20.04.0'
-                r"- NXF_VER: [\'\"]{}[\'\"]".format(current_version.replace(".", r"\.")),
-                "- NXF_VER: '{}'".format(new_version),
+                rf"- NXF_VER: [\'\"]{re.escape(current_version)}[\'\"]",
+                f"- NXF_VER: '{new_version}'",
             )
         ],
     )
@@ -96,17 +96,13 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                r"nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(current_version.replace(".", r"\.")),
-                "nextflow%20DSL2-%E2%89%A5{}-23aa62.svg".format(new_version),
+                rf"nextflow%20DSL2-%E2%89%A5{re.escape(current_version)}-23aa62.svg",
+                f"nextflow%20DSL2-%E2%89%A5{new_version}-23aa62.svg",
             ),
             (
                 # example: 1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=20.04.0`)
-                r"1\.\s*Install\s*\[`Nextflow`\]\(https:\/\/www\.nextflow\.io\/docs\/latest\/getstarted\.html#installation\)\s*\(`>={}`\)".format(
-                    current_version.replace(".", r"\.")
-                ),
-                "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={}`)".format(
-                    new_version
-                ),
+                rf"1\.\s*Install\s*\[`Nextflow`\]\(https:\/\/www\.nextflow\.io\/docs\/latest\/getstarted\.html#installation\)\s*\(`>={re.escape(current_version)}`\)",
+                f"1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>={new_version}`)",
             ),
         ],
     )
@@ -132,7 +128,7 @@ def update_file_version(filename, pipeline_obj, patterns):
         with open(fn, "r") as fh:
             content = fh.read()
     except FileNotFoundError:
-        log.warning("File not found: '{}'".format(fn))
+        log.warning(f"File not found: '{fn}'")
         return
 
     replacements = []
@@ -144,7 +140,7 @@ def update_file_version(filename, pipeline_obj, patterns):
         for line in content.splitlines():
 
             # Match the pattern
-            matches_pattern = re.findall("^.*{}.*$".format(pattern[0]), line)
+            matches_pattern = re.findall(rf"^.*{pattern[0]}.*$", line)
             if matches_pattern:
                 found_match = True
 
@@ -162,12 +158,12 @@ def update_file_version(filename, pipeline_obj, patterns):
         if found_match:
             content = "\n".join(newcontent) + "\n"
         else:
-            log.error("Could not find version number in {}: '{}'".format(filename, pattern))
+            log.error(f"Could not find version number in {filename}: '{pattern}'")
 
-    log.info("Updated version in '{}'".format(filename))
+    log.info(f"Updated version in '{filename}'")
     for replacement in replacements:
-        stderr.print("          [red] - {}".format(replacement[0].strip()), highlight=False)
-        stderr.print("          [green] + {}".format(replacement[1].strip()), highlight=False)
+        stderr.print(f"          [red] - {replacement[0].strip()}", highlight=False)
+        stderr.print(f"          [green] + {replacement[1].strip()}", highlight=False)
     stderr.print("\n")
 
     with open(fn, "w") as fh:

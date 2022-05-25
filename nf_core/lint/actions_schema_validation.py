@@ -42,7 +42,7 @@ def actions_schema_validation(self):
             with open(wf_path, "r") as fh:
                 wf_json = yaml.safe_load(fh)
         except Exception as e:
-            failed.append("Could not parse yaml file: {}, {}".format(wf, e))
+            failed.append(f"Could not parse yaml file: {wf}, {e}")
             continue
 
         # yaml parses 'on' as True --> try to fix it before schema validation
@@ -54,8 +54,8 @@ def actions_schema_validation(self):
         # Validate the workflow
         try:
             jsonschema.validate(wf_json, schema)
-            passed.append("Workflow validation passed: {}".format(wf))
+            passed.append(f"Workflow validation passed: {wf}")
         except Exception as e:
-            failed.append("Workflow validation failed for {}: {}".format(wf, e))
+            failed.append(f"Workflow validation failed for {wf}: {e}")
 
     return {"passed": passed, "failed": failed}
