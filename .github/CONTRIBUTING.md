@@ -55,7 +55,8 @@ any code does not adhere to Black formatting.
 
 ### isort
 
-All Python code must also be passed through [isort](https://pycqa.github.io/isort/index.html). This Python utility will sort imports alphabetically, and automatically separated into sections and by type.
+All Python code must also be passed through [isort](https://pycqa.github.io/isort/index.html).
+This ensures a harmonised imports throughout the package, from all contributors.
 
 To run isort on the command line recursively on the whole repository you can use:
 
