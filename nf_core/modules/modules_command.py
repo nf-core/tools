@@ -161,7 +161,7 @@ class ModuleCommand:
                     modules_repo.get_modules_file_tree()
                     install_folder = [modules_repo.owner, modules_repo.repo]
                 except LookupError as e:
-                    log.warn(f"Could not get module's file tree for '{repo}': {e}")
+                    log.warning(f"Could not get module's file tree for '{repo}': {e}")
                     remove_from_mod_json[repo] = list(modules.keys())
                     continue
 
@@ -170,7 +170,7 @@ class ModuleCommand:
                     if sha is None:
                         if repo not in remove_from_mod_json:
                             remove_from_mod_json[repo] = []
-                        log.warn(
+                        log.warning(
                             f"Could not find git SHA for module '{module}' in '{repo}' - removing from modules.json"
                         )
                         remove_from_mod_json[repo].append(module)
