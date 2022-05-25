@@ -46,7 +46,7 @@ def get_local_wf(workflow, revision=None):
     """
     # Assume nf-core if no org given
     if workflow.count("/") == 0:
-        workflow = "nf-core/{}".format(workflow)
+        workflow = f"nf-core/{workflow}"
 
     wfs = Workflows()
     wfs.get_local_nf_workflows()
@@ -54,16 +54,16 @@ def get_local_wf(workflow, revision=None):
         if workflow == wf.full_name:
             if revision is None or revision == wf.commit_sha or revision == wf.branch or revision == wf.active_tag:
                 if wf.active_tag:
-                    print_revision = "v{}".format(wf.active_tag)
+                    print_revision = f"v{wf.active_tag}"
                 elif wf.branch:
-                    print_revision = "{} - {}".format(wf.branch, wf.commit_sha[:7])
+                    print_revision = f"{wf.branch} - {wf.commit_sha[:7]}"
                 else:
                     print_revision = wf.commit_sha
-                log.info("Using local workflow: {} ({})".format(workflow, print_revision))
+                log.info(f"Using local workflow: {workflow} ({print_revision})")
                 return wf.local_path
 
     # Wasn't local, fetch it
-    log.info("Downloading workflow: {} ({})".format(workflow, revision))
+    log.info(f"Downloading workflow: {workflow} ({revision})")
     pull_cmd = f"nextflow pull {workflow}"
     if revision is not None:
         pull_cmd += f" -r {revision}"
@@ -123,7 +123,7 @@ class Workflows(object):
             log.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
             for org_name in os.listdir(nextflow_wfdir):
                 for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
-                    self.local_workflows.append(LocalWorkflow("{}/{}".format(org_name, wf_name)))
+                    self.local_workflows.append(LocalWorkflow(f"{org_name}/{wf_name}"))
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:
@@ -136,7 +136,7 @@ class Workflows(object):
                     self.local_workflows.append(LocalWorkflow(wf_name))
 
         # Find additional information about each workflow by checking its git history
-        log.debug("Fetching extra info about {} local workflows".format(len(self.local_workflows)))
+        log.debug(f"Fetching extra info about {len(self.local_workflows)} local workflows")
         for wf in self.local_workflows:
             wf.get_local_nf_workflow_details()
 
@@ -223,24 +223,24 @@ class Workflows(object):
         table.add_column("Last Pulled", justify="right")
         table.add_column("Have latest release?")
         for wf in filtered_workflows:
-            wf_name = "[bold][link=https://nf-co.re/{0}]{0}[/link]".format(wf.name, wf.full_name)
+            wf_name = f"[bold][link=https://nf-co.re/{wf.name}]{wf.name}[/link]"
             version = "[yellow]dev"
             if len(wf.releases) > 0:
-                version = "[blue]{}".format(wf.releases[-1]["tag_name"])
+                version = f"[blue]{wf.releases[-1]['tag_name']}"
             published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "[dim]-"
             pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "[dim]-"
             if wf.local_wf is not None:
                 revision = ""
                 if wf.local_wf.active_tag is not None:
-                    revision = "v{}".format(wf.local_wf.active_tag)
+                    revision = f"v{wf.local_wf.active_tag}"
                 elif wf.local_wf.branch is not None:
-                    revision = "{} - {}".format(wf.local_wf.branch, wf.local_wf.commit_sha[:7])
+                    revision = f"{wf.local_wf.branch} - {wf.local_wf.commit_sha[:7]}"
                 else:
                     revision = wf.local_wf.commit_sha
                 if wf.local_is_latest:
-                    is_latest = "[green]Yes ({})".format(revision)
+                    is_latest = f"[green]Yes ({revision})"
                 else:
-                    is_latest = "[red]No ({})".format(revision)
+                    is_latest = f"[red]No ({revision})"
             else:
                 is_latest = "[dim]-"
 
@@ -337,7 +337,7 @@ class LocalWorkflow(object):
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):
-                log.debug("Guessed nextflow assets workflow directory: {}".format(nf_wfdir))
+                log.debug(f"Guessed nextflow assets workflow directory: {nf_wfdir}")
                 self.local_path = nf_wfdir
 
             # Use `nextflow info` to get more details about the workflow
@@ -351,7 +351,7 @@ class LocalWorkflow(object):
 
         # Pull information from the local git repository
         if self.local_path is not None:
-            log.debug("Pulling git info from {}".format(self.local_path))
+            log.debug(f"Pulling git info from {self.local_path}")
             try:
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)

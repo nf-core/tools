@@ -157,31 +157,31 @@ def nextflow_config(self):
     for cfs in config_fail:
         for cf in cfs:
             if cf in ignore_configs:
-                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
                 break
             if cf in self.nf_config.keys():
-                passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
+                passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
                 break
         else:
-            failed.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
+            failed.append(f"Config variable not found: {self._wrap_quotes(cfs)}")
     for cfs in config_warn:
         for cf in cfs:
             if cf in ignore_configs:
-                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
                 break
             if cf in self.nf_config.keys():
-                passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
+                passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
                 break
         else:
-            warned.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
+            warned.append(f"Config variable not found: {self._wrap_quotes(cfs)}")
     for cf in config_fail_ifdefined:
         if cf in ignore_configs:
-            ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+            ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
             break
         if cf not in self.nf_config.keys():
-            passed.append("Config variable (correctly) not found: {}".format(self._wrap_quotes(cf)))
+            passed.append(f"Config variable (correctly) not found: {self._wrap_quotes(cf)}")
         else:
-            failed.append("Config variable (incorrectly) found: {}".format(self._wrap_quotes(cf)))
+            failed.append(f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}")
 
     # Check and warn if the process configuration is done with deprecated syntax
     process_with_deprecated_syntax = list(
@@ -194,14 +194,14 @@ def nextflow_config(self):
         )
     )
     for pd in process_with_deprecated_syntax:
-        warned.append("Process configuration is done with deprecated_syntax: {}".format(pd))
+        warned.append(f"Process configuration is done with deprecated_syntax: {pd}")
 
     # Check the variables that should be set to 'true'
     for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
         if self.nf_config.get(k) == "true":
-            passed.append("Config ``{}`` had correct value: ``{}``".format(k, self.nf_config.get(k)))
+            passed.append(f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``")
         else:
-            failed.append("Config ``{}`` did not have correct value: ``{}``".format(k, self.nf_config.get(k)))
+            failed.append(f"Config ``{k}`` did not have correct value: ``{self.nf_config.get(k)}``")
 
     # Check that the pipeline name starts with nf-core
     try:
@@ -241,33 +241,28 @@ def nextflow_config(self):
             passed.append("Config variable ``manifest.nextflowVersion`` started with >= or !>=")
         else:
             failed.append(
-                "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : ``{}``".format(
-                    self.nf_config.get("manifest.nextflowVersion", "")
-                ).strip("\"'")
+                "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : "
+                f"``{self.nf_config.get('manifest.nextflowVersion', '')}``".strip("\"'")
             )
 
     # Check that the pipeline version contains ``dev``
     if not self.release_mode and "manifest.version" in self.nf_config:
         if self.nf_config["manifest.version"].strip(" '\"").endswith("dev"):
-            passed.append(
-                "Config ``manifest.version`` ends in ``dev``: ``{}``".format(self.nf_config["manifest.version"])
-            )
+            passed.append(f"Config ``manifest.version`` ends in ``dev``: ``{self.nf_config['manifest.version']}``")
         else:
             warned.append(
-                "Config ``manifest.version`` should end in ``dev``: ``{}``".format(self.nf_config["manifest.version"])
+                f"Config ``manifest.version`` should end in ``dev``: ``{self.nf_config['manifest.version']}``"
             )
     elif "manifest.version" in self.nf_config:
         if "dev" in self.nf_config["manifest.version"]:
             failed.append(
-                "Config ``manifest.version`` should not contain ``dev`` for a release: ``{}``".format(
-                    self.nf_config["manifest.version"]
-                )
+                "Config ``manifest.version`` should not contain ``dev`` for a release: "
+                f"``{self.nf_config['manifest.version']}``"
             )
         else:
             passed.append(
-                "Config ``manifest.version`` does not contain ``dev`` for release: ``{}``".format(
-                    self.nf_config["manifest.version"]
-                )
+                "Config ``manifest.version`` does not contain ``dev`` for release: "
+                f"``{self.nf_config['manifest.version']}``"
             )
 
     # Check if custom profile params are set correctly
@@ -280,9 +275,9 @@ def nextflow_config(self):
         self.nf_config.get("params.custom_config_version", "").strip("'")
     )
     if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
-        passed.append("Config `params.custom_config_base` is set to `{}`".format(custom_config_base))
+        passed.append(f"Config `params.custom_config_base` is set to `{custom_config_base}`")
     else:
-        failed.append("Config `params.custom_config_base` is not set to `{}`".format(custom_config_base))
+        failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
 
     # Check that lines for loading custom profiles exist
     lines = [
