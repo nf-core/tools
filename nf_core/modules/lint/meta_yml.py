@@ -20,7 +20,7 @@ def meta_yml(module_lint_object, module):
     ``meta.yml`` and the ``main.nf``.
 
     """
-    required_keys = ["name", "input", "output"]
+    required_keys = ["name", "output"]
     required_keys_lists = ["input", "output"]
     try:
         with open(module.meta_yml, "r") as fh:
@@ -35,9 +35,9 @@ def meta_yml(module_lint_object, module):
     all_list_children = True
     for rk in required_keys:
         if not rk in meta_yaml.keys():
-            module.failed.append(("meta_required_keys", f"`{rk}` not specified", module.meta_yml))
+            module.failed.append(("meta_required_keys", f"`{rk}` not specified in YAML", module.meta_yml))
             contains_required_keys = False
-        elif not isinstance(meta_yaml[rk], list) and rk in required_keys_lists:
+        elif rk in meta_yaml.keys() and not isinstance(meta_yaml[rk], list) and rk in required_keys_lists:
             module.failed.append(("meta_required_keys", f"`{rk}` is not a list", module.meta_yml))
             all_list_children = False
     if contains_required_keys:
@@ -45,24 +45,30 @@ def meta_yml(module_lint_object, module):
 
     # Confirm that all input and output channels are specified
     if contains_required_keys and all_list_children:
-        meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
-        for input in module.inputs:
-            if input in meta_input:
-                module.passed.append(("meta_input", f"`{input}` specified", module.meta_yml))
-            else:
-                module.failed.append(("meta_input", f"`{input}` missing in `meta.yml`", module.meta_yml))
+        if "input" in meta_yaml:
+            meta_input = [list(x.keys())[0] for x in meta_yaml["input"]]
+            for input in module.inputs:
+                if input in meta_input:
+                    module.passed.append(("meta_input", f"`{input}` specified", module.meta_yml))
+                else:
+                    module.failed.append(("meta_input", f"`{input}` missing in `meta.yml`", module.meta_yml))
 
-        meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
-        for output in module.outputs:
-            if output in meta_output:
-                module.passed.append(("meta_output", "`{output}` specified", module.meta_yml))
-            else:
-                module.failed.append(("meta_output", "`{output}` missing in `meta.yml`", module.meta_yml))
+        if "output" in meta_yaml:
+            meta_output = [list(x.keys())[0] for x in meta_yaml["output"]]
+            for output in module.outputs:
+                if output in meta_output:
+                    module.passed.append(("meta_output", f"`{output}` specified", module.meta_yml))
+                else:
+                    module.failed.append(("meta_output", f"`{output}` missing in `meta.yml`", module.meta_yml))
 
         # confirm that the name matches the process name in main.nf
         if meta_yaml["name"].upper() == module.process_name:
             module.passed.append(("meta_name", "Correct name specified in `meta.yml`", module.meta_yml))
         else:
             module.failed.append(
-                ("meta_name", "Conflicting process name between `meta.yml` and `main.nf`", module.meta_yml)
+                (
+                    "meta_name",
+                    f"Conflicting process name between meta.yml (`{meta_yaml['name']}`) and main.nf (`{module.process_name}`)",
+                    module.meta_yml,
+                )
             )

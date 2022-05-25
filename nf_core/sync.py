@@ -76,11 +76,14 @@ class PipelineSync(object):
         self.gh_repo = gh_repo
         self.pr_url = ""
 
+        # Set up the API auth if supplied on the command line
         self.gh_api = nf_core.utils.gh_api
-        if self.gh_username and "GITHUB_AUTH_TOKEN" in os.environ:
-            self.gh_api.auth = requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
-        self.gh_api.return_ok = [200, 201]
         self.gh_api.lazy_init()
+        if self.gh_username and "GITHUB_AUTH_TOKEN" in os.environ:
+            log.debug(f"Authenticating sync as {self.gh_username}")
+            self.gh_api.setup_github_auth(
+                requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
+            )
 
     def sync(self):
         """Find workflow attributes, create a new template pipeline on TEMPLATE"""
@@ -320,7 +323,6 @@ class PipelineSync(object):
 
         # Make new pull-request
         stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
-        log.debug("Submitting PR to GitHub API")
         with self.gh_api.cache_disabled():
             try:
                 r = self.gh_api.request_retry(
