@@ -48,15 +48,13 @@ def readme(self):
             assert nf_badge_version == self.minNextflowVersion
         except (AssertionError, KeyError):
             failed.append(
-                "README Nextflow minimum version badge does not match config. Badge: `{}`, Config: `{}`".format(
-                    nf_badge_version, self.minNextflowVersion
-                )
+                f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "
+                f"Config: `{self.minNextflowVersion}`"
             )
         else:
             passed.append(
-                "README Nextflow minimum version badge matched config. Badge: `{}`, Config: `{}`".format(
-                    nf_badge_version, self.minNextflowVersion
-                )
+                f"README Nextflow minimum version badge matched config. Badge: `{nf_badge_version}`, "
+                f"Config: `{self.minNextflowVersion}`"
             )
     else:
         warned.append("README did not have a Nextflow minimum version badge.")

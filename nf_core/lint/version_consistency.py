@@ -34,9 +34,7 @@ def version_consistency(self):
 
     # Get version from the docker tag
     if self.nf_config.get("process.container", "") and not ":" in self.nf_config.get("process.container", ""):
-        failed.append(
-            "Docker slug seems not to have a version tag: {}".format(self.nf_config.get("process.container", ""))
-        )
+        failed.append(f"Docker slug seems not to have a version tag: {self.nf_config.get('process.container', '')}")
 
     # Get config container tag (if set; one container per workflow)
     if self.nf_config.get("process.container", ""):
@@ -52,7 +50,7 @@ def version_consistency(self):
     # Check if they are all numeric
     for v_type, version in versions.items():
         if not version.replace(".", "").isdigit():
-            failed.append("{} was not numeric: {}!".format(v_type, version))
+            failed.append(f"{v_type} was not numeric: {version}!")
 
     # Check if they are consistent
     if len(set(versions.values())) != 1:
