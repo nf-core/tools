@@ -186,7 +186,7 @@ class PipelineCreate(object):
             except (ConnectionError, UserWarning) as e:
                 # Something went wrong - try again
                 log.warning(e)
-                log.error(f"Connection error - retrying")
+                log.error("Connection error - retrying")
                 continue
 
             # Write the new logo to the file
