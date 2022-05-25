@@ -14,6 +14,8 @@
 
 ### Modules
 
+- Fix a bug in the regex extracting the version from biocontainers URLs [#1596](https://github.com/nf-core/tools/pull/1596)
+
 ### Linting
 
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
