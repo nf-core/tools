@@ -4,6 +4,7 @@ Lint the main.nf file of a module
 """
 
 import re
+
 import nf_core
 
 

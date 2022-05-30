@@ -3,9 +3,10 @@
 """
 import json
 import os
-import pytest
 import tempfile
 import unittest
+
+import pytest
 from rich.console import Console
 
 import nf_core.create

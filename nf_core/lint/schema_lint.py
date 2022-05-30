@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
 import logging
-import nf_core.schema
+
 import jsonschema
+
+import nf_core.schema
 
 
 def schema_lint(self):

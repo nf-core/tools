@@ -1,6 +1,7 @@
-import os
 import base64
 import logging
+import os
+
 from nf_core.utils import gh_api
 
 log = logging.getLogger(__name__)

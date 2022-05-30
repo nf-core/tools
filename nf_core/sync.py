@@ -2,14 +2,15 @@
 """Synchronise a pipeline TEMPLATE branch with the template.
 """
 
-import git
 import json
 import logging
 import os
+import shutil
+
+import git
 import requests
 import requests_cache
 import rich
-import shutil
 
 import nf_core
 import nf_core.create

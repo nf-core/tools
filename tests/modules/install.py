@@ -1,5 +1,6 @@
-import pytest
 import os
+
+import pytest
 
 from ..utils import with_temporary_folder
 

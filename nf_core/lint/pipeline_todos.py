@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+import fnmatch
+import io
 import logging
 import os
-import io
-import fnmatch
 
 log = logging.getLogger(__name__)
 

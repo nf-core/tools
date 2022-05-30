@@ -5,7 +5,6 @@ along with running the tests and creating md5 sums
 """
 
 from __future__ import print_function
-from rich.syntax import Syntax
 
 import errno
 import gzip
@@ -13,18 +12,19 @@ import hashlib
 import logging
 import operator
 import os
-import questionary
 import re
-import rich
 import shlex
 import subprocess
 import tempfile
+
+import questionary
+import rich
 import yaml
+from rich.syntax import Syntax
 
 import nf_core.utils
 
 from .modules_repo import ModulesRepo
-
 
 log = logging.getLogger(__name__)
 

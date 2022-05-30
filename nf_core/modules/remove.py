@@ -1,9 +1,9 @@
+import json
+import logging
 import os
 import sys
-import json
-import questionary
-import logging
 
+import questionary
 
 import nf_core.utils
 

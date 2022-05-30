@@ -2,6 +2,7 @@
 """Some tests covering the bump_version code.
 """
 import os
+
 import yaml
 
 import nf_core.bump_version

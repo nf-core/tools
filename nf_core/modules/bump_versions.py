@@ -5,21 +5,23 @@ or for a single module
 
 
 from __future__ import print_function
+
 import logging
-import questionary
 import os
 import re
+
+import questionary
 import rich
 from rich.console import Console
-from rich.table import Table
 from rich.markdown import Markdown
-import rich
+from rich.table import Table
+
+import nf_core.modules.module_utils
+import nf_core.utils
+from nf_core.modules.nfcore_module import NFCoreModule
+from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
 
-import nf_core.utils
-from nf_core.utils import plural_s as _s
-import nf_core.modules.module_utils
-from nf_core.modules.nfcore_module import NFCoreModule
 from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)

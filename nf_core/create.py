@@ -2,18 +2,19 @@
 """Creates a nf-core pipeline matching the current
 organization's specification based on a template.
 """
-from genericpath import exists
-import git
 import imghdr
-import jinja2
 import logging
 import os
 import pathlib
 import random
-import requests
 import shutil
 import sys
 import time
+
+import git
+import jinja2
+import requests
+from genericpath import exists
 
 import nf_core
 

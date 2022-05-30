@@ -5,3 +5,4 @@ mock
 black
 Sphinx
 sphinx_rtd_theme
+isort

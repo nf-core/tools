@@ -15,3 +15,8 @@ markers = [
 ]
 testpaths = ["tests"]
 norecursedirs = [ ".*", "build", "dist", "*.egg", "data", "__pycache__", ".github", "nf_core", "docs"]
+
+[tool.isort]
+profile = "black"
+known_first_party = ["nf_core"]
+multi_line_output = 3

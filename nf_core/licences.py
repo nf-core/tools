@@ -3,14 +3,15 @@
 
 from __future__ import print_function
 
-import logging
 import json
+import logging
 import os
 import re
+
 import requests
-import yaml
 import rich.console
 import rich.table
+import yaml
 
 import nf_core.utils
 

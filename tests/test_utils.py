@@ -2,17 +2,18 @@
 """ Tests covering for utility functions.
 """
 
+import os
+import shutil
+import tempfile
+import unittest
+
+import mock
+import pytest
+import requests
+
 import nf_core.create
 import nf_core.list
 import nf_core.utils
-
-import mock
-import os
-import pytest
-import requests
-import tempfile
-import unittest
-import shutil
 
 from .utils import with_temporary_folder
 
