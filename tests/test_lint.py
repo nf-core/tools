@@ -177,12 +177,12 @@ class TestLint(unittest.TestCase):
         # Check .md files against each test name
         lint_obj = nf_core.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
-            fn = os.path.join(docs_basedir, "{}.md".format(test_name))
-            assert os.path.exists(fn), "Could not find lint docs .md file: {}".format(fn)
+            fn = os.path.join(docs_basedir, f"{test_name}.md")
+            assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"
             existing_docs.remove(fn)
 
         # Check that we have no remaining .md files that we didn't expect
-        assert len(existing_docs) == 0, "Unexpected lint docs .md files found: {}".format(", ".join(existing_docs))
+        assert len(existing_docs) == 0, f"Unexpected lint docs .md files found: {', '.join(existing_docs)}"
 
     #######################
     # SPECIFIC LINT TESTS #
@@ -209,6 +209,7 @@ class TestLint(unittest.TestCase):
     from .lint.actions_schema_validation import (
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
+        test_actions_schema_validation_fails_for_additional_property,
     )
 
     from .lint.merge_markers import test_merge_markers_found

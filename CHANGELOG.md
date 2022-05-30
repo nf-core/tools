@@ -4,11 +4,18 @@
 
 ### Template
 
+- Fix bug in pipeline readme logo URL ([#1589](https://github.com/nf-core/tools/issues/1589))
+
+### Linting
+
+- Check that the `.prettierignore` file exists and that starts with the same content.
+
 ### General
 
 ### Modules
 
 - Add `fix` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
+- Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
