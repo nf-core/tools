@@ -12,6 +12,9 @@
 
 ### General
 
+- Add `--fail-warned` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
+- Add `--fail-warned` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
+
 ### Modules
 
 - Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)

@@ -29,7 +29,15 @@ log = logging.getLogger(__name__)
 
 
 def run_linting(
-    pipeline_dir, release_mode=False, fix=(), key=(), show_passed=False, fail_ignored=False, md_fn=None, json_fn=None
+    pipeline_dir,
+    release_mode=False,
+    fix=(),
+    key=(),
+    show_passed=False,
+    fail_ignored=False,
+    fail_warned=False,
+    md_fn=None,
+    json_fn=None,
 ):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
@@ -62,7 +70,7 @@ def run_linting(
     # Create the lint object
     pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode)))) if key else []
 
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -167,7 +175,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 
-    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False):
+    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False, fail_warned=False):
         """Initialise linting object"""
 
         # Initialise the parent object
@@ -179,6 +187,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         self.lint_config = {}
         self.release_mode = release_mode
         self.fail_ignored = fail_ignored
+        self.fail_warned = fail_warned
         self.failed = []
         self.ignored = []
         self.fixed = []
@@ -314,7 +323,10 @@ class PipelineLint(nf_core.utils.Pipeline):
                 for test in test_results.get("fixed", []):
                     self.fixed.append((test_name, test))
                 for test in test_results.get("warned", []):
-                    self.warned.append((test_name, test))
+                    if self.fail_warned:
+                        self.failed.append((test_name, test))
+                    else:
+                        self.warned.append((test_name, test))
                 for test in test_results.get("failed", []):
                     self.failed.append((test_name, test))
                 if test_results.get("could_fix", False):
