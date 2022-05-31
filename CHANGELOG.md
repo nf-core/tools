@@ -8,8 +8,8 @@
 
 ### General
 
-- Add `--fix-warning` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
-- Add `--fix-warning` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
+- Add `--fail-warned` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
+- Add `--fail-warned` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
 
 ### Modules
 
