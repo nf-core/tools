@@ -18,6 +18,7 @@ from .module_utils import (
     get_installed_modules,
     get_module_git_log,
     module_exist_in_repo,
+    sha_exists,
 )
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
