@@ -6,6 +6,7 @@ jsonschema>=3.0
 markdown>=3.3
 packaging
 prompt_toolkit>=3.0.3
+pytest
 pytest-workflow
 pyyaml
 questionary>=1.8.0
