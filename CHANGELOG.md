@@ -12,6 +12,8 @@
 
 ### General
 
+- Updated the package requirements to prevent defunct installations of nf-core [#1620](https://github.com/nf-core/tools/pull/1620)
+
 ### Modules
 
 - Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
