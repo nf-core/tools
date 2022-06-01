@@ -178,9 +178,6 @@ class DownloadTest(unittest.TestCase):
         with pytest.raises(FileNotFoundError):
             download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
 
-    #
-    # Tests for 'singularity_pull_image'
-    #
     # If Singularity is not installed, it raises a FileNotFoundError because the singularity command can't be found.
     @pytest.mark.skipif(
         shutil.which("singularity") is not None,
