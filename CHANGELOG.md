@@ -9,6 +9,7 @@
 ### Linting
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
+- Update `readme.py` nf version badge validation regexp to accept any signs before version number ([#1613](https://github.com/nf-core/tools/issues/1613))
 
 ### General
 
