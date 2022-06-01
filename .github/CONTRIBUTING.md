@@ -33,7 +33,9 @@ Then install your local fork of nf-core/tools:
 pip install -e .
 ```
 
-## Code formatting with Black
+## Code formatting
+
+### Black
 
 All Python code in nf-core/tools must be passed through the [Black Python code formatter](https://black.readthedocs.io/en/stable/).
 This ensures a harmonised code formatting style throughout the package, from all contributors.
@@ -50,6 +52,24 @@ You can also set it up to run when you [make a commit](https://black.readthedocs
 
 There is an automated CI check that runs when you open a pull-request to nf-core/tools that will fail if
 any code does not adhere to Black formatting.
+
+### isort
+
+All Python code must also be passed through [isort](https://pycqa.github.io/isort/index.html).
+This ensures a harmonised imports throughout the package, from all contributors.
+
+To run isort on the command line recursively on the whole repository you can use:
+
+```bash
+isort .
+```
+
+isort also has [plugins for most common editors](https://github.com/pycqa/isort/wiki/isort-Plugins)
+to automatically format code when you hit save.
+Or [version control integration](https://pycqa.github.io/isort/docs/configuration/pre-commit.html) to set it up to run when you make a commit.
+
+There is an automated CI check that runs when you open a pull-request to nf-core/tools that will fail if
+any code does not adhere to isort formatting.
 
 ## API Documentation
 

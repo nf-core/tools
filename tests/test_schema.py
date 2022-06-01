@@ -2,18 +2,19 @@
 """ Tests covering the pipeline schema code.
 """
 
-import nf_core.schema
-
-import click
 import json
-import mock
 import os
-import pytest
-import requests
 import shutil
 import tempfile
 import unittest
+
+import click
+import mock
+import pytest
+import requests
 import yaml
+
+import nf_core.schema
 
 from .utils import with_temporary_file, with_temporary_folder
 

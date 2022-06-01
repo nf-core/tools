@@ -8,31 +8,31 @@ nf-core modules lint
 """
 
 from __future__ import print_function
+
+import json
 import logging
-from nf_core.modules.modules_command import ModuleCommand
 import operator
 import os
-import questionary
 import re
+import sys
+
+import questionary
 import requests
 import rich
 import yaml
-import json
-from rich.table import Table
 from rich.markdown import Markdown
 from rich.panel import Panel
-import rich
-from nf_core.utils import rich_force_colors
-from nf_core.lint.pipeline_todos import pipeline_todos
-import sys
+from rich.table import Table
 
-import nf_core.utils
 import nf_core.modules.module_utils
-
-from nf_core.utils import plural_s as _s
+import nf_core.utils
+from nf_core.lint.pipeline_todos import pipeline_todos
+from nf_core.lint_utils import console
+from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
-from nf_core.lint_utils import console
+from nf_core.utils import plural_s as _s
+from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
@@ -64,9 +64,9 @@ class ModuleLint(ModuleCommand):
     from .main_nf import main_nf
     from .meta_yml import meta_yml
     from .module_changes import module_changes
+    from .module_deprecations import module_deprecations
     from .module_tests import module_tests
     from .module_todos import module_todos
-    from .module_deprecations import module_deprecations
     from .module_version import module_version
 
     def __init__(self, dir):

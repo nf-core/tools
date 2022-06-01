@@ -3,14 +3,15 @@
 """
 import fnmatch
 import json
-import mock
 import os
-import pytest
-import requests
 import shutil
 import subprocess
 import tempfile
 import unittest
+
+import mock
+import pytest
+import requests
 import yaml
 
 import nf_core.create
@@ -188,46 +189,43 @@ class TestLint(unittest.TestCase):
     # SPECIFIC LINT TESTS #
     #######################
     from .lint.actions_awsfulltest import (
-        test_actions_awsfulltest_warn,
-        test_actions_awsfulltest_pass,
         test_actions_awsfulltest_fail,
+        test_actions_awsfulltest_pass,
+        test_actions_awsfulltest_warn,
     )
-    from .lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
-    from .lint.files_exist import (
-        test_files_exist_missing_config,
-        test_files_exist_missing_main,
-        test_files_exist_depreciated_file,
-        test_files_exist_pass,
+    from .lint.actions_awstest import (
+        test_actions_awstest_fail,
+        test_actions_awstest_pass,
     )
     from .lint.actions_ci import (
-        test_actions_ci_pass,
-        test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_docker_ver,
+        test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_trigger,
+        test_actions_ci_pass,
     )
-
     from .lint.actions_schema_validation import (
+        test_actions_schema_validation_fails_for_additional_property,
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
-        test_actions_schema_validation_fails_for_additional_property,
     )
-
+    from .lint.files_exist import (
+        test_files_exist_depreciated_file,
+        test_files_exist_missing_config,
+        test_files_exist_missing_main,
+        test_files_exist_pass,
+    )
+    from .lint.files_unchanged import (
+        test_files_unchanged_fail,
+        test_files_unchanged_pass,
+    )
     from .lint.merge_markers import test_merge_markers_found
-
+    from .lint.modules_json import test_modules_json_pass
     from .lint.nextflow_config import (
-        test_nextflow_config_example_pass,
         test_nextflow_config_bad_name_fail,
         test_nextflow_config_dev_in_release_mode_failed,
+        test_nextflow_config_example_pass,
     )
-
-    from .lint.files_unchanged import (
-        test_files_unchanged_pass,
-        test_files_unchanged_fail,
-    )
-
     from .lint.version_consistency import test_version_consistency
-
-    from .lint.modules_json import test_modules_json_pass
 
 
 # TODO nf-core: Assess and strip out if no longer required for DSL2

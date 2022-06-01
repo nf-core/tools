@@ -2,20 +2,21 @@
 """ Code to deal with pipeline JSON Schema """
 
 from __future__ import print_function
-from rich.prompt import Confirm
 
 import copy
-import copy
-import jinja2
 import json
-import jsonschema
 import logging
-import markdown
 import os
 import webbrowser
-import yaml
 
-import nf_core.list, nf_core.utils
+import jinja2
+import jsonschema
+import markdown
+import yaml
+from rich.prompt import Confirm
+
+import nf_core.list
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 

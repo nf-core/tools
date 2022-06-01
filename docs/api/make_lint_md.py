@@ -2,6 +2,7 @@
 
 import fnmatch
 import os
+
 import nf_core.lint
 import nf_core.modules.lint
 
