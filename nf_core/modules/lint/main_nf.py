@@ -3,22 +3,16 @@
 Lint the main.nf file of a module
 """
 
-import re
-<<<<<<< HEAD
-=======
-import nf_core
 import logging
-import requests
->>>>>>> db7fac1e (check that url exist & add log info)
+import re
 
+import requests
 from galaxy.tool_util.deps.mulled.util import build_target
+
+import nf_core
 import nf_core.modules.module_utils
 
-<<<<<<< HEAD
-import nf_core
-=======
 log = logging.getLogger(__name__)
->>>>>>> db7fac1e (check that url exist & add log info)
 
 
 def main_nf(module_lint_object, module, fix_version, progress_bar):
