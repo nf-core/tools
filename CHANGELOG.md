@@ -10,7 +10,6 @@
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
-- Add `fix` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
 
 ### General
 
