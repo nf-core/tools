@@ -596,8 +596,8 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
-@click.option("--fix", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(ctx, tool, dir, key, all, local, passed, fix):
+@click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
+def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     """
     Lint one or more modules in a directory.
 
@@ -611,7 +611,13 @@ def lint(ctx, tool, dir, key, all, local, passed, fix):
         module_lint = nf_core.modules.ModuleLint(dir=dir)
         module_lint.modules_repo = ctx.obj["modules_repo_obj"]
         module_lint.lint(
-            module=tool, key=key, all_modules=all, print_results=True, local=local, show_passed=passed, fix_version=fix
+            module=tool,
+            key=key,
+            all_modules=all,
+            print_results=True,
+            local=local,
+            show_passed=passed,
+            fix_version=fix_version,
         )
         if len(module_lint.failed) > 0:
             sys.exit(1)
