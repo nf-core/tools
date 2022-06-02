@@ -9,6 +9,7 @@
 ### Linting
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
+- Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 
 ### General
 
@@ -18,11 +19,8 @@
 
 ### Modules
 
+- Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
 - Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
-
-### Linting
-
-- Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

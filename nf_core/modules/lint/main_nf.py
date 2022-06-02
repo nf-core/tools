@@ -3,12 +3,19 @@
 Lint the main.nf file of a module
 """
 
+import logging
 import re
 
+import requests
+from galaxy.tool_util.deps.mulled.util import build_target
+
 import nf_core
+import nf_core.modules.module_utils
+
+log = logging.getLogger(__name__)
 
 
-def main_nf(module_lint_object, module):
+def main_nf(module_lint_object, module, fix_version, progress_bar):
     """
     Lint a ``main.nf`` module file
 
@@ -100,7 +107,7 @@ def main_nf(module_lint_object, module):
         module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines):
+    if check_process_section(module, process_lines, fix_version, progress_bar):
         module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
     else:
         module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
@@ -190,7 +197,7 @@ def check_when_section(self, lines):
         self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines):
+def check_process_section(self, lines, fix_version, progress_bar):
     """
     Lint the section of a module between the process definition
     and the 'input:' definition
@@ -236,14 +243,14 @@ def check_process_section(self, lines):
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
 
     for l in lines:
-        if re.search("bioconda::", l):
+        if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
         l = l.strip(" '\"")
-        if l.startswith("https://containers") or l.startswith("https://depot"):
+        if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
             singularity_tag = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l).group(1)
-        if l.startswith("biocontainers/") or l.startswith("quay.io/"):
+        if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
             docker_tag = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)['\"]", l).group(1)
@@ -272,9 +279,30 @@ def check_process_section(self, lines):
             last_ver = response.get("latest_version")
             if last_ver is not None and last_ver != bioconda_version:
                 package, ver = bp.split("=", 1)
-                self.warned.append(
-                    ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                )
+                # If a new version is available and fix is True, update the version
+                if fix_version:
+                    if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
+                        progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                        log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                        self.passed.append(
+                            (
+                                "bioconda_latest",
+                                f"Conda package has been updated to the latest available: `{bp}`",
+                                self.main_nf,
+                            )
+                        )
+                    else:
+                        progress_bar.print(
+                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                        )
+                        log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                        self.warned.append(
+                            ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                        )
+                else:
+                    self.warned.append(
+                        ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                    )
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
@@ -341,3 +369,70 @@ def _is_empty(self, line):
     if line.strip().replace(" ", "") == "":
         empty = True
     return empty
+
+
+def _fix_module_version(self, current_version, latest_version, singularity_tag, response):
+    """Updates the module version
+
+    Changes the bioconda current version by the latest version.
+    Obtains the latest build from bioconda response
+    Checks that the new URLs for docker and singularity with the tag [version]--[build] are valid
+    Changes the docker and singularity URLs
+    """
+    # Get latest build
+    build = _get_build(response)
+
+    with open(self.main_nf, "r") as source:
+        lines = source.readlines()
+
+    # Check if the new version + build exist and replace
+    new_lines = []
+    for line in lines:
+        l = line.strip(" '\"")
+        build_type = _container_type(l)
+        if build_type == "bioconda":
+            new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
+        elif build_type == "singularity" or build_type == "docker":
+            # Check that the new url is valid
+            new_url = re.search(
+                "(?:')(.+)(?:')", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
+            ).group(1)
+            response_new_container = requests.get(
+                "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
+            )
+            log.debug(
+                f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+            )
+            if response_new_container.status_code != 200:
+                return False
+            new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
+        else:
+            new_lines.append(line)
+
+    # Replace outdated versions by the latest one
+    with open(self.main_nf, "w") as source:
+        for line in new_lines:
+            source.write(line)
+
+    return True
+
+
+def _get_build(response):
+    """Get the latest build of the container version"""
+    build_times = []
+    latest_v = response.get("latest_version")
+    files = response.get("files")
+    for f in files:
+        if f.get("version") == latest_v:
+            build_times.append((f.get("upload_time"), f.get("attrs").get("build")))
+    return sorted(build_times, key=lambda tup: tup[0], reverse=True)[0][1]
+
+
+def _container_type(line):
+    """Returns the container type of a build."""
+    if re.search("bioconda::", line):
+        return "bioconda"
+    if line.startswith("https://containers") or line.startswith("https://depot"):
+        return "singularity"
+    if line.startswith("biocontainers/") or line.startswith("quay.io/"):
+        return "docker"
