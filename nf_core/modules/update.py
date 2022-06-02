@@ -438,7 +438,7 @@ class ModuleUpdate(ModuleCommand):
                 modules_json = self.update_modules_json(
                     modules_json, modules_repo.name, module, version, write_file=False
                 )
-                
+
         if self.save_diff_fn:
             # Compare the new modules.json and build a diff
             modules_json_diff = difflib.unified_diff(
