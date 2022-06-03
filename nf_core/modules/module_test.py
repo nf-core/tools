@@ -66,6 +66,11 @@ class ModulesTest(object):
         # Obtain repo type
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(".")
+            if not self.repo_type == "modules":
+                raise UserWarning(
+                    "The working directory doesn't look like a clone of nf-core/modules.\n"
+                    "Are you running the tests inside the nf-core/modules main directory?"
+                )
         except LookupError as e:
             raise UserWarning(e)
         # Get installed modules
