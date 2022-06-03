@@ -82,20 +82,9 @@ class ModulesTest(object):
     def _check_inputs(self):
         """Do more complex checks about supplied flags."""
 
-        # Obtain repo type
-        try:
-            self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(".")
-            # Check that the command is run from nf-core/modules directory
-            if not self.repo_type == "modules":
-                raise UserWarning(
-                    "The working directory doesn't look like a clone of nf-core/modules.\n"
-                    "Are you running the tests inside the nf-core/modules main directory?"
-                )
-        except LookupError as e:
-            raise UserWarning(e)
         # Get installed modules
         self.all_local_modules, self.all_nfcore_modules = nf_core.modules.module_utils.get_installed_modules(
-            self.dir, self.repo_type
+            ".", "modules"
         )
 
         # Get the tool name if not specified
@@ -107,7 +96,9 @@ class ModulesTest(object):
             all_installed_modules = [m.module_name for m in self.all_nfcore_modules]
             if len(all_installed_modules) == 0:
                 raise UserWarning(
-                    "No installed modules were found. Are you running the tests inside the nf-core/modules main directory?"
+                    "No installed modules were found.\n"
+                    "Are you running the tests inside the nf-core/modules main directory?\n"
+                    "Otherwise, make sure that the directory structure is modules/TOOL/SUBTOOL/ and tests/modules/TOOLS/SUBTOOL/"
                 )
             self.module_name = questionary.autocomplete(
                 "Tool name:",

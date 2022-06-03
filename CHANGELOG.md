@@ -21,7 +21,7 @@
 
 - Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
 - Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
-- Command `nf-core modules test` obtains module name suggestions from installed modules and fails if it isn't run from nf-core/modules [#1624](https://github.com/nf-core/tools/pull/1624)
+- Command `nf-core modules test` obtains module name suggestions from installed modules [#1624](https://github.com/nf-core/tools/pull/1624)
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
