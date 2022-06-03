@@ -63,20 +63,10 @@ class ModulesTest(object):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
-        # Obtain repo type
-        try:
-            self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(".")
-            if not self.repo_type == "modules":
-                raise UserWarning(
-                    "The working directory doesn't look like a clone of nf-core/modules.\n"
-                    "Are you running the tests inside the nf-core/modules main directory?"
-                )
-        except LookupError as e:
-            raise UserWarning(e)
-        # Get installed modules
-        self.all_local_modules, self.all_nfcore_modules = nf_core.modules.module_utils.get_installed_modules(
-            self.dir, self.repo_type
-        )
+        self.dir = ""
+        self.repo_type = ""
+        self.all_local_modules = ""
+        self.all_nfcore_modules = ""
 
     def run(self):
         """Run test steps"""
@@ -91,6 +81,22 @@ class ModulesTest(object):
 
     def _check_inputs(self):
         """Do more complex checks about supplied flags."""
+
+        # Obtain repo type
+        try:
+            self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(".")
+            # Check that the command is run from nf-core/modules directory
+            if not self.repo_type == "modules":
+                raise UserWarning(
+                    "The working directory doesn't look like a clone of nf-core/modules.\n"
+                    "Are you running the tests inside the nf-core/modules main directory?"
+                )
+        except LookupError as e:
+            raise UserWarning(e)
+        # Get installed modules
+        self.all_local_modules, self.all_nfcore_modules = nf_core.modules.module_utils.get_installed_modules(
+            self.dir, self.repo_type
+        )
 
         # Get the tool name if not specified
         if self.module_name is None:

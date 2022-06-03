@@ -26,3 +26,17 @@ def test_modules_test_no_name_no_prompts(self):
         meta_builder._check_inputs()
     os.chdir(cwd)
     assert "Tool name not provided and prompts deactivated." in str(excinfo.value)
+
+
+def test_modules_test_no_modules_dir(self):
+    """Test the check_inputs() function - raise UserWarning because command is not run from nf-core/modules"""
+    cwd = os.getcwd()
+    os.chdir(self.nfcore_modules)
+    meta_builder = nf_core.modules.ModulesTest("none", True, "")
+    with pytest.raises(UserWarning) as excinfo:
+        meta_builder._check_inputs()
+    os.chdir(cwd)
+    assert (
+        str(excinfo.value)
+        == "The working directory doesn't look like a clone of nf-core/modules.\nAre you running the tests inside the nf-core/modules main directory?"
+    )
