@@ -13,9 +13,8 @@ import pytest
 import questionary
 import rich
 
+import nf_core.modules.module_utils
 import nf_core.utils
-
-from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -34,6 +33,14 @@ class ModulesTest(object):
         flat indicating if prompts are used
     pytest_args : tuple
         additional arguments passed to pytest command
+    dir: str
+        Directory path
+    repo_type: str
+        Type of repository ['pipeline', 'modules']
+    all_local_modules: list
+        List of all installed local modules
+    all_nfcore_modules: list
+        List of all installed nf-core modules
 
     Methods
     -------
@@ -56,6 +63,15 @@ class ModulesTest(object):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
+        # Obtain repo type
+        try:
+            self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(".")
+        except LookupError as e:
+            raise UserWarning(e)
+        # Get installed modules
+        self.all_local_modules, self.all_nfcore_modules = nf_core.modules.module_utils.get_installed_modules(
+            self.dir, self.repo_type
+        )
 
     def run(self):
         """Run test steps"""
@@ -77,11 +93,14 @@ class ModulesTest(object):
                 raise UserWarning(
                     "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
                 )
-            modules_repo = ModulesRepo()
-            modules_repo.get_modules_file_tree()
+            all_installed_modules = [m.module_name for m in self.all_nfcore_modules]
+            if len(all_installed_modules) == 0:
+                raise UserWarning(
+                    "No installed modules were found. Are you running the tests inside the nf-core/modules main directory?"
+                )
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.modules_avail_module_names,
+                choices=all_installed_modules,
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
         module_dir = Path("modules") / self.module_name
