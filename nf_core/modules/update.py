@@ -4,18 +4,23 @@ import enum
 import json
 import logging
 import os
-import questionary
 import shutil
 import tempfile
+
+import questionary
 from questionary import question
 from rich.console import Console
 from rich.syntax import Syntax
 
-import nf_core.utils
 import nf_core.modules.module_utils
+import nf_core.utils
 
+from .module_utils import (
+    get_installed_modules,
+    get_module_git_log,
+    module_exist_in_repo,
+)
 from .modules_command import ModuleCommand
-from .module_utils import get_installed_modules, get_module_git_log, module_exist_in_repo
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -122,7 +127,7 @@ class ModuleUpdate(ModuleCommand):
 
             # Check that the supplied name is an available module
             if module and module not in self.modules_repo.modules_avail_module_names:
-                log.error("Module '{}' not found in list of available modules.".format(module))
+                log.error(f"Module '{module}' not found in list of available modules.")
                 log.info("Use the command 'nf-core modules list remote' to view available software")
                 return False
 
@@ -221,7 +226,7 @@ class ModuleUpdate(ModuleCommand):
                     os.remove(self.save_diff_fn)
                     break
                 self.save_diff_fn = questionary.text(
-                    f"Enter a new filename: ",
+                    "Enter a new filename: ",
                     style=nf_core.utils.nfcore_question_style,
                 ).unsafe_ask()
 
@@ -445,7 +450,7 @@ class ModuleUpdate(ModuleCommand):
 
             # Save diff for modules.json to file
             with open(self.save_diff_fn, "a") as fh:
-                fh.write(f"Changes in './modules.json'\n")
+                fh.write("Changes in './modules.json'\n")
                 for line in modules_json_diff:
                     fh.write(line)
                 fh.write("*" * 60 + "\n")

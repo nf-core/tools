@@ -38,6 +38,16 @@ jobs:
           # Override to remove the default --check flag so that we make changes
           options: "--color"
 
+      - name: Set up Python 3.8
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.8
+      - name: python-isort
+        uses: isort/isort-action@v0.1.0
+        with:
+          isortVersion: "latest"
+          requirementsFiles: "requirements.txt requirements-dev.txt"
+
       - name: Commit & push changes
         run: |
           git config user.email "core@nf-co.re"

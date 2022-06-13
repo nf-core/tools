@@ -1,16 +1,18 @@
-from posixpath import dirname
-from nf_core import modules
-import os
-import glob
-import shutil
 import copy
+import glob
 import json
 import logging
+import os
+import shutil
+from posixpath import dirname
+
 import yaml
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core import modules
 from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
@@ -88,7 +90,7 @@ class ModuleCommand:
         if self.repo_type == "modules":
             return True
         if self.dir is None or not os.path.exists(self.dir):
-            log.error("Could not find pipeline: {}".format(self.dir))
+            log.error(f"Could not find pipeline: {self.dir}")
             return False
         main_nf = os.path.join(self.dir, "main.nf")
         nf_config = os.path.join(self.dir, "nextflow.config")
@@ -227,10 +229,6 @@ class ModuleCommand:
                         failed_to_find_commit_sha.append(f"'{repo}/{module}'")
 
             if len(failed_to_find_commit_sha) > 0:
-
-                def _s(some_list):
-                    return "" if len(some_list) == 1 else "s"
-
                 log.info(
                     f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: {', '.join(failed_to_find_commit_sha)}."
                     f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'} module{_s(failed_to_find_commit_sha)}."
@@ -251,10 +249,10 @@ class ModuleCommand:
                     log.debug(f"Parent directory not empty: '{parent_dir}'")
                 else:
                     log.debug(f"Deleted orphan tool directory: '{parent_dir}'")
-            log.debug("Successfully removed {} module".format(module_name))
+            log.debug(f"Successfully removed {module_name} module")
             return True
         except OSError as e:
-            log.error("Could not remove module: {}".format(e))
+            log.error(f"Could not remove module: {e}")
             return False
 
     def download_module_file(self, module_name, module_version, modules_repo, install_folder, dry_run=False):
@@ -270,7 +268,7 @@ class ModuleCommand:
                 log.error(e)
                 return False
         if not dry_run:
-            log.info("Downloaded {} files to {}".format(len(files), os.path.join(*install_folder, module_name)))
+            log.info(f"Downloaded {len(files)} files to {os.path.join(*install_folder, module_name)}")
         return True
 
     def load_modules_json(self):
@@ -323,4 +321,4 @@ class ModuleCommand:
             with open(config_fn, "r") as fh:
                 self.lint_config = yaml.safe_load(fh)
         except FileNotFoundError:
-            log.debug("No lint config file found: {}".format(config_fn))
+            log.debug(f"No lint config file found: {config_fn}")

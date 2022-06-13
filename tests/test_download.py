@@ -2,19 +2,20 @@
 """Tests for the download subcommand of nf-core tools
 """
 
-import nf_core.create
-import nf_core.utils
-from nf_core.download import DownloadWorkflow
-
 import hashlib
-import mock
 import os
-import pytest
 import shutil
 import tempfile
 import unittest
 
-from .utils import with_temporary_folder, with_temporary_file
+import mock
+import pytest
+
+import nf_core.create
+import nf_core.utils
+from nf_core.download import DownloadWorkflow
+
+from .utils import with_temporary_file, with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):

@@ -8,30 +8,31 @@ nf-core modules lint
 """
 
 from __future__ import print_function
+
+import json
 import logging
-from nf_core.modules.modules_command import ModuleCommand
 import operator
 import os
-import questionary
 import re
+import sys
+
+import questionary
 import requests
 import rich
 import yaml
-import json
-from rich.table import Table
 from rich.markdown import Markdown
 from rich.panel import Panel
-import rich
-from nf_core.utils import rich_force_colors
-from nf_core.lint.pipeline_todos import pipeline_todos
-import sys
+from rich.table import Table
 
-import nf_core.utils
 import nf_core.modules.module_utils
-
+import nf_core.utils
+from nf_core.lint.pipeline_todos import pipeline_todos
+from nf_core.lint_utils import console
+from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
-from nf_core.lint_utils import console
+from nf_core.utils import plural_s as _s
+from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
@@ -63,9 +64,9 @@ class ModuleLint(ModuleCommand):
     from .main_nf import main_nf
     from .meta_yml import meta_yml
     from .module_changes import module_changes
+    from .module_deprecations import module_deprecations
     from .module_tests import module_tests
     from .module_todos import module_todos
-    from .module_deprecations import module_deprecations
     from .module_version import module_version
 
     def __init__(self, dir):
@@ -100,7 +101,16 @@ class ModuleLint(ModuleCommand):
     def _get_all_lint_tests():
         return ["main_nf", "meta_yml", "module_todos", "module_deprecations"]
 
-    def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
+    def lint(
+        self,
+        module=None,
+        key=(),
+        all_modules=False,
+        print_results=True,
+        show_passed=False,
+        local=False,
+        fix_version=False,
+    ):
         """
         Lint all or one specific module
 
@@ -117,6 +127,7 @@ class ModuleLint(ModuleCommand):
         :param module:          A specific module to lint
         :param print_results:   Whether to print the linting results
         :param show_passed:     Whether passed tests should be shown as well
+        :param fix_version:     Update the module version if a newer version is available
 
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests
@@ -173,11 +184,11 @@ class ModuleLint(ModuleCommand):
 
         # Lint local modules
         if local and len(local_modules) > 0:
-            self.lint_modules(local_modules, local=True)
+            self.lint_modules(local_modules, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
         if len(nfcore_modules) > 0:
-            self.lint_modules(nfcore_modules, local=False)
+            self.lint_modules(nfcore_modules, local=False, fix_version=fix_version)
 
         if print_results:
             self._print_results(show_passed=show_passed)
@@ -201,7 +212,7 @@ class ModuleLint(ModuleCommand):
         if len(bad_keys) > 0:
             raise AssertionError(
                 "Test name{} not recognised: '{}'".format(
-                    "s" if len(bad_keys) > 1 else "",
+                    _s(bad_keys),
                     "', '".join(bad_keys),
                 )
             )
@@ -243,7 +254,8 @@ class ModuleLint(ModuleCommand):
             for m in sorted(os.listdir(nfcore_modules_dir)):
                 if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
                     raise ModuleLintException(
-                        f"File found in '{nfcore_modules_dir}': '{m}'! This directory should only contain module directories."
+                        f"File found in '{nfcore_modules_dir}': '{m}'! "
+                        "This directory should only contain module directories."
                     )
 
                 module_dir = os.path.join(nfcore_modules_dir, m)
@@ -280,19 +292,21 @@ class ModuleLint(ModuleCommand):
 
         return local_modules, nfcore_modules
 
-    def lint_modules(self, modules, local=False):
+    def lint_modules(self, modules, local=False, fix_version=False):
         """
         Lint a list of modules
 
         Args:
             modules ([NFCoreModule]): A list of module objects
             local (boolean): Whether the list consist of local or nf-core modules
+            fix_version (boolean): Fix the module version if a newer version is available
         """
         progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
+            console=console,
         )
         with progress_bar:
             lint_progress = progress_bar.add_task(
@@ -303,9 +317,9 @@ class ModuleLint(ModuleCommand):
 
             for mod in modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
-                self.lint_module(mod, local=local)
+                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
 
-    def lint_module(self, mod, local=False):
+    def lint_module(self, mod, progress_bar, local=False, fix_version=False):
         """
         Perform linting on one module
 
@@ -324,14 +338,17 @@ class ModuleLint(ModuleCommand):
 
         # Only check the main script in case of a local module
         if local:
-            self.main_nf(mod)
+            self.main_nf(mod, fix_version, progress_bar)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             self.warned += [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
 
         # Otherwise run all the lint tests
         else:
             for test_name in self.lint_tests:
-                getattr(self, test_name)(mod)
+                if test_name == "main_nf":
+                    getattr(self, test_name)(mod, fix_version, progress_bar)
+                else:
+                    getattr(self, test_name)(mod)
 
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             self.warned += [LintResult(mod, *m) for m in mod.warned]
@@ -382,11 +399,6 @@ class ModuleLint(ModuleCommand):
                 )
             return table
 
-        def _s(some_list):
-            if len(some_list) > 1:
-                return "s"
-            return ""
-
         # Print blank line for spacing
         console.print("")
 
@@ -400,7 +412,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][✔] {} Module Test{} Passed".format(len(self.passed), _s(self.passed)),
+                    title=rf"[bold][✔] {len(self.passed)} Module Test{_s(self.passed)} Passed",
                     title_align="left",
                     style="green",
                     padding=0,
@@ -417,7 +429,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][!] {} Module Test Warning{}".format(len(self.warned), _s(self.warned)),
+                    title=rf"[bold][!] {len(self.warned)} Module Test Warning{_s(self.warned)}",
                     title_align="left",
                     style="yellow",
                     padding=0,
@@ -434,7 +446,7 @@ class ModuleLint(ModuleCommand):
             console.print(
                 rich.panel.Panel(
                     table,
-                    title=r"[bold][✗] {} Module Test{} Failed".format(len(self.failed), _s(self.failed)),
+                    title=rf"[bold][✗] {len(self.failed)} Module Test{_s(self.failed)} Failed",
                     title_align="left",
                     style="red",
                     padding=0,
@@ -442,18 +454,13 @@ class ModuleLint(ModuleCommand):
             )
 
     def print_summary(self):
-        def _s(some_list):
-            if len(some_list) > 1:
-                return "s"
-            return ""
-
-        # Summary table
+        """Print a summary table to the console."""
         table = Table(box=rich.box.ROUNDED)
-        table.add_column("[bold green]LINT RESULTS SUMMARY".format(len(self.passed)), no_wrap=True)
+        table.add_column("[bold green]LINT RESULTS SUMMARY", no_wrap=True)
         table.add_row(
-            r"[✔] {:>3} Test{} Passed".format(len(self.passed), _s(self.passed)),
+            rf"[✔] {len(self.passed):>3} Test{_s(self.passed)} Passed",
             style="green",
         )
-        table.add_row(r"[!] {:>3} Test Warning{}".format(len(self.warned), _s(self.warned)), style="yellow")
-        table.add_row(r"[✗] {:>3} Test{} Failed".format(len(self.failed), _s(self.failed)), style="red")
+        table.add_row(rf"[!] {len(self.warned):>3} Test Warning{_s(self.warned)}", style="yellow")
+        table.add_row(rf"[✗] {len(self.failed):>3} Test{_s(self.failed)} Failed", style="red")
         console.print(table)

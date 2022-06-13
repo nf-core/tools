@@ -1,14 +1,15 @@
 #!/usr/bin/env python
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
-from rich import print
 import logging
 import os
 import re
+import sys
+
 import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
-import sys
+from rich import print
 
 import nf_core
 import nf_core.bump_version
@@ -65,10 +66,10 @@ def run_nf_core():
     rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
 
     # Print nf-core header
-    stderr.print("\n[green]{},--.[grey39]/[green],-.".format(" " * 42), highlight=False)
+    stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
-    stderr.print("[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
-    stderr.print("[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
+    stderr.print(r"[blue]    |\ | |__  __ /  ` /  \ |__) |__      [yellow]   }  {", highlight=False)
+    stderr.print(r"[blue]    | \| |       \__, \__/ |  \ |___     [green]\`-._,-`-,", highlight=False)
     stderr.print("[green]                                          `._,._,'\n", highlight=False)
     stderr.print(
         f"[grey39]    nf-core/tools version {nf_core.__version__} - [link=https://nf-co.re]https://nf-co.re[/]",
@@ -78,11 +79,11 @@ def run_nf_core():
         is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
         if is_outdated:
             stderr.print(
-                "[bold bright_yellow]    There is a new version of nf-core/tools available! ({})".format(remote_vers),
+                f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
                 highlight=False,
             )
     except Exception as e:
-        log.debug("Could not check latest version: {}".format(e))
+        log.debug(f"Could not check latest version: {e}")
     stderr.print("\n")
 
     # Lanch the click cli
@@ -284,7 +285,7 @@ def create(name, description, author, version, no_git, force, outdir):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory [dim]\[default: current working directory][/]",
 )
 @click.option(
     "--release",
@@ -300,9 +301,10 @@ def create(name, description, author, version, no_git, force, outdir):
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
+def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -324,7 +326,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, markdown, json):
     # Run the lint tests!
     try:
         lint_obj, module_lint_obj = nf_core.lint.run_linting(
-            dir, release, fix, key, show_passed, fail_ignored, markdown, json
+            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json
         )
         if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
             sys.exit(1)
@@ -401,7 +403,7 @@ def remote(ctx, keywords, json):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: Current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
 def local(ctx, keywords, json, dir):
     """
@@ -425,7 +427,7 @@ def local(ctx, keywords, json, dir):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
 @click.option("-f", "--force", is_flag=True, default=False, help="Force reinstallation of module if it already exists")
@@ -456,7 +458,7 @@ def install(ctx, tool, dir, prompt, force, sha):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-f", "--force", is_flag=True, default=False, help="Force update of module")
 @click.option("-p", "--prompt", is_flag=True, default=False, help="Prompt for the version of the module")
@@ -505,7 +507,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 def remove(ctx, dir, tool):
     """
@@ -594,7 +596,8 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
-def lint(ctx, tool, dir, key, all, local, passed):
+@click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
+def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     """
     Lint one or more modules in a directory.
 
@@ -607,7 +610,15 @@ def lint(ctx, tool, dir, key, all, local, passed):
     try:
         module_lint = nf_core.modules.ModuleLint(dir=dir)
         module_lint.modules_repo = ctx.obj["modules_repo_obj"]
-        module_lint.lint(module=tool, key=key, all_modules=all, print_results=True, local=local, show_passed=passed)
+        module_lint.lint(
+            module=tool,
+            key=key,
+            all_modules=all,
+            print_results=True,
+            local=local,
+            show_passed=passed,
+            fix_version=fix_version,
+        )
         if len(module_lint.failed) > 0:
             sys.exit(1)
     except nf_core.modules.lint.ModuleLintException as e:
@@ -627,7 +638,7 @@ def lint(ctx, tool, dir, key, all, local, passed):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: Current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
 def info(ctx, tool, dir):
     """
@@ -784,7 +795,7 @@ def validate(pipeline, params):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("--no-prompts", is_flag=True, help="Do not confirm changes, just update parameters and exit")
 @click.option("--web-only", is_flag=True, help="Skip building using Nextflow config, just launch the web tool")
@@ -886,7 +897,7 @@ def docs(schema_path, output, format, force, columns):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option(
     "-n", "--nextflow", is_flag=True, default=False, help="Bump required nextflow version instead of pipeline version"
@@ -929,7 +940,7 @@ def bump_version(new_version, dir, nextflow):
     "--dir",
     type=click.Path(exists=True),
     default=".",
-    help="Pipeline directory. [dim]\[default: current working directory][/]",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 @click.option("-b", "--from-branch", type=str, help="The git branch to use to fetch workflow variables.")
 @click.option("-p", "--pull-request", is_flag=True, default=False, help="Make a GitHub pull-request with the changes.")

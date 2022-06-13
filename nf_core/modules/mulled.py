@@ -3,12 +3,11 @@
 
 import logging
 import re
-from packaging.version import Version, InvalidVersion
-from typing import Iterable, Tuple, List
+from typing import Iterable, List, Tuple
 
 import requests
 from galaxy.tool_util.deps.mulled.util import build_target, v2_image_name
-
+from packaging.version import InvalidVersion, Version
 
 log = logging.getLogger(__name__)
 

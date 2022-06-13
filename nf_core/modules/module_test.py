@@ -4,15 +4,17 @@ The ModulesTest class runs the tests locally
 """
 
 import logging
-import questionary
 import os
-import pytest
 import sys
-import rich
 from pathlib import Path
 from shutil import which
 
+import pytest
+import questionary
+import rich
+
 import nf_core.utils
+
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)

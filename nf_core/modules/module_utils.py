@@ -1,11 +1,11 @@
+import datetime
 import glob
 import json
-import os
 import logging
-import rich
-import datetime
-import questionary
+import os
 
+import questionary
+import rich
 
 import nf_core.utils
 
@@ -92,15 +92,13 @@ def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     Fetches metadata about the commit (dates, message, etc.)
     Args:
         commit_sha (str): The SHA of the requested commit
-        repo_name (str): module repos name (def. {0})
+        repo_name (str): module repos name (def. nf-core/modules)
     Returns:
         message (str): The commit message for the requested commit
         date (str): The commit date for the requested commit
     Raises:
         LookupError: If the call to the API fails.
-    """.format(
-        repo_name
-    )
+    """
     api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
     response = gh_api.get(api_url)
@@ -135,7 +133,7 @@ def create_modules_json(pipeline_dir):
     modules_dir = f"{pipeline_dir}/modules"
 
     if not os.path.exists(modules_dir):
-        raise UserWarning(f"Can't find a ./modules directory. Is this a DSL2 pipeline?")
+        raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
     # Extract all modules repos in the pipeline directory
     repo_names = [
@@ -377,7 +375,7 @@ def get_repo_type(dir, repo_type=None, use_prompt=True):
 
     # If not set, prompt the user
     if not repo_type and use_prompt:
-        log.warning(f"Can't find a '.nf-core.yml' file that defines 'repository_type'")
+        log.warning("Can't find a '.nf-core.yml' file that defines 'repository_type'")
         repo_type = questionary.select(
             "Is this repository an nf-core pipeline or a fork of nf-core/modules?",
             choices=[
