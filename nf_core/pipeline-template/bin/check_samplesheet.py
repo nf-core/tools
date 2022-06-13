@@ -127,6 +127,7 @@ class RowChecker:
                 seen[sample] += 1
                 row[self._sample_col] = f"{sample}_T{seen[sample]}"
 
+
 def read_head(handle, num_lines=10):
     """Read the specified number of lines from the current position in the file."""
     lines = []
