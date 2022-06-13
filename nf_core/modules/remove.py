@@ -1,9 +1,9 @@
+import json
+import logging
 import os
 import sys
-import json
-import questionary
-import logging
 
+import questionary
 
 import nf_core.utils
 
@@ -69,7 +69,7 @@ class ModuleRemove(ModuleCommand):
                 self.remove_modules_json_entry(module, repo_name, modules_json)
             return False
 
-        log.info("Removing {}".format(module))
+        log.info(f"Removing {module}")
 
         # Remove entry from modules.json
         modules_json = self.load_modules_json()

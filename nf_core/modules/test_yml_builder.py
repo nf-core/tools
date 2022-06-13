@@ -5,7 +5,6 @@ along with running the tests and creating md5 sums
 """
 
 from __future__ import print_function
-from rich.syntax import Syntax
 
 import errno
 import gzip
@@ -13,18 +12,19 @@ import hashlib
 import logging
 import operator
 import os
-import questionary
 import re
-import rich
 import shlex
 import subprocess
 import tempfile
+
+import questionary
+import rich
 import yaml
+from rich.syntax import Syntax
 
 import nf_core.utils
 
 from .modules_repo import ModulesRepo
-
 
 log = logging.getLogger(__name__)
 
@@ -263,7 +263,7 @@ class ModulesTestYmlBuilder(object):
                 results_dir, results_dir_repeat = self.run_tests_workflow(command)
             else:
                 results_dir = rich.prompt.Prompt.ask(
-                    f"[violet]Test output folder with results[/] (leave blank to run test)"
+                    "[violet]Test output folder with results[/] (leave blank to run test)"
                 )
                 if results_dir == "":
                     results_dir = None
@@ -325,7 +325,7 @@ class ModulesTestYmlBuilder(object):
         log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
-            log.info(f"Repeating test ...")
+            log.info("Repeating test ...")
             nfconfig_raw = subprocess.check_output(shlex.split(command_repeat))
 
         except OSError as e:
@@ -363,4 +363,4 @@ class ModulesTestYmlBuilder(object):
             with open(self.test_yml_output_path, "w") as fh:
                 yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
         except FileNotFoundError as e:
-            raise UserWarning("Could not create test.yml file: '{}'".format(e))
+            raise UserWarning(f"Could not create test.yml file: '{e}'")

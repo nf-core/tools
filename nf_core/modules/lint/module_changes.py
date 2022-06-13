@@ -2,8 +2,10 @@
 Check whether the content of a module has changed compared to the original repository
 """
 import os
+
 import requests
 import rich
+
 from nf_core.modules.lint import LintResult
 
 
@@ -44,7 +46,7 @@ def module_changes(module_lint_object, module):
             module.warned.append(
                 (
                     "check_local_copy",
-                    f"Could not fetch remote copy, skipping comparison.",
+                    "Could not fetch remote copy, skipping comparison.",
                     f"{os.path.join(module.module_dir, f)}",
                 )
             )

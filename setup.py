@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-version = "2.4.1"
+version = "2.5dev"
 
 with open("README.md") as f:
     readme = f.read()
