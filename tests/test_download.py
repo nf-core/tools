@@ -181,7 +181,7 @@ class DownloadTest(unittest.TestCase):
     # If Singularity is not installed, it raises a FileNotFoundError because the singularity command can't be found.
     @pytest.mark.skipif(
         shutil.which("singularity") is not None,
-        reason="Can't test how the code behaves if sungularity is not installed if it is.",
+        reason="Can't test how the code behaves when sungularity is not installed if it is.",
     )
     @with_temporary_folder
     @mock.patch("rich.progress.Progress.add_task")
