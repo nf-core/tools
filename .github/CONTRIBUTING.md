@@ -71,6 +71,24 @@ Or [version control integration](https://pycqa.github.io/isort/docs/configuratio
 There is an automated CI check that runs when you open a pull-request to nf-core/tools that will fail if
 any code does not adhere to isort formatting.
 
+### pre-commit hooks
+
+This repository comes with [pre-commit](https://pre-commit.com/) hooks for black, isort and Prettier. pre-commit automatically runs checks before a commit is committed into the git history. If all checks pass, the commit is made, if files are changed by the pre-commit hooks, the user is informed and has to stage the changes and attempt the commit again.
+
+You can use the pre-commit hooks if you like, but you don't have to. The CI on Github will run the same checks as the tools installed with pre-commit. If the pre-commit checks pass, then the same checks in the CI will pass, too.
+
+You can install the pre-commit hooks into the development environment by running the following command in the root directory of the repository.
+
+```bash
+pre-commit install --install-hooks
+```
+
+You can also run all pre-commit hooks without making a commit:
+
+```bash
+pre-commit run --all
+```
+
 ## API Documentation
 
 We aim to write function docstrings according to the [Google Python style-guide](https://github.com/google/styleguide/blob/gh-pages/pyguide.md#38-comments-and-docstrings). These are used to automatically generate package documentation on the nf-core website using Sphinx.

@@ -167,14 +167,14 @@ class TestUtils(unittest.TestCase):
             raise AssertionError("MultiQC release v1.10 not found")
         assert "master" in wf_branches.keys()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
+        with pytest.raises(AssertionError):
+            nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_repo_releases_branches_not_exists_slash(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
+        with pytest.raises(AssertionError):
+            nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)

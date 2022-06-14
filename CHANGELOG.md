@@ -9,18 +9,19 @@
 ### Linting
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
+- Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 
 ### General
 
 - Fix and improve broken test for Singularity container download [#1622](https://github.com/nf-core/tools/pull/1622).
+- Updated the package requirements to prevent defunct installations of nf-core [#1620](https://github.com/nf-core/tools/pull/1620)
+- Add `--fail-warned` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
+- Add `--fail-warned` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
 
 ### Modules
 
+- Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
 - Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
-
-### Linting
-
-- Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
