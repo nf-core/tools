@@ -12,6 +12,8 @@
 
 ### General
 
+- Fix and improve broken test for Singularity container download [#1622](https://github.com/nf-core/tools/pull/1622).
+
 ### Modules
 
 - Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
