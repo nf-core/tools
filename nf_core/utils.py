@@ -540,7 +540,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 gh_api = GitHub_API_Session()
 
 
-def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
+def anaconda_package(dep, dep_channels=None):
     """Query conda package information.
 
     Sends a HTTP GET request to the Anaconda remote API.
@@ -553,6 +553,9 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
         A LookupError, if the connection fails or times out or gives an unexpected status code
         A ValueError, if the package name can not be found (404)
     """
+
+    if dep_channels is None:
+        dep_channels = ["conda-forge", "bioconda", "defaults"]
 
     # Check if each dependency is the latest available version
     if "=" in dep:
