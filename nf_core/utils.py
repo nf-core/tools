@@ -308,7 +308,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CONFIG_DIR, f"cache_{pyversion}")
+    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
 
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
