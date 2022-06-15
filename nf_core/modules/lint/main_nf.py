@@ -343,7 +343,8 @@ def _parse_input(self, line_raw):
     else:
         if "(" in line:
             match = re.search(r"\((\w+)\)", line)
-            inputs.append(match.group(1))
+            if match:
+                inputs.append(match.group(1))
         else:
             inputs.append(line.split()[1])
     return inputs
