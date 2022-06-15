@@ -13,14 +13,14 @@
 
 ### General
 
-- Updated the package requirements to prevent defunct installations of nf-core [#1620](https://github.com/nf-core/tools/pull/1620)
-- Add `--fail-warned` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
-- Add `--fail-warned` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
+- Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
+- Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
+- Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
 
 ### Modules
 
 - Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
-- Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
+- Fix a bug in the regex extracting the version from biocontainers URLs ([#1598](https://github.com/nf-core/tools/pull/1598))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
