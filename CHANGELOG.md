@@ -4,7 +4,7 @@
 
 ### Template
 
-- Fix bug in pipeline readme logo URL ([#1589](https://github.com/nf-core/tools/issues/1589))
+- Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
 
 ### Linting
 
