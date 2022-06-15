@@ -16,6 +16,7 @@
 - Updated the package requirements to prevent defunct installations of nf-core [#1620](https://github.com/nf-core/tools/pull/1620)
 - Add `--fail-warned` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
 - Add `--fail-warned` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
+- Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
 
 ### Modules
 
@@ -58,7 +59,7 @@
 - Add a new command `nf-core modules test` which runs pytests locally.
 - Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 - Allow follow links when generating `test.yml` file with `nf-core modules create-test-yml` ([1570](https://github.com/nf-core/tools/pull/1570))
-- Escaped test run output before logging it, to avoid a rich ` MarkupError`
+- Escaped test run output before logging it, to avoid a rich `MarkupError`
 
 ### Linting
 
