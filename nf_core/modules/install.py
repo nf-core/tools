@@ -84,7 +84,7 @@ class ModuleInstall(ModuleCommand):
             current_entry = None
 
         # Set the install folder based on the repository name
-        install_folder = [self.dir, "modules", self.modules_repo.owner, self.modules_repo.name]
+        install_folder = [self.dir, "modules"].extend(os.path.split(self.modules_repo.fullname))
 
         # Compute the module directory
         module_dir = os.path.join(*install_folder, module)

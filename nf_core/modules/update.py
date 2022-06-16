@@ -251,7 +251,7 @@ class ModuleUpdate(ModuleCommand):
                 current_entry = None
 
             # Set the install folder based on the repository name
-            install_folder = [self.dir, "modules", modules_repo.owner, modules_repo.name]
+            install_folder = [self.dir, "modules"].extend(os.path.split(modules_repo.fullname))
 
             # Compute the module directory
             module_dir = os.path.join(*install_folder, module)

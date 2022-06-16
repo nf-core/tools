@@ -43,7 +43,6 @@ class ModulesRepo(object):
             else:
                 self.branch = self.get_default_branch()
 
-        self.owner, self.name = self.fullname.split("/")
         self.repo = self.setup_local_repo(self.owner, self.name, remote_url)
 
         # Verify that the requested branch exists by checking it out
@@ -56,7 +55,7 @@ class ModulesRepo(object):
         self.modules_file_tree = {}
         self.modules_avail_module_names = []
 
-    def setup_local_repo(self, owner, name, remote=None):
+    def setup_local_repo(self, remote):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -64,15 +63,11 @@ class ModulesRepo(object):
 
         Returns repo: git.Repo
         """
-        owner_local_dir = os.path.join(NFCORE_DIR, owner)
+        owner_local_dir = os.path.join(NFCORE_DIR, self.fullname)
         if not os.path.exists(owner_local_dir):
             os.makedirs(owner_local_dir)
-        self.local_dir = os.path.join(owner_local_dir, name)
+        self.local_dir = os.path.join(owner_local_dir, self.fullname)
         if not os.path.exists(self.local_dir):
-            if remote == None:
-                raise Exception(
-                    f"The git repo {os.path.join(owner, name)} has not been previously used and you did not provide a link to the remote"
-                )
             try:
                 repo = git.Repo.clone_from(remote, self.local_dir)
             except git.exc.GitCommandError:
