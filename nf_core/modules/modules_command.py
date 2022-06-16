@@ -161,7 +161,7 @@ class ModuleCommand:
                 try:
                     modules_repo = ModulesRepo(repo=repo)
                     modules_repo.get_modules_file_tree()
-                    install_folder = [modules_repo.owner, modules_repo.repo]
+                    install_folder = [modules_repo.owner, modules_repo.name]
                 except LookupError as e:
                     log.warn(f"Could not get module's file tree for '{repo}': {e}")
                     remove_from_mod_json[repo] = list(modules.keys())

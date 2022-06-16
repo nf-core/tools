@@ -54,6 +54,7 @@ NFCORE_CONFIG_DIR = os.path.join(
     os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")),
     "nf-core",
 )
+NFCORE_DIR = os.path.join(os.getenv("HOME"), ".nfcore")
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
@@ -296,6 +297,15 @@ def nextflow_cmd(cmd):
         raise AssertionError(
             f"Command '{cmd}' returned non-zero error code '{e.returncode}':\n[red]> {e.stderr.decode()}{e.stdout.decode()}"
         )
+
+
+def setup_nfcore_dir():
+    """Creates a directory for files that need to be kept between sessions
+
+    Currently only used for keeping local copies of modules repos
+    """
+    if not os.path.exists(NFCORE_DIR):
+        os.makedirs(NFCORE_DIR)
 
 
 def setup_requests_cachedir():

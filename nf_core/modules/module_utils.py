@@ -58,7 +58,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
     """
     if modules_repo is None:
         modules_repo = ModulesRepo()
-    api_url = f"https://api.github.com/repos/{modules_repo.name}/commits"
+    api_url = f"https://api.github.com/repos/{modules_repo.fullname}/commits"
     api_url += f"?sha={modules_repo.branch}"
     if module_name is not None:
         api_url += f"&path=modules/{module_name}"
@@ -79,7 +79,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
                 for commit in commits
             ]
     elif response.status_code == 404:
-        raise LookupError(f"Module '{module_name}' not found in '{modules_repo.name}'\n{api_url}")
+        raise LookupError(f"Module '{module_name}' not found in '{modules_repo.fullname}'\n{api_url}")
     else:
         gh_api.log_content_headers(response)
         raise LookupError(

@@ -47,7 +47,7 @@ class ModuleInstall(ModuleCommand):
             try:
                 nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
             except UserWarning:
-                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.name}'")
+                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
                 return False
             except LookupError as e:
                 log.error(e)
@@ -72,17 +72,19 @@ class ModuleInstall(ModuleCommand):
             return False
 
         if not module_exist_in_repo(module, self.modules_repo):
-            warn_msg = f"Module '{module}' not found in remote '{self.modules_repo.name}' ({self.modules_repo.branch})"
+            warn_msg = (
+                f"Module '{module}' not found in remote '{self.modules_repo.fullname}' ({self.modules_repo.branch})"
+            )
             log.warning(warn_msg)
             return False
 
-        if self.modules_repo.name in modules_json["repos"]:
-            current_entry = modules_json["repos"][self.modules_repo.name].get(module)
+        if self.modules_repo.fullname in modules_json["repos"]:
+            current_entry = modules_json["repos"][self.modules_repo.fullname].get(module)
         else:
             current_entry = None
 
         # Set the install folder based on the repository name
-        install_folder = [self.dir, "modules", self.modules_repo.owner, self.modules_repo.repo]
+        install_folder = [self.dir, "modules", self.modules_repo.owner, self.modules_repo.name]
 
         # Compute the module directory
         module_dir = os.path.join(*install_folder, module)
@@ -91,7 +93,7 @@ class ModuleInstall(ModuleCommand):
         if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
 
             log.error("Module is already installed.")
-            repo_flag = "" if self.modules_repo.name == "nf-core/modules" else f"-g {self.modules_repo.name} "
+            repo_flag = "" if self.modules_repo.fullname == "nf-core/modules" else f"-g {self.modules_repo.fullname} "
             branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 
             log.info(
@@ -121,11 +123,11 @@ class ModuleInstall(ModuleCommand):
             version = git_log[0]["git_sha"]
 
         if self.force:
-            log.info(f"Removing installed version of '{self.modules_repo.name}/{module}'")
+            log.info(f"Removing installed version of '{self.modules_repo.fullname}/{module}'")
             self.clear_module_dir(module, module_dir)
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{module}'")
-        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.name}")
+        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.fullname}")
 
         # Download module files
         if not self.download_module_file(module, version, self.modules_repo, install_folder):
@@ -136,5 +138,5 @@ class ModuleInstall(ModuleCommand):
         log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main’")
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, self.modules_repo.name, module, version)
+        self.update_modules_json(modules_json, self.modules_repo.fullname, module, version)
         return True

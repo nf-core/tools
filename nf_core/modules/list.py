@@ -55,7 +55,7 @@ class ModuleList(ModuleCommand):
             # Nothing found
             if len(modules) == 0:
                 log.info(
-                    f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})"
+                    f"No available modules found in {self.modules_repo.fullname} ({self.modules_repo.branch})"
                     f"{pattern_msg(keywords)}"
                 )
                 return ""
@@ -122,7 +122,7 @@ class ModuleList(ModuleCommand):
 
         if self.remote:
             log.info(
-                f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch})"
+                f"Modules available from {self.modules_repo.fullname} ({self.modules_repo.branch})"
                 f"{pattern_msg(keywords)}:\n"
             )
         else:

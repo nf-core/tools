@@ -1,8 +1,9 @@
 import base64
 import logging
 import os
+import git
 
-from nf_core.utils import gh_api
+from nf_core.utils import NFCORE_DIR, gh_api
 
 log = logging.getLogger(__name__)
 
@@ -15,67 +16,74 @@ class ModulesRepo(object):
     so that this can be used in the same way by all sub-commands.
     """
 
-    def __init__(self, repo="nf-core/modules", branch=None):
-        self.name = repo
+    def __init__(self, repo="nf-core/modules", branch=None, remote=None):
+        """
+        Initializes the object and clones the git repository if it is not already present
+        """
+
+        # Check if name seems to be well formed
+        if self.fullname.count("/") != 1:
+            raise LookupError(f"Repository name '{self.fullname}' should be of the format '<user>/<repo_name>'")
+
+        self.fullname = repo
         self.branch = branch
 
-        # Don't bother fetching default branch if we're using nf-core
-        if not self.branch and self.name == "nf-core/modules":
-            self.branch = "master"
+        if self.branch is None:
+            # Don't bother fetching default branch if we're using nf-core
+            if self.fullname == "nf-core/modules":
+                self.branch = "master"
+            else:
+                self.branch = self.get_default_branch()
+
+        if remote is None and self.fullname == "nf-core/modules":
+            self.remote = "git@github.com:nf-core/modules.git"
+
+        self.owner, self.name = self.fullname.split("/")
+        self.repo = self.setup_local_repo(self.owner, self.name, remote)
 
         # Verify that the repo seems to be correctly configured
-        if self.name != "nf-core/modules" or self.branch:
+        if self.fullname != "nf-core/modules" or self.branch:
+            self.verify_branch()
 
-            # Get the default branch if not set
-            if not self.branch:
-                self.get_default_branch()
-
-            try:
-                self.verify_modules_repo()
-            except LookupError:
-                raise
-
-        self.owner, self.repo = self.name.split("/")
         self.modules_file_tree = {}
         self.modules_avail_module_names = []
 
+    def setup_local_repo(self, owner, name, remote=None):
+        owner_local_dir = os.path.join(NFCORE_DIR, owner)
+        if not os.path.exists(owner_local_dir):
+            os.makedirs(owner_local_dir)
+        self.local_dir = os.path.join(owner_local_dir, name)
+        if not os.path.exists(self.local_dir):
+            if remote == None:
+                raise Exception(
+                    f"The git repo {os.path.join(owner, name)} has not been previously used and you did not provide a link to the remote"
+                )
+            try:
+                return git.Repo.clone_from(remote, self.local_dir)
+            except git.exc.GitCommandError:
+                raise LookupError(f"Failed to clone from the remote: `{remote}`")
+
+        return git.Repo(self.local_dir)
+
     def get_default_branch(self):
-        """Get the default branch for a GitHub repo"""
-        api_url = f"https://api.github.com/repos/{self.name}"
-        response = gh_api.get(api_url)
-        if response.status_code == 200:
-            self.branch = response.json()["default_branch"]
-            log.debug(f"Found default branch to be '{self.branch}'")
-        else:
-            raise LookupError(f"Could not find repository '{self.name}' on GitHub")
+        """Get the default branch for the repo (the branch origin/HEAD is pointing to)"""
+        origin_head = next(ref for ref in self.repo.refs if ref == "origin/HEAD")
+        _, self.branch = origin_head.ref.name.split("/")
 
-    def verify_modules_repo(self):
+    def verify_branch(self):
+        # Check if the branch name exists by trying to check out the branch
+        try:
+            self.repo.git.checkout(self.branch)
+        except git.exc.GitCommandError:
+            raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
 
-        # Check if name seems to be well formed
-        if self.name.count("/") != 1:
-            raise LookupError(f"Repository name '{self.name}' should be of the format '<github_user_name>/<repo_name>'")
-
-        # Check if repository exist
-        api_url = f"https://api.github.com/repos/{self.name}/branches"
-        response = gh_api.get(api_url)
-        if response.status_code == 200:
-            branches = [branch["name"] for branch in response.json()]
-            if self.branch not in branches:
-                raise LookupError(f"Branch '{self.branch}' not found in '{self.name}'")
-        else:
-            raise LookupError(f"Repository '{self.name}' is not available on GitHub")
-
-        api_url = f"https://api.github.com/repos/{self.name}/contents?ref={self.branch}"
-        response = gh_api.get(api_url)
-        if response.status_code == 200:
-            dir_names = [entry["name"] for entry in response.json() if entry["type"] == "dir"]
-            if "modules" not in dir_names:
-                err_str = f"Repository '{self.name}' ({self.branch}) does not contain a 'modules/' directory"
-                if "software" in dir_names:
-                    err_str += ".\nAs of version 2.0, the 'software/' directory should be renamed to 'modules/'"
-                raise LookupError(err_str)
-        else:
-            raise LookupError(f"Unable to fetch repository information from '{self.name}' ({self.branch})")
+        # Make sure the directory is well formed
+        dir_names = os.listdir(self.local_dir)
+        if "modules" not in dir_names:
+            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain a 'modules/' directory"
+            if "software" in dir_names:
+                err_str += ".\nAs of version 2.0, the 'software/' directory should be renamed to 'modules/'"
+            raise LookupError(err_str)
 
     def get_modules_file_tree(self):
         """
@@ -84,12 +92,12 @@ class ModulesRepo(object):
         Sets self.modules_file_tree
              self.modules_avail_module_names
         """
-        api_url = f"https://api.github.com/repos/{self.name}/git/trees/{self.branch}?recursive=1"
+        api_url = f"https://api.github.com/repos/{self.fullname}/git/trees/{self.branch}?recursive=1"
         r = gh_api.get(api_url)
         if r.status_code == 404:
-            raise LookupError(f"Repository / branch not found: {self.name} ({self.branch})\n{api_url}")
+            raise LookupError(f"Repository / branch not found: {self.fullname} ({self.branch})\n{api_url}")
         elif r.status_code != 200:
-            raise LookupError(f"Could not fetch {self.name} ({self.branch}) tree: {r.status_code}\n{api_url}")
+            raise LookupError(f"Could not fetch {self.fullname} ({self.branch}) tree: {r.status_code}\n{api_url}")
 
         result = r.json()
         assert result["truncated"] == False
@@ -100,7 +108,7 @@ class ModulesRepo(object):
                 # remove modules/ and /main.nf
                 self.modules_avail_module_names.append(f["path"].replace("modules/", "").replace("/main.nf", ""))
         if len(self.modules_avail_module_names) == 0:
-            raise LookupError(f"Found no modules in '{self.name}'")
+            raise LookupError(f"Found no modules in '{self.fullname}'")
 
     def get_module_file_urls(self, module, commit=""):
         """Fetch list of URLs for a specific module
@@ -134,7 +142,7 @@ class ModulesRepo(object):
             results[f["path"]] = f["url"]
         if commit != "":
             for path in results:
-                results[path] = f"https://api.github.com/repos/{self.name}/contents/{path}?ref={commit}"
+                results[path] = f"https://api.github.com/repos/{self.fullname}/contents/{path}?ref={commit}"
         return results
 
     def download_gh_file(self, dl_filename, api_url):
@@ -156,7 +164,7 @@ class ModulesRepo(object):
         # Call the GitHub API
         r = gh_api.get(api_url)
         if r.status_code != 200:
-            raise LookupError(f"Could not fetch {self.name} file: {r.status_code}\n {api_url}")
+            raise LookupError(f"Could not fetch {self.fullname} file: {r.status_code}\n {api_url}")
         result = r.json()
         file_contents = base64.b64decode(result["content"])
 

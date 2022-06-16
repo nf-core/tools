@@ -28,6 +28,9 @@ import nf_core.utils
 # Submodules should all traverse back to this
 log = logging.getLogger()
 
+# Set up .nfcore directory
+nf_core.utils.setup_nfcore_dir()
+
 # Set up nicer formatting of click cli help messages
 click.rich_click.MAX_WIDTH = 100
 click.rich_click.USE_RICH_MARKUP = True

@@ -71,7 +71,7 @@ class ModuleUpdate(ModuleCommand):
             try:
                 nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
             except UserWarning:
-                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.name}'")
+                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
                 return False
             except LookupError as e:
                 log.error(e)
@@ -86,7 +86,7 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
             # Check if there are any modules installed from
-            repo_name = self.modules_repo.name
+            repo_name = self.modules_repo.fullname
             if repo_name not in self.module_names:
                 log.error(f"No modules installed from '{repo_name}'")
                 return False
@@ -105,8 +105,8 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
             sha = self.sha
-            if module in update_config.get(self.modules_repo.name, {}):
-                config_entry = update_config[self.modules_repo.name].get(module)
+            if module in update_config.get(self.modules_repo.fullname, {}):
+                config_entry = update_config[self.modules_repo.fullname].get(module)
                 if config_entry is not None and config_entry is not True:
                     if config_entry is False:
                         log.info("Module's update entry in '.nf-core.yml' is set to False")
@@ -238,20 +238,20 @@ class ModuleUpdate(ModuleCommand):
 
             # Check if the module we've been asked to update actually exists
             if not module_exist_in_repo(module, modules_repo):
-                warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
+                warn_msg = f"Module '{module}' not found in remote '{modules_repo.fullname}' ({modules_repo.branch})"
                 if self.update_all:
                     warn_msg += ". Skipping..."
                 log.warning(warn_msg)
                 exit_value = False
                 continue
 
-            if modules_repo.name in modules_json["repos"]:
-                current_entry = modules_json["repos"][modules_repo.name].get(module)
+            if modules_repo.fullname in modules_json["repos"]:
+                current_entry = modules_json["repos"][modules_repo.fullname].get(module)
             else:
                 current_entry = None
 
             # Set the install folder based on the repository name
-            install_folder = [self.dir, "modules", modules_repo.owner, modules_repo.repo]
+            install_folder = [self.dir, "modules", modules_repo.owner, modules_repo.name]
 
             # Compute the module directory
             module_dir = os.path.join(*install_folder, module)
@@ -284,14 +284,14 @@ class ModuleUpdate(ModuleCommand):
                 current_version = current_entry["git_sha"]
                 if current_version == version:
                     if self.sha or self.prompt:
-                        log.info(f"'{modules_repo.name}/{module}' is already installed at {version}")
+                        log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
                     else:
-                        log.info(f"'{modules_repo.name}/{module}' is already up to date")
+                        log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
                     continue
 
             if not dry_run:
-                log.info(f"Updating '{modules_repo.name}/{module}'")
-                log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
+                log.info(f"Updating '{modules_repo.fullname}/{module}'")
+                log.debug(f"Updating module '{module}' to {version} from {modules_repo.fullname}")
 
                 log.debug(f"Removing old version of module '{module}'")
                 self.clear_module_dir(module, module_dir)
@@ -426,17 +426,17 @@ class ModuleUpdate(ModuleCommand):
                             path = os.path.join(temp_folder, file)
                             if os.path.exists(path):
                                 shutil.move(path, os.path.join(module_dir, file))
-                        log.info(f"Updating '{modules_repo.name}/{module}'")
-                        log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
+                        log.info(f"Updating '{modules_repo.fullname}/{module}'")
+                        log.debug(f"Updating module '{module}' to {version} from {modules_repo.fullname}")
 
             # Update modules.json with newly installed module
             if not dry_run:
-                self.update_modules_json(modules_json, modules_repo.name, module, version)
+                self.update_modules_json(modules_json, modules_repo.fullname, module, version)
 
             # Don't save to a file, just iteratively update the variable
             else:
                 modules_json = self.update_modules_json(
-                    modules_json, modules_repo.name, module, version, write_file=False
+                    modules_json, modules_repo.fullname, module, version, write_file=False
                 )
 
         if self.save_diff_fn:

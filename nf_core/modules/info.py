@@ -114,7 +114,7 @@ class ModuleInfo(ModuleCommand):
         response = requests.get(meta_url)
         result = response.json()
         file_contents = base64.b64decode(result["content"])
-        self.remote_location = self.modules_repo.name
+        self.remote_location = self.modules_repo.fullname
         return yaml.safe_load(file_contents)
 
     def generate_module_info_help(self):

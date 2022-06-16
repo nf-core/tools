@@ -40,7 +40,7 @@ class ModuleRemove(ModuleCommand):
         # Decide from which repo the module was installed
         # TODO Configure the prompt for repository name in a nice way
         if True:
-            repo_name = self.modules_repo.name
+            repo_name = self.modules_repo.fullname
         elif len(self.module_names) == 1:
             repo_name = list(self.module_names.keys())[0]
         else:
@@ -64,7 +64,7 @@ class ModuleRemove(ModuleCommand):
             log.error(f"Module directory does not exist: '{module_dir}'")
 
             modules_json = self.load_modules_json()
-            if self.modules_repo.name in modules_json["repos"] and module in modules_json["repos"][repo_name]:
+            if self.modules_repo.fullname in modules_json["repos"] and module in modules_json["repos"][repo_name]:
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
                 self.remove_modules_json_entry(module, repo_name, modules_json)
             return False
