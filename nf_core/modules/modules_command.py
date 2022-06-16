@@ -161,7 +161,7 @@ class ModuleCommand:
                 try:
                     modules_repo = ModulesRepo(remote_path=repo)
                     modules_repo.get_modules_file_tree()
-                    install_folder = [modules_repo.owner, modules_repo.name]
+                    install_folder = os.path.split(modules_repo.fullname)
                 except LookupError as e:
                     log.warn(f"Could not get module's file tree for '{repo}': {e}")
                     remove_from_mod_json[repo] = list(modules.keys())
@@ -256,19 +256,21 @@ class ModuleCommand:
             return False
 
     def download_module_file(self, module_name, module_version, modules_repo, install_folder, dry_run=False):
-        """Downloads the files of a module from the remote repo"""
-        files = modules_repo.get_module_file_urls(module_name, module_version)
-        log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
-        for filename, api_url in files.items():
-            split_filename = filename.split("/")
-            dl_filename = os.path.join(*install_folder, *split_filename[1:])
-            try:
-                self.modules_repo.download_gh_file(dl_filename, api_url)
-            except (SystemError, LookupError) as e:
-                log.error(e)
-                return False
-        if not dry_run:
-            log.info(f"Downloaded {len(files)} files to {os.path.join(*install_folder, module_name)}")
+        """
+        Copies the files of a module from the local copy of the repo
+        """
+        # Make sure that the correct branch of the repo is checked out
+        modules_repo.checkout()
+
+        # Check if the module exists in the branch
+        if not modules_repo.module_exists(module_name):
+            log.error(
+                f"The requested module does not exists in the '{modules_repo.branch}' of {modules_repo.fullname}'"
+            )
+            return False
+
+        # Copy the files from the repo to the install folder
+        shutil.copytree(modules_repo.get_module_dir())
         return True
 
     def load_modules_json(self):

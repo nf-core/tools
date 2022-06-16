@@ -63,18 +63,17 @@ class ModulesRepo(object):
 
         Returns repo: git.Repo
         """
-        owner_local_dir = os.path.join(NFCORE_DIR, self.fullname)
-        if not os.path.exists(owner_local_dir):
-            os.makedirs(owner_local_dir)
-        self.local_dir = os.path.join(owner_local_dir, self.fullname)
-        if not os.path.exists(self.local_dir):
+        self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
+        if not os.path.exists(self.local_repo_dir):
+            os.makedirs(self.local_repo_dir)
+        if not os.path.exists(self.local_repo_dir):
             try:
-                repo = git.Repo.clone_from(remote, self.local_dir)
+                repo = git.Repo.clone_from(remote, self.local_repo_dir)
             except git.exc.GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
         else:
             # If the repo is already cloned, pull the latest changes from the remote
-            repo = git.Repo(self.local_dir)
+            repo = git.Repo(self.local_repo_dir)
             repo.remotes.origin.pull()
         return repo
 
@@ -96,7 +95,7 @@ class ModulesRepo(object):
         """
         Verifies the active branch conforms do the correct directory structure
         """
-        dir_names = os.listdir(self.local_dir)
+        dir_names = os.listdir(self.local_repo_dir)
         if "modules" not in dir_names:
             err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain a 'modules/' directory"
             if "software" in dir_names:
@@ -109,6 +108,23 @@ class ModulesRepo(object):
         """
         if self.repo.active_branch.name != self.branch:
             self.repo.git.checkout(self.branch)
+
+    def module_exists(self, module_name):
+        """
+        Check if a module exists in the branch of the repo
+
+        Returns bool
+        """
+        return module_name in os.listdir(self.local_repo_dir)
+
+    def get_module_dir(self, module_name):
+        """
+        Returns the file path of a module directory in the repo.
+        Does not verify that the path exists.
+
+        Returns module_path: str
+        """
+        return os.path.join(self.local_repo_dir, module_name)
 
     def get_modules_file_tree(self):
         """
