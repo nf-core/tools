@@ -273,7 +273,7 @@ class PipelineSchema(object):
                 else:
                     self.invalid_nextflow_config_default_parameters[
                         param
-                    ] = "Not in pipeline parameters Check `nextflow.config`."
+                    ] = "Not in pipeline parameters. Check `nextflow.config`."
 
     def validate_config_default_parameter(self, param, schema_param, config_default):
         """
