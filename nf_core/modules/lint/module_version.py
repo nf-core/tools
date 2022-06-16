@@ -13,6 +13,7 @@ import questionary
 
 import nf_core
 import nf_core.modules.module_utils
+import nf_core.modules.modules_repo
 
 log = logging.getLogger(__name__)
 
@@ -39,7 +40,8 @@ def module_version(module_lint_object, module):
 
         # Check whether a new version is available
         try:
-            module_git_log = nf_core.modules.module_utils.get_module_git_log(module.module_name)
+            modules_repo = nf_core.modules.modules_repo.ModulesRepo()
+            module_git_log = modules_repo.get_module_git_log(module.module_name)
             if git_sha == module_git_log[0]["git_sha"]:
                 module.passed.append(("module_version", "Module is the latest version", module.module_dir))
             else:

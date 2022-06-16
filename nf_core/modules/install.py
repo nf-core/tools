@@ -6,7 +6,7 @@ import questionary
 import nf_core.modules.module_utils
 import nf_core.utils
 
-from .module_utils import get_module_git_log, module_exist_in_repo
+from .module_utils import module_exist_in_repo
 from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
@@ -115,11 +115,7 @@ class ModuleInstall(ModuleCommand):
                 return False
         else:
             # Fetch the latest commit for the module
-            try:
-                git_log = get_module_git_log(module, modules_repo=self.modules_repo, per_page=1, page_nbr=1)
-            except UserWarning:
-                log.error(f"Was unable to fetch version of module '{module}'")
-                return False
+            git_log = list(self.modules_repo.get_module_git_log(module, depth=1))
             version = git_log[0]["git_sha"]
 
         if self.force:

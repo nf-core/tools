@@ -15,11 +15,8 @@ from rich.syntax import Syntax
 import nf_core.modules.module_utils
 import nf_core.utils
 
-from .module_utils import (
-    get_installed_modules,
-    get_module_git_log,
-    module_exist_in_repo,
-)
+from .module_utils import module_exist_in_repo
+
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
@@ -271,12 +268,7 @@ class ModuleUpdate(ModuleCommand):
                     continue
             else:
                 # Fetch the latest commit for the module
-                try:
-                    git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
-                except UserWarning:
-                    log.error(f"Was unable to fetch version of module '{module}'")
-                    exit_value = False
-                    continue
+                git_log = list(modules_repo.get_module_git_log(module, depth=1))
                 version = git_log[0]["git_sha"]
 
             if current_entry is not None and not self.force:

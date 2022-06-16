@@ -203,18 +203,12 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
         commit_sha (str): The latest commit SHA where local files are identical to remote files
     """
     try:
-        # Find the correct commit SHA for the local files.
-        # We iterate over the commit log pages until we either
-        # find a matching commit or we reach the end of the commits
+        # Find the correct commit SHA for the local module files.
+        # We iterate over the commit history for the module until we find
+        # a revision that matches the file contents
         correct_commit_sha = None
-        commit_page_nbr = 1
-        while correct_commit_sha is None:
-            commit_shas = [
-                commit["git_sha"]
-                for commit in get_module_git_log(module_name, modules_repo=modules_repo, page_nbr=commit_page_nbr)
-            ]
-            correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
-            commit_page_nbr += 1
+        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name))
+        correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         return correct_commit_sha
     except (UserWarning, LookupError) as e:
         raise

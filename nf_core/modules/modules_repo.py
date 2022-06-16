@@ -132,6 +132,29 @@ class ModulesRepo(object):
         """
         return os.path.join(self.local_repo_dir, module_name)
 
+    def get_module_git_log(self, module_name, depth=None, since="2021-07-07T00:00:00Z"):
+        """
+        Fetches the commit history the of requested module since a given date. The default value is
+        not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
+        update breaking backwards compatibility.
+        Args:
+            module_name (str): Name of module
+            modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
+            per_page (int): Number of commits per page returned by API
+            page_nbr (int): Page number of the retrieved commits
+            since (str): Only show commits later than this timestamp.
+            Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
+
+        Returns:
+            ( dict ): Iterator of commit SHAs and associated (truncated) message
+        """
+        module_path = os.path.join("modules", module_name)
+        commits = self.repo.iter_commits(
+            rev=f"{self.branch}@{{now}}...{self.branch}@{{{since}}}", max_count=depth, paths=module_path
+        )
+        commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
+        return commits
+
     def get_modules_file_tree(self):
         """
         Fetch the file list from the repo, using the GitHub API
