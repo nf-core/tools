@@ -179,7 +179,7 @@ class ModuleUpdate(ModuleCommand):
                 log.info(f"Skipping module{'' if len(skipped_modules) == 1 else 's'}: '{skipped_str}'")
 
             repos_mods_shas = [
-                (ModulesRepo(repo=repo_name), mods_shas) for repo_name, mods_shas in repos_mods_shas.items()
+                (ModulesRepo(remote_path=repo_name), mods_shas) for repo_name, mods_shas in repos_mods_shas.items()
             ]
 
             for repo, _ in repos_mods_shas:

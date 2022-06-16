@@ -2,6 +2,7 @@ import base64
 import logging
 import os
 import git
+import urllib.parse
 
 from nf_core.utils import NFCORE_DIR, gh_api
 
@@ -16,16 +17,23 @@ class ModulesRepo(object):
     so that this can be used in the same way by all sub-commands.
     """
 
-    def __init__(self, repo="nf-core/modules", branch=None, remote=None):
+    def __init__(self, remote_url="git@github.com:nf-core/modules.git", branch=None):
         """
         Initializes the object and clones the git repository if it is not already present
         """
 
-        # Check if name seems to be well formed
-        if self.fullname.count("/") != 1:
-            raise LookupError(f"Repository name '{self.fullname}' should be of the format '<user>/<repo_name>'")
+        # Check if the remote seems to be well formed
+        if remote_url is None:
+            raise LookupError("You have to provide a remote URL when working with a private repository")
 
-        self.fullname = repo
+        # Extract the repo path from the remote url
+        # See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
+        # Remove the initial `git@`` if it is present
+        path = remote_url.split("@")[1]
+        path = urllib.parse.urlparse(path)
+        path = path.path
+
+        self.fullname = os.path.splitext(path)[0]
         self.branch = branch
 
         if self.branch is None:
@@ -35,11 +43,11 @@ class ModulesRepo(object):
             else:
                 self.branch = self.get_default_branch()
 
-        if remote is None and self.fullname == "nf-core/modules":
-            self.remote = "git@github.com:nf-core/modules.git"
-
         self.owner, self.name = self.fullname.split("/")
-        self.repo = self.setup_local_repo(self.owner, self.name, remote)
+        self.repo = self.setup_local_repo(self.owner, self.name, remote_url)
+
+        # Verify that the requested branch exists by checking it out
+        self.branch_exists()
 
         # Verify that the repo seems to be correctly configured
         if self.fullname != "nf-core/modules" or self.branch:
@@ -49,6 +57,13 @@ class ModulesRepo(object):
         self.modules_avail_module_names = []
 
     def setup_local_repo(self, owner, name, remote=None):
+        """
+        Sets up the local git repository. If the repository has been cloned previously, it
+        returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
+        the provided remote URL and returns a git.Repo of the new clone.
+
+        Returns repo: git.Repo
+        """
         owner_local_dir = os.path.join(NFCORE_DIR, owner)
         if not os.path.exists(owner_local_dir):
             os.makedirs(owner_local_dir)
@@ -59,31 +74,46 @@ class ModulesRepo(object):
                     f"The git repo {os.path.join(owner, name)} has not been previously used and you did not provide a link to the remote"
                 )
             try:
-                return git.Repo.clone_from(remote, self.local_dir)
+                repo = git.Repo.clone_from(remote, self.local_dir)
             except git.exc.GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
-
-        return git.Repo(self.local_dir)
+        else:
+            # If the repo is already cloned, pull the latest changes from the remote
+            repo = git.Repo(self.local_dir)
+            repo.remotes.origin.pull()
+        return repo
 
     def get_default_branch(self):
-        """Get the default branch for the repo (the branch origin/HEAD is pointing to)"""
+        """
+        Gets the default branch for the repo (the branch origin/HEAD is pointing to)
+        """
         origin_head = next(ref for ref in self.repo.refs if ref == "origin/HEAD")
         _, self.branch = origin_head.ref.name.split("/")
 
-    def verify_branch(self):
-        # Check if the branch name exists by trying to check out the branch
+    def branch_exists(self):
+        """Verifies that the branch exists in the repository by trying to check it out"""
         try:
             self.repo.git.checkout(self.branch)
         except git.exc.GitCommandError:
             raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
 
-        # Make sure the directory is well formed
+    def verify_branch(self):
+        """
+        Verifies the active branch conforms do the correct directory structure
+        """
         dir_names = os.listdir(self.local_dir)
         if "modules" not in dir_names:
             err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain a 'modules/' directory"
             if "software" in dir_names:
                 err_str += ".\nAs of version 2.0, the 'software/' directory should be renamed to 'modules/'"
             raise LookupError(err_str)
+
+    def checkout(self):
+        """
+        Checks out the correct branch in the local repository
+        """
+        if self.repo.active_branch.name != self.branch:
+            self.repo.git.checkout(self.branch)
 
     def get_modules_file_tree(self):
         """

@@ -167,7 +167,7 @@ def create_modules_json(pipeline_dir):
         )
         for repo_name, module_names in sorted(repo_module_names.items()):
             try:
-                modules_repo = ModulesRepo(repo=repo_name)
+                modules_repo = ModulesRepo(remote_path=repo_name)
             except LookupError as e:
                 raise UserWarning(e)
 

@@ -159,7 +159,7 @@ class ModuleCommand:
             remove_from_mod_json = {}
             for repo, modules in mod_json["repos"].items():
                 try:
-                    modules_repo = ModulesRepo(repo=repo)
+                    modules_repo = ModulesRepo(remote_path=repo)
                     modules_repo.get_modules_file_tree()
                     install_folder = [modules_repo.owner, modules_repo.name]
                 except LookupError as e:
@@ -213,7 +213,7 @@ class ModuleCommand:
                 )
             failed_to_find_commit_sha = []
             for repo, modules in missing_from_modules_json.items():
-                modules_repo = ModulesRepo(repo=repo)
+                modules_repo = ModulesRepo(remote_path=repo)
                 repo_path = os.path.join(self.dir, "modules", repo)
                 for module in modules:
                     module_path = os.path.join(repo_path, module)
