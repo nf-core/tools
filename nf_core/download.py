@@ -742,16 +742,24 @@ class DownloadWorkflow(object):
         task = progress.add_task(container, start=False, total=False, progress_type="singularity_pull", current_log="")
 
         # Run the singularity pull command
-        proc = subprocess.Popen(
+        with subprocess.Popen(
             singularity_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
             bufsize=1,
-        )
-        for line in proc.stdout:
-            log.debug(line.strip())
-            progress.update(task, current_log=line.strip())
+        ) as proc:
+            lines = []
+            for line in proc.stdout:
+                lines.append(line)
+                progress.update(task, current_log=line.strip())
+
+        if lines:
+            # something went wrong with the container retrieval
+            if any("FATAL: " in line for line in lines):
+                log.info("Singularity container retrieval fialed with the following error:")
+                log.info("".join(lines))
+                raise FileNotFoundError(f'The container "{container}" is unavailable.\n{"".join(lines)}')
 
         # Copy cached download if we are using the cache
         if cache_path:
