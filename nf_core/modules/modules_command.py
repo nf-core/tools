@@ -259,8 +259,8 @@ class ModuleCommand:
         """
         Copies the files of a module from the local copy of the repo
         """
-        # Make sure that the correct branch of the repo is checked out
-        modules_repo.checkout()
+        # Check out the repository at the requested ref
+        modules_repo.checkout_ref(module_version)
 
         # Check if the module exists in the branch
         if not modules_repo.module_exists(module_name):
@@ -270,7 +270,10 @@ class ModuleCommand:
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(modules_repo.get_module_dir())
+        shutil.copytree(modules_repo.get_module_dir(), os.path.join(install_folder))
+
+        # Switch back to the tip of the branch (needed?)
+        modules_repo.checkout()
         return True
 
     def load_modules_json(self):

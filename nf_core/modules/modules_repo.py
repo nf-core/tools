@@ -109,6 +109,12 @@ class ModulesRepo(object):
         if self.repo.active_branch.name != self.branch:
             self.repo.git.checkout(self.branch)
 
+    def checkout_ref(self, ref):
+        """
+        Checks out the repository at the requested ref
+        """
+        self.repo.git.checkout(ref)
+
     def module_exists(self, module_name):
         """
         Check if a module exists in the branch of the repo
