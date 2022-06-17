@@ -421,24 +421,14 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
     )
     git_sha = ""
     page_nbr = 1
-    try:
-        next_page_commits = get_module_git_log(module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr)
-    except UserWarning:
-        next_page_commits = None
-    except LookupError as e:
-        log.warning(e)
-        next_page_commits = None
+
+    all_commits = modules_repo.get_module_git_log(module)
+    next_page_commits = [next(all_commits, None) for _ in range(10)]
 
     while git_sha == "":
         commits = next_page_commits
-        try:
-            next_page_commits = get_module_git_log(
-                module, modules_repo=modules_repo, per_page=10, page_nbr=page_nbr + 1
-            )
-        except UserWarning:
-            next_page_commits = None
-        except LookupError as e:
-            log.warning(e)
+        next_page_commits = [next(all_commits, None) for _ in range(10)]
+        if all(commit is None for commit in next_page_commits):
             next_page_commits = None
 
         choices = []
