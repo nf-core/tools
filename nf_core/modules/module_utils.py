@@ -32,86 +32,6 @@ class ModuleException(Exception):
     pass
 
 
-def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"):
-    """
-    Fetches the commit history the of requested module since a given date. The default value is
-    not arbitrary - it is the last time the structure of the nf-core/modules repository was had an
-    update breaking backwards compatibility.
-    Args:
-        module_name (str): Name of module
-        modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
-        per_page (int): Number of commits per page returned by API
-        page_nbr (int): Page number of the retrieved commits
-        since (str): Only show commits later than this timestamp.
-        Time should be given in ISO-8601 format: YYYY-MM-DDTHH:MM:SSZ.
-
-    Returns:
-        [ dict ]: List of commit SHAs and associated (truncated) message
-    """
-    if modules_repo is None:
-        modules_repo = ModulesRepo()
-    api_url = f"https://api.github.com/repos/{modules_repo.fullname}/commits"
-    api_url += f"?sha={modules_repo.branch}"
-    if module_name is not None:
-        api_url += f"&path=modules/{module_name}"
-    api_url += f"&page={page_nbr}"
-    api_url += f"&since={since}"
-
-    log.debug(f"Fetching commit history of module '{module_name}' from github API")
-    response = gh_api.get(api_url)
-    if response.status_code == 200:
-        commits = response.json()
-
-        if len(commits) == 0:
-            raise UserWarning(f"Reached end of commit history for '{module_name}'")
-        else:
-            # Return the commit SHAs and the first line of the commit message
-            return [
-                {"git_sha": commit["sha"], "trunc_message": commit["commit"]["message"].partition("\n")[0]}
-                for commit in commits
-            ]
-    elif response.status_code == 404:
-        raise LookupError(f"Module '{module_name}' not found in '{modules_repo.fullname}'\n{api_url}")
-    else:
-        gh_api.log_content_headers(response)
-        raise LookupError(
-            f"Unable to fetch commit SHA for module {module_name}. API responded with '{response.status_code}'"
-        )
-
-
-def get_commit_info(commit_sha, repo_name="git@github.com:nf-core/modules.git"):
-    """
-    Fetches metadata about the commit (dates, message, etc.)
-    Args:
-        commit_sha (str): The SHA of the requested commit
-        repo_name (str): module repos name (def. nf-core/modules)
-    Returns:
-        message (str): The commit message for the requested commit
-        date (str): The commit date for the requested commit
-    Raises:
-        LookupError: If the call to the API fails.
-    """
-
-    api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
-    log.debug(f"Fetching commit metadata for commit at {commit_sha}")
-    response = gh_api.get(api_url)
-    if response.status_code == 200:
-        commit = response.json()
-        message = commit["commit"]["message"].partition("\n")[0]
-        raw_date = commit["commit"]["author"]["date"]
-
-        # Parse the date returned from the API
-        date_obj = datetime.datetime.strptime(raw_date, "%Y-%m-%dT%H:%M:%SZ")
-        date = str(date_obj.date())
-
-        return message, date
-    elif response.status_code == 404:
-        raise LookupError(f"Commit '{commit_sha}' not found in 'nf-core/modules/'\n{api_url}")
-    else:
-        gh_api.log_content_headers(response)
-        raise LookupError(f"Unable to fetch metadata for commit SHA {commit_sha}")
-
-
 def dir_tree_uncovered(modules_dir, repos):
     """
     Does a BFS of the modules directory of a pipeline and rapports any directories
@@ -532,14 +452,3 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
         ).unsafe_ask()
         page_nbr += 1
     return git_sha
-
-
-def sha_exists(sha, modules_repo):
-    i = 1
-    while True:
-        try:
-            if sha in {commit["git_sha"] for commit in get_module_git_log(None, modules_repo, page_nbr=i)}:
-                return True
-            i += 1
-        except (UserWarning, LookupError):
-            raise
