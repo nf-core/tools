@@ -175,8 +175,8 @@ class ModuleCommand:
                         )
                         remove_from_mod_json[repo].append(module)
                         continue
-                    module_dir = os.path.join(self.dir, "modules", *install_folder, module)
-                    self.download_module_file(module, sha, modules_repo, install_folder, module_dir)
+                    module_dir = [self.dir, "modules", *install_folder]
+                    self.download_module_file(module, sha, modules_repo, module_dir)
 
             # If the reinstall fails, we remove those entries in 'modules.json'
             if sum(map(len, remove_from_mod_json.values())) > 0:
