@@ -3,6 +3,10 @@ import glob
 import json
 import logging
 import os
+from sys import modules
+import git
+import urllib
+from pyrsistent import m
 
 import questionary
 import rich
@@ -15,6 +19,11 @@ from .nfcore_module import NFCoreModule
 log = logging.getLogger(__name__)
 
 gh_api = nf_core.utils.gh_api
+
+
+# Constants for used throughout the module files
+NF_CORE_MODULES_NAME = "nf-core/modules"
+NF_CORE_MODULES_REMOTE = "git@github.com:nf-core/modules.git"
 
 
 class ModuleException(Exception):
@@ -103,6 +112,98 @@ def get_commit_info(commit_sha, repo_name="git@github.com:nf-core/modules.git"):
         raise LookupError(f"Unable to fetch metadata for commit SHA {commit_sha}")
 
 
+def dir_tree_uncovered(modules_dir, repos):
+    """
+    Does a BFS of the modules directory of a pipeline and rapports any directories
+    that are not found in the current list of repos
+    """
+    # Initialise the FIFO queue. Note that we assume the directory to be correctly
+    # configured, i.e. no files etc.
+    fifo = [os.path.join(modules_dir, subdir) for subdir in os.listdir(modules_dir) if subdir != "local"]
+    depth = 1
+    dirs_not_covered = []
+    while len(fifo) > 0:
+        temp_queue = []
+        repos_at_level = [os.path.join(*[os.path.split(repo) for repo in repos][:depth])]
+        for dir in fifo:
+            rel_dir = os.path.relpath(dir, modules_dir)
+            if rel_dir in repos_at_level:
+                # Go the next depth if this directory was found
+                temp_queue.extend([os.path.join(dir, subdir) for subdir in os.listdir(dir)])
+            else:
+                # Otherwise add the directory to the ones not covered
+                dirs_not_covered.append(dir)
+        fifo = temp_queue
+        depth += 1
+    return dirs_not_covered
+
+
+def path_from_remote(remote_url):
+    """
+    Extracts the path from the remote URL
+    See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
+    """
+    # Remove the initial `git@`` if it is present
+    path = remote_url.split("@")
+    path = path[-1] if len(path) > 1 else path[0]
+    path = urllib.parse.urlparse(path)
+    path = path.path
+
+
+def get_pipeline_module_repositories(modules_dir):
+    """
+    Finds all module repositories in the modules directory. Ignores the local modules.
+    Args:
+        modules_dir (str): base directory for the module files
+    Returns
+        repos [ (str, str) ]: List of tuples of repo name and repo remote URL
+    """
+    # Check if there are any nf-core modules installed
+    if os.path.exists(os.path.join(modules_dir, NF_CORE_MODULES_NAME)):
+        repos = [(NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE)]
+    else:
+        repos = []
+    # Check if there are any untrack repositories
+    dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _ in repos])
+    if len(dirs_not_covered) > 0:
+        log.info("Found custom module repositories when creating 'modules.json'")
+        # Loop until all directories in the base directory are covered by a remote
+        while len(dirs_not_covered) > 0:
+            log.info(
+                "The following director{s} in the modules directory are untracked: '{l}'".format(
+                    s="ies" if len(dirs_not_covered) > 0 else "y", l="', '".join(dir_tree_uncovered)
+                )
+            )
+            nrepo_remote = questionary.text("Please provide a URL for for one of the remaining repos").ask()
+            # Verify that the remote exists
+            while True:
+                try:
+                    git.Git().ls_remote(nrepo_remote)
+                    break
+                except git.exc.GitCommandError:
+                    nrepo_remote = questionary.text(
+                        "The provided remote does not seem to exist, please provide a new remote."
+                    ).ask()
+
+            # Verify that there is a directory corresponding the remote
+            nrepo_name = path_from_remote(nrepo_remote)
+            if not os.path.exists(os.path.join(modules_dir, nrepo_name)):
+                log.info(
+                    "The provided remote does not seem to correspond to a local directory. "
+                    "The directory structure should correspond to the one in the remote"
+                )
+                dir_name = questionary.text(
+                    "Please provide the correct directory, it will be renamed. If left empty, the remote will be ignored"
+                )
+                if dir_name:
+                    os.rename(os.path.join(modules_dir, dir_name), os.path.join(modules_dir, nrepo_name))
+                else:
+                    continue
+            repos.append((nrepo_name, nrepo_remote))
+            dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _ in repos])
+    return dirs_not_covered
+
+
 def create_modules_json(pipeline_dir):
     """
     Create the modules.json files
@@ -119,25 +220,23 @@ def create_modules_json(pipeline_dir):
     if not os.path.exists(modules_dir):
         raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
-    # Extract all modules repos in the pipeline directory
-    repo_names = [
-        f"{user_name}/{repo_name}"
-        for user_name in os.listdir(modules_dir)
-        if os.path.isdir(os.path.join(modules_dir, user_name)) and user_name != "local"
-        for repo_name in os.listdir(os.path.join(modules_dir, user_name))
-    ]
+    repos = get_pipeline_module_repositories(modules_dir)
 
     # Get all module names in the repos
-    repo_module_names = {
-        repo_name: list(
-            {
-                os.path.relpath(os.path.dirname(path), os.path.join(modules_dir, repo_name))
-                for path in glob.glob(f"{modules_dir}/{repo_name}/**/*", recursive=True)
-                if os.path.isfile(path)
-            }
+    repo_module_names = [
+        (
+            repo_name,
+            list(
+                {
+                    os.path.relpath(os.path.dirname(path), os.path.join(modules_dir, repo_name))
+                    for path in glob.glob(f"{modules_dir}/{repo_name}/**/*", recursive=True)
+                    if os.path.isfile(path)
+                }
+            ),
+            repo_remote,
         )
-        for repo_name in repo_names
-    }
+        for repo_name, repo_remote in repos
+    ]
 
     progress_bar = rich.progress.Progress(
         "[bold blue]{task.description}",
@@ -149,14 +248,16 @@ def create_modules_json(pipeline_dir):
         file_progress = progress_bar.add_task(
             "Creating 'modules.json' file", total=sum(map(len, repo_module_names.values())), test_name="module.json"
         )
-        for repo_name, module_names in sorted(repo_module_names.items()):
+        for repo_name, module_names, remote in sorted(repo_module_names.items()):
             try:
-                modules_repo = ModulesRepo(remote_path=repo_name)
+                modules_repo = ModulesRepo(remote_url=remote)
             except LookupError as e:
                 raise UserWarning(e)
 
             repo_path = os.path.join(modules_dir, repo_name)
             modules_json["repos"][repo_name] = dict()
+            modules_json["repos"][repo_name]["git_url"] = remote
+            modules_json["repos"][repo_name]["modules"] = dict()
             for module_name in sorted(module_names):
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
@@ -168,7 +269,7 @@ def create_modules_json(pipeline_dir):
                         f"Could not fetch 'git_sha' for module: '{module_name}'. Please try to install a newer version of this module. ({e})"
                     )
                     continue
-                modules_json["repos"][repo_name][module_name] = {"git_sha": correct_commit_sha}
+                modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": correct_commit_sha}
 
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
     with open(modules_json_path, "w") as fh:
