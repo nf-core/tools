@@ -106,7 +106,7 @@ class ModuleList(ModuleCommand):
                         version_sha = module_entry["git_sha"]
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
-                            message, date = ModulesRepo().get_commit_info(
+                            message, date = ModulesRepo(no_pull=True).get_commit_info(
                                 version_sha
                             )  # NOTE add support for other remotes
                         except LookupError as e:

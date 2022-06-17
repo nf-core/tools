@@ -17,7 +17,7 @@ class ModulesRepo(object):
     so that this can be used in the same way by all sub-commands.
     """
 
-    def __init__(self, remote_url=None, branch=None):
+    def __init__(self, remote_url=None, branch=None, no_pull=False):
         """
         Initializes the object and clones the git repository if it is not already present
         """
@@ -29,7 +29,6 @@ class ModulesRepo(object):
         # Extract the repo path from the remote url
         # See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
         # Remove the initial `git@`` if it is present
-        log.info(remote_url)
         path = remote_url.split("@")
         path = path[-1] if len(path) > 1 else path[0]
         path = urllib.parse.urlparse(path)
@@ -45,7 +44,7 @@ class ModulesRepo(object):
             else:
                 self.branch = self.get_default_branch()
 
-        self.setup_local_repo(remote_url)
+        self.setup_local_repo(remote_url, no_pull)
 
         # Verify that the repo seems to be correctly configured
         if self.fullname != "nf-core/modules" or self.branch:
@@ -54,7 +53,7 @@ class ModulesRepo(object):
         self.modules_file_tree = {}
         self.modules_avail_module_names = []
 
-    def setup_local_repo(self, remote):
+    def setup_local_repo(self, remote, no_pull):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -77,7 +76,8 @@ class ModulesRepo(object):
             self.branch_exists()
 
             # If the repo is already cloned, pull the latest changes from the remote
-            self.repo.remotes.origin.pull()
+            if not no_pull:
+                self.repo.remotes.origin.pull()
 
     def get_default_branch(self):
         """
@@ -195,7 +195,7 @@ class ModulesRepo(object):
             if commit.hexsha == sha:
                 message = commit.message.partition("\n")[0]
                 date_obj = commit.committed_datetime
-                date = date_obj.date()
+                date = str(date_obj.date())
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.fullname}'")
 
