@@ -104,6 +104,12 @@ class ModulesRepo(object):
                 err_str += ".\nAs of version 2.0, the 'software/' directory should be renamed to 'modules/'"
             raise LookupError(err_str)
 
+    def branch_checkout(self):
+        """
+        Checks out the specified branch of the repository
+        """
+        self.repo.git.checkout(self.branch)
+
     def checkout(self, ref):
         """
         Checks out the repository at the requested ref
@@ -172,6 +178,26 @@ class ModulesRepo(object):
         """
         self.checkout()
         return sha in (commit.hexsha for commit in self.repo.iter_commits())
+
+    def get_commit_info(self, sha):
+        """
+        Fetches metadata about the commit (dates, message, etc.)
+        Args:
+            commit_sha (str): The SHA of the requested commit
+        Returns:
+            message (str): The commit message for the requested commit
+            date (str): The commit date for the requested commit
+        Raises:
+            LookupError: If the search for the commit fails
+        """
+        self.branch_checkout()
+        for commit in self.repo.iter_commits():
+            if commit.hexsha == sha:
+                message = commit.message.partition("\n")[0]
+                date_obj = commit.committed_datetime
+                date = date_obj.date()
+                return message, date
+        raise LookupError(f"Commit '{sha}' not found in the '{self.fullname}'")
 
     def get_modules_file_tree(self):
         """

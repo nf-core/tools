@@ -5,6 +5,7 @@ from os import pipe
 import rich
 
 import nf_core.modules.module_utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 from .modules_command import ModuleCommand
 
@@ -105,7 +106,9 @@ class ModuleList(ModuleCommand):
                         version_sha = module_entry["git_sha"]
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
-                            message, date = nf_core.modules.module_utils.get_commit_info(version_sha, repo_name)
+                            message, date = ModulesRepo().get_commit_info(
+                                version_sha
+                            )  # NOTE add support for other remotes
                         except LookupError as e:
                             log.warning(e)
                             date = "[red]Not Available"

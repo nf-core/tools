@@ -70,7 +70,7 @@ def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, 
         )
 
 
-def get_commit_info(commit_sha, repo_name="nf-core/modules"):
+def get_commit_info(commit_sha, repo_name="git@github.com:nf-core/modules.git"):
     """
     Fetches metadata about the commit (dates, message, etc.)
     Args:
@@ -82,6 +82,7 @@ def get_commit_info(commit_sha, repo_name="nf-core/modules"):
     Raises:
         LookupError: If the call to the API fails.
     """
+
     api_url = f"https://api.github.com/repos/{repo_name}/commits/{commit_sha}?stats=false"
     log.debug(f"Fetching commit metadata for commit at {commit_sha}")
     response = gh_api.get(api_url)
