@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 from posixpath import dirname
+import sys
 
 import yaml
 
@@ -29,6 +30,7 @@ class ModuleCommand:
         self.modules_repo = ModulesRepo()
         self.dir = dir
         self.module_names = []
+        log.info("Hello")
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -213,7 +215,7 @@ class ModuleCommand:
                 )
             failed_to_find_commit_sha = []
             for repo, modules in missing_from_modules_json.items():
-                modules_repo = ModulesRepo(remote_path=repo)
+                modules_repo = ModulesRepo()  # NOTE TO SELF: Must allow other remotes
                 repo_path = os.path.join(self.dir, "modules", repo)
                 for module in modules:
                     module_path = os.path.join(repo_path, module)
@@ -260,7 +262,7 @@ class ModuleCommand:
         Copies the files of a module from the local copy of the repo
         """
         # Check out the repository at the requested ref
-        modules_repo.checkout_ref(module_version)
+        modules_repo.checkout(module_version)
 
         # Check if the module exists in the branch
         if not modules_repo.module_exists(module_name):
@@ -270,7 +272,7 @@ class ModuleCommand:
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(modules_repo.get_module_dir(), os.path.join(install_folder))
+        shutil.copytree(modules_repo.get_module_dir(module_name), os.path.join(*install_folder, module_name))
 
         # Switch back to the tip of the branch (needed?)
         modules_repo.checkout()

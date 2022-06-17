@@ -347,7 +347,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     "-g",
     "--github-repository",
     type=str,
-    default="nf-core/modules",
+    default="git@github.com:nf-core/modules.git",
     help="GitHub repository hosting modules.",
 )
 @click.option("-b", "--branch", type=str, default="master", help="Branch of GitHub repository hosting modules.")
@@ -361,11 +361,7 @@ def modules(ctx, github_repository, branch):
     ctx.ensure_object(dict)
 
     # Make repository object to pass to subcommands
-    try:
-        ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(github_repository, branch)
-    except LookupError as e:
-        log.critical(e)
-        sys.exit(1)
+    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(github_repository, branch)
 
 
 # nf-core modules list subcommands

@@ -17,19 +17,21 @@ class ModulesRepo(object):
     so that this can be used in the same way by all sub-commands.
     """
 
-    def __init__(self, remote_url="git@github.com:nf-core/modules.git", branch=None):
+    def __init__(self, remote_url=None, branch=None):
         """
         Initializes the object and clones the git repository if it is not already present
         """
 
         # Check if the remote seems to be well formed
         if remote_url is None:
-            raise LookupError("You have to provide a remote URL when working with a private repository")
+            remote_url = "git@github.com:nf-core/modules.git"
 
         # Extract the repo path from the remote url
         # See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
         # Remove the initial `git@`` if it is present
-        path = remote_url.split("@")[1]
+        log.info(remote_url)
+        path = remote_url.split("@")
+        path = path[-1] if len(path) > 1 else path[0]
         path = urllib.parse.urlparse(path)
         path = path.path
 
@@ -43,10 +45,7 @@ class ModulesRepo(object):
             else:
                 self.branch = self.get_default_branch()
 
-        self.repo = self.setup_local_repo(self.owner, self.name, remote_url)
-
-        # Verify that the requested branch exists by checking it out
-        self.branch_exists()
+        self.setup_local_repo(remote_url)
 
         # Verify that the repo seems to be correctly configured
         if self.fullname != "nf-core/modules" or self.branch:
@@ -61,21 +60,24 @@ class ModulesRepo(object):
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
         the provided remote URL and returns a git.Repo of the new clone.
 
-        Returns repo: git.Repo
+        Sets self.repo
         """
         self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
         if not os.path.exists(self.local_repo_dir):
-            os.makedirs(self.local_repo_dir)
-        if not os.path.exists(self.local_repo_dir):
             try:
-                repo = git.Repo.clone_from(remote, self.local_repo_dir)
+                self.repo = git.Repo.clone_from(remote, self.local_repo_dir)
             except git.exc.GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
+            # Verify that the requested branch exists by checking it out
+            self.branch_exists()
         else:
+            self.repo = git.Repo(self.local_repo_dir)
+
+            # Verify that the requested branch exists by checking it out
+            self.branch_exists()
+
             # If the repo is already cloned, pull the latest changes from the remote
-            repo = git.Repo(self.local_repo_dir)
-            repo.remotes.origin.pull()
-        return repo
+            self.repo.remotes.origin.pull()
 
     def get_default_branch(self):
         """
@@ -102,14 +104,7 @@ class ModulesRepo(object):
                 err_str += ".\nAs of version 2.0, the 'software/' directory should be renamed to 'modules/'"
             raise LookupError(err_str)
 
-    def checkout(self):
-        """
-        Checks out the correct branch in the local repository
-        """
-        if self.repo.active_branch.name != self.branch:
-            self.repo.git.checkout(self.branch)
-
-    def checkout_ref(self, ref):
+    def checkout(self, ref):
         """
         Checks out the repository at the requested ref
         """
@@ -121,7 +116,7 @@ class ModulesRepo(object):
 
         Returns bool
         """
-        return module_name in os.listdir(self.local_repo_dir)
+        return module_name in os.listdir(os.path.join(self.local_repo_dir, "modules"))
 
     def get_module_dir(self, module_name):
         """
@@ -130,16 +125,15 @@ class ModulesRepo(object):
 
         Returns module_path: str
         """
-        return os.path.join(self.local_repo_dir, module_name)
+        return os.path.join(self.local_repo_dir, "modules", module_name)
 
-    def get_module_files(self, module_name, files, commit_sha):
+    def get_module_files(self, module_name, files):
         """
         Returns the contents requested files for a module at the current
         checked out ref
 
         Returns contents: [ str ]
         """
-        self.checkout_ref(commit_sha)
 
         contents = [None] * len(files)
         module_path = self.get_module_dir(module_name)
@@ -168,9 +162,7 @@ class ModulesRepo(object):
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         module_path = os.path.join("modules", module_name)
-        commits = self.repo.iter_commits(
-            rev=f"{self.branch}@{{now}}...{self.branch}@{{{since}}}", max_count=depth, paths=module_path
-        )
+        commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
 

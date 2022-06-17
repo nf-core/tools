@@ -23,23 +23,6 @@ class ModuleException(Exception):
     pass
 
 
-def module_exist_in_repo(module_name, modules_repo):
-    """
-    Checks whether a module exists in a branch of a GitHub repository
-
-    Args:
-        module_name (str): Name of module
-        modules_repo (ModulesRepo): A ModulesRepo object configured for the repository in question
-    Returns:
-        boolean: Whether the module exist in the repo or not.
-    """
-    api_url = (
-        f"https://api.github.com/repos/{modules_repo.name}/contents/modules/{module_name}?ref={modules_repo.branch}"
-    )
-    response = gh_api.get(api_url)
-    return not (response.status_code == 404)
-
-
 def get_module_git_log(module_name, modules_repo=None, per_page=30, page_nbr=1, since="2021-07-07T00:00:00Z"):
     """
     Fetches the commit history the of requested module since a given date. The default value is
@@ -254,7 +237,7 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
 
     files_to_check = ["main.nf", "meta.yml"]
 
-    modules_repo.checkout_ref(commit_sha)
+    modules_repo.checkout(commit_sha)
     remote_files = modules_repo.get_module_files(module_name, files_to_check)
     return all(lfile == rfile for lfile, rfile in zip(local_files, remote_files))
 

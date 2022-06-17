@@ -6,7 +6,6 @@ import questionary
 import nf_core.modules.module_utils
 import nf_core.utils
 
-from .module_utils import module_exist_in_repo
 from .modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
@@ -66,7 +65,7 @@ class ModuleInstall(ModuleCommand):
         if not modules_json:
             return False
 
-        if not module_exist_in_repo(module, self.modules_repo):
+        if not self.modules_repo.module_exists(module):
             warn_msg = (
                 f"Module '{module}' not found in remote '{self.modules_repo.fullname}' ({self.modules_repo.branch})"
             )
@@ -79,7 +78,8 @@ class ModuleInstall(ModuleCommand):
             current_entry = None
 
         # Set the install folder based on the repository name
-        install_folder = [self.dir, "modules"].extend(os.path.split(self.modules_repo.fullname))
+        install_folder = [self.dir, "modules"]
+        install_folder.extend(os.path.split(self.modules_repo.fullname))
 
         # Compute the module directory
         module_dir = os.path.join(*install_folder, module)

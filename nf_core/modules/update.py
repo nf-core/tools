@@ -15,8 +15,6 @@ from rich.syntax import Syntax
 import nf_core.modules.module_utils
 import nf_core.utils
 
-from .module_utils import module_exist_in_repo
-
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
@@ -229,7 +227,7 @@ class ModuleUpdate(ModuleCommand):
             dry_run = self.show_diff or self.save_diff_fn
 
             # Check if the module we've been asked to update actually exists
-            if not module_exist_in_repo(module, modules_repo):
+            if not modules_repo.module_exists(module):
                 warn_msg = f"Module '{module}' not found in remote '{modules_repo.fullname}' ({modules_repo.branch})"
                 if self.update_all:
                     warn_msg += ". Skipping..."
