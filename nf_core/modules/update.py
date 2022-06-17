@@ -65,13 +65,8 @@ class ModuleUpdate(ModuleCommand):
 
         # Verify that the provided SHA exists in the repo
         if self.sha:
-            try:
-                nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
-            except UserWarning:
+            if not self.modules_repo.sha_exists_on_branch(self.sha):
                 log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
-                return False
-            except LookupError as e:
-                log.error(e)
                 return False
 
         if not self.update_all:

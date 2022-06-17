@@ -174,6 +174,13 @@ class ModulesRepo(object):
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
 
+    def sha_exists_on_branch(self, sha):
+        """
+        Verifies that a given commit sha exists on the branch
+        """
+        self.checkout()
+        return sha in (commit.hexsha for commit in self.repo.iter_commits())
+
     def get_modules_file_tree(self):
         """
         Fetch the file list from the repo, using the GitHub API
