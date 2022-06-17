@@ -1,4 +1,5 @@
 import base64
+import filecmp
 import logging
 import os
 import git
@@ -135,6 +136,17 @@ class ModulesRepo(object):
         """
         return os.path.join(self.local_repo_dir, "modules", module_name)
 
+    def module_files_identical(self, module_name, base_path):
+        module_dir = self.get_module_dir(module_name)
+        for file in os.listdir(base_path):
+            try:
+                if not filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file)):
+                    return False
+            except FileNotFoundError as e:
+                log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
+                continue
+        return True
+
     def get_module_files(self, module_name, files):
         """
         Returns the contents requested files for a module at the current
@@ -170,6 +182,7 @@ class ModulesRepo(object):
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         module_path = os.path.join("modules", module_name)
+        log.info(module_path)
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits

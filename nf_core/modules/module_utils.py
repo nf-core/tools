@@ -32,7 +32,7 @@ class ModuleException(Exception):
 def dir_tree_uncovered(modules_dir, repos):
     """
     Does a BFS of the modules directory of a pipeline and rapports any directories
-    that are not found in the current list of repos
+    that are not found in the list of repos
     """
     # Initialise the FIFO queue. Note that we assume the directory to be correctly
     # configured, i.e. no files etc.
@@ -41,12 +41,14 @@ def dir_tree_uncovered(modules_dir, repos):
     dirs_not_covered = []
     while len(fifo) > 0:
         temp_queue = []
-        repos_at_level = [os.path.join(*[os.path.split(repo) for repo in repos][:depth])]
+        log.info([os.path.join(*os.path.split(repo)[:depth]) for repo in repos])
+        repos_at_level = {os.path.join(*os.path.split(repo)[:depth]): len(os.path.split(repo)) for repo in repos}
         for dir in fifo:
             rel_dir = os.path.relpath(dir, modules_dir)
-            if rel_dir in repos_at_level:
-                # Go the next depth if this directory was found
-                temp_queue.extend([os.path.join(dir, subdir) for subdir in os.listdir(dir)])
+            if rel_dir in repos_at_level.keys():
+                # Go the next depth if this directory is not one of the repos
+                if depth < repos_at_level[rel_dir]:
+                    temp_queue.extend([os.path.join(dir, subdir) for subdir in os.listdir(dir)])
             else:
                 # Otherwise add the directory to the ones not covered
                 dirs_not_covered.append(dir)
@@ -80,7 +82,7 @@ def get_pipeline_module_repositories(modules_dir):
         repos = [(NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE)]
     else:
         repos = []
-    # Check if there are any untrack repositories
+    # Check if there are any untracked repositories
     dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _ in repos])
     if len(dirs_not_covered) > 0:
         log.info("Found custom module repositories when creating 'modules.json'")
@@ -88,10 +90,10 @@ def get_pipeline_module_repositories(modules_dir):
         while len(dirs_not_covered) > 0:
             log.info(
                 "The following director{s} in the modules directory are untracked: '{l}'".format(
-                    s="ies" if len(dirs_not_covered) > 0 else "y", l="', '".join(dir_tree_uncovered)
+                    s="ies" if len(dirs_not_covered) > 0 else "y", l="', '".join(dirs_not_covered)
                 )
             )
-            nrepo_remote = questionary.text("Please provide a URL for for one of the remaining repos").ask()
+            nrepo_remote = questionary.text("Please provide a URL for for one of the remaining repos").unsafe_ask()
             # Verify that the remote exists
             while True:
                 try:
@@ -163,9 +165,9 @@ def create_modules_json(pipeline_dir):
     )
     with progress_bar:
         file_progress = progress_bar.add_task(
-            "Creating 'modules.json' file", total=sum(map(len, repo_module_names.values())), test_name="module.json"
+            "Creating 'modules.json' file", total=sum(map(len, repo_module_names)), test_name="module.json"
         )
-        for repo_name, module_names, remote in sorted(repo_module_names.items()):
+        for repo_name, module_names, remote in sorted(repo_module_names):
             try:
                 modules_repo = ModulesRepo(remote_url=remote)
             except LookupError as e:
@@ -178,14 +180,9 @@ def create_modules_json(pipeline_dir):
             for module_name in sorted(module_names):
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
-                try:
-                    correct_commit_sha = find_correct_commit_sha(module_name, module_path, modules_repo)
+                correct_commit_sha = find_correct_commit_sha(module_name, module_path, modules_repo)
+                log.info(correct_commit_sha)
 
-                except (LookupError, UserWarning) as e:
-                    log.warn(
-                        f"Could not fetch 'git_sha' for module: '{module_name}'. Please try to install a newer version of this module. ({e})"
-                    )
-                    continue
                 modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": correct_commit_sha}
 
     modules_json_path = os.path.join(pipeline_dir, "modules.json")
@@ -209,7 +206,7 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
         # We iterate over the commit history for the module until we find
         # a revision that matches the file contents
         correct_commit_sha = None
-        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name))
+        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
         correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         return correct_commit_sha
     except (UserWarning, LookupError) as e:
@@ -228,16 +225,11 @@ def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         commit_sha (str): The latest commit SHA from 'commit_shas' where local files
         are identical to remote files
     """
-    files_to_check = ["main.nf", "meta.yml"]
-    local_file_contents = [None, None, None]
-    for i, file in enumerate(files_to_check):
-        try:
-            local_file_contents[i] = open(os.path.join(module_path, file), "r").read()
-        except FileNotFoundError as e:
-            log.debug(f"Could not open file: {os.path.join(module_path, file)}")
-            continue
+    commit_shas = list(commit_shas)
+    print(len(commit_shas))
     for commit_sha in commit_shas:
-        if local_module_equal_to_commit(local_file_contents, module_name, modules_repo, commit_sha):
+        modules_repo.checkout(commit_sha)
+        if modules_repo.module_files_identical(module_name, module_path):
             return commit_sha
     return None
 

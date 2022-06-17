@@ -30,13 +30,6 @@ class ModuleInstall(ModuleCommand):
         # Verify that 'modules.json' is consistent with the installed modules
         self.modules_json_up_to_date()
 
-        # Get the available modules
-        try:
-            self.modules_repo.get_modules_file_tree()
-        except LookupError as e:
-            log.error(e)
-            return False
-
         if self.prompt and self.sha is not None:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
             return False

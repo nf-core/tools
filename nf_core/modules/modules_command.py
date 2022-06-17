@@ -249,16 +249,14 @@ class ModuleCommand:
                 repo_path = os.path.join(self.dir, "modules", repo)
                 for module in modules:
                     module_path = os.path.join(repo_path, module)
-                    try:
-                        correct_commit_sha = nf_core.modules.module_utils.find_correct_commit_sha(
-                            module, module_path, modules_repo
-                        )
-                        if repo not in fresh_mod_json["repos"]:
-                            fresh_mod_json["repos"][repo] = {}
+                    correct_commit_sha = nf_core.modules.module_utils.find_correct_commit_sha(
+                        module, module_path, modules_repo
+                    )
+                    log.info(correct_commit_sha)
+                    if repo not in fresh_mod_json["repos"]:
+                        fresh_mod_json["repos"][repo] = {}
 
-                        fresh_mod_json["repos"][repo][module] = {"git_sha": correct_commit_sha}
-                    except (LookupError, UserWarning) as e:
-                        failed_to_find_commit_sha.append(f"'{repo}/{module}'")
+                    fresh_mod_json["repos"][repo][module] = {"git_sha": correct_commit_sha}
 
             if len(failed_to_find_commit_sha) > 0:
                 log.info(
