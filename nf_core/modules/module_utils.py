@@ -18,9 +18,6 @@ from .nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)
 
-gh_api = nf_core.utils.gh_api
-
-
 # Constants for used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core/modules"
 NF_CORE_MODULES_REMOTE = "git@github.com:nf-core/modules.git"
