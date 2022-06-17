@@ -406,6 +406,16 @@ def verify_pipeline_dir(dir):
 
 
 def prompt_module_version_sha(module, modules_repo, installed_sha=None):
+    """
+    Creates an interactive questionary prompt for selecting the module version
+    Args:
+        module (str): Module name
+        modules_repo (ModulesRepo): Modules repo the module originate in
+        installed_sha (str): Optional extra argument to highlight the current installed version
+
+    Returns:
+        git_sha (str): The selected version of the module
+    """
     older_commits_choice = questionary.Choice(
         title=[("fg:ansiyellow", "older commits"), ("class:choice-default", "")], value=""
     )
