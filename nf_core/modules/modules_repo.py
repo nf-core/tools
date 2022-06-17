@@ -26,6 +26,8 @@ class ModulesRepo(object):
         if remote_url is None:
             remote_url = "git@github.com:nf-core/modules.git"
 
+        self.remote_url = remote_url
+
         # Extract the repo path from the remote url
         # See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
         # Remove the initial `git@`` if it is present

@@ -286,7 +286,7 @@ class ModuleUpdate(ModuleCommand):
                 install_folder = ["/tmp", next(tempfile._get_candidate_names())]
 
             # Download module files
-            if not self.download_module_file(module, version, modules_repo, install_folder, dry_run=dry_run):
+            if not self.install_module_files(module, version, modules_repo, install_folder, dry_run=dry_run):
                 exit_value = False
                 continue
 
@@ -416,13 +416,11 @@ class ModuleUpdate(ModuleCommand):
 
             # Update modules.json with newly installed module
             if not dry_run:
-                self.update_modules_json(modules_json, modules_repo.fullname, module, version)
+                self.update_modules_json(modules_json, modules_repo, module, version)
 
             # Don't save to a file, just iteratively update the variable
             else:
-                modules_json = self.update_modules_json(
-                    modules_json, modules_repo.fullname, module, version, write_file=False
-                )
+                modules_json = self.update_modules_json(modules_json, modules_repo, module, version, write_file=False)
 
         if self.save_diff_fn:
             # Compare the new modules.json and build a diff

@@ -121,7 +121,7 @@ class ModuleInstall(ModuleCommand):
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.fullname}")
 
         # Download module files
-        if not self.download_module_file(module, version, self.modules_repo, install_folder):
+        if not self.install_module_files(module, version, self.modules_repo, install_folder):
             return False
 
         # Print include statement
@@ -129,5 +129,5 @@ class ModuleInstall(ModuleCommand):
         log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main’")
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, self.modules_repo.fullname, module, version)
+        self.update_modules_json(modules_json, self.modules_repo, module, version)
         return True

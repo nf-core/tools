@@ -190,7 +190,7 @@ def get_pipeline_module_repositories(modules_dir):
             if not os.path.exists(os.path.join(modules_dir, nrepo_name)):
                 log.info(
                     "The provided remote does not seem to correspond to a local directory. "
-                    "The directory structure should correspond to the one in the remote"
+                    "The directory structure should be the same as in the remote"
                 )
                 dir_name = questionary.text(
                     "Please provide the correct directory, it will be renamed. If left empty, the remote will be ignored"
