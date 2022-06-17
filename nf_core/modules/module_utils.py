@@ -226,7 +226,6 @@ def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         commit_sha (str): The latest commit SHA from 'commit_shas' where local files
         are identical to remote files
     """
-
     files_to_check = ["main.nf", "meta.yml"]
     local_file_contents = [None, None, None]
     for i, file in enumerate(files_to_check):
@@ -254,32 +253,10 @@ def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_
     """
 
     files_to_check = ["main.nf", "meta.yml"]
-    files_are_equal = [False, False, False]
-    remote_copies = [None, None, None]
 
-    module_base_url = f"https://raw.githubusercontent.com/{modules_repo.name}/{commit_sha}/modules/{module_name}"
-    for i, file in enumerate(files_to_check):
-        # Download remote copy and compare
-        api_url = f"{module_base_url}/{file}"
-        r = gh_api.get(api_url)
-        # TODO: Remove debugging
-        gh_api.log_content_headers(r)
-        if r.status_code != 200:
-            gh_api.log_content_headers(r)
-            log.debug(f"Could not download remote copy of file module {module_name}/{file}")
-        else:
-            try:
-                remote_copies[i] = r.content.decode("utf-8")
-            except UnicodeDecodeError as e:
-                log.debug(f"Could not decode remote copy of {file} for the {module_name} module")
-
-        # Compare the contents of the files.
-        # If the file is missing from both the local and remote repo
-        # we will get the comparision None == None
-        if local_files[i] == remote_copies[i]:
-            files_are_equal[i] = True
-
-    return all(files_are_equal)
+    modules_repo.checkout_ref(commit_sha)
+    remote_files = modules_repo.get_module_files(module_name, files_to_check)
+    return all(lfile == rfile for lfile, rfile in zip(local_files, remote_files))
 
 
 def get_installed_modules(dir, repo_type="modules"):

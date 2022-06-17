@@ -132,6 +132,25 @@ class ModulesRepo(object):
         """
         return os.path.join(self.local_repo_dir, module_name)
 
+    def get_module_files(self, module_name, files, commit_sha):
+        """
+        Returns the contents requested files for a module at the current
+        checked out ref
+
+        Returns contents: [ str ]
+        """
+        self.checkout_ref(commit_sha)
+
+        contents = [None] * len(files)
+        module_path = self.get_module_dir(module_name)
+        for i, file in enumerate(files):
+            try:
+                contents[i] = open(os.path.join(module_path, file), "r").read()
+            except FileNotFoundError as e:
+                log.debug(f"Could not open file: {os.path.join(module_path, file)}")
+                continue
+        return contents
+
     def get_module_git_log(self, module_name, depth=None, since="2021-07-07T00:00:00Z"):
         """
         Fetches the commit history the of requested module since a given date. The default value is
