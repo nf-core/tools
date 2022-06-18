@@ -13,14 +13,10 @@ import rich
 
 import nf_core.utils
 
-from .modules_repo import ModulesRepo
+from .modules_repo import ModulesRepo, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from .nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)
-
-# Constants for used throughout the module files
-NF_CORE_MODULES_NAME = "nf-core/modules"
-NF_CORE_MODULES_REMOTE = "git@github.com:nf-core/modules.git"
 
 
 class ModuleException(Exception):

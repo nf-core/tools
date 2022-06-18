@@ -1,4 +1,3 @@
-import base64
 import filecmp
 import logging
 import os
@@ -8,6 +7,10 @@ import urllib.parse
 from nf_core.utils import NFCORE_DIR, gh_api
 
 log = logging.getLogger(__name__)
+
+# Constants for the nf-core/modules repo used throughout the module files
+NF_CORE_MODULES_NAME = "nf-core/modules"
+NF_CORE_MODULES_REMOTE = "git@github.com:nf-core/modules.git"
 
 
 class ModulesRepo(object):
@@ -25,7 +28,7 @@ class ModulesRepo(object):
 
         # Check if the remote seems to be well formed
         if remote_url is None:
-            remote_url = "git@github.com:nf-core/modules.git"
+            remote_url = NF_CORE_MODULES_REMOTE
 
         self.remote_url = remote_url
 
@@ -42,8 +45,11 @@ class ModulesRepo(object):
         self.setup_local_repo(remote_url, branch, no_pull)
 
         # Verify that the repo seems to be correctly configured
-        if self.fullname != "nf-core/modules" or self.branch:
+        if self.fullname != NF_CORE_MODULES_NAME or self.branch:
             self.verify_branch()
+
+        # Convenience variable
+        self.modules_dir = os.path.join(self.local_repo_dir, "modules")
 
         self.avail_module_names = None
 
@@ -80,7 +86,7 @@ class ModulesRepo(object):
     def setup_branch(self, branch):
         if branch is None:
             # Don't bother fetching default branch if we're using nf-core
-            if self.fullname == "nf-core/modules":
+            if self.fullname == NF_CORE_MODULES_NAME:
                 self.branch = "master"
             else:
                 self.branch = self.get_default_branch()
@@ -132,7 +138,7 @@ class ModulesRepo(object):
 
         Returns bool
         """
-        return module_name in os.listdir(os.path.join(self.local_repo_dir, "modules"))
+        return module_name in os.listdir(self.modules_dir)
 
     def get_module_dir(self, module_name):
         """
@@ -141,7 +147,7 @@ class ModulesRepo(object):
 
         Returns module_path: str
         """
-        return os.path.join(self.local_repo_dir, "modules", module_name)
+        return os.path.join(self.modules_dir, module_name)
 
     def module_files_identical(self, module_name, base_path):
         module_files = ["main.nf", "meta.yml"]
@@ -224,5 +230,10 @@ class ModulesRepo(object):
 
     def get_avail_modules(self):
         if self.avail_module_names is None:
-            self.avail_module_names = os.listdir(self.get_module_dir())
+            # Module directories are characterized by having a 'main.nf' file
+            self.avail_module_names = [
+                os.path.relpath(dirpath, start=self.modules_dir)
+                for dirpath, _, file_names in os.walk(self.modules_dir)
+                if "main.nf" in file_names
+            ]
         return self.avail_module_names

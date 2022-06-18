@@ -5,7 +5,6 @@ import json
 import logging
 import os
 import shutil
-from posixpath import dirname
 import questionary
 import git
 
@@ -15,9 +14,8 @@ import nf_core.modules.module_utils
 import nf_core.utils
 
 from nf_core import modules
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import ModulesRepo, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 from nf_core.utils import plural_s as _s
-from nf_core.modules.module_utils import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 
