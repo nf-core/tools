@@ -69,7 +69,6 @@ class ModulesTestYmlBuilder(object):
         # Get the tool name if not specified
         if self.module_name is None:
             modules_repo = ModulesRepo()
-            modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
                 choices=modules_repo.get_avail_modules(),

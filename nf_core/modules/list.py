@@ -43,15 +43,8 @@ class ModuleList(ModuleCommand):
         # No pipeline given - show all remote
         if self.remote:
 
-            # Get the list of available modules
-            try:
-                self.modules_repo.get_modules_file_tree()
-            except LookupError as e:
-                log.error(e)
-                return False
-
             # Filter the modules by keywords
-            modules = [mod for mod in self.modules_repo.get_avail_module() if all(k in mod for k in keywords)]
+            modules = [mod for mod in self.modules_repo.get_avail_modules() if all(k in mod for k in keywords)]
 
             # Nothing found
             if len(modules) == 0:
@@ -101,7 +94,13 @@ class ModuleList(ModuleCommand):
             for repo_name, modules in sorted(repos_with_mods.items()):
                 repo_entry = modules_json["repos"].get(repo_name, {})
                 for module in sorted(modules):
-                    module_entry = repo_entry.get(module)
+                    repo_modules = repo_entry.get("modules")
+                    if repo_modules is None:
+                        raise UserWarning(
+                            "You 'modules.json' file is not up to date. Please remove it and rerun the command"
+                        )
+                    module_entry = repo_modules.get(module)
+
                     if module_entry:
                         version_sha = module_entry["git_sha"]
                         try:
