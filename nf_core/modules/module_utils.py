@@ -215,44 +215,6 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
     return None
 
 
-def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas):
-    """
-    Iterates through a list of commits for a module and checks if the local file contents match the remote
-    Args:
-        module_name (str): Name of module
-        module_path (str): Path to module in local repo
-        module_repo (str): Remote repo for module
-        commit_shas ([ str ]): List of commit SHAs for module, sorted in descending order
-    Returns:
-        commit_sha (str): The latest commit SHA from 'commit_shas' where local files
-        are identical to remote files
-    """
-    for commit_sha in commit_shas:
-        modules_repo.checkout(commit_sha)
-        if modules_repo.module_files_identical(module_name, module_path):
-            return commit_sha
-    return None
-
-
-def local_module_equal_to_commit(local_files, module_name, modules_repo, commit_sha):
-    """
-    Compares the local module files to the module files for the given commit sha
-    Args:
-        local_files ([ str ]): Contents of local files. `None` if files doesn't exist
-        module_name (str): Name of module
-        module_repo (str): Remote repo for module
-        commit_sha (str): Commit SHA for remote version to compare against local version
-    Returns:
-        bool: Whether all local files are identical to remote version
-    """
-
-    files_to_check = ["main.nf", "meta.yml"]
-
-    modules_repo.checkout(commit_sha)
-    remote_files = modules_repo.get_module_files(module_name, files_to_check)
-    return all(lfile == rfile for lfile, rfile in zip(local_files, remote_files))
-
-
 def get_installed_modules(dir, repo_type="modules"):
     """
     Make a list of all modules installed in this repository
