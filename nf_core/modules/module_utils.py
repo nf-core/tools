@@ -340,16 +340,17 @@ def prompt_module_version_sha(module, modules_repo, installed_sha=None):
 
     all_commits = modules_repo.get_module_git_log(module)
     next_page_commits = [next(all_commits, None) for _ in range(10)]
+    next_page_commits = [commit for commit in next_page_commits if commit is not None]
 
     while git_sha == "":
         commits = next_page_commits
         next_page_commits = [next(all_commits, None) for _ in range(10)]
+        next_page_commits = [commit for commit in next_page_commits if commit is not None]
         if all(commit is None for commit in next_page_commits):
             next_page_commits = None
 
         choices = []
         for title, sha in map(lambda commit: (commit["trunc_message"], commit["git_sha"]), commits):
-
             display_color = "fg:ansiblue" if sha != installed_sha else "fg:ansired"
             message = f"{title} {sha}"
             if installed_sha == sha:

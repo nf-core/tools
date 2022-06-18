@@ -80,7 +80,7 @@ class ModulesRepo(object):
             self.setup_branch(branch)
 
             # If the repo is already cloned, pull the latest changes from the remote
-            if not no_pull:
+            if False:
                 self.repo.remotes.origin.pull()
 
     def setup_branch(self, branch):
@@ -138,7 +138,7 @@ class ModulesRepo(object):
 
         Returns bool
         """
-        return module_name in os.listdir(self.modules_dir)
+        return module_name in self.get_avail_modules()
 
     def get_module_dir(self, module_name):
         """

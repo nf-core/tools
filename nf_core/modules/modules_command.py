@@ -133,7 +133,7 @@ class ModuleCommand:
                         mod_json["repos"][repo]["modules"].pop(module)
                     else:
                         if repo not in missing_from_modules_json:
-                            missing_from_modules_json[repo] = ([], mod_json["repos"]["git_url"])
+                            missing_from_modules_json[repo] = ([], mod_json["repos"][repo]["git_url"])
                         missing_from_modules_json[repo][0].append(module)
                 if len(mod_json["repos"][repo]["modules"]) == 0:
                     mod_json["repos"].pop(repo)
@@ -196,7 +196,7 @@ class ModuleCommand:
         if sum(map(len, missing_from_modules_json.values())) > 0:
 
             format_missing = [
-                f"'{repo}/{module}'" for repo, modules in missing_from_modules_json.items() for module in modules
+                f"'{repo}/{module}'" for repo, contents in missing_from_modules_json.items() for module in contents[0]
             ]
             if len(format_missing) == 1:
                 log.info(f"Recomputing commit SHA for module {format_missing[0]} which was missing from 'modules.json'")
@@ -327,7 +327,7 @@ class ModuleCommand:
         shutil.copytree(modules_repo.get_module_dir(module_name), os.path.join(*install_folder, module_name))
 
         # Switch back to the tip of the branch (needed?)
-        modules_repo.checkout()
+        modules_repo.checkout_branch()
         return True
 
     def load_modules_json(self):
@@ -344,7 +344,7 @@ class ModuleCommand:
     def update_modules_json(self, modules_json, modules_repo, module_name, module_version, write_file=True):
         """Updates the 'module.json' file with new module info"""
         repo_name = modules_repo.fullname
-        remote_url = modules_repo.remove_url
+        remote_url = modules_repo.remote_url
         if repo_name not in modules_json["repos"]:
             modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url}
         modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": module_version}

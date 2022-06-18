@@ -68,14 +68,7 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
         if not self.update_all:
-            # Get the available modules
-            try:
-                self.modules_repo.get_modules_file_tree()
-            except LookupError as e:
-                log.error(e)
-                return False
-
-            # Check if there are any modules installed from
+            # Check if there are any modules installed from the repo
             repo_name = self.modules_repo.fullname
             if repo_name not in self.module_names:
                 log.error(f"No modules installed from '{repo_name}'")
@@ -123,6 +116,9 @@ class ModuleUpdate(ModuleCommand):
 
             repos_mods_shas = [(self.modules_repo, module, sha)]
 
+            # Load 'modules.json' (loaded here for consistency with the '--all' case)
+            modules_json = self.load_modules_json()
+
         else:
             if module:
                 raise UserWarning("You cannot specify a module and use the '--all' flag at the same time")
@@ -168,18 +164,18 @@ class ModuleUpdate(ModuleCommand):
                 skipped_str = "', '".join(skipped_modules)
                 log.info(f"Skipping module{'' if len(skipped_modules) == 1 else 's'}: '{skipped_str}'")
 
+            # Get the git urls from the modules.json
+            modules_json = self.load_modules_json()
             repos_mods_shas = [
-                (ModulesRepo(remote_path=repo_name), mods_shas) for repo_name, mods_shas in repos_mods_shas.items()
+                (modules_json["repos"][repo_name]["git_url"], mods_shas)
+                for repo_name, mods_shas in repos_mods_shas.items()
             ]
 
-            for repo, _ in repos_mods_shas:
-                repo.get_modules_file_tree()
+            repos_mods_shas = [(ModulesRepo(remote_url=repo_url), mods_shas) for repo_url, mods_shas in repos_mods_shas]
 
             # Flatten the list
             repos_mods_shas = [(repo, mod, sha) for repo, mods_shas in repos_mods_shas for mod, sha in mods_shas]
 
-        # Load 'modules.json'
-        modules_json = self.load_modules_json()
         old_modules_json = copy.deepcopy(modules_json)  # Deep copy to avoid mutability
         if not modules_json:
             return False
@@ -236,12 +232,13 @@ class ModuleUpdate(ModuleCommand):
                 continue
 
             if modules_repo.fullname in modules_json["repos"]:
-                current_entry = modules_json["repos"][modules_repo.fullname].get(module)
+                current_entry = modules_json["repos"][modules_repo.fullname]["modules"].get(module)
             else:
                 current_entry = None
 
             # Set the install folder based on the repository name
-            install_folder = [self.dir, "modules"].extend(os.path.split(modules_repo.fullname))
+            install_folder = [self.dir, "modules"]
+            install_folder.extend(os.path.split(modules_repo.fullname))
 
             # Compute the module directory
             module_dir = os.path.join(*install_folder, module)
