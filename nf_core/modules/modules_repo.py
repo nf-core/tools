@@ -3,6 +3,7 @@ import logging
 import os
 import git
 import urllib.parse
+import rich.progress
 
 from nf_core.utils import NFCORE_DIR, gh_api
 
@@ -11,6 +12,18 @@ log = logging.getLogger(__name__)
 # Constants for the nf-core/modules repo used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core/modules"
 NF_CORE_MODULES_REMOTE = "git@github.com:nf-core/modules.git"
+
+
+class RemoteProgressbar(git.RemoteProgress):
+    def __init__(self, progress_bar, repo_name, remote_url, operation):
+        super().__init__()
+        self.progress_bar = progress_bar
+        self.tid = self.progress_bar.add_task(f"{operation} '{repo_name}' ({remote_url})", start=False, state="Started")
+
+    def update(self, op_code, cur_count, max_count=None, message=""):
+        if not self.progress_bar.tasks[self.tid].started:
+            self.progress_bar.start_task(self.tid)
+        self.progress_bar.update(self.tid, total=max_count, completed=cur_count, state=message)
 
 
 class ModulesRepo(object):
@@ -68,7 +81,18 @@ class ModulesRepo(object):
         self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
         if not os.path.exists(self.local_repo_dir):
             try:
-                self.repo = git.Repo.clone_from(remote, self.local_repo_dir)
+                pbar = rich.progress.Progress(
+                    "[bold blue]{task.description}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "[bold yellow]{task.fields[state]}",
+                    transient=True,
+                )
+                with pbar:
+                    self.repo = git.Repo.clone_from(
+                        remote,
+                        self.local_repo_dir,
+                        progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
+                    )
             except git.exc.GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
             # Verify that the requested branch exists by checking it out
@@ -80,8 +104,17 @@ class ModulesRepo(object):
             self.setup_branch(branch)
 
             # If the repo is already cloned, pull the latest changes from the remote
-            if False:
-                self.repo.remotes.origin.pull()
+            if not no_pull:
+                pbar = rich.progress.Progress(
+                    "[bold blue]{task.description}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "[bold yellow]{task.fields[state]}",
+                    transient=True,
+                )
+                with pbar:
+                    self.repo.remotes.origin.pull(
+                        progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
+                    )
 
     def setup_branch(self, branch):
         if branch is None:
