@@ -74,7 +74,7 @@ class ModulesTestYmlBuilder(object):
                 "Tool name:",
                 choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
         self.module_dir = os.path.join("modules", *self.module_name.split("/"))
         self.module_test_main = os.path.join("tests", "modules", *self.module_name.split("/"), "main.nf")
 

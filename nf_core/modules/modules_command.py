@@ -232,7 +232,7 @@ class ModuleCommand:
                                 except git.exc.GitCommandError:
                                     remote = questionary.text(
                                         "The provided remote does not seem to exist, please provide a new remote."
-                                    ).ask()
+                                    ).unsafe_ask()
                         elif choice == 1:
                             sb_local_repos.append(repo)
                             continue

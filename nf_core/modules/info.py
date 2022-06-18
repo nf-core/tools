@@ -93,7 +93,7 @@ class ModuleInfo(ModuleCommand):
         self.modules_repo.get_modules_file_tree()
 
         # Check if our requested module is there
-        if self.module not in self.modules_repo.avail_module_names:
+        if self.module not in self.modules_repo.get_avail_modules():
             return False
 
         # Get the remote path

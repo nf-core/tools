@@ -105,7 +105,7 @@ def get_pipeline_module_repositories(modules_dir):
                 except git.exc.GitCommandError:
                     nrepo_remote = questionary.text(
                         "The provided remote does not seem to exist, please provide a new remote."
-                    ).ask()
+                    ).unsafe_ask()
 
             # Verify that there is a directory corresponding the remote
             nrepo_name = path_from_remote(nrepo_remote)
