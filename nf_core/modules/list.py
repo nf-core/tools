@@ -51,7 +51,7 @@ class ModuleList(ModuleCommand):
                 return False
 
             # Filter the modules by keywords
-            modules = [mod for mod in self.modules_repo.modules_avail_module_names if all(k in mod for k in keywords)]
+            modules = [mod for mod in self.modules_repo.get_avail_module() if all(k in mod for k in keywords)]
 
             # Nothing found
             if len(modules) == 0:

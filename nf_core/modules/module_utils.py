@@ -78,6 +78,9 @@ def get_pipeline_module_repositories(modules_dir):
         repos [ (str, str) ]: List of tuples of repo name and repo remote URL
     """
     # Check if there are any nf-core modules installed
+    log.info(
+        f"Nf-core path {os.path.join(modules_dir, NF_CORE_MODULES_NAME)} exists {os.path.exists(os.path.join(modules_dir, NF_CORE_MODULES_NAME))}"
+    )
     if os.path.exists(os.path.join(modules_dir, NF_CORE_MODULES_NAME)):
         repos = [(NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE)]
     else:
@@ -120,7 +123,7 @@ def get_pipeline_module_repositories(modules_dir):
                     continue
             repos.append((nrepo_name, nrepo_remote))
             dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _ in repos])
-    return dirs_not_covered
+    return repos
 
 
 def create_modules_json(pipeline_dir):
@@ -156,7 +159,7 @@ def create_modules_json(pipeline_dir):
         )
         for repo_name, repo_remote in repos
     ]
-
+    log.info(f"Module names: {[x[0] for x in repo_module_names]}")
     progress_bar = rich.progress.Progress(
         "[bold blue]{task.description}",
         rich.progress.BarColumn(bar_width=None),
@@ -164,8 +167,9 @@ def create_modules_json(pipeline_dir):
         transient=True,
     )
     with progress_bar:
+        n_total_modules = sum(len(modules) for _, modules, _ in repo_module_names)
         file_progress = progress_bar.add_task(
-            "Creating 'modules.json' file", total=sum(map(len, repo_module_names)), test_name="module.json"
+            "Creating 'modules.json' file", total=n_total_modules, test_name="module.json"
         )
         for repo_name, module_names, remote in sorted(repo_module_names):
             try:
@@ -175,13 +179,13 @@ def create_modules_json(pipeline_dir):
 
             repo_path = os.path.join(modules_dir, repo_name)
             modules_json["repos"][repo_name] = dict()
+            log.info(f"HELLO: {remote}")
             modules_json["repos"][repo_name]["git_url"] = remote
             modules_json["repos"][repo_name]["modules"] = dict()
             for module_name in sorted(module_names):
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
                 correct_commit_sha = find_correct_commit_sha(module_name, module_path, modules_repo)
-                log.info(correct_commit_sha)
 
                 modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": correct_commit_sha}
 
@@ -205,8 +209,6 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
     # We iterate over the commit history for the module until we find
     # a revision that matches the file contents
     commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
-    commit_shas = list(commit_shas)
-    log.debug(len(commit_shas))
     for commit_sha in commit_shas:
         modules_repo.checkout(commit_sha)
         if modules_repo.module_files_identical(module_name, module_path):

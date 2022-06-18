@@ -107,10 +107,7 @@ class ModuleCommand:
         modules_json_path = os.path.join(self.dir, "modules.json")
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
-            try:
-                nf_core.modules.module_utils.create_modules_json(self.dir)
-            except UserWarning as e:
-                raise
+            nf_core.modules.module_utils.create_modules_json(self.dir)
 
     def modules_json_up_to_date(self):
         """
@@ -161,7 +158,7 @@ class ModuleCommand:
                 modules = contents["modules"]
                 remote = contents["git_url"]
 
-                modules_repo = ModulesRepo(remote_path=remote)
+                modules_repo = ModulesRepo(remote_url=remote)
                 install_folder = os.path.split(modules_repo.fullname)
 
                 for module, entry in modules.items():
@@ -339,6 +336,7 @@ class ModuleCommand:
     def load_modules_json(self):
         """Loads the modules.json file"""
         modules_json_path = os.path.join(self.dir, "modules.json")
+        log.info(f"Module.json exists {os.path.exists(modules_json_path)}")
         try:
             with open(modules_json_path, "r") as fh:
                 modules_json = json.load(fh)

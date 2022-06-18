@@ -116,7 +116,7 @@ class ModuleUpdate(ModuleCommand):
                         return False
 
             # Check that the supplied name is an available module
-            if module and module not in self.modules_repo.modules_avail_module_names:
+            if module and module not in self.modules_repo.get_avail_modules():
                 log.error(f"Module '{module}' not found in list of available modules.")
                 log.info("Use the command 'nf-core modules list remote' to view available software")
                 return False

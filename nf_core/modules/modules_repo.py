@@ -45,8 +45,7 @@ class ModulesRepo(object):
         if self.fullname != "nf-core/modules" or self.branch:
             self.verify_branch()
 
-        self.modules_file_tree = {}
-        self.modules_avail_module_names = []
+        self.avail_module_names = None
 
     def setup_local_repo(self, remote, branch, no_pull=False):
         """
@@ -145,8 +144,9 @@ class ModulesRepo(object):
         return os.path.join(self.local_repo_dir, "modules", module_name)
 
     def module_files_identical(self, module_name, base_path):
+        module_files = ["main.nf", "meta.yml"]
         module_dir = self.get_module_dir(module_name)
-        for file in os.listdir(base_path):
+        for file in module_files:
             try:
                 if not filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file)):
                     return False
@@ -189,8 +189,8 @@ class ModulesRepo(object):
         Returns:
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
+        self.checkout_branch()
         module_path = os.path.join("modules", module_name)
-        log.info(module_path)
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
@@ -221,3 +221,8 @@ class ModulesRepo(object):
                 date = str(date_obj.date())
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.fullname}'")
+
+    def get_avail_modules(self):
+        if self.avail_module_names is None:
+            self.avail_module_names = os.listdir(self.get_module_dir())
+        return self.avail_module_names

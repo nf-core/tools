@@ -72,7 +72,7 @@ class ModulesTestYmlBuilder(object):
             modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.modules_avail_module_names,
+                choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
         self.module_dir = os.path.join("modules", *self.module_name.split("/"))
