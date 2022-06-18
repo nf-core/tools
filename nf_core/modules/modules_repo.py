@@ -36,21 +36,21 @@ class ModulesRepo(object):
     so that this can be used in the same way by all sub-commands.
     """
 
-    local_repo_up_to_date = dict()
+    local_repo_statuses = dict()
 
-    @classmethod
-    def local_repo_is_up_to_date(repo_name):
+    @staticmethod
+    def local_repo_synced(repo_name):
         """
         Checks whether a local repo has been cloned/pull in the current session
         """
-        return ModulesRepo.local_repo_is_up_to_date.get(repo_name, False)
+        return ModulesRepo.local_repo_statuses.get(repo_name, False)
 
-    @classmethod
+    @staticmethod
     def update_local_repo_status(repo_name, up_to_date):
         """
         Updates the clone/pull status of a local repo
         """
-        ModulesRepo.local_repo_up_do_date = up_to_date
+        ModulesRepo.local_repo_statuses[repo_name] = up_to_date
 
     def __init__(self, remote_url=None, branch=None):
         """
@@ -122,7 +122,7 @@ class ModulesRepo(object):
             self.setup_branch(branch)
 
             # If the repo is already cloned, pull the latest changes from the remote
-            if ModulesRepo.local_repo_is_up_to_date(self.fullname)
+            if not ModulesRepo.local_repo_synced(self.fullname):
                 pbar = rich.progress.Progress(
                     "[bold blue]{task.description}",
                     rich.progress.BarColumn(bar_width=None),
