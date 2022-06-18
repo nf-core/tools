@@ -41,7 +41,6 @@ def dir_tree_uncovered(modules_dir, repos):
     dirs_not_covered = []
     while len(fifo) > 0:
         temp_queue = []
-        log.info([os.path.join(*os.path.split(repo)[:depth]) for repo in repos])
         repos_at_level = {os.path.join(*os.path.split(repo)[:depth]): len(os.path.split(repo)) for repo in repos}
         for dir in fifo:
             rel_dir = os.path.relpath(dir, modules_dir)
@@ -78,9 +77,6 @@ def get_pipeline_module_repositories(modules_dir):
         repos [ (str, str) ]: List of tuples of repo name and repo remote URL
     """
     # Check if there are any nf-core modules installed
-    log.info(
-        f"Nf-core path {os.path.join(modules_dir, NF_CORE_MODULES_NAME)} exists {os.path.exists(os.path.join(modules_dir, NF_CORE_MODULES_NAME))}"
-    )
     if os.path.exists(os.path.join(modules_dir, NF_CORE_MODULES_NAME)):
         repos = [(NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE)]
     else:
@@ -159,7 +155,6 @@ def create_modules_json(pipeline_dir):
         )
         for repo_name, repo_remote in repos
     ]
-    log.info(f"Module names: {[x[0] for x in repo_module_names]}")
     progress_bar = rich.progress.Progress(
         "[bold blue]{task.description}",
         rich.progress.BarColumn(bar_width=None),
@@ -179,7 +174,6 @@ def create_modules_json(pipeline_dir):
 
             repo_path = os.path.join(modules_dir, repo_name)
             modules_json["repos"][repo_name] = dict()
-            log.info(f"HELLO: {remote}")
             modules_json["repos"][repo_name]["git_url"] = remote
             modules_json["repos"][repo_name]["modules"] = dict()
             for module_name in sorted(module_names):

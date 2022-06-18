@@ -336,7 +336,6 @@ class ModuleCommand:
     def load_modules_json(self):
         """Loads the modules.json file"""
         modules_json_path = os.path.join(self.dir, "modules.json")
-        log.info(f"Module.json exists {os.path.exists(modules_json_path)}")
         try:
             with open(modules_json_path, "r") as fh:
                 modules_json = json.load(fh)
