@@ -38,16 +38,8 @@ class ModulesRepo(object):
         path = path.path
 
         self.fullname = os.path.splitext(path)[0]
-        self.branch = branch
 
-        if self.branch is None:
-            # Don't bother fetching default branch if we're using nf-core
-            if self.fullname == "nf-core/modules":
-                self.branch = "master"
-            else:
-                self.branch = self.get_default_branch()
-
-        self.setup_local_repo(remote_url, no_pull)
+        self.setup_local_repo(remote_url, branch, no_pull)
 
         # Verify that the repo seems to be correctly configured
         if self.fullname != "nf-core/modules" or self.branch:
@@ -56,12 +48,16 @@ class ModulesRepo(object):
         self.modules_file_tree = {}
         self.modules_avail_module_names = []
 
-    def setup_local_repo(self, remote, no_pull):
+    def setup_local_repo(self, remote, branch, no_pull=False):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
         the provided remote URL and returns a git.Repo of the new clone.
 
+        Args:
+            remote (str): git url of remote
+            branch (str): name of branch to use
+            no_pull (bool): Don't pull the repo. (Used for performance reasons)
         Sets self.repo
         """
         self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
@@ -71,28 +67,40 @@ class ModulesRepo(object):
             except git.exc.GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
             # Verify that the requested branch exists by checking it out
-            self.branch_exists()
+            self.setup_branch(branch)
         else:
             self.repo = git.Repo(self.local_repo_dir)
 
             # Verify that the requested branch exists by checking it out
-            self.branch_exists()
+            self.setup_branch(branch)
 
             # If the repo is already cloned, pull the latest changes from the remote
             if not no_pull:
                 self.repo.remotes.origin.pull()
 
+    def setup_branch(self, branch):
+        if branch is None:
+            # Don't bother fetching default branch if we're using nf-core
+            if self.fullname == "nf-core/modules":
+                self.branch = "master"
+            else:
+                self.branch = self.get_default_branch()
+        else:
+            self.branch = branch
+        # Verify that the branch exists by checking it out
+        self.branch_exists()
+
     def get_default_branch(self):
         """
         Gets the default branch for the repo (the branch origin/HEAD is pointing to)
         """
-        origin_head = next(ref for ref in self.repo.refs if ref == "origin/HEAD")
+        origin_head = next(ref for ref in self.repo.refs if ref.name == "origin/HEAD")
         _, self.branch = origin_head.ref.name.split("/")
 
     def branch_exists(self):
         """Verifies that the branch exists in the repository by trying to check it out"""
         try:
-            self.repo.git.checkout(self.branch)
+            self.checkout_branch()
         except git.exc.GitCommandError:
             raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
 
@@ -107,17 +115,17 @@ class ModulesRepo(object):
                 err_str += ".\nAs of version 2.0, the 'software/' directory should be renamed to 'modules/'"
             raise LookupError(err_str)
 
-    def branch_checkout(self):
+    def checkout_branch(self):
         """
         Checks out the specified branch of the repository
         """
         self.repo.git.checkout(self.branch)
 
-    def checkout(self, ref):
+    def checkout(self, commit):
         """
-        Checks out the repository at the requested ref
+        Checks out the repository at the requested commit
         """
-        self.repo.git.checkout(ref)
+        self.repo.git.checkout(commit)
 
     def module_exists(self, module_name):
         """
@@ -205,7 +213,7 @@ class ModulesRepo(object):
         Raises:
             LookupError: If the search for the commit fails
         """
-        self.branch_checkout()
+        self.checkout_branch()
         for commit in self.repo.iter_commits():
             if commit.hexsha == sha:
                 message = commit.message.partition("\n")[0]

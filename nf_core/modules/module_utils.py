@@ -201,16 +201,18 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
     Returns:
         commit_sha (str): The latest commit SHA where local files are identical to remote files
     """
-    try:
-        # Find the correct commit SHA for the local module files.
-        # We iterate over the commit history for the module until we find
-        # a revision that matches the file contents
-        correct_commit_sha = None
-        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
-        correct_commit_sha = iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
-        return correct_commit_sha
-    except (UserWarning, LookupError) as e:
-        raise
+    # Find the correct commit SHA for the local module files.
+    # We iterate over the commit history for the module until we find
+    # a revision that matches the file contents
+    commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
+    commit_shas = list(commit_shas)
+    log.debug(len(commit_shas))
+    for commit_sha in commit_shas:
+        modules_repo.checkout(commit_sha)
+        if modules_repo.module_files_identical(module_name, module_path):
+            return commit_sha
+        modules_repo.checkout_branch()
+    return None
 
 
 def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas):
@@ -225,8 +227,6 @@ def iterate_commit_log_page(module_name, module_path, modules_repo, commit_shas)
         commit_sha (str): The latest commit SHA from 'commit_shas' where local files
         are identical to remote files
     """
-    commit_shas = list(commit_shas)
-    print(len(commit_shas))
     for commit_sha in commit_shas:
         modules_repo.checkout(commit_sha)
         if modules_repo.module_files_identical(module_name, module_path):
