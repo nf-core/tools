@@ -140,13 +140,11 @@ def create_modules_json(pipeline_dir):
     repo_module_names = [
         (
             repo_name,
-            list(
-                {
-                    os.path.relpath(os.path.dirname(path), os.path.join(modules_dir, repo_name))
-                    for path in glob.glob(f"{modules_dir}/{repo_name}/**/*", recursive=True)
-                    if os.path.isfile(path)
-                }
-            ),
+            [
+                os.path.relpath(dir_name, os.path.join(modules_dir, repo_name))
+                for dir_name, _, file_names in os.walk(os.path.join(modules_dir, repo_name))
+                if "main.nf" in file_names
+            ],
             repo_remote,
         )
         for repo_name, repo_remote in repos

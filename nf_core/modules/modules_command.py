@@ -32,7 +32,6 @@ class ModuleCommand:
         self.modules_repo = ModulesRepo()
         self.dir = dir
         self.module_names = []
-        log.info("Hello")
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
