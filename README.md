@@ -907,42 +907,25 @@ This allows multiple pipelines to use the same code for share tools and gives a 
 
 The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
+### Running the module commands
+
+The `nf-core/tools` package contains a suite of commands for working DSL2 modules in your pipeline. The modules commands use `git` to interface
+with the `nf-core/modules` repository. Therefore you need to have have `git` installed to use the modules commands. You can then use the
+the modules commands for a variety of tasks such as creating new DSL2 modules, viewing and getting metadata about the modules in your pipeline,
+and installing and updating modules from a remote git repository.
+
 ### Custom remote modules
 
 The modules supercommand comes with two flags for specifying a custom remote:
 
-- `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
-- `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
+- `--git-remote <git remote url>`: Specify the repository from which the modules should be fetched as a git URL. Defaults to the github repository of `nf-core/modules`.
+- `--branch <branch name>`: Specify the branch from which the modules should be fetched. Defaults to the default branch of your repository
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
-### Private remote modules
-
-In order to get access to your private modules repo, you need to create
-the `~/.config/gh/hosts.yml` file, which is the same file required by
-[GitHub CLI](https://cli.github.com/) to deal with private repositories.
-Such file is structured as follow:
-
-```conf
-github.com:
-    oauth_token: <your github access token>
-    user: <your github user>
-    git_protocol: <ssh or https are valid choices>
-```
-
-The easiest way to create this configuration file is through _GitHub CLI_: follow
-its [installation instructions](https://cli.github.com/manual/installation)
-and then call:
-
-```bash
-gh auth login
-```
-
-After that, you will be able to list and install your private modules without
-providing your github credentials through command line, by using `--github-repository`
-and `--branch` options properly.
-See the documentation on [gh auth login](https://cli.github.com/manual/gh_auth_login>)
-to get more information.
+The modules commands will during initalisation pull try to pull changes from the remote repositories. If you want to disable this, for example
+due to performance reason or if you want to run the commands offline, you can diable `git pulls` by using the flag `--no-pull`. Note however
+that the commands will still need to clone repositories that have previously not been used.
 
 ### List modules
 

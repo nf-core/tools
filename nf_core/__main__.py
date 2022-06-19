@@ -350,7 +350,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     default="git@github.com:nf-core/modules.git",
     help="Remote git repo to fetch files from",
 )
-@click.option("-b", "--branch", type=str, default="master", help="Branch of git repository hosting modules.")
+@click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
 @click.option(
     "--no-pull",
     is_flag=True,
