@@ -198,10 +198,8 @@ def find_correct_commit_sha(module_name, module_path, modules_repo):
     # a revision that matches the file contents
     commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
     for commit_sha in commit_shas:
-        modules_repo.checkout(commit_sha)
-        if modules_repo.module_files_identical(module_name, module_path):
+        if modules_repo.module_files_identical(module_name, module_path, commit_sha):
             return commit_sha
-        modules_repo.checkout_branch()
     return None
 
 

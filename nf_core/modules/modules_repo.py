@@ -1,6 +1,7 @@
 import filecmp
 import logging
 import os
+import shutil
 import git
 import urllib.parse
 import rich.progress
@@ -15,7 +16,22 @@ NF_CORE_MODULES_REMOTE = "git@github.com:nf-core/modules.git"
 
 
 class RemoteProgressbar(git.RemoteProgress):
+    """
+    An object to create a progressbar for when doing an operation with the remote.
+    Note that an initialized rich Progress (progress bar) object must be past
+    during initialization.
+    """
+
     def __init__(self, progress_bar, repo_name, remote_url, operation):
+        """
+        Initializes the object and adds a task to the progressbar passed as 'progress_bar'
+
+        Args:
+            progress_bar (rich.progress.Progress): A rich progress bar object
+            repo_name (str): Name of the repository the operation is performed on
+            remote_url (str): Git URL of the repository the operation is performed on
+            operation (str): The operation performed on the repository, i.e. 'Pulling', 'Cloning' etc.
+        """
         super().__init__()
         self.progress_bar = progress_bar
         self.tid = self.progress_bar.add_task(
@@ -23,6 +39,10 @@ class RemoteProgressbar(git.RemoteProgress):
         )
 
     def update(self, op_code, cur_count, max_count=None, message=""):
+        """
+        Overrides git.RemoteProgress.update.
+        Called every time there is a change in the remote operation
+        """
         if not self.progress_bar.tasks[self.tid].started:
             self.progress_bar.start_task(self.tid)
         self.progress_bar.update(self.tid, total=max_count, completed=cur_count, state=message)
@@ -34,6 +54,10 @@ class ModulesRepo(object):
 
     Used by the `nf-core modules` top-level command with -r and -b flags,
     so that this can be used in the same way by all sub-commands.
+
+    We keep track of the pull-status of the different installed repos in
+    the static variable local_repo_status. This is so we don't need to
+    pull a remote several times in one command.
     """
 
     local_repo_statuses = dict()
@@ -138,6 +162,13 @@ class ModulesRepo(object):
                 ModulesRepo.update_local_repo_status(self.fullname, True)
 
     def setup_branch(self, branch):
+        """
+        Verify that we have a branch and otherwise use the default one.
+        The branch is then checked out to verify that it exists in the repo.
+
+        Args:
+            branch (str): Name of branch
+        """
         if branch is None:
             # Don't bother fetching default branch if we're using nf-core
             if self.fullname == NF_CORE_MODULES_NAME:
@@ -157,7 +188,9 @@ class ModulesRepo(object):
         _, self.branch = origin_head.ref.name.split("/")
 
     def branch_exists(self):
-        """Verifies that the branch exists in the repository by trying to check it out"""
+        """
+        Verifies that the branch exists in the repository by trying to check it out
+        """
         try:
             self.checkout_branch()
         except git.exc.GitCommandError:
@@ -183,6 +216,9 @@ class ModulesRepo(object):
     def checkout(self, commit):
         """
         Checks out the repository at the requested commit
+
+        Args:
+            commit (str): Git SHA of the commit
         """
         self.repo.git.checkout(commit)
 
@@ -190,7 +226,11 @@ class ModulesRepo(object):
         """
         Check if a module exists in the branch of the repo
 
-        Returns bool
+        Args:
+            module_name (str): The name of the module
+
+        Returns:
+            (bool): Whether the module exists in this branch of the repository
         """
         return module_name in self.get_avail_modules()
 
@@ -198,12 +238,52 @@ class ModulesRepo(object):
         """
         Returns the file path of a module directory in the repo.
         Does not verify that the path exists.
+        Args:
+            module_name (str): The name of the module
 
-        Returns module_path: str
+        Returns:
+            module_path (str): The path of the module in the local copy of the repository
         """
         return os.path.join(self.modules_dir, module_name)
 
-    def module_files_identical(self, module_name, base_path):
+    def install_module(self, module_name, install_dir, commit):
+        """
+        Install the module files into a pipeline at the given commit
+
+        Args:
+            module_name (str): The name of the module
+            install_dir (str): The path where the module should be installed
+            commit (str): The git SHA for the version of the module to be installed
+
+        Returns:
+            (bool): Whether the operation was successful or not
+        """
+        # Check out the repository at the requested ref
+        self.checkout(commit)
+
+        # Check if the module exists in the branch
+        if not self.module_exists(module_name):
+            log.error(f"The requested module does not exists in the '{self.branch}' of {self.fullname}'")
+            return False
+
+        # Copy the files from the repo to the install folder
+        shutil.copytree(self.get_module_dir(module_name), os.path.join(*install_dir, module_name))
+
+        # Switch back to the tip of the branch
+        self.checkout_branch()
+        return True
+
+    def module_files_identical(self, module_name, base_path, commit):
+        """
+        Checks whether the module files in a pipeline are identical to the ones in the remote
+        Args:
+            module_name (str): The name of the module
+            base_path (str): The path to the module in the pipeline
+
+        Returns:
+            (bool): Whether the pipeline files are identical to the repo files
+        """
+        self.checkout(commit)
         module_files = ["main.nf", "meta.yml"]
         module_dir = self.get_module_dir(module_name)
         for file in module_files:
@@ -213,25 +293,8 @@ class ModulesRepo(object):
             except FileNotFoundError as e:
                 log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
                 continue
+        self.checkout_branch()
         return True
-
-    def get_module_files(self, module_name, files):
-        """
-        Returns the contents requested files for a module at the current
-        checked out ref
-
-        Returns contents: [ str ]
-        """
-
-        contents = [None] * len(files)
-        module_path = self.get_module_dir(module_name)
-        for i, file in enumerate(files):
-            try:
-                contents[i] = open(os.path.join(module_path, file), "r").read()
-            except FileNotFoundError as e:
-                log.debug(f"Could not open file: {os.path.join(module_path, file)}")
-                continue
-        return contents
 
     def get_module_git_log(self, module_name, depth=None, since="2021-07-07T00:00:00Z"):
         """
@@ -283,6 +346,13 @@ class ModulesRepo(object):
         raise LookupError(f"Commit '{sha}' not found in the '{self.fullname}'")
 
     def get_avail_modules(self):
+        """
+        Gets the names of the modules in the repository. They are detected by
+        checking which directories have a 'main.nf' file
+
+        Returns:
+            ([ str ]): The module names
+        """
         if self.avail_module_names is None:
             # Module directories are characterized by having a 'main.nf' file
             self.avail_module_names = [
@@ -292,9 +362,18 @@ class ModulesRepo(object):
             ]
         return self.avail_module_names
 
-    def get_meta_yml(self, module):
+    def get_meta_yml(self, module_name):
+        """
+        Returns the contents of the 'meta.yml' file of a module
+
+        Args:
+            module_name (str): The name of the module
+
+        Returns:
+            (str): The contents of the file in text format
+        """
         self.checkout_branch()
-        path = os.path.join(self.modules_dir, module, "meta.yml")
+        path = os.path.join(self.modules_dir, module_name, "meta.yml")
         if not os.path.exists(path):
             return None
         with open(path) as fh:

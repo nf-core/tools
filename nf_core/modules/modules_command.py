@@ -315,29 +315,31 @@ class ModuleCommand:
             log.error(f"Could not remove module: {e}")
             return False
 
-    def install_module_files(self, module_name, module_version, modules_repo, install_folder, dry_run=False):
+    def install_module_files(self, module_name, module_version, modules_repo, install_dir, dry_run=False):
         """
-        Copies the files of a module from the local copy of the repo
+        Installs a module
+
+        Args:
+            module_name (str): The name of the module
+            module_versioN (str): Git SHA for the version of the module to be installed
+            modules_repo (ModulesRepo): A correctly configured ModulesRepo object
+            install_dir (str): The path to where the module should be installed (should be the 'modules/' dir of the pipeline)
+            dry_run (bool): The command does nothing if True
+
+        Returns:
+            (bool): Whether the operation was successful of not
         """
-        # Check out the repository at the requested ref
-        modules_repo.checkout(module_version)
-
-        # Check if the module exists in the branch
-        if not modules_repo.module_exists(module_name):
-            log.error(
-                f"The requested module does not exists in the '{modules_repo.branch}' of {modules_repo.fullname}'"
-            )
-            return False
-
-        # Copy the files from the repo to the install folder
-        shutil.copytree(modules_repo.get_module_dir(module_name), os.path.join(*install_folder, module_name))
-
-        # Switch back to the tip of the branch (needed?)
-        modules_repo.checkout_branch()
-        return True
+        if dry_run:
+            return True
+        return modules_repo.install_module(module_name, install_dir, module_version)
 
     def load_modules_json(self):
-        """Loads the modules.json file"""
+        """
+        Loads the modules.json file
+
+        Returns:
+            (nested dict...): The parsed 'modules.json' file
+        """
         modules_json_path = os.path.join(self.dir, "modules.json")
         try:
             with open(modules_json_path, "r") as fh:
@@ -348,7 +350,9 @@ class ModuleCommand:
         return modules_json
 
     def update_modules_json(self, modules_json, modules_repo, module_name, module_version, write_file=True):
-        """Updates the 'module.json' file with new module info"""
+        """
+        Updates the 'module.json' file with new module info
+        """
         repo_name = modules_repo.fullname
         remote_url = modules_repo.remote_url
         if repo_name not in modules_json["repos"]:
