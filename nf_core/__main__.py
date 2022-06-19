@@ -345,14 +345,14 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
 @nf_core_cli.group()
 @click.option(
     "-g",
-    "--github-repository",
+    "--git-remote",
     type=str,
     default="git@github.com:nf-core/modules.git",
-    help="GitHub repository hosting modules.",
+    help="Remote git repo to fetch files from",
 )
-@click.option("-b", "--branch", type=str, default="master", help="Branch of GitHub repository hosting modules.")
+@click.option("-b", "--branch", type=str, default="master", help="Branch of git repository hosting modules.")
 @click.pass_context
-def modules(ctx, github_repository, branch):
+def modules(ctx, git_remote, branch):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -361,7 +361,7 @@ def modules(ctx, github_repository, branch):
     ctx.ensure_object(dict)
 
     # Make repository object to pass to subcommands
-    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(github_repository, branch)
+    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(remote_url=git_remote, branch=branch)
 
 
 # nf-core modules list subcommands
