@@ -22,6 +22,7 @@
 
 - Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
 - Fix a bug in the regex extracting the version from biocontainers URLs ([#1598](https://github.com/nf-core/tools/pull/1598))
+- Update how we interface with git remotes. ([#1626](https://github.com/nf-core/tools/issues/1626))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
@@ -59,7 +60,7 @@
 - Add a new command `nf-core modules test` which runs pytests locally.
 - Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 - Allow follow links when generating `test.yml` file with `nf-core modules create-test-yml` ([1570](https://github.com/nf-core/tools/pull/1570))
-- Escaped test run output before logging it, to avoid a rich ` MarkupError`
+- Escaped test run output before logging it, to avoid a rich `MarkupError`
 
 ### Linting
 
