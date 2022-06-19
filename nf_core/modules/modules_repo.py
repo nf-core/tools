@@ -52,7 +52,7 @@ class ModulesRepo(object):
         """
         ModulesRepo.local_repo_statuses[repo_name] = up_to_date
 
-    def __init__(self, remote_url=None, branch=None):
+    def __init__(self, remote_url=None, branch=None, no_pull=False):
         """
         Initializes the object and clones the git repository if it is not already present
         """
@@ -73,7 +73,7 @@ class ModulesRepo(object):
 
         self.fullname = os.path.splitext(path)[0]
 
-        self.setup_local_repo(remote_url, branch)
+        self.setup_local_repo(remote_url, branch, no_pull)
 
         # Verify that the repo seems to be correctly configured
         if self.fullname != NF_CORE_MODULES_NAME or self.branch:
@@ -84,7 +84,7 @@ class ModulesRepo(object):
 
         self.avail_module_names = None
 
-    def setup_local_repo(self, remote, branch):
+    def setup_local_repo(self, remote, branch, no_pull):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -121,6 +121,8 @@ class ModulesRepo(object):
             # Verify that the requested branch exists by checking it out
             self.setup_branch(branch)
 
+            if no_pull:
+                ModulesRepo.update_local_repo_status(self.fullname, True)
             # If the repo is already cloned, pull the latest changes from the remote
             if not ModulesRepo.local_repo_synced(self.fullname):
                 pbar = rich.progress.Progress(

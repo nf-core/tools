@@ -28,7 +28,7 @@ import nf_core.utils
 # Submodules should all traverse back to this
 log = logging.getLogger()
 
-# Set up .nfcore directory
+# Set up .nfcore directory for storing files between sessions
 nf_core.utils.setup_nfcore_dir()
 
 # Set up nicer formatting of click cli help messages
@@ -351,8 +351,14 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     help="Remote git repo to fetch files from",
 )
 @click.option("-b", "--branch", type=str, default="master", help="Branch of git repository hosting modules.")
+@click.option(
+    "--no-pull",
+    is_flag=True,
+    default=False,
+    help="Use this option for faster commands if you know there have been no recent changes to the repository",
+)
 @click.pass_context
-def modules(ctx, git_remote, branch):
+def modules(ctx, git_remote, branch, no_pull):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -361,7 +367,7 @@ def modules(ctx, git_remote, branch):
     ctx.ensure_object(dict)
 
     # Make repository object to pass to subcommands
-    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(remote_url=git_remote, branch=branch)
+    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(remote_url=git_remote, branch=branch, no_pull=no_pull)
 
 
 # nf-core modules list subcommands

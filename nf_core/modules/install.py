@@ -67,7 +67,7 @@ class ModuleInstall(ModuleCommand):
             return False
 
         if self.modules_repo.fullname in modules_json["repos"]:
-            current_entry = modules_json["repos"][self.modules_repo.fullname].get(module)
+            current_entry = modules_json["repos"][self.modules_repo.fullname]["modules"].get(module)
         else:
             current_entry = None
 

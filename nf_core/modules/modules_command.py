@@ -129,6 +129,12 @@ class ModuleCommand:
         for repo, modules in self.module_names.items():
             if repo in mod_json["repos"]:
                 for module in modules:
+                    repo_modules = mod_json["repos"][repo].get("modules")
+                    if repo_modules is None:
+                        raise UserWarning(
+                            "Your 'modules.json' is not up to date. "
+                            "Please reinstall it by removing it and rerunning the command."
+                        )
                     if module in mod_json["repos"][repo]["modules"]:
                         mod_json["repos"][repo]["modules"].pop(module)
                     else:
