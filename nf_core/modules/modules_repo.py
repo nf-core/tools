@@ -289,3 +289,12 @@ class ModulesRepo(object):
                 if "main.nf" in file_names
             ]
         return self.avail_module_names
+
+    def get_meta_yml(self, module):
+        self.checkout_branch()
+        path = os.path.join(self.modules_dir, module, "meta.yml")
+        if not os.path.exists(path):
+            return None
+        with open(path) as fh:
+            contents = fh.read()
+        return contents

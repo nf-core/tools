@@ -7,6 +7,7 @@ import nf_core.modules.module_utils
 import nf_core.utils
 
 from .modules_command import ModuleCommand
+from .modules_repo import NF_CORE_MODULES_NAME
 
 log = logging.getLogger(__name__)
 
@@ -81,7 +82,9 @@ class ModuleInstall(ModuleCommand):
         if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
 
             log.error("Module is already installed.")
-            repo_flag = "" if self.modules_repo.fullname == "nf-core/modules" else f"-g {self.modules_repo.fullname} "
+            repo_flag = (
+                "" if self.modules_repo.fullname == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.fullname} "
+            )
             branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 
             log.info(

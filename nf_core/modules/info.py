@@ -89,27 +89,13 @@ class ModuleInfo(ModuleCommand):
         Returns:
             dict or bool: Parsed meta.yml found, False otherwise
         """
-        # Fetch the remote repo information
-        self.modules_repo.get_modules_file_tree()
-
         # Check if our requested module is there
         if self.module not in self.modules_repo.get_avail_modules():
             return False
 
-        # Get the remote path
-        meta_url = None
-        for file_dict in self.modules_repo.modules_file_tree:
-            if file_dict.get("path") == f"modules/{self.module}/meta.yml":
-                meta_url = file_dict.get("url")
-
-        if not meta_url:
+        file_contents = self.modules_repo.get_meta_yml(self.module)
+        if file_contents is None:
             return False
-
-        # Download and parse
-        log.debug(f"Attempting to fetch {meta_url}")
-        response = requests.get(meta_url)
-        result = response.json()
-        file_contents = base64.b64decode(result["content"])
         self.remote_location = self.modules_repo.fullname
         return yaml.safe_load(file_contents)
 
