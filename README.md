@@ -923,9 +923,9 @@ The modules supercommand comes with two flags for specifying a custom remote:
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
-The modules commands will during initalisation pull try to pull changes from the remote repositories. If you want to disable this, for example
-due to performance reason or if you want to run the commands offline, you can diable `git pulls` by using the flag `--no-pull`. Note however
-that the commands will still need to clone repositories that have previously not been used.
+The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
+due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
+still need to clone repositories that have previously not been used.
 
 ### List modules
 
@@ -1062,7 +1062,7 @@ There are three additional flags that you can use when installing a module:
 
 - `--force`: Overwrite a previously installed version of the module.
 - `--prompt`: Select the module version using a cli prompt.
-- `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+- `--sha <commit_sha>`: Install the module at a specific commit.
 
 ### Update modules in a pipeline
 
