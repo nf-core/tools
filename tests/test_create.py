@@ -2,13 +2,16 @@
 """Some tests covering the pipeline creation sub command.
 """
 import os
-import nf_core.create
-import tempfile
 import unittest
+
+import nf_core.create
+
+from .utils import with_temporary_folder
 
 
 class NfcoreCreateTest(unittest.TestCase):
-    def setUp(self):
+    @with_temporary_folder
+    def setUp(self, tmp_path):
         self.pipeline_name = "nf-core/test"
         self.pipeline_description = "just for 4w3s0m3 tests"
         self.pipeline_author = "Chuck Norris"
@@ -21,7 +24,7 @@ class NfcoreCreateTest(unittest.TestCase):
             version=self.pipeline_version,
             no_git=False,
             force=True,
-            outdir=tempfile.mkdtemp(),
+            outdir=tmp_path,
         )
 
     def test_pipeline_creation(self):

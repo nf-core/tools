@@ -2,15 +2,19 @@
 """Creates a nf-core pipeline matching the current
 organization's specification based on a template.
 """
-from genericpath import exists
-import git
-import jinja2
+import imghdr
 import logging
 import os
 import pathlib
-import requests
+import random
 import shutil
 import sys
+import time
+
+import git
+import jinja2
+import requests
+from genericpath import exists
 
 import nf_core
 
@@ -18,7 +22,7 @@ log = logging.getLogger(__name__)
 
 
 class PipelineCreate(object):
-    """Creates a nf-core pipeline a la carte from the nf-core best-practise template.
+    """Creates a nf-core pipeline a la carte from the nf-core best-practice template.
 
     Args:
         name (str): Name for the pipeline.
@@ -36,6 +40,8 @@ class PipelineCreate(object):
         self.name = f"nf-core/{self.short_name}"
         self.name_noslash = self.name.replace("/", "-")
         self.name_docker = self.name.replace("nf-core", "nfcore")
+        self.logo_light = f"{self.name_noslash}_logo_light.png"
+        self.logo_dark = f"{self.name_noslash}_logo_dark.png"
         self.description = description
         self.author = author
         self.version = version
@@ -89,6 +95,10 @@ class PipelineCreate(object):
         template_files = list(pathlib.Path(template_dir).glob("**/*"))
         template_files += list(pathlib.Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
+        rename_files = {
+            "workflows/pipeline.nf": f"workflows/{self.short_name}.nf",
+            "lib/WorkflowPipeline.groovy": f"lib/Workflow{self.short_name[0].upper()}{self.short_name[1:]}.groovy",
+        }
 
         for template_fn_path_obj in template_files:
 
@@ -102,6 +112,8 @@ class PipelineCreate(object):
             # Set up vars and directories
             template_fn = os.path.relpath(template_fn_path, template_dir)
             output_path = os.path.join(self.outdir, template_fn)
+            if template_fn in rename_files:
+                output_path = os.path.join(self.outdir, rename_files[template_fn])
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             try:
@@ -139,23 +151,56 @@ class PipelineCreate(object):
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
 
-        logo_url = f"https://nf-co.re/logo/{self.short_name}"
+        logo_url = f"https://nf-co.re/logo/{self.short_name}?theme=light"
         log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo.png"
-        os.makedirs(os.path.dirname(email_logo_path), exist_ok=True)
-        log.debug(f"Writing logo to '{email_logo_path}'")
-        r = requests.get(f"{logo_url}?w=400")
-        with open(email_logo_path, "wb") as fh:
-            fh.write(r.content)
+        email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo_light.png"
+        self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
+        for theme in ["dark", "light"]:
+            readme_logo_url = f"{logo_url}?w=600&theme={theme}"
+            readme_logo_path = f"{self.outdir}/docs/images/{self.name_noslash}_logo_{theme}.png"
+            self.download_pipeline_logo(readme_logo_url, readme_logo_path)
 
-        readme_logo_path = f"{self.outdir}/docs/images/{self.name_noslash}_logo.png"
+    def download_pipeline_logo(self, url, img_fn):
+        """Attempt to download a logo from the website. Retry if it fails."""
+        os.makedirs(os.path.dirname(img_fn), exist_ok=True)
+        attempt = 0
+        max_attempts = 10
+        retry_delay = 0  # x up to 10 each time, so first delay will be 1-100 seconds
+        while attempt < max_attempts:
+            # If retrying, wait a while
+            if retry_delay > 0:
+                log.info(f"Waiting {retry_delay} seconds before next image fetch attempt")
+                time.sleep(retry_delay)
 
-        log.debug(f"Writing logo to '{readme_logo_path}'")
-        os.makedirs(os.path.dirname(readme_logo_path), exist_ok=True)
-        r = requests.get(f"{logo_url}?w=600")
-        with open(readme_logo_path, "wb") as fh:
-            fh.write(r.content)
+            attempt += 1
+            # Use a random number to avoid the template sync hitting the website simultaneously for all pipelines
+            retry_delay = random.randint(1, 100) * attempt
+            log.debug(f"Fetching logo '{img_fn}' (attempt {attempt})")
+            try:
+                # Try to fetch the logo from the website
+                r = requests.get(url, timeout=180)
+                if r.status_code != 200:
+                    raise UserWarning(f"Got status code {r.status_code}")
+                # Check that the returned image looks right
+
+            except (ConnectionError, UserWarning) as e:
+                # Something went wrong - try again
+                log.warning(e)
+                log.error("Connection error - retrying")
+                continue
+
+            # Write the new logo to the file
+            with open(img_fn, "wb") as fh:
+                fh.write(r.content)
+            # Check that the file looks valid
+            image_type = imghdr.what(img_fn)
+            if image_type != "png":
+                log.error(f"Logo from the website didn't look like an image: '{image_type}'")
+                continue
+
+            # Got this far, presumably it's good - break the retry loop
+            break
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit."""

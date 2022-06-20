@@ -2,14 +2,17 @@
 """ Tests covering the pipeline launch code.
 """
 
-import nf_core.launch
-
 import json
-from unittest import mock
 import os
 import shutil
 import tempfile
 import unittest
+
+import mock
+
+import nf_core.launch
+
+from .utils import with_temporary_file, with_temporary_folder
 
 
 class TestLaunch(unittest.TestCase):
@@ -20,8 +23,20 @@ class TestLaunch(unittest.TestCase):
         # Set up the schema
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.nf_params_fn = os.path.join(tempfile.mkdtemp(), "nf-params.json")
+        # cannot use a context manager here, since outside setUp the temporary
+        # file will never exists
+        self.tmp_dir = tempfile.mkdtemp()
+        self.nf_params_fn = os.path.join(self.tmp_dir, "nf-params.json")
         self.launcher = nf_core.launch.Launch(self.template_dir, params_out=self.nf_params_fn)
+
+    def tearDown(self):
+        """Clean up temporary files and folders"""
+
+        if os.path.exists(self.nf_params_fn):
+            os.remove(self.nf_params_fn)
+
+        if os.path.exists(self.tmp_dir):
+            os.rmdir(self.tmp_dir)
 
     @mock.patch.object(nf_core.launch.Launch, "prompt_web_gui", side_effect=[True])
     @mock.patch.object(nf_core.launch.Launch, "launch_web_gui")
@@ -52,9 +67,10 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
 
-    def test_make_pipeline_schema(self):
+    @with_temporary_folder
+    def test_make_pipeline_schema(self, tmp_path):
         """Make a copy of the template workflow, but delete the schema file, then try to load it"""
-        test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "wf")
+        test_pipeline_dir = os.path.join(tmp_path, "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
         self.launcher = nf_core.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
@@ -62,8 +78,8 @@ class TestLaunch(unittest.TestCase):
         assert len(self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]) > 2
         assert self.launcher.schema_obj.schema["definitions"]["input_output_options"]["properties"]["outdir"] == {
             "type": "string",
-            "description": "The output directory where the results will be saved.",
-            "default": "./results",
+            "format": "directory-path",
+            "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
             "fa_icon": "fas fa-folder-open",
         }
 
@@ -72,14 +88,14 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
-        assert self.launcher.schema_obj.input_params["outdir"] == "./results"
+        assert self.launcher.schema_obj.input_params["validate_params"] == True
 
-    def test_get_pipeline_defaults_input_params(self):
+    @with_temporary_file
+    def test_get_pipeline_defaults_input_params(self, tmp_file):
         """Test fetching default inputs from the pipeline schema with an input params file supplied"""
-        tmp_filehandle, tmp_filename = tempfile.mkstemp()
-        with os.fdopen(tmp_filehandle, "w") as fh:
+        with open(tmp_file.name, "w") as fh:
             json.dump({"outdir": "fubar"}, fh)
-        self.launcher.params_in = tmp_filename
+        self.launcher.params_in = tmp_file.name
         self.launcher.get_pipeline_schema()
         self.launcher.set_schema_inputs()
         assert len(self.launcher.schema_obj.input_params) > 0
@@ -191,11 +207,11 @@ class TestLaunch(unittest.TestCase):
         """Check that we can properly sanitise results from the web"""
         self.launcher.get_pipeline_schema()
         self.launcher.nxf_flags["-name"] = ""
-        self.launcher.schema_obj.input_params["single_end"] = "true"
+        self.launcher.schema_obj.input_params["igenomes_ignore"] = "true"
         self.launcher.schema_obj.input_params["max_cpus"] = "12"
         self.launcher.sanitise_web_response()
         assert "-name" not in self.launcher.nxf_flags
-        assert self.launcher.schema_obj.input_params["single_end"] == True
+        assert self.launcher.schema_obj.input_params["igenomes_ignore"] == True
         assert self.launcher.schema_obj.input_params["max_cpus"] == 12
 
     def test_ob_to_questionary_bool(self):
@@ -294,7 +310,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.merge_nxf_flag_schema()
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == "nextflow run {}".format(self.template_dir)
+        assert self.launcher.nextflow_cmd == f"nextflow run {self.template_dir}"
 
     def test_build_command_nf(self):
         """Test the functionality to build a nextflow command - core nf customised"""
@@ -303,7 +319,7 @@ class TestLaunch(unittest.TestCase):
         self.launcher.nxf_flags["-name"] = "Test_Workflow"
         self.launcher.nxf_flags["-resume"] = True
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == 'nextflow run {} -name "Test_Workflow" -resume'.format(self.template_dir)
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.template_dir} -name "Test_Workflow" -resume'
 
     def test_build_command_params(self):
         """Test the functionality to build a nextflow command - params supplied"""
@@ -311,8 +327,9 @@ class TestLaunch(unittest.TestCase):
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
         # Check command
-        assert self.launcher.nextflow_cmd == 'nextflow run {} -params-file "{}"'.format(
-            self.template_dir, os.path.relpath(self.nf_params_fn)
+        assert (
+            self.launcher.nextflow_cmd
+            == f'nextflow run {self.template_dir} -params-file "{os.path.relpath(self.nf_params_fn)}"'
         )
         # Check saved parameters file
         with open(self.nf_params_fn, "r") as fh:
@@ -325,4 +342,4 @@ class TestLaunch(unittest.TestCase):
         self.launcher.get_pipeline_schema()
         self.launcher.schema_obj.input_params.update({"input": "custom_input"})
         self.launcher.build_command()
-        assert self.launcher.nextflow_cmd == 'nextflow run {} --input "custom_input"'.format(self.template_dir)
+        assert self.launcher.nextflow_cmd == f'nextflow run {self.template_dir} --input "custom_input"'

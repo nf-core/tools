@@ -3,11 +3,7 @@ name: Python tests
 # Only run if we changed a Python file
 on:
   push:
-    paths:
-      - "**.py"
   pull_request:
-    paths:
-      - "**.py"
 
 # Uncomment if we need an edge release of Nextflow again
 # env: NXF_EDGE: 1
@@ -17,14 +13,14 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: ["3.6", "3.7", "3.8", "3.9", "3.10"]
 
     steps:
       - uses: actions/checkout@v2
         name: Check out source-code repository
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -41,7 +37,7 @@ jobs:
           sudo mv nextflow /usr/local/bin/
 
       - name: Test with pytest
-        run: python3 -m pytest --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
+        run: python3 -m pytest tests/ --color=yes --cov-report=xml --cov-config=.github/.coveragerc --cov=nf_core
 
       - uses: codecov/codecov-action@v1
         name: Upload code coverage report

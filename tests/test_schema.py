@@ -2,18 +2,21 @@
 """ Tests covering the pipeline schema code.
 """
 
-import nf_core.schema
-
-import click
 import json
-from unittest import mock
 import os
-import pytest
-import requests
 import shutil
 import tempfile
 import unittest
+
+import click
+import mock
+import pytest
+import requests
 import yaml
+
+import nf_core.schema
+
+from .utils import with_temporary_file, with_temporary_folder
 
 
 class TestSchema(unittest.TestCase):
@@ -24,39 +27,43 @@ class TestSchema(unittest.TestCase):
         self.schema_obj = nf_core.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         # Copy the template to a temp directory so that we can use that for tests
-        self.template_dir = os.path.join(tempfile.mkdtemp(), "wf")
+        self.tmp_dir = tempfile.mkdtemp()
+        self.template_dir = os.path.join(self.tmp_dir, "wf")
         template_dir = os.path.join(self.root_repo_dir, "nf_core", "pipeline-template")
         shutil.copytree(template_dir, self.template_dir)
         self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
+
+    def tearDown(self):
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     def test_load_lint_schema(self):
         """Check linting with the pipeline template directory"""
         self.schema_obj.get_schema_path(self.template_dir)
         self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_nofile(self):
         """Check that linting raises properly if a non-existant file is given"""
-        self.schema_obj.get_schema_path("fake_file")
-        self.schema_obj.load_lint_schema()
+        with pytest.raises(AssertionError):
+            self.schema_obj.get_schema_path("fake_file")
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_lint_schema_notjson(self):
         """Check that linting raises properly if a non-JSON file is given"""
         self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
-        self.schema_obj.load_lint_schema()
+        with pytest.raises(AssertionError):
+            self.schema_obj.load_lint_schema()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
-    def test_load_lint_schema_noparams(self):
+    @with_temporary_file
+    def test_load_lint_schema_noparams(self, tmp_file):
         """
         Check that linting raises properly if a JSON file is given without any params
         """
-        # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
+        # write schema to a temporary file
         with open(tmp_file.name, "w") as fh:
             json.dump({"type": "fubar"}, fh)
         self.schema_obj.get_schema_path(tmp_file.name)
-        self.schema_obj.load_lint_schema()
+        with pytest.raises(AssertionError):
+            self.schema_obj.load_lint_schema()
 
     def test_get_schema_path_dir(self):
         """Get schema file from directory"""
@@ -66,66 +73,78 @@ class TestSchema(unittest.TestCase):
         """Get schema file from a path"""
         self.schema_obj.get_schema_path(self.template_schema)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_path_notexist(self):
         """Get schema file from a path"""
-        self.schema_obj.get_schema_path("fubar", local_only=True)
+        with pytest.raises(AssertionError):
+            self.schema_obj.get_schema_path("fubar", local_only=True)
 
     def test_get_schema_path_name(self):
         """Get schema file from the name of a remote pipeline"""
         self.schema_obj.get_schema_path("atacseq")
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_schema_path_name_notexist(self):
         """
         Get schema file from the name of a remote pipeline
         that doesn't have a schema file
         """
-        self.schema_obj.get_schema_path("exoseq")
+        with pytest.raises(AssertionError):
+            self.schema_obj.get_schema_path("exoseq")
 
     def test_load_schema(self):
         """Try to load a schema from a file"""
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
 
-    def test_save_schema(self):
+    def test_schema_docs(self):
+        """Try to generate Markdown docs for a schema from a file"""
+        self.schema_obj.schema_filename = self.template_schema
+        self.schema_obj.load_schema()
+        docs = self.schema_obj.print_documentation()
+        print(docs)
+        assert self.schema_obj.schema["title"] in docs
+        assert self.schema_obj.schema["description"] in docs
+        for definition in self.schema_obj.schema.get("definitions", {}).values():
+            assert definition["title"] in docs
+            assert definition["description"] in docs
+
+    @with_temporary_file
+    def test_save_schema(self, tmp_file):
         """Try to save a schema"""
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
 
         # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
         self.schema_obj.schema_filename = tmp_file.name
         self.schema_obj.save_schema()
 
-    def test_load_input_params_json(self):
+    @with_temporary_file
+    def test_load_input_params_json(self, tmp_file):
         """Try to load a JSON file with params for a pipeline run"""
-        # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
+        # write schema to a temporary file
         with open(tmp_file.name, "w") as fh:
             json.dump({"input": "fubar"}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
-    def test_load_input_params_yaml(self):
+    @with_temporary_file
+    def test_load_input_params_yaml(self, tmp_file):
         """Try to load a YAML file with params for a pipeline run"""
-        # Make a temporary file to write schema to
-        tmp_file = tempfile.NamedTemporaryFile()
+        # write schema to a temporary file
         with open(tmp_file.name, "w") as fh:
             yaml.dump({"input": "fubar"}, fh)
         self.schema_obj.load_input_params(tmp_file.name)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_load_input_params_invalid(self):
         """Check failure when a non-existent file params file is loaded"""
-        self.schema_obj.load_input_params("fubar")
+        with pytest.raises(AssertionError):
+            self.schema_obj.load_input_params("fubar")
 
     def test_validate_params_pass(self):
         """Try validating a set of parameters against a schema"""
         # Load the template schema
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
-        self.schema_obj.input_params = {"input": "fubar"}
+        self.schema_obj.input_params = {"input": "fubar.csv", "outdir": "results/"}
         assert self.schema_obj.validate_params()
 
     def test_validate_params_fail(self):
@@ -143,11 +162,11 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_schema()
         self.schema_obj.validate_schema(self.schema_obj.schema)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_validate_schema_fail_noparams(self):
         """Check that the schema validation fails when no params described"""
         self.schema_obj.schema = {"type": "invalidthing"}
-        self.schema_obj.validate_schema(self.schema_obj.schema)
+        with pytest.raises(AssertionError):
+            self.schema_obj.validate_schema(self.schema_obj.schema)
 
     def test_validate_schema_fail_duplicate_ids(self):
         """
@@ -293,50 +312,51 @@ class TestSchema(unittest.TestCase):
         """
         param = self.schema_obj.build_schema(self.template_dir, True, False, None)
 
-    def test_build_schema_from_scratch(self):
+    @with_temporary_folder
+    def test_build_schema_from_scratch(self, tmp_dir):
         """
         Build a new schema param from a pipeline with no existing file
         Run code to ensure it doesn't crash. Individual functions tested separately.
 
         Pretty much a copy of test_launch.py test_make_pipeline_schema
         """
-        test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "wf")
+        test_pipeline_dir = os.path.join(tmp_dir, "wf")
         shutil.copytree(self.template_dir, test_pipeline_dir)
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
 
         param = self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_timeout(self, mock_post):
         """Mock launching the web builder, but timeout on the request"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.Timeout()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_launch_web_builder_connection_error(self, mock_post):
         """Mock launching the web builder, but get a connection error"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.ConnectionError()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_timeout(self, mock_post):
         """Mock checking for a web builder response, but timeout on the request"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.Timeout()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     @mock.patch("requests.post")
     def test_get_web_builder_response_connection_error(self, mock_post):
         """Mock checking for a web builder response, but get a connection error"""
         # Define the behaviour of the request get mock
         mock_post.side_effect = requests.exceptions.ConnectionError()
-        self.schema_obj.launch_web_builder()
+        with pytest.raises(AssertionError):
+            self.schema_obj.launch_web_builder()
 
     def mocked_requests_post(**kwargs):
         """Helper function to emulate POST requests responses from the web"""

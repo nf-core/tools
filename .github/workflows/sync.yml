@@ -3,6 +3,11 @@ on:
   release:
     types: [published]
   workflow_dispatch:
+    inputs:
+      testpipeline:
+        type: boolean
+        description: Only run on nf-core/testpipeline?
+        required: true
 
 # Uncomment if we need an edge release of Nextflow again
 # env: NXF_EDGE: 1
@@ -15,7 +20,11 @@ jobs:
     steps:
       - id: set-matrix
         run: |
-          curl -O https://nf-co.re/pipeline_names.json
+          if [ "${{ github.event.inputs.testpipeline }}" == "true" ]; then
+            echo '{"pipeline":["testpipeline"]}' > pipeline_names.json
+          else
+            curl -O https://nf-co.re/pipeline_names.json
+          fi
           echo "::set-output name=matrix::$(cat pipeline_names.json)"
 
   sync:
@@ -38,7 +47,7 @@ jobs:
           fetch-depth: "0"
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
 
@@ -63,11 +72,11 @@ jobs:
         run: |
           git config --global user.email "core@nf-co.re"
           git config --global user.name "nf-core-bot"
-          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt sync nf-core/${{ matrix.pipeline }} \
+          nf-core --log-file sync_log_${{ matrix.pipeline }}.txt sync -d nf-core/${{ matrix.pipeline }} \
             --from-branch dev \
             --pull-request \
             --username nf-core-bot \
-            --repository nf-core/${{ matrix.pipeline }}
+            --github-repository nf-core/${{ matrix.pipeline }}
 
       - name: Upload sync log file artifact
         if: ${{ always() }}

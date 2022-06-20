@@ -2,21 +2,17 @@
 """Lists available nf-core pipelines and versions."""
 
 from __future__ import print_function
-from collections import OrderedDict
 
-import click
-import datetime
-import errno
-import git
 import json
 import logging
 import os
 import re
+from datetime import datetime
+
+import git
 import requests
 import rich.console
 import rich.table
-import subprocess
-import sys
 
 import nf_core.utils
 
@@ -51,7 +47,7 @@ def get_local_wf(workflow, revision=None):
     """
     # Assume nf-core if no org given
     if workflow.count("/") == 0:
-        workflow = "nf-core/{}".format(workflow)
+        workflow = f"nf-core/{workflow}"
 
     wfs = Workflows()
     wfs.get_local_nf_workflows()
@@ -59,16 +55,16 @@ def get_local_wf(workflow, revision=None):
         if workflow == wf.full_name:
             if revision is None or revision == wf.commit_sha or revision == wf.branch or revision == wf.active_tag:
                 if wf.active_tag:
-                    print_revision = "v{}".format(wf.active_tag)
+                    print_revision = f"v{wf.active_tag}"
                 elif wf.branch:
-                    print_revision = "{} - {}".format(wf.branch, wf.commit_sha[:7])
+                    print_revision = f"{wf.branch} - {wf.commit_sha[:7]}"
                 else:
                     print_revision = wf.commit_sha
-                log.info("Using local workflow: {} ({})".format(workflow, print_revision))
+                log.info(f"Using local workflow: {workflow} ({print_revision})")
                 return wf.local_path
 
     # Wasn't local, fetch it
-    log.info("Downloading workflow: {} ({})".format(workflow, revision))
+    log.info(f"Downloading workflow: {workflow} ({revision})")
     pull_cmd = f"nextflow pull {workflow}"
     if revision is not None:
         pull_cmd += f" -r {revision}"
@@ -128,7 +124,7 @@ class Workflows(object):
             log.debug("Guessed nextflow assets directory - pulling pipeline dirnames")
             for org_name in os.listdir(nextflow_wfdir):
                 for wf_name in os.listdir(os.path.join(nextflow_wfdir, org_name)):
-                    self.local_workflows.append(LocalWorkflow("{}/{}".format(org_name, wf_name)))
+                    self.local_workflows.append(LocalWorkflow(f"{org_name}/{wf_name}"))
 
         # Fetch details about local cached pipelines with `nextflow list`
         else:
@@ -141,7 +137,7 @@ class Workflows(object):
                     self.local_workflows.append(LocalWorkflow(wf_name))
 
         # Find additional information about each workflow by checking its git history
-        log.debug("Fetching extra info about {} local workflows".format(len(self.local_workflows)))
+        log.debug(f"Fetching extra info about {len(self.local_workflows)} local workflows")
         for wf in self.local_workflows:
             wf.get_local_nf_workflow_details()
 
@@ -179,7 +175,7 @@ class Workflows(object):
             for k in self.keyword_filters:
                 in_name = k in wf.name if wf.name else False
                 in_desc = k in wf.description if wf.description else False
-                in_topics = any([k in t for t in wf.topics])
+                in_topics = any(k in t for t in wf.topics)
                 if not in_name and not in_desc and not in_topics:
                     break
             else:
@@ -228,24 +224,24 @@ class Workflows(object):
         table.add_column("Last Pulled", justify="right")
         table.add_column("Have latest release?")
         for wf in filtered_workflows:
-            wf_name = "[bold][link=https://nf-co.re/{0}]{0}[/link]".format(wf.name, wf.full_name)
+            wf_name = f"[bold][link=https://nf-co.re/{wf.name}]{wf.name}[/link]"
             version = "[yellow]dev"
             if len(wf.releases) > 0:
-                version = "[blue]{}".format(wf.releases[-1]["tag_name"])
+                version = f"[blue]{wf.releases[-1]['tag_name']}"
             published = wf.releases[-1]["published_at_pretty"] if len(wf.releases) > 0 else "[dim]-"
             pulled = wf.local_wf.last_pull_pretty if wf.local_wf is not None else "[dim]-"
             if wf.local_wf is not None:
                 revision = ""
                 if wf.local_wf.active_tag is not None:
-                    revision = "v{}".format(wf.local_wf.active_tag)
+                    revision = f"v{wf.local_wf.active_tag}"
                 elif wf.local_wf.branch is not None:
-                    revision = "{} - {}".format(wf.local_wf.branch, wf.local_wf.commit_sha[:7])
+                    revision = f"{wf.local_wf.branch} - {wf.local_wf.commit_sha[:7]}"
                 else:
                     revision = wf.local_wf.commit_sha
                 if wf.local_is_latest:
-                    is_latest = "[green]Yes ({})".format(revision)
+                    is_latest = f"[green]Yes ({revision})"
                 else:
-                    is_latest = "[red]No ({})".format(revision)
+                    is_latest = f"[red]No ({revision})"
             else:
                 is_latest = "[dim]-"
 
@@ -254,13 +250,19 @@ class Workflows(object):
             # Handle archived pipelines
             if wf.archived:
                 rowdata[1] = "archived"
-                rowdata = [re.sub("\[\w+\]", "", k) for k in rowdata]
+                rowdata = [re.sub(r"\[\w+\]", "", k) for k in rowdata]
                 table.add_row(*rowdata, style="dim")
             else:
                 table.add_row(*rowdata)
 
-        # Print summary table
-        return table
+        if len(filtered_workflows) > 0:
+            # Print summary table
+            return table
+        else:
+            return_str = f"No pipelines found using filter keywords: '{', '.join(self.keyword_filters)}'"
+            if self.keyword_filters == ("modules",):
+                return_str += "\n\n:bulb: Did you mean 'nf-core modules list' instead?"
+            return return_str
 
     def print_json(self):
         """Dump JSON of all parsed information"""
@@ -300,10 +302,10 @@ class RemoteWorkflow(object):
         # Beautify date
         for release in self.releases:
             release["published_at_pretty"] = pretty_date(
-                datetime.datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ")
+                datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ")
             )
             release["published_at_timestamp"] = int(
-                datetime.datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ").strftime("%s")
+                datetime.strptime(release.get("published_at"), "%Y-%m-%dT%H:%M:%SZ").strftime("%s")
             )
 
 
@@ -332,11 +334,11 @@ class LocalWorkflow(object):
             if len(os.environ.get("NXF_ASSETS", "")) > 0:
                 nf_wfdir = os.path.join(os.environ.get("NXF_ASSETS"), self.full_name)
             elif len(os.environ.get("NXF_HOME", "")) > 0:
-                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets")
+                nf_wfdir = os.path.join(os.environ.get("NXF_HOME"), "assets", self.full_name)
             else:
                 nf_wfdir = os.path.join(os.getenv("HOME"), ".nextflow", "assets", self.full_name)
             if os.path.isdir(nf_wfdir):
-                log.debug("Guessed nextflow assets workflow directory: {}".format(nf_wfdir))
+                log.debug(f"Guessed nextflow assets workflow directory: {nf_wfdir}")
                 self.local_path = nf_wfdir
 
             # Use `nextflow info` to get more details about the workflow
@@ -350,13 +352,13 @@ class LocalWorkflow(object):
 
         # Pull information from the local git repository
         if self.local_path is not None:
-            log.debug("Pulling git info from {}".format(self.local_path))
+            log.debug(f"Pulling git info from {self.local_path}")
             try:
                 repo = git.Repo(self.local_path)
                 self.commit_sha = str(repo.head.commit.hexsha)
                 self.remote_url = str(repo.remotes.origin.url)
                 self.last_pull = os.stat(os.path.join(self.local_path, ".git", "FETCH_HEAD")).st_mtime
-                self.last_pull_date = datetime.datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
+                self.last_pull_date = datetime.fromtimestamp(self.last_pull).strftime("%Y-%m-%d %H:%M:%S")
                 self.last_pull_pretty = pretty_date(self.last_pull)
 
                 # Get the checked out branch if we can
@@ -372,13 +374,13 @@ class LocalWorkflow(object):
                         self.active_tag = str(tag)
 
             # I'm not sure that we need this any more, it predated the self.branch catch above for detacted HEAD
-            except TypeError as e:
+            except (TypeError, git.InvalidGitRepositoryError) as e:
                 log.error(
-                    "Could not fetch status of local Nextflow copy of {}:".format(self.full_name)
-                    + "\n   {}".format(str(e))
-                    + "\n\nIt's probably a good idea to delete this local copy and pull again:".format(self.local_path)
-                    + "\n   rm -rf {}".format(self.local_path)
-                    + "\n   nextflow pull {}".format(self.full_name)
+                    f"Could not fetch status of local Nextflow copy of '{self.full_name}':"
+                    f"\n   [red]{type(e).__name__}:[/] {str(e)}"
+                    "\n\nThis git repository looks broken. It's probably a good idea to delete this local copy and pull again:"
+                    f"\n   [magenta]rm -rf {self.local_path}"
+                    f"\n   [magenta]nextflow pull {self.full_name}",
                 )
 
 
@@ -390,7 +392,6 @@ def pretty_date(time):
     Based on https://stackoverflow.com/a/1551394/713980
     Adapted by sven1103
     """
-    from datetime import datetime
 
     now = datetime.now()
     if isinstance(time, datetime):
@@ -400,23 +401,27 @@ def pretty_date(time):
     second_diff = diff.seconds
     day_diff = diff.days
 
-    pretty_msg = OrderedDict()
-    pretty_msg[0] = [(float("inf"), 1, "from the future")]
-    pretty_msg[1] = [
-        (10, 1, "just now"),
-        (60, 1, "{sec:.0f} seconds ago"),
-        (120, 1, "a minute ago"),
-        (3600, 60, "{sec:.0f} minutes ago"),
-        (7200, 1, "an hour ago"),
-        (86400, 3600, "{sec:.0f} hours ago"),
-    ]
-    pretty_msg[2] = [(float("inf"), 1, "yesterday")]
-    pretty_msg[7] = [(float("inf"), 1, "{days:.0f} day{day_s} ago")]
-    pretty_msg[31] = [(float("inf"), 7, "{days:.0f} week{day_s} ago")]
-    pretty_msg[365] = [(float("inf"), 30, "{days:.0f} months ago")]
-    pretty_msg[float("inf")] = [(float("inf"), 365, "{days:.0f} year{day_s} ago")]
+    pretty_msg = (
+        (0, ((float("inf"), 1, "from the future"),)),
+        (
+            1,
+            (
+                (10, 1, "just now"),
+                (60, 1, "{sec:.0f} seconds ago"),
+                (120, 1, "a minute ago"),
+                (3600, 60, "{sec:.0f} minutes ago"),
+                (7200, 1, "an hour ago"),
+                (86400, 3600, "{sec:.0f} hours ago"),
+            ),
+        ),
+        (2, ((float("inf"), 1, "yesterday"),)),
+        (7, ((float("inf"), 1, "{days:.0f} day{day_s} ago"),)),
+        (31, ((float("inf"), 7, "{days:.0f} week{day_s} ago"),)),
+        (365, ((float("inf"), 30, "{days:.0f} months ago"),)),
+        (float("inf"), ((float("inf"), 365, "{days:.0f} year{day_s} ago"),)),
+    )
 
-    for days, seconds in pretty_msg.items():
+    for days, seconds in pretty_msg:
         if day_diff < days:
             for sec in seconds:
                 if second_diff < sec[0]:

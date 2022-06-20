@@ -1,18 +1,33 @@
-name: Create a pipeline and lint it
+name: Create a pipeline and run nf-core linting
 on: [push, pull_request]
 
-# Uncomment if we need an edge release of Nextflow again
-# env: NXF_EDGE: 1
+env:
+  NXF_ANSI_LOG: false
+  CAPSULE_LOG: none
 
 jobs:
   MakeTestWorkflow:
     runs-on: ubuntu-latest
+    env:
+      NXF_ANSI_LOG: false
+    strategy:
+      matrix:
+        # Nextflow versions
+        include:
+          # Test pipeline minimum Nextflow version
+          - NXF_VER: "21.10.3"
+            NXF_EDGE: ""
+          # Test latest edge release of Nextflow
+          - NXF_VER: ""
+            NXF_EDGE: "1"
     steps:
+      # Get the repo code
       - uses: actions/checkout@v2
         name: Check out source-code repository
 
+      # Set up nf-core/tools
       - name: Set up Python 3.8
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
         with:
           python-version: 3.8
 
@@ -21,39 +36,76 @@ jobs:
           python -m pip install --upgrade pip
           pip install .
 
+      # Set up Nextflow
       - name: Install Nextflow
         env:
-          CAPSULE_LOG: none
+          NXF_VER: ${{ matrix.NXF_VER }}
+          # Uncomment only if the edge release is more recent than the latest stable release
+          # See https://github.com/nextflow-io/nextflow/issues/2467
+          # NXF_EDGE: ${{ matrix.NXF_EDGE }}
         run: |
           wget -qO- get.nextflow.io | bash
           sudo mv nextflow /usr/local/bin/
 
+      # Install the Prettier linting tools
+      - uses: actions/setup-node@v2
+
+      - name: Install Prettier
+        run: npm install -g prettier
+
+      # Install the editorconfig linting tools
+      - name: Install editorconfig-checker
+        run: npm install -g editorconfig-checker
+
+      # Build a pipeline from the template
       - name: nf-core create
         run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
 
-      - name: nf-core lint
-        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored
+      # Try syncing it before we change anything
+      - name: nf-core sync
+        run: nf-core --log-file log.txt sync --dir nf-core-testpipeline/
 
+      # Build a module from the template
+      - name: nf-core modules create
+        run: nf-core --log-file log.txt modules create bpipe --dir nf-core-testpipeline --author @nf-core-bot --label process_low --meta
+
+      # Run code style linting
+      - name: Run Prettier --check
+        run: prettier --check nf-core-testpipeline
+
+      - name: Run ECLint check
+        run: editorconfig-checker -exclude README.md $(find nf-core-testpipeline/.* -type f | grep -v '.git\|.py\|md\|json\|yml\|yaml\|html\|css\|work\|.nextflow\|build\|nf_core.egg-info\|log.txt\|Makefile')
+
+      # Update modules to the latest version
+      - name: nf-core modules update
+        run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
+
+      # Remove TODO statements
+      - name: remove TODO
+        run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+
+      # Run nf-core linting
+      - name: nf-core lint
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned
+
+      # Run the other nf-core commands
       - name: nf-core list
         run: nf-core --log-file log.txt list
 
-      - name: nf-core licences
-        run: nf-core --log-file log.txt licences nf-core-testpipeline
-
-      - name: nf-core sync
-        run: nf-core --log-file log.txt sync nf-core-testpipeline/
+      # - name: nf-core licences
+      #   run: nf-core --log-file log.txt licences nf-core-testpipeline
 
       - name: nf-core schema
-        run: nf-core --log-file log.txt schema build nf-core-testpipeline/ --no-prompts
+        run: nf-core --log-file log.txt schema build --dir nf-core-testpipeline/ --no-prompts
 
       - name: nf-core bump-version
-        run: nf-core --log-file log.txt bump-version nf-core-testpipeline/ 1.1
+        run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
 
       - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt lint nf-core-testpipeline --fail-ignored --release
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
 
       - name: nf-core modules install
-        run: nf-core --log-file log.txt modules install nf-core-testpipeline/ --tool fastqc
+        run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
 
       - name: Upload log file artifact
         if: ${{ always() }}

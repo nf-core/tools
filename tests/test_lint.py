@@ -3,18 +3,21 @@
 """
 import fnmatch
 import json
-from unittest import mock
 import os
-import pytest
-import requests
 import shutil
 import subprocess
 import tempfile
 import unittest
+
+import mock
+import pytest
+import requests
 import yaml
 
 import nf_core.create
 import nf_core.lint
+
+from .utils import with_temporary_folder
 
 
 class TestLint(unittest.TestCase):
@@ -25,7 +28,9 @@ class TestLint(unittest.TestCase):
 
         Use nf_core.create() to make a pipeline that we can use for testing
         """
-        self.test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+
+        self.tmp_dir = tempfile.mkdtemp()
+        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
         )
@@ -33,11 +38,17 @@ class TestLint(unittest.TestCase):
         # Base lint object on this directory
         self.lint_obj = nf_core.lint.PipelineLint(self.test_pipeline_dir)
 
+    def tearDown(self):
+        """Clean up temporary files and folders"""
+
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
+
     def _make_pipeline_copy(self):
         """Make a copy of the test pipeline that can be edited
 
         Returns: Path to new temp directory with pipeline"""
-        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        new_pipeline = os.path.join(self.tmp_dir, "nf-core-testpipeline-copy")
         shutil.copytree(self.test_pipeline_dir, new_pipeline)
         return new_pipeline
 
@@ -72,14 +83,14 @@ class TestLint(unittest.TestCase):
 
     def test_load_lint_config_ignore_all_tests(self):
         """Try to load a linting config file that ignores all tests"""
+
         # Make a copy of the test pipeline and create a lint object
-        new_pipeline = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
-        shutil.copytree(self.test_pipeline_dir, new_pipeline)
+        new_pipeline = self._make_pipeline_copy()
         lint_obj = nf_core.lint.PipelineLint(new_pipeline)
 
         # Make a config file listing all test names
-        config_dict = {test_name: False for test_name in lint_obj.lint_tests}
-        with open(os.path.join(new_pipeline, ".nf-core-lint.yml"), "w") as fh:
+        config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
+        with open(os.path.join(new_pipeline, ".nf-core.yml"), "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
@@ -93,7 +104,8 @@ class TestLint(unittest.TestCase):
         assert len(lint_obj.failed) == 0
         assert len(lint_obj.ignored) == len(lint_obj.lint_tests)
 
-    def test_json_output(self):
+    @with_temporary_folder
+    def test_json_output(self, tmp_dir):
         """
         Test creation of a JSON file with lint results
 
@@ -122,14 +134,14 @@ class TestLint(unittest.TestCase):
         self.lint_obj.warned.append(("test_three", "This test gave a warning"))
 
         # Make a temp dir for the JSON output
-        json_fn = os.path.join(tempfile.mkdtemp(), "lint_results.json")
+        json_fn = os.path.join(tmp_dir, "lint_results.json")
         self.lint_obj._save_json_results(json_fn)
 
         # Load created JSON file and check its contents
         with open(json_fn, "r") as fh:
             saved_json = json.load(fh)
-        assert saved_json["num_tests_pass"] == 2
-        assert saved_json["num_tests_warned"] == 1
+        assert saved_json["num_tests_pass"] > 0
+        assert saved_json["num_tests_warned"] > 0
         assert saved_json["num_tests_ignored"] == 0
         assert saved_json["num_tests_failed"] == 0
         assert saved_json["has_tests_pass"]
@@ -149,76 +161,79 @@ class TestLint(unittest.TestCase):
         stripped = self.lint_obj._strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
         assert stripped == "ls examplefile.zip"
 
-    def test_sphinx_rst_files(self):
-        """Check that we have .rst files for all lint module code,
+    def test_sphinx_md_files(self):
+        """Check that we have .md files for all lint module code,
         and that there are no unexpected files (eg. deleted lint tests)"""
 
         docs_basedir = os.path.join(
             os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "pipeline_lint_tests"
         )
 
-        # Get list of existing .rst files
+        # Get list of existing .md files
         existing_docs = []
         for fn in os.listdir(docs_basedir):
-            if fnmatch.fnmatch(fn, "*.rst") and not fnmatch.fnmatch(fn, "index.rst"):
+            if fnmatch.fnmatch(fn, "*.md") and not fnmatch.fnmatch(fn, "index.md"):
                 existing_docs.append(os.path.join(docs_basedir, fn))
 
-        # Check .rst files against each test name
+        # Check .md files against each test name
         lint_obj = nf_core.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
-            fn = os.path.join(docs_basedir, "{}.rst".format(test_name))
-            assert os.path.exists(fn), "Could not find lint docs .rst file: {}".format(fn)
+            fn = os.path.join(docs_basedir, f"{test_name}.md")
+            assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"
             existing_docs.remove(fn)
 
-        # Check that we have no remaining .rst files that we didn't expect
-        assert len(existing_docs) == 0, "Unexpected lint docs .rst files found: {}".format(", ".join(existing_docs))
+        # Check that we have no remaining .md files that we didn't expect
+        assert len(existing_docs) == 0, f"Unexpected lint docs .md files found: {', '.join(existing_docs)}"
 
     #######################
     # SPECIFIC LINT TESTS #
     #######################
-    from lint.actions_awsfulltest import (
-        test_actions_awsfulltest_warn,
-        test_actions_awsfulltest_pass,
+    from .lint.actions_awsfulltest import (
         test_actions_awsfulltest_fail,
+        test_actions_awsfulltest_pass,
+        test_actions_awsfulltest_warn,
     )
-    from lint.actions_awstest import test_actions_awstest_pass, test_actions_awstest_fail
-    from lint.files_exist import (
-        test_files_exist_missing_config,
-        test_files_exist_missing_main,
-        test_files_exist_depreciated_file,
-        test_files_exist_pass,
+    from .lint.actions_awstest import (
+        test_actions_awstest_fail,
+        test_actions_awstest_pass,
     )
-    from lint.actions_ci import (
-        test_actions_ci_pass,
-        test_actions_ci_fail_wrong_nf,
+    from .lint.actions_ci import (
         test_actions_ci_fail_wrong_docker_ver,
+        test_actions_ci_fail_wrong_nf,
         test_actions_ci_fail_wrong_trigger,
+        test_actions_ci_pass,
     )
-
-    from lint.actions_schema_validation import (
+    from .lint.actions_schema_validation import (
+        test_actions_schema_validation_fails_for_additional_property,
         test_actions_schema_validation_missing_jobs,
         test_actions_schema_validation_missing_on,
     )
-
-    from lint.merge_markers import test_merge_markers_found
-
-    from lint.nextflow_config import (
-        test_nextflow_config_example_pass,
-        test_nextflow_config_bad_name_fail,
-        test_nextflow_config_bad_container_name_failed,
-        test_nextflow_config_dev_in_release_mode_failed,
+    from .lint.files_exist import (
+        test_files_exist_depreciated_file,
+        test_files_exist_missing_config,
+        test_files_exist_missing_main,
+        test_files_exist_pass,
     )
-
-    from lint.files_unchanged import (
-        test_files_unchanged_pass,
+    from .lint.files_unchanged import (
         test_files_unchanged_fail,
+        test_files_unchanged_pass,
     )
+    from .lint.merge_markers import test_merge_markers_found
+    from .lint.modules_json import test_modules_json_pass
+    from .lint.nextflow_config import (
+        test_nextflow_config_bad_name_fail,
+        test_nextflow_config_dev_in_release_mode_failed,
+        test_nextflow_config_example_pass,
+    )
+    from .lint.version_consistency import test_version_consistency
 
+
+# TODO nf-core: Assess and strip out if no longer required for DSL2
 
 #    def test_critical_missingfiles_example(self):
 #        """Tests for missing nextflow config and main.nf files"""
 #        lint_obj = nf_core.lint.run_linting(PATH_CRITICAL_EXAMPLE, False)
-#        assert len(lint_obj.failed) == 1
+#        assert len(lint_obj.failed) > 0
 #
 #    def test_failing_missingfiles_example(self):
 #        """Tests for missing files like Dockerfile or LICENSE"""

@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
+import fnmatch
+import io
 import logging
 import os
-import io
-import fnmatch
 
 log = logging.getLogger(__name__)
 
 
-def pipeline_todos(self):
+def pipeline_todos(self, root_dir=None):
     """Check for nf-core *TODO* lines.
 
     The nf-core workflow template contains a number of comment lines to help developers
@@ -34,15 +34,19 @@ def pipeline_todos(self):
     """
     passed = []
     warned = []
-    failed = []
     file_paths = []
 
+    # Pipelines don't provide a path, so use the workflow path.
+    # Modules run this function twice and provide a string path
+    if root_dir is None:
+        root_dir = self.wf_path
+
     ignore = [".git"]
-    if os.path.isfile(os.path.join(self.wf_path, ".gitignore")):
-        with io.open(os.path.join(self.wf_path, ".gitignore"), "rt", encoding="latin1") as fh:
+    if os.path.isfile(os.path.join(root_dir, ".gitignore")):
+        with io.open(os.path.join(root_dir, ".gitignore"), "rt", encoding="latin1") as fh:
             for l in fh:
                 ignore.append(os.path.basename(l.strip().rstrip("/")))
-    for root, dirs, files in os.walk(self.wf_path, topdown=True):
+    for root, dirs, files in os.walk(root_dir, topdown=True):
         # Ignore files
         for i_base in ignore:
             i = os.path.join(root, i_base)
@@ -61,10 +65,14 @@ def pipeline_todos(self):
                                 .replace("TODO nf-core: ", "")
                                 .strip()
                             )
-                            warned.append("TODO string in `{}`: _{}_".format(fname, l))
+                            warned.append(f"TODO string in `{fname}`: _{l}_")
                             file_paths.append(os.path.join(root, fname))
             except FileNotFoundError:
                 log.debug(f"Could not open file {fname} in pipeline_todos lint test")
+
+    if len(warned) == 0:
+        passed.append("No TODO strings found")
+
     # HACK file paths are returned to allow usage of this function in modules/lint.py
     # Needs to be refactored!
-    return {"passed": passed, "warned": warned, "failed": failed, "file_paths": file_paths}
+    return {"passed": passed, "warned": warned, "file_paths": file_paths}

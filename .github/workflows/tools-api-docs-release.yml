@@ -9,14 +9,15 @@ jobs:
     runs-on: ubuntu-18.04
     strategy:
       matrix:
-        dir: [latest, $GITHUB_REF]
-
+        dir:
+          - latest
+          - ${{ github.event.release.tag_name }}
     steps:
       - name: Check out source-code repository
         uses: actions/checkout@v2
 
       - name: Set up Python 3.7
-        uses: actions/setup-python@v1
+        uses: actions/setup-python@v3
         with:
           python-version: 3.7
 
@@ -36,7 +37,7 @@ jobs:
           server: ${{ secrets.ftp_server }}
           username: ${{ secrets.ftp_username}}
           password: ${{ secrets.ftp_password }}
-          local-dir: './docs/api/_build/html/'
+          local-dir: "./docs/api/_build/html/"
           server-dir: ${{ secrets.ftp_server_dir }}/${{ matrix.dir }}/
           protocol: ${{ secrets.ftp_protocol }}
           port: ${{ secrets.ftp_port }}

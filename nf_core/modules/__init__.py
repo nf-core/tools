@@ -1,4 +1,13 @@
-from .pipeline_modules import ModulesRepo, PipelineModules
+from .bump_versions import ModuleVersionBumper
 from .create import ModuleCreate
-from .test_yml_builder import ModulesTestYmlBuilder
+from .info import ModuleInfo
+from .install import ModuleInstall
 from .lint import ModuleLint
+from .list import ModuleList
+from .module_test import ModulesTest
+from .module_utils import ModuleException
+from .modules_repo import ModulesRepo
+from .mulled import MulledImageNameGenerator
+from .remove import ModuleRemove
+from .test_yml_builder import ModulesTestYmlBuilder
+from .update import ModuleUpdate

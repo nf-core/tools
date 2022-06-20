@@ -2,16 +2,20 @@
 """ Tests covering for utility functions.
 """
 
+import os
+import shutil
+import tempfile
+import unittest
+
+import mock
+import pytest
+import requests
+
 import nf_core.create
 import nf_core.list
 import nf_core.utils
 
-from unittest import mock
-import os
-import pytest
-import requests
-import tempfile
-import unittest
+from .utils import with_temporary_folder
 
 
 class TestUtils(unittest.TestCase):
@@ -22,13 +26,18 @@ class TestUtils(unittest.TestCase):
 
         Use nf_core.create() to make a pipeline that we can use for testing
         """
-        self.test_pipeline_dir = os.path.join(tempfile.mkdtemp(), "nf-core-testpipeline")
+        self.tmp_dir = tempfile.mkdtemp()
+        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
         )
         self.create_obj.init_pipeline()
         # Base Pipeline object on this directory
         self.pipeline_obj = nf_core.utils.Pipeline(self.test_pipeline_dir)
+
+    def tearDown(self):
+        if os.path.exists(self.tmp_dir):
+            shutil.rmtree(self.tmp_dir)
 
     def test_check_if_outdated_1(self):
         current_version = "1.0"
@@ -77,20 +86,22 @@ class TestUtils(unittest.TestCase):
         self.pipeline_obj._load_pipeline_config()
         assert self.pipeline_obj.nf_config["dag.enabled"] == "true"
 
-    def test_load_conda_env(self):
-        """Load the pipeline Conda environment.yml file"""
-        self.pipeline_obj._load_conda_environment()
-        assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
+    # TODO nf-core: Assess and strip out if no longer required for DSL2
+
+    # def test_load_conda_env(self):
+    #     """Load the pipeline Conda environment.yml file"""
+    #     self.pipeline_obj._load_conda_environment()
+    #     assert self.pipeline_obj.conda_config["channels"] == ["conda-forge", "bioconda", "defaults"]
 
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
         self.pipeline_obj._list_files()
         assert os.path.join(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
 
-    def test_list_files_no_git(self):
+    @with_temporary_folder
+    def test_list_files_no_git(self, tmpdir):
         """Test listing pipeline files without `git-ls`"""
-        # Create directory with a test file
-        tmpdir = tempfile.mkdtemp()
+        # Create a test file in a temporary directory
         tmp_fn = os.path.join(tmpdir, "testfile")
         open(tmp_fn, "a").close()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
@@ -156,14 +167,14 @@ class TestUtils(unittest.TestCase):
             raise AssertionError("MultiQC release v1.10 not found")
         assert "master" in wf_branches.keys()
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_repo_releases_branches_not_exists(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
+        with pytest.raises(AssertionError):
+            nf_core.utils.get_repo_releases_branches("made_up_pipeline", wfs)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_repo_releases_branches_not_exists_slash(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
-        pipeline, wf_releases, wf_branches = nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
+        with pytest.raises(AssertionError):
+            nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)

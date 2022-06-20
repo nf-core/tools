@@ -2,11 +2,12 @@
 """ Tests covering the command-line code.
 """
 
-import nf_core.__main__
-
-from click.testing import CliRunner
-from unittest import mock
 import unittest
+
+import mock
+from click.testing import CliRunner
+
+import nf_core.__main__
 
 
 @mock.patch("nf_core.__main__.nf_core_cli")

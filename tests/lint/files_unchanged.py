@@ -1,7 +1,8 @@
-import pytest
+import os
 import shutil
 import tempfile
-import os
+
+import pytest
 
 import nf_core.lint
 
@@ -24,6 +25,6 @@ def test_files_unchanged_fail(self):
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     results = lint_obj.files_unchanged()
-    assert len(results["failed"]) == 1
+    assert len(results["failed"]) > 0
     assert failing_file in results["failed"][0]
     assert results["could_fix"]

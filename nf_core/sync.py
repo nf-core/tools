@@ -2,22 +2,19 @@
 """Synchronise a pipeline TEMPLATE branch with the template.
 """
 
-import git
 import json
 import logging
 import os
-import random
-import re
+import shutil
+
+import git
 import requests
 import requests_cache
 import rich
-import shutil
-import time
 
 import nf_core
 import nf_core.create
 import nf_core.list
-import nf_core.sync
 import nf_core.utils
 
 log = logging.getLogger(__name__)
@@ -69,7 +66,7 @@ class PipelineSync(object):
         self.pipeline_dir = os.path.abspath(pipeline_dir)
         self.from_branch = from_branch
         self.original_branch = None
-        self.merge_branch = "nf-core-template-merge-{}".format(nf_core.__version__)
+        self.merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
         self.made_changes = False
         self.make_pr = make_pr
         self.gh_pr_returned_data = {}
@@ -79,15 +76,24 @@ class PipelineSync(object):
         self.gh_repo = gh_repo
         self.pr_url = ""
 
+        # Set up the API auth if supplied on the command line
+        self.gh_api = nf_core.utils.gh_api
+        self.gh_api.lazy_init()
+        if self.gh_username and "GITHUB_AUTH_TOKEN" in os.environ:
+            log.debug(f"Authenticating sync as {self.gh_username}")
+            self.gh_api.setup_github_auth(
+                requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"])
+            )
+
     def sync(self):
         """Find workflow attributes, create a new template pipeline on TEMPLATE"""
 
         # Clear requests_cache so that we don't get stale API responses
         requests_cache.clear()
 
-        log.info("Pipeline directory: {}".format(self.pipeline_dir))
+        log.info(f"Pipeline directory: {self.pipeline_dir}")
         if self.from_branch:
-            log.info("Using branch '{}' to fetch workflow variables".format(self.from_branch))
+            log.info(f"Using branch '{self.from_branch}' to fetch workflow variables")
         if self.make_pr:
             log.info("Will attempt to automatically create a pull request")
 
@@ -124,9 +130,7 @@ class PipelineSync(object):
             log.info("No changes made to TEMPLATE - sync complete")
         elif not self.make_pr:
             log.info(
-                "Now try to merge the updates in to your pipeline:\n  cd {}\n  git merge TEMPLATE".format(
-                    self.pipeline_dir
-                )
+                f"Now try to merge the updates in to your pipeline:\n  cd {self.pipeline_dir}\n  git merge TEMPLATE"
             )
 
     def inspect_sync_dir(self):
@@ -137,11 +141,11 @@ class PipelineSync(object):
         try:
             self.repo = git.Repo(self.pipeline_dir)
         except git.exc.InvalidGitRepositoryError as e:
-            raise SyncException("'{}' does not appear to be a git repository".format(self.pipeline_dir))
+            raise SyncException(f"'{self.pipeline_dir}' does not appear to be a git repository")
 
         # get current branch so we can switch back later
         self.original_branch = self.repo.active_branch.name
-        log.info("Original pipeline repository branch is '{}'".format(self.original_branch))
+        log.info(f"Original pipeline repository branch is '{self.original_branch}'")
 
         # Check to see if there are uncommitted changes on current branch
         if self.repo.is_dirty(untracked_files=True):
@@ -156,17 +160,17 @@ class PipelineSync(object):
         # Try to check out target branch (eg. `origin/dev`)
         try:
             if self.from_branch and self.repo.active_branch.name != self.from_branch:
-                log.info("Checking out workflow branch '{}'".format(self.from_branch))
+                log.info(f"Checking out workflow branch '{self.from_branch}'")
                 self.repo.git.checkout(self.from_branch)
         except git.exc.GitCommandError:
-            raise SyncException("Branch `{}` not found!".format(self.from_branch))
+            raise SyncException(f"Branch `{self.from_branch}` not found!")
 
         # If not specified, get the name of the active branch
         if not self.from_branch:
             try:
                 self.from_branch = self.repo.active_branch.name
             except git.exc.GitCommandError as e:
-                log.error("Could not find active repo branch: ".format(e))
+                log.error(f"Could not find active repo branch: {e}")
 
         # Fetch workflow variables
         log.debug("Fetching workflow config variables")
@@ -175,7 +179,7 @@ class PipelineSync(object):
         # Check that we have the required variables
         for rvar in self.required_config_vars:
             if rvar not in self.wf_config:
-                raise SyncException("Workflow config variable `{}` not found!".format(rvar))
+                raise SyncException(f"Workflow config variable `{rvar}` not found!")
 
     def checkout_template_branch(self):
         """
@@ -202,7 +206,7 @@ class PipelineSync(object):
             if the_file == ".git":
                 continue
             file_path = os.path.join(self.pipeline_dir, the_file)
-            log.debug("Deleting {}".format(file_path))
+            log.debug(f"Deleting {file_path}")
             try:
                 if os.path.isfile(file_path):
                     os.unlink(file_path)
@@ -239,11 +243,11 @@ class PipelineSync(object):
         # Commit changes
         try:
             self.repo.git.add(A=True)
-            self.repo.index.commit("Template update for nf-core/tools version {}".format(nf_core.__version__))
+            self.repo.index.commit(f"Template update for nf-core/tools version {nf_core.__version__}")
             self.made_changes = True
             log.info("Committed changes to 'TEMPLATE' branch")
         except Exception as e:
-            raise SyncException("Could not commit changes to TEMPLATE:\n{}".format(e))
+            raise SyncException(f"Could not commit changes to TEMPLATE:\n{e}")
         return True
 
     def push_template_branch(self):
@@ -251,11 +255,11 @@ class PipelineSync(object):
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        log.info("Pushing TEMPLATE branch to remote: '{}'".format(os.path.basename(self.pipeline_dir)))
+        log.info(f"Pushing TEMPLATE branch to remote: '{os.path.basename(self.pipeline_dir)}'")
         try:
             self.repo.git.push()
         except git.exc.GitCommandError as e:
-            raise PullRequestException("Could not push TEMPLATE branch:\n  {}".format(e))
+            raise PullRequestException(f"Could not push TEMPLATE branch:\n  {e}")
 
     def create_merge_base_branch(self):
         """Create a new branch from the updated TEMPLATE branch
@@ -273,9 +277,7 @@ class PipelineSync(object):
                 branch_no += 1
                 self.merge_branch = f"{original_merge_branch}-{branch_no}"
             log.info(
-                "Branch already existed: '{}', creating branch '{}' instead.".format(
-                    original_merge_branch, self.merge_branch
-                )
+                f"Branch already existed: '{original_merge_branch}', creating branch '{self.merge_branch}' instead."
             )
 
         # Create new branch and checkout
@@ -316,75 +318,27 @@ class PipelineSync(object):
         ).format(tag=nf_core.__version__)
 
         # Make new pull-request
-        pr_content = {
-            "title": pr_title,
-            "body": pr_body_text,
-            "maintainer_can_modify": True,
-            "head": self.merge_branch,
-            "base": self.from_branch,
-        }
-
         stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
-
-        while True:
+        with self.gh_api.cache_disabled():
             try:
-                log.debug("Submitting PR to GitHub API")
-                returned_data_prettyprint = ""
-                r_headers_pp = ""
-                with requests_cache.disabled():
-                    r = requests.post(
-                        url="https://api.github.com/repos/{}/pulls".format(self.gh_repo),
-                        data=json.dumps(pr_content),
-                        auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-                    )
-                try:
-                    self.gh_pr_returned_data = json.loads(r.content)
-                    returned_data_prettyprint = json.dumps(dict(self.gh_pr_returned_data), indent=4)
-                    r_headers_pp = json.dumps(dict(r.headers), indent=4)
-                except:
-                    self.gh_pr_returned_data = r.content
-                    returned_data_prettyprint = r.content
-                    r_headers_pp = r.headers
-                    log.error("Could not parse JSON response from GitHub API!")
-                    stderr.print_exception()
-
-                # Dump the responses to the log just in case..
-                log.debug(f"PR response from GitHub. Data:\n{returned_data_prettyprint}\n\nHeaders:\n{r_headers_pp}")
-
-                # PR worked
-                if r.status_code == 201:
-                    self.pr_url = self.gh_pr_returned_data["html_url"]
-                    log.debug(f"GitHub API PR worked, return code 201")
-                    log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
-                    break
-
-                # Returned 403 error - too many simultaneous requests
-                # https://github.com/nf-core/tools/issues/911
-                if r.status_code == 403:
-                    log.debug(f"GitHub API PR failed with 403 error")
-                    wait_time = float(re.sub("[^0-9]", "", str(r.headers.get("Retry-After", 0))))
-                    if wait_time == 0:
-                        log.debug("Couldn't find 'Retry-After' header, guessing a length of time to wait")
-                        wait_time = random.randrange(10, 60)
-                    log.warning(
-                        f"Got 403 code - probably the abuse protection. Trying again after {wait_time} seconds.."
-                    )
-                    time.sleep(wait_time)
-
-                # Something went wrong
-                else:
-                    raise PullRequestException(
-                        f"GitHub API returned code {r.status_code}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
-                    )
-            # Don't catch the PullRequestException that we raised inside
-            except PullRequestException:
-                raise
-            # Do catch any other exceptions that we hit
+                r = self.gh_api.request_retry(
+                    f"https://api.github.com/repos/{self.gh_repo}/pulls",
+                    post_data={
+                        "title": pr_title,
+                        "body": pr_body_text,
+                        "maintainer_can_modify": True,
+                        "head": self.merge_branch,
+                        "base": self.from_branch,
+                    },
+                )
             except Exception as e:
                 stderr.print_exception()
-                raise PullRequestException(
-                    f"Something went badly wrong - {e}: \n\n{returned_data_prettyprint}\n\n{r_headers_pp}"
-                )
+                raise PullRequestException(f"Something went badly wrong - {e}")
+            else:
+                self.gh_pr_returned_data = r.json()
+                self.pr_url = self.gh_pr_returned_data["html_url"]
+                log.debug(f"GitHub API PR worked, return code {r.status_code}")
+                log.info(f"GitHub PR created: {self.gh_pr_returned_data['html_url']}")
 
     def close_open_template_merge_prs(self):
         """Get all template merging branches (starting with 'nf-core-template-merge-')
@@ -395,11 +349,8 @@ class PipelineSync(object):
 
         # Look for existing pull-requests
         list_prs_url = f"https://api.github.com/repos/{self.gh_repo}/pulls"
-        with requests_cache.disabled():
-            list_prs_request = requests.get(
-                url=list_prs_url,
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
+        with self.gh_api.cache_disabled():
+            list_prs_request = self.gh_api.get(list_prs_url)
         try:
             list_prs_json = json.loads(list_prs_request.content)
             list_prs_pp = json.dumps(list_prs_json, indent=4)
@@ -437,20 +388,12 @@ class PipelineSync(object):
             f"This pull-request is now outdated and has been closed in favour of {self.pr_url}\n\n"
             f"Please use {self.pr_url} to merge in the new changes from the nf-core template as soon as possible."
         )
-        with requests_cache.disabled():
-            comment_request = requests.post(
-                url=pr["comments_url"],
-                data=json.dumps({"body": comment_text}),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
+        with self.gh_api.cache_disabled():
+            self.gh_api.post(url=pr["comments_url"], data=json.dumps({"body": comment_text}))
 
         # Update the PR status to be closed
-        with requests_cache.disabled():
-            pr_request = requests.patch(
-                url=pr["url"],
-                data=json.dumps({"state": "closed"}),
-                auth=requests.auth.HTTPBasicAuth(self.gh_username, os.environ["GITHUB_AUTH_TOKEN"]),
-            )
+        with self.gh_api.cache_disabled():
+            pr_request = self.gh_api.patch(url=pr["url"], data=json.dumps({"state": "closed"}))
         try:
             pr_request_json = json.loads(pr_request.content)
             pr_request_pp = json.dumps(pr_request_json, indent=4)
@@ -460,7 +403,7 @@ class PipelineSync(object):
 
         # PR update worked
         if pr_request.status_code == 200:
-            log.debug("GitHub API PR-update worked:\n{}".format(pr_request_pp))
+            log.debug(f"GitHub API PR-update worked:\n{pr_request_pp}")
             log.info(
                 f"Closed GitHub PR from '{pr['head']['ref']}' to '{pr['base']['ref']}': {pr_request_json['html_url']}"
             )
@@ -474,8 +417,8 @@ class PipelineSync(object):
         """
         Reset the target pipeline directory. Check out the original branch.
         """
-        log.info("Checking out original branch: '{}'".format(self.original_branch))
+        log.info(f"Checking out original branch: '{self.original_branch}'")
         try:
             self.repo.git.checkout(self.original_branch)
         except git.exc.GitCommandError as e:
-            raise SyncException("Could not reset to original branch `{}`:\n{}".format(self.from_branch, e))
+            raise SyncException(f"Could not reset to original branch `{self.from_branch}`:\n{e}")

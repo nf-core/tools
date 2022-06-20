@@ -3,22 +3,23 @@
 
 from __future__ import print_function
 
-from io import BytesIO
-import logging
+import concurrent.futures
 import hashlib
+import logging
 import os
-import questionary
 import re
-import requests
-import requests_cache
 import shutil
 import subprocess
 import sys
 import tarfile
-import concurrent.futures
+from io import BytesIO
+from zipfile import ZipFile
+
+import questionary
+import requests
+import requests_cache
 import rich
 import rich.progress
-from zipfile import ZipFile
 
 import nf_core
 import nf_core.list
@@ -71,7 +72,7 @@ class DownloadWorkflow(object):
 
     Args:
         pipeline (str): A nf-core pipeline name.
-        release (str): The workflow release version to download, like `1.0`. Defaults to None.
+        revision (str): The workflow revision to download, like `1.0`. Defaults to None.
         singularity (bool): Flag, if the Singularity container should be downloaded as well. Defaults to False.
         outdir (str): Path to the local download directory. Defaults to None.
     """
@@ -79,7 +80,7 @@ class DownloadWorkflow(object):
     def __init__(
         self,
         pipeline=None,
-        release=None,
+        revision=None,
         outdir=None,
         compress_type=None,
         force=False,
@@ -88,7 +89,7 @@ class DownloadWorkflow(object):
         parallel_downloads=4,
     ):
         self.pipeline = pipeline
-        self.release = release
+        self.revision = revision
         self.outdir = outdir
         self.output_filename = None
         self.compress_type = compress_type
@@ -97,7 +98,7 @@ class DownloadWorkflow(object):
         self.singularity_cache_only = singularity_cache_only
         self.parallel_downloads = parallel_downloads
 
-        self.wf_releases = {}
+        self.wf_revisions = {}
         self.wf_branches = {}
         self.wf_sha = None
         self.wf_download_url = None
@@ -114,11 +115,11 @@ class DownloadWorkflow(object):
         # Get workflow details
         try:
             self.prompt_pipeline_name()
-            self.pipeline, self.wf_releases, self.wf_branches = nf_core.utils.get_repo_releases_branches(
+            self.pipeline, self.wf_revisions, self.wf_branches = nf_core.utils.get_repo_releases_branches(
                 self.pipeline, self.wfs
             )
-            self.prompt_release()
-            self.get_release_hash()
+            self.prompt_revision()
+            self.get_revision_hash()
             self.prompt_container_download()
             self.prompt_use_singularity_cachedir()
             self.prompt_singularity_cachedir_only()
@@ -127,11 +128,9 @@ class DownloadWorkflow(object):
             log.critical(e)
             sys.exit(1)
 
-        summary_log = [f"Pipeline release: '{self.release}'", f"Pull containers: '{self.container}'"]
+        summary_log = [f"Pipeline revision: '{self.revision}'", f"Pull containers: '{self.container}'"]
         if self.container == "singularity" and os.environ.get("NXF_SINGULARITY_CACHEDIR") is not None:
-            summary_log.append(
-                "Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {}".format(os.environ["NXF_SINGULARITY_CACHEDIR"])
-            )
+            summary_log.append(f"Using [blue]$NXF_SINGULARITY_CACHEDIR[/]': {os.environ['NXF_SINGULARITY_CACHEDIR']}")
 
         # Set an output filename now that we have the outdir
         if self.compress_type is not None:
@@ -194,44 +193,42 @@ class DownloadWorkflow(object):
             stderr.print("Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).")
             self.pipeline = nf_core.utils.prompt_remote_pipeline_name(self.wfs)
 
-    def prompt_release(self):
-        """Prompt for pipeline release / branch"""
-        # Prompt user for release tag if '--release' was not set
-        if self.release is None:
-            self.release = nf_core.utils.prompt_pipeline_release_branch(self.wf_releases, self.wf_branches)
+    def prompt_revision(self):
+        """Prompt for pipeline revision / branch"""
+        # Prompt user for revision tag if '--revision' was not set
+        if self.revision is None:
+            self.revision = nf_core.utils.prompt_pipeline_release_branch(self.wf_revisions, self.wf_branches)
 
-    def get_release_hash(self):
-        """Find specified release / branch hash"""
+    def get_revision_hash(self):
+        """Find specified revision / branch hash"""
 
         # Branch
-        if self.release in self.wf_branches.keys():
-            self.wf_sha = self.wf_branches[self.release]
+        if self.revision in self.wf_branches.keys():
+            self.wf_sha = self.wf_branches[self.revision]
 
-        # Release
+        # Revision
         else:
-            for r in self.wf_releases:
-                if r["tag_name"] == self.release:
+            for r in self.wf_revisions:
+                if r["tag_name"] == self.revision:
                     self.wf_sha = r["tag_sha"]
                     break
 
-            # Can't find the release or branch - throw an error
+            # Can't find the revisions or branch - throw an error
             else:
                 log.info(
-                    "Available {} releases: '{}'".format(
-                        self.pipeline, "', '".join([r["tag_name"] for r in self.wf_releases])
+                    "Available {} revisions: '{}'".format(
+                        self.pipeline, "', '".join([r["tag_name"] for r in self.wf_revisions])
                     )
                 )
                 log.info("Available {} branches: '{}'".format(self.pipeline, "', '".join(self.wf_branches.keys())))
-                raise AssertionError(
-                    "Not able to find release / branch '{}' for {}".format(self.release, self.pipeline)
-                )
+                raise AssertionError(f"Not able to find revision / branch '{self.revision}' for {self.pipeline}")
 
         # Set the outdir
         if not self.outdir:
-            self.outdir = "{}-{}".format(self.pipeline.replace("/", "-").lower(), self.release)
+            self.outdir = f"{self.pipeline.replace('/', '-').lower()}-{self.revision}"
 
         # Set the download URL and return
-        self.wf_download_url = "https://github.com/{}/archive/{}.zip".format(self.pipeline, self.wf_sha)
+        self.wf_download_url = f"https://github.com/{self.pipeline}/archive/{self.wf_sha}.zip"
 
     def prompt_container_download(self):
         """Prompt whether to download container images or not"""
@@ -256,7 +253,7 @@ class DownloadWorkflow(object):
                 "This allows downloaded images to be cached in a central location."
             )
             if rich.prompt.Confirm.ask(
-                f"[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
+                "[blue bold]?[/] [bold]Define [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] for a shared Singularity image download folder?[/]"
             ):
                 # Prompt user for a cache directory path
                 cachedir_path = None
@@ -266,7 +263,7 @@ class DownloadWorkflow(object):
                     ).unsafe_ask()
                     cachedir_path = os.path.abspath(os.path.expanduser(prompt_cachedir_path))
                     if prompt_cachedir_path == "":
-                        log.error(f"Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
+                        log.error("Not using [blue]$NXF_SINGULARITY_CACHEDIR[/]")
                         cachedir_path = False
                     elif not os.path.isdir(cachedir_path):
                         log.error(f"'{cachedir_path}' is not a directory.")
@@ -315,7 +312,7 @@ class DownloadWorkflow(object):
                 "However if you will transfer the downloaded files to a different system then they should be copied to the target folder."
             )
             self.singularity_cache_only = rich.prompt.Confirm.ask(
-                f"[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
+                "[blue bold]?[/] [bold]Copy singularity images from [blue not bold]$NXF_SINGULARITY_CACHEDIR[/] to the target folder?[/]"
             )
 
         # Sanity check, for when passed as a cli flag
@@ -349,7 +346,7 @@ class DownloadWorkflow(object):
 
     def download_wf_files(self):
         """Downloads workflow files from GitHub to the :attr:`self.outdir`."""
-        log.debug("Downloading {}".format(self.wf_download_url))
+        log.debug(f"Downloading {self.wf_download_url}")
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
@@ -357,7 +354,7 @@ class DownloadWorkflow(object):
         zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
-        gh_name = "{}-{}".format(self.pipeline, self.wf_sha).split("/")[-1]
+        gh_name = f"{self.pipeline}-{self.wf_sha}".split("/")[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, "workflow"))
 
         # Make downloaded files executable
@@ -369,7 +366,7 @@ class DownloadWorkflow(object):
         """Downloads the centralised config profiles from nf-core/configs to :attr:`self.outdir`."""
         configs_zip_url = "https://github.com/nf-core/configs/archive/master.zip"
         configs_local_dir = "configs-master"
-        log.debug("Downloading {}".format(configs_zip_url))
+        log.debug(f"Downloading {configs_zip_url}")
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
@@ -388,14 +385,15 @@ class DownloadWorkflow(object):
         """Edit the downloaded nextflow.config file to use the local config files"""
         nfconfig_fn = os.path.join(self.outdir, "workflow", "nextflow.config")
         find_str = "https://raw.githubusercontent.com/nf-core/configs/${params.custom_config_version}"
-        repl_str = "../configs/"
-        log.debug("Editing 'params.custom_config_base' in '{}'".format(nfconfig_fn))
+        repl_str = "${projectDir}/../configs/"
+        log.debug(f"Editing 'params.custom_config_base' in '{nfconfig_fn}'")
 
         # Load the nextflow.config file into memory
         with open(nfconfig_fn, "r") as nfconfig_fh:
             nfconfig = nfconfig_fh.read()
 
         # Replace the target string
+        log.debug(f"Replacing '{find_str}' with '{repl_str}'")
         nfconfig = nfconfig.replace(find_str, repl_str)
 
         # Append the singularity.cacheDir to the end if we need it
@@ -407,6 +405,7 @@ class DownloadWorkflow(object):
             )
 
         # Write the file out again
+        log.debug(f"Updating '{nfconfig_fn}'")
         with open(nfconfig_fn, "w") as nfconfig_fh:
             nfconfig_fh.write(nfconfig)
 
@@ -414,10 +413,30 @@ class DownloadWorkflow(object):
         """Find container image names for workflow.
 
         Starts by using `nextflow config` to pull out any process.container
-        declarations. This works for DSL1.
+        declarations. This works for DSL1. It should return a simple string with resolved logic.
 
         Second, we look for DSL2 containers. These can't be found with
         `nextflow config` at the time of writing, so we scrape the pipeline files.
+        This returns raw source code that will likely need to be cleaned.
+
+        If multiple containers are found, prioritise any prefixed with http for direct download.
+
+        Example syntax:
+
+        Early DSL2:
+            if (workflow.containerEngine == 'singularity' && !params.singularity_pull_docker_container) {
+                container "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0"
+            } else {
+                container "quay.io/biocontainers/fastqc:0.11.9--0"
+            }
+
+        Later DSL2:
+            container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+                'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
+                'quay.io/biocontainers/fastqc:0.11.9--0' }"
+
+        DSL1 / Special case DSL2:
+            container "nfcore/cellranger:6.0.2"
         """
 
         log.debug("Fetching container names for workflow")
@@ -437,37 +456,38 @@ class DownloadWorkflow(object):
                 if file.endswith(".nf"):
                     with open(os.path.join(subdir, file), "r") as fh:
                         # Look for any lines with `container = "xxx"`
-                        matches = []
-                        for line in fh:
-                            match = re.match(r"\s*container\s+[\"']([^\"']+)[\"']", line)
-                            if match:
-                                matches.append(match.group(1))
+                        this_container = None
+                        contents = fh.read()
+                        matches = re.findall(r"container\s*\"([^\"]*)\"", contents, re.S)
+                        if matches:
+                            for match in matches:
+                                # Look for a http download URL.
+                                # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
+                                url_regex = r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+                                url_match = re.search(url_regex, match, re.S)
+                                if url_match:
+                                    this_container = url_match.group(0)
+                                    break  # Prioritise http, exit loop as soon as we find it
 
-                        # If we have matches, save the first one that starts with http
-                        for m in matches:
-                            if m.startswith("http"):
-                                containers_raw.append(m.strip('"').strip("'"))
-                                break
-                        # If we get here then we didn't call break - just save the first match
-                        else:
-                            if len(matches) > 0:
-                                containers_raw.append(matches[0].strip('"').strip("'"))
+                                # No https download, is the entire container string a docker URI?
+                                else:
+                                    # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/39672069/713980
+                                    docker_regex = r"^(?:(?=[^:\/]{1,253})(?!-)[a-zA-Z0-9-]{1,63}(?<!-)(?:\.(?!-)[a-zA-Z0-9-]{1,63}(?<!-))*(?::[0-9]{1,5})?/)?((?![._-])(?:[a-z0-9._-]*)(?<![._-])(?:/(?![._-])[a-z0-9._-]*(?<![._-]))*)(?::(?![.-])[a-zA-Z0-9_.-]{1,128})?$"
+                                    docker_match = re.match(docker_regex, match.strip(), re.S)
+                                    if docker_match:
+                                        this_container = docker_match.group(0)
+
+                                    # Don't recognise this, throw a warning
+                                    else:
+                                        log.error(f"[red]Cannot parse container string, skipping: [green]{match}")
+
+                        if this_container:
+                            containers_raw.append(this_container)
 
         # Remove duplicates and sort
-        containers_raw = sorted(list(set(containers_raw)))
+        self.containers = sorted(list(set(containers_raw)))
 
-        # Strip any container names that have dynamic names - eg. {params.foo}
-        self.containers = []
-        for container in containers_raw:
-            if "{" in container and "}" in container:
-                log.error(
-                    f"[red]Container name [green]'{container}'[/] has dynamic Nextflow logic in name - skipping![/]"
-                )
-                log.info("Please use a 'nextflow run' command to fetch this container. Ask on Slack if you need help.")
-            else:
-                self.containers.append(container)
-
-        log.info("Found {} container{}".format(len(self.containers), "s" if len(self.containers) > 1 else ""))
+        log.info(f"Found {len(self.containers)} container{'s' if len(self.containers) > 1 else ''}")
 
     def get_singularity_images(self):
         """Loop through container names and download Singularity images"""
@@ -527,7 +547,7 @@ class DownloadWorkflow(object):
                     progress.update(task, advance=1)
 
                 for container in containers_cache:
-                    progress.update(task, description=f"Copying singularity images from cache")
+                    progress.update(task, description="Copying singularity images from cache")
                     self.singularity_copy_cache_image(*container)
                     progress.update(task, advance=1)
 
@@ -625,7 +645,7 @@ class DownloadWorkflow(object):
         """Copy Singularity image from NXF_SINGULARITY_CACHEDIR to target folder."""
         # Copy to destination folder if we have a cached version
         if cache_path and os.path.exists(cache_path):
-            log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+            log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             shutil.copyfile(cache_path, out_path)
 
     def singularity_download_image(self, container, out_path, cache_path, progress):
@@ -679,7 +699,7 @@ class DownloadWorkflow(object):
 
             # Copy cached download if we are using the cache
             if cache_path:
-                log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+                log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
                 progress.update(task, description="Copying from cache to target directory")
                 shutil.copyfile(cache_path, out_path)
 
@@ -713,29 +733,37 @@ class DownloadWorkflow(object):
         output_path = cache_path or out_path
 
         # Pull using singularity
-        address = "docker://{}".format(container.replace("docker://", ""))
+        address = f"docker://{container.replace('docker://', '')}"
         singularity_command = ["singularity", "pull", "--name", output_path, address]
-        log.debug("Building singularity image: {}".format(address))
-        log.debug("Singularity command: {}".format(" ".join(singularity_command)))
+        log.debug(f"Building singularity image: {address}")
+        log.debug(f"Singularity command: {' '.join(singularity_command)}")
 
         # Progress bar to show that something is happening
         task = progress.add_task(container, start=False, total=False, progress_type="singularity_pull", current_log="")
 
         # Run the singularity pull command
-        proc = subprocess.Popen(
+        with subprocess.Popen(
             singularity_command,
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
             universal_newlines=True,
             bufsize=1,
-        )
-        for line in proc.stdout:
-            log.debug(line.strip())
-            progress.update(task, current_log=line.strip())
+        ) as proc:
+            lines = []
+            for line in proc.stdout:
+                lines.append(line)
+                progress.update(task, current_log=line.strip())
+
+        if lines:
+            # something went wrong with the container retrieval
+            if any("FATAL: " in line for line in lines):
+                log.info("Singularity container retrieval fialed with the following error:")
+                log.info("".join(lines))
+                raise FileNotFoundError(f'The container "{container}" is unavailable.\n{"".join(lines)}')
 
         # Copy cached download if we are using the cache
         if cache_path:
-            log.debug("Copying {} from cache: '{}'".format(container, os.path.basename(out_path)))
+            log.debug(f"Copying {container} from cache: '{os.path.basename(out_path)}'")
             progress.update(task, current_log="Copying from cache to target directory")
             shutil.copyfile(cache_path, out_path)
 
@@ -743,12 +771,12 @@ class DownloadWorkflow(object):
 
     def compress_download(self):
         """Take the downloaded files and make a compressed .tar.gz archive."""
-        log.debug("Creating archive: {}".format(self.output_filename))
+        log.debug(f"Creating archive: {self.output_filename}")
 
         # .tar.gz and .tar.bz2 files
         if self.compress_type == "tar.gz" or self.compress_type == "tar.bz2":
             ctype = self.compress_type.split(".")[1]
-            with tarfile.open(self.output_filename, "w:{}".format(ctype)) as tar:
+            with tarfile.open(self.output_filename, f"w:{ctype}") as tar:
                 tar.add(self.outdir, arcname=os.path.basename(self.outdir))
             tar_flags = "xzf" if ctype == "gz" else "xjf"
             log.info(f"Command to extract files: [bright_magenta]tar -{tar_flags} {self.output_filename}[/]")
@@ -782,7 +810,7 @@ class DownloadWorkflow(object):
         Raises:
             IOError, if the md5sum does not match the remote sum.
         """
-        log.debug("Validating image hash: {}".format(fname))
+        log.debug(f"Validating image hash: {fname}")
 
         # Calculate the md5 for the file on disk
         hash_md5 = hashlib.md5()
@@ -792,9 +820,9 @@ class DownloadWorkflow(object):
         file_hash = hash_md5.hexdigest()
 
         if expected is None:
-            log.info("MD5 checksum for '{}': [blue]{}[/]".format(fname, file_hash))
+            log.info(f"MD5 checksum for '{fname}': [blue]{file_hash}[/]")
         else:
             if file_hash == expected:
-                log.debug("md5 sum of image matches expected: {}".format(expected))
+                log.debug(f"md5 sum of image matches expected: {expected}")
             else:
-                raise IOError("{} md5 does not match remote: {} - {}".format(fname, expected, file_hash))
+                raise IOError(f"{fname} md5 does not match remote: {expected} - {file_hash}")

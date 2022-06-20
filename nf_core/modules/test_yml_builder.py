@@ -5,24 +5,26 @@ along with running the tests and creating md5 sums
 """
 
 from __future__ import print_function
-from rich.syntax import Syntax
 
 import errno
+import gzip
 import hashlib
 import logging
+import operator
 import os
-import questionary
 import re
-import rich
 import shlex
 import subprocess
 import tempfile
+
+import questionary
+import rich
 import yaml
-import operator
+from rich.syntax import Syntax
 
 import nf_core.utils
-import nf_core.modules.pipeline_modules
 
+from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -45,6 +47,7 @@ class ModulesTestYmlBuilder(object):
         self.module_test_main = None
         self.entry_points = []
         self.tests = []
+        self.errors = []
 
     def run(self):
         """Run build steps"""
@@ -56,21 +59,24 @@ class ModulesTestYmlBuilder(object):
         self.scrape_workflow_entry_points()
         self.build_all_tests()
         self.print_test_yml()
+        if len(self.errors) > 0:
+            errors = "\n - ".join(self.errors)
+            raise UserWarning(f"Ran, but found errors:\n - {errors}")
 
     def check_inputs(self):
         """Do more complex checks about supplied flags."""
 
         # Get the tool name if not specified
         if self.module_name is None:
-            modules_repo = nf_core.modules.pipeline_modules.ModulesRepo()
+            modules_repo = ModulesRepo()
             modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
                 choices=modules_repo.modules_avail_module_names,
                 style=nf_core.utils.nfcore_question_style,
             ).ask()
-        self.module_dir = os.path.join("software", *self.module_name.split("/"))
-        self.module_test_main = os.path.join("tests", "software", *self.module_name.split("/"), "main.nf")
+        self.module_dir = os.path.join("modules", *self.module_name.split("/"))
+        self.module_test_main = os.path.join("tests", "modules", *self.module_name.split("/"), "main.nf")
 
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.module_dir):
@@ -85,7 +91,7 @@ class ModulesTestYmlBuilder(object):
 
         # Get the output YAML file / check it does not already exist
         while self.test_yml_output_path is None:
-            default_val = f"tests/software/{self.module_name}/test.yml"
+            default_val = f"tests/modules/{self.module_name}/test.yml"
             if self.no_prompts:
                 self.test_yml_output_path = default_val
             else:
@@ -158,9 +164,9 @@ class ModulesTestYmlBuilder(object):
                 ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
 
         while ep_test["command"] == "":
-            default_val = (
-                f"nextflow run tests/software/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
-            )
+            # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
+            # See https://github.com/nf-core/tools/issues/1562
+            default_val = f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config  -c ./tests/modules/{self.module_name}/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -186,6 +192,27 @@ class ModulesTestYmlBuilder(object):
 
         return ep_test
 
+    def check_if_empty_file(self, fname):
+        """Check if the file is empty, or compressed empty"""
+        if os.path.getsize(fname) == 0:
+            return True
+        try:
+            with open(fname, "rb") as fh:
+                g_f = gzip.GzipFile(fileobj=fh, mode="rb")
+                if g_f.read() == b"":
+                    return True
+        except Exception as e:
+            # Python 3.8+
+            if hasattr(gzip, "BadGzipFile"):
+                if isinstance(e, gzip.BadGzipFile):
+                    pass
+            # Python 3.7
+            elif isinstance(e, OSError):
+                pass
+            else:
+                raise e
+        return False
+
     def _md5(self, fname):
         """Generate md5 sum for file"""
         hash_md5 = hashlib.md5()
@@ -195,16 +222,29 @@ class ModulesTestYmlBuilder(object):
         md5sum = hash_md5.hexdigest()
         return md5sum
 
-    def create_test_file_dict(self, results_dir):
+    def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
-        for root, dir, file in os.walk(results_dir):
-            for elem in file:
-                elem = os.path.join(root, elem)
-                elem_md5 = self._md5(elem)
+        for root, dir, files in os.walk(results_dir, followlinks=True):
+            for filename in files:
+                # Check that the file is not versions.yml
+                if filename == "versions.yml":
+                    continue
+                file_path = os.path.join(root, filename)
+                # add the key here so that it comes first in the dict
+                test_file = {"path": file_path}
+                # Check that this isn't an empty file
+                if self.check_if_empty_file(file_path):
+                    if not is_repeat:
+                        self.errors.append(f"Empty file found! '{os.path.basename(file_path)}'")
+                # Add the md5 anyway, linting should fail later and can be manually removed if needed.
+                #  Originally we skipped this if empty, but then it's too easy to miss the warning.
+                #  Equally, if a file is legitimately empty we don't want to prevent this from working.
+                file_md5 = self._md5(file_path)
+                test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
-                elem = elem.replace(results_dir, "output")
-                test_files.append({"path": elem, "md5sum": elem_md5})
+                test_file["path"] = file_path.replace(results_dir, "output")
+                test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))
 
@@ -223,7 +263,7 @@ class ModulesTestYmlBuilder(object):
                 results_dir, results_dir_repeat = self.run_tests_workflow(command)
             else:
                 results_dir = rich.prompt.Prompt.ask(
-                    f"[violet]Test output folder with results[/] (leave blank to run test)"
+                    "[violet]Test output folder with results[/] (leave blank to run test)"
                 )
                 if results_dir == "":
                     results_dir = None
@@ -233,15 +273,18 @@ class ModulesTestYmlBuilder(object):
                     results_dir = None
 
         test_files = self.create_test_file_dict(results_dir=results_dir)
-        test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat)
 
-        # Compare both test.yml files
-        for i in range(len(test_files)):
-            if not test_files[i]["md5sum"] == test_files_repeat[i]["md5sum"]:
-                test_files[i].pop("md5sum")
-                test_files[i][
-                    "contains"
-                ] = "# TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead"
+        # If test was repeated, compare the md5 sums
+        if results_dir_repeat:
+            test_files_repeat = self.create_test_file_dict(results_dir=results_dir_repeat, is_repeat=True)
+
+            # Compare both test.yml files
+            for i in range(len(test_files)):
+                if test_files[i].get("md5sum") and not test_files[i].get("md5sum") == test_files_repeat[i]["md5sum"]:
+                    test_files[i].pop("md5sum")
+                    test_files[i][
+                        "contains"
+                    ] = "[ # TODO nf-core: file md5sum was variable, please replace this text with a string found in the file instead ]"
 
         if len(test_files) == 0:
             raise UserWarning(f"Could not find any test result files in '{results_dir}'")
@@ -275,13 +318,14 @@ class ModulesTestYmlBuilder(object):
 
         tmp_dir = tempfile.mkdtemp()
         tmp_dir_repeat = tempfile.mkdtemp()
-        command += f" --outdir {tmp_dir}"
-        command_repeat = command + f" --outdir {tmp_dir_repeat}"
+        work_dir = tempfile.mkdtemp()
+        command_repeat = command + f" --outdir {tmp_dir_repeat} -work-dir {work_dir}"
+        command += f" --outdir {tmp_dir} -work-dir {work_dir}"
 
         log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
-            log.info(f"Repeating test ...")
+            log.info("Repeating test ...")
             nfconfig_raw = subprocess.check_output(shlex.split(command_repeat))
 
         except OSError as e:
@@ -290,12 +334,16 @@ class ModulesTestYmlBuilder(object):
                     "It looks like Nextflow is not installed. It is required for most nf-core functions."
                 )
         except subprocess.CalledProcessError as e:
-            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{e.output.decode()}")
+            output = rich.markup.escape(e.output.decode())
+            raise UserWarning(f"Error running test workflow (exit code {e.returncode})\n[red]{output}")
         except Exception as e:
             raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
-            log.debug(nfconfig_raw)
+            try:
+                log.debug(rich.markup.escape(nfconfig_raw))
+            except TypeError:
+                log.debug(rich.markup.escape(nfconfig_raw.decode("utf-8")))
 
         return tmp_dir, tmp_dir_repeat
 
@@ -315,4 +363,4 @@ class ModulesTestYmlBuilder(object):
             with open(self.test_yml_output_path, "w") as fh:
                 yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
         except FileNotFoundError as e:
-            raise UserWarning("Could not create test.yml file: '{}'".format(e))
+            raise UserWarning(f"Could not create test.yml file: '{e}'")

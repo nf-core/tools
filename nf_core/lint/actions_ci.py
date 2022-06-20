@@ -2,6 +2,7 @@
 
 import os
 import re
+
 import yaml
 
 
@@ -81,13 +82,19 @@ def actions_ci(self):
         with open(fn, "r") as fh:
             ciwf = yaml.safe_load(fh)
     except Exception as e:
-        return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
+        return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
     # Check that the action is turned on for the correct events
     try:
-        expected = {"push": {"branches": ["dev"]}, "pull_request": None, "release": {"types": ["published"]}}
         # NB: YAML dict key 'on' is evaluated to a Python dict key True
-        assert ciwf[True] == expected
+        assert "dev" in ciwf[True]["push"]["branches"]
+        pr_subtree = ciwf[True]["pull_request"]
+        assert (
+            pr_subtree == None
+            or ("branches" in pr_subtree and "dev" in pr_subtree["branches"])
+            or ("ignore_branches" in pr_subtree and not "dev" in pr_subtree["ignore_branches"])
+        )
+        assert "published" in ciwf[True]["release"]["types"]
     except (AssertionError, KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' is not triggered on expected events")
     else:
@@ -99,43 +106,45 @@ def actions_ci(self):
         docker_withtag = self.nf_config.get("process.container", "").strip("\"'")
 
         # docker build
-        docker_build_cmd = "docker build --no-cache . -t {}".format(docker_withtag)
+        docker_build_cmd = f"docker build --no-cache . -t {docker_withtag}"
         try:
             steps = ciwf["jobs"]["test"]["steps"]
             assert any([docker_build_cmd in step["run"] for step in steps if "run" in step.keys()])
         except (AssertionError, KeyError, TypeError):
-            failed.append("CI is not building the correct docker image. Should be: `{}`".format(docker_build_cmd))
+            failed.append(f"CI is not building the correct docker image. Should be: `{docker_build_cmd}`")
         else:
-            passed.append("CI is building the correct docker image: `{}`".format(docker_build_cmd))
+            passed.append(f"CI is building the correct docker image: `{docker_build_cmd}`")
 
         # docker pull
-        docker_pull_cmd = "docker pull {}:dev".format(docker_notag)
+        docker_pull_cmd = f"docker pull {docker_notag}:dev"
         try:
             steps = ciwf["jobs"]["test"]["steps"]
             assert any([docker_pull_cmd in step["run"] for step in steps if "run" in step.keys()])
         except (AssertionError, KeyError, TypeError):
-            failed.append("CI is not pulling the correct docker image. Should be: `{}`".format(docker_pull_cmd))
+            failed.append(f"CI is not pulling the correct docker image. Should be: `{docker_pull_cmd}`")
         else:
-            passed.append("CI is pulling the correct docker image: {}".format(docker_pull_cmd))
+            passed.append(f"CI is pulling the correct docker image: {docker_pull_cmd}")
 
         # docker tag
-        docker_tag_cmd = "docker tag {}:dev {}".format(docker_notag, docker_withtag)
+        docker_tag_cmd = f"docker tag {docker_notag}:dev {docker_withtag}"
         try:
             steps = ciwf["jobs"]["test"]["steps"]
             assert any([docker_tag_cmd in step["run"] for step in steps if "run" in step.keys()])
         except (AssertionError, KeyError, TypeError):
-            failed.append("CI is not tagging docker image correctly. Should be: `{}`".format(docker_tag_cmd))
+            failed.append(f"CI is not tagging docker image correctly. Should be: `{docker_tag_cmd}`")
         else:
-            passed.append("CI is tagging docker image correctly: {}".format(docker_tag_cmd))
+            passed.append(f"CI is tagging docker image correctly: {docker_tag_cmd}")
 
     # Check that we are testing the minimum nextflow version
     try:
-        matrix = ciwf["jobs"]["test"]["strategy"]["matrix"]["nxf_ver"]
-        assert any([self.minNextflowVersion in matrix])
+        matrix = ciwf["jobs"]["test"]["strategy"]["matrix"]["include"]
+        assert any([i.get("NXF_VER") == self.minNextflowVersion for i in matrix])
     except (KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' does not check minimum NF version")
     except AssertionError:
-        failed.append("Minimum NF version in '.github/workflows/ci.yml' different to pipeline's manifest")
+        failed.append(
+            f"Minimum pipeline NF version '{self.minNextflowVersion}' is not tested in '.github/workflows/ci.yml'"
+        )
     else:
         passed.append("'.github/workflows/ci.yml' checks minimum NF version")
 

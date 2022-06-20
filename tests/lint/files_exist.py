@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import os
+
 import yaml
+
 import nf_core.lint
 
 
@@ -29,7 +31,7 @@ def test_files_exist_missing_main(self):
     lint_obj._load()
 
     results = lint_obj.files_exist()
-    assert results["warned"] == ["File not found: `main.nf`"]
+    assert "File not found: `main.nf`" in results["warned"]
 
 
 def test_files_exist_depreciated_file(self):
@@ -37,7 +39,7 @@ def test_files_exist_depreciated_file(self):
     new_pipeline = self._make_pipeline_copy()
 
     nf = os.path.join(new_pipeline, "parameters.settings.json")
-    os.system("touch {}".format(nf))
+    os.system(f"touch {nf}")
 
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()

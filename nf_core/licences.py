@@ -3,14 +3,15 @@
 
 from __future__ import print_function
 
-import logging
 import json
+import logging
 import os
 import re
+
 import requests
-import yaml
 import rich.console
 import rich.table
+import yaml
 
 import nf_core.utils
 
@@ -53,15 +54,19 @@ class WorkflowLicences(object):
             pipeline_obj = nf_core.utils.Pipeline(self.pipeline)
             pipeline_obj._load()
             if pipeline_obj._fp("environment.yml") not in pipeline_obj.files:
-                raise LookupError("No `environment.yml` file found")
+                raise LookupError(
+                    "No `environment.yml` file found. (Note: DSL2 pipelines are currently not supported by this command.)"
+                )
             self.conda_config = pipeline_obj.conda_config
         else:
-            env_url = "https://raw.githubusercontent.com/nf-core/{}/master/environment.yml".format(self.pipeline)
-            log.debug("Fetching environment.yml file: {}".format(env_url))
+            env_url = f"https://raw.githubusercontent.com/nf-core/{self.pipeline}/master/environment.yml"
+            log.debug(f"Fetching environment.yml file: {env_url}")
             response = requests.get(env_url)
             # Check that the pipeline exists
             if response.status_code == 404:
-                raise LookupError("Couldn't find pipeline conda file: {}".format(env_url))
+                raise LookupError(
+                    f"Couldn't find pipeline conda file: {env_url}. (Note: DSL2 pipelines are currently not supported by this command.)"
+                )
             self.conda_config = yaml.safe_load(response.text)
 
     def fetch_conda_licences(self):
@@ -70,7 +75,7 @@ class WorkflowLicences(object):
         # Check conda dependency list
         deps = self.conda_config.get("dependencies", [])
         deps_data = {}
-        log.info("Fetching licence information for {} tools".format(len(deps)))
+        log.info(f"Fetching licence information for {len(deps)} tools")
         for dep in deps:
             try:
                 if isinstance(dep, str):
@@ -79,7 +84,7 @@ class WorkflowLicences(object):
                 elif isinstance(dep, dict):
                     deps_data[dep] = nf_core.utils.pip_package(dep)
             except ValueError:
-                log.error("Couldn't get licence information for {}".format(dep))
+                log.error(f"Couldn't get licence information for {dep}")
 
         for dep, data in deps_data.items():
             depname, depver = dep.split("=", 1)
