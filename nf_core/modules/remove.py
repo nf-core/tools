@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class ModuleRemove(ModuleCommand):
-    def __init__(self, pipeline_dir, remote_url, branch, no_pull):
+    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False):
         """
         Initialise the ModulesRemove object and run remove command
         """

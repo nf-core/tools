@@ -13,7 +13,7 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInstall(ModuleCommand):
-    def __init__(self, pipeline_dir, force, prompt, sha, remote_url, branch, no_pull):
+    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, remote_url=None, branch=None, no_pull=False):
         super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt

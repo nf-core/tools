@@ -69,7 +69,7 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir, remote_url, branch, no_pull):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
         self.dir = dir
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)

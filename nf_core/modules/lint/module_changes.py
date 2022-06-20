@@ -25,11 +25,11 @@ def module_changes(module_lint_object, module):
     files_to_check = ["main.nf", "meta.yml"]
 
     # Loop over nf-core modules
-    module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module_lint_object.modules_repo.branch}/modules/{module.module_name}/"
+    module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.fullname}/{module_lint_object.modules_repo.branch}/modules/{module.module_name}/"
 
     # If module.git_sha specified, check specific commit version for changes
     if module.git_sha:
-        module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.name}/{module.git_sha}/modules/{module.module_name}/"
+        module_base_url = f"https://raw.githubusercontent.com/{module_lint_object.modules_repo.fullname}/{module.git_sha}/modules/{module.module_name}/"
 
     for f in files_to_check:
         # open local copy, continue if file not found (a failed message has already been issued in this case)

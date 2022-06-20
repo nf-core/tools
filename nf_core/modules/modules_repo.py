@@ -2,6 +2,7 @@ import filecmp
 import logging
 import os
 import shutil
+import sys
 import git
 import urllib.parse
 import rich.progress

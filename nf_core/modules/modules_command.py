@@ -25,7 +25,7 @@ class ModuleCommand:
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self, dir, remote_url, branch, no_pull):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
         """
         Initialise the ModulesCommand object
         """

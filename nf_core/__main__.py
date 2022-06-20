@@ -702,7 +702,9 @@ def bump_versions(ctx, tool, dir, all, show_all):
     the nf-core/modules repo.
     """
     try:
-        version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=dir)
+        version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(
+            dir, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+        )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)

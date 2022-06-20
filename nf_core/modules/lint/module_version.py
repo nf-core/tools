@@ -31,7 +31,7 @@ def module_version(module_lint_object, module):
 
     # Verify that a git_sha exists in the `modules.json` file for this module
     try:
-        module_entry = module_lint_object.modules_json["repos"][module_lint_object.modules_repo.name][
+        module_entry = module_lint_object.modules_json["repos"][module_lint_object.modules_repo.fullname]["modules"][
             module.module_name
         ]
         git_sha = module_entry["git_sha"]
@@ -42,7 +42,7 @@ def module_version(module_lint_object, module):
         try:
             modules_repo = nf_core.modules.modules_repo.ModulesRepo()
             module_git_log = modules_repo.get_module_git_log(module.module_name)
-            if git_sha == module_git_log[0]["git_sha"]:
+            if git_sha == next(module_git_log)["git_sha"]:
                 module.passed.append(("module_version", "Module is the latest version", module.module_dir))
             else:
                 module.warned.append(("module_version", "New version available", module.module_dir))
