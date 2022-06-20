@@ -62,6 +62,8 @@ def path_from_remote(remote_url):
     path = path[-1] if len(path) > 1 else path[0]
     path = urllib.parse.urlparse(path)
     path = path.path
+    path = os.path.splitext(path)[0]
+    return path
 
 
 def get_pipeline_module_repositories(modules_dir):
@@ -88,7 +90,9 @@ def get_pipeline_module_repositories(modules_dir):
                     s="ies" if len(dirs_not_covered) > 0 else "y", l="', '".join(dirs_not_covered)
                 )
             )
-            nrepo_remote = questionary.text("Please provide a URL for for one of the remaining repos").unsafe_ask()
+            nrepo_remote = questionary.text(
+                "Please provide a URL for for one of the repos contained in the untracked directories"
+            ).unsafe_ask()
             # Verify that the remote exists
             while True:
                 try:
@@ -108,7 +112,7 @@ def get_pipeline_module_repositories(modules_dir):
                 )
                 dir_name = questionary.text(
                     "Please provide the correct directory, it will be renamed. If left empty, the remote will be ignored"
-                )
+                ).unsafe_ask()
                 if dir_name:
                     os.rename(os.path.join(modules_dir, dir_name), os.path.join(modules_dir, nrepo_name))
                 else:
@@ -162,7 +166,8 @@ def create_modules_json(pipeline_dir):
         )
         for repo_name, module_names, remote in sorted(repo_module_names):
             try:
-                modules_repo = ModulesRepo(remote_url=remote)
+                # Create a ModulesRepo object without progress bar to not conflict with the other one
+                modules_repo = ModulesRepo(remote_url=remote, no_progress=True)
             except LookupError as e:
                 raise UserWarning(e)
 
