@@ -3,17 +3,17 @@ import glob
 import json
 import logging
 import os
-from sys import modules
-import git
 import urllib
-from pyrsistent import m
+from sys import modules
 
+import git
 import questionary
 import rich
+from pyrsistent import m
 
 import nf_core.utils
 
-from .modules_repo import ModulesRepo, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from .modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE, ModulesRepo
 from .nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)

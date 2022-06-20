@@ -3,13 +3,13 @@ import logging
 import os
 import shutil
 import sys
-import git
 import urllib.parse
+
+import git
 import rich.progress
 
 import nf_core.modules.module_utils
 from nf_core.utils import NFCORE_DIR, gh_api
-
 
 log = logging.getLogger(__name__)
 

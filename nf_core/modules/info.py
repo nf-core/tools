@@ -12,7 +12,6 @@ from rich.table import Table
 from rich.text import Text
 
 from .module_utils import get_repo_type
-
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 

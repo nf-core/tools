@@ -1,20 +1,23 @@
 import copy
-from datetime import datetime
 import glob
 import json
 import logging
 import os
 import shutil
-import questionary
-import git
+from datetime import datetime
 
+import git
+import questionary
 import yaml
 
 import nf_core.modules.module_utils
 import nf_core.utils
-
 from nf_core import modules
-from nf_core.modules.modules_repo import ModulesRepo, NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE
+from nf_core.modules.modules_repo import (
+    NF_CORE_MODULES_NAME,
+    NF_CORE_MODULES_REMOTE,
+    ModulesRepo,
+)
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
