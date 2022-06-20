@@ -179,6 +179,7 @@ class ModulesRepo(object):
                 self.branch = self.get_default_branch()
         else:
             self.branch = branch
+
         # Verify that the branch exists by checking it out
         self.branch_exists()
 
@@ -187,7 +188,8 @@ class ModulesRepo(object):
         Gets the default branch for the repo (the branch origin/HEAD is pointing to)
         """
         origin_head = next(ref for ref in self.repo.refs if ref.name == "origin/HEAD")
-        _, self.branch = origin_head.ref.name.split("/")
+        _, branch = origin_head.ref.name.split("/")
+        return branch
 
     def branch_exists(self):
         """
