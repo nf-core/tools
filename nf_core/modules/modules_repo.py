@@ -63,6 +63,7 @@ class ModulesRepo(object):
     """
 
     local_repo_statuses = dict()
+    no_pull_global = False
 
     @staticmethod
     def local_repo_synced(repo_name):
@@ -82,6 +83,9 @@ class ModulesRepo(object):
         """
         Initializes the object and clones the git repository if it is not already present
         """
+
+        # This allows us to set this one time and then keep track of the user's choice
+        ModulesRepo.no_pull_global |= no_pull
 
         # Check if the remote seems to be well formed
         if remote_url is None:
@@ -147,7 +151,7 @@ class ModulesRepo(object):
             # Verify that the requested branch exists by checking it out
             self.setup_branch(branch)
 
-            if no_pull:
+            if ModulesRepo.no_pull_global:
                 ModulesRepo.update_local_repo_status(self.fullname, True)
             # If the repo is already cloned, pull the latest changes from the remote
             if not ModulesRepo.local_repo_synced(self.fullname):
