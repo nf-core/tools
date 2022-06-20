@@ -347,7 +347,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     "-g",
     "--git-remote",
     type=str,
-    default="git@github.com:nf-core/modules.git",
+    default=nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE,
     help="Remote git repo to fetch files from",
 )
 @click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")

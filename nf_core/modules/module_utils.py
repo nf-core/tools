@@ -57,12 +57,20 @@ def path_from_remote(remote_url):
     Extracts the path from the remote URL
     See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
     """
-    # Remove the initial `git@`` if it is present
-    path = remote_url.split("@")
-    path = path[-1] if len(path) > 1 else path[0]
-    path = urllib.parse.urlparse(path)
-    path = path.path
-    path = os.path.splitext(path)[0]
+    # Check whether we have a https or ssh url
+    if remote_url.startswith("https"):
+        path = urllib.parse.urlparse(remote_url)
+        path = path.path
+        # Remove the intial '/'
+        path = path[1:]
+        path = os.path.splitext(path)[0]
+    else:
+        # Remove the initial `git@``
+        path = remote_url.split("@")
+        path = path[-1] if len(path) > 1 else path[0]
+        path = urllib.parse.urlparse(path)
+        path = path.path
+        path = os.path.splitext(path)[0]
     return path
 
 

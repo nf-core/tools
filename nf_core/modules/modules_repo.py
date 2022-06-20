@@ -7,13 +7,15 @@ import git
 import urllib.parse
 import rich.progress
 
+import nf_core.modules.module_utils
 from nf_core.utils import NFCORE_DIR, gh_api
+
 
 log = logging.getLogger(__name__)
 
 # Constants for the nf-core/modules repo used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core/modules"
-NF_CORE_MODULES_REMOTE = "git@github.com:nf-core/modules.git"
+NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
 
 
 class RemoteProgressbar(git.RemoteProgress):
@@ -94,15 +96,7 @@ class ModulesRepo(object):
 
         self.remote_url = remote_url
 
-        # Extract the repo path from the remote url
-        # See https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-clone.html#URLS for the possible URL patterns
-        # Remove the initial `git@`` if it is present
-        path = remote_url.split("@")
-        path = path[-1] if len(path) > 1 else path[0]
-        path = urllib.parse.urlparse(path)
-        path = path.path
-
-        self.fullname = os.path.splitext(path)[0]
+        self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, no_progress)
 
@@ -127,6 +121,7 @@ class ModulesRepo(object):
         Sets self.repo
         """
         self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
+        log.info(f"'{self.fullname}'")
         if not os.path.exists(self.local_repo_dir):
             try:
                 if no_progress:
