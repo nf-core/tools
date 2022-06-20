@@ -298,18 +298,21 @@ class ModulesRepo(object):
         Returns:
             (bool): Whether the pipeline files are identical to the repo files
         """
-        self.checkout(commit)
+        if commit is None:
+            self.checkout_branch()
+        else:
+            self.checkout(commit)
         module_files = ["main.nf", "meta.yml"]
         module_dir = self.get_module_dir(module_name)
+        files_identical = {file: True for file in module_files}
         for file in module_files:
             try:
-                if not filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file)):
-                    return False
+                files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
             except FileNotFoundError as e:
                 log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
                 continue
         self.checkout_branch()
-        return True
+        return files_identical
 
     def get_module_git_log(self, module_name, depth=None, since="2021-07-07T00:00:00Z"):
         """
