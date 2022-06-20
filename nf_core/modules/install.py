@@ -13,12 +13,11 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInstall(ModuleCommand):
-    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False):
-        super().__init__(pipeline_dir)
+    def __init__(self, pipeline_dir, force, prompt, sha, remote_url, branch, no_pull):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
-        self.update_all = update_all
 
     def install(self, module):
         if self.repo_type == "modules":

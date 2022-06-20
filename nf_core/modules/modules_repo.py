@@ -45,7 +45,9 @@ class RemoteProgressbar(git.RemoteProgress):
         """
         if not self.progress_bar.tasks[self.tid].started:
             self.progress_bar.start_task(self.tid)
-        self.progress_bar.update(self.tid, total=max_count, completed=cur_count, state=message)
+        self.progress_bar.update(
+            self.tid, total=max_count, completed=cur_count, state=f"{int(cur_count)}/{int(max_count)}"
+        )
 
 
 class ModulesRepo(object):

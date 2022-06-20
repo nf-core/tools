@@ -366,8 +366,10 @@ def modules(ctx, git_remote, branch, no_pull):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
-    # Make repository object to pass to subcommands
-    ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(remote_url=git_remote, branch=branch, no_pull=no_pull)
+    # Place the arguments in a context object
+    ctx.obj["modules_repo_url"] = git_remote
+    ctx.obj["modules_repo_branch"] = branch
+    ctx.obj["modules_repo_no_pull"] = no_pull
 
 
 # nf-core modules list subcommands
@@ -390,7 +392,9 @@ def remote(ctx, keywords, json):
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
     try:
-        module_list = nf_core.modules.ModuleList(None, remote=True)
+        module_list = nf_core.modules.ModuleList(
+            None, True, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+        )
         module_list.modules_repo = ctx.obj["modules_repo_obj"]
         print(module_list.list_modules(keywords, json))
     except UserWarning as e:
@@ -415,8 +419,9 @@ def local(ctx, keywords, json, dir):
     List modules installed locally in a pipeline
     """
     try:
-        module_list = nf_core.modules.ModuleList(dir, remote=False)
-        module_list.modules_repo = ctx.obj["modules_repo_obj"]
+        module_list = nf_core.modules.ModuleList(
+            dir, False, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+        )
         print(module_list.list_modules(keywords, json))
     except UserWarning as e:
         log.critical(e)
@@ -444,8 +449,15 @@ def install(ctx, tool, dir, prompt, force, sha):
     Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
     try:
-        module_install = nf_core.modules.ModuleInstall(dir, force=force, prompt=prompt, sha=sha)
-        module_install.modules_repo = ctx.obj["modules_repo_obj"]
+        module_install = nf_core.modules.ModuleInstall(
+            dir,
+            force,
+            prompt,
+            sha,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
         exit_status = module_install.install(tool)
         if not exit_status and all:
             sys.exit(1)
@@ -492,9 +504,17 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
     """
     try:
         module_install = nf_core.modules.ModuleUpdate(
-            dir, force=force, prompt=prompt, sha=sha, update_all=all, show_diff=preview, save_diff_fn=save_diff
+            dir,
+            force,
+            prompt,
+            sha,
+            all,
+            preview,
+            save_diff,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
         )
-        module_install.modules_repo = ctx.obj["modules_repo_obj"]
         exit_status = module_install.update(tool)
         if not exit_status and all:
             sys.exit(1)
@@ -519,8 +539,9 @@ def remove(ctx, dir, tool):
     Remove a module from a pipeline.
     """
     try:
-        module_remove = nf_core.modules.ModuleRemove(dir)
-        module_remove.modules_repo = ctx.obj["modules_repo_obj"]
+        module_remove = nf_core.modules.ModuleRemove(
+            dir, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+        )
         module_remove.remove(tool)
     except UserWarning as e:
         log.critical(e)
@@ -613,8 +634,9 @@ def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     nf-core/modules repository.
     """
     try:
-        module_lint = nf_core.modules.ModuleLint(dir=dir)
-        module_lint.modules_repo = ctx.obj["modules_repo_obj"]
+        module_lint = nf_core.modules.ModuleLint(
+            dir, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+        )
         module_lint.lint(
             module=tool,
             key=key,
@@ -658,8 +680,9 @@ def info(ctx, tool, dir):
     If not, usage from the remote modules repo will be shown.
     """
     try:
-        module_info = nf_core.modules.ModuleInfo(dir, tool)
-        module_info.modules_repo = ctx.obj["modules_repo_obj"]
+        module_info = nf_core.modules.ModuleInfo(
+            dir, tool, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+        )
         print(module_info.get_module_info())
     except UserWarning as e:
         log.error(e)

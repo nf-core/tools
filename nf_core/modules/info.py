@@ -20,7 +20,7 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInfo(ModuleCommand):
-    def __init__(self, pipeline_dir, tool):
+    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
 
         self.module = tool
         self.meta = None
@@ -36,7 +36,7 @@ class ModuleInfo(ModuleCommand):
                 log.debug(f"Only showing remote info: {e}")
                 pipeline_dir = None
 
-        super().__init__(pipeline_dir)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
 
     def get_module_info(self):
         """Given the name of a module, parse meta.yml and print usage help."""

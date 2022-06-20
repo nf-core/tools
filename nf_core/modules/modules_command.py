@@ -25,11 +25,11 @@ class ModuleCommand:
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self, dir):
+    def __init__(self, dir, remote_url, branch, no_pull):
         """
         Initialise the ModulesCommand object
         """
-        self.modules_repo = ModulesRepo()
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
         self.dir = dir
         self.module_names = []
         try:

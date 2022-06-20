@@ -13,8 +13,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir, remote=True):
-        super().__init__(pipeline_dir)
+    def __init__(self, pipeline_dir, remote, remote_url, branch, no_pull):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
     def list_modules(self, keywords=None, print_json=False):
