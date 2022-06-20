@@ -633,6 +633,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
         log.error(e)
         sys.exit(1)
 
+
 # nf-core modules lint
 @modules.command()
 @click.pass_context
@@ -714,6 +715,7 @@ def info(ctx, tool, dir):
         log.error(e)
         sys.exit(1)
 
+
 # nf-core modules bump-versions
 @modules.command()
 @click.pass_context
@@ -740,6 +742,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
     except LookupError as e:
         log.error(e)
         sys.exit(1)
+
 
 # nf-core modules mulled
 @modules.command()
@@ -801,6 +804,9 @@ def test_module(ctx, tool, no_prompts, pytest_args):
         meta_builder.run()
     except UserWarning as e:
         log.critical(e)
+        sys.exit(1)
+    except LookupError as e:
+        log.error(e)
         sys.exit(1)
 
 
