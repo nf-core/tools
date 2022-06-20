@@ -283,7 +283,7 @@ class ModuleUpdate(ModuleCommand):
                 install_folder = ["/tmp", next(tempfile._get_candidate_names())]
 
             # Download module files
-            if not self.install_module_files(module, version, modules_repo, install_folder, dry_run=dry_run):
+            if not self.install_module_files(module, version, modules_repo, install_folder):
                 exit_value = False
                 continue
 

@@ -315,22 +315,19 @@ class ModuleCommand:
             log.error(f"Could not remove module: {e}")
             return False
 
-    def install_module_files(self, module_name, module_version, modules_repo, install_dir, dry_run=False):
+    def install_module_files(self, module_name, module_version, modules_repo, install_dir):
         """
-        Installs a module
+        Installs a module into the given directory
 
         Args:
             module_name (str): The name of the module
             module_versioN (str): Git SHA for the version of the module to be installed
             modules_repo (ModulesRepo): A correctly configured ModulesRepo object
             install_dir (str): The path to where the module should be installed (should be the 'modules/' dir of the pipeline)
-            dry_run (bool): The command does nothing if True
 
         Returns:
             (bool): Whether the operation was successful of not
         """
-        if dry_run:
-            return True
         return modules_repo.install_module(module_name, install_dir, module_version)
 
     def load_modules_json(self):
