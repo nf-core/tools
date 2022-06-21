@@ -42,11 +42,7 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Install Nextflow
-        env:
-          CAPSULE_LOG: none
-        run: |
-          wget -qO- get.nextflow.io | bash
-          sudo mv nextflow /usr/local/bin/
+        uses: nf-core/setup-nextflow@v1
 
       - uses: actions/setup-python@v3
         with:
