@@ -395,13 +395,9 @@ def remote(ctx, keywords, json):
         module_list = nf_core.modules.ModuleList(
             None, True, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
         )
-        module_list.modules_repo = ctx.obj["modules_repo_obj"]
         print(module_list.list_modules(keywords, json))
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
         sys.exit(1)
 
 
