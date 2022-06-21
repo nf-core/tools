@@ -54,7 +54,8 @@ NFCORE_CONFIG_DIR = os.path.join(
     os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")),
     "nf-core",
 )
-NFCORE_DIR = os.path.join(os.getenv("HOME"), ".nfcore")
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
+print(f"NF_CORE_DIR: {NFCORE_DIR}")
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):

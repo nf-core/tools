@@ -38,7 +38,9 @@ class RemoteProgressbar(git.RemoteProgress):
         super().__init__()
         self.progress_bar = progress_bar
         self.tid = self.progress_bar.add_task(
-            f"{operation} '{repo_name}' ({remote_url})", start=False, state="Waiting for response"
+            f"{operation} from [bold green]'{repo_name}'[/bold green] ([link={remote_url}]{remote_url}[/link])",
+            start=False,
+            state="Waiting for response",
         )
 
     def update(self, op_code, cur_count, max_count=None, message=""):
@@ -49,7 +51,7 @@ class RemoteProgressbar(git.RemoteProgress):
         if not self.progress_bar.tasks[self.tid].started:
             self.progress_bar.start_task(self.tid)
         self.progress_bar.update(
-            self.tid, total=max_count, completed=cur_count, state=f"{int(cur_count)}/{int(max_count)}"
+            self.tid, total=max_count, completed=cur_count, state=f"{cur_count / max_count * 100:.1f}%"
         )
 
 
@@ -121,7 +123,7 @@ class ModulesRepo(object):
         Sets self.repo
         """
         self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
-        log.info(f"'{self.fullname}'")
+        log.info(NFCORE_DIR)
         if not os.path.exists(self.local_repo_dir):
             try:
                 if no_progress:
