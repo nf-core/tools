@@ -919,7 +919,7 @@ and installing and updating modules from a remote git repository.
 The modules supercommand comes with two flags for specifying a custom remote:
 
 - `--git-remote <git remote url>`: Specify the repository from which the modules should be fetched as a git URL. Defaults to the github repository of `nf-core/modules`.
-- `--branch <branch name>`: Specify the branch from which the modules should be fetched. Defaults to the default branch of your repository
+- `--branch <branch name>`: Specify the branch from which the modules should be fetched. Defaults to the default branch of your repository.
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
