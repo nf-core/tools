@@ -171,7 +171,7 @@ class ModuleCommand:
                     if sha is None:
                         if repo not in remove_from_mod_json:
                             remove_from_mod_json[repo] = []
-                        log.warn(
+                        log.warning(
                             f"Could not find git SHA for module '{module}' in '{repo}' - removing from modules.json"
                         )
                         remove_from_mod_json[repo].append(module)
