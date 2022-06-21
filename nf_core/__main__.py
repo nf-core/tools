@@ -422,11 +422,8 @@ def local(ctx, keywords, json, dir):
             dir, False, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
         )
         print(module_list.list_modules(keywords, json))
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
         sys.exit(1)
 
 
@@ -463,10 +460,7 @@ def install(ctx, tool, dir, prompt, force, sha):
         exit_status = module_install.install(tool)
         if not exit_status and all:
             sys.exit(1)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-    except LookupError as e:
+    except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -523,10 +517,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
         exit_status = module_install.update(tool)
         if not exit_status and all:
             sys.exit(1)
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-    except LookupError as e:
+    except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -551,11 +542,8 @@ def remove(ctx, dir, tool):
             dir, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
         )
         module_remove.remove(tool)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
         sys.exit(1)
 
 
@@ -622,11 +610,8 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     try:
         meta_builder = nf_core.modules.ModulesTestYmlBuilder(tool, run_tests, output, force, no_prompts)
         meta_builder.run()
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
         sys.exit(1)
 
 
@@ -668,11 +653,8 @@ def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     except nf_core.modules.lint.ModuleLintException as e:
         log.error(e)
         sys.exit(1)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
         sys.exit(1)
 
 
@@ -704,10 +686,7 @@ def info(ctx, tool, dir):
             dir, tool, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
         )
         print(module_info.get_module_info())
-    except UserWarning as e:
-        log.error(e)
-        sys.exit(1)
-    except LookupError as e:
+    except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -732,11 +711,8 @@ def bump_versions(ctx, tool, dir, all, show_all):
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
         sys.exit(1)
 
 
@@ -798,11 +774,8 @@ def test_module(ctx, tool, no_prompts, pytest_args):
     try:
         meta_builder = nf_core.modules.ModulesTest(tool, no_prompts, pytest_args)
         meta_builder.run()
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
-        sys.exit(1)
-    except LookupError as e:
-        log.error(e)
         sys.exit(1)
 
 
