@@ -4,22 +4,23 @@ The ModuleCreate class handles generating of module templates
 """
 
 from __future__ import print_function
-from packaging.version import parse as parse_version
 
 import glob
-import jinja2
 import json
 import logging
-import nf_core
 import os
-import questionary
 import re
-import rich
 import subprocess
-import yaml
 
-import nf_core.utils
+import jinja2
+import questionary
+import rich
+import yaml
+from packaging.version import parse as parse_version
+
+import nf_core
 import nf_core.modules.module_utils
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 
@@ -167,7 +168,7 @@ class ModuleCreate(object):
                 log.warning(
                     f"Could not find Conda dependency using the Anaconda API: '{self.tool_conda_name if self.tool_conda_name else self.tool}'"
                 )
-                if rich.prompt.Confirm.ask(f"[violet]Do you want to enter a different Bioconda package name?"):
+                if rich.prompt.Confirm.ask("[violet]Do you want to enter a different Bioconda package name?"):
                     self.tool_conda_name = rich.prompt.Prompt.ask("[violet]Name of Bioconda package").strip()
                     continue
                 else:
@@ -198,7 +199,7 @@ class ModuleCreate(object):
         try:
             with open(os.devnull, "w") as devnull:
                 gh_auth_user = json.loads(subprocess.check_output(["gh", "api", "/user"], stderr=devnull))
-            author_default = "@{}".format(gh_auth_user["login"])
+            author_default = f"@{gh_auth_user['login']}"
         except Exception as e:
             log.debug(f"Could not find GitHub username using 'gh' cli command: [red]{e}")
 
@@ -208,7 +209,7 @@ class ModuleCreate(object):
             if self.author is not None and not github_username_regex.match(self.author):
                 log.warning("Does not look like a valid GitHub username (must start with an '@')!")
             self.author = rich.prompt.Prompt.ask(
-                "[violet]GitHub Username:[/]{}".format(" (@author)" if author_default is None else ""),
+                f"[violet]GitHub Username:[/]{' (@author)' if author_default is None else ''}",
                 default=author_default,
             )
 
@@ -261,7 +262,7 @@ class ModuleCreate(object):
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
-                raise UserWarning(f"Could not open 'tests/config/pytest_modules.yml' file!")
+                raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
         new_files = list(self.file_paths.values())
         if self.repo_type == "modules":
@@ -345,7 +346,7 @@ class ModuleCreate(object):
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob("{}/*/main.nf".format(os.path.join(self.directory, "modules", self.tool)))
+            tool_glob = glob.glob(f"{os.path.join(self.directory, 'modules', self.tool)}/*/main.nf")
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.tool_name}'"

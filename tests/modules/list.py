@@ -1,5 +1,6 @@
-import nf_core.modules
 from rich.console import Console
+
+import nf_core.modules
 
 
 def test_modules_list_remote(self):

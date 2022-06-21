@@ -1,8 +1,9 @@
-import pytest
-import unittest
-import tempfile
 import os
 import shutil
+import tempfile
+import unittest
+
+import pytest
 
 import nf_core.create
 import nf_core.lint

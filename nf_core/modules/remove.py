@@ -1,9 +1,9 @@
+import json
+import logging
 import os
 import sys
-import json
-import questionary
-import logging
 
+import questionary
 
 import nf_core.utils
 
@@ -13,11 +13,11 @@ log = logging.getLogger(__name__)
 
 
 class ModuleRemove(ModuleCommand):
-    def __init__(self, pipeline_dir):
+    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False):
         """
         Initialise the ModulesRemove object and run remove command
         """
-        super().__init__(pipeline_dir)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
 
     def remove(self, module):
         """
@@ -40,7 +40,7 @@ class ModuleRemove(ModuleCommand):
         # Decide from which repo the module was installed
         # TODO Configure the prompt for repository name in a nice way
         if True:
-            repo_name = self.modules_repo.name
+            repo_name = self.modules_repo.fullname
         elif len(self.module_names) == 1:
             repo_name = list(self.module_names.keys())[0]
         else:
@@ -64,12 +64,12 @@ class ModuleRemove(ModuleCommand):
             log.error(f"Module directory does not exist: '{module_dir}'")
 
             modules_json = self.load_modules_json()
-            if self.modules_repo.name in modules_json["repos"] and module in modules_json["repos"][repo_name]:
+            if self.modules_repo.fullname in modules_json["repos"] and module in modules_json["repos"][repo_name]:
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
                 self.remove_modules_json_entry(module, repo_name, modules_json)
             return False
 
-        log.info("Removing {}".format(module))
+        log.info(f"Removing {module}")
 
         # Remove entry from modules.json
         modules_json = self.load_modules_json()

@@ -80,9 +80,13 @@ jobs:
       - name: nf-core modules update
         run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
 
+      # Remove TODO statements
+      - name: remove TODO
+        run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+
       # Run nf-core linting
       - name: nf-core lint
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned
 
       # Run the other nf-core commands
       - name: nf-core list
@@ -98,7 +102,7 @@ jobs:
         run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
 
       - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --release
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
 
       - name: nf-core modules install
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
