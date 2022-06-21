@@ -4,14 +4,19 @@ import json
 import logging
 import os
 import shutil
-from posixpath import dirname
+from datetime import datetime
 
+import git
+import questionary
 import yaml
 
 import nf_core.modules.module_utils
 import nf_core.utils
-from nf_core import modules
-from nf_core.modules.modules_repo import ModulesRepo
+from nf_core.modules.modules_repo import (
+    NF_CORE_MODULES_NAME,
+    NF_CORE_MODULES_REMOTE,
+    ModulesRepo,
+)
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
@@ -22,11 +27,11 @@ class ModuleCommand:
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self, dir):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
         """
         Initialise the ModulesCommand object
         """
-        self.modules_repo = ModulesRepo()
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
         self.dir = dir
         self.module_names = []
         try:
@@ -36,12 +41,6 @@ class ModuleCommand:
                 self.repo_type = None
         except LookupError as e:
             raise UserWarning(e)
-
-        if self.repo_type == "pipeline":
-            try:
-                nf_core.modules.module_utils.verify_pipeline_dir(self.dir)
-            except UserWarning:
-                raise
 
     def get_pipeline_modules(self):
         """
@@ -107,10 +106,7 @@ class ModuleCommand:
         modules_json_path = os.path.join(self.dir, "modules.json")
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
-            try:
-                nf_core.modules.module_utils.create_modules_json(self.dir)
-            except UserWarning as e:
-                raise
+            nf_core.modules.module_utils.create_modules_json(self.dir)
 
     def modules_json_up_to_date(self):
         """
@@ -135,37 +131,40 @@ class ModuleCommand:
         for repo, modules in self.module_names.items():
             if repo in mod_json["repos"]:
                 for module in modules:
-                    if module in mod_json["repos"][repo]:
-                        mod_json["repos"][repo].pop(module)
+                    repo_modules = mod_json["repos"][repo].get("modules")
+                    if repo_modules is None:
+                        raise UserWarning(
+                            "Your 'modules.json' is not up to date. "
+                            "Please reinstall it by removing it and rerunning the command."
+                        )
+                    if module in mod_json["repos"][repo]["modules"]:
+                        mod_json["repos"][repo]["modules"].pop(module)
                     else:
                         if repo not in missing_from_modules_json:
-                            missing_from_modules_json[repo] = []
-                        missing_from_modules_json[repo].append(module)
-                if len(mod_json["repos"][repo]) == 0:
+                            missing_from_modules_json[repo] = ([], mod_json["repos"][repo]["git_url"])
+                        missing_from_modules_json[repo][0].append(module)
+                if len(mod_json["repos"][repo]["modules"]) == 0:
                     mod_json["repos"].pop(repo)
             else:
-                missing_from_modules_json[repo] = modules
+                missing_from_modules_json[repo] = (modules, None)
 
-        # If there are any modules left in 'modules.json' after all  installed are removed,
+        # If there are any modules left in 'modules.json' after all installed are removed,
         # we try to reinstall them
         if len(mod_json["repos"]) > 0:
             missing_but_in_mod_json = [
-                f"'{repo}/{module}'" for repo, modules in mod_json["repos"].items() for module in modules
+                f"'{repo}/{module}'" for repo, contents in mod_json["repos"].items() for module in contents["modules"]
             ]
             log.info(
                 f"Reinstalling modules found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
             )
 
             remove_from_mod_json = {}
-            for repo, modules in mod_json["repos"].items():
-                try:
-                    modules_repo = ModulesRepo(repo=repo)
-                    modules_repo.get_modules_file_tree()
-                    install_folder = [modules_repo.owner, modules_repo.repo]
-                except LookupError as e:
-                    log.warning(f"Could not get module's file tree for '{repo}': {e}")
-                    remove_from_mod_json[repo] = list(modules.keys())
-                    continue
+            for repo, contents in mod_json["repos"].items():
+                modules = contents["modules"]
+                remote = contents["git_url"]
+
+                modules_repo = ModulesRepo(remote_url=remote)
+                install_folder = os.path.split(modules_repo.fullname)
 
                 for module, entry in modules.items():
                     sha = entry.get("git_sha")
@@ -178,7 +177,7 @@ class ModuleCommand:
                         remove_from_mod_json[repo].append(module)
                         continue
                     module_dir = os.path.join(self.dir, "modules", *install_folder, module)
-                    self.download_module_file(module, sha, modules_repo, install_folder, module_dir)
+                    self.install_module_files(module, sha, modules_repo, install_folder, module_dir)
 
             # If the reinstall fails, we remove those entries in 'modules.json'
             if sum(map(len, remove_from_mod_json.values())) > 0:
@@ -200,10 +199,12 @@ class ModuleCommand:
 
         # If some modules didn't have an entry in the 'modules.json' file
         # we try to determine the SHA from the commit log of the remote
+        dead_repos = []
+        sb_local_repos = []
         if sum(map(len, missing_from_modules_json.values())) > 0:
 
             format_missing = [
-                f"'{repo}/{module}'" for repo, modules in missing_from_modules_json.items() for module in modules
+                f"'{repo}/{module}'" for repo, contents in missing_from_modules_json.items() for module in contents[0]
             ]
             if len(format_missing) == 1:
                 log.info(f"Recomputing commit SHA for module {format_missing[0]} which was missing from 'modules.json'")
@@ -211,28 +212,89 @@ class ModuleCommand:
                 log.info(
                     f"Recomputing commit SHAs for modules which were missing from 'modules.json': {', '.join(format_missing)}"
                 )
+
             failed_to_find_commit_sha = []
-            for repo, modules in missing_from_modules_json.items():
-                modules_repo = ModulesRepo(repo=repo)
+            for repo, (modules, remote) in missing_from_modules_json.items():
+                if remote is None:
+                    if repo == NF_CORE_MODULES_NAME:
+                        remote = NF_CORE_MODULES_REMOTE
+                    else:
+                        choice = questionary.select(
+                            f"Found untracked files in {repo}. Please select a choice",
+                            choices=[
+                                questionary.Choice("Provide the remote", value=0),
+                                questionary.Choice("Move the directory to 'local'", value=1),
+                                questionary.Choice("Remove the files", value=2),
+                            ],
+                        )
+                        if choice == 0:
+                            remote = questionary.text("Please provide the URL of the remote")
+                            # Verify that the remote exists
+                            while True:
+                                try:
+                                    git.Git().ls_remote(remote)
+                                    break
+                                except git.exc.GitCommandError:
+                                    remote = questionary.text(
+                                        "The provided remote does not seem to exist, please provide a new remote."
+                                    ).unsafe_ask()
+                        elif choice == 1:
+                            sb_local_repos.append(repo)
+                            continue
+                        else:
+                            dead_repos.append(repo)
+                            continue
+
+                        remote = questionary.text(f"Please provide a remote for these files ")
+
+                modules_repo = ModulesRepo(remote_url=remote)
                 repo_path = os.path.join(self.dir, "modules", repo)
                 for module in modules:
                     module_path = os.path.join(repo_path, module)
-                    try:
-                        correct_commit_sha = nf_core.modules.module_utils.find_correct_commit_sha(
-                            module, module_path, modules_repo
-                        )
-                        if repo not in fresh_mod_json["repos"]:
-                            fresh_mod_json["repos"][repo] = {}
+                    correct_commit_sha = nf_core.modules.module_utils.find_correct_commit_sha(
+                        module, module_path, modules_repo
+                    )
+                    log.info(correct_commit_sha)
+                    if repo not in fresh_mod_json["repos"]:
+                        fresh_mod_json["repos"][repo] = {}
 
-                        fresh_mod_json["repos"][repo][module] = {"git_sha": correct_commit_sha}
-                    except (LookupError, UserWarning) as e:
-                        failed_to_find_commit_sha.append(f"'{repo}/{module}'")
+                    fresh_mod_json["repos"][repo][module] = {"git_sha": correct_commit_sha}
 
             if len(failed_to_find_commit_sha) > 0:
                 log.info(
-                    f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: {', '.join(failed_to_find_commit_sha)}."
-                    f"\nPlease try to install a newer version of {'this' if len(failed_to_find_commit_sha) == 1 else 'these'} module{_s(failed_to_find_commit_sha)}."
+                    f"Could not determine 'git_sha' for module{_s(failed_to_find_commit_sha)}: "
+                    f"{', '.join(failed_to_find_commit_sha)}."
+                    f"\nPlease try to install a newer version of "
+                    f"{'this' if len(failed_to_find_commit_sha) == 1 else 'these'} "
+                    f"module{_s(failed_to_find_commit_sha)}."
                 )
+
+        # Remove the requested repos
+        for repo in dead_repos:
+            path = os.path.join(self.dir, "modules", repo)
+            shutil.rmtree(path)
+
+        # Copy the untracked repos to local
+        for repo in sb_local_repos:
+            modules_path = os.path.join(self.dir, "modules")
+            path = os.path.join(modules_path, repo)
+            local_path = os.path.join(modules_path, "local")
+
+            # Create the local module directory if it doesn't already exist
+            if not os.path.exists(local_path):
+                os.makedirs(local_path)
+
+            # Check if there is already a subdirectory with the name
+            if os.path.exists(os.path.join(local_path, to_path)):
+                to_path = path
+                while os.path.exists(os.path.join(local_path, to_path)):
+                    # Add a time suffix to the path to make it unique
+                    # (do it again and again if it didn't work out...)
+                    to_path += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
+                shutil.move(path, to_path)
+                path = to_path
+
+            shutil.move(path, local_path)
 
         self.dump_modules_json(fresh_mod_json)
 
@@ -255,24 +317,28 @@ class ModuleCommand:
             log.error(f"Could not remove module: {e}")
             return False
 
-    def download_module_file(self, module_name, module_version, modules_repo, install_folder, dry_run=False):
-        """Downloads the files of a module from the remote repo"""
-        files = modules_repo.get_module_file_urls(module_name, module_version)
-        log.debug("Fetching module files:\n - {}".format("\n - ".join(files.keys())))
-        for filename, api_url in files.items():
-            split_filename = filename.split("/")
-            dl_filename = os.path.join(*install_folder, *split_filename[1:])
-            try:
-                self.modules_repo.download_gh_file(dl_filename, api_url)
-            except (SystemError, LookupError) as e:
-                log.error(e)
-                return False
-        if not dry_run:
-            log.info(f"Downloaded {len(files)} files to {os.path.join(*install_folder, module_name)}")
-        return True
+    def install_module_files(self, module_name, module_version, modules_repo, install_dir):
+        """
+        Installs a module into the given directory
+
+        Args:
+            module_name (str): The name of the module
+            module_versioN (str): Git SHA for the version of the module to be installed
+            modules_repo (ModulesRepo): A correctly configured ModulesRepo object
+            install_dir (str): The path to where the module should be installed (should be the 'modules/' dir of the pipeline)
+
+        Returns:
+            (bool): Whether the operation was successful of not
+        """
+        return modules_repo.install_module(module_name, install_dir, module_version)
 
     def load_modules_json(self):
-        """Loads the modules.json file"""
+        """
+        Loads the modules.json file
+
+        Returns:
+            (nested dict...): The parsed 'modules.json' file
+        """
         modules_json_path = os.path.join(self.dir, "modules.json")
         try:
             with open(modules_json_path, "r") as fh:
@@ -282,11 +348,15 @@ class ModuleCommand:
             modules_json = None
         return modules_json
 
-    def update_modules_json(self, modules_json, repo_name, module_name, module_version, write_file=True):
-        """Updates the 'module.json' file with new module info"""
+    def update_modules_json(self, modules_json, modules_repo, module_name, module_version, write_file=True):
+        """
+        Updates the 'module.json' file with new module info
+        """
+        repo_name = modules_repo.fullname
+        remote_url = modules_repo.remote_url
         if repo_name not in modules_json["repos"]:
-            modules_json["repos"][repo_name] = dict()
-        modules_json["repos"][repo_name][module_name] = {"git_sha": module_version}
+            modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url}
+        modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": module_version}
         # Sort the 'modules.json' repo entries
         modules_json["repos"] = nf_core.utils.sort_dictionary(modules_json["repos"])
         if write_file:

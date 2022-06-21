@@ -911,38 +911,19 @@ The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
 The modules supercommand comes with two flags for specifying a custom remote:
 
-- `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
-- `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
+- `--git-remote <git remote url>`: Specify the repository from which the modules should be fetched as a git URL. Defaults to the github repository of `nf-core/modules`.
+- `--branch <branch name>`: Specify the branch from which the modules should be fetched. Defaults to the default branch of your repository.
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
-### Private remote modules
+The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
+due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
+still need to clone repositories that have previously not been used.
 
-In order to get access to your private modules repo, you need to create
-the `~/.config/gh/hosts.yml` file, which is the same file required by
-[GitHub CLI](https://cli.github.com/) to deal with private repositories.
-Such file is structured as follow:
+### Private remote repositories
 
-```conf
-github.com:
-    oauth_token: <your github access token>
-    user: <your github user>
-    git_protocol: <ssh or https are valid choices>
-```
-
-The easiest way to create this configuration file is through _GitHub CLI_: follow
-its [installation instructions](https://cli.github.com/manual/installation)
-and then call:
-
-```bash
-gh auth login
-```
-
-After that, you will be able to list and install your private modules without
-providing your github credentials through command line, by using `--github-repository`
-and `--branch` options properly.
-See the documentation on [gh auth login](https://cli.github.com/manual/gh_auth_login>)
-to get more information.
+You can use the modules command with private remote repositories. Make sure that your local `git` is correctly configured with your private remote
+and then specify the remote the same way you would do with a public remote repository.
 
 ### List modules
 
@@ -1079,7 +1060,7 @@ There are three additional flags that you can use when installing a module:
 
 - `--force`: Overwrite a previously installed version of the module.
 - `--prompt`: Select the module version using a cli prompt.
-- `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+- `--sha <commit_sha>`: Install the module at a specific commit.
 
 ### Update modules in a pipeline
 
