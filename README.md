@@ -907,13 +907,6 @@ This allows multiple pipelines to use the same code for share tools and gives a 
 
 The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
-### Running the module commands
-
-The `nf-core/tools` package contains a suite of commands for working DSL2 modules in your pipeline. The modules commands use `git` to interface
-with the `nf-core/modules` repository. Therefore you need to have have `git` installed to use the modules commands. You can then use the
-the modules commands for a variety of tasks such as creating new DSL2 modules, viewing and getting metadata about the modules in your pipeline,
-and installing and updating modules from a remote git repository.
-
 ### Custom remote modules
 
 The modules supercommand comes with two flags for specifying a custom remote:
@@ -926,6 +919,11 @@ Note that a custom remote must follow a similar directory structure to that of `
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
 due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
 still need to clone repositories that have previously not been used.
+
+### Private remote repositories
+
+You can use the modules command with private remote repositories. Make sure that your local `git` is correctly configured with your private remote
+and then specify the remote the same way you would do with a public remote repository.
 
 ### List modules
 

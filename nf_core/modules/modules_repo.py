@@ -123,7 +123,6 @@ class ModulesRepo(object):
         Sets self.repo
         """
         self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
-        log.info(NFCORE_DIR)
         if not os.path.exists(self.local_repo_dir):
             try:
                 if no_progress:
