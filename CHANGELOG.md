@@ -5,6 +5,7 @@
 ### Template
 
 - Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 
 ### Linting
 
@@ -19,6 +20,7 @@
 - Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
 - Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
 - Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 
 ### Modules
 
