@@ -355,7 +355,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     "--no-pull",
     is_flag=True,
     default=False,
-    help="Use this option for faster commands if you know there have been no recent changes to the repository",
+    help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.pass_context
 def modules(ctx, git_remote, branch, no_pull):
