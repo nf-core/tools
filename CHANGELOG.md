@@ -4,25 +4,25 @@
 
 ### Template
 
-- Fix bug in pipeline readme logo URL ([#1589](https://github.com/nf-core/tools/issues/1589))
+- Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
 
 ### Linting
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
+- Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 
 ### General
 
-- Add `--fail-warned` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
-- Add `--fail-warned` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
 - Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
+- Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
+- Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
+- Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
+- Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
 
 ### Modules
 
-- Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
-
-### Linting
-
-- Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
+- Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
+- Fix a bug in the regex extracting the version from biocontainers URLs ([#1598](https://github.com/nf-core/tools/pull/1598))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
@@ -60,7 +60,7 @@
 - Add a new command `nf-core modules test` which runs pytests locally.
 - Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 - Allow follow links when generating `test.yml` file with `nf-core modules create-test-yml` ([1570](https://github.com/nf-core/tools/pull/1570))
-- Escaped test run output before logging it, to avoid a rich ` MarkupError`
+- Escaped test run output before logging it, to avoid a rich `MarkupError`
 
 ### Linting
 
