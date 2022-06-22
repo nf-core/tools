@@ -34,7 +34,7 @@ jobs:
 
       - name: Run Prettier --check
         run: prettier --check ${GITHUB_WORKSPACE}
-        
+
   PythonBlack:
     runs-on: ubuntu-latest
     steps:
