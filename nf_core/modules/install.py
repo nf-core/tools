@@ -70,7 +70,7 @@ class ModuleInstall(ModuleCommand):
 
         if not self.modules_repo.module_exists(module):
             warn_msg = (
-                f"Module '{module}' not found in remote '{self.modules_repo.fullname}' ({self.modules_repo.branch})"
+                f"Module '{module}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
             )
             log.warning(warn_msg)
             return False
@@ -123,7 +123,7 @@ class ModuleInstall(ModuleCommand):
             self.clear_module_dir(module, module_dir)
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{module}'")
-        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.fullname}")
+        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")
 
         # Download module files
         if not self.install_module_files(module, version, self.modules_repo, install_folder):
