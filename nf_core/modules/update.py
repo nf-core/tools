@@ -34,8 +34,9 @@ class ModuleUpdate(ModuleCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
+        base_path=None,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -177,11 +178,14 @@ class ModuleUpdate(ModuleCommand):
             # Get the git urls from the modules.json
             modules_json = self.load_modules_json()
             repos_mods_shas = [
-                (modules_json["repos"][repo_name]["git_url"], mods_shas)
+                (modules_json["repos"][repo_name]["git_url"], modules_json["repos"][repo_name]["base_path"], mods_shas)
                 for repo_name, mods_shas in repos_mods_shas.items()
             ]
 
-            repos_mods_shas = [(ModulesRepo(remote_url=repo_url), mods_shas) for repo_url, mods_shas in repos_mods_shas]
+            repos_mods_shas = [
+                (ModulesRepo(remote_url=repo_url, base_path=base_path), mods_shas)
+                for repo_url, base_path, mods_shas in repos_mods_shas
+            ]
 
             # Flatten the list
             repos_mods_shas = [(repo, mod, sha) for repo, mods_shas in repos_mods_shas for mod, sha in mods_shas]

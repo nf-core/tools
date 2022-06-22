@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 from datetime import datetime
+from operator import mod
 
 import git
 import questionary
@@ -13,6 +14,7 @@ import yaml
 import nf_core.modules.module_utils
 import nf_core.utils
 from nf_core.modules.modules_repo import (
+    NF_CORE_MODULES_BASE_PATH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
     ModulesRepo,
@@ -27,11 +29,11 @@ class ModuleCommand:
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False, base_path=None):
         """
         Initialise the ModulesCommand object
         """
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.dir = dir
         self.module_names = []
         try:
@@ -131,8 +133,8 @@ class ModuleCommand:
         for repo, modules in self.module_names.items():
             if repo in mod_json["repos"]:
                 for module in modules:
-                    repo_modules = mod_json["repos"][repo].get("modules")
-                    if repo_modules is None:
+                    # Verify that the modules.json has the correct fields
+                    if "modules" not in mod_json["repos"][repo] or "base_path" not in mod_json["repos"][repo]:
                         raise UserWarning(
                             "Your 'modules.json' is not up to date. "
                             "Please reinstall it by removing it and rerunning the command."
@@ -162,8 +164,9 @@ class ModuleCommand:
             for repo, contents in mod_json["repos"].items():
                 modules = contents["modules"]
                 remote = contents["git_url"]
+                base_path = contents["base_path"]
 
-                modules_repo = ModulesRepo(remote_url=remote)
+                modules_repo = ModulesRepo(remote_url=remote, base_path=base_path)
                 install_folder = os.path.split(modules_repo.fullname)
 
                 for module, entry in modules.items():

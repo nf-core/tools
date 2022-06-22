@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import sys
+from email.policy import default
 
 import rich.console
 import rich.logging
@@ -357,8 +358,14 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     default=False,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
+@click.option(
+    "--base-path",
+    type=str,
+    default=nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH,
+    help="Specify the directory containing modules in the remote repository",
+)
 @click.pass_context
-def modules(ctx, git_remote, branch, no_pull):
+def modules(ctx, git_remote, branch, no_pull, base_path):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -370,6 +377,7 @@ def modules(ctx, git_remote, branch, no_pull):
     ctx.obj["modules_repo_url"] = git_remote
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
+    ctx.obj["modules_repo_base_path"] = base_path
 
 
 # nf-core modules list subcommands
@@ -393,7 +401,12 @@ def remote(ctx, keywords, json):
     """
     try:
         module_list = nf_core.modules.ModuleList(
-            None, True, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+            None,
+            True,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
@@ -419,7 +432,12 @@ def local(ctx, keywords, json, dir):
     """
     try:
         module_list = nf_core.modules.ModuleList(
-            dir, False, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+            dir,
+            False,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
@@ -456,6 +474,7 @@ def install(ctx, tool, dir, prompt, force, sha):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.install(tool)
         if not exit_status and all:
@@ -513,6 +532,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.update(tool)
         if not exit_status and all:
@@ -539,7 +559,11 @@ def remove(ctx, dir, tool):
     """
     try:
         module_remove = nf_core.modules.ModuleRemove(
-            dir, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         module_remove.remove(tool)
     except (UserWarning, LookupError) as e:
@@ -637,7 +661,11 @@ def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     """
     try:
         module_lint = nf_core.modules.ModuleLint(
-            dir, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         module_lint.lint(
             module=tool,
@@ -683,7 +711,12 @@ def info(ctx, tool, dir):
     """
     try:
         module_info = nf_core.modules.ModuleInfo(
-            dir, tool, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+            dir,
+            tool,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         print(module_info.get_module_info())
     except (UserWarning, LookupError) as e:
@@ -705,7 +738,11 @@ def bump_versions(ctx, tool, dir, all, show_all):
     """
     try:
         version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(
-            dir, ctx.obj["modules_repo_url"], ctx.obj["modules_repo_branch"], ctx.obj["modules_repo_no_pull"]
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:

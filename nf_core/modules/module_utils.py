@@ -1,19 +1,20 @@
-import datetime
-import glob
 import json
 import logging
 import os
 import urllib
-from sys import modules
 
 import git
 import questionary
 import rich
-from pyrsistent import m
 
 import nf_core.utils
 
-from .modules_repo import NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE, ModulesRepo
+from .modules_repo import (
+    NF_CORE_MODULES_BASE_PATH,
+    NF_CORE_MODULES_NAME,
+    NF_CORE_MODULES_REMOTE,
+    ModulesRepo,
+)
 from .nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)
@@ -80,15 +81,15 @@ def get_pipeline_module_repositories(modules_dir):
     Args:
         modules_dir (str): base directory for the module files
     Returns
-        repos [ (str, str) ]: List of tuples of repo name and repo remote URL
+        repos [ (str, str, str) ]: List of tuples of repo name, repo remote URL and path to modules in repo
     """
     # Check if there are any nf-core modules installed
     if os.path.exists(os.path.join(modules_dir, NF_CORE_MODULES_NAME)):
-        repos = [(NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE)]
+        repos = [(NF_CORE_MODULES_NAME, NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_BASE_PATH)]
     else:
         repos = []
     # Check if there are any untracked repositories
-    dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _ in repos])
+    dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _, _ in repos])
     if len(dirs_not_covered) > 0:
         log.info("Found custom module repositories when creating 'modules.json'")
         # Loop until all directories in the base directory are covered by a remote
@@ -99,7 +100,7 @@ def get_pipeline_module_repositories(modules_dir):
                 )
             )
             nrepo_remote = questionary.text(
-                "Please provide a URL for for one of the repos contained in the untracked directories"
+                "Please provide a URL for for one of the repos contained in the untracked directories."
             ).unsafe_ask()
             # Verify that the remote exists
             while True:
@@ -116,17 +117,26 @@ def get_pipeline_module_repositories(modules_dir):
             if not os.path.exists(os.path.join(modules_dir, nrepo_name)):
                 log.info(
                     "The provided remote does not seem to correspond to a local directory. "
-                    "The directory structure should be the same as in the remote"
+                    "The directory structure should be the same as in the remote."
                 )
                 dir_name = questionary.text(
-                    "Please provide the correct directory, it will be renamed. If left empty, the remote will be ignored"
+                    "Please provide the correct directory, it will be renamed. If left empty, the remote will be ignored."
                 ).unsafe_ask()
                 if dir_name:
                     os.rename(os.path.join(modules_dir, dir_name), os.path.join(modules_dir, nrepo_name))
                 else:
                     continue
-            repos.append((nrepo_name, nrepo_remote))
-            dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _ in repos])
+
+            # Prompt the user for the modules base path in the remote
+            nrepo_base_path = questionary.text(
+                f"Please provide the path of the modules directory in the remote. "
+                f"Will default to '{NF_CORE_MODULES_BASE_PATH}' if left empty."
+            ).unsafe_ask()
+            if not nrepo_base_path:
+                nrepo_base_path = NF_CORE_MODULES_BASE_PATH
+
+            repos.append((nrepo_name, nrepo_remote, nrepo_base_path))
+            dirs_not_covered = dir_tree_uncovered(modules_dir, [name for name, _, _ in repos])
     return repos
 
 
@@ -158,8 +168,9 @@ def create_modules_json(pipeline_dir):
                 if "main.nf" in file_names
             ],
             repo_remote,
+            base_path,
         )
-        for repo_name, repo_remote in repos
+        for repo_name, repo_remote, base_path in repos
     ]
     progress_bar = rich.progress.Progress(
         "[bold blue]{task.description}",
@@ -168,11 +179,11 @@ def create_modules_json(pipeline_dir):
         transient=True,
     )
     with progress_bar:
-        n_total_modules = sum(len(modules) for _, modules, _ in repo_module_names)
+        n_total_modules = sum(len(modules) for _, modules, _, _ in repo_module_names)
         file_progress = progress_bar.add_task(
             "Creating 'modules.json' file", total=n_total_modules, test_name="module.json"
         )
-        for repo_name, module_names, remote in sorted(repo_module_names):
+        for repo_name, module_names, remote, base_path in sorted(repo_module_names):
             try:
                 # Create a ModulesRepo object without progress bar to not conflict with the other one
                 modules_repo = ModulesRepo(remote_url=remote, no_progress=True)
@@ -183,6 +194,7 @@ def create_modules_json(pipeline_dir):
             modules_json["repos"][repo_name] = dict()
             modules_json["repos"][repo_name]["git_url"] = remote
             modules_json["repos"][repo_name]["modules"] = dict()
+            modules_json["repos"][repo_name]["base_path"] = base_path
             for module_name in sorted(module_names):
                 module_path = os.path.join(repo_path, module_name)
                 progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")

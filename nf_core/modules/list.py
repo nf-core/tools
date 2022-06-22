@@ -13,8 +13,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False, base_path=None):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.remote = remote
 
     def list_modules(self, keywords=None, print_json=False):
@@ -105,9 +105,9 @@ class ModuleList(ModuleCommand):
                         version_sha = module_entry["git_sha"]
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
-                            message, date = ModulesRepo(remote_url=repo_entry["git_url"]).get_commit_info(
-                                version_sha
-                            )  # NOTE add support for other remotes
+                            message, date = ModulesRepo(
+                                remote_url=repo_entry["git_url"], base_path=repo_entry["base_path"]
+                            ).get_commit_info(version_sha)
                         except LookupError as e:
                             log.warning(e)
                             date = "[red]Not Available"
