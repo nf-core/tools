@@ -10,7 +10,6 @@ on:
 
 env:
   NXF_ANSI_LOG: false
-  CAPSULE_LOG: none
 
 jobs:
   test:

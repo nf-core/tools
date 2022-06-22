@@ -3,7 +3,6 @@ on: [push, pull_request]
 
 env:
   NXF_ANSI_LOG: false
-  CAPSULE_LOG: none
 
 jobs:
   MakeTestWorkflow:
