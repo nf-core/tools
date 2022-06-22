@@ -105,7 +105,7 @@ class ModuleInfo(ModuleCommand):
                 raise LookupError(f"No modules installed from {self.modules_repo.remote_url}")
 
             if self.module in modules:
-                mod_dir = os.path.join(module_base_path, self.dir, self.module)
+                mod_dir = os.path.join(module_base_path, self.module)
                 meta_fn = os.path.join(mod_dir, "meta.yml")
                 if os.path.exists(meta_fn):
                     log.debug(f"Found local file: {meta_fn}")
