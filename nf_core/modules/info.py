@@ -15,7 +15,7 @@ import nf_core.utils
 
 from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
-from .modules_repo import ModulesRepo
+from .modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ class ModuleInfo(ModuleCommand):
                 "Please select a module", choices=modules, style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
             while module not in modules:
-                log.info(f" '{module}' is not a valid module name")
+                log.info(f"'{module}' is not a valid module name")
                 module = questionary.autocomplete(
                     "Please select a new module", choices=modules, style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
@@ -141,7 +141,7 @@ class ModuleInfo(ModuleCommand):
         file_contents = self.modules_repo.get_meta_yml(self.module)
         if file_contents is None:
             return False
-        self.remote_location = self.modules_repo.fullname
+        self.remote_location = self.modules_repo.remote_url
         return yaml.safe_load(file_contents)
 
     def generate_module_info_help(self):
@@ -168,7 +168,10 @@ class ModuleInfo(ModuleCommand):
             tools_strings = []
             for tool in self.meta["tools"]:
                 for tool_name, tool_meta in tool.items():
-                    tools_strings.append(f"[link={tool_meta['homepage']}]{tool_name}")
+                    if "homepage" in tool_meta:
+                        tools_strings.append(f"[link={tool_meta['homepage']}]{tool_name}[/link]")
+                    else:
+                        tools_strings.append(f"{tool_name}")
             intro_text.append(Text.from_markup(f":wrench: Tools: {', '.join(tools_strings)}\n", style="dim"))
 
         if self.meta.get("description"):
@@ -217,8 +220,8 @@ class ModuleInfo(ModuleCommand):
         # Installation command
         if self.remote_location:
             cmd_base = "nf-core modules"
-            if self.remote_location != "nf-core/modules":
-                cmd_base = f"nf-core modules --github-repository {self.remote_location}"
+            if self.remote_location != NF_CORE_MODULES_REMOTE:
+                cmd_base = f"nf-core modules --git-remote {self.remote_location}"
             renderables.append(
                 Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.module}\n")
             )
