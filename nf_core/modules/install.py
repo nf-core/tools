@@ -92,7 +92,7 @@ class ModuleInstall(ModuleCommand):
 
             log.error("Module is already installed.")
             repo_flag = (
-                "" if self.modules_repo.fullname == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.fullname} "
+                "" if self.modules_repo.fullname == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
             )
             branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 
