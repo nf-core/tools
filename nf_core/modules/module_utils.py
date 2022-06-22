@@ -186,7 +186,7 @@ def create_modules_json(pipeline_dir):
         for repo_name, module_names, remote, base_path in sorted(repo_module_names):
             try:
                 # Create a ModulesRepo object without progress bar to not conflict with the other one
-                modules_repo = ModulesRepo(remote_url=remote, no_progress=True)
+                modules_repo = ModulesRepo(remote_url=remote, base_path=base_path, no_progress=True)
             except LookupError as e:
                 raise UserWarning(e)
 

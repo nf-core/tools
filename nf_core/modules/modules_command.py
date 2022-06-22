@@ -357,8 +357,9 @@ class ModuleCommand:
         """
         repo_name = modules_repo.fullname
         remote_url = modules_repo.remote_url
+        base_path = modules_repo.base_path
         if repo_name not in modules_json["repos"]:
-            modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url}
+            modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url, "base_path": base_path}
         modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": module_version}
         # Sort the 'modules.json' repo entries
         modules_json["repos"] = nf_core.utils.sort_dictionary(modules_json["repos"])
