@@ -917,7 +917,7 @@ The modules supercommand comes with two flags for specifying a custom remote:
 For example, if you want to install the `fastqc` module from the repository `nf-core/modules-test` hosted at `gitlab.com`, you can use the following command:
 
 ```terminal
-nf-core modules --git-remote https://gitlab.com/nf-core/modules-test.git install fastqc
+nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
 ```
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
