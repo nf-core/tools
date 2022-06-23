@@ -8,6 +8,7 @@ import questionary
 import nf_core.utils
 
 from .modules_command import ModuleCommand
+from .modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
@@ -59,21 +60,23 @@ class ModuleRemove(ModuleCommand):
         # Get the module directory
         module_dir = os.path.join(self.dir, "modules", *remove_folder, module)
 
+        # Load the modules.json file
+        modules_json = ModulesJson(self.dir)
+        modules_json.load_modules_json()
+
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
             log.error(f"Module directory does not exist: '{module_dir}'")
 
-            modules_json = self.load_modules_json()
-            if self.modules_repo.fullname in modules_json["repos"] and module in modules_json["repos"][repo_name]:
+            if modules_json.module_present(module, repo_name):
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
-                self.remove_modules_json_entry(module, repo_name, modules_json)
+                modules_json.remove_modules_json_entry(module, repo_name)
             return False
 
         log.info(f"Removing {module}")
 
         # Remove entry from modules.json
-        modules_json = self.load_modules_json()
-        self.remove_modules_json_entry(module, repo_name, modules_json)
+        modules_json.remove_modules_json_entry(module, repo_name)
 
         # Remove the module
         return self.clear_module_dir(module_name=module, module_dir=module_dir)
