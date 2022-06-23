@@ -11,6 +11,7 @@
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
+- Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 
 ### General
 
