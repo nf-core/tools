@@ -5,6 +5,7 @@ import questionary
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core.modules.modules_json import ModulesJson
 
 from .modules_command import ModuleCommand
 from .modules_repo import NF_CORE_MODULES_NAME
@@ -38,7 +39,8 @@ class ModuleInstall(ModuleCommand):
             return False
 
         # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json_up_to_date()
+        modules_json = ModulesJson(self.dir)
+        modules_json.modules_json_up_to_date()
 
         if self.prompt and self.sha is not None:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")

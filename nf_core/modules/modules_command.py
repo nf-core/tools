@@ -13,6 +13,7 @@ import yaml
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_BASE_PATH,
     NF_CORE_MODULES_NAME,
@@ -122,6 +123,9 @@ class ModuleCommand:
         If a module is installed but the entry in 'modules.json' is missing we iterate through
         the commit log in the remote to try to determine the SHA.
         """
+        modules_json = ModulesJson(self.dir)
+        modules_json.modules_json_up_to_date()
+        return
         mod_json = self.load_modules_json()
         fresh_mod_json = copy.deepcopy(mod_json)
         self.get_pipeline_modules()
