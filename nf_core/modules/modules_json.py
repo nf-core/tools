@@ -442,11 +442,9 @@ class ModulesJson:
         modules_json_path = os.path.join(self.dir, "modules.json")
         try:
             with open(modules_json_path, "r") as fh:
-                modules_json = json.load(fh)
+                self.modules_json = json.load(fh)
         except FileNotFoundError:
-            log.error("File 'modules.json' is missing")
-            modules_json = None
-        self.modules_json = modules_json
+            raise UserWarning("File 'modules.json' is missing")
 
     def update_modules_json(self, modules_json, modules_repo, module_name, module_version, write_file=True):
         """
@@ -466,7 +464,12 @@ class ModulesJson:
             return modules_json
 
     def remove_modules_json_entry(self, module, repo_name):
+        """
+        Removes an entry from the 'modules.json' file.
 
+        Returns:
+            (bool): True if the removal was successful, False otherwise
+        """
         if not self.modules_json:
             return False
         if repo_name in self.modules_json.get("repos", {}):
@@ -483,7 +486,6 @@ class ModulesJson:
             return False
 
         self.dump_modules_json()
-
         return True
 
     def repo_present(self, repo_name):
@@ -497,6 +499,44 @@ class ModulesJson:
         Checks if a module is present in the modules.json file
         """
         return module_name in self.modules_json.get("repos", {}).get(repo_name, {}).get("modules", {})
+
+    def get_modules_json(self):
+        """
+        Returns a copy of the loaded modules.json
+        """
+        if self.modules_json is None:
+            self.load_modules_json()
+        return copy.deepcopy(self.modules_json)
+
+    def get_module_version(self, module_name, repo_name):
+        """
+        Returns the version of a module
+        """
+        if self.modules_json is None:
+            self.load_modules_json()
+        return (
+            self.modules_json.get("repos", {})
+            .get(repo_name, {})
+            .get("modules", {})
+            .get(module_name, {})
+            .get("git_sha", None)
+        )
+
+    def get_git_url(self, repo_name):
+        """
+        Returns the git url of a repo
+        """
+        if self.modules_json is None:
+            self.load_modules_json()
+        return self.modules_json.get("repos", {}).get(repo_name, {}).get("git_url", None)
+
+    def get_base_path(self, repo_name):
+        """
+        Returns the modules base path of a repo
+        """
+        if self.modules_json is None:
+            self.load_modules_json()
+        return self.modules_json.get("repos", {}).get(repo_name, {}).get("base_path", None)
 
     def dump_modules_json(self):
         """Build filename for modules.json and write to file."""

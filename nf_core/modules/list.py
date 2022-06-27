@@ -4,10 +4,9 @@ from os import pipe
 
 import rich
 
-import nf_core.modules.module_utils
-from nf_core.modules.modules_repo import ModulesRepo
-
 from .modules_command import ModuleCommand
+from .modules_json import ModulesJson
+from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
@@ -67,7 +66,8 @@ class ModuleList(ModuleCommand):
                 return ""
 
             # Verify that 'modules.json' is consistent with the installed modules
-            self.modules_json_up_to_date()
+            modules_json = ModulesJson(self.dir)
+            modules_json.modules_json_up_to_date()
 
             # Get installed modules
             self.get_pipeline_modules()
@@ -89,7 +89,7 @@ class ModuleList(ModuleCommand):
             table.add_column("Date")
 
             # Load 'modules.json'
-            modules_json = self.load_modules_json()
+            modules_json = modules_json.modules_json
 
             for repo_name, modules in sorted(repos_with_mods.items()):
                 repo_entry = modules_json["repos"].get(repo_name, {})
