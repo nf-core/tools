@@ -80,21 +80,3 @@ class ModuleRemove(ModuleCommand):
 
         # Remove the module
         return self.clear_module_dir(module_name=module, module_dir=module_dir)
-
-    def remove_modules_json_entry(self, module, repo_name, modules_json):
-
-        if not modules_json:
-            return False
-        if repo_name in modules_json.get("repos", {}):
-            repo_entry = modules_json["repos"][repo_name]
-            if module in repo_entry:
-                repo_entry.pop(module)
-            if len(repo_entry) == 0:
-                modules_json["repos"].pop(repo_name)
-        else:
-            log.warning(f"Module '{repo_name}/{module}' is missing from 'modules.json' file.")
-            return False
-
-        self.dump_modules_json(modules_json)
-
-        return True
