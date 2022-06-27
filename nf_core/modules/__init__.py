@@ -6,6 +6,7 @@ from .lint import ModuleLint
 from .list import ModuleList
 from .module_test import ModulesTest
 from .module_utils import ModuleException
+from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
 from .mulled import MulledImageNameGenerator
 from .remove import ModuleRemove

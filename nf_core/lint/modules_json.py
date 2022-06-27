@@ -29,7 +29,7 @@ def modules_json(self):
 
         all_modules_passed = True
 
-        for repo in modules_json["repos"].keys():
+        for repo in modules_json_dict["repos"].keys():
             # Check if the modules.json has been updated to keep the
             if "modules" not in modules_json_dict["repos"][repo] or "git_url" not in modules_json_dict["repos"][repo]:
                 failed.append(
