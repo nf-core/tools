@@ -75,11 +75,6 @@ class ModuleInstall(ModuleCommand):
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
 
-        # Load 'modules.json'
-        modules_json = self.load_modules_json()
-        if not modules_json:
-            return False
-
         if not self.modules_repo.module_exists(module):
             warn_msg = (
                 f"Module '{module}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
@@ -87,10 +82,7 @@ class ModuleInstall(ModuleCommand):
             log.warning(warn_msg)
             return False
 
-        if self.modules_repo.fullname in modules_json["repos"]:
-            current_entry = modules_json["repos"][self.modules_repo.fullname]["modules"].get(module)
-        else:
-            current_entry = None
+        current_version = modules_json.get_module_version(module, self.modules_repo.fullname)
 
         # Set the install folder based on the repository name
         install_folder = [self.dir, "modules"]
@@ -100,7 +92,7 @@ class ModuleInstall(ModuleCommand):
         module_dir = os.path.join(*install_folder, module)
 
         # Check that the module is not already installed
-        if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
+        if (current_version is not None and os.path.exists(module_dir)) and not self.force:
 
             log.error("Module is already installed.")
             repo_flag = (
@@ -119,7 +111,7 @@ class ModuleInstall(ModuleCommand):
             try:
                 version = nf_core.modules.module_utils.prompt_module_version_sha(
                     module,
-                    installed_sha=current_entry["git_sha"] if not current_entry is None else None,
+                    installed_sha=current_version,
                     modules_repo=self.modules_repo,
                 )
             except SystemError as e:
@@ -146,5 +138,5 @@ class ModuleInstall(ModuleCommand):
         log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main'")
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, self.modules_repo, module, version)
+        modules_json.update_modules_json(self.modules_repo, module, version)
         return True
