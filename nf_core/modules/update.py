@@ -1,4 +1,3 @@
-import copy
 import difflib
 import enum
 import json
@@ -8,7 +7,6 @@ import shutil
 import tempfile
 
 import questionary
-from questionary import question
 from rich.console import Console
 from rich.syntax import Syntax
 

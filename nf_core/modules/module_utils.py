@@ -1,20 +1,12 @@
-import json
 import logging
 import os
 import urllib
 
-import git
 import questionary
 import rich
 
 import nf_core.utils
 
-from .modules_repo import (
-    NF_CORE_MODULES_BASE_PATH,
-    NF_CORE_MODULES_NAME,
-    NF_CORE_MODULES_REMOTE,
-    ModulesRepo,
-)
 from .nfcore_module import NFCoreModule
 
 log = logging.getLogger(__name__)

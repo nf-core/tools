@@ -12,7 +12,6 @@ import rich.progress
 import nf_core.modules.module_utils
 import nf_core.modules.modules_repo
 import nf_core.utils
-from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 

@@ -1,26 +1,15 @@
-import copy
 import glob
-import json
 import logging
 import os
 import shutil
-from datetime import datetime
-from operator import mod
 
-import git
-import questionary
 import yaml
 
 import nf_core.modules.module_utils
 import nf_core.utils
-from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import (
-    NF_CORE_MODULES_BASE_PATH,
-    NF_CORE_MODULES_NAME,
-    NF_CORE_MODULES_REMOTE,
-    ModulesRepo,
-)
-from nf_core.utils import plural_s as _s
+
+from .modules_json import ModulesJson
+from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
