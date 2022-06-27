@@ -506,27 +506,3 @@ class ModulesJson:
         with open(modules_json_path, "w") as fh:
             json.dump(self.modules_json, fh, indent=4)
             fh.write("\n")
-
-    def get_module_directories(self):
-        """
-        Returns a nested dictionary of all modules present in the pipeline
-        Ignores the local modules directory
-        """
-        # Get all modules in the 'modules' directory
-        module_paths = (
-            os.path.relpath(dirpath, start=self.modules_dir)
-            for dirpath, _, file_names in os.walk(self.modules_dir)
-            if "main.nf" in file_names and not os.path.relpath(dirpath, start=self.modules_dir).startswith("local")
-        )
-        # Create the nested dictionary
-        modules = {}
-        for module_path in module_paths:
-            module_dir, module_name = os.path.split(module_path)
-            dirs = module_dir.split(os.path.sep)
-            cur_dict = modules
-            for dir in dirs:
-                if dir not in cur_dict:
-                    cur_dict[dir] = {}
-                cur_dict = cur_dict[dir]
-            cur_dict[module_name] = None
-        return modules
