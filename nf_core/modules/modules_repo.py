@@ -238,7 +238,7 @@ class ModulesRepo(object):
         """
         self.repo.git.checkout(commit)
 
-    def module_exists(self, module_name):
+    def module_exists(self, module_name, checkout=True):
         """
         Check if a module exists in the branch of the repo
 
@@ -248,7 +248,7 @@ class ModulesRepo(object):
         Returns:
             (bool): Whether the module exists in this branch of the repository
         """
-        return module_name in self.get_avail_modules()
+        return module_name in self.get_avail_modules(checkout=checkout)
 
     def get_module_dir(self, module_name):
         """
@@ -278,7 +278,7 @@ class ModulesRepo(object):
         self.checkout(commit)
 
         # Check if the module exists in the branch
-        if not self.module_exists(module_name):
+        if not self.module_exists(module_name, checkout=False):
             log.error(f"The requested module does not exists in the '{self.branch}' of {self.fullname}'")
             return False
 
@@ -341,7 +341,7 @@ class ModulesRepo(object):
         """
         Verifies that a given commit sha exists on the branch
         """
-        self.checkout()
+        self.checkout_branch()
         return sha in (commit.hexsha for commit in self.repo.iter_commits())
 
     def get_commit_info(self, sha):
@@ -364,7 +364,7 @@ class ModulesRepo(object):
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.fullname}'")
 
-    def get_avail_modules(self):
+    def get_avail_modules(self, checkout=True):
         """
         Gets the names of the modules in the repository. They are detected by
         checking which directories have a 'main.nf' file
@@ -372,14 +372,15 @@ class ModulesRepo(object):
         Returns:
             ([ str ]): The module names
         """
-        if self.avail_module_names is None:
-            # Module directories are characterized by having a 'main.nf' file
-            self.avail_module_names = [
-                os.path.relpath(dirpath, start=self.modules_dir)
-                for dirpath, _, file_names in os.walk(self.modules_dir)
-                if "main.nf" in file_names
-            ]
-        return self.avail_module_names
+        if checkout:
+            self.checkout_branch()
+        # Module directories are characterized by having a 'main.nf' file
+        avail_module_names = [
+            os.path.relpath(dirpath, start=self.modules_dir)
+            for dirpath, _, file_names in os.walk(self.modules_dir)
+            if "main.nf" in file_names
+        ]
+        return avail_module_names
 
     def get_meta_yml(self, module_name):
         """

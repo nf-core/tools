@@ -227,6 +227,7 @@ class ModulesJson:
             for dir_name, _, file_names in os.walk(self.modules_dir)
             if "main.nf" in file_names
         ]
+
         missing_from_modules_json = []
         repo_names = list(old_modules_json["repos"].keys())
         for dir in dirs:
@@ -262,7 +263,7 @@ class ModulesJson:
         if len(old_modules_json["repos"]) > 0:
             missing_but_in_mod_json = [
                 f"'{repo}/{module}'"
-                for repo, contents in self.modules_json["repos"].items()
+                for repo, contents in old_modules_json["repos"].items()
                 for module in contents["modules"]
             ]
             log.info(
@@ -272,9 +273,8 @@ class ModulesJson:
             remove_from_mod_json = {}
             for repo, contents in old_modules_json["repos"].items():
                 modules = contents["modules"]
-                # Get the git_url and base_path from the fresh_mod_json (They might be missing from the original one)
-                remote = self.modules_json["repos"][repo]["git_url"]
-                base_path = self.modules_json["repos"][repo]["base_path"]
+                remote = contents["git_url"]
+                base_path = contents["base_path"]
 
                 modules_repo = ModulesRepo(remote_url=remote, base_path=base_path)
                 install_folder = os.path.split(modules_repo.fullname)
@@ -290,7 +290,7 @@ class ModulesJson:
                         remove_from_mod_json[repo].append(module)
                         continue
                     module_dir = [self.dir, "modules", *install_folder]
-                    modules_repo.install_module(module, sha, module_dir)
+                    modules_repo.install_module(module, module_dir, sha)
 
             # If the reinstall fails, we remove those entries in 'modules.json'
             if sum(map(len, remove_from_mod_json.values())) > 0:
@@ -446,22 +446,22 @@ class ModulesJson:
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
-    def update_modules_json(self, modules_json, modules_repo, module_name, module_version, write_file=True):
+    def update_modules_json(self, modules_repo, module_name, module_version, write_file=True):
         """
         Updates the 'module.json' file with new module info
         """
+        if self.modules_json is None:
+            self.load_modules_json()
         repo_name = modules_repo.fullname
         remote_url = modules_repo.remote_url
         base_path = modules_repo.base_path
-        if repo_name not in modules_json["repos"]:
-            modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url, "base_path": base_path}
-        modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": module_version}
+        if repo_name not in self.modules_json["repos"]:
+            self.modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url, "base_path": base_path}
+        self.modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": module_version}
         # Sort the 'modules.json' repo entries
-        modules_json["repos"] = nf_core.utils.sort_dictionary(modules_json["repos"])
+        self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
-            self.dump_modules_json(modules_json)
-        else:
-            return modules_json
+            self.dump_modules_json()
 
     def remove_modules_json_entry(self, module, repo_name):
         """

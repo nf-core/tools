@@ -242,7 +242,8 @@ class ModuleUpdate(ModuleCommand):
                 exit_value = False
                 continue
 
-            current_version = modules_json.get_module_version(module, modules_repo)
+            current_version = modules_json.get_module_version(module, modules_repo.fullname)
+
             # Set the install folder based on the repository name
             install_folder = [self.dir, "modules"]
             install_folder.extend(os.path.split(modules_repo.fullname))
