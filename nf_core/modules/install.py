@@ -25,6 +25,16 @@ class ModuleInstall(ModuleCommand):
         no_pull=False,
         base_path=None,
     ):
+        # Check if we are given a base path, otherwise look in the modules.json
+        if base_path is None:
+            try:
+                modules_json = ModulesJson(pipeline_dir)
+                repo_name = nf_core.modules.module_utils.path_from_remote(remote_url)
+                base_path = modules_json.get_base_path(repo_name)
+            except:
+                # We don't want to fail yet if the modules.json is not found
+                pass
+
         super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.force = force
         self.prompt = prompt

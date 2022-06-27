@@ -10,13 +10,8 @@ import questionary
 import rich.progress
 
 import nf_core.modules.module_utils
+import nf_core.modules.modules_repo
 import nf_core.utils
-from nf_core.modules.modules_repo import (
-    NF_CORE_MODULES_BASE_PATH,
-    NF_CORE_MODULES_NAME,
-    NF_CORE_MODULES_REMOTE,
-    ModulesRepo,
-)
 from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
@@ -71,7 +66,9 @@ class ModulesJson:
             for repo_name, module_names, remote, base_path in sorted(repo_module_names):
                 try:
                     # Create a ModulesRepo object without progress bar to not conflict with the other one
-                    modules_repo = ModulesRepo(remote_url=remote, base_path=base_path, no_progress=True)
+                    modules_repo = nf_core.modules.modules_repo.ModulesRepo(
+                        remote_url=remote, base_path=base_path, no_progress=True
+                    )
                 except LookupError as e:
                     raise UserWarning(e)
 
@@ -104,8 +101,11 @@ class ModulesJson:
             repos = {}
 
         # Check if there are any nf-core modules installed
-        if os.path.exists(os.path.join(modules_dir, NF_CORE_MODULES_NAME)):
-            repos[NF_CORE_MODULES_NAME] = (NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_BASE_PATH)
+        if os.path.exists(os.path.join(modules_dir, nf_core.modules.modules_repo.NF_CORE_MODULES_NAME)):
+            repos[nf_core.modules.modules_repo.NF_CORE_MODULES_NAME] = (
+                nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE,
+                nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH,
+            )
 
         # Check if there are any untracked repositories
         dirs_not_covered = self.dir_tree_uncovered(modules_dir, [name for name in repos])
@@ -149,10 +149,10 @@ class ModulesJson:
                 # Prompt the user for the modules base path in the remote
                 nrepo_base_path = questionary.text(
                     f"Please provide the path of the modules directory in the remote. "
-                    f"Will default to '{NF_CORE_MODULES_BASE_PATH}' if left empty."
+                    f"Will default to '{nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH}' if left empty."
                 ).unsafe_ask()
                 if not nrepo_base_path:
-                    nrepo_base_path = NF_CORE_MODULES_BASE_PATH
+                    nrepo_base_path = nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH
 
                 repos[nrepo_name] = (nrepo_remote, nrepo_base_path)
                 dirs_not_covered = self.dir_tree_uncovered(modules_dir, [name for name in repos])
@@ -276,7 +276,7 @@ class ModulesJson:
                 remote = contents["git_url"]
                 base_path = contents["base_path"]
 
-                modules_repo = ModulesRepo(remote_url=remote, base_path=base_path)
+                modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote, base_path=base_path)
                 install_folder = os.path.split(modules_repo.fullname)
 
                 for module, entry in modules.items():
@@ -369,10 +369,10 @@ class ModulesJson:
                             # Ask the user for the modules base path in the remote
                             base_path = questionary.text(
                                 f"Please provide the path of the modules directory in the remote. "
-                                f"Will default to '{NF_CORE_MODULES_BASE_PATH}' if left empty."
+                                f"Will default to '{nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH}' if left empty."
                             ).unsafe_ask()
                             if not base_path:
-                                base_path = NF_CORE_MODULES_BASE_PATH
+                                base_path = nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH
                             break
                     else:
                         repo = nf_core.modules.module_utils.path_from_remote(remote)
@@ -383,7 +383,7 @@ class ModulesJson:
                     dead_repos.append(repo)
                     continue
 
-                modules_repo = ModulesRepo(remote_url=remote, base_path=base_path)
+                modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote, base_path=base_path)
                 repo_path = os.path.join(self.dir, "modules", repo)
                 module = os.path.relpath(dir, repo)
                 module_path = os.path.join(repo_path, module)

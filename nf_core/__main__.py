@@ -359,13 +359,13 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     help="Do not pull in latest changes to local clone of modules repository.",
 )
 @click.option(
-    "--modules-path",
+    "--base-path",
     type=str,
-    default=nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH,
+    default=None,
     help="Specify where the modules are stored in the remote",
 )
 @click.pass_context
-def modules(ctx, git_remote, branch, no_pull, modules_path):
+def modules(ctx, git_remote, branch, no_pull, base_path):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -377,7 +377,7 @@ def modules(ctx, git_remote, branch, no_pull, modules_path):
     ctx.obj["modules_repo_url"] = git_remote
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
-    ctx.obj["modules_repo_modules_path"] = modules_path
+    ctx.obj["modules_repo_base_path"] = base_path
 
 
 # nf-core modules list subcommands
@@ -406,7 +406,7 @@ def remote(ctx, keywords, json):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
@@ -437,7 +437,7 @@ def local(ctx, keywords, json, dir):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
@@ -474,7 +474,7 @@ def install(ctx, tool, dir, prompt, force, sha):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.install(tool)
         if not exit_status and all:
@@ -532,7 +532,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.update(tool)
         if not exit_status and all:
@@ -563,7 +563,7 @@ def remove(ctx, dir, tool):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         module_remove.remove(tool)
     except (UserWarning, LookupError) as e:
@@ -665,7 +665,7 @@ def lint(ctx, tool, dir, key, all, local, passed, fix_version):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         module_lint.lint(
             module=tool,
@@ -716,7 +716,7 @@ def info(ctx, tool, dir):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         print(module_info.get_module_info())
     except (UserWarning, LookupError) as e:
@@ -742,7 +742,7 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_modules_path"],
+            ctx.obj["modules_repo_base_path"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:

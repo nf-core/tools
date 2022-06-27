@@ -9,7 +9,8 @@ import git
 import rich.progress
 
 import nf_core.modules.module_utils
-from nf_core.utils import NFCORE_DIR, gh_api
+import nf_core.modules.modules_json
+from nf_core.utils import NFCORE_DIR
 
 log = logging.getLogger(__name__)
 
@@ -99,13 +100,12 @@ class ModulesRepo(object):
 
         self.remote_url = remote_url
 
-        # Check if we are given a base path, assume directory
-        # structure is the same as nf-core/modules otherwise
+        self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
+
         if base_path is None:
             base_path = NF_CORE_MODULES_BASE_PATH
-        self.base_path = base_path
 
-        self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
+        self.base_path = base_path
 
         self.setup_local_repo(remote_url, branch, no_progress)
 
