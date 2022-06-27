@@ -142,22 +142,6 @@ class ModuleCommand:
         """
         return modules_repo.install_module(module_name, install_dir, module_version)
 
-    def load_modules_json(self):
-        """
-        Loads the modules.json file
-
-        Returns:
-            (nested dict...): The parsed 'modules.json' file
-        """
-        modules_json_path = os.path.join(self.dir, "modules.json")
-        try:
-            with open(modules_json_path, "r") as fh:
-                modules_json = json.load(fh)
-        except FileNotFoundError:
-            log.error("File 'modules.json' is missing")
-            modules_json = None
-        return modules_json
-
     def update_modules_json(self, modules_json, modules_repo, module_name, module_version, write_file=True):
         """
         Updates the 'module.json' file with new module info

@@ -29,6 +29,7 @@ import nf_core.utils
 from nf_core.lint.pipeline_todos import pipeline_todos
 from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ModuleCommand
+from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
@@ -196,7 +197,8 @@ class ModuleLint(ModuleCommand):
 
     def set_up_pipeline_files(self):
         self.load_lint_config()
-        self.modules_json = self.load_modules_json()
+        self.modules_json = ModulesJson(self.dir)
+        self.modules_json.load_modules_json()
 
         # Only continue if a lint config has been loaded
         if self.lint_config:
