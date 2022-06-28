@@ -67,7 +67,7 @@ class ModulesTest(ModuleCommand):
         self.all_local_modules = None
         self.all_nfcore_modules = None
 
-        # Quietly check if this is a pipeline or not
+        # Check if this is a pipeline or not
         try:
             pipeline_dir, repo_type = nf_core.modules.module_utils.get_repo_type(".", use_prompt=False)
             log.debug(f"Found {repo_type} repo: {pipeline_dir}")
@@ -117,10 +117,34 @@ class ModulesTest(ModuleCommand):
             ).unsafe_ask()
         module_dir = Path("modules") / self.module_name
 
-        # First, sanity check that the module directory exists
-        if not module_dir.is_dir():
+        # Sanity check that the module directory exists
+        self._validate_folder_structure()
+        # if not module_dir.is_dir():
+        #     raise UserWarning(
+        #         f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+        #     )
+
+    def _validate_folder_structure(self):
+        """Validate that the modules follow the correct folder structure to run the tests:
+        - modules/TOOL/SUBTOOL/
+        - tests/modules/TOOL/SUBTOOL/
+        """
+        if self.repo_type == "modules":
+            module_path = Path("modules") / self.module_name
+            test_path = Path("tests/modules") / self.module_name
+        else:
+            module_path = Path("modules/nf-core/modules") / self.module_name
+            test_path = Path("modules/nf-core/tests/modules") / self.module_name
+
+        if not module_path.is_dir():
             raise UserWarning(
-                f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+                f"Cannot find directory '{module_path}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+            )
+        if not test_path.is_dir():
+            raise UserWarning(
+                f"Cannot find directory '{test_path}'. Should be TOOL/SUBTOOL or TOOL."
+                "Are you running the tests inside the nf-core/modules main directory?"
+                "Do you have tests for the specified module?"
             )
 
     def _set_profile(self):
