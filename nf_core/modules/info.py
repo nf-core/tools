@@ -1,7 +1,7 @@
-import base64
 import logging
 import os
 
+import questionary
 import requests
 import yaml
 from rich import box
@@ -11,17 +11,18 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+import nf_core.utils
+
 from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
-from .modules_repo import ModulesRepo
+from .modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
 class ModuleInfo(ModuleCommand):
-    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull, base_path):
-
-        self.module = tool
+    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.meta = None
         self.local_path = None
         self.remote_location = None
@@ -35,7 +36,40 @@ class ModuleInfo(ModuleCommand):
                 log.debug(f"Only showing remote info: {e}")
                 pipeline_dir = None
 
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+        self.get_pipeline_modules()
+        self.module = self.init_mod_name(tool)
+
+    def init_mod_name(self, module):
+        """
+        Makes sure that we have a module name before proceeding.
+
+        Args:
+            module: str: Module name to check
+        """
+        if module is not None:
+            return module
+        else:
+            local = questionary.confirm(
+                "Is the module locally installed?", style=nf_core.utils.nfcore_question_style
+            ).unsafe_ask()
+            if local:
+                if self.repo_type == "modules":
+                    modules = self.module_names["modules"]
+                else:
+                    modules = self.module_names.get(self.modules_repo.fullname)
+                    if modules is None:
+                        raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
+            else:
+                modules = self.modules_repo.get_avail_modules()
+            module = questionary.autocomplete(
+                "Please select a module", choices=modules, style=nf_core.utils.nfcore_question_style
+            ).unsafe_ask()
+            while module not in modules:
+                log.info(f"'{module}' is not a valid module name")
+                module = questionary.autocomplete(
+                    "Please select a new module", choices=modules, style=nf_core.utils.nfcore_question_style
+                ).unsafe_ask()
+            return module
 
     def get_module_info(self):
         """Given the name of a module, parse meta.yml and print usage help."""
@@ -61,26 +95,38 @@ class ModuleInfo(ModuleCommand):
             dict or bool: Parsed meta.yml found, False otherwise
         """
 
-        # Get installed modules
-        self.get_pipeline_modules()
+        if self.repo_type == "pipeline":
+            # Try to find and load the meta.yml file
+            repo_name = self.modules_repo.fullname
+            module_base_path = os.path.join(self.dir, "modules", repo_name)
+            # Check that we have any modules installed from this repo
+            modules = self.module_names.get(repo_name)
+            if modules is None:
+                raise LookupError(f"No modules installed from {self.modules_repo.remote_url}")
 
-        # Try to find and load the meta.yml file
-        module_base_path = f"{self.dir}/modules/"
-        if self.repo_type == "modules":
-            module_base_path = f"{self.dir}/"
-        for dir, mods in self.module_names.items():
-            for mod in mods:
-                if mod == self.module:
-                    mod_dir = os.path.join(module_base_path, dir, mod)
-                    meta_fn = os.path.join(mod_dir, "meta.yml")
-                    if os.path.exists(meta_fn):
-                        log.debug(f"Found local file: {meta_fn}")
-                        with open(meta_fn, "r") as fh:
-                            self.local_path = mod_dir
-                            return yaml.safe_load(fh)
+            if self.module in modules:
+                mod_dir = os.path.join(module_base_path, self.module)
+                meta_fn = os.path.join(mod_dir, "meta.yml")
+                if os.path.exists(meta_fn):
+                    log.debug(f"Found local file: {meta_fn}")
+                    with open(meta_fn, "r") as fh:
+                        self.local_path = mod_dir
+                        return yaml.safe_load(fh)
 
-        log.debug(f"Module '{self.module}' meta.yml not found locally")
-        return False
+            log.debug(f"Module '{self.module}' meta.yml not found locally")
+            return None
+        else:
+            module_base_path = os.path.join(self.dir, "modules")
+            if self.module in os.listdir(module_base_path):
+                mod_dir = os.path.join(module_base_path, self.module)
+                meta_fn = os.path.join(mod_dir, "meta.yml")
+                if os.path.exists(meta_fn):
+                    log.debug(f"Found local file: {meta_fn}")
+                    with open(meta_fn, "r") as fh:
+                        self.local_path = mod_dir
+                        return yaml.safe_load(fh)
+            log.debug(f"Module '{self.module}' meta.yml not found locally")
+            return None
 
     def get_remote_yaml(self):
         """Attempt to get the meta.yml file from a remote repo.
@@ -95,7 +141,7 @@ class ModuleInfo(ModuleCommand):
         file_contents = self.modules_repo.get_meta_yml(self.module)
         if file_contents is None:
             return False
-        self.remote_location = self.modules_repo.fullname
+        self.remote_location = self.modules_repo.remote_url
         return yaml.safe_load(file_contents)
 
     def generate_module_info_help(self):
@@ -122,7 +168,10 @@ class ModuleInfo(ModuleCommand):
             tools_strings = []
             for tool in self.meta["tools"]:
                 for tool_name, tool_meta in tool.items():
-                    tools_strings.append(f"[link={tool_meta['homepage']}]{tool_name}")
+                    if "homepage" in tool_meta:
+                        tools_strings.append(f"[link={tool_meta['homepage']}]{tool_name}[/link]")
+                    else:
+                        tools_strings.append(f"{tool_name}")
             intro_text.append(Text.from_markup(f":wrench: Tools: {', '.join(tools_strings)}\n", style="dim"))
 
         if self.meta.get("description"):
@@ -171,8 +220,8 @@ class ModuleInfo(ModuleCommand):
         # Installation command
         if self.remote_location:
             cmd_base = "nf-core modules"
-            if self.remote_location != "nf-core/modules":
-                cmd_base = f"nf-core modules --github-repository {self.remote_location}"
+            if self.remote_location != NF_CORE_MODULES_REMOTE:
+                cmd_base = f"nf-core modules --git-remote {self.remote_location}"
             renderables.append(
                 Text.from_markup(f"\n :computer:  Installation command: [magenta]{cmd_base} install {self.module}\n")
             )

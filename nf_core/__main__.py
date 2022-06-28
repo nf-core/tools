@@ -1029,10 +1029,7 @@ def sync(dir, from_branch, pull_request, github_repository, username):
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
     # Check if pipeline directory contains necessary files
-    try:
-        nf_core.utils.is_pipeline_directory(dir)
-    except UserWarning:
-        raise
+    nf_core.utils.is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
     sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, github_repository, username)
