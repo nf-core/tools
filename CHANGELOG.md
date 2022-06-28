@@ -10,6 +10,7 @@
 ### Linting
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
+- Update `readme.py` nf version badge validation regexp to accept any signs before version number ([#1613](https://github.com/nf-core/tools/issues/1613))
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 - Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 
@@ -28,6 +29,7 @@
 - Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
 - Fix a bug in the regex extracting the version from biocontainers URLs ([#1598](https://github.com/nf-core/tools/pull/1598))
 - Update how we interface with git remotes. ([#1626](https://github.com/nf-core/tools/issues/1626))
+- Add prompt for module name to `nf-core modules info` ([#1644](https://github.com/nf-core/tools/issues/1644))
 - Update docs with example of custom git remote ([#1645](https://github.com/nf-core/tools/issues/1645))
 - Command `nf-core modules test` obtains module name suggestions from installed modules ([#1624](https://github.com/nf-core/tools/pull/1624))
 

@@ -518,10 +518,7 @@ class PipelineSchema(object):
         """Interactively build a new pipeline schema for a pipeline"""
 
         # Check if supplied pipeline directory really is one
-        try:
-            nf_core.utils.is_pipeline_directory(pipeline_dir)
-        except UserWarning:
-            raise
+        nf_core.utils.is_pipeline_directory(pipeline_dir)
 
         if no_prompts:
             self.no_prompts = True
