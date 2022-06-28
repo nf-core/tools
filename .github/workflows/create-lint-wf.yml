@@ -3,7 +3,6 @@ on: [push, pull_request]
 
 env:
   NXF_ANSI_LOG: false
-  CAPSULE_LOG: none
 
 jobs:
   MakeTestWorkflow:
@@ -12,14 +11,9 @@ jobs:
       NXF_ANSI_LOG: false
     strategy:
       matrix:
-        # Nextflow versions
-        include:
-          # Test pipeline minimum Nextflow version
-          - NXF_VER: "21.10.3"
-            NXF_EDGE: ""
-          # Test latest edge release of Nextflow
-          - NXF_VER: ""
-            NXF_EDGE: "1"
+        NXF_VER:
+          - "21.10.3"
+          - "latest-everything"
     steps:
       # Get the repo code
       - uses: actions/checkout@v2
@@ -38,14 +32,9 @@ jobs:
 
       # Set up Nextflow
       - name: Install Nextflow
-        env:
-          NXF_VER: ${{ matrix.NXF_VER }}
-          # Uncomment only if the edge release is more recent than the latest stable release
-          # See https://github.com/nextflow-io/nextflow/issues/2467
-          # NXF_EDGE: ${{ matrix.NXF_EDGE }}
-        run: |
-          wget -qO- get.nextflow.io | bash
-          sudo mv nextflow /usr/local/bin/
+        uses: nf-core/setup-nextflow@v1
+        with:
+          version: ${{ matrix.NXF_VER }}
 
       # Install the Prettier linting tools
       - uses: actions/setup-node@v2
@@ -80,9 +69,13 @@ jobs:
       - name: nf-core modules update
         run: nf-core --log-file log.txt modules update --dir nf-core-testpipeline --all --no-preview
 
+      # Remove TODO statements
+      - name: remove TODO
+        run: find nf-core-testpipeline -type f -exec sed -i '/TODO nf-core:/d' {} \;
+
       # Run nf-core linting
       - name: nf-core lint
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned
 
       # Run the other nf-core commands
       - name: nf-core list
@@ -98,7 +91,7 @@ jobs:
         run: nf-core --log-file log.txt bump-version --dir nf-core-testpipeline/ 1.1
 
       - name: nf-core lint in release mode
-        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --release
+        run: nf-core --log-file log.txt lint --dir nf-core-testpipeline --fail-ignored --fail-warned --release
 
       - name: nf-core modules install
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force

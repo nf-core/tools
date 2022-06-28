@@ -11,7 +11,6 @@ import sys
 from collections import Counter
 from pathlib import Path
 
-
 logger = logging.getLogger()
 
 
@@ -114,19 +113,26 @@ class RowChecker:
         """
         Assert that the combination of sample name and FASTQ filename is unique.
 
-        In addition to the validation, also rename the sample if more than one sample,
-        FASTQ file combination exists.
+        In addition to the validation, also rename all samples to have a suffix of _T{n}, where n is the
+        number of times the same sample exist, but with different FASTQ files, e.g., multiple runs per experiment.
 
         """
         assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
-        if len({pair[0] for pair in self._seen}) < len(self._seen):
-            counts = Counter(pair[0] for pair in self._seen)
-            seen = Counter()
-            for row in self.modified:
-                sample = row[self._sample_col]
-                seen[sample] += 1
-                if counts[sample] > 1:
-                    row[self._sample_col] = f"{sample}_T{seen[sample]}"
+        seen = Counter()
+        for row in self.modified:
+            sample = row[self._sample_col]
+            seen[sample] += 1
+            row[self._sample_col] = f"{sample}_T{seen[sample]}"
+
+
+def read_head(handle, num_lines=10):
+    """Read the specified number of lines from the current position in the file."""
+    lines = []
+    for idx, line in enumerate(handle):
+        if idx == num_lines:
+            break
+        lines.append(line)
+    return "".join(lines)
 
 
 def sniff_format(handle):
@@ -144,13 +150,13 @@ def sniff_format(handle):
         https://docs.python.org/3/glossary.html#term-text-file
 
     """
-    peek = handle.read(2048)
+    peek = read_head(handle)
+    handle.seek(0)
     sniffer = csv.Sniffer()
     if not sniffer.has_header(peek):
         logger.critical(f"The given sample sheet does not appear to contain a header.")
         sys.exit(1)
     dialect = sniffer.sniff(peek)
-    handle.seek(0)
     return dialect
 
 

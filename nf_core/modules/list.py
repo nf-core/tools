@@ -1,9 +1,11 @@
 import json
-from os import pipe
-import rich
 import logging
+from os import pipe
+
+import rich
 
 import nf_core.modules.module_utils
+from nf_core.modules.modules_repo import ModulesRepo
 
 from .modules_command import ModuleCommand
 
@@ -11,8 +13,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir, remote=True):
-        super().__init__(pipeline_dir)
+    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
     def list_modules(self, keywords=None, print_json=False):
@@ -41,20 +43,13 @@ class ModuleList(ModuleCommand):
         # No pipeline given - show all remote
         if self.remote:
 
-            # Get the list of available modules
-            try:
-                self.modules_repo.get_modules_file_tree()
-            except LookupError as e:
-                log.error(e)
-                return False
-
             # Filter the modules by keywords
-            modules = [mod for mod in self.modules_repo.modules_avail_module_names if all(k in mod for k in keywords)]
+            modules = [mod for mod in self.modules_repo.get_avail_modules() if all(k in mod for k in keywords)]
 
             # Nothing found
             if len(modules) == 0:
                 log.info(
-                    f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})"
+                    f"No available modules found in {self.modules_repo.fullname} ({self.modules_repo.branch})"
                     f"{pattern_msg(keywords)}"
                 )
                 return ""
@@ -99,12 +94,20 @@ class ModuleList(ModuleCommand):
             for repo_name, modules in sorted(repos_with_mods.items()):
                 repo_entry = modules_json["repos"].get(repo_name, {})
                 for module in sorted(modules):
-                    module_entry = repo_entry.get(module)
+                    repo_modules = repo_entry.get("modules")
+                    if repo_modules is None:
+                        raise UserWarning(
+                            "You 'modules.json' file is not up to date. Please remove it and rerun the command"
+                        )
+                    module_entry = repo_modules.get(module)
+
                     if module_entry:
                         version_sha = module_entry["git_sha"]
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
-                            message, date = nf_core.modules.module_utils.get_commit_info(version_sha, repo_name)
+                            message, date = ModulesRepo(remote_url=repo_entry["git_url"]).get_commit_info(
+                                version_sha
+                            )  # NOTE add support for other remotes
                         except LookupError as e:
                             log.warning(e)
                             date = "[red]Not Available"
@@ -121,7 +124,7 @@ class ModuleList(ModuleCommand):
 
         if self.remote:
             log.info(
-                f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch})"
+                f"Modules available from {self.modules_repo.fullname} ({self.modules_repo.branch})"
                 f"{pattern_msg(keywords)}:\n"
             )
         else:

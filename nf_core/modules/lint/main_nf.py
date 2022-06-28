@@ -3,11 +3,19 @@
 Lint the main.nf file of a module
 """
 
+import logging
 import re
+
+import requests
+from galaxy.tool_util.deps.mulled.util import build_target
+
 import nf_core
+import nf_core.modules.module_utils
+
+log = logging.getLogger(__name__)
 
 
-def main_nf(module_lint_object, module):
+def main_nf(module_lint_object, module, fix_version, progress_bar):
     """
     Lint a ``main.nf`` module file
 
@@ -56,28 +64,32 @@ def main_nf(module_lint_object, module):
     state = "module"
     process_lines = []
     script_lines = []
+    shell_lines = []
     when_lines = []
     for l in lines:
-        if re.search("^\s*process\s*\w*\s*{", l) and state == "module":
+        if re.search(r"^\s*process\s*\w*\s*{", l) and state == "module":
             state = "process"
-        if re.search("input\s*:", l) and state in ["process"]:
+        if re.search(r"input\s*:", l) and state in ["process"]:
             state = "input"
             continue
-        if re.search("output\s*:", l) and state in ["input", "process"]:
+        if re.search(r"output\s*:", l) and state in ["input", "process"]:
             state = "output"
             continue
-        if re.search("when\s*:", l) and state in ["input", "output", "process"]:
+        if re.search(r"when\s*:", l) and state in ["input", "output", "process"]:
             state = "when"
             continue
-        if re.search("script\s*:", l) and state in ["input", "output", "when", "process"]:
+        if re.search(r"script\s*:", l) and state in ["input", "output", "when", "process"]:
             state = "script"
+            continue
+        if re.search(r"shell\s*:", l) and state in ["input", "output", "when", "process"]:
+            state = "shell"
             continue
 
         # Perform state-specific linting checks
         if state == "process" and not _is_empty(module, l):
             process_lines.append(l)
         if state == "input" and not _is_empty(module, l):
-            inputs += _parse_input(module, l)
+            inputs.extend(_parse_input(module, l))
         if state == "output" and not _is_empty(module, l):
             outputs += _parse_output(module, l)
             outputs = list(set(outputs))  # remove duplicate 'meta's
@@ -85,9 +97,17 @@ def main_nf(module_lint_object, module):
             when_lines.append(l)
         if state == "script" and not _is_empty(module, l):
             script_lines.append(l)
+        if state == "shell" and not _is_empty(module, l):
+            shell_lines.append(l)
+
+    # Check that we have required sections
+    if not len(outputs):
+        module.failed.append(("main_nf_script_outputs", "No process 'output' block found", module.main_nf))
+    else:
+        module.passed.append(("main_nf_script_outputs", "Process 'output' block found", module.main_nf))
 
     # Check the process definitions
-    if check_process_section(module, process_lines):
+    if check_process_section(module, process_lines, fix_version, progress_bar):
         module.passed.append(("main_nf_container", "Container versions match", module.main_nf))
     else:
         module.warned.append(("main_nf_container", "Container versions do not match", module.main_nf))
@@ -95,8 +115,20 @@ def main_nf(module_lint_object, module):
     # Check the when statement
     check_when_section(module, when_lines)
 
+    # Check that we have script or shell, not both
+    if len(script_lines) and len(shell_lines):
+        module.failed.append(("main_nf_script_shell", "Script and Shell found, should use only one", module.main_nf))
+
     # Check the script definition
-    check_script_section(module, script_lines)
+    if len(script_lines):
+        check_script_section(module, script_lines)
+
+    # Check that shell uses a template
+    if len(shell_lines):
+        if any("template" in l for l in shell_lines):
+            module.passed.append(("main_nf_shell_template", "`template` found in `shell` block", module.main_nf))
+        else:
+            module.failed.append(("main_nf_shell_template", "No `template` found in `shell` block", module.main_nf))
 
     # Check whether 'meta' is emitted when given as input
     if inputs:
@@ -130,14 +162,14 @@ def check_script_section(self, lines):
     script = "".join(lines)
 
     # check that process name is used for `versions.yml`
-    if re.search("\$\{\s*task\.process\s*\}", script):
+    if re.search(r"\$\{\s*task\.process\s*\}", script):
         self.passed.append(("main_nf_version_script", "Process name used for versions.yml", self.main_nf))
     else:
         self.warned.append(("main_nf_version_script", "Process name not used for versions.yml", self.main_nf))
 
     # check for prefix (only if module has a meta map as input)
     if self.has_meta:
-        if re.search("\s*prefix\s*=\s*task.ext.prefix", script):
+        if re.search(r"\s*prefix\s*=\s*task.ext.prefix", script):
             self.passed.append(("main_nf_meta_prefix", "'prefix' specified in script section", self.main_nf))
         else:
             self.failed.append(("main_nf_meta_prefix", "'prefix' unspecified in script section", self.main_nf))
@@ -165,7 +197,7 @@ def check_when_section(self, lines):
         self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
-def check_process_section(self, lines):
+def check_process_section(self, lines, fix_version, progress_bar):
     """
     Lint the section of a module between the process definition
     and the 'input:' definition
@@ -196,7 +228,7 @@ def check_process_section(self, lines):
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
     process_label = [l for l in lines if "label" in l]
     if len(process_label) > 0:
-        process_label = process_label[0].split()[1].strip().strip("'").strip('"')
+        process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
         if not process_label in correct_process_labels:
             self.warned.append(
                 (
@@ -211,23 +243,17 @@ def check_process_section(self, lines):
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
 
     for l in lines:
-        l = l.strip()
-        l = l.replace('"', "")
-        l = l.replace("'", "")
-        if re.search("bioconda::", l):
+        if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-        if l.startswith("https://containers") or l.startswith("https://depot"):
-            lspl = l.lstrip("https://").split(":")
-            if len(lspl) == 2:
-                # e.g. 'https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :
-                singularity_tag = "_".join(lspl[0].split("/")[-1].strip().rstrip(".img").split("_")[1:])
-            else:
-                # e.g. 'https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :
-                singularity_tag = lspl[-2].strip()
-        if l.startswith("biocontainers/") or l.startswith("quay.io/"):
-            # e.g. 'quay.io/biocontainers/krona:2.7.1--pl526_5' }"
-            # e.g. 'biocontainers/biocontainers:v1.2.0_cv1' }"
-            docker_tag = l.split(":")[-1].strip("}").strip()
+        l = l.strip(" '\"")
+        if _container_type(l) == "singularity":
+            # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
+            # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
+            singularity_tag = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l).group(1)
+        if _container_type(l) == "docker":
+            # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
+            # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
+            docker_tag = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)['\"]", l).group(1)
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -245,15 +271,38 @@ def check_process_section(self, lines):
         else:
             # Check that required version is available at all
             if bioconda_version not in response.get("versions"):
-                self.failed.append(("bioconda_version", "Conda package had unknown version: `{}`", self.main_nf))
+                self.failed.append(
+                    ("bioconda_version", f"Conda package had unknown version: `{bioconda_version}`", self.main_nf)
+                )
                 continue  # No need to test for latest version, continue linting
             # Check version is latest available
             last_ver = response.get("latest_version")
             if last_ver is not None and last_ver != bioconda_version:
                 package, ver = bp.split("=", 1)
-                self.warned.append(
-                    ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                )
+                # If a new version is available and fix is True, update the version
+                if fix_version:
+                    if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
+                        progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                        log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                        self.passed.append(
+                            (
+                                "bioconda_latest",
+                                f"Conda package has been updated to the latest available: `{bp}`",
+                                self.main_nf,
+                            )
+                        )
+                    else:
+                        progress_bar.print(
+                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                        )
+                        log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                        self.warned.append(
+                            ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                        )
+                else:
+                    self.warned.append(
+                        ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                    )
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
@@ -263,26 +312,42 @@ def check_process_section(self, lines):
         return False
 
 
-def _parse_input(self, line):
-    input = []
+def _parse_input(self, line_raw):
+    """
+    Return list of input channel names from an input line.
+
+    If more than one elements in channel should work with both of:
+        tuple val(meta), path(reads)
+        tuple val(meta), path(reads, stageAs: "input*/*")
+
+    If using a tuple, channel names must be in (parentheses)
+    """
+    inputs = []
+    # Remove comments and trailing whitespace
+    line = line_raw.split("//")[0]
     line = line.strip()
+    # Tuples with multiple elements
     if "tuple" in line:
-        # If more than one elements in channel should work with both of:
-        # e.g. tuple val(meta), path(reads)
-        # e.g. tuple val(meta), path(reads, stageAs: "input*/*")
-        line = line.replace("tuple", "")
-        line = line.replace(" ", "")
-        for idx, elem in enumerate(line.split(")")):
-            if elem:
-                elem = elem.split("(")[1]
-                elem = elem.split(",")[0].strip()
-                input.append(elem)
+        matches = re.findall(r"\((\w+)\)", line)
+        if matches:
+            inputs.extend(matches)
+        else:
+            self.failed.append(
+                (
+                    "main_nf_input_tuple",
+                    f"Found tuple but no channel names: `{line}`",
+                    self.main_nf,
+                )
+            )
+    # Single element inputs
     else:
         if "(" in line:
-            input.append(line.split("(")[1].replace(")", ""))
+            match = re.search(r"\((\w+)\)", line)
+            if match:
+                inputs.append(match.group(1))
         else:
-            input.append(line.split()[1])
-    return input
+            inputs.append(line.split()[1])
+    return inputs
 
 
 def _parse_output(self, line):
@@ -305,3 +370,70 @@ def _is_empty(self, line):
     if line.strip().replace(" ", "") == "":
         empty = True
     return empty
+
+
+def _fix_module_version(self, current_version, latest_version, singularity_tag, response):
+    """Updates the module version
+
+    Changes the bioconda current version by the latest version.
+    Obtains the latest build from bioconda response
+    Checks that the new URLs for docker and singularity with the tag [version]--[build] are valid
+    Changes the docker and singularity URLs
+    """
+    # Get latest build
+    build = _get_build(response)
+
+    with open(self.main_nf, "r") as source:
+        lines = source.readlines()
+
+    # Check if the new version + build exist and replace
+    new_lines = []
+    for line in lines:
+        l = line.strip(" '\"")
+        build_type = _container_type(l)
+        if build_type == "bioconda":
+            new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
+        elif build_type == "singularity" or build_type == "docker":
+            # Check that the new url is valid
+            new_url = re.search(
+                "(?:')(.+)(?:')", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
+            ).group(1)
+            response_new_container = requests.get(
+                "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
+            )
+            log.debug(
+                f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+            )
+            if response_new_container.status_code != 200:
+                return False
+            new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
+        else:
+            new_lines.append(line)
+
+    # Replace outdated versions by the latest one
+    with open(self.main_nf, "w") as source:
+        for line in new_lines:
+            source.write(line)
+
+    return True
+
+
+def _get_build(response):
+    """Get the latest build of the container version"""
+    build_times = []
+    latest_v = response.get("latest_version")
+    files = response.get("files")
+    for f in files:
+        if f.get("version") == latest_v:
+            build_times.append((f.get("upload_time"), f.get("attrs").get("build")))
+    return sorted(build_times, key=lambda tup: tup[0], reverse=True)[0][1]
+
+
+def _container_type(line):
+    """Returns the container type of a build."""
+    if re.search("bioconda::", line):
+        return "bioconda"
+    if line.startswith("https://containers") or line.startswith("https://depot"):
+        return "singularity"
+    if line.startswith("biocontainers/") or line.startswith("quay.io/"):
+        return "docker"

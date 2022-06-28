@@ -5,7 +5,6 @@ along with running the tests and creating md5 sums
 """
 
 from __future__ import print_function
-from rich.syntax import Syntax
 
 import errno
 import gzip
@@ -13,18 +12,19 @@ import hashlib
 import logging
 import operator
 import os
-import questionary
 import re
-import rich
 import shlex
 import subprocess
 import tempfile
+
+import questionary
+import rich
 import yaml
+from rich.syntax import Syntax
 
 import nf_core.utils
 
 from .modules_repo import ModulesRepo
-
 
 log = logging.getLogger(__name__)
 
@@ -69,12 +69,11 @@ class ModulesTestYmlBuilder(object):
         # Get the tool name if not specified
         if self.module_name is None:
             modules_repo = ModulesRepo()
-            modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.modules_avail_module_names,
+                choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
         self.module_dir = os.path.join("modules", *self.module_name.split("/"))
         self.module_test_main = os.path.join("tests", "modules", *self.module_name.split("/"), "main.nf")
 
@@ -164,9 +163,9 @@ class ModulesTestYmlBuilder(object):
                 ep_test["name"] = rich.prompt.Prompt.ask("[violet]Test name", default=default_val).strip()
 
         while ep_test["command"] == "":
-            default_val = (
-                f"nextflow run tests/modules/{self.module_name} -entry {entry_point} -c tests/config/nextflow.config"
-            )
+            # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
+            # See https://github.com/nf-core/tools/issues/1562
+            default_val = f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config  -c ./tests/modules/{self.module_name}/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
@@ -225,7 +224,7 @@ class ModulesTestYmlBuilder(object):
     def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
-        for root, dir, files in os.walk(results_dir):
+        for root, dir, files in os.walk(results_dir, followlinks=True):
             for filename in files:
                 # Check that the file is not versions.yml
                 if filename == "versions.yml":
@@ -263,7 +262,7 @@ class ModulesTestYmlBuilder(object):
                 results_dir, results_dir_repeat = self.run_tests_workflow(command)
             else:
                 results_dir = rich.prompt.Prompt.ask(
-                    f"[violet]Test output folder with results[/] (leave blank to run test)"
+                    "[violet]Test output folder with results[/] (leave blank to run test)"
                 )
                 if results_dir == "":
                     results_dir = None
@@ -325,7 +324,7 @@ class ModulesTestYmlBuilder(object):
         log.info(f"Running '{self.module_name}' test with command:\n[violet]{command}")
         try:
             nfconfig_raw = subprocess.check_output(shlex.split(command))
-            log.info(f"Repeating test ...")
+            log.info("Repeating test ...")
             nfconfig_raw = subprocess.check_output(shlex.split(command_repeat))
 
         except OSError as e:
@@ -340,7 +339,10 @@ class ModulesTestYmlBuilder(object):
             raise UserWarning(f"Error running test workflow: {e}")
         else:
             log.info("Test workflow finished!")
-            log.debug(rich.markup.escape(nfconfig_raw))
+            try:
+                log.debug(rich.markup.escape(nfconfig_raw))
+            except TypeError:
+                log.debug(rich.markup.escape(nfconfig_raw.decode("utf-8")))
 
         return tmp_dir, tmp_dir_repeat
 
@@ -360,4 +362,4 @@ class ModulesTestYmlBuilder(object):
             with open(self.test_yml_output_path, "w") as fh:
                 yaml.dump(self.tests, fh, Dumper=nf_core.utils.custom_yaml_dumper(), width=10000000)
         except FileNotFoundError as e:
-            raise UserWarning("Could not create test.yml file: '{}'".format(e))
+            raise UserWarning(f"Could not create test.yml file: '{e}'")

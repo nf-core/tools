@@ -3,12 +3,11 @@
 
 import logging
 import re
-from packaging.version import Version, InvalidVersion
-from typing import Iterable, Tuple, List
+from typing import Iterable, List, Tuple
 
 import requests
 from galaxy.tool_util.deps.mulled.util import build_target, v2_image_name
-
+from packaging.version import InvalidVersion, Version
 
 log = logging.getLogger(__name__)
 
@@ -43,7 +42,7 @@ class MulledImageNameGenerator:
             try:
                 Version(version)
             except InvalidVersion:
-                raise ValueError(f"{version} in {spec} is not a PEP440 compliant version specification.") from None
+                raise ValueError(f"Not a PEP440 version spec: '{version}' in '{spec}'") from None
             result.append((tool.strip(), version.strip()))
         return result
 
@@ -62,6 +61,12 @@ class MulledImageNameGenerator:
     @classmethod
     def image_exists(cls, image_name: str) -> bool:
         """Check whether a given BioContainers image name exists via a call to the quay.io API."""
-        response = requests.get(f"https://quay.io/biocontainers/{image_name}/", allow_redirects=True)
-        log.debug(response.text)
-        return response.status_code == 200
+        quay_url = f"https://quay.io/biocontainers/{image_name}/"
+        response = requests.get(quay_url, allow_redirects=True)
+        log.debug(f"Got response code '{response.status_code}' for URL {quay_url}")
+        if response.status_code == 200:
+            log.info(f"Found [link={quay_url}]docker image[/link] on quay.io! :sparkles:")
+            return True
+        else:
+            log.error(f"Was not able to find [link={quay_url}]docker image[/link] on quay.io")
+            return False

@@ -2,18 +2,19 @@
 """Creates a nf-core pipeline matching the current
 organization's specification based on a template.
 """
-from genericpath import exists
-import git
 import imghdr
-import jinja2
 import logging
 import os
 import pathlib
 import random
-import requests
 import shutil
 import sys
 import time
+
+import git
+import jinja2
+import requests
+from genericpath import exists
 
 import nf_core
 
@@ -34,11 +35,13 @@ class PipelineCreate(object):
         outdir (str): Path to the local output directory.
     """
 
-    def __init__(self, name, description, author, prefix="nf-core", version="1.0dev", no_git=False, force=False, outdir=None):
+    def __init__(
+        self, name, description, author, prefix="nf-core", version="1.0dev", no_git=False, force=False, outdir=None
+    ):
         self.short_name = name.lower().replace(r"/\s+/", "-").replace(f"{prefix}/", "").replace("/", "-")
         self.name = f"{prefix}/{self.short_name}"
         self.name_noslash = self.name.replace("/", "-")
-        self.prefix_nodash = prefix.replace("-","")
+        self.prefix_nodash = prefix.replace("-", "")
         self.name_docker = self.name.replace(prefix, self.prefix_nodash)
         self.logo_light = f"{self.name}_logo_light.png"
         self.logo_dark = f"{self.name}_logo_dark.png"
@@ -188,7 +191,7 @@ class PipelineCreate(object):
             except (ConnectionError, UserWarning) as e:
                 # Something went wrong - try again
                 log.warning(e)
-                log.error(f"Connection error - retrying")
+                log.error("Connection error - retrying")
                 continue
 
             # Write the new logo to the file

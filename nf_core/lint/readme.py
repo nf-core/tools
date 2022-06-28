@@ -38,9 +38,9 @@ def readme(self):
         content = fh.read()
 
     # Check that there is a readme badge showing the minimum required version of Nextflow
-    # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg?labelColor=000000)](https://www.nextflow.io/)
+    # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
     # and that it has the correct version
-    nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-%E2%89%A5([\d\.]+)-23aa62\.svg\?labelColor=000000\)\]\(https://www\.nextflow\.io/\)"
+    nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
     match = re.search(nf_badge_re, content)
     if match:
         nf_badge_version = match.group(1).strip("'\"")
@@ -48,15 +48,13 @@ def readme(self):
             assert nf_badge_version == self.minNextflowVersion
         except (AssertionError, KeyError):
             failed.append(
-                "README Nextflow minimum version badge does not match config. Badge: `{}`, Config: `{}`".format(
-                    nf_badge_version, self.minNextflowVersion
-                )
+                f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "
+                f"Config: `{self.minNextflowVersion}`"
             )
         else:
             passed.append(
-                "README Nextflow minimum version badge matched config. Badge: `{}`, Config: `{}`".format(
-                    nf_badge_version, self.minNextflowVersion
-                )
+                f"README Nextflow minimum version badge matched config. Badge: `{nf_badge_version}`, "
+                f"Config: `{self.minNextflowVersion}`"
             )
     else:
         warned.append("README did not have a Nextflow minimum version badge.")

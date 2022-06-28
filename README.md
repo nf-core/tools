@@ -2,7 +2,9 @@
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![code style: prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
+[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 
 [![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
 [![install with PyPI](https://img.shields.io/badge/install%20with-PyPI-blue.svg)](https://pypi.org/project/nf-core/)
@@ -35,7 +37,9 @@ A python package with helper tools for the nf-core community.
   - [`modules create` - Create a module from the template](#create-a-new-module)
   - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
+  - [`modules test` - Run the tests for a module](#run-the-tests-for-a-module-using-pytest)
   - [`modules bump-versions` - Bump software versions of modules](#bump-bioconda-and-container-versions-of-modules-in)
+  - [`modules mulled` - Generate the name for a multi-tool container image](#generate-the-name-for-a-multi-tool-container-image)
 
 - [Citation](#citation)
 
@@ -907,42 +911,29 @@ The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
 The modules supercommand comes with two flags for specifying a custom remote:
 
-- `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
-- `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
+- `--git-remote <git remote url>`: Specify the repository from which the modules should be fetched as a git URL. Defaults to the github repository of `nf-core/modules`.
+- `--branch <branch name>`: Specify the branch from which the modules should be fetched. Defaults to the default branch of your repository.
+
+For example, if you want to install the `fastqc` module from the repository `nf-core/modules-test` hosted at `gitlab.com`, you can use the following command:
+
+```terminal
+nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
+```
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
-### Private remote modules
+The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
+due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
+still need to clone repositories that have previously not been used.
 
-In order to get access to your private modules repo, you need to create
-the `~/.config/gh/hosts.yml` file, which is the same file required by
-[GitHub CLI](https://cli.github.com/) to deal with private repositories.
-Such file is structured as follow:
+### Private remote repositories
 
-```conf
-github.com:
-    oauth_token: <your github access token>
-    user: <your github user>
-    git_protocol: <ssh or https are valid choices>
-```
-
-The easiest way to create this configuration file is through _GitHub CLI_: follow
-its [installation instructions](https://cli.github.com/manual/installation)
-and then call:
-
-```bash
-gh auth login
-```
-
-After that, you will be able to list and install your private modules without
-providing your github credentials through command line, by using `--github-repository`
-and `--branch` options properly.
-See the documentation on [gh auth login](https://cli.github.com/manual/gh_auth_login>)
-to get more information.
+You can use the modules command with private remote repositories. Make sure that your local `git` is correctly configured with your private remote
+and then specify the remote the same way you would do with a public remote repository.
 
 ### List modules
 
-The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
+The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands allow to use a pattern for filtering the modules by keywords eg: `nf-core modules list <subcommand> <keyword>`.
 
 #### List remote modules
 
@@ -1075,7 +1066,7 @@ There are three additional flags that you can use when installing a module:
 
 - `--force`: Overwrite a previously installed version of the module.
 - `--prompt`: Select the module version using a cli prompt.
-- `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+- `--sha <commit_sha>`: Install the module at a specific commit.
 
 ### Update modules in a pipeline
 
@@ -1296,6 +1287,57 @@ INFO     Linting module: star/align
 ╰──────────────────────╯
 ```
 
+### Run the tests for a module using pytest
+
+To run unit tests of a module that you have installed or the test created by the command [`nf-core mdoules create-test-yml`](#create-a-module-test-config-file), you can use `nf-core modules test` command. This command runs the tests specified in `modules/tests/software/<tool>/<subtool>/test.yml` file using [pytest](https://pytest-workflow.readthedocs.io/en/stable/).
+
+You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
+
+```console
+$ nf-core modules test fastqc
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.4
+
+? Choose software profile Docker
+INFO     Setting environment variable '$PROFILE' to 'docker'
+INFO     Running pytest for module 'fastqc'
+
+=============================================================== test session starts ================================================================
+platform darwin -- Python 3.9.12, pytest-7.1.2, pluggy-1.0.0
+rootdir: ~/modules, configfile: pytest.ini
+plugins: workflow-1.6.0
+collecting ...
+collected 761 items
+
+fastqc single-end:
+        command:   nextflow run ./tests/modules/fastqc/ -entry test_fastqc_single_end -c ./tests/config/nextflow.config -c ./tests/modules/fastqc/nextflow.config -c ./tests/modules/fastqc/nextflow.config
+        directory: /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end
+        stdout:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end/log.out
+        stderr:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end/log.err
+'fastqc single-end' done.
+
+fastqc paired-end:
+        command:   nextflow run ./tests/modules/fastqc/ -entry test_fastqc_paired_end -c ./tests/config/nextflow.config -c ./tests/modules/fastqc/nextflow.config -c ./tests/modules/fastqc/nextflow.config
+        directory: /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end
+        stdout:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end/log.out
+        stderr:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end/log.err
+'fastqc paired-end' done.
+
+tests/test_versions_yml.py sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 17%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 38%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 59%]
+sssssssssssssssssssssssssssssssssssssssssssssssssssssssssss..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss ssss [ 80%]
+ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss     [ 98%]
+tests/modules/fastqc/test.yml ........
+Keeping temporary directories and logs. Use '--kwd' or '--keep-workflow-wd' to disable this behaviour.
+=================================================== 10 passed, 751 skipped, 479 warnings in 50.76s ===================================================
+```
+
 ### Bump bioconda and container versions of modules in
 
 If you are contributing to the `nf-core/modules` repository and want to bump bioconda and container versions of certain modules, you can use the `nf-core modules bump-versions` helper tool. This will bump the bioconda version of a single or all modules to the latest version and also fetch the correct Docker and Singularity container tags.
@@ -1337,6 +1379,25 @@ If you want this module to be updated only to a specific version (or downgraded)
 ```yaml
 bump-versions:
   star/align: "2.6.1d"
+```
+
+### Generate the name for a multi-tool container image
+
+When you want to use an image of a multi-tool container and you know the specific dependencies and their versions of that container, for example, by looking them up in the [BioContainers hash.tsv](https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv), you can use the `nf-core modules mulled` helper tool. This tool generates the name of a BioContainers mulled image.
+
+```console
+$ nf-core modules mulled pysam==0.16.0.1 biopython==1.78
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.4
+
+
+mulled-v2-3a59640f3fe1ed11819984087d31d68600200c3f:185a25ca79923df85b58f42deb48f5ac4481e91f-0
 ```
 
 ## Citation

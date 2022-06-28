@@ -2,19 +2,20 @@
 """Tests for the download subcommand of nf-core tools
 """
 
-import nf_core.create
-import nf_core.utils
-from nf_core.download import DownloadWorkflow
-
 import hashlib
-import mock
 import os
-import pytest
 import shutil
 import tempfile
 import unittest
 
-from .utils import with_temporary_folder, with_temporary_file
+import mock
+import pytest
+
+import nf_core.create
+import nf_core.utils
+from nf_core.download import DownloadWorkflow
+
+from .utils import with_temporary_file, with_temporary_folder
 
 
 class DownloadTest(unittest.TestCase):
@@ -59,7 +60,6 @@ class DownloadTest(unittest.TestCase):
             == "https://github.com/nf-core/exoseq/archive/819cbac792b76cf66c840b567ed0ee9a2f620db7.zip"
         )
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_get_release_hash_non_existent_release(self):
         wfs = nf_core.list.Workflows()
         wfs.get_remote_workflows()
@@ -70,7 +70,8 @@ class DownloadTest(unittest.TestCase):
             download_obj.wf_revisions,
             download_obj.wf_branches,
         ) = nf_core.utils.get_repo_releases_branches(pipeline, wfs)
-        download_obj.get_revision_hash()
+        with pytest.raises(AssertionError):
+            download_obj.get_revision_hash()
 
     #
     # Tests for 'download_wf_files'
@@ -149,7 +150,6 @@ class DownloadTest(unittest.TestCase):
         download_obj.validate_md5(tmpfile.name, val_hash)
 
     @with_temporary_file
-    @pytest.mark.xfail(raises=IOError, strict=True)
     def test_mismatching_md5sums(self, tmpfile):
         download_obj = DownloadWorkflow(pipeline="dummy")
         test_hash = hashlib.md5()
@@ -159,19 +159,36 @@ class DownloadTest(unittest.TestCase):
         with open(tmpfile.name, "w") as f:
             f.write("test")
 
-        download_obj.validate_md5(tmpfile.name, val_hash)
+        with pytest.raises(IOError):
+            download_obj.validate_md5(tmpfile.name, val_hash)
 
     #
     # Tests for 'singularity_pull_image'
     #
-    # If Singularity is not installed, will log an error and exit
-    # If Singularity is installed, should raise an OSError due to non-existant image
+    # If Singularity is installed, but the container can't be accessed because it does not exist or there are aceess
+    # restrictions, a FileNotFoundError is raised due to the unavailability of the image.
+    @pytest.mark.skipif(
+        shutil.which("singularity") is None,
+        reason="Can't test what Singularity does if it's not installed.",
+    )
     @with_temporary_folder
-    @pytest.mark.xfail(raises=OSError)
     @mock.patch("rich.progress.Progress.add_task")
-    def test_singularity_pull_image(self, tmp_dir, mock_rich_progress):
+    def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
-        download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+        with pytest.raises(FileNotFoundError):
+            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+
+    # If Singularity is not installed, it raises a FileNotFoundError because the singularity command can't be found.
+    @pytest.mark.skipif(
+        shutil.which("singularity") is not None,
+        reason="Can't test how the code behaves when sungularity is not installed if it is.",
+    )
+    @with_temporary_folder
+    @mock.patch("rich.progress.Progress.add_task")
+    def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
+        download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
+        with pytest.raises(FileNotFoundError):
+            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
 
     #
     # Tests for the main entry method 'download_workflow'

@@ -1,9 +1,11 @@
+import logging
+
 import rich
 from rich.console import Console
 from rich.table import Table
-import logging
 
 import nf_core.utils
+from nf_core.utils import plural_s as _s
 
 log = logging.getLogger(__name__)
 
@@ -19,18 +21,15 @@ def print_joint_summary(lint_obj, module_lint_obj):
     nbr_warned = len(lint_obj.warned) + len(module_lint_obj.warned)
     nbr_failed = len(lint_obj.failed) + len(module_lint_obj.failed)
 
-    def _s(some_length):
-        return "" if some_length == 1 else "s"
-
     summary_colour = "red" if nbr_failed > 0 else "green"
     table = Table(box=rich.box.ROUNDED, style=summary_colour)
-    table.add_column(f"LINT RESULTS SUMMARY".format(nbr_passed), no_wrap=True)
-    table.add_row(r"[green][✔] {:>3} Test{} Passed".format(nbr_passed, _s(nbr_passed)))
+    table.add_column("LINT RESULTS SUMMARY", no_wrap=True)
+    table.add_row(rf"[green][✔] {nbr_passed:>3} Test{_s(nbr_passed)} Passed")
     if nbr_fixed:
-        table.add_row(r"[bright blue][?] {:>3} Test{} Fixed".format(nbr_fixed, _s(nbr_fixed)))
-    table.add_row(r"[grey58][?] {:>3} Test{} Ignored".format(nbr_ignored, _s(nbr_ignored)))
-    table.add_row(r"[yellow][!] {:>3} Test Warning{}".format(nbr_warned, _s(nbr_warned)))
-    table.add_row(r"[red][✗] {:>3} Test{} Failed".format(nbr_failed, _s(nbr_failed)))
+        table.add_row(rf"[bright blue][?] {nbr_fixed:>3} Test{_s(nbr_fixed)} Fixed")
+    table.add_row(rf"[grey58][?] {nbr_ignored:>3} Test{_s(nbr_ignored)} Ignored")
+    table.add_row(rf"[yellow][!] {nbr_warned:>3} Test Warning{_s(nbr_warned)}")
+    table.add_row(rf"[red][✗] {nbr_failed:>3} Test{_s(nbr_failed)} Failed")
     console.print(table)
 
 

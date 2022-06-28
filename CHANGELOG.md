@@ -1,30 +1,83 @@
 # nf-core/tools: Changelog
 
-## v2.4dev
+## v2.5dev
 
 ### Template
 
-- Set the default DAG graphic output to HTML to have a default that does not depend on Graphviz being installed on the host system ([#1512](https://github.com/nf-core/tools/pull/1512)).
-- Fix bug in pipeline readme logo URL
-- Fix Prettier formatting bug in completion email HTML template ([#1509](https://github.com/nf-core/tools/issues/1509))
-- Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
-- Add `.prettierignore` file to stop Prettier linting tests from running over test files
-- Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
+- Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
+
+### Linting
+
+- Check that the `.prettierignore` file exists and that starts with the same content.
+- Update `readme.py` nf version badge validation regexp to accept any signs before version number ([#1613](https://github.com/nf-core/tools/issues/1613))
+- Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
+- Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 
 ### General
 
-- Bumped the minimum version of `rich` from `v10` to `v10.7.0`
-- Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
-- Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
-- Linting: Don't allow a `.nf-core.yaml` file, should be `.yml` ([#1515](https://github.com/nf-core/tools/pull/1515)).
-- Remove empty JSON schema definition groups to avoid usage errors ([#1419](https://github.com/nf-core/tools/issues/1419))
-- Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
+- Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
+- Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
+- Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
+- Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
+- Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
+- Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 
 ### Modules
 
-- Escaped test run output before logging it, to avoid a rich ` MarkupError`
+- Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
+- Fix a bug in the regex extracting the version from biocontainers URLs ([#1598](https://github.com/nf-core/tools/pull/1598))
+- Update how we interface with git remotes. ([#1626](https://github.com/nf-core/tools/issues/1626))
+- Add prompt for module name to `nf-core modules info` ([#1644](https://github.com/nf-core/tools/issues/1644))
+- Update docs with example of custom git remote ([#1645](https://github.com/nf-core/tools/issues/1645))
+
+## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
+
+- Patch release to try to fix the template sync ([#1585](https://github.com/nf-core/tools/pull/1585))
+- Avoid persistent temp files from pytests ([#1566](https://github.com/nf-core/tools/pull/1566))
+- Add option to trigger sync manually on just nf-core/testpipeline
+
+## [v2.4 - Cobolt Koala](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
+
+### Template
+
+- Read entire lines when sniffing the samplesheet format (fix [#1561](https://github.com/nf-core/tools/issues/1561))
+- Add actions workflow to respond to `@nf-core-bot fix linting` comments on pipeline PRs
+- Fix Prettier formatting bug in completion email HTML template ([#1509](https://github.com/nf-core/tools/issues/1509))
+- Fix bug in pipeline readme logo URL
+- Set the default DAG graphic output to HTML to have a default that does not depend on Graphviz being installed on the host system ([#1512](https://github.com/nf-core/tools/pull/1512)).
+- Removed retry strategy for AWS tests CI, as Nextflow now handles spot instance retries itself
+- Add `.prettierignore` file to stop Prettier linting tests from running over test files
+- Made module template test command match the default used in `nf-core modules create-test-yml` ([#1562](https://github.com/nf-core/tools/issues/1562))
+- Removed black background from Readme badges now that GitHub has a dark mode, added Tower launch badge.
+- Don't save md5sum for `versions.yml` when running `nf-core modules create-test-yml` ([#1511](https://github.com/nf-core/tools/pull/1511))
+
+### General
+
+- Add actions workflow to respond to `@nf-core-bot fix linting` comments on nf-core/tools PRs
+- Use [`$XDG_CONFIG_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.config/nf-core` instead of `~/.nfcore` for API cache (the latter can be safely deleted)
+- Consolidate GitHub API calls into a shared function that uses authentication from the [`gh` GitHub cli tool](https://cli.github.com/) or `GITHUB_AUTH_TOKEN` to avoid rate limiting ([#1499](https://github.com/nf-core/tools/pull/1499))
+- Add an empty line to `modules.json`, `params.json` and `nextflow-schema.json` when dumping them to avoid prettier errors.
+- Remove empty JSON schema definition groups to avoid usage errors ([#1419](https://github.com/nf-core/tools/issues/1419))
+- Bumped the minimum version of `rich` from `v10` to `v10.7.0`
+
+### Modules
+
 - Add a new command `nf-core modules mulled` which can generate the name for a multi-tool container image.
 - Add a new command `nf-core modules test` which runs pytests locally.
+- Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
+- Allow follow links when generating `test.yml` file with `nf-core modules create-test-yml` ([1570](https://github.com/nf-core/tools/pull/1570))
+- Escaped test run output before logging it, to avoid a rich `MarkupError`
+
+### Linting
+
+- Don't allow a `.nf-core.yaml` file, should be `.yml` ([#1515](https://github.com/nf-core/tools/pull/1515)).
+- `shell` blocks now recognised to avoid error `when: condition has too many lines` ([#1557](https://github.com/nf-core/tools/issues/1557))
+- Fixed error when using comments after `input` tuple lines ([#1542](https://github.com/nf-core/tools/issues/1542))
+- Don't lint the `shell` block when `script` is used ([1558](https://github.com/nf-core/tools/pull/1558))
+- Check that `template` is used in `script` blocks
+- Tweaks to CLI output display of lint results
 
 ## [v2.3.2 - Mercury Vulture Fixed Formatting](https://github.com/nf-core/tools/releases/tag/2.3.2) - [2022-03-24]
 
@@ -37,7 +90,6 @@ Very minor patch release to fix the full size AWS tests and re-run the template 
 - Remove traces of markdownlint in the template ([#1486](https://github.com/nf-core/tools/pull/1486)
 - Remove accidentally added line in `CHANGELOG.md` in the template ([#1487](https://github.com/nf-core/tools/pull/1487))
 - Update linting to check that `.editorconfig` is there and `.yamllint.yml` isn't.
-- Don't save md5sum for `versions.yml` when running `nf-core modules create-test-yml` ([#1511](https://github.com/nf-core/tools/pull/1511))
 
 ## [v2.3.1 - Mercury Vulture Formatting](https://github.com/nf-core/tools/releases/tag/2.3.1) - [2022-03-23]
 
