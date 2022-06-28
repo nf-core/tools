@@ -5,11 +5,13 @@
 ### Template
 
 - Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 
 ### Linting
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
+- Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 
 ### General
 
@@ -19,6 +21,7 @@
 - Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
 - Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
 - Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 
 ### Modules
 
@@ -26,6 +29,7 @@
 - Fix a bug in the regex extracting the version from biocontainers URLs ([#1598](https://github.com/nf-core/tools/pull/1598))
 - Update how we interface with git remotes. ([#1626](https://github.com/nf-core/tools/issues/1626))
 - Add prompt for module name to `nf-core modules info` ([#1644](https://github.com/nf-core/tools/issues/1644))
+- Update docs with example of custom git remote ([#1645](https://github.com/nf-core/tools/issues/1645))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
