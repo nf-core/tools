@@ -16,7 +16,6 @@ import rich
 import nf_core.modules.module_utils
 import nf_core.utils
 from nf_core.modules.modules_command import ModuleCommand
-from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
 
 log = logging.getLogger(__name__)
 

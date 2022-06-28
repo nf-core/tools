@@ -109,8 +109,8 @@ class TestModules(unittest.TestCase):
     )
     from .modules.module_test import (
         test_modules_test_check_inputs,
-        test_modules_test_no_installed_modules,
         test_modules_test_no_name_no_prompts,
+        test_modules_test_no_proper_path,
     )
     from .modules.remove import (
         test_modules_remove_trimgalore,
