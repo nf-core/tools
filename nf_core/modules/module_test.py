@@ -67,7 +67,7 @@ class ModulesTest(ModuleCommand):
         self.all_local_modules = None
         self.all_nfcore_modules = None
 
-        # Check if this is a pipeline or not
+        # Check repository type
         try:
             pipeline_dir, repo_type = nf_core.modules.module_utils.get_repo_type(".", use_prompt=False)
             log.debug(f"Found {repo_type} repo: {pipeline_dir}")
@@ -115,14 +115,9 @@ class ModulesTest(ModuleCommand):
                 choices=installed_modules,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        module_dir = Path("modules") / self.module_name
 
         # Sanity check that the module directory exists
         self._validate_folder_structure()
-        # if not module_dir.is_dir():
-        #     raise UserWarning(
-        #         f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
-        #     )
 
     def _validate_folder_structure(self):
         """Validate that the modules follow the correct folder structure to run the tests:
