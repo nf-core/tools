@@ -11,12 +11,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .module_utils import (
-    get_installed_modules,
-    get_module_git_log,
-    get_repo_type,
-    module_exist_in_repo,
-)
+from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
@@ -24,7 +19,7 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInfo(ModuleCommand):
-    def __init__(self, pipeline_dir, tool):
+    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
 
         self.module = tool
         self.meta = None
@@ -40,7 +35,7 @@ class ModuleInfo(ModuleCommand):
                 log.debug(f"Only showing remote info: {e}")
                 pipeline_dir = None
 
-        super().__init__(pipeline_dir)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
 
     def get_module_info(self):
         """Given the name of a module, parse meta.yml and print usage help."""
@@ -93,28 +88,14 @@ class ModuleInfo(ModuleCommand):
         Returns:
             dict or bool: Parsed meta.yml found, False otherwise
         """
-        # Fetch the remote repo information
-        self.modules_repo.get_modules_file_tree()
-
         # Check if our requested module is there
-        if self.module not in self.modules_repo.modules_avail_module_names:
+        if self.module not in self.modules_repo.get_avail_modules():
             return False
 
-        # Get the remote path
-        meta_url = None
-        for file_dict in self.modules_repo.modules_file_tree:
-            if file_dict.get("path") == f"modules/{self.module}/meta.yml":
-                meta_url = file_dict.get("url")
-
-        if not meta_url:
+        file_contents = self.modules_repo.get_meta_yml(self.module)
+        if file_contents is None:
             return False
-
-        # Download and parse
-        log.debug(f"Attempting to fetch {meta_url}")
-        response = requests.get(meta_url)
-        result = response.json()
-        file_contents = base64.b64decode(result["content"])
-        self.remote_location = self.modules_repo.name
+        self.remote_location = self.modules_repo.fullname
         return yaml.safe_load(file_contents)
 
     def generate_module_info_help(self):

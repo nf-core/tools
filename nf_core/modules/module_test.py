@@ -96,9 +96,9 @@ class ModulesTest(object):
                 )
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=all_installed_modules,
+                choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
         module_dir = Path("modules") / self.module_name
 
         # First, sanity check that the module directory exists

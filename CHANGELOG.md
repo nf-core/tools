@@ -4,24 +4,32 @@
 
 ### Template
 
-- Fix bug in pipeline readme logo URL ([#1589](https://github.com/nf-core/tools/issues/1589))
+- Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 
 ### Linting
 
 - Check that the `.prettierignore` file exists and that starts with the same content.
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
+- Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 
 ### General
 
-- Updated the package requirements to prevent defunct installations of nf-core [#1620](https://github.com/nf-core/tools/pull/1620)
-- Add `--fail-warned` flag to `nf-core lint` to make warnings fail [#1593](https://github.com/nf-core/tools/pull/1593)
-- Add `--fail-warned` flag to pipeline linting workflow [#1593](https://github.com/nf-core/tools/pull/1593)
+- Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
+- Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
+- Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
+- Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
+- Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
+- Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
+- Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 
 ### Modules
 
 - Add `--fix-version` flag to `nf-core modules lint` command to update modules to the latest version ([#1588](https://github.com/nf-core/tools/pull/1588))
-- Fix a bug in the regex extracting the version from biocontainers URLs [#1598](https://github.com/nf-core/tools/pull/1598)
-- Command `nf-core modules test` obtains module name suggestions from installed modules [#1624](https://github.com/nf-core/tools/pull/1624)
+- Fix a bug in the regex extracting the version from biocontainers URLs ([#1598](https://github.com/nf-core/tools/pull/1598))
+- Update how we interface with git remotes. ([#1626](https://github.com/nf-core/tools/issues/1626))
+- Update docs with example of custom git remote ([#1645](https://github.com/nf-core/tools/issues/1645))
+- Command `nf-core modules test` obtains module name suggestions from installed modules ([#1624](https://github.com/nf-core/tools/pull/1624))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
@@ -59,7 +67,7 @@
 - Add a new command `nf-core modules test` which runs pytests locally.
 - Print include statement to terminal when `modules install` ([#1520](https://github.com/nf-core/tools/pull/1520))
 - Allow follow links when generating `test.yml` file with `nf-core modules create-test-yml` ([1570](https://github.com/nf-core/tools/pull/1570))
-- Escaped test run output before logging it, to avoid a rich ` MarkupError`
+- Escaped test run output before logging it, to avoid a rich `MarkupError`
 
 ### Linting
 

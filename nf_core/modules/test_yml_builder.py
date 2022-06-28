@@ -69,12 +69,11 @@ class ModulesTestYmlBuilder(object):
         # Get the tool name if not specified
         if self.module_name is None:
             modules_repo = ModulesRepo()
-            modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.modules_avail_module_names,
+                choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
         self.module_dir = os.path.join("modules", *self.module_name.split("/"))
         self.module_test_main = os.path.join("tests", "modules", *self.module_name.split("/"), "main.nf")
 

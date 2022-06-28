@@ -69,7 +69,7 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
         self.dir = dir
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -79,7 +79,7 @@ class ModuleLint(ModuleCommand):
         self.passed = []
         self.warned = []
         self.failed = []
-        self.modules_repo = ModulesRepo()
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
         self.lint_tests = self._get_all_lint_tests()
         # Get lists of modules install in directory
         self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
