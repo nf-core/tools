@@ -16,6 +16,7 @@ import jinja2
 import questionary
 import requests
 import yaml
+from pytest import param
 
 import nf_core
 
@@ -85,13 +86,27 @@ class PipelineCreate(object):
                 template_yaml = yaml.safe_load(f)
 
             param_dict = {}
-            param_dict["name"] = template_yaml.get(
-                "name",
-            )
-            param_dict["author"] = template_yaml.get("author", self.name)
-            param_dict["name"] = template_yaml.get("name", self.name)
-            param_dict["name"] = template_yaml.get("name", self.name)
+            param_dict["name"] = self.get_param("name", name, template_yaml, template_yaml_path)
+            param_dict["description"] = self.get_param("description", description, template_yaml, template_yaml_path)
+            param_dict["author"] = self.get_param("author", author, template_yaml, template_yaml_path)
+
+            if "version" in template_yaml:
+                if version is not None:
+                    log.info(f"Overriding --version with version found in {template_yaml_path}")
+                version = template_yaml["version"]
+            param_dict["version"] = version
+
         return param_dict
+
+    def get_param(self, param_name, passed_value, template_yaml, template_yaml_path):
+        if param_name in template_yaml:
+            if passed_value is not None:
+                log.info(f"overriding --{param_name} with name found in {template_yaml_path}")
+            passed_value = template_yaml["name"]
+        if passed_value is None:
+            default = self.__getattribute__("prompt_wf_" + param_name)
+            passed_value = default()
+        return passed_value
 
     def prompt_wf_name(self):
         wf_name = questionary.text("Workflow name").unsafe_ask()
