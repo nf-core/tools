@@ -914,7 +914,15 @@ The modules supercommand comes with two flags for specifying a custom remote:
 - `--git-remote <git remote url>`: Specify the repository from which the modules should be fetched as a git URL. Defaults to the github repository of `nf-core/modules`.
 - `--branch <branch name>`: Specify the branch from which the modules should be fetched. Defaults to the default branch of your repository.
 
-You can also specify the base path where the modules are kept in the remote repository, by using the `--base-path <path>` flag. This will default to `modules`.
+For example, if you want to install the `fastqc` module from the repository `nf-core/modules-test` hosted at `gitlab.com`, you can use the following command:
+
+```terminal
+nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
+```
+
+If the modules in your custom remote are stored in another directory than `modules`, you can specify the path by using the `--base-path <path>` flag. This will default to `modules`.
+
+Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
 due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
