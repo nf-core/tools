@@ -59,8 +59,8 @@ class ModulesTest(object):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
-        self.all_local_modules = ""
-        self.all_nfcore_modules = ""
+        self.all_local_modules = None
+        self.all_nfcore_modules = None
 
     def run(self):
         """Run test steps"""
