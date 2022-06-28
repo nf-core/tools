@@ -4,15 +4,17 @@ The ModulesTest class runs the tests locally
 """
 
 import logging
-import questionary
 import os
-import pytest
 import sys
-import rich
 from pathlib import Path
 from shutil import which
 
+import pytest
+import questionary
+import rich
+
 import nf_core.utils
+
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -79,9 +81,9 @@ class ModulesTest(object):
             modules_repo.get_modules_file_tree()
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.modules_avail_module_names,
+                choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
-            ).ask()
+            ).unsafe_ask()
         module_dir = Path("modules") / self.module_name
 
         # First, sanity check that the module directory exists

@@ -2,8 +2,9 @@
 """Some tests covering the pipeline creation sub command.
 """
 import os
-import nf_core.create
 import unittest
+
+import nf_core.create
 
 from .utils import with_temporary_folder
 

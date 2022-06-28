@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
+import fnmatch
+import io
 import logging
 import os
-import io
-import fnmatch
 
 log = logging.getLogger(__name__)
 
@@ -65,7 +65,7 @@ def pipeline_todos(self, root_dir=None):
                                 .replace("TODO nf-core: ", "")
                                 .strip()
                             )
-                            warned.append("TODO string in `{}`: _{}_".format(fname, l))
+                            warned.append(f"TODO string in `{fname}`: _{l}_")
                             file_paths.append(os.path.join(root, fname))
             except FileNotFoundError:
                 log.debug(f"Could not open file {fname} in pipeline_todos lint test")

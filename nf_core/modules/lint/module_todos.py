@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import logging
+
 from nf_core.lint.pipeline_todos import pipeline_todos
 
 log = logging.getLogger(__name__)
