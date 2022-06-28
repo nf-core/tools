@@ -264,8 +264,8 @@ def validate_wf_name_prompt(ctx, opts, value):
     type=str,
     help="The name of your new pipeline",
 )
-@click.option("-d", "--description", prompt=True, type=str, help="A short description of your pipeline")
-@click.option("-a", "--author", prompt=True, type=str, help="Name of the main author(s)")
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
 @click.option("--no-git", is_flag=True, default=False, help="Do not initialise pipeline as new git repository")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")

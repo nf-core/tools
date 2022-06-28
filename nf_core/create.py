@@ -13,8 +13,9 @@ import time
 
 import git
 import jinja2
+import questionary
 import requests
-from genericpath import exists
+import yaml
 
 import nf_core
 
@@ -36,9 +37,27 @@ class PipelineCreate(object):
     """
 
     def __init__(
-        self, name, description, author, prefix="nf-core", version="1.0dev", no_git=False, force=False, outdir=None
+        self,
+        name,
+        description,
+        author,
+        version="1.0dev",
+        no_git=False,
+        force=False,
+        outdir=None,
+        template_yaml_path=None,
     ):
-        self.short_name = name.lower().replace(r"/\s+/", "-").replace(f"{prefix}/", "").replace("/", "-")
+
+        template_params = {
+            "name": name,
+            "description": description,
+            "author": author,
+            "prefix": "nf-core",
+            "version": version,
+        }
+        self.template_params = self.create_param_dict(name, description, author, version, template_yaml_path)
+
+        self.short_name = name.lower().replace(r"/\s+/", "-").replace(f"nf-core/", "").replace("/", "-")
         self.name = f"{prefix}/{self.short_name}"
         self.name_noslash = self.name.replace("/", "-")
         self.prefix_nodash = prefix.replace("-", "")
@@ -55,7 +74,42 @@ class PipelineCreate(object):
         if not self.outdir:
             self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
+    def create_param_dict(self, name, description, author, version, template_yaml_path):
+        """Creates a dictionary of parameters for the new pipeline.
+
+        Args:
+            template_yaml_path (str): Path to YAML file containing template parameters.
+        """
+        if template_yaml_path is not None:
+            with open(template_yaml_path, "r") as f:
+                template_yaml = yaml.safe_load(f)
+
+            param_dict = {}
+            param_dict["name"] = template_yaml.get(
+                "name",
+            )
+            param_dict["author"] = template_yaml.get("author", self.name)
+            param_dict["name"] = template_yaml.get("name", self.name)
+            param_dict["name"] = template_yaml.get("name", self.name)
+        return param_dict
+
+    def prompt_wf_name(self):
+        wf_name = questionary.text("Workflow name").unsafe_ask()
+        while not re.match(r"^[a-z]+$", wf_name):
+            log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
+            wf_name = questionary.text("Please provide a new workflow name").unsafe_ask()
+        return wf_name
+
+    def prompt_wf_description(self):
+        wf_description = questionary.text("Description").unsafe_ask()
+        return wf_description
+
+    def prompt_wf_author(self):
+        wf_author = questionary.text("Author").unsafe_ask()
+        return wf_author
+
     def init_pipeline(self):
+
         """Creates the nf-core pipeline."""
 
         # Make the new pipeline
