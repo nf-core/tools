@@ -1,4 +1,3 @@
-pytest
 pytest-datafiles
 pytest-cov
 mock
@@ -6,3 +5,4 @@ black
 Sphinx
 sphinx_rtd_theme
 isort
+pre-commit

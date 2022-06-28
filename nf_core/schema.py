@@ -256,7 +256,9 @@ class PipelineSchema(object):
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
                 else:
-                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
+                    self.invalid_nextflow_config_default_parameters[
+                        param
+                    ] = "Not in pipeline parameters. Check `nextflow.config`."
 
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -269,7 +271,9 @@ class PipelineSchema(object):
                         param, ungrouped_properties[param], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
+                    self.invalid_nextflow_config_default_parameters[
+                        param
+                    ] = "Not in pipeline parameters. Check `nextflow.config`."
 
     def validate_config_default_parameter(self, param, schema_param, config_default):
         """
@@ -413,11 +417,14 @@ class PipelineSchema(object):
         output_fn=None,
         format="markdown",
         force=False,
-        columns=["parameter", "description", "type,", "default", "required", "hidden"],
+        columns=None,
     ):
         """
         Prints documentation for the schema.
         """
+        if columns is None:
+            columns = ["parameter", "description", "type,", "default", "required", "hidden"]
+
         output = self.schema_to_markdown(columns)
         if format == "html":
             output = self.markdown_to_html(output)
@@ -511,10 +518,7 @@ class PipelineSchema(object):
         """Interactively build a new pipeline schema for a pipeline"""
 
         # Check if supplied pipeline directory really is one
-        try:
-            nf_core.utils.is_pipeline_directory(pipeline_dir)
-        except UserWarning:
-            raise
+        nf_core.utils.is_pipeline_directory(pipeline_dir)
 
         if no_prompts:
             self.no_prompts = True

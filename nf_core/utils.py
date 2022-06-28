@@ -15,7 +15,7 @@ import shlex
 import subprocess
 import sys
 import time
-from distutils import version
+from distutils.version import StrictVersion
 
 import git
 import prompt_toolkit
@@ -50,10 +50,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
-NFCORE_CONFIG_DIR = os.path.join(
-    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")),
+NFCORE_CACHE_DIR = os.path.join(
+    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
     "nf-core",
 )
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
@@ -75,7 +76,7 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
         response = requests.get(source_url, timeout=3)
         remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
-    is_outdated = version.StrictVersion(remote_version) > version.StrictVersion(current_version)
+    is_outdated = StrictVersion(remote_version) > StrictVersion(current_version)
     return (is_outdated, current_version, remote_version)
 
 
@@ -298,6 +299,15 @@ def nextflow_cmd(cmd):
         )
 
 
+def setup_nfcore_dir():
+    """Creates a directory for files that need to be kept between sessions
+
+    Currently only used for keeping local copies of modules repos
+    """
+    if not os.path.exists(NFCORE_DIR):
+        os.makedirs(NFCORE_DIR)
+
+
 def setup_requests_cachedir():
     """Sets up local caching for faster remote HTTP requests.
 
@@ -308,7 +318,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CONFIG_DIR, f"cache_{pyversion}")
+    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
 
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
@@ -540,7 +550,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 gh_api = GitHub_API_Session()
 
 
-def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
+def anaconda_package(dep, dep_channels=None):
     """Query conda package information.
 
     Sends a HTTP GET request to the Anaconda remote API.
@@ -553,6 +563,9 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
         A LookupError, if the connection fails or times out or gives an unexpected status code
         A ValueError, if the package name can not be found (404)
     """
+
+    if dep_channels is None:
+        dep_channels = ["conda-forge", "bioconda", "defaults"]
 
     # Check if each dependency is the latest available version
     if "=" in dep:
