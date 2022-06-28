@@ -17,7 +17,17 @@ log = logging.getLogger(__name__)
 
 
 class ModulesJson:
+    """
+    An object for handling a 'modules.json' file in a pipeline
+    """
+
     def __init__(self, pipeline_dir):
+        """
+        Initialise the object.
+
+        Args:
+            pipeline_dir (str): The pipeline directory
+        """
         self.dir = pipeline_dir
         self.modules_dir = os.path.join(self.dir, "modules")
         self.modules_json = None
@@ -25,6 +35,9 @@ class ModulesJson:
     def create_modules_json(self):
         """
         Creates the modules.json file from the modules installed in the pipeline directory
+
+        Raises:
+            UserWarning: If the creation fails
         """
         pipeline_config = nf_core.utils.fetch_wf_config(self.dir)
         pipeline_name = pipeline_config.get("manifest.name", "")
@@ -165,7 +178,8 @@ class ModulesJson:
             module_path (str): Path to module in local repo
             module_repo (str): Remote repo for module
         Returns:
-            commit_sha (str): The latest commit SHA where local files are identical to remote files
+            commit_sha (str): The latest commit SHA where local files are identical to remote files,
+                              or None if no commit is found
         """
         # Find the correct commit SHA for the local module files.
         # We iterate over the commit history for the module until we find
@@ -178,8 +192,17 @@ class ModulesJson:
 
     def dir_tree_uncovered(self, modules_dir, repos):
         """
-        Does a BFS of the modules directory of a pipeline and rapports any directories
-        that are not found in the list of repos
+        Does a BFS of the modules directory to look for directories that
+        are not tracked by a remote. The 'repos' argument contains the
+        directories that are currently covered by remote, and it and its
+        subdirectories are therefore ignore.
+
+        Args:
+            module_dir (str): Base path of modules in pipeline
+            repos ([ str ]): List of repos that are covered by a remote
+
+        Returns:
+            dirs_not_covered ([ str ]): A list of directories that are currently not covered by any remote.
         """
         # Initialise the FIFO queue. Note that we assume the directory to be correctly
         # configured, i.e. no files etc.
@@ -437,6 +460,11 @@ class ModulesJson:
     def load_modules_json(self):
         """
         Loads the modules.json file into the variable 'modules_json'
+
+        Sets the modules_json attribute to the loaded file.
+
+        Raises:
+            UserWarning: If the modules.json file is not found
         """
         modules_json_path = os.path.join(self.dir, "modules.json")
         try:
@@ -448,6 +476,12 @@ class ModulesJson:
     def update_modules_json(self, modules_repo, module_name, module_version, write_file=True):
         """
         Updates the 'module.json' file with new module info
+
+        Args:
+            modules_repo (ModulesRepo): A ModulesRepo object configured for the new module
+            module_name (str): Name of new module
+            module_version (str): git SHA for the new module entry
+            write_file (bool): whether to write the updated modules.json to a file.
         """
         if self.modules_json is None:
             self.load_modules_json()
@@ -462,10 +496,13 @@ class ModulesJson:
         if write_file:
             self.dump_modules_json()
 
-    def remove_modules_json_entry(self, module, repo_name):
+    def remove_modules_json_entry(self, module_name, repo_name):
         """
         Removes an entry from the 'modules.json' file.
 
+        Args:
+            module_name (str): Name of the module to be removed
+            repo_name (str): Name of the repository containing the module
         Returns:
             (bool): True if the removal was successful, False otherwise
         """
@@ -473,15 +510,15 @@ class ModulesJson:
             return False
         if repo_name in self.modules_json.get("repos", {}):
             repo_entry = self.modules_json["repos"][repo_name]
-            if module in repo_entry.get("modules", {}):
-                repo_entry["modules"].pop(module)
+            if module_name in repo_entry.get("modules", {}):
+                repo_entry["modules"].pop(module_name)
             else:
-                log.warning(f"Module '{repo_name}/{module}' is missing from 'modules.json' file.")
+                log.warning(f"Module '{repo_name}/{module_name}' is missing from 'modules.json' file.")
                 return False
             if len(repo_entry) == 0:
                 self.modules_json["repos"].pop(repo_name)
         else:
-            log.warning(f"Module '{repo_name}/{module}' is missing from 'modules.json' file.")
+            log.warning(f"Module '{repo_name}/{module_name}' is missing from 'modules.json' file.")
             return False
 
         self.dump_modules_json()
@@ -490,18 +527,30 @@ class ModulesJson:
     def repo_present(self, repo_name):
         """
         Checks if a repo is present in the modules.json file
+        Args:
+            repo_name (str): Name of the repository
+        Returns:
+            (bool): Whether the repo exists in the modules.json
         """
         return repo_name in self.modules_json.get("repos", {})
 
     def module_present(self, module_name, repo_name):
         """
         Checks if a module is present in the modules.json file
+        Args:
+            module_name (str): Name of the module
+            repo_name (str): Name of the repository
+        Returns:
+            (bool): Whether the module is present in the 'modules.json' file
         """
         return module_name in self.modules_json.get("repos", {}).get(repo_name, {}).get("modules", {})
 
     def get_modules_json(self):
         """
         Returns a copy of the loaded modules.json
+
+        Returns:
+            (dict): A copy of the loaded modules.json
         """
         if self.modules_json is None:
             self.load_modules_json()
@@ -510,6 +559,13 @@ class ModulesJson:
     def get_module_version(self, module_name, repo_name):
         """
         Returns the version of a module
+
+        Args:
+            module_name (str): Name of the module
+            repo_name (str): Name of the repository
+
+        Returns:
+            (str): The git SHA of the module if it exists, None otherwise
         """
         if self.modules_json is None:
             self.load_modules_json()
@@ -524,6 +580,12 @@ class ModulesJson:
     def get_git_url(self, repo_name):
         """
         Returns the git url of a repo
+
+        Args:
+            repo_name (str): Name of the repository
+
+        Returns:
+            (str): The git url of the repository if it exists, None otherwise
         """
         if self.modules_json is None:
             self.load_modules_json()
@@ -532,13 +594,20 @@ class ModulesJson:
     def get_base_path(self, repo_name):
         """
         Returns the modules base path of a repo
+        Args:
+            repo_name (str): Name of the repository
+
+        Returns:
+            (str): The base path of the repository if it exists, None otherwise
         """
         if self.modules_json is None:
             self.load_modules_json()
         return self.modules_json.get("repos", {}).get(repo_name, {}).get("base_path", None)
 
     def dump_modules_json(self):
-        """Build filename for modules.json and write to file."""
+        """
+        Sort the modules.json, and write it to file
+        """
         # Sort the modules.json
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         modules_json_path = os.path.join(self.dir, "modules.json")
