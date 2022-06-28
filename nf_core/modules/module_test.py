@@ -15,11 +15,13 @@ import rich
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core.modules.modules_command import ModuleCommand
+from nf_core.modules.modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTest(object):
+class ModulesTest(ModuleCommand):
     """
     Class to run module pytests.
 
@@ -55,12 +57,26 @@ class ModulesTest(object):
         module_name=None,
         no_prompts=False,
         pytest_args="",
+        remote_url=None,
+        branch=None,
+        no_pull=False,
     ):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
         self.all_local_modules = None
         self.all_nfcore_modules = None
+
+        # Quietly check if this is a pipeline or not
+        try:
+            pipeline_dir, repo_type = nf_core.modules.module_utils.get_repo_type(".", use_prompt=False)
+            log.debug(f"Found {repo_type} repo: {pipeline_dir}")
+        except UserWarning as e:
+            log.debug(f"Only showing remote info: {e}")
+            pipeline_dir = None
+
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        self.get_pipeline_modules()
 
     def run(self):
         """Run test steps"""
@@ -76,10 +92,11 @@ class ModulesTest(object):
     def _check_inputs(self):
         """Do more complex checks about supplied flags."""
 
-        # Get installed modules
-        self.all_local_modules, self.all_nfcore_modules = nf_core.modules.module_utils.get_installed_modules(
-            ".", "modules"
-        )
+        # Retrieving installed modules
+        if self.repo_type == "modules":
+            installed_modules = self.module_names["modules"]
+        else:
+            installed_modules = self.module_names.get(self.modules_repo.fullname)
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -87,16 +104,15 @@ class ModulesTest(object):
                 raise UserWarning(
                     "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
                 )
-            all_installed_modules = [m.module_name for m in self.all_nfcore_modules]
-            if len(all_installed_modules) == 0:
+            if installed_modules is None:
                 raise UserWarning(
-                    "No installed modules were found.\n"
+                    "No installed modules were found from '{self.modules_repo.remote_url}'.\n"
                     "Are you running the tests inside the nf-core/modules main directory?\n"
                     "Otherwise, make sure that the directory structure is modules/TOOL/SUBTOOL/ and tests/modules/TOOLS/SUBTOOL/"
                 )
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.get_avail_modules(),
+                choices=installed_modules,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         module_dir = Path("modules") / self.module_name
