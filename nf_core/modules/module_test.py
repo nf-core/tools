@@ -34,10 +34,6 @@ class ModulesTest(ModuleCommand):
         flat indicating if prompts are used
     pytest_args : tuple
         additional arguments passed to pytest command
-    all_local_modules: list
-        List of all installed local modules
-    all_nfcore_modules: list
-        List of all installed nf-core modules
 
     Methods
     -------
@@ -63,8 +59,6 @@ class ModulesTest(ModuleCommand):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
-        self.all_local_modules = None
-        self.all_nfcore_modules = None
 
         # Check repository type
         try:
