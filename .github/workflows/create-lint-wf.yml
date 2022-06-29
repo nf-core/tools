@@ -96,6 +96,9 @@ jobs:
       - name: nf-core modules install
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
 
+      - name: nf-core modules install gitlab
+        run: nf-core --log-file log.txt modules --git-remote git@gitlab.com:nf-core/modules-test.git --base-path tools install fastqc --dir nf-core-testpipeline/
+
       - name: Upload log file artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@v2
