@@ -1,20 +1,18 @@
 import json
 import logging
-from os import pipe
 
 import rich
 
-import nf_core.modules.module_utils
-from nf_core.modules.modules_repo import ModulesRepo
-
 from .modules_command import ModuleCommand
+from .modules_json import ModulesJson
+from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False, base_path=None):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.remote = remote
 
     def list_modules(self, keywords=None, print_json=False):
@@ -67,7 +65,8 @@ class ModuleList(ModuleCommand):
                 return ""
 
             # Verify that 'modules.json' is consistent with the installed modules
-            self.modules_json_up_to_date()
+            modules_json = ModulesJson(self.dir)
+            modules_json.modules_json_up_to_date()
 
             # Get installed modules
             self.get_pipeline_modules()
@@ -89,7 +88,7 @@ class ModuleList(ModuleCommand):
             table.add_column("Date")
 
             # Load 'modules.json'
-            modules_json = self.load_modules_json()
+            modules_json = modules_json.modules_json
 
             for repo_name, modules in sorted(repos_with_mods.items()):
                 repo_entry = modules_json["repos"].get(repo_name, {})
@@ -105,9 +104,9 @@ class ModuleList(ModuleCommand):
                         version_sha = module_entry["git_sha"]
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
-                            message, date = ModulesRepo(remote_url=repo_entry["git_url"]).get_commit_info(
-                                version_sha
-                            )  # NOTE add support for other remotes
+                            message, date = ModulesRepo(
+                                remote_url=repo_entry["git_url"], base_path=repo_entry["base_path"]
+                            ).get_commit_info(version_sha)
                         except LookupError as e:
                             log.warning(e)
                             date = "[red]Not Available"
