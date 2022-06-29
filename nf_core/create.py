@@ -53,6 +53,9 @@ class PipelineCreate(object):
 
         self.no_git = no_git
         self.force = force
+        if outdir is None:
+            outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
+        self.outdir = outdir
 
     def create_param_dict(self, name, description, author, version, outdir, template_yaml_path):
         """Creates a dictionary of parameters for the new pipeline.
@@ -113,10 +116,6 @@ class PipelineCreate(object):
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
         param_dict["branded"] = param_dict["prefix"] == "nf-core"
-
-        if outdir is None:
-            outdir = os.path.join(os.getcwd(), param_dict["name_noslash"])
-        param_dict["outdir"] = outdir
 
         return param_dict
 
