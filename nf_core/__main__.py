@@ -272,15 +272,17 @@ def validate_wf_name_prompt(ctx, opts, value):
     "-o", "--outdir", type=str, default=None, help="Output directory for new pipeline (default: pipeline name)"
 )
 @click.option("-t", "--template-yaml", type=str, default=None, help="Pass a YAML file to customize the template")
-def create(name, description, author, version, no_git, force, outdir, template_yaml):
+@click.option("--plain", is_flag=True, default=False, help="Use the standard nf-core template")
+def create(name, description, author, version, no_git, force, outdir, template_yaml, plain):
     """
     Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
     """
-    print(outdir)
-    create_obj = nf_core.create.PipelineCreate(name, description, author, version, no_git, force, outdir, template_yaml)
+    create_obj = nf_core.create.PipelineCreate(
+        name, description, author, version, no_git, force, outdir, template_yaml, plain
+    )
     create_obj.init_pipeline()
 
 

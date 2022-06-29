@@ -48,9 +48,10 @@ class PipelineCreate(object):
         force=False,
         outdir=None,
         template_yaml_path=None,
+        plain=False,
     ):
         self.template_params, skip_paths = self.create_param_dict(
-            name, description, author, version, template_yaml_path
+            name, description, author, version, template_yaml_path, plain
         )
 
         skippable_paths = {"ci": ".github/workflows/", "igenomes": "conf/igenomes.config"}
@@ -62,7 +63,7 @@ class PipelineCreate(object):
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
         self.outdir = outdir
 
-    def create_param_dict(self, name, description, author, version, template_yaml_path):
+    def create_param_dict(self, name, description, author, version, template_yaml_path, plain):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -95,7 +96,7 @@ class PipelineCreate(object):
         }
 
         # Once all necessary parameters are set, check if the user wants to customize the template more
-        if template_yaml_path is None:
+        if template_yaml_path is None and not plain:
             customize_template = questionary.confirm(
                 "Do you want to customize which parts of the template are used?",
                 style=nf_core.utils.nfcore_question_style,
@@ -108,7 +109,7 @@ class PipelineCreate(object):
 
         skip_paths = []
         for t_area in template_areas:
-            if t_area in template_yaml["skip"]:
+            if t_area in template_yaml.get("skip", []):
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
                 param_dict[t_area] = template_areas[t_area]["content"]
