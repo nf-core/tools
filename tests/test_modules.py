@@ -44,8 +44,15 @@ class TestModules(unittest.TestCase):
 
         # Set up install objects
         print("Setting up install objects")
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True, no_pull=True)
+        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True, no_pull=True)
+        self.mods_install_gitlab = nf_core.modules.ModuleInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=True,
+            remote_url="git@gitlab.com:nf-core/modules-test.git",
+            base_path="tools",
+        )
 
         # Set up remove objects
         print("Setting up remove objects")

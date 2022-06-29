@@ -38,6 +38,11 @@ def test_modules_install_trimgalore_twice(self):
     assert self.mods_install.install("trimgalore") is True
 
 
+def test_modules_install_from_gitlab(self):
+    """Test installing a module from GitLab"""
+    assert self.mods_install_gitlab.install("fastqc") is True
+
+
 # TODO Remove comments once external repository to have same structure as nf-core/modules
 # def test_modules_install_trimgalore_alternative_source(self):
 #     """Test installing a module from a different source repository - TrimGalore!"""
