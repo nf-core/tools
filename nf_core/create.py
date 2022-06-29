@@ -190,7 +190,7 @@ class PipelineCreate(object):
         log.info(f"Creating new nf-core pipeline: '{self.template_params['name']}'")
 
         # Check if the output directory exists
-        if os.path.exists(self.template_params["outdir"]):
+        if os.path.exists(self.outdir):
             if self.force:
                 log.warning(
                     f"Output directory '{self.template_params['outdir']}' exists - continuing as --force specified"
@@ -200,7 +200,7 @@ class PipelineCreate(object):
                 log.info("Use -f / --force to overwrite existing files")
                 sys.exit(1)
         else:
-            os.makedirs(self.template_params["outdir"])
+            os.makedirs(self.outdir)
 
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(
@@ -232,9 +232,9 @@ class PipelineCreate(object):
 
             # Set up vars and directories
             template_fn = os.path.relpath(template_fn_path, template_dir)
-            output_path = os.path.join(self.template_params["outdir"], template_fn)
+            output_path = os.path.join(self.outdir, template_fn)
             if template_fn in rename_files:
-                output_path = os.path.join(self.template_params["outdir"], rename_files[template_fn])
+                output_path = os.path.join(self.outdir, rename_files[template_fn])
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             try:
@@ -330,7 +330,7 @@ class PipelineCreate(object):
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit."""
         log.info("Initialising pipeline git repository")
-        repo = git.Repo.init(self.template_params["outdir"])
+        repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         # Add TEMPLATE branch to git repository
