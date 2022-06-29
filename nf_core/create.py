@@ -49,7 +49,12 @@ class PipelineCreate(object):
         outdir=None,
         template_yaml_path=None,
     ):
-        self.template_params = self.create_param_dict(name, description, author, version, outdir, template_yaml_path)
+        self.template_params, skip_paths = self.create_param_dict(
+            name, description, author, version, template_yaml_path
+        )
+
+        skippable_paths = {"ci": ".github/workflows/", "igenomes": "conf/igenomes.config"}
+        self.skip_paths = {skippable_paths[k] for k in skip_paths}
 
         self.no_git = no_git
         self.force = force
@@ -57,7 +62,7 @@ class PipelineCreate(object):
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
         self.outdir = outdir
 
-    def create_param_dict(self, name, description, author, version, outdir, template_yaml_path):
+    def create_param_dict(self, name, description, author, version, template_yaml_path):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -81,12 +86,13 @@ class PipelineCreate(object):
             version = template_yaml["version"]
         param_dict["version"] = version
 
-        # Define the different template areas
-        template_areas = [
-            {"name": "GitHub CI", "value": "ci"},
-            {"name": "GitHub badges", "value": "github_badges"},
-            {"name": "iGenomes config", "value": "igenomes"},
-        ]
+        # Define the different template areas, and what actions to take for each
+        # if they are skipped
+        template_areas = {
+            "ci": {"name": "GitHub CI", "file": True, "content": False},
+            "gh_badges": {"name": "GitHub badges", "file": False, "content": True},
+            "igenomes": {"name": "iGenomes config", "file": True, "content": False},
+        }
 
         # Once all necessary parameters are set, check if the user wants to customize the template more
         if template_yaml_path is None:
@@ -100,9 +106,14 @@ class PipelineCreate(object):
         # Now look in the template for more options, otherwise default to nf-core defaults
         param_dict["prefix"] = template_yaml.get("prefix", "nf-core")
 
-        param_dict["skip"] = []
-        for t_area_key in (t_area["value"] for t_area in template_areas):
-            param_dict[t_area_key] = t_area_key not in template_yaml.get("skip", [])
+        skip_paths = []
+        for t_area in template_areas:
+            if t_area in template_yaml["skip"]:
+                if template_areas[t_area]["file"]:
+                    skip_paths.append(t_area)
+                param_dict[t_area] = template_areas[t_area]["content"]
+            else:
+                param_dict[t_area] = True
 
         # Set the last parameters based on the ones provided
         param_dict["short_name"] = (
@@ -117,7 +128,7 @@ class PipelineCreate(object):
         param_dict["version"] = version
         param_dict["branded"] = param_dict["prefix"] == "nf-core"
 
-        return param_dict
+        return param_dict, skip_paths
 
     def customize_template(self, template_areas):
         """Customizes the template parameters.
@@ -136,8 +147,9 @@ class PipelineCreate(object):
             ).unsafe_ask()
         template_yaml["prefix"] = prefix
 
+        choices = [{"name": template_areas[area]["name"], "value": area} for area in template_areas]
         template_yaml["skip"] = questionary.checkbox(
-            "Skip template areas?", choices=template_areas, style=nf_core.utils.nfcore_question_style
+            "Skip template areas?", choices=choices, style=nf_core.utils.nfcore_question_style
         ).unsafe_ask()
         return template_yaml
 
@@ -192,11 +204,9 @@ class PipelineCreate(object):
         # Check if the output directory exists
         if os.path.exists(self.outdir):
             if self.force:
-                log.warning(
-                    f"Output directory '{self.template_params['outdir']}' exists - continuing as --force specified"
-                )
+                log.warning(f"Output directory '{self.outdir}' exists - continuing as --force specified")
             else:
-                log.error(f"Output directory '{self.template_params['outdir']}' exists!")
+                log.error(f"Output directory '{self.outdir}' exists!")
                 log.info("Use -f / --force to overwrite existing files")
                 sys.exit(1)
         else:
@@ -218,53 +228,58 @@ class PipelineCreate(object):
             "workflows/pipeline.nf": f"workflows/{self.template_params['short_name']}.nf",
             "lib/WorkflowPipeline.groovy": f"lib/Workflow{self.template_params['short_name'][0].upper()}{self.template_params['short_name'][1:]}.groovy",
         }
-        # Set the paths to skip according to customization
-        skippable_paths = {"ci": ".github/workflows/", "igenomes": "conf/igenomes.config"}
 
+        # Set the paths to skip according to customization
         for template_fn_path_obj in template_files:
 
             template_fn_path = str(template_fn_path_obj)
-            if os.path.isdir(template_fn_path):
-                continue
-            if any([s in template_fn_path for s in ignore_strs]):
-                log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
-                continue
 
-            # Set up vars and directories
-            template_fn = os.path.relpath(template_fn_path, template_dir)
-            output_path = os.path.join(self.outdir, template_fn)
-            if template_fn in rename_files:
-                output_path = os.path.join(self.outdir, rename_files[template_fn])
-            os.makedirs(os.path.dirname(output_path), exist_ok=True)
+            # Skip files that are in the self.skip_paths list
+            for skip_path in self.skip_paths:
+                if os.path.relpath(template_fn_path, template_dir).startswith(skip_path):
+                    break
+            else:
+                if os.path.isdir(template_fn_path):
+                    continue
+                if any([s in template_fn_path for s in ignore_strs]):
+                    log.debug(f"Ignoring '{template_fn_path}' in jinja2 template creation")
+                    continue
 
-            try:
-                # Just copy binary files
-                if nf_core.utils.is_file_binary(template_fn_path):
-                    raise AttributeError(f"Binary file: {template_fn_path}")
+                # Set up vars and directories
+                template_fn = os.path.relpath(template_fn_path, template_dir)
+                output_path = os.path.join(self.outdir, template_fn)
+                if template_fn in rename_files:
+                    output_path = os.path.join(self.outdir, rename_files[template_fn])
+                os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
-                # Got this far - render the template
-                log.debug(f"Rendering template file: '{template_fn}'")
-                j_template = env.get_template(template_fn)
-                rendered_output = j_template.render(object_attrs)
+                try:
+                    # Just copy binary files
+                    if nf_core.utils.is_file_binary(template_fn_path):
+                        raise AttributeError(f"Binary file: {template_fn_path}")
 
-                # Write to the pipeline output file
-                with open(output_path, "w") as fh:
-                    log.debug(f"Writing to output file: '{output_path}'")
-                    fh.write(rendered_output)
+                    # Got this far - render the template
+                    log.debug(f"Rendering template file: '{template_fn}'")
+                    j_template = env.get_template(template_fn)
+                    rendered_output = j_template.render(object_attrs)
 
-            # Copy the file directly instead of using Jinja
-            except (AttributeError, UnicodeDecodeError) as e:
-                log.debug(f"Copying file without Jinja: '{output_path}' - {e}")
-                shutil.copy(template_fn_path, output_path)
+                    # Write to the pipeline output file
+                    with open(output_path, "w") as fh:
+                        log.debug(f"Writing to output file: '{output_path}'")
+                        fh.write(rendered_output)
 
-            # Something else went wrong
-            except Exception as e:
-                log.error(f"Copying raw file as error rendering with Jinja: '{output_path}' - {e}")
-                shutil.copy(template_fn_path, output_path)
+                # Copy the file directly instead of using Jinja
+                except (AttributeError, UnicodeDecodeError) as e:
+                    log.debug(f"Copying file without Jinja: '{output_path}' - {e}")
+                    shutil.copy(template_fn_path, output_path)
 
-            # Mirror file permissions
-            template_stat = os.stat(template_fn_path)
-            os.chmod(output_path, template_stat.st_mode)
+                # Something else went wrong
+                except Exception as e:
+                    log.error(f"Copying raw file as error rendering with Jinja: '{output_path}' - {e}")
+                    shutil.copy(template_fn_path, output_path)
+
+                # Mirror file permissions
+                template_stat = os.stat(template_fn_path)
+                os.chmod(output_path, template_stat.st_mode)
 
         # Make a logo and save it
         self.make_pipeline_logo()
@@ -275,15 +290,11 @@ class PipelineCreate(object):
         logo_url = f"https://nf-co.re/logo/{self.template_params['short_name']}?theme=light"
         log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = (
-            f"{self.template_params['outdir']}/assets/{self.template_params['name_noslash']}_logo_light.png"
-        )
+        email_logo_path = f"{self.outdir}/assets/{self.template_params['name_noslash']}_logo_light.png"
         self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = (
-                f"{self.template_params['outdir']}/docs/images/{self.template_params['name_noslash']}_logo_{theme}.png"
-            )
+            readme_logo_path = f"{self.outdir}/docs/images/{self.template_params['name_noslash']}_logo_{theme}.png"
             self.download_pipeline_logo(readme_logo_url, readme_logo_path)
 
     def download_pipeline_logo(self, url, img_fn):
@@ -338,7 +349,7 @@ class PipelineCreate(object):
         repo.git.branch("dev")
         log.info(
             "Done. Remember to add a remote and push to GitHub:\n"
-            f"[white on grey23] cd {self.template_params['outdir']} \n"
+            f"[white on grey23] cd {self.outdir} \n"
             " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
             " git push --all origin                                       "
         )
