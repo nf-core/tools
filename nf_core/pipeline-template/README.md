@@ -1,4 +1,4 @@
-# ![{{ name }}](docs/images/{{ logo_light }}#gh-light-mode-only) ![{{ name }}](docs/images/{{ logo_dark }}#gh-dark-mode-only)
+{% if branded -%}# ![{{ name }}](docs/images/{{ logo_light }}#gh-light-mode-only) ![{{ name }}](docs/images/{{ logo_dark }}#gh-dark-mode-only){% endif -%}
 
 {% if branded -%}
 [![GitHub Actions CI Status](<https://github.com/>{{ name }}/workflows/nf-core%20CI/badge.svg)](<https://github.com/>{{ name }}/actions?query=workflow%3A%22nf-core+CI%22)
@@ -99,8 +99,8 @@ An extensive list of references for the tools used by the pipeline can be found 
 {% if branded -%}
 You can cite the `nf-core` publication as follows:
 {% else %}
-This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).{% endif %}
-{% endif %}
+This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
+{% endif -%}
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
 >

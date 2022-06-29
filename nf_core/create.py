@@ -11,16 +11,15 @@ import re
 import shutil
 import sys
 import time
-from re import template
 
 import git
 import jinja2
 import questionary
 import requests
 import yaml
-from pytest import param
 
 import nf_core
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 
@@ -50,7 +49,6 @@ class PipelineCreate(object):
         outdir=None,
         template_yaml_path=None,
     ):
-
         self.template_params = self.create_param_dict(name, description, author, version, outdir, template_yaml_path)
 
         self.no_git = no_git
@@ -88,9 +86,10 @@ class PipelineCreate(object):
         ]
 
         # Once all necessary parameters are set, check if the user wants to customize the template more
-        if template_yaml_path is not None:
+        if template_yaml_path is None:
             customize_template = questionary.confirm(
-                "Do you want to customize which parts of the template are used?"
+                "Do you want to customize which parts of the template are used?",
+                style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
             if customize_template:
                 template_yaml.update(self.customize_template(template_areas))
@@ -98,13 +97,13 @@ class PipelineCreate(object):
         # Now look in the template for more options, otherwise default to nf-core defaults
         param_dict["prefix"] = template_yaml.get("prefix", "nf-core")
 
-        # Next check if any template areas should be skipped
+        param_dict["skip"] = []
         for t_area_key in (t_area["value"] for t_area in template_areas):
             param_dict[t_area_key] = t_area_key not in template_yaml.get("skip", [])
 
         # Set the last parameters based on the ones provided
         param_dict["short_name"] = (
-            name.lower().replace(r"/\s+/", "-").replace(f"{param_dict['prefix']}/", "").replace("/", "-")
+            param_dict["name"].lower().replace(r"/\s+/", "-").replace(f"{param_dict['prefix']}/", "").replace("/", "-")
         )
         param_dict["name"] = f"{param_dict['prefix']}/{param_dict['short_name']}"
         param_dict["name_noslash"] = param_dict["name"].replace("/", "-")
@@ -118,7 +117,7 @@ class PipelineCreate(object):
         param_dict["branded"] = param_dict["prefix"] == "nf-core"
 
         if outdir is None:
-            outdir = os.path.join(os.getcwd(), self.name_noslash)
+            outdir = os.path.join(os.getcwd(), param_dict["name_noslash"])
         param_dict["outdir"] = outdir
 
         return param_dict
@@ -132,13 +131,17 @@ class PipelineCreate(object):
             author (str): Authors name of the pipeline.
         """
         template_yaml = {}
-        prefix = questionary.text("Pipeline prefix").unsafe_ask()
+        prefix = questionary.text("Pipeline prefix", style=nf_core.utils.nfcore_question_style).unsafe_ask()
         while not re.match(r"^[a-zA-Z_][a-zA-Z0-9-_]*$", prefix):
             log.error("[red]Pipeline prefix cannot start with digit or hyphen and cannot contain punctuation.[/red]")
-            prefix = questionary.text("Please provide a new pipeline prefix").unsafe_ask()
+            prefix = questionary.text(
+                "Please provide a new pipeline prefix", style=nf_core.utils.nfcore_question_style
+            ).unsafe_ask()
         template_yaml["prefix"] = prefix
 
-        template_yaml["skip"] = questionary.checkbox("Skip template areas?", choices=template_areas).unsafe_ask()
+        template_yaml["skip"] = questionary.checkbox(
+            "Skip template areas?", choices=template_areas, style=nf_core.utils.nfcore_question_style
+        ).unsafe_ask()
         return template_yaml
 
     def get_param(self, param_name, passed_value, template_yaml, template_yaml_path):
@@ -151,18 +154,20 @@ class PipelineCreate(object):
         return passed_value
 
     def prompt_wf_name(self):
-        wf_name = questionary.text("Workflow name").unsafe_ask()
+        wf_name = questionary.text("Workflow name", style=nf_core.utils.nfcore_question_style).unsafe_ask()
         while not re.match(r"^[a-z]+$", wf_name):
             log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
-            wf_name = questionary.text("Please provide a new workflow name").unsafe_ask()
+            wf_name = questionary.text(
+                "Please provide a new workflow name", style=nf_core.utils.nfcore_question_style
+            ).unsafe_ask()
         return wf_name
 
     def prompt_wf_description(self):
-        wf_description = questionary.text("Description").unsafe_ask()
+        wf_description = questionary.text("Description", style=nf_core.utils.nfcore_question_style).unsafe_ask()
         return wf_description
 
     def prompt_wf_author(self):
-        wf_author = questionary.text("Author").unsafe_ask()
+        wf_author = questionary.text("Author", style=nf_core.utils.nfcore_question_style).unsafe_ask()
         return wf_author
 
     def init_pipeline(self):
@@ -185,18 +190,20 @@ class PipelineCreate(object):
 
     def render_template(self):
         """Runs Jinja to create a new nf-core pipeline."""
-        log.info(f"Creating new nf-core pipeline: '{self.name}'")
+        log.info(f"Creating new nf-core pipeline: '{self.template_params['name']}'")
 
         # Check if the output directory exists
-        if os.path.exists(self.outdir):
+        if os.path.exists(self.template_params["outdir"]):
             if self.force:
-                log.warning(f"Output directory '{self.outdir}' exists - continuing as --force specified")
+                log.warning(
+                    f"Output directory '{self.template_params['outdir']}' exists - continuing as --force specified"
+                )
             else:
-                log.error(f"Output directory '{self.outdir}' exists!")
+                log.error(f"Output directory '{self.template_params['outdir']}' exists!")
                 log.info("Use -f / --force to overwrite existing files")
                 sys.exit(1)
         else:
-            os.makedirs(self.outdir)
+            os.makedirs(self.template_params["outdir"])
 
         # Run jinja2 for each file in the template folder
         env = jinja2.Environment(
@@ -211,9 +218,11 @@ class PipelineCreate(object):
         template_files += list(pathlib.Path(template_dir).glob("*"))
         ignore_strs = [".pyc", "__pycache__", ".pyo", ".pyd", ".DS_Store", ".egg"]
         rename_files = {
-            "workflows/pipeline.nf": f"workflows/{self.short_name}.nf",
-            "lib/WorkflowPipeline.groovy": f"lib/Workflow{self.short_name[0].upper()}{self.short_name[1:]}.groovy",
+            "workflows/pipeline.nf": f"workflows/{self.template_params['short_name']}.nf",
+            "lib/WorkflowPipeline.groovy": f"lib/Workflow{self.template_params['short_name'][0].upper()}{self.template_params['short_name'][1:]}.groovy",
         }
+        # Set the paths to skip according to customization
+        skippable_paths = {"ci": ".github/workflows/", "igenomes": "conf/igenomes.config"}
 
         for template_fn_path_obj in template_files:
 
@@ -226,9 +235,9 @@ class PipelineCreate(object):
 
             # Set up vars and directories
             template_fn = os.path.relpath(template_fn_path, template_dir)
-            output_path = os.path.join(self.outdir, template_fn)
+            output_path = os.path.join(self.template_params["outdir"], template_fn)
             if template_fn in rename_files:
-                output_path = os.path.join(self.outdir, rename_files[template_fn])
+                output_path = os.path.join(self.template_params["outdir"], rename_files[template_fn])
             os.makedirs(os.path.dirname(output_path), exist_ok=True)
 
             try:
@@ -266,14 +275,18 @@ class PipelineCreate(object):
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
 
-        logo_url = f"https://nf-co.re/logo/{self.short_name}?theme=light"
+        logo_url = f"https://nf-co.re/logo/{self.template_params['short_name']}?theme=light"
         log.debug(f"Fetching logo from {logo_url}")
 
-        email_logo_path = f"{self.outdir}/assets/{self.name_noslash}_logo_light.png"
+        email_logo_path = (
+            f"{self.template_params['outdir']}/assets/{self.template_params['name_noslash']}_logo_light.png"
+        )
         self.download_pipeline_logo(f"{logo_url}&w=400", email_logo_path)
         for theme in ["dark", "light"]:
             readme_logo_url = f"{logo_url}?w=600&theme={theme}"
-            readme_logo_path = f"{self.outdir}/docs/images/{self.name_noslash}_logo_{theme}.png"
+            readme_logo_path = (
+                f"{self.template_params['outdir']}/docs/images/{self.template_params['name_noslash']}_logo_{theme}.png"
+            )
             self.download_pipeline_logo(readme_logo_url, readme_logo_path)
 
     def download_pipeline_logo(self, url, img_fn):
@@ -320,7 +333,7 @@ class PipelineCreate(object):
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit."""
         log.info("Initialising pipeline git repository")
-        repo = git.Repo.init(self.outdir)
+        repo = git.Repo.init(self.template_params["outdir"])
         repo.git.add(A=True)
         repo.index.commit(f"initial template build from nf-core/tools, version {nf_core.__version__}")
         # Add TEMPLATE branch to git repository
@@ -328,7 +341,7 @@ class PipelineCreate(object):
         repo.git.branch("dev")
         log.info(
             "Done. Remember to add a remote and push to GitHub:\n"
-            f"[white on grey23] cd {self.outdir} \n"
+            f"[white on grey23] cd {self.template_params['outdir']} \n"
             " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
             " git push --all origin                                       "
         )
