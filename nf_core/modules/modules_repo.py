@@ -2,20 +2,20 @@ import filecmp
 import logging
 import os
 import shutil
-import sys
-import urllib.parse
 
 import git
 import rich.progress
 
 import nf_core.modules.module_utils
-from nf_core.utils import NFCORE_DIR, gh_api
+import nf_core.modules.modules_json
+from nf_core.utils import NFCORE_DIR
 
 log = logging.getLogger(__name__)
 
 # Constants for the nf-core/modules repo used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core/modules"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
+NF_CORE_MODULES_BASE_PATH = "modules"
 
 
 class RemoteProgressbar(git.RemoteProgress):
@@ -84,7 +84,7 @@ class ModulesRepo(object):
         """
         ModulesRepo.local_repo_statuses[repo_name] = up_to_date
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, no_progress=False):
+    def __init__(self, remote_url=None, branch=None, no_pull=False, base_path=None, no_progress=False):
         """
         Initializes the object and clones the git repository if it is not already present
         """
@@ -100,6 +100,11 @@ class ModulesRepo(object):
 
         self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
 
+        if base_path is None:
+            base_path = NF_CORE_MODULES_BASE_PATH
+
+        self.base_path = base_path
+
         self.setup_local_repo(remote_url, branch, no_progress)
 
         # Verify that the repo seems to be correctly configured
@@ -107,7 +112,7 @@ class ModulesRepo(object):
             self.verify_branch()
 
         # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, "modules")
+        self.modules_dir = os.path.join(self.local_repo_dir, self.base_path)
 
         self.avail_module_names = None
 
@@ -212,10 +217,8 @@ class ModulesRepo(object):
         Verifies the active branch conforms do the correct directory structure
         """
         dir_names = os.listdir(self.local_repo_dir)
-        if "modules" not in dir_names:
-            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain a 'modules/' directory"
-            if "software" in dir_names:
-                err_str += ".\nAs of version 2.0, the 'software/' directory should be renamed to 'modules/'"
+        if self.base_path not in dir_names:
+            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain the '{self.base_path}' directory"
             raise LookupError(err_str)
 
     def checkout_branch(self):
@@ -233,7 +236,7 @@ class ModulesRepo(object):
         """
         self.repo.git.checkout(commit)
 
-    def module_exists(self, module_name):
+    def module_exists(self, module_name, checkout=True):
         """
         Check if a module exists in the branch of the repo
 
@@ -243,7 +246,7 @@ class ModulesRepo(object):
         Returns:
             (bool): Whether the module exists in this branch of the repository
         """
-        return module_name in self.get_avail_modules()
+        return module_name in self.get_avail_modules(checkout=checkout)
 
     def get_module_dir(self, module_name):
         """
@@ -273,7 +276,7 @@ class ModulesRepo(object):
         self.checkout(commit)
 
         # Check if the module exists in the branch
-        if not self.module_exists(module_name):
+        if not self.module_exists(module_name, checkout=False):
             log.error(f"The requested module does not exists in the '{self.branch}' of {self.fullname}'")
             return False
 
@@ -327,7 +330,7 @@ class ModulesRepo(object):
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         self.checkout_branch()
-        module_path = os.path.join("modules", module_name)
+        module_path = os.path.join(self.base_path, module_name)
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
@@ -336,7 +339,7 @@ class ModulesRepo(object):
         """
         Verifies that a given commit sha exists on the branch
         """
-        self.checkout()
+        self.checkout_branch()
         return sha in (commit.hexsha for commit in self.repo.iter_commits())
 
     def get_commit_info(self, sha):
@@ -359,7 +362,7 @@ class ModulesRepo(object):
                 return message, date
         raise LookupError(f"Commit '{sha}' not found in the '{self.fullname}'")
 
-    def get_avail_modules(self):
+    def get_avail_modules(self, checkout=True):
         """
         Gets the names of the modules in the repository. They are detected by
         checking which directories have a 'main.nf' file
@@ -367,14 +370,15 @@ class ModulesRepo(object):
         Returns:
             ([ str ]): The module names
         """
-        if self.avail_module_names is None:
-            # Module directories are characterized by having a 'main.nf' file
-            self.avail_module_names = [
-                os.path.relpath(dirpath, start=self.modules_dir)
-                for dirpath, _, file_names in os.walk(self.modules_dir)
-                if "main.nf" in file_names
-            ]
-        return self.avail_module_names
+        if checkout:
+            self.checkout_branch()
+        # Module directories are characterized by having a 'main.nf' file
+        avail_module_names = [
+            os.path.relpath(dirpath, start=self.modules_dir)
+            for dirpath, _, file_names in os.walk(self.modules_dir)
+            if "main.nf" in file_names
+        ]
+        return avail_module_names
 
     def get_meta_yml(self, module_name):
         """

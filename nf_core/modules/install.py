@@ -5,6 +5,7 @@ import questionary
 
 import nf_core.modules.module_utils
 import nf_core.utils
+from nf_core.modules.modules_json import ModulesJson
 
 from .modules_command import ModuleCommand
 from .modules_repo import NF_CORE_MODULES_NAME
@@ -13,8 +14,28 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInstall(ModuleCommand):
-    def __init__(self, pipeline_dir, force=False, prompt=False, sha=None, remote_url=None, branch=None, no_pull=False):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+    def __init__(
+        self,
+        pipeline_dir,
+        force=False,
+        prompt=False,
+        sha=None,
+        remote_url=None,
+        branch=None,
+        no_pull=False,
+        base_path=None,
+    ):
+        # Check if we are given a base path, otherwise look in the modules.json
+        if base_path is None:
+            try:
+                modules_json = ModulesJson(pipeline_dir)
+                repo_name = nf_core.modules.module_utils.path_from_remote(remote_url)
+                base_path = modules_json.get_base_path(repo_name)
+            except:
+                # We don't want to fail yet if the modules.json is not found
+                pass
+
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -28,7 +49,8 @@ class ModuleInstall(ModuleCommand):
             return False
 
         # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json_up_to_date()
+        modules_json = ModulesJson(self.dir)
+        modules_json.modules_json_up_to_date()
 
         if self.prompt and self.sha is not None:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
@@ -53,22 +75,14 @@ class ModuleInstall(ModuleCommand):
             log.info("Use the command 'nf-core modules list' to view available software")
             return False
 
-        # Load 'modules.json'
-        modules_json = self.load_modules_json()
-        if not modules_json:
-            return False
-
         if not self.modules_repo.module_exists(module):
             warn_msg = (
-                f"Module '{module}' not found in remote '{self.modules_repo.fullname}' ({self.modules_repo.branch})"
+                f"Module '{module}' not found in remote '{self.modules_repo.remote_url}' ({self.modules_repo.branch})"
             )
             log.warning(warn_msg)
             return False
 
-        if self.modules_repo.fullname in modules_json["repos"]:
-            current_entry = modules_json["repos"][self.modules_repo.fullname]["modules"].get(module)
-        else:
-            current_entry = None
+        current_version = modules_json.get_module_version(module, self.modules_repo.fullname)
 
         # Set the install folder based on the repository name
         install_folder = [self.dir, "modules"]
@@ -78,11 +92,11 @@ class ModuleInstall(ModuleCommand):
         module_dir = os.path.join(*install_folder, module)
 
         # Check that the module is not already installed
-        if (current_entry is not None and os.path.exists(module_dir)) and not self.force:
+        if (current_version is not None and os.path.exists(module_dir)) and not self.force:
 
             log.error("Module is already installed.")
             repo_flag = (
-                "" if self.modules_repo.fullname == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.fullname} "
+                "" if self.modules_repo.fullname == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
             )
             branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 
@@ -97,7 +111,7 @@ class ModuleInstall(ModuleCommand):
             try:
                 version = nf_core.modules.module_utils.prompt_module_version_sha(
                     module,
-                    installed_sha=current_entry["git_sha"] if not current_entry is None else None,
+                    installed_sha=current_version,
                     modules_repo=self.modules_repo,
                 )
             except SystemError as e:
@@ -113,7 +127,7 @@ class ModuleInstall(ModuleCommand):
             self.clear_module_dir(module, module_dir)
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{module}'")
-        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.fullname}")
+        log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")
 
         # Download module files
         if not self.install_module_files(module, version, self.modules_repo, install_folder):
@@ -124,5 +138,5 @@ class ModuleInstall(ModuleCommand):
         log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main'")
 
         # Update module.json with newly installed module
-        self.update_modules_json(modules_json, self.modules_repo, module, version)
+        modules_json.update_modules_json(self.modules_repo, module, version)
         return True
