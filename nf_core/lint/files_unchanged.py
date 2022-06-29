@@ -114,6 +114,7 @@ def files_unchanged(self):
         self.nf_config["manifest.description"].strip("\"'"),
         self.nf_config["manifest.author"].strip("\"'"),
         outdir=test_pipeline_dir,
+        plain=True,
     )
     create_obj.init_pipeline()
 

@@ -57,6 +57,10 @@ class PipelineCreate(object):
         skippable_paths = {"ci": ".github/workflows/", "igenomes": "conf/igenomes.config"}
         self.skip_paths = {skippable_paths[k] for k in skip_paths}
 
+        # Set convenience variables
+        self.name = self.template_params["name"]
+
+        # Set fields used by the class methods
         self.no_git = no_git
         self.force = force
         if outdir is None:
@@ -200,7 +204,7 @@ class PipelineCreate(object):
 
     def render_template(self):
         """Runs Jinja to create a new nf-core pipeline."""
-        log.info(f"Creating new nf-core pipeline: '{self.template_params['name']}'")
+        log.info(f"Creating new nf-core pipeline: '{self.name}'")
 
         # Check if the output directory exists
         if os.path.exists(self.outdir):
