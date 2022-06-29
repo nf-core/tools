@@ -7,9 +7,11 @@ import logging
 import os
 import pathlib
 import random
+import re
 import shutil
 import sys
 import time
+from re import template
 
 import git
 import jinja2
@@ -49,33 +51,12 @@ class PipelineCreate(object):
         template_yaml_path=None,
     ):
 
-        template_params = {
-            "name": name,
-            "description": description,
-            "author": author,
-            "prefix": "nf-core",
-            "version": version,
-        }
-        self.template_params = self.create_param_dict(name, description, author, version, template_yaml_path)
+        self.template_params = self.create_param_dict(name, description, author, version, outdir, template_yaml_path)
 
-        self.short_name = name.lower().replace(r"/\s+/", "-").replace(f"nf-core/", "").replace("/", "-")
-        self.name = f"{prefix}/{self.short_name}"
-        self.name_noslash = self.name.replace("/", "-")
-        self.prefix_nodash = prefix.replace("-", "")
-        self.name_docker = self.name.replace(prefix, self.prefix_nodash)
-        self.logo_light = f"{self.name}_logo_light.png"
-        self.logo_dark = f"{self.name}_logo_dark.png"
-        self.description = description
-        self.author = author
-        self.version = version
         self.no_git = no_git
         self.force = force
-        self.outdir = outdir
-        self.branded = prefix == "nf-core"
-        if not self.outdir:
-            self.outdir = os.path.join(os.getcwd(), self.name_noslash)
 
-    def create_param_dict(self, name, description, author, version, template_yaml_path):
+    def create_param_dict(self, name, description, author, version, outdir, template_yaml_path):
         """Creates a dictionary of parameters for the new pipeline.
 
         Args:
@@ -84,19 +65,81 @@ class PipelineCreate(object):
         if template_yaml_path is not None:
             with open(template_yaml_path, "r") as f:
                 template_yaml = yaml.safe_load(f)
+        else:
+            template_yaml = {}
 
-            param_dict = {}
-            param_dict["name"] = self.get_param("name", name, template_yaml, template_yaml_path)
-            param_dict["description"] = self.get_param("description", description, template_yaml, template_yaml_path)
-            param_dict["author"] = self.get_param("author", author, template_yaml, template_yaml_path)
+        param_dict = {}
+        # Get the necessary parameters either from the template or command line arguments
+        param_dict["name"] = self.get_param("name", name, template_yaml, template_yaml_path)
+        param_dict["description"] = self.get_param("description", description, template_yaml, template_yaml_path)
+        param_dict["author"] = self.get_param("author", author, template_yaml, template_yaml_path)
 
-            if "version" in template_yaml:
-                if version is not None:
-                    log.info(f"Overriding --version with version found in {template_yaml_path}")
-                version = template_yaml["version"]
-            param_dict["version"] = version
+        if "version" in template_yaml:
+            if version is not None:
+                log.info(f"Overriding --version with version found in {template_yaml_path}")
+            version = template_yaml["version"]
+        param_dict["version"] = version
+
+        # Define the different template areas
+        template_areas = [
+            {"name": "GitHub CI", "value": "ci"},
+            {"name": "GitHub badges", "value": "github_badges"},
+            {"name": "iGenomes config", "value": "igenomes"},
+        ]
+
+        # Once all necessary parameters are set, check if the user wants to customize the template more
+        if template_yaml_path is not None:
+            customize_template = questionary.confirm(
+                "Do you want to customize which parts of the template are used?"
+            ).unsafe_ask()
+            if customize_template:
+                template_yaml.update(self.customize_template(template_areas))
+
+        # Now look in the template for more options, otherwise default to nf-core defaults
+        param_dict["prefix"] = template_yaml.get("prefix", "nf-core")
+
+        # Next check if any template areas should be skipped
+        for t_area_key in (t_area["value"] for t_area in template_areas):
+            param_dict[t_area_key] = t_area_key not in template_yaml.get("skip", [])
+
+        # Set the last parameters based on the ones provided
+        param_dict["short_name"] = (
+            name.lower().replace(r"/\s+/", "-").replace(f"{param_dict['prefix']}/", "").replace("/", "-")
+        )
+        param_dict["name"] = f"{param_dict['prefix']}/{param_dict['short_name']}"
+        param_dict["name_noslash"] = param_dict["name"].replace("/", "-")
+        param_dict["prefix_nodash"] = param_dict["prefix"].replace("-", "")
+        param_dict["name_docker"] = param_dict["name"].replace(param_dict["prefix"], param_dict["prefix_nodash"])
+        param_dict["logo_light"] = f"{param_dict['name']}_logo_light.png"
+        param_dict["logo_dark"] = f"{param_dict['name']}_logo_dark.png"
+        param_dict["description"] = description
+        param_dict["author"] = author
+        param_dict["version"] = version
+        param_dict["branded"] = param_dict["prefix"] == "nf-core"
+
+        if outdir is None:
+            outdir = os.path.join(os.getcwd(), self.name_noslash)
+        param_dict["outdir"] = outdir
 
         return param_dict
+
+    def customize_template(self, template_areas):
+        """Customizes the template parameters.
+
+        Args:
+            name (str): Name for the pipeline.
+            description (str): Description for the pipeline.
+            author (str): Authors name of the pipeline.
+        """
+        template_yaml = {}
+        prefix = questionary.text("Pipeline prefix").unsafe_ask()
+        while not re.match(r"^[a-zA-Z_][a-zA-Z0-9-_]*$", prefix):
+            log.error("[red]Pipeline prefix cannot start with digit or hyphen and cannot contain punctuation.[/red]")
+            prefix = questionary.text("Please provide a new pipeline prefix").unsafe_ask()
+        template_yaml["prefix"] = prefix
+
+        template_yaml["skip"] = questionary.checkbox("Skip template areas?", choices=template_areas).unsafe_ask()
+        return template_yaml
 
     def get_param(self, param_name, passed_value, template_yaml, template_yaml_path):
         if param_name in template_yaml:
@@ -104,8 +147,7 @@ class PipelineCreate(object):
                 log.info(f"overriding --{param_name} with name found in {template_yaml_path}")
             passed_value = template_yaml["name"]
         if passed_value is None:
-            default = self.__getattribute__("prompt_wf_" + param_name)
-            passed_value = default()
+            passed_value = getattr(self, f"prompt_wf_{param_name}")()
         return passed_value
 
     def prompt_wf_name(self):
@@ -161,7 +203,7 @@ class PipelineCreate(object):
             loader=jinja2.PackageLoader("nf_core", "pipeline-template"), keep_trailing_newline=True
         )
         template_dir = os.path.join(os.path.dirname(__file__), "pipeline-template")
-        object_attrs = vars(self)
+        object_attrs = self.template_params
         object_attrs["nf_core_version"] = nf_core.__version__
 
         # Can't use glob.glob() as need recursive hidden dotfiles - https://stackoverflow.com/a/58126417/713980
