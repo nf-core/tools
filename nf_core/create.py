@@ -109,10 +109,8 @@ class PipelineCreate(object):
         param_dict["name_noslash"] = param_dict["name"].replace("/", "-")
         param_dict["prefix_nodash"] = param_dict["prefix"].replace("-", "")
         param_dict["name_docker"] = param_dict["name"].replace(param_dict["prefix"], param_dict["prefix_nodash"])
-        param_dict["logo_light"] = f"{param_dict['name']}_logo_light.png"
-        param_dict["logo_dark"] = f"{param_dict['name']}_logo_dark.png"
-        param_dict["description"] = description
-        param_dict["author"] = author
+        param_dict["logo_light"] = f"{param_dict['name_noslash']}_logo_light.png"
+        param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
         param_dict["branded"] = param_dict["prefix"] == "nf-core"
 
