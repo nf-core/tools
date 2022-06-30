@@ -8,7 +8,6 @@ import shutil
 import subprocess
 import tempfile
 import unittest
-from unittest import mock
 
 import mock
 import pytest

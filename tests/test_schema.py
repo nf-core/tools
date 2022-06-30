@@ -7,7 +7,6 @@ import os
 import shutil
 import tempfile
 import unittest
-from unittest import mock
 
 import click
 import mock
