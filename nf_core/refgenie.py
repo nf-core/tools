@@ -35,7 +35,11 @@ params {{
 """
 
 
+<<<<<<< HEAD
 def _print_nf_config(rgc):
+=======
+def print_nf_config(rgc):
+>>>>>>> 9f462ae9 (black, cleaned up code)
     """
     Generate a nextflow config file with the genomes
     from the refgenie config file
@@ -59,11 +63,15 @@ def _print_nf_config(rgc):
     return NF_CFG_TEMPLATE.format(content=genomes_str)
 
 
+<<<<<<< HEAD
 def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
     """
     Update the $NXF_HOME/config file by adding a includeConfig statement to it
     for the 'refgenie_genomes_config_file' if not already defined
     """
+=======
+def update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
+>>>>>>> 9f462ae9 (black, cleaned up code)
     # Check if NXF_HOME/config exists and has a
     include_config_string = f"includeConfig '{os.path.abspath(refgenie_genomes_config_file)}'\n"
     nxf_home_config = os.path.join(nxf_home, "config")
@@ -117,7 +125,10 @@ def update_config(rgc):
     if not nxf_home and "HOME" in os.environ:
         nxf_home = os.path.join(os.environ.get("HOME"), ".nextflow")
         if not os.path.exists(nxf_home):
+<<<<<<< HEAD
             log.info(f"Creating NXF_HOME directory at {nxf_home}")
+=======
+>>>>>>> 9f462ae9 (black, cleaned up code)
             os.makedirs(nxf_home, exist_ok=True)
 
     # Get the path for storing the updated refgenie_genomes.config
@@ -129,7 +140,11 @@ def update_config(rgc):
         refgenie_genomes_config_file = os.path.join(nxf_home, "nf-core/refgenie_genomes.config")
     else:
         log.info("Could not determine path to 'refgenie_genomes.config' file.")
+<<<<<<< HEAD
         return False
+=======
+        return
+>>>>>>> 9f462ae9 (black, cleaned up code)
 
     # Save the udated genome config
     try:
