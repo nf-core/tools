@@ -31,10 +31,15 @@ setup(
     author_email="phil.ewels@scilifelab.se",
     url="https://github.com/nf-core/tools",
     license="MIT",
+<<<<<<< HEAD
     entry_points={
         "console_scripts": ["nf-core=nf_core.__main__:run_nf_core"],
         "refgenie.hooks.post_update": ["nf-core-refgenie=nf_core.refgenie:update_config"],
     },
+=======
+    entry_points={"console_scripts": ["nf-core=nf_core.__main__:run_nf_core"],
+                  "refgenie.hooks.post_update": ["nf-core-refgenie=nf_core.refgenie:update_config"]},
+>>>>>>> e2019f08 (resolve merge conflicts)
     install_requires=required,
     packages=find_packages(exclude=("docs")),
     include_package_data=True,

@@ -6,11 +6,13 @@ Update a nextflow.config file with refgenie genomes
 import logging
 import os
 import re
-import rich
 
 # import refgenconf
 from warnings import warn
+
+import rich
 from rich.logging import RichHandler
+
 import nf_core.utils
 
 # Set up logging
