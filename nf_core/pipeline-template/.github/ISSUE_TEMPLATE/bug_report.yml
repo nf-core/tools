@@ -10,7 +10,7 @@ body:
 
         - [nf-core website: troubleshooting](https://nf-co.re/usage/troubleshooting)
         - [{{ name }} pipeline documentation](https://nf-co.re/{{ short_name }}/usage)
-  {% endif %}
+  {% endif -%}
 
   - type: textarea
     id: description

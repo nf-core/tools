@@ -54,7 +54,11 @@ class PipelineCreate(object):
             name, description, author, version, template_yaml_path, plain
         )
 
-        skippable_paths = {"ci": ".github/workflows/", "igenomes": "conf/igenomes.config"}
+        skippable_paths = {
+            "ci": ".github/workflows/",
+            "igenomes": "conf/igenomes.config",
+            "branded": ".github/ISSUE_TEMPLATE/config",
+        }
         self.skip_paths = {skippable_paths[k] for k in skip_paths}
 
         # Set convenience variables
@@ -110,8 +114,10 @@ class PipelineCreate(object):
 
         # Now look in the template for more options, otherwise default to nf-core defaults
         param_dict["prefix"] = template_yaml.get("prefix", "nf-core")
+        param_dict["branded"] = param_dict["prefix"] == "nf-core"
 
-        skip_paths = []
+        skip_paths = [] if param_dict["branded"] else ["branded"]
+
         for t_area in template_areas:
             if t_area in template_yaml.get("skip", []):
                 if template_areas[t_area]["file"]:
@@ -131,7 +137,6 @@ class PipelineCreate(object):
         param_dict["logo_light"] = f"{param_dict['name_noslash']}_logo_light.png"
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
-        param_dict["branded"] = param_dict["prefix"] == "nf-core"
 
         return param_dict, skip_paths
 
@@ -286,8 +291,9 @@ class PipelineCreate(object):
                 template_stat = os.stat(template_fn_path)
                 os.chmod(output_path, template_stat.st_mode)
 
-        # Make a logo and save it
-        self.make_pipeline_logo()
+        # Make a logo and save it, if it is a nf-core pipeline
+        if self.template_params["branded"]:
+            self.make_pipeline_logo()
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
