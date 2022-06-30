@@ -7,7 +7,14 @@ import logging
 import os
 import re
 
+<<<<<<< HEAD
+
 # import refgenconf
+=======
+import refgenconf
+import rich
+
+>>>>>>> 7a75fa6b (black)
 from warnings import warn
 
 import rich
@@ -22,6 +29,7 @@ log.setLevel(logging.INFO)
 # # Setup rich traceback
 stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
 rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
+
 
 
 NF_CFG_TEMPLATE = """
@@ -125,10 +133,7 @@ def update_config(rgc):
     if not nxf_home and "HOME" in os.environ:
         nxf_home = os.path.join(os.environ.get("HOME"), ".nextflow")
         if not os.path.exists(nxf_home):
-<<<<<<< HEAD
             log.info(f"Creating NXF_HOME directory at {nxf_home}")
-=======
->>>>>>> 9f462ae9 (black, cleaned up code)
             os.makedirs(nxf_home, exist_ok=True)
 
     # Get the path for storing the updated refgenie_genomes.config
@@ -140,11 +145,7 @@ def update_config(rgc):
         refgenie_genomes_config_file = os.path.join(nxf_home, "nf-core/refgenie_genomes.config")
     else:
         log.info("Could not determine path to 'refgenie_genomes.config' file.")
-<<<<<<< HEAD
-        return False
-=======
         return
->>>>>>> 9f462ae9 (black, cleaned up code)
 
     # Save the udated genome config
     try:
