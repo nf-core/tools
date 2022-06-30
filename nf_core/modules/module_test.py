@@ -94,7 +94,7 @@ class ModulesTest(ModuleCommand):
             if local:
                 installed_modules = self.module_names.get("local/modules")
             else:
-                installed_modules = self.module_names.get("nf-core/modules")
+                installed_modules = self.module_names.get(self.modules_repo.fullname)
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -104,9 +104,9 @@ class ModulesTest(ModuleCommand):
                 )
             if installed_modules is None:
                 raise UserWarning(
-                    "No installed modules were found from '{self.modules_repo.remote_url}'.\n"
-                    "Are you running the tests inside the nf-core/modules main directory?\n"
-                    "Otherwise, make sure that the directory structure is modules/TOOL/SUBTOOL/ and tests/modules/TOOLS/SUBTOOL/"
+                    f"No installed modules were found from '{self.modules_repo.remote_url}'.\n"
+                    f"Are you running the tests inside the nf-core/modules main directory?\n"
+                    f"Otherwise, make sure that the directory structure is modules/TOOL/SUBTOOL/ and tests/modules/TOOLS/SUBTOOL/"
                 )
             self.module_name = questionary.autocomplete(
                 "Tool name:",
@@ -130,20 +130,20 @@ class ModulesTest(ModuleCommand):
             basedir = "modules/nf-core"
 
         if self.repo_type == "modules":
-            module_path = Path("modules") / self.module_name
+            module_path = Path(self.base_path) / self.module_name
             test_path = Path("tests/modules") / self.module_name
         else:
             module_path = Path(f"{basedir}/modules") / self.module_name
             test_path = Path(f"{basedir}/tests/modules") / self.module_name
 
-        if not module_path.is_dir():
+        if not (self.dir / module_path).is_dir():
             raise UserWarning(
                 f"Cannot find directory '{module_path}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
             )
-        if not test_path.is_dir():
+        if not (self.dir / test_path).is_dir():
             raise UserWarning(
-                f"Cannot find directory '{test_path}'. Should be TOOL/SUBTOOL or TOOL."
-                "Are you running the tests inside the nf-core/modules main directory?"
+                f"Cannot find directory '{test_path}'. Should be TOOL/SUBTOOL or TOOL. "
+                "Are you running the tests inside the nf-core/modules main directory? "
                 "Do you have tests for the specified module?"
             )
 
