@@ -17,11 +17,18 @@ import rich
 >>>>>>> 7a75fa6b (black)
 from warnings import warn
 
+from rich.logging import RichHandler
+
+import nf_core.utils
+
+<<<<<<< HEAD
 import rich
 from rich.logging import RichHandler
 
 import nf_core.utils
 
+=======
+>>>>>>> 1d18b39e (removed rich logging)
 # Set up logging
 log = logging.getLogger(__name__)
 log.setLevel(logging.INFO)
@@ -29,7 +36,10 @@ log.setLevel(logging.INFO)
 # # Setup rich traceback
 stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
 rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1d18b39e (removed rich logging)
 
 
 NF_CFG_TEMPLATE = """
@@ -44,10 +54,14 @@ params {{
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def _print_nf_config(rgc):
 =======
 def print_nf_config(rgc):
 >>>>>>> 9f462ae9 (black, cleaned up code)
+=======
+def _print_nf_config(rgc):
+>>>>>>> 1d18b39e (removed rich logging)
     """
     Generate a nextflow config file with the genomes
     from the refgenie config file
@@ -72,14 +86,20 @@ def print_nf_config(rgc):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 1d18b39e (removed rich logging)
 def _update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
     """
     Update the $NXF_HOME/config file by adding a includeConfig statement to it
     for the 'refgenie_genomes_config_file' if not already defined
     """
+<<<<<<< HEAD
 =======
 def update_nextflow_home_config(refgenie_genomes_config_file, nxf_home):
 >>>>>>> 9f462ae9 (black, cleaned up code)
+=======
+>>>>>>> 1d18b39e (removed rich logging)
     # Check if NXF_HOME/config exists and has a
     include_config_string = f"includeConfig '{os.path.abspath(refgenie_genomes_config_file)}'\n"
     nxf_home_config = os.path.join(nxf_home, "config")
@@ -145,7 +165,7 @@ def update_config(rgc):
         refgenie_genomes_config_file = os.path.join(nxf_home, "nf-core/refgenie_genomes.config")
     else:
         log.info("Could not determine path to 'refgenie_genomes.config' file.")
-        return
+        return False
 
     # Save the udated genome config
     try:
