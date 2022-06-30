@@ -42,7 +42,7 @@ class ModuleCommand:
         except LookupError as e:
             raise UserWarning(e)
 
-    def get_pipeline_modules(self):
+    def get_pipeline_modules(self, retrieve_local=False):
         """
         Get the modules installed in the current directory.
 
@@ -52,6 +52,8 @@ class ModuleCommand:
         is a clone of nf-core/modules the filed is set to
         `{"modules": modules_in_dir}`
 
+        retrieve_local (bool): True if retrieving local modules
+
         """
 
         self.module_names = {}
@@ -59,7 +61,10 @@ class ModuleCommand:
         module_base_path = f"{self.dir}/modules/"
 
         if self.repo_type == "pipeline":
-            repo_owners = (owner for owner in os.listdir(module_base_path) if owner != "local")
+            if retrieve_local:
+                repo_owners = os.listdir(module_base_path)
+            else:
+                repo_owners = (owner for owner in os.listdir(module_base_path) if owner != "local")
             repo_names = (
                 f"{repo_owner}/{name}"
                 for repo_owner in repo_owners
