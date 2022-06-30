@@ -2,6 +2,7 @@
 """ Tests covering the refgenie integration code
 """
 
+<<<<<<< HEAD
 import os
 import unittest
 import tempfile
@@ -9,6 +10,19 @@ import subprocess
 import shlex
 
 import nf_core.refgenie
+=======
+import nf_core.refgenie
+import refgenconf
+import json
+import os
+import pytest
+import time
+import unittest
+import tempfile
+from unittest import mock
+import subprocess
+from rich.console import Console
+>>>>>>> b835afd3 (resolve merge conflicts)
 
 
 class TestRefgenie(unittest.TestCase):
@@ -29,9 +43,17 @@ class TestRefgenie(unittest.TestCase):
         # Initialize a refgenie config
         os.system(f"refgenie init -c {self.REFGENIE}")
 
+<<<<<<< HEAD
         # Add NXF_REFGENIE_PATH to refgenie config
         with open(self.REFGENIE, "a") as fh:
             fh.write(f"nextflow_config: {os.path.join(self.NXF_REFGENIE_PATH)}\n")
+=======
+        # Populate the config with a genome
+        os.system(f"refgenie pull t7/fasta -c {self.REFGENIE}")
+
+        with open(self.REFGENIE, "a") as fh:
+            fh.write(f"nextflow_config: {os.path.join(self.NXF_REFGENIE_PATH)}")
+>>>>>>> b835afd3 (resolve merge conflicts)
 
     def tearDown(self) -> None:
         # Remove the tempdir again
@@ -39,8 +61,14 @@ class TestRefgenie(unittest.TestCase):
 
     def test_update_refgenie_genomes_config(self):
         """Test that listing pipelines works"""
+<<<<<<< HEAD
         # Populate the config with a genome
         cmd = f"refgenie pull t7/fasta -c {self.REFGENIE}"
         out = subprocess.check_output(shlex.split(cmd), stderr=subprocess.STDOUT)
 
         assert "Updated nf-core genomes config" in str(out)
+=======
+        rgc = refgenconf.RefGenConf(self.REFGENIE)
+
+        assert nf_core.refgenie.update_config(rgc) == True
+>>>>>>> b835afd3 (resolve merge conflicts)
