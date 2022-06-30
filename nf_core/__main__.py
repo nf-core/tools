@@ -4,6 +4,7 @@ import logging
 import os
 import re
 import sys
+from email.policy import default
 
 import rich.console
 import rich.logging
@@ -27,6 +28,9 @@ import nf_core.utils
 # Set up logging as the root logger
 # Submodules should all traverse back to this
 log = logging.getLogger()
+
+# Set up .nfcore directory for storing files between sessions
+nf_core.utils.setup_nfcore_dir()
 
 # Set up nicer formatting of click cli help messages
 click.rich_click.MAX_WIDTH = 100
@@ -342,14 +346,26 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
 @nf_core_cli.group()
 @click.option(
     "-g",
-    "--github-repository",
+    "--git-remote",
     type=str,
-    default="nf-core/modules",
-    help="GitHub repository hosting modules.",
+    default=nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE,
+    help="Remote git repo to fetch files from",
 )
-@click.option("-b", "--branch", type=str, default="master", help="Branch of GitHub repository hosting modules.")
+@click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
+@click.option(
+    "--no-pull",
+    is_flag=True,
+    default=False,
+    help="Do not pull in latest changes to local clone of modules repository.",
+)
+@click.option(
+    "--base-path",
+    type=str,
+    default=None,
+    help="Specify where the modules are stored in the remote",
+)
 @click.pass_context
-def modules(ctx, github_repository, branch):
+def modules(ctx, git_remote, branch, no_pull, base_path):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -357,12 +373,11 @@ def modules(ctx, github_repository, branch):
     # by means other than the `if` block below)
     ctx.ensure_object(dict)
 
-    # Make repository object to pass to subcommands
-    try:
-        ctx.obj["modules_repo_obj"] = nf_core.modules.ModulesRepo(github_repository, branch)
-    except LookupError as e:
-        log.critical(e)
-        sys.exit(1)
+    # Place the arguments in a context object
+    ctx.obj["modules_repo_url"] = git_remote
+    ctx.obj["modules_repo_branch"] = branch
+    ctx.obj["modules_repo_no_pull"] = no_pull
+    ctx.obj["modules_repo_base_path"] = base_path
 
 
 # nf-core modules list subcommands
@@ -385,10 +400,16 @@ def remote(ctx, keywords, json):
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
     try:
-        module_list = nf_core.modules.ModuleList(None, remote=True)
-        module_list.modules_repo = ctx.obj["modules_repo_obj"]
+        module_list = nf_core.modules.ModuleList(
+            None,
+            True,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
         print(module_list.list_modules(keywords, json))
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
@@ -410,10 +431,16 @@ def local(ctx, keywords, json, dir):
     List modules installed locally in a pipeline
     """
     try:
-        module_list = nf_core.modules.ModuleList(dir, remote=False)
-        module_list.modules_repo = ctx.obj["modules_repo_obj"]
+        module_list = nf_core.modules.ModuleList(
+            dir,
+            False,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
         print(module_list.list_modules(keywords, json))
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
@@ -439,12 +466,20 @@ def install(ctx, tool, dir, prompt, force, sha):
     Fetches and installs module files from a remote repo e.g. nf-core/modules.
     """
     try:
-        module_install = nf_core.modules.ModuleInstall(dir, force=force, prompt=prompt, sha=sha)
-        module_install.modules_repo = ctx.obj["modules_repo_obj"]
+        module_install = nf_core.modules.ModuleInstall(
+            dir,
+            force,
+            prompt,
+            sha,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
         exit_status = module_install.install(tool)
         if not exit_status and all:
             sys.exit(1)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -487,13 +522,22 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
     """
     try:
         module_install = nf_core.modules.ModuleUpdate(
-            dir, force=force, prompt=prompt, sha=sha, update_all=all, show_diff=preview, save_diff_fn=save_diff
+            dir,
+            force,
+            prompt,
+            sha,
+            all,
+            preview,
+            save_diff,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
         )
-        module_install.modules_repo = ctx.obj["modules_repo_obj"]
         exit_status = module_install.update(tool)
         if not exit_status and all:
             sys.exit(1)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -514,10 +558,15 @@ def remove(ctx, dir, tool):
     Remove a module from a pipeline.
     """
     try:
-        module_remove = nf_core.modules.ModuleRemove(dir)
-        module_remove.modules_repo = ctx.obj["modules_repo_obj"]
+        module_remove = nf_core.modules.ModuleRemove(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
         module_remove.remove(tool)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
@@ -562,6 +611,9 @@ def create_module(ctx, tool, dir, author, label, meta, no_meta, force, conda_nam
     except UserWarning as e:
         log.critical(e)
         sys.exit(1)
+    except LookupError as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core modules create-test-yml
@@ -582,7 +634,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     try:
         meta_builder = nf_core.modules.ModulesTestYmlBuilder(tool, run_tests, output, force, no_prompts)
         meta_builder.run()
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
@@ -608,8 +660,13 @@ def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     nf-core/modules repository.
     """
     try:
-        module_lint = nf_core.modules.ModuleLint(dir=dir)
-        module_lint.modules_repo = ctx.obj["modules_repo_obj"]
+        module_lint = nf_core.modules.ModuleLint(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
         module_lint.lint(
             module=tool,
             key=key,
@@ -624,7 +681,7 @@ def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     except nf_core.modules.lint.ModuleLintException as e:
         log.error(e)
         sys.exit(1)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
@@ -653,10 +710,16 @@ def info(ctx, tool, dir):
     If not, usage from the remote modules repo will be shown.
     """
     try:
-        module_info = nf_core.modules.ModuleInfo(dir, tool)
-        module_info.modules_repo = ctx.obj["modules_repo_obj"]
+        module_info = nf_core.modules.ModuleInfo(
+            dir,
+            tool,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
         print(module_info.get_module_info())
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
 
@@ -674,12 +737,18 @@ def bump_versions(ctx, tool, dir, all, show_all):
     the nf-core/modules repo.
     """
     try:
-        version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(pipeline_dir=dir)
+        version_bumper = nf_core.modules.bump_versions.ModuleVersionBumper(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
         log.error(e)
         sys.exit(1)
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
@@ -742,7 +811,7 @@ def test_module(ctx, tool, no_prompts, pytest_args):
     try:
         meta_builder = nf_core.modules.ModulesTest(tool, no_prompts, pytest_args)
         meta_builder.run()
-    except UserWarning as e:
+    except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
 
@@ -960,10 +1029,7 @@ def sync(dir, from_branch, pull_request, github_repository, username):
     new release of [link=https://github.com/nf-core/tools]nf-core/tools[/link] (and the included template) is made.
     """
     # Check if pipeline directory contains necessary files
-    try:
-        nf_core.utils.is_pipeline_directory(dir)
-    except UserWarning:
-        raise
+    nf_core.utils.is_pipeline_directory(dir)
 
     # Sync the given pipeline dir
     sync_obj = nf_core.sync.PipelineSync(dir, from_branch, pull_request, github_repository, username)

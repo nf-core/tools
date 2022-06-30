@@ -81,10 +81,7 @@ def run_linting(
     module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir)
 
     # Verify that the pipeline is correctly configured
-    try:
-        module_lint_obj.has_valid_directory()
-    except UserWarning:
-        raise
+    module_lint_obj.has_valid_directory()
 
     # Run only the tests we want
     if key:
@@ -179,10 +176,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         """Initialise linting object"""
 
         # Initialise the parent object
-        try:
-            super().__init__(wf_path)
-        except UserWarning:
-            raise
+        super().__init__(wf_path)
 
         self.lint_config = {}
         self.release_mode = release_mode
