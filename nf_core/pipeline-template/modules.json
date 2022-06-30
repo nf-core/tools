@@ -3,6 +3,7 @@
     "homePage": "https://github.com/{{ name }}",
     "repos": {
         "nf-core/modules": {
+            "base_path": "modules",
             "git_url": "git@github.com@nf-core/modules.git",
             "modules": {
                 "custom/dumpsoftwareversions": {
