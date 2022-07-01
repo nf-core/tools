@@ -60,15 +60,7 @@ class ModulesTest(ModuleCommand):
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
 
-        # Check repository type
-        try:
-            pipeline_dir, repo_type = nf_core.modules.module_utils.get_repo_type(".", use_prompt=False)
-            log.debug(f"Found {repo_type} repo: {pipeline_dir}")
-        except UserWarning as e:
-            log.debug(f"Only showing remote info: {e}")
-            pipeline_dir = None
-
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+        super().__init__(".", remote_url, branch, no_pull)
         self.get_pipeline_modules()
 
     def run(self):
