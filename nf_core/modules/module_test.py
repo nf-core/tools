@@ -69,7 +69,7 @@ class ModulesTest(ModuleCommand):
             pipeline_dir = None
 
         super().__init__(pipeline_dir, remote_url, branch, no_pull)
-        self.get_pipeline_modules(True)  # To change!
+        self.get_pipeline_modules()
 
     def run(self):
         """Run test steps"""
@@ -87,14 +87,9 @@ class ModulesTest(ModuleCommand):
 
         # Retrieving installed modules
         if self.repo_type == "modules":
-            local = False
             installed_modules = self.module_names["modules"]
         else:
-            local = questionary.confirm("Is the module local?", style=nf_core.utils.nfcore_question_style).unsafe_ask()
-            if local:
-                installed_modules = self.module_names.get("local/modules")
-            else:
-                installed_modules = self.module_names.get(self.modules_repo.fullname)
+            installed_modules = self.module_names.get(self.modules_repo.fullname)
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -115,19 +110,15 @@ class ModulesTest(ModuleCommand):
             ).unsafe_ask()
 
         # Sanity check that the module directory exists
-        self._validate_folder_structure(local)
+        self._validate_folder_structure()
 
-    def _validate_folder_structure(self, local=False):
+    def _validate_folder_structure(self):
         """Validate that the modules follow the correct folder structure to run the tests:
         - modules/TOOL/SUBTOOL/
         - tests/modules/TOOL/SUBTOOL/
 
-        local (bool): Testing local modules (True) or nf-core modules (False)
         """
-        if local:
-            basedir = "modules/local"
-        else:
-            basedir = "modules/nf-core"
+        basedir = "modules/nf-core"
 
         if self.repo_type == "modules":
             module_path = Path("modules") / self.module_name
