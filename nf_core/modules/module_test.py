@@ -130,7 +130,7 @@ class ModulesTest(ModuleCommand):
             basedir = "modules/nf-core"
 
         if self.repo_type == "modules":
-            module_path = Path(self.base_path) / self.module_name
+            module_path = Path("modules") / self.module_name
             test_path = Path("tests/modules") / self.module_name
         else:
             module_path = Path(f"{basedir}/modules") / self.module_name
