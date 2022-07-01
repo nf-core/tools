@@ -28,18 +28,15 @@ def test_modules_test_no_name_no_prompts(self):
     assert "Tool name not provided and prompts deactivated." in str(excinfo.value)
 
 
-def test_modules_test_no_proper_path(self):
+def test_modules_test_no_installed_modules(self):
     """Test the check_inputs() function - raise UserWarning because installed modules were not found"""
     cwd = os.getcwd()
-    with pytest.raises(SystemError):
-        assert nf_core.modules.ModulesTest(".", False, "")
-
-
-def test_modules_test_all_modules_listed(self):
-    """Test the check_inputs() function - raise UserWarning because installed modules were not found"""
-    cwd = os.getcwd()
-    meta_builder = nf_core.modules.ModulesTest(".", False, "")
+    os.chdir(self.nfcore_modules)
+    meta_builder = nf_core.modules.ModulesTest(None, False, "")
+    meta_builder.module_names["modules"] = None
+    meta_builder.repo_type = "modules"
     with pytest.raises(UserWarning) as excinfo:
         meta_builder._check_inputs()
     os.chdir(cwd)
-    assert "No installed modules were found." in str(excinfo.value)
+    print(excinfo.value)
+    assert "No installed modules were found" in str(excinfo.value)
