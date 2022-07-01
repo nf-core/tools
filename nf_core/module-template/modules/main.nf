@@ -16,7 +16,7 @@
 //               list (`[]`) instead of a file can be used to work around this issue.
 
 process {{ tool_name_underscore|upper }} {
-    tag {{ '"$meta.id"' if has_meta else "'$bam'" }}
+    tag "$prefix"
     label '{{ process_label }}'
 
     // TODO nf-core: List required Conda package(s).
@@ -49,7 +49,7 @@ process {{ tool_name_underscore|upper }} {
     script:
     def args = task.ext.args ?: ''
     {% if has_meta -%}
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     {%- endif %}
     // TODO nf-core: Where possible, a command MUST be provided to obtain the version number of the software e.g. 1.10
     //               If the software is unable to output a version number on the command-line then it can be manually specified
