@@ -16,7 +16,7 @@
 //               list (`[]`) instead of a file can be used to work around this issue.
 
 process {{ tool_name_underscore|upper }} {
-    tag "$prefix"
+    tag {{ '"$prefix"' if has_meta else "'$bam'" }}
     label '{{ process_label }}'
 
     // TODO nf-core: List required Conda package(s).
