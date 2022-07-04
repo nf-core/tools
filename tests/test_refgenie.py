@@ -22,6 +22,13 @@ class TestRefgenie(unittest.TestCase):
         self.NXF_HOME = os.path.join(self.tmp_dir, ".nextflow")
         self.NXF_REFGENIE_PATH = os.path.join(self.NXF_HOME, "nf-core", "refgenie_genomes.config")
         self.REFGENIE = os.path.join(self.tmp_dir, "genomes_config.yaml")
+        # Set NXF_HOME environment variable
+        # avoids adding includeConfig statement to config file outside the current tmpdir
+        try:
+            self.NXF_HOME_ORIGINAL = os.environ["NXF_HOME"]
+        except:
+            self.NXF_HOME_ORIGINAL = None
+        os.environ["NXF_HOME"] = self.NXF_HOME
 
         # create NXF_HOME and nf-core directories
         os.makedirs(os.path.join(self.NXF_HOME, "nf-core"), exist_ok=True)
@@ -36,6 +43,11 @@ class TestRefgenie(unittest.TestCase):
     def tearDown(self) -> None:
         # Remove the tempdir again
         os.system(f"rm -rf {self.tmp_dir}")
+        # Reset NXF_HOME environment variable
+        if self.NXF_HOME_ORIGINAL is None:
+            del os.environ["NXF_HOME"]
+        else:
+            os.environ["NXF_HOME"] = self.NXF_HOME_ORIGINAL
 
     def test_update_refgenie_genomes_config(self):
         """Test that listing pipelines works"""
