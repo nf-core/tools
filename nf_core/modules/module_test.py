@@ -13,14 +13,14 @@ import pytest
 import questionary
 import rich
 
+import nf_core.modules.module_utils
 import nf_core.utils
-
-from .modules_repo import ModulesRepo
+from nf_core.modules.modules_command import ModuleCommand
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTest(object):
+class ModulesTest(ModuleCommand):
     """
     Class to run module pytests.
 
@@ -52,10 +52,16 @@ class ModulesTest(object):
         module_name=None,
         no_prompts=False,
         pytest_args="",
+        remote_url=None,
+        branch=None,
+        no_pull=False,
     ):
         self.module_name = module_name
         self.no_prompts = no_prompts
         self.pytest_args = pytest_args
+
+        super().__init__(".", remote_url, branch, no_pull)
+        self.get_pipeline_modules()
 
     def run(self):
         """Run test steps"""
@@ -71,25 +77,57 @@ class ModulesTest(object):
     def _check_inputs(self):
         """Do more complex checks about supplied flags."""
 
+        # Retrieving installed modules
+        if self.repo_type == "modules":
+            installed_modules = self.module_names["modules"]
+        else:
+            installed_modules = self.module_names.get(self.modules_repo.fullname)
+
         # Get the tool name if not specified
         if self.module_name is None:
             if self.no_prompts:
                 raise UserWarning(
                     "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
                 )
-            modules_repo = ModulesRepo()
-            modules_repo.get_modules_file_tree()
+            if installed_modules is None:
+                raise UserWarning(
+                    f"No installed modules were found from '{self.modules_repo.remote_url}'.\n"
+                    f"Are you running the tests inside the nf-core/modules main directory?\n"
+                    f"Otherwise, make sure that the directory structure is modules/TOOL/SUBTOOL/ and tests/modules/TOOLS/SUBTOOL/"
+                )
             self.module_name = questionary.autocomplete(
                 "Tool name:",
-                choices=modules_repo.get_avail_modules(),
+                choices=installed_modules,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        module_dir = Path("modules") / self.module_name
 
-        # First, sanity check that the module directory exists
-        if not module_dir.is_dir():
+        # Sanity check that the module directory exists
+        self._validate_folder_structure()
+
+    def _validate_folder_structure(self):
+        """Validate that the modules follow the correct folder structure to run the tests:
+        - modules/TOOL/SUBTOOL/
+        - tests/modules/TOOL/SUBTOOL/
+
+        """
+        basedir = "modules/nf-core"
+
+        if self.repo_type == "modules":
+            module_path = Path("modules") / self.module_name
+            test_path = Path("tests/modules") / self.module_name
+        else:
+            module_path = Path(f"{basedir}/modules") / self.module_name
+            test_path = Path(f"{basedir}/tests/modules") / self.module_name
+
+        if not (self.dir / module_path).is_dir():
             raise UserWarning(
-                f"Cannot find directory '{module_dir}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+                f"Cannot find directory '{module_path}'. Should be TOOL/SUBTOOL or TOOL. Are you running the tests inside the nf-core/modules main directory?"
+            )
+        if not (self.dir / test_path).is_dir():
+            raise UserWarning(
+                f"Cannot find directory '{test_path}'. Should be TOOL/SUBTOOL or TOOL. "
+                "Are you running the tests inside the nf-core/modules main directory? "
+                "Do you have tests for the specified module?"
             )
 
     def _set_profile(self):
