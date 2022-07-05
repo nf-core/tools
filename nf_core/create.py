@@ -19,6 +19,7 @@ import requests
 import yaml
 
 import nf_core
+import nf_core.schema
 import nf_core.utils
 
 log = logging.getLogger(__name__)
@@ -291,9 +292,27 @@ class PipelineCreate(object):
                 template_stat = os.stat(template_fn_path)
                 os.chmod(output_path, template_stat.st_mode)
 
+        # Remove all unused parameters in the nextflow schema
+        if "igenomes" in self.template_params:
+            self.update_nextflow_schema()
+
         # Make a logo and save it, if it is a nf-core pipeline
         if self.template_params["branded"]:
             self.make_pipeline_logo()
+
+    def update_nextflow_schema(self):
+        """
+        Removes unused parameters from the nextflow schema.
+        """
+        schema_path = os.path.join(self.outdir, "nextflow_schema.json")
+
+        schema = nf_core.schema.PipelineSchema()
+        schema.schema_filename = schema_path
+        schema.no_prompts = True
+        schema.load_schema()
+        schema.get_wf_params()
+        schema.remove_schema_notfound_configs()
+        schema.save_schema(suppress_logging=True)
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""

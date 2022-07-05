@@ -165,12 +165,13 @@ class PipelineSchema(object):
                     param = self.sanitise_param_default(param)
                     self.schema_defaults[p_key] = param["default"]
 
-    def save_schema(self):
+    def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
         num_params += sum([len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values()])
-        log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
+        if not suppress_logging:
+            log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
             fh.write("\n")
