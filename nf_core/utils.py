@@ -52,7 +52,7 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 
 NFCORE_CACHE_DIR = os.path.join(
     os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
-    "nf-core",
+    "nfcore",
 )
 NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
 
