@@ -190,7 +190,6 @@ class PipelineCreate(object):
         return wf_author
 
     def init_pipeline(self):
-
         """Creates the nf-core pipeline."""
 
         # Make the new pipeline
