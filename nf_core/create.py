@@ -110,6 +110,7 @@ class PipelineCreate(object):
             customize_template = questionary.confirm(
                 "Do you want to customize which parts of the template are used?",
                 style=nf_core.utils.nfcore_question_style,
+                default=False,
             ).unsafe_ask()
             if customize_template:
                 template_yaml.update(self.customize_template(template_areas))
