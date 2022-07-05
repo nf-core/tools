@@ -50,16 +50,16 @@ class PipelineCreate(object):
         template_yaml_path=None,
         plain=False,
     ):
-        self.template_params, skip_paths = self.create_param_dict(
+        self.template_params, skip_paths_keys = self.create_param_dict(
             name, description, author, version, template_yaml_path, plain
         )
 
         skippable_paths = {
-            "ci": ".github/workflows/",
-            "igenomes": "conf/igenomes.config",
-            "branded": ".github/ISSUE_TEMPLATE/config",
+            "ci": [".github/workflows/"],
+            "igenomes": ["conf/igenomes.config"],
+            "branded": [".github/ISSUE_TEMPLATE/config", "CODE_OF_CONDUCT.md"],
         }
-        self.skip_paths = {skippable_paths[k] for k in skip_paths}
+        self.skip_paths = {sp for k in skip_paths_keys for sp in skippable_paths[k]}
 
         # Set convenience variables
         self.name = self.template_params["name"]
@@ -200,12 +200,13 @@ class PipelineCreate(object):
         if not self.no_git:
             self.git_init_pipeline()
 
-        log.info(
-            "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
-            + "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
-            + "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
-            + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
-        )
+        if self.template_params["branded"]:
+            log.info(
+                "[green bold]!!!!!! IMPORTANT !!!!!!\n\n"
+                + "[green not bold]If you are interested in adding your pipeline to the nf-core community,\n"
+                + "PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!\n\n"
+                + "[default]Please read: [link=https://nf-co.re/developers/adding_pipelines#join-the-community]https://nf-co.re/developers/adding_pipelines#join-the-community[/link]"
+            )
 
     def render_template(self):
         """Runs Jinja to create a new nf-core pipeline."""
