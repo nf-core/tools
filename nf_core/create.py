@@ -101,7 +101,8 @@ class PipelineCreate(object):
         template_areas = {
             "ci": {"name": "GitHub CI", "file": True, "content": False},
             "gh_badges": {"name": "GitHub badges", "file": False, "content": True},
-            "igenomes": {"name": "iGenomes config", "file": True, "content": False},
+            "igenomes": {"name": "iGenomes config", "file": True, "content": True},
+            "nf_core_configs": {"name": "nf-core/configs", "file": False, "content": True},
         }
 
         # Once all necessary parameters are set, check if the user wants to customize the template more
@@ -123,7 +124,7 @@ class PipelineCreate(object):
             if t_area in template_yaml.get("skip", []):
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
-                param_dict[t_area] = template_areas[t_area]["content"]
+                param_dict[t_area] = not template_areas[t_area]["content"]
             else:
                 param_dict[t_area] = True
 
@@ -293,7 +294,7 @@ class PipelineCreate(object):
                 os.chmod(output_path, template_stat.st_mode)
 
         # Remove all unused parameters in the nextflow schema
-        if "igenomes" in self.template_params:
+        if self.template_params["igenomes"]:
             self.update_nextflow_schema()
 
         # Make a logo and save it, if it is a nf-core pipeline
