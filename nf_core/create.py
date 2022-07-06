@@ -335,11 +335,8 @@ class PipelineCreate(object):
         with open(bug_report_path, "r") as fh:
             contents = yaml.load(fh, Loader=yaml.FullLoader)
 
-        print(contents)
         # Remove the first item in the body, which is the information about the docs
         contents["body"].pop(0)
-
-        print(contents)
 
         with open(bug_report_path, "w") as fh:
             yaml.dump(contents, fh, default_flow_style=False, sort_keys=False)
