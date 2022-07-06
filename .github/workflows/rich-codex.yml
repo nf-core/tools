@@ -7,6 +7,13 @@ jobs:
       - name: Check out the repo
         uses: actions/checkout@v3
 
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.x
+          cache: pip
+          cache-dependency-path: setup.py
+
       - name: Install nf-core/tools
         run: pip install .
 
