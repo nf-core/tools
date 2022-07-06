@@ -20,6 +20,7 @@
 {%- if branded -%}[![Get help on Slack](http://img.shields.io/badge/slack-nf--core%20%23{{ short_name }}-4A154B?labelColor=000000&logo=slack)](https://nfcore.slack.com/channels/{{ short_name }}){% endif -%}
 {%- if branded -%}[![Follow on Twitter](http://img.shields.io/badge/twitter-%40nf__core-1DA1F2?labelColor=000000&logo=twitter)](https://twitter.com/nf_core){% endif -%}
 {%- if branded -%}[![Watch on YouTube](http://img.shields.io/badge/youtube-nf--core-FF0000?labelColor=000000&logo=youtube)](https://www.youtube.com/c/nf-core)
+
 {% endif -%}
 
 ## Introduction
@@ -35,7 +36,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.
 {% if branded -%}
 The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/{{ short_name }}/results).
-{% endif %}
+
+{% endif -%}
 
 ## Pipeline summary
 
@@ -107,8 +109,10 @@ An extensive list of references for the tools used by the pipeline can be found 
 
 {% if branded -%}
 You can cite the `nf-core` publication as follows:
+
 {% else %}
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
+
 {% endif -%}
 
 > **The nf-core framework for community-curated bioinformatics pipelines.**
