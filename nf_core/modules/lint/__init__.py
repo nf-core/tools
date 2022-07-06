@@ -29,6 +29,7 @@ import nf_core.utils
 from nf_core.lint.pipeline_todos import pipeline_todos
 from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ModuleCommand
+from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
@@ -69,7 +70,7 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False, base_path=None):
         self.dir = dir
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -79,7 +80,7 @@ class ModuleLint(ModuleCommand):
         self.passed = []
         self.warned = []
         self.failed = []
-        self.modules_repo = ModulesRepo()
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.lint_tests = self._get_all_lint_tests()
         # Get lists of modules install in directory
         self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
@@ -196,7 +197,8 @@ class ModuleLint(ModuleCommand):
 
     def set_up_pipeline_files(self):
         self.load_lint_config()
-        self.modules_json = self.load_modules_json()
+        self.modules_json = ModulesJson(self.dir)
+        self.modules_json.load_modules_json()
 
         # Only continue if a lint config has been loaded
         if self.lint_config:

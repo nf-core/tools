@@ -1,3 +1,5 @@
+import json
+
 import nf_core.modules
 
 

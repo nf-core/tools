@@ -83,9 +83,11 @@ def bump_nextflow_version(pipeline_obj, new_version):
         pipeline_obj,
         [
             (
-                # example: - NXF_VER: '20.04.0'
-                rf"- NXF_VER: [\'\"]{re.escape(current_version)}[\'\"]",
-                f"- NXF_VER: '{new_version}'",
+                # example:
+                # NXF_VER:
+                #   - "20.04.0"
+                rf"- [\"]{re.escape(current_version)}[\"]",
+                f'- "{new_version}"',
             )
         ],
     )

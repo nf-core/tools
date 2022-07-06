@@ -2,7 +2,8 @@
 
 [![Python tests](https://github.com/nf-core/tools/workflows/Python%20tests/badge.svg?branch=master&event=push)](https://github.com/nf-core/tools/actions?query=workflow%3A%22Python+tests%22+branch%3Amaster)
 [![codecov](https://codecov.io/gh/nf-core/tools/branch/master/graph/badge.svg)](https://codecov.io/gh/nf-core/tools)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![code style: prettier](https://img.shields.io/badge/code%20style-prettier-ff69b4.svg)](https://github.com/prettier/prettier)
 [![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 
 [![install with Bioconda](https://img.shields.io/badge/install%20with-bioconda-brightgreen.svg)](https://bioconda.github.io/recipes/nf-core/README.html)
@@ -910,42 +911,31 @@ The nf-core DSL2 modules repository is at <https://github.com/nf-core/modules>
 
 The modules supercommand comes with two flags for specifying a custom remote:
 
-- `--github-repository <github repo>`: Specify the repository from which the modules should be fetched. Defaults to `nf-core/modules`.
-- `--branch <branch name>`: Specify the branch from which the modules shoudl be fetched. Defaults to `master`.
+- `--git-remote <git remote url>`: Specify the repository from which the modules should be fetched as a git URL. Defaults to the github repository of `nf-core/modules`.
+- `--branch <branch name>`: Specify the branch from which the modules should be fetched. Defaults to the default branch of your repository.
+
+For example, if you want to install the `fastqc` module from the repository `nf-core/modules-test` hosted at `gitlab.com`, you can use the following command:
+
+```terminal
+nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
+```
+
+If the modules in your custom remote are stored in another directory than `modules`, you can specify the path by using the `--base-path <path>` flag. This will default to `modules`.
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
-### Private remote modules
+The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
+due to performance reason or if you want to run the commands offline, you can use the flag `--no-pull`. Note however that the commands will
+still need to clone repositories that have previously not been used.
 
-In order to get access to your private modules repo, you need to create
-the `~/.config/gh/hosts.yml` file, which is the same file required by
-[GitHub CLI](https://cli.github.com/) to deal with private repositories.
-Such file is structured as follow:
+### Private remote repositories
 
-```conf
-github.com:
-    oauth_token: <your github access token>
-    user: <your github user>
-    git_protocol: <ssh or https are valid choices>
-```
-
-The easiest way to create this configuration file is through _GitHub CLI_: follow
-its [installation instructions](https://cli.github.com/manual/installation)
-and then call:
-
-```bash
-gh auth login
-```
-
-After that, you will be able to list and install your private modules without
-providing your github credentials through command line, by using `--github-repository`
-and `--branch` options properly.
-See the documentation on [gh auth login](https://cli.github.com/manual/gh_auth_login>)
-to get more information.
+You can use the modules command with private remote repositories. Make sure that your local `git` is correctly configured with your private remote
+and then specify the remote the same way you would do with a public remote repository.
 
 ### List modules
 
-The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands come with the `--key <keywords>` option for filtering the modules by keywords.
+The `nf-core modules list` command provides the subcommands `remote` and `local` for listing modules installed in a remote repository and in the local pipeline respectively. Both subcommands allow to use a pattern for filtering the modules by keywords eg: `nf-core modules list <subcommand> <keyword>`.
 
 #### List remote modules
 
@@ -1078,7 +1068,7 @@ There are three additional flags that you can use when installing a module:
 
 - `--force`: Overwrite a previously installed version of the module.
 - `--prompt`: Select the module version using a cli prompt.
-- `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
+- `--sha <commit_sha>`: Install the module at a specific commit.
 
 ### Update modules in a pipeline
 

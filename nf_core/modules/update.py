@@ -1,4 +1,3 @@
-import copy
 import difflib
 import enum
 import json
@@ -8,19 +7,14 @@ import shutil
 import tempfile
 
 import questionary
-from questionary import question
 from rich.console import Console
 from rich.syntax import Syntax
 
 import nf_core.modules.module_utils
 import nf_core.utils
 
-from .module_utils import (
-    get_installed_modules,
-    get_module_git_log,
-    module_exist_in_repo,
-)
 from .modules_command import ModuleCommand
+from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
@@ -28,9 +22,20 @@ log = logging.getLogger(__name__)
 
 class ModuleUpdate(ModuleCommand):
     def __init__(
-        self, pipeline_dir, force=False, prompt=False, sha=None, update_all=False, show_diff=None, save_diff_fn=None
+        self,
+        pipeline_dir,
+        force=False,
+        prompt=False,
+        sha=None,
+        update_all=False,
+        show_diff=None,
+        save_diff_fn=None,
+        remote_url=None,
+        branch=None,
+        no_pull=False,
+        base_path=None,
     ):
-        super().__init__(pipeline_dir)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -47,7 +52,8 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json_up_to_date()
+        modules_json = ModulesJson(self.dir)
+        modules_json.modules_json_up_to_date()
 
         tool_config = nf_core.utils.load_tools_config()
         update_config = tool_config.get("update", {})
@@ -68,25 +74,13 @@ class ModuleUpdate(ModuleCommand):
 
         # Verify that the provided SHA exists in the repo
         if self.sha:
-            try:
-                nf_core.modules.module_utils.sha_exists(self.sha, self.modules_repo)
-            except UserWarning:
-                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.name}'")
-                return False
-            except LookupError as e:
-                log.error(e)
+            if not self.modules_repo.sha_exists_on_branch(self.sha):
+                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
                 return False
 
         if not self.update_all:
-            # Get the available modules
-            try:
-                self.modules_repo.get_modules_file_tree()
-            except LookupError as e:
-                log.error(e)
-                return False
-
-            # Check if there are any modules installed from
-            repo_name = self.modules_repo.name
+            # Check if there are any modules installed from the repo
+            repo_name = self.modules_repo.fullname
             if repo_name not in self.module_names:
                 log.error(f"No modules installed from '{repo_name}'")
                 return False
@@ -105,8 +99,8 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
             sha = self.sha
-            if module in update_config.get(self.modules_repo.name, {}):
-                config_entry = update_config[self.modules_repo.name].get(module)
+            if module in update_config.get(self.modules_repo.fullname, {}):
+                config_entry = update_config[self.modules_repo.fullname].get(module)
                 if config_entry is not None and config_entry is not True:
                     if config_entry is False:
                         log.info("Module's update entry in '.nf-core.yml' is set to False")
@@ -126,7 +120,7 @@ class ModuleUpdate(ModuleCommand):
                         return False
 
             # Check that the supplied name is an available module
-            if module and module not in self.modules_repo.modules_avail_module_names:
+            if module and module not in self.modules_repo.get_avail_modules():
                 log.error(f"Module '{module}' not found in list of available modules.")
                 log.info("Use the command 'nf-core modules list remote' to view available software")
                 return False
@@ -178,21 +172,22 @@ class ModuleUpdate(ModuleCommand):
                 skipped_str = "', '".join(skipped_modules)
                 log.info(f"Skipping module{'' if len(skipped_modules) == 1 else 's'}: '{skipped_str}'")
 
+            # Get the git urls from the modules.json
             repos_mods_shas = [
-                (ModulesRepo(repo=repo_name), mods_shas) for repo_name, mods_shas in repos_mods_shas.items()
+                (modules_json.get_git_url(repo_name), modules_json.get_base_path(repo_name), mods_shas)
+                for repo_name, mods_shas in repos_mods_shas.items()
             ]
 
-            for repo, _ in repos_mods_shas:
-                repo.get_modules_file_tree()
+            repos_mods_shas = [
+                (ModulesRepo(remote_url=repo_url, base_path=base_path), mods_shas)
+                for repo_url, base_path, mods_shas in repos_mods_shas
+            ]
 
             # Flatten the list
             repos_mods_shas = [(repo, mod, sha) for repo, mods_shas in repos_mods_shas for mod, sha in mods_shas]
 
-        # Load 'modules.json'
-        modules_json = self.load_modules_json()
-        old_modules_json = copy.deepcopy(modules_json)  # Deep copy to avoid mutability
-        if not modules_json:
-            return False
+        # Save the current state of the modules.json
+        old_modules_json = modules_json.get_modules_json()
 
         # If --preview is true, don't save to a patch file
         if self.show_diff:
@@ -237,21 +232,19 @@ class ModuleUpdate(ModuleCommand):
             dry_run = self.show_diff or self.save_diff_fn
 
             # Check if the module we've been asked to update actually exists
-            if not module_exist_in_repo(module, modules_repo):
-                warn_msg = f"Module '{module}' not found in remote '{modules_repo.name}' ({modules_repo.branch})"
+            if not modules_repo.module_exists(module):
+                warn_msg = f"Module '{module}' not found in remote '{modules_repo.fullname}' ({modules_repo.branch})"
                 if self.update_all:
                     warn_msg += ". Skipping..."
                 log.warning(warn_msg)
                 exit_value = False
                 continue
 
-            if modules_repo.name in modules_json["repos"]:
-                current_entry = modules_json["repos"][modules_repo.name].get(module)
-            else:
-                current_entry = None
+            current_version = modules_json.get_module_version(module, modules_repo.fullname)
 
             # Set the install folder based on the repository name
-            install_folder = [self.dir, "modules", modules_repo.owner, modules_repo.repo]
+            install_folder = [self.dir, "modules"]
+            install_folder.extend(os.path.split(modules_repo.fullname))
 
             # Compute the module directory
             module_dir = os.path.join(*install_folder, module)
@@ -261,9 +254,7 @@ class ModuleUpdate(ModuleCommand):
             elif self.prompt:
                 try:
                     version = nf_core.modules.module_utils.prompt_module_version_sha(
-                        module,
-                        modules_repo=modules_repo,
-                        installed_sha=current_entry["git_sha"] if not current_entry is None else None,
+                        module, modules_repo=modules_repo, installed_sha=current_version
                     )
                 except SystemError as e:
                     log.error(e)
@@ -271,27 +262,21 @@ class ModuleUpdate(ModuleCommand):
                     continue
             else:
                 # Fetch the latest commit for the module
-                try:
-                    git_log = get_module_git_log(module, modules_repo=modules_repo, per_page=1, page_nbr=1)
-                except UserWarning:
-                    log.error(f"Was unable to fetch version of module '{module}'")
-                    exit_value = False
-                    continue
+                git_log = list(modules_repo.get_module_git_log(module, depth=1))
                 version = git_log[0]["git_sha"]
 
-            if current_entry is not None and not self.force:
+            if current_version is not None and not self.force:
                 # Fetch the latest commit for the module
-                current_version = current_entry["git_sha"]
                 if current_version == version:
                     if self.sha or self.prompt:
-                        log.info(f"'{modules_repo.name}/{module}' is already installed at {version}")
+                        log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
                     else:
-                        log.info(f"'{modules_repo.name}/{module}' is already up to date")
+                        log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
                     continue
 
             if not dry_run:
-                log.info(f"Updating '{modules_repo.name}/{module}'")
-                log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
+                log.info(f"Updating '{modules_repo.fullname}/{module}'")
+                log.debug(f"Updating module '{module}' to {version} from {modules_repo.fullname}")
 
                 log.debug(f"Removing old version of module '{module}'")
                 self.clear_module_dir(module, module_dir)
@@ -301,7 +286,7 @@ class ModuleUpdate(ModuleCommand):
                 install_folder = ["/tmp", next(tempfile._get_candidate_names())]
 
             # Download module files
-            if not self.download_module_file(module, version, modules_repo, install_folder, dry_run=dry_run):
+            if not self.install_module_files(module, version, modules_repo, install_folder):
                 exit_value = False
                 continue
 
@@ -363,7 +348,7 @@ class ModuleUpdate(ModuleCommand):
                     log.info(f"Writing diff of '{module}' to '{self.save_diff_fn}'")
                     with open(self.save_diff_fn, "a") as fh:
                         fh.write(
-                            f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})\n"
+                            f"Changes in module '{module}' between ({current_version if current_version is not None else '?'}) and ({version if version is not None else 'latest'})\n"
                         )
 
                         for file, d in diffs.items():
@@ -392,7 +377,7 @@ class ModuleUpdate(ModuleCommand):
                 elif self.show_diff:
                     console = Console(force_terminal=nf_core.utils.rich_force_colors())
                     log.info(
-                        f"Changes in module '{module}' between ({current_entry['git_sha'] if current_entry is not None else '?'}) and ({version if version is not None else 'latest'})"
+                        f"Changes in module '{module}' between ({current_version if current_version is not None else '?'}) and ({version if version is not None else 'latest'})"
                     )
 
                     for file, d in diffs.items():
@@ -426,24 +411,22 @@ class ModuleUpdate(ModuleCommand):
                             path = os.path.join(temp_folder, file)
                             if os.path.exists(path):
                                 shutil.move(path, os.path.join(module_dir, file))
-                        log.info(f"Updating '{modules_repo.name}/{module}'")
-                        log.debug(f"Updating module '{module}' to {version} from {modules_repo.name}")
+                        log.info(f"Updating '{modules_repo.fullname}/{module}'")
+                        log.debug(f"Updating module '{module}' to {version} from {modules_repo.fullname}")
 
             # Update modules.json with newly installed module
             if not dry_run:
-                self.update_modules_json(modules_json, modules_repo.name, module, version)
+                modules_json.update_modules_json(modules_repo, module, version)
 
             # Don't save to a file, just iteratively update the variable
             else:
-                modules_json = self.update_modules_json(
-                    modules_json, modules_repo.name, module, version, write_file=False
-                )
+                modules_json.update_modules_json(modules_repo, module, version, write_file=False)
 
         if self.save_diff_fn:
             # Compare the new modules.json and build a diff
             modules_json_diff = difflib.unified_diff(
                 json.dumps(old_modules_json, indent=4).splitlines(keepends=True),
-                json.dumps(modules_json, indent=4).splitlines(keepends=True),
+                json.dumps(modules_json.get_modules_json(), indent=4).splitlines(keepends=True),
                 fromfile=os.path.join(self.dir, "modules.json"),
                 tofile=os.path.join(self.dir, "modules.json"),
             )

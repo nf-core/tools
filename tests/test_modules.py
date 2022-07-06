@@ -64,7 +64,7 @@ class TestModules(unittest.TestCase):
     def test_modulesrepo_class(self):
         """Initialise a modules repo object"""
         modrepo = nf_core.modules.ModulesRepo()
-        assert modrepo.name == "nf-core/modules"
+        assert modrepo.fullname == "nf-core/modules"
         assert modrepo.branch == "master"
 
     ############################################
@@ -109,6 +109,7 @@ class TestModules(unittest.TestCase):
     )
     from .modules.module_test import (
         test_modules_test_check_inputs,
+        test_modules_test_no_installed_modules,
         test_modules_test_no_name_no_prompts,
     )
     from .modules.remove import (
