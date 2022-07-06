@@ -82,6 +82,6 @@ def test_bump_nextflow_version(datafiles, tmp_path):
     with open(new_pipeline_obj._fp("README.md")) as fh:
         readme = fh.read().splitlines()
     assert (
-        f"[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A5{version}-23aa62.svg)]"
+        f"[![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A5{version}-23aa62.svg?labelColor=000000)]"
         "(https://www.nextflow.io/)" in readme
     )
