@@ -1,0 +1,16 @@
+on: [push]
+jobs:
+  rich_codex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Install nf-core/tools
+        run: pip install .
+
+      - name: Generate terminal images with rich-codex
+        uses: ewels/rich-codex@v1
+        with:
+          commit_changes: "true"
+          clean_img_paths: docs/img/*.svg

@@ -190,83 +190,22 @@ The command `nf-core list` shows all available nf-core pipelines along with thei
 
 An example of the output from the command is as follows:
 
-```console
-$ nf-core list
+<!-- RICH-CODEX head: 19 -->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│ rnafusion         │    45 │          1.2.0 │   2 weeks ago │            - │ -                     │
-│ hic               │    17 │          1.2.1 │   3 weeks ago │ 4 months ago │ No (v1.1.0)           │
-│ chipseq           │    56 │          1.2.0 │   4 weeks ago │  4 weeks ago │ No (dev - bfe7eb3)    │
-│ atacseq           │    40 │          1.2.0 │   4 weeks ago │  6 hours ago │ No (master - 79bc7c2) │
-│ viralrecon        │    20 │          1.1.0 │  1 months ago │ 1 months ago │ Yes (v1.1.0)          │
-│ sarek             │    59 │          2.6.1 │  1 months ago │            - │ -                     │
-[..truncated..]
-```
+![`nf-core list`](docs/images/nf-core-list.svg)
 
 To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
 
-```console
-$ nf-core list rna rna-seq
-
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Pipeline Name ┃ Stars ┃ Latest Release ┃     Released ┃ Last Pulled ┃ Have latest release? ┃
-┡━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ dualrnaseq    │     3 │          1.0.0 │ 1 months ago │           - │ -                    │
-│ rnaseq        │   304 │            3.0 │ 3 months ago │ 1 years ago │ No (v1.4.2)          │
-│ rnafusion     │    56 │          1.2.0 │ 8 months ago │ 2 years ago │ No (v1.0.1)          │
-│ smrnaseq      │    18 │          1.0.0 │  1 years ago │           - │ -                    │
-│ circrna       │     1 │            dev │            - │           - │ -                    │
-│ lncpipe       │    18 │            dev │            - │           - │ -                    │
-│ scflow        │     2 │            dev │            - │           - │ -                    │
-└───────────────┴───────┴────────────────┴──────────────┴─────────────┴──────────────────────┘
-```
+![`nf-core list rna rna-seq`](docs/images/nf-core-list-rna.svg)
 
 You can sort the results by latest release (`-s release`, default),
 when you last pulled a local copy (`-s pulled`),
 alphabetically (`-s name`),
 or number of GitHub stars (`-s stars`).
 
-```console
-$ nf-core list -s stars
+<!-- RICH-CODEX head: 18 -->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│ rnaseq            │   207 │          1.4.2 │  9 months ago │   5 days ago │ Yes (v1.4.2)          │
-│ sarek             │    59 │          2.6.1 │  1 months ago │            - │ -                     │
-│ chipseq           │    56 │          1.2.0 │   4 weeks ago │  4 weeks ago │ No (dev - bfe7eb3)    │
-│ methylseq         │    47 │            1.5 │  4 months ago │            - │ -                     │
-│ rnafusion         │    45 │          1.2.0 │   2 weeks ago │            - │ -                     │
-│ ampliseq          │    41 │          1.1.2 │  7 months ago │            - │ -                     │
-│ atacseq           │    40 │          1.2.0 │   4 weeks ago │  6 hours ago │ No (master - 79bc7c2) │
-[..truncated..]
-```
+![`nf-core list -s stars`](docs/images/nf-core-list-stars.svg)
 
 To return results as JSON output for downstream use, use the `--json` flag.
 
@@ -288,39 +227,9 @@ This makes it easier to reuse these in the future.
 The command takes one argument - either the name of an nf-core pipeline which will be pulled automatically,
 or the path to a directory containing a Nextflow pipeline _(can be any pipeline, doesn't have to be nf-core)_.
 
-```console
-$ nf-core launch rnaseq
+<!-- RICH-CODEX trim_after: "Command line" -->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-INFO     This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
-
-INFO     Using local workflow: nf-core/rnaseq (v3.0)
-INFO     [✓] Default parameters look valid
-INFO     [✓] Pipeline schema looks valid (found 85 params)
-INFO     Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?
-? Choose launch method  Command line
-
-
-?  Nextflow command-line flags
-General Nextflow flags to control how the pipeline runs.
-These are not specific to the pipeline and will not be saved in any parameter file. They are just used when building the nextflow run launch command.
-(Use arrow keys)
-
- » Continue >>
-   ---------------
-   -name
-   -profile
-   -work-dir  [./work]
-   -resume  [False]
-```
+![`nf-core launch rnaseq -r 3.8.1`](docs/images/nf-core-launch-rnaseq.svg)
 
 Once complete, the wizard will ask you if you want to launch the Nextflow run.
 If not, you can copy and paste the Nextflow command with the `nf-params.json` file of your inputs.
@@ -368,47 +277,12 @@ The `nf-core download` command will download both the pipeline code and the [ins
 If run without any arguments, the download tool will interactively prompt you for the required information.
 Each option has a flag, if all are supplied then it will run without any user input needed.
 
-```console
-$ nf-core download
+<!-- RICH-CODEX
+fake_command: nf-core download
+after_command: rm -rf tmp_download
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
-? Pipeline name: rnaseq
-? Select release / branch: 3.0  [release]
-
-In addition to the pipeline code, this tool can download software containers.
-? Download software container images: singularity
-
-Nextflow and nf-core can use an environment variable called $NXF_SINGULARITY_CACHEDIR that is a path to a directory where remote Singularity
-images are stored. This allows downloaded images to be cached in a central location.
-? Define $NXF_SINGULARITY_CACHEDIR for a shared Singularity image download folder? [y/n]: y
-? Specify the path: cachedir/
-
-So that $NXF_SINGULARITY_CACHEDIR is always defined, you can add it to your ~/.bashrc file. This will then be autmoatically set every time you open a new terminal. We can add the following line to this file for you:
-export NXF_SINGULARITY_CACHEDIR="/path/to/demo/cachedir"
-? Add to ~/.bashrc ? [y/n]: n
-
-If transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file.
-This is not recommended when downloading Singularity images, as it can take a long time and saves very little space.
-? Choose compression type: none
-INFO     Saving 'nf-core/rnaseq
-          Pipeline release: '3.0'
-          Pull containers: 'singularity'
-          Using $NXF_SINGULARITY_CACHEDIR': /path/to/demo/cachedir
-          Output directory: 'nf-core-rnaseq-3.0'
-INFO     Downloading workflow files from GitHub
-INFO     Downloading centralised configs from GitHub
-INFO     Found 29 containers
-Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
-```
+![`nf-core download rnaseq -r 3.8.1 --outdir tmp_download -x none -c none`](docs/images/nf-core-download.svg)
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
@@ -434,7 +308,7 @@ nf-core-rnaseq-3.0
 You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
 
 ```bash
-nextflow run /path/to/download/nf-core-rnaseq-3.0/workflow/ --input mydata.csv   # usual parameters here
+nextflow run /path/to/download/nf-core-rnaseq-3.8.1/workflow/ --input mydata.csv   # usual parameters here
 ```
 
 ### Downloaded nf-core configs
@@ -498,7 +372,7 @@ If the download speeds are much slower than your internet connection is capable 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-> NB: Currently this command does not work for DSL2 pipelines. This will be addressed [soon](https://github.com/nf-core/tools/issues/1155).
+> ⚠️ This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
 
 ```console
 $ nf-core licences rnaseq
@@ -554,34 +428,12 @@ After creating the files, the command initialises the folder as a git repository
 This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
 See the [nf-core syncing docs](https://nf-co.re/developers/sync) for more information.
 
-```console
-$ nf-core create
+<!-- RICH-CODEX
+working_dir: temp_create_outputs
+after_command: cd ../ && rm -rf temp_create_outputs
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-Workflow Name: nextbigthing
-Description: This pipeline analyses data from the next big 'omics technique
-Author: Big Steve
-  INFO     Creating new nf-core pipeline: nf-core/nextbigthing
-  INFO     Initialising pipeline git repository
-  INFO     Done. Remember to add a remote and push to GitHub:
-            cd /Users/philewels/GitHub/nf-core/tools/test-create/nf-core-nextbigthing
-            git remote add origin git@github.com:USERNAME/REPO_NAME.git
-            git push --all origin
-  INFO     This will also push your newly created dev branch and the TEMPLATE branch for syncing.
-  INFO     !!!!!! IMPORTANT !!!!!!
-
-           If you are interested in adding your pipeline to the nf-core community,
-           PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
-
-           Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
-```
+![`nf-core create -n nextbigthing -d "This pipeline analyses data from the next big omics technique" -a "Big Steve"`](docs/images/nf-core-create.svg)
 
 Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet) and push the commits from your computer using the example commands in the above log.
 You can then continue to edit, commit and push normally as you build your pipeline.
@@ -600,46 +452,18 @@ This is the same test that is used on the automated continuous integration tests
 
 For example, the current version looks something like this:
 
-```console
-$ nf-core lint
+<!-- RICH-CODEX
+min_pct_diff: 15  # Progress bar changes each time - would be good to figure out how to disable it
+timeout: 30
+working_dir: temp_lint_outputs
+before_command: >
+  nf-core create -n nextbigthing -d "This pipeline analyses data from the next big omics technique" -a "Big Steve" &&
+  echo "lint: { pipeline_todos: false }" >> nf-core-nextbigthing/.nf-core.yml
+after_command: cd ../ && rm -rf temp_lint_outputs
+fake_command: nf-core lint
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-    nf-core/tools version 2.2
-
-INFO     Testing pipeline: .
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ General lint results                                                                                            │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 1 Test Warnings                                                                                             │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ pipeline_todos: TODO string in base.config: Check the defaults for all processes                                │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Module lint results                                                                                             │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 1 Test Warnings                                                                                             │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────┬──────────────────────────────────┬───────────────────────────────────╮
-│ Module name                              │ File path                        │ Test message                      │
-├──────────────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ get_software_versions.nf                 │ modules/local/get_software_vers… │ 'options' variable not specified  │
-╰──────────────────────────────────────────┴──────────────────────────────────┴───────────────────────────────────╯
-╭───────────────────────╮
-│ LINT RESULTS SUMMARY  │
-├───────────────────────┤
-│ [✔] 183 Tests Passed  │
-│ [?]   0 Tests Ignored │
-│ [!]   2 Test Warnings │
-│ [✗]   0 Tests Failed  │
-╰───────────────────────╯
-
-```
+![`cd nf-core-nextbigthing && nf-core lint`](docs/images/nf-core-lint.svg)
 
 You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
 
@@ -709,24 +533,12 @@ This command validates such a file against the pipeline schema.
 
 Usage is `nf-core schema validate <pipeline> <parameter file>`, eg:
 
-```console
-$ nf-core schema validate rnaseq nf-params.json
+<!-- RICH-CODEX
+before_command: 'echo "input: myfiles.csv, outdir: results" > nf-params.json'
+after_command: rm nf-params.json
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-
-INFO     Using local workflow: nf-core/rnaseq (v3.0)
-INFO     [✓] Default parameters look valid
-INFO     [✓] Pipeline schema looks valid (found 85 params)
-INFO     [✓] Input parameters look valid
-```
+![`nf-core schema validate rnaseq nf-params.json`](docs/images/nf-core-schema-validate.svg)
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
