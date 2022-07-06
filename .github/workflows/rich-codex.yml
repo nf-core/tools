@@ -1,3 +1,4 @@
+name: Generate images for docs
 on: [push]
 jobs:
   rich_codex:
@@ -10,7 +11,7 @@ jobs:
         run: pip install .
 
       - name: Generate terminal images with rich-codex
-        uses: ewels/rich-codex@v1
+        uses: ewels/rich-codex@main
         with:
           commit_changes: "true"
-          clean_img_paths: docs/img/*.svg
+          clean_img_paths: docs/images/*.svg
