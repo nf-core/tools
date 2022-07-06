@@ -1,4 +1,4 @@
-<svg class="rich-terminal" viewBox="0 0 994 98.8" xmlns="http://www.w3.org/2000/svg">
+<svg class="rich-terminal" viewBox="0 0 994 367.2" xmlns="http://www.w3.org/2000/svg">
     <!-- Generated with Rich https://www.textualize.io -->
     <style>
 
@@ -19,43 +19,93 @@
         font-weight: 700;
     }
 
-    .terminal-2420970763-matrix {
+    .terminal-489190087-matrix {
         font-family: Fira Code, monospace;
         font-size: 20px;
         line-height: 24.4px;
         font-variant-east-asian: full-width;
     }
 
-    .terminal-2420970763-title {
+    .terminal-489190087-title {
         font-size: 18px;
         font-weight: bold;
         font-family: arial;
     }
 
-    .terminal-2420970763-r1 { fill: #c5c8c6 }
+    .terminal-489190087-r1 { fill: #c5c8c6 }
+.terminal-489190087-r2 { fill: #98a84b }
+.terminal-489190087-r3 { fill: #9a9b99 }
+.terminal-489190087-r4 { fill: #608ab1 }
+.terminal-489190087-r5 { fill: #d0b344 }
+.terminal-489190087-r6 { fill: #292929;font-weight: bold }
+.terminal-489190087-r7 { fill: #868887 }
     </style>
 
     <defs>
-    <clipPath id="terminal-2420970763-clip-terminal">
-      <rect x="0" y="0" width="975.0" height="47.8" />
+    <clipPath id="terminal-489190087-clip-terminal">
+      <rect x="0" y="0" width="975.0" height="316.2" />
     </clipPath>
-    <clipPath id="terminal-2420970763-line-0">
+    <clipPath id="terminal-489190087-line-0">
     <rect x="0" y="1.5" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-1">
+    <rect x="0" y="25.9" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-2">
+    <rect x="0" y="50.3" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-3">
+    <rect x="0" y="74.7" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-4">
+    <rect x="0" y="99.1" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-5">
+    <rect x="0" y="123.5" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-6">
+    <rect x="0" y="147.9" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-7">
+    <rect x="0" y="172.3" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-8">
+    <rect x="0" y="196.7" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-9">
+    <rect x="0" y="221.1" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-10">
+    <rect x="0" y="245.5" width="976" height="24.65"/>
+            </clipPath>
+<clipPath id="terminal-489190087-line-11">
+    <rect x="0" y="269.9" width="976" height="24.65"/>
             </clipPath>
     </defs>
 
-    <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="992" height="96.8" rx="8"/>
+    <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="992" height="365.2" rx="8"/>
             <g transform="translate(26,22)">
             <circle cx="0" cy="0" r="7" fill="#ff5f57"/>
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
         
-    <g transform="translate(9, 41)" clip-path="url(#terminal-2420970763-clip-terminal)">
-    
-    <g class="terminal-2420970763-matrix">
-    <text class="terminal-2420970763-r1" x="0" y="20" textLength="170.8" clip-path="url(#terminal-2420970763-line-0)">$&#160;nf-core&#160;lint</text><text class="terminal-2420970763-r1" x="976" y="20" textLength="12.2" clip-path="url(#terminal-2420970763-line-0)">
-</text><text class="terminal-2420970763-r1" x="0" y="44.4" textLength="585.6" clip-path="url(#terminal-2420970763-line-1)">/bin/sh:&#160;1:&#160;cd:&#160;can&#x27;t&#160;cd&#160;to&#160;nf-core-nextbigthing</text><text class="terminal-2420970763-r1" x="976" y="44.4" textLength="12.2" clip-path="url(#terminal-2420970763-line-1)">
+    <g transform="translate(9, 41)" clip-path="url(#terminal-489190087-clip-terminal)">
+    <rect fill="#cc555a" x="0" y="269.9" width="97.6" height="24.65" shape-rendering="crispEdges"/>
+    <g class="terminal-489190087-matrix">
+    <text class="terminal-489190087-r1" x="0" y="20" textLength="170.8" clip-path="url(#terminal-489190087-line-0)">$&#160;nf-core&#160;lint</text><text class="terminal-489190087-r1" x="976" y="20" textLength="12.2" clip-path="url(#terminal-489190087-line-0)">
+</text><text class="terminal-489190087-r1" x="976" y="44.4" textLength="12.2" clip-path="url(#terminal-489190087-line-1)">
+</text><text class="terminal-489190087-r2" x="0" y="68.8" textLength="561.2" clip-path="url(#terminal-489190087-line-2)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;,--.</text><text class="terminal-489190087-r3" x="561.2" y="68.8" textLength="12.2" clip-path="url(#terminal-489190087-line-2)">/</text><text class="terminal-489190087-r2" x="573.4" y="68.8" textLength="36.6" clip-path="url(#terminal-489190087-line-2)">,-.</text><text class="terminal-489190087-r1" x="976" y="68.8" textLength="12.2" clip-path="url(#terminal-489190087-line-2)">
+</text><text class="terminal-489190087-r4" x="0" y="93.2" textLength="500.2" clip-path="url(#terminal-489190087-line-3)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;___&#160;&#160;&#160;&#160;&#160;__&#160;&#160;&#160;__&#160;&#160;&#160;__&#160;&#160;&#160;___&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-489190087-r2" x="500.2" y="93.2" textLength="122" clip-path="url(#terminal-489190087-line-3)">/,-._.--~\</text><text class="terminal-489190087-r1" x="976" y="93.2" textLength="12.2" clip-path="url(#terminal-489190087-line-3)">
+</text><text class="terminal-489190087-r4" x="0" y="117.6" textLength="500.2" clip-path="url(#terminal-489190087-line-4)">&#160;&#160;&#160;&#160;|\&#160;|&#160;|__&#160;&#160;__&#160;/&#160;&#160;`&#160;/&#160;&#160;\&#160;|__)&#160;|__&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-489190087-r5" x="500.2" y="117.6" textLength="85.4" clip-path="url(#terminal-489190087-line-4)">&#160;&#160;&#160;}&#160;&#160;{</text><text class="terminal-489190087-r1" x="976" y="117.6" textLength="12.2" clip-path="url(#terminal-489190087-line-4)">
+</text><text class="terminal-489190087-r4" x="0" y="142" textLength="500.2" clip-path="url(#terminal-489190087-line-5)">&#160;&#160;&#160;&#160;|&#160;\|&#160;|&#160;&#160;&#160;&#160;&#160;&#160;&#160;\__,&#160;\__/&#160;|&#160;&#160;\&#160;|___&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-489190087-r2" x="500.2" y="142" textLength="122" clip-path="url(#terminal-489190087-line-5)">\`-._,-`-,</text><text class="terminal-489190087-r1" x="976" y="142" textLength="12.2" clip-path="url(#terminal-489190087-line-5)">
+</text><text class="terminal-489190087-r2" x="0" y="166.4" textLength="610" clip-path="url(#terminal-489190087-line-6)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;`._,._,&#x27;</text><text class="terminal-489190087-r1" x="976" y="166.4" textLength="12.2" clip-path="url(#terminal-489190087-line-6)">
+</text><text class="terminal-489190087-r1" x="976" y="190.8" textLength="12.2" clip-path="url(#terminal-489190087-line-7)">
+</text><text class="terminal-489190087-r3" x="0" y="215.2" textLength="451.4" clip-path="url(#terminal-489190087-line-8)">&#160;&#160;&#160;&#160;nf-core/tools&#160;version&#160;2.5.dev0&#160;-&#160;</text><text class="terminal-489190087-r3" x="451.4" y="215.2" textLength="195.2" clip-path="url(#terminal-489190087-line-8)">https://nf-co.re</text><text class="terminal-489190087-r1" x="976" y="215.2" textLength="12.2" clip-path="url(#terminal-489190087-line-8)">
+</text><text class="terminal-489190087-r1" x="976" y="239.6" textLength="12.2" clip-path="url(#terminal-489190087-line-9)">
+</text><text class="terminal-489190087-r1" x="976" y="264" textLength="12.2" clip-path="url(#terminal-489190087-line-10)">
+</text><text class="terminal-489190087-r6" x="0" y="288.4" textLength="97.6" clip-path="url(#terminal-489190087-line-11)">CRITICAL</text><text class="terminal-489190087-r1" x="97.6" y="288.4" textLength="695.4" clip-path="url(#terminal-489190087-line-11)">&#160;It&#160;looks&#160;like&#160;Nextflow&#160;is&#160;not&#160;installed.&#160;It&#160;is&#160;required&#160;</text><text class="terminal-489190087-r7" x="793" y="288.4" textLength="134.2" clip-path="url(#terminal-489190087-line-11)">__main__.py</text><text class="terminal-489190087-r7" x="927.2" y="288.4" textLength="12.2" clip-path="url(#terminal-489190087-line-11)">:</text><text class="terminal-489190087-r7" x="939.4" y="288.4" textLength="36.6" clip-path="url(#terminal-489190087-line-11)">338</text><text class="terminal-489190087-r1" x="976" y="288.4" textLength="12.2" clip-path="url(#terminal-489190087-line-11)">
+</text><text class="terminal-489190087-r1" x="0" y="312.8" textLength="793" clip-path="url(#terminal-489190087-line-12)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;for&#160;most&#160;nf-core&#160;functions.&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-489190087-r1" x="976" y="312.8" textLength="12.2" clip-path="url(#terminal-489190087-line-12)">
 </text>
     </g>
     </g>
