@@ -9,6 +9,7 @@ import pathlib
 import random
 import re
 import shutil
+import subprocess
 import sys
 import time
 
@@ -315,6 +316,10 @@ class PipelineCreate(object):
         schema.get_wf_params()
         schema.remove_schema_notfound_configs()
         schema.save_schema(suppress_logging=True)
+
+        # The schema is not guaranteed to follow Prettier standards
+        # so we run prettier on the schema file
+        subprocess.run(["prettier", "--write", schema_path])
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
