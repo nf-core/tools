@@ -47,7 +47,7 @@ def _print_nf_config(rgc):
     abg = rgc.list_assets_by_genome()
     genomes_str = ""
     for genome, asset_list in abg.items():
-        genomes_str += "    '{}' {{\n".format(genome)
+        genomes_str += f"    '{genome}' {{\n"
         for asset in asset_list:
             try:
                 pth = rgc.seek(genome, asset)
@@ -55,7 +55,8 @@ def _print_nf_config(rgc):
             except Exception as e:
                 log.warn(f"{genome}/{asset} is incomplete, ignoring...")
             else:
-                genomes_str += '      {} = "{}"\n'.format(asset.ljust(20, " "), pth)
+                genomes_str += f'      {asset.ljust(20, " ")} = "{pth}"\n'
+        genomes_str += "    }\n"
 
     return NF_CFG_TEMPLATE.format(content=genomes_str)
 
@@ -131,12 +132,6 @@ def update_config(rgc):
                 os.makedirs(nxf_home, exist_ok=True)
         except RuntimeError:
             nxf_home = False
-
-    """if not nxf_home and "HOME" in os.environ:
-        nxf_home = os.path.join(os.environ.get("HOME"), ".nextflow")
-        if not os.path.exists(nxf_home):
-            log.info(f"Creating NXF_HOME directory at {nxf_home}")
-            os.makedirs(nxf_home, exist_ok=True)"""
 
     # Get the path for storing the updated refgenie_genomes.config
     if hasattr(rgc, "nextflow_config"):
