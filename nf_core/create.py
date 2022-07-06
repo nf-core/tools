@@ -296,12 +296,16 @@ class PipelineCreate(object):
                 os.chmod(output_path, template_stat.st_mode)
 
         # Remove all unused parameters in the nextflow schema
-        if self.template_params["igenomes"]:
+        if not self.template_params["igenomes"]:
             self.update_nextflow_schema()
 
         # Make a logo and save it, if it is a nf-core pipeline
         if self.template_params["branded"]:
             self.make_pipeline_logo()
+        else:
+            # Remove field mentioning nf-core docs
+            # in the github bug report template
+            self.remove_nf_core_in_bug_report_template()
 
     def update_nextflow_schema(self):
         """
@@ -320,6 +324,29 @@ class PipelineCreate(object):
         # The schema is not guaranteed to follow Prettier standards
         # so we run prettier on the schema file
         subprocess.run(["prettier", "--write", schema_path])
+
+    def remove_nf_core_in_bug_report_template(self):
+        """
+        Remove the field mentioning nf-core documentation
+        in the github bug report template
+        """
+        bug_report_path = os.path.join(self.outdir, ".github", "ISSUE_TEMPLATE", "bug_report.yml")
+
+        with open(bug_report_path, "r") as fh:
+            contents = yaml.load(fh, Loader=yaml.FullLoader)
+
+        print(contents)
+        # Remove the first item in the body, which is the information about the docs
+        contents["body"].pop(0)
+
+        print(contents)
+
+        with open(bug_report_path, "w") as fh:
+            yaml.dump(contents, fh, default_flow_style=False, sort_keys=False)
+
+        # The dumped yaml file will not follow prettier formatting rules
+        # so we run prettier on the file
+        subprocess.run(["prettier", "--write", bug_report_path])
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
