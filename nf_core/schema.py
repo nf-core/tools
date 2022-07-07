@@ -72,7 +72,6 @@ class PipelineSchema(object):
             error = f"Could not find pipeline schema for '{path}': {self.schema_filename}"
             log.error(error)
             raise AssertionError(error)
-        print(self.schema_filename)
 
     def load_lint_schema(self):
         """Load and lint a given schema to see if it looks valid"""

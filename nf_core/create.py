@@ -299,8 +299,8 @@ class PipelineCreate(object):
         if not self.template_params["igenomes"]:
             self.update_nextflow_schema()
 
-        # Make a logo and save it, if it is a nf-core pipeline
         if self.template_params["branded"]:
+            # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
         else:
             # Remove field mentioning nf-core docs
