@@ -213,7 +213,7 @@ class PipelineCreate(object):
         repo.git.branch("dev")
         log.info(
             "Done. Remember to add a remote and push to GitHub:\n"
-            f"[white on grey23] cd {self.outdir} \n"
+            f"[white on black] cd {self.outdir} \n"
             " git remote add origin git@github.com:USERNAME/REPO_NAME.git \n"
             " git push --all origin                                       "
         )

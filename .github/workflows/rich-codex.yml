@@ -20,6 +20,13 @@ jobs:
       - name: Install nf-core/tools
         run: pip install .
 
+      - name: Test installation
+        run: |
+          which nextflow
+          which nf-core
+          nextflow -version
+          nf-core --version
+
       - name: Generate terminal images with rich-codex
         uses: ewels/rich-codex@v1
         with:
