@@ -34,10 +34,8 @@ The pipeline is built using [Nextflow](https://www.nextflow.io), a workflow tool
 <!-- TODO nf-core: Add full-sized test dataset and amend the paragraph below if applicable -->
 
 On release, automated continuous integration tests run the pipeline on a full-sized dataset on the AWS cloud infrastructure. This ensures that the pipeline runs on AWS, has sensible resource allocation defaults set to run on real-world datasets, and permits the persistent storage of results to benchmark between pipeline releases and other analysis sources.
-{% if branded -%}
-The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/{{ short_name }}/results).
-
-{% endif -%}
+{%- if branded -%}
+The results obtained from the full-sized test can be viewed on the [nf-core website](https://nf-co.re/{{ short_name }}/results).{% endif %}
 
 ## Pipeline summary
 
@@ -110,7 +108,7 @@ An extensive list of references for the tools used by the pipeline can be found 
 {% if branded -%}
 You can cite the `nf-core` publication as follows:
 
-{% else %}
+{% else -%}
 This pipeline uses code and infrastructure developed and maintained by the [nf-core](https://nf-co.re) community, reused here under the [MIT license](https://github.com/nf-core/tools/blob/master/LICENSE).
 
 {% endif -%}
