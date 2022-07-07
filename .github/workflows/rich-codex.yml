@@ -14,6 +14,9 @@ jobs:
           cache: pip
           cache-dependency-path: setup.py
 
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v1
+
       - name: Install nf-core/tools
         run: pip install .
 
