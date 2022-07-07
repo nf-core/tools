@@ -111,7 +111,7 @@ def files_exist(self):
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
     #: test autodoc
-    short_name = self.nf_config["manifest.name"].strip("\"'").replace("nf-core/", "")
+    _, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
     files_fail = [
         [".gitattributes"],
         [".gitignore"],

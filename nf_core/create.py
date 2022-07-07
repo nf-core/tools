@@ -126,7 +126,7 @@ class PipelineCreate(object):
             if t_area in template_yaml.get("skip", []):
                 if template_areas[t_area]["file"]:
                     skip_paths.append(t_area)
-                param_dict[t_area] = not template_areas[t_area]["content"]
+                param_dict[t_area] = False
             else:
                 param_dict[t_area] = True
 
@@ -307,6 +307,9 @@ class PipelineCreate(object):
             # in the github bug report template
             self.remove_nf_core_in_bug_report_template()
 
+            # Update the .nf-core.yml with linting configurations
+            self.fix_linting()
+
     def update_nextflow_schema(self):
         """
         Removes unused parameters from the nextflow schema.
@@ -323,7 +326,7 @@ class PipelineCreate(object):
 
         # The schema is not guaranteed to follow Prettier standards
         # so we run prettier on the schema file
-        subprocess.run(["prettier", "--write", schema_path])
+        subprocess.run(["prettier", "--write", schema_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def remove_nf_core_in_bug_report_template(self):
         """
@@ -343,7 +346,71 @@ class PipelineCreate(object):
 
         # The dumped yaml file will not follow prettier formatting rules
         # so we run prettier on the file
-        subprocess.run(["prettier", "--write", bug_report_path])
+        subprocess.run(["prettier", "--write", bug_report_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def fix_linting(self):
+        """
+        Updates the .nf-core.yml with linting configurations
+        for a customized pipeline.
+        """
+        # Create a lint config
+        short_name = self.template_params["short_name"]
+        lint_config = {
+            "files_exist": [
+                "CODE_OF_CONDUCT.md",
+                f"assets/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_light.png",
+                f"docs/images/nf-core-{short_name}_logo_dark.png",
+            ],
+            "nextflow_config": [
+                "manifest.name",
+                "manifest.homePage",
+            ],
+            "multiqc_config": ["report_comment"],
+        }
+
+        # Add CI specific configurations
+        if not self.template_params["ci"]:
+            lint_config["files_exist"].extend(
+                [
+                    ".github/workflows/branch.yml",
+                    ".github/workflows/ci.yml",
+                    ".github/workflows/linting_comment.yml",
+                    ".github/workflows/linting.yml",
+                    ".github/workflows/awstest.yml",
+                    ".github/workflows/awsfulltest.yml",
+                ]
+            )
+
+        # Add custom config specific configurations
+        if not self.template_params["nf_core_configs"]:
+            lint_config["files_exist"].extend([".github/ISSUE_TEMPLATE/config.yml", "conf/igenomes.config"])
+            lint_config["nextflow_config"].extend(
+                [
+                    "process.cpus",
+                    "process.memory",
+                    "process.time",
+                    "custom_config",
+                ]
+            )
+
+        # Add github badges specific configurations
+        if not self.template_params["gh_badges"]:
+            lint_config["readme"] = ["nextflow_badge"]
+
+        # Add the lint content to the preexisting nf-core config
+        nf_core_yml = nf_core.utils.load_tools_config(self.outdir)
+        nf_core_yml["lint"] = lint_config
+        with open(os.path.join(self.outdir, ".nf-core.yml"), "w") as fh:
+            yaml.dump(nf_core_yml, fh, default_flow_style=False, sort_keys=False)
+
+        # The dumped yaml file will not follow prettier formatting rules
+        # so we run prettier on the file
+        subprocess.run(
+            ["prettier", "--write", os.path.join(self.outdir, ".nf-core.yml")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
