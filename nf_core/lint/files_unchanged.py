@@ -113,10 +113,11 @@ def files_unchanged(self):
     # Create a template.yaml file for the pipeline creation
     template_yaml = {
         "name": short_name,
-        "description": self.nf_config["manifest.description"],
-        "author": self.nf_config["manifest.author"],
+        "description": self.nf_config["manifest.description"].strip("\"'"),
+        "author": self.nf_config["manifest.author"].strip("\"'"),
         "prefix": prefix,
     }
+
     template_yaml_path = os.path.join(tmp_dir, "template.yaml")
     with open(template_yaml_path, "w") as fh:
         yaml.dump(template_yaml, fh, default_flow_style=False)

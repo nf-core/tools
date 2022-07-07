@@ -171,7 +171,7 @@ class PipelineCreate(object):
         if param_name in template_yaml:
             if passed_value is not None:
                 log.info(f"overriding --{param_name} with name found in {template_yaml_path}")
-            passed_value = template_yaml["name"]
+            passed_value = template_yaml[param_name]
         if passed_value is None:
             passed_value = getattr(self, f"prompt_wf_{param_name}")()
         return passed_value
