@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
+import logging
 import os
+
+log = logging.getLogger(__name__)
 
 
 def files_exist(self):
@@ -111,7 +114,12 @@ def files_exist(self):
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
     #: test autodoc
-    _, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+    try:
+        _, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+    except ValueError:
+        log.warning("Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is '<pipeline>'.")
+        short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+
     files_fail = [
         [".gitattributes"],
         [".gitignore"],

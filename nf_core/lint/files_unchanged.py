@@ -10,6 +10,8 @@ import yaml
 
 import nf_core.create
 
+log = logging.getLogger(__name__)
+
 
 def files_unchanged(self):
     """Checks that certain pipeline files are not modified from template output.
@@ -71,7 +73,14 @@ def files_unchanged(self):
     missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
     if missing_pipeline_config:
         return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
-    prefix, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+    try:
+        prefix, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+    except ValueError:
+        log.warning(
+            "Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is <pipeline> and default to repo 'nf-core'"
+        )
+        short_name = self.nf_config["manifest.name"].strip("\"'")
+        prefix = "nf-core"
 
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
