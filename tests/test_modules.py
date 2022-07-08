@@ -50,7 +50,7 @@ class TestModules(unittest.TestCase):
             self.pipeline_dir,
             prompt=False,
             force=True,
-            remote_url="git@gitlab.com:nf-core/modules-test.git",
+            remote_url="https://gitlab.com/nf-core/modules-test.git",
             base_path="tools",
         )
 
