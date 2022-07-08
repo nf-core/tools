@@ -51,7 +51,6 @@ class TestModules(unittest.TestCase):
             prompt=False,
             force=True,
             remote_url="https://gitlab.com/nf-core/modules-test.git",
-            base_path="tools",
         )
 
         # Set up remove objects
