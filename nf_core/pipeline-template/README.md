@@ -7,7 +7,7 @@
 [![GitHub Actions CI Status](https://github.com/{{ name }}/workflows/nf-core%20CI/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+CI%22)
 [![GitHub Actions Linting Status](https://github.com/{{ name }}/workflows/nf-core%20linting/badge.svg)](https://github.com/{{ name }}/actions?query=workflow%3A%22nf-core+linting%22){% endif -%}
 {% if branded -%}[![AWS CI](https://img.shields.io/badge/CI%20tests-full%20size-FF9900?labelColor=000000&logo=Amazon%20AWS)](https://nf-co.re/{{ short_name }}/results){% endif -%}
-{%- if gh_badges -%}
+{%- if github_badges -%}
 [![Cite with Zenodo](http://img.shields.io/badge/DOI-10.5281/zenodo.XXXXXXX-1073c8?labelColor=000000)](https://doi.org/10.5281/zenodo.XXXXXXX)
 
 [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
