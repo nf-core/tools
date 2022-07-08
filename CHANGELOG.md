@@ -23,6 +23,7 @@
 - Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
 - Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
 - Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
+- Add `CITATIONS.cff` [#361](https://github.com/nf-core/tools/issues/361)
 
 ### Modules
 
