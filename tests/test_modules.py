@@ -98,6 +98,7 @@ class TestModules(unittest.TestCase):
     )
     from .modules.install import (
         test_modules_install_emptypipeline,
+        test_modules_install_from_gitlab,
         test_modules_install_nomodule,
         test_modules_install_nopipeline,
         test_modules_install_trimgalore,
@@ -110,8 +111,10 @@ class TestModules(unittest.TestCase):
     )
     from .modules.list import (
         test_modules_install_and_list_pipeline,
+        test_modules_install_gitlab_and_list_pipeline,
         test_modules_list_pipeline,
         test_modules_list_remote,
+        test_modules_list_remote_gitlab,
     )
     from .modules.module_test import (
         test_modules_test_check_inputs,
