@@ -103,10 +103,10 @@ jobs:
         run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/
 
       - name: nf-core modules list remote
-        run: nf-core --log-file log.txt modules list remote --dir nf-core-testpipeline/
+        run: nf-core --log-file log.txt modules list remote
 
       - name: nf-core modules list remote gitlab
-        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote --dir nf-core-testpipeline/
+        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git list remote
 
       - name: Upload log file artifact
         if: ${{ always() }}
