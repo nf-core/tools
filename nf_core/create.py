@@ -106,7 +106,7 @@ class PipelineCreate(object):
         # if they are skipped
         template_areas = {
             "ci": {"name": "GitHub CI", "file": True, "content": False},
-            "gh_badges": {"name": "GitHub badges", "file": False, "content": True},
+            "github_badges": {"name": "GitHub badges", "file": False, "content": True},
             "igenomes": {"name": "iGenomes config", "file": True, "content": True},
             "nf_core_configs": {"name": "nf-core/configs", "file": False, "content": True},
         }
@@ -301,7 +301,7 @@ class PipelineCreate(object):
                 os.chmod(output_path, template_stat.st_mode)
 
         # Remove all unused parameters in the nextflow schema
-        if not self.template_params["igenomes"]:
+        if not self.template_params["igenomes"] or not self.template_params["nf_core_configs"]:
             self.update_nextflow_schema()
 
         if self.template_params["branded"]:
@@ -401,7 +401,7 @@ class PipelineCreate(object):
             )
 
         # Add github badges specific configurations
-        if not self.template_params["gh_badges"]:
+        if not self.template_params["github_badges"]:
             lint_config["readme"] = ["nextflow_badge"]
 
         # Add the lint content to the preexisting nf-core config
