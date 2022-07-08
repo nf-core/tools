@@ -59,7 +59,12 @@ class PipelineCreate(object):
         skippable_paths = {
             "ci": [".github/workflows/"],
             "igenomes": ["conf/igenomes.config"],
-            "branded": [".github/ISSUE_TEMPLATE/config", "CODE_OF_CONDUCT.md"],
+            "branded": [
+                ".github/ISSUE_TEMPLATE/config",
+                "CODE_OF_CONDUCT.md",
+                ".github/workflows/awsfulltest.yml",
+                ".github/workflows/awstest.yml",
+            ],
         }
         self.skip_paths = {sp for k in skip_paths_keys for sp in skippable_paths[k]}
 
@@ -361,6 +366,9 @@ class PipelineCreate(object):
                 f"assets/nf-core-{short_name}_logo_light.png",
                 f"docs/images/nf-core-{short_name}_logo_light.png",
                 f"docs/images/nf-core-{short_name}_logo_dark.png",
+                ".github/ISSUE_TEMPLATE/config.yml",
+                ".github/workflows/awstest.yml",
+                ".github/workflows/awsfulltest.yml",
             ],
             "nextflow_config": [
                 "manifest.name",
@@ -377,14 +385,12 @@ class PipelineCreate(object):
                     ".github/workflows/ci.yml",
                     ".github/workflows/linting_comment.yml",
                     ".github/workflows/linting.yml",
-                    ".github/workflows/awstest.yml",
-                    ".github/workflows/awsfulltest.yml",
                 ]
             )
 
         # Add custom config specific configurations
         if not self.template_params["nf_core_configs"]:
-            lint_config["files_exist"].extend([".github/ISSUE_TEMPLATE/config.yml", "conf/igenomes.config"])
+            lint_config["files_exist"].extend(["conf/igenomes.config"])
             lint_config["nextflow_config"].extend(
                 [
                     "process.cpus",
