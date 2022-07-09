@@ -43,7 +43,7 @@ class ModuleUpdate(ModuleCommand):
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
 
-    def update(self, module):
+    def update(self, module=None):
         if self.repo_type == "modules":
             log.error("You cannot update a module in a clone of nf-core/modules")
             return False

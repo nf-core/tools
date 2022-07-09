@@ -5,6 +5,7 @@ import tempfile
 
 import pytest
 
+import nf_core.modules.modules_json
 import nf_core.modules.update
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
 
@@ -38,6 +39,15 @@ def test_install_at_hash_and_update(self):
     assert update_obj.update("trimgalore") is True
     assert cmp_module(tmpdir, trimgalore_path) is False
 
+    # Check that the modules.json is correctly updated
+    mod_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+    # Get the up-to-date git_sha for the module from the ModulesRepo object
+    correct_git_sha = list(update_obj.modules_repo.get_module_git_log("trimgalore", depth=1))[0]["git_sha"]
+    current_git_sha = mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["trimgalore"]["git_sha"]
+    print(correct_git_sha, current_git_sha)
+    assert correct_git_sha == current_git_sha
+
 
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
@@ -52,6 +62,22 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
 
     assert update_obj.update("trimgalore") is True
     assert cmp_module(tmpdir, trimgalore_path) is True
+
+
+def test_update_all(self):
+    """Updates all modules present in the pipeline"""
+    update_obj = nf_core.modules.update.ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=False)
+    # Get the current modules.json
+    assert update_obj.update() is True
+
+    # We must reload the modules.json to get the updated version
+    mod_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+    # Loop through all modules and check that they are updated (according to the modules.json file)
+    for mod in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]:
+        correct_git_sha = list(update_obj.modules_repo.get_module_git_log(mod, depth=1))[0]["git_sha"]
+        current_git_sha = mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]["git_sha"]
+        assert correct_git_sha == current_git_sha
 
 
 def cmp_module(dir1, dir2):
