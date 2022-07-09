@@ -268,9 +268,7 @@ def validate_wf_name_prompt(ctx, opts, value):
 @click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
 @click.option("--no-git", is_flag=True, default=False, help="Do not initialise pipeline as new git repository")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
-@click.option(
-    "-o", "--outdir", type=str, default=None, help="Output directory for new pipeline (default: pipeline name)"
-)
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
 @click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
 @click.option("--plain", is_flag=True, help="Use the standard nf-core template")
 def create(name, description, author, version, no_git, force, outdir, template_yaml, plain):
