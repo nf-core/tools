@@ -9,6 +9,8 @@ import unittest
 
 import nf_core.modules
 
+OLD_TRIMGALORE_SHA = "e745e167c1020928ef20ea1397b6b4d230681b4d"
+
 
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
@@ -46,6 +48,9 @@ class TestModules(unittest.TestCase):
         print("Setting up install objects")
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
+        self.mods_install_old = nf_core.modules.ModuleInstall(
+            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
+        )
 
         # Set up remove objects
         print("Setting up remove objects")
@@ -115,4 +120,9 @@ class TestModules(unittest.TestCase):
     from .modules.remove import (
         test_modules_remove_trimgalore,
         test_modules_remove_trimgalore_uninstalled,
+    )
+    from .modules.update import (
+        test_install_and_update,
+        test_install_at_hash_and_update,
+        test_install_at_hash_and_update_and_save_diff_to_file,
     )
