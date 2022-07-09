@@ -79,6 +79,8 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
         if not self.update_all:
+            self.get_pipeline_modules()
+
             # Check if there are any modules installed from the repo
             repo_name = self.modules_repo.fullname
             if repo_name not in self.module_names:
@@ -86,7 +88,6 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
             if module is None:
-                self.get_pipeline_modules()
                 module = questionary.autocomplete(
                     "Tool name:",
                     choices=self.module_names[repo_name],

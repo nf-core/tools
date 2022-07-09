@@ -56,7 +56,8 @@ def test_install_at_hash_and_dryrun_update(self):
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
     self.mods_install_old.install("trimgalore")
-    update_obj = nf_core.modules.update.ModuleUpdate(self.pipeline_dir, save_diff_fn="trimgalore.patch")
+    patch_path = os.path.join(self.pipeline_dir, "trimgalore.patch")
+    update_obj = nf_core.modules.update.ModuleUpdate(self.pipeline_dir, save_diff_fn=patch_path)
 
     # Copy the module files and check that they are affected by the update
     tmpdir = tempfile.mkdtemp()
@@ -70,4 +71,4 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
 def cmp_module(dir1, dir2):
     """Compare two versions of the same module"""
     files = ["main.nf", "meta.yml"]
-    return all(filecmp.cmp(os.path.join(dir1, f), os.path.join(dir2, f)) for f in files)
+    return all(filecmp.cmp(os.path.join(dir1, f), os.path.join(dir2, f), shallow=False) for f in files)
