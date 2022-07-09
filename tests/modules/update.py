@@ -39,20 +39,6 @@ def test_install_at_hash_and_update(self):
     assert cmp_module(tmpdir, trimgalore_path) is False
 
 
-def test_install_at_hash_and_dryrun_update(self):
-    """Installs an old version of a module in the pipeline and updates it"""
-    self.mods_install_old.install("trimgalore")
-    update_obj = nf_core.modules.update.ModuleUpdate(self.pipeline_dir, show_diff=True)
-
-    # Copy the module files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "trimgalore")
-    shutil.copytree(trimgalore_path, tmpdir, dirs_exist_ok=True)
-
-    assert update_obj.update("trimgalore") is True
-    assert cmp_module(tmpdir, trimgalore_path) is True
-
-
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
     self.mods_install_old.install("trimgalore")

@@ -7,6 +7,7 @@ import shutil
 import tempfile
 import unittest
 
+import nf_core.create
 import nf_core.modules
 
 OLD_TRIMGALORE_SHA = "e745e167c1020928ef20ea1397b6b4d230681b4d"
@@ -42,8 +43,7 @@ class TestModules(unittest.TestCase):
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
-        shutil.copytree(self.template_dir, self.pipeline_dir)
-
+        nf_core.create.PipelineCreate("mypipeline", "it is mine", "me", outdir=self.pipeline_dir).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
