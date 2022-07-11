@@ -46,10 +46,10 @@ class TestModules(unittest.TestCase):
         nf_core.create.PipelineCreate("mypipeline", "it is mine", "me", outdir=self.pipeline_dir).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True, no_pull=True)
+        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True, no_pull=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
+            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA, no_pull=True
         )
 
         # Set up remove objects
@@ -116,6 +116,21 @@ class TestModules(unittest.TestCase):
         test_modules_test_check_inputs,
         test_modules_test_no_installed_modules,
         test_modules_test_no_name_no_prompts,
+    )
+    from .modules.modules_json import (
+        test_get_modules_json,
+        test_mod_json_create,
+        test_mod_json_dump,
+        test_mod_json_get_base_path,
+        test_mod_json_get_git_url,
+        test_mod_json_get_module_version,
+        test_mod_json_module_present,
+        test_mod_json_repo_present,
+        test_mod_json_up_to_date,
+        test_mod_json_up_to_date_entry_removed,
+        test_mod_json_up_to_date_module_removed,
+        test_mod_json_up_to_date_reinstall_fails,
+        test_mod_json_update,
     )
     from .modules.remove import (
         test_modules_remove_trimgalore,

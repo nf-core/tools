@@ -2,9 +2,6 @@ import json
 import os
 import shutil
 
-from pyrsistent import T
-
-from nf_core.lint.modules_json import modules_json
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_BASE_PATH,
@@ -42,7 +39,7 @@ def test_get_modules_json(self):
             )
 
 
-def test_update(self):
+def test_mod_json_update(self):
     """Checks whether the update function works properly"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
     # Update the modules.json file
@@ -54,7 +51,7 @@ def test_update(self):
     assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["git_sha"]
 
 
-def test_create(self):
+def test_mod_json_create(self):
     """Test creating a modules.json file from scratch""" ""
     mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
     # Remove the existing modules.json file
@@ -77,7 +74,7 @@ def test_create(self):
         assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
 
 
-def test_up_to_date(self):
+def test_mod_json_up_to_date(self):
     """
     Checks if the modules.json file is up to date
     when no changes have been made to the pipeline
@@ -98,7 +95,7 @@ def test_up_to_date(self):
         )
 
 
-def test_up_to_date_entry_removed(self):
+def test_mod_json_up_to_date_entry_removed(self):
     """
     Makes the modules.json up to date when a module
     entry has been removed
@@ -121,7 +118,7 @@ def test_up_to_date_entry_removed(self):
     assert entry["git_sha"] == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]["git_sha"]
 
 
-def test_up_to_date_module_removed(self):
+def test_mod_json_up_to_date_module_removed(self):
     """
     Reinstall a module that has an entry in the modules.json
     but is missing in the pipeline
@@ -142,7 +139,7 @@ def test_up_to_date_module_removed(self):
         assert os.path.exists(os.path.join(fastqc_path, f))
 
 
-def test_up_to_date_reinstall_fails(self):
+def test_mod_json_up_to_date_reinstall_fails(self):
     """
     Try reinstalling a module where the git_sha is invalid
     """
@@ -162,7 +159,7 @@ def test_up_to_date_reinstall_fails(self):
     assert "fastqc" not in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
 
 
-def test_repo_present(self):
+def test_mod_json_repo_present(self):
     """Tests the repo_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json_obj.load_modules_json()
@@ -171,7 +168,7 @@ def test_repo_present(self):
     assert mod_json_obj.repo_present("INVALID_REPO") is False
 
 
-def test_module_present(self):
+def test_mod_json_module_present(self):
     """Tests the module_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json_obj.load_modules_json()
@@ -182,7 +179,7 @@ def test_module_present(self):
     assert mod_json_obj.module_present("INVALID_MODULE", "INVALID_REPO") is False
 
 
-def test_get_module_version(self):
+def test_mod_json_get_module_version(self):
     """Test the get_module_version function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
@@ -193,21 +190,23 @@ def test_get_module_version(self):
     assert mod_json_obj.get_module_version("INVALID_MODULE", NF_CORE_MODULES_NAME) is None
 
 
-def test_get_git_url(self):
+def test_mod_json_get_git_url(self):
     """Tests the get_git_url function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
+    print(mod_json_obj.get_git_url(NF_CORE_MODULES_NAME), NF_CORE_MODULES_REMOTE)
     assert mod_json_obj.get_git_url(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_REMOTE
     assert mod_json_obj.get_git_url("INVALID_REPO") is None
 
 
-def test_get_base_path(self):
+def test_mod_json_get_base_path(self):
     """Tests the get_base_path function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    assert mod_json_obj.get_base_path() == NF_CORE_MODULES_BASE_PATH
+    print(mod_json_obj.get_base_path(NF_CORE_MODULES_NAME))
+    assert mod_json_obj.get_base_path(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_BASE_PATH
     assert mod_json_obj.get_base_path("INVALID_REPO") is None
 
 
-def test_dump(self):
+def test_mod_json_dump(self):
     """Tests the dump function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
