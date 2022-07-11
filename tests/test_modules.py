@@ -10,7 +10,7 @@ import unittest
 import nf_core.create
 import nf_core.modules
 
-OLD_TRIMGALORE_SHA = "e745e167c1020928ef20ea1397b6b4d230681b4d"
+from .utils import OLD_TRIMGALORE_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -140,4 +140,8 @@ class TestModules(unittest.TestCase):
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,
         test_update_all,
+        test_update_with_config_dont_update,
+        test_update_with_config_fix_all,
+        test_update_with_config_fixed_version,
+        test_update_with_config_no_updates,
     )
