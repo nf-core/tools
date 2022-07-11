@@ -46,10 +46,10 @@ class TestModules(unittest.TestCase):
         nf_core.create.PipelineCreate("mypipeline", "it is mine", "me", outdir=self.pipeline_dir).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True, no_pull=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True, no_pull=True)
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
+        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA, no_pull=True
+            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
         )
 
         # Set up remove objects
