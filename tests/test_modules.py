@@ -43,7 +43,9 @@ class TestModules(unittest.TestCase):
         root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
-        nf_core.create.PipelineCreate("mypipeline", "it is mine", "me", outdir=self.pipeline_dir).init_pipeline()
+        nf_core.create.PipelineCreate(
+            "mypipeline", "it is mine", "me", outdir=self.pipeline_dir, plain=True
+        ).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
