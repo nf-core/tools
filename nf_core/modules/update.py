@@ -43,7 +43,7 @@ class ModuleUpdate(ModuleCommand):
         self.show_diff = show_diff
         self.save_diff_fn = save_diff_fn
 
-    def update(self, module):
+    def update(self, module=None):
         if self.repo_type == "modules":
             log.error("You cannot update a module in a clone of nf-core/modules")
             return False
@@ -55,7 +55,7 @@ class ModuleUpdate(ModuleCommand):
         modules_json = ModulesJson(self.dir)
         modules_json.modules_json_up_to_date()
 
-        tool_config = nf_core.utils.load_tools_config()
+        tool_config = nf_core.utils.load_tools_config(self.dir)
         update_config = tool_config.get("update", {})
         if not self.update_all and module is None:
             choices = ["All modules", "Named module"]
@@ -79,6 +79,8 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
         if not self.update_all:
+            self.get_pipeline_modules()
+
             # Check if there are any modules installed from the repo
             repo_name = self.modules_repo.fullname
             if repo_name not in self.module_names:
@@ -86,7 +88,6 @@ class ModuleUpdate(ModuleCommand):
                 return False
 
             if module is None:
-                self.get_pipeline_modules()
                 module = questionary.autocomplete(
                     "Tool name:",
                     choices=self.module_names[repo_name],

@@ -7,6 +7,8 @@ Helper functions for tests
 import functools
 import tempfile
 
+OLD_TRIMGALORE_SHA = "20d8250d9f39ddb05dfb437603aaf99b5c0b2b41"
+
 
 def with_temporary_folder(func):
     """
