@@ -593,6 +593,29 @@ Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipeli
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
+### Customizing the creation of a pipeline
+
+The `nf-core create` command comes with a number of options that allow you to customize the creation of a pipeline if you intend to not publish it as an
+nf-core pipeline. This can be done in two ways: by using interactive prompts, or by supplying a `template.yml` file using the `--template-yaml <file>` option.
+Both options allow you to specify a custom pipeline prefix, as well as selecting parts of the template to be excluded during pipeline creation.
+The interactive prompts will guide you through the pipeline creation process. An example of a `template.yml` file is shown below.
+
+```yaml
+name: cool-pipe
+description: A cool pipeline
+author: me
+prefix: cool-pipes-company
+skip:
+  - ci
+  - github_badges
+  - igenomes
+  - nf_core_configs
+```
+
+This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
+
+To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
+
 ## Linting a workflow
 
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
