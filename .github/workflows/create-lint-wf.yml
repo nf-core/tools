@@ -48,7 +48,7 @@ jobs:
 
       # Build a pipeline from the template
       - name: nf-core create
-        run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface"
+        run: nf-core --log-file log.txt create -n testpipeline -d "This pipeline is for testing" -a "Testing McTestface" --plain
 
       # Try syncing it before we change anything
       - name: nf-core sync

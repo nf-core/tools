@@ -244,12 +244,12 @@ class NfcoreTemplate {
         Map colors = logColours(monochrome_logs)
         String.format(
             """\n
-            ${dashedLine(monochrome_logs)}
+            ${dashedLine(monochrome_logs)}{% if branded %}
                                                     ${colors.green},--.${colors.black}/${colors.green},-.${colors.reset}
             ${colors.blue}        ___     __   __   __   ___     ${colors.green}/,-._.--~\'${colors.reset}
             ${colors.blue}  |\\ | |__  __ /  ` /  \\ |__) |__         ${colors.yellow}}  {${colors.reset}
             ${colors.blue}  | \\| |       \\__, \\__/ |  \\ |___     ${colors.green}\\`-._,-`-,${colors.reset}
-                                                    ${colors.green}`._,._,\'${colors.reset}
+                                                    ${colors.green}`._,._,\'${colors.reset}{% endif %}
             ${colors.purple}  ${workflow.manifest.name} v${workflow.manifest.version}${colors.reset}
             ${dashedLine(monochrome_logs)}
             """.stripIndent()

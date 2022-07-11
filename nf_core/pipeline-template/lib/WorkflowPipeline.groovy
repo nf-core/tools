@@ -8,7 +8,9 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
     // Check and validate parameters
     //
     public static void initialise(params, log) {
+        {% if igenomes -%}
         genomeExistsError(params, log)
+{% endif %}
 
         if (!params.fasta) {
             log.error "Genome fasta file not specified with e.g. '--fasta genome.fa' or via a detectable config file."
@@ -43,6 +45,7 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
         return yaml_file_text
     }
 
+    {%- if igenomes -%}
     //
     // Exit pipeline if incorrect --genome key provided
     //
@@ -56,4 +59,4 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
             System.exit(1)
         }
     }
-}
+{% endif -%}}

@@ -6,7 +6,11 @@ import os
 import shutil
 import tempfile
 
+import yaml
+
 import nf_core.create
+
+log = logging.getLogger(__name__)
 
 
 def files_unchanged(self):
@@ -69,7 +73,14 @@ def files_unchanged(self):
     missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
     if missing_pipeline_config:
         return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
-    short_name = self.nf_config["manifest.name"].strip("\"'").replace("nf-core/", "")
+    try:
+        prefix, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+    except ValueError:
+        log.warning(
+            "Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is <pipeline> and default to repo 'nf-core'"
+        )
+        short_name = self.nf_config["manifest.name"].strip("\"'")
+        prefix = "nf-core"
 
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
@@ -108,12 +119,21 @@ def files_unchanged(self):
     # Generate a new pipeline with nf-core create that we can compare to
     tmp_dir = tempfile.mkdtemp()
 
-    test_pipeline_dir = os.path.join(tmp_dir, f"nf-core-{short_name}")
+    # Create a template.yaml file for the pipeline creation
+    template_yaml = {
+        "name": short_name,
+        "description": self.nf_config["manifest.description"].strip("\"'"),
+        "author": self.nf_config["manifest.author"].strip("\"'"),
+        "prefix": prefix,
+    }
+
+    template_yaml_path = os.path.join(tmp_dir, "template.yaml")
+    with open(template_yaml_path, "w") as fh:
+        yaml.dump(template_yaml, fh, default_flow_style=False)
+
+    test_pipeline_dir = os.path.join(tmp_dir, f"{prefix}-{short_name}")
     create_obj = nf_core.create.PipelineCreate(
-        self.nf_config["manifest.name"].strip("\"'"),
-        self.nf_config["manifest.description"].strip("\"'"),
-        self.nf_config["manifest.author"].strip("\"'"),
-        outdir=test_pipeline_dir,
+        None, None, None, outdir=test_pipeline_dir, template_yaml_path=template_yaml_path
     )
     create_obj.init_pipeline()
 
