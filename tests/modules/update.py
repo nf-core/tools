@@ -3,13 +3,9 @@ import os
 import shutil
 import tempfile
 
-import pytest
-
 import nf_core.modules.modules_json
 import nf_core.modules.update
 from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
-
-from ..utils import with_temporary_folder
 
 
 def test_install_and_update(self):
@@ -45,7 +41,6 @@ def test_install_at_hash_and_update(self):
     # Get the up-to-date git_sha for the module from the ModulesRepo object
     correct_git_sha = list(update_obj.modules_repo.get_module_git_log("trimgalore", depth=1))[0]["git_sha"]
     current_git_sha = mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["trimgalore"]["git_sha"]
-    print(correct_git_sha, current_git_sha)
     assert correct_git_sha == current_git_sha
 
 
@@ -62,6 +57,8 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
 
     assert update_obj.update("trimgalore") is True
     assert cmp_module(tmpdir, trimgalore_path) is True
+
+    # TODO: Apply the patch to the module
 
 
 def test_update_all(self):
