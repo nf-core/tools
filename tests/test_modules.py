@@ -127,7 +127,6 @@ class TestModules(unittest.TestCase):
         test_mod_json_module_present,
         test_mod_json_repo_present,
         test_mod_json_up_to_date,
-        test_mod_json_up_to_date_entry_removed,
         test_mod_json_up_to_date_module_removed,
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,

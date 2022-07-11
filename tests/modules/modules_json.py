@@ -95,29 +95,6 @@ def test_mod_json_up_to_date(self):
         )
 
 
-def test_mod_json_up_to_date_entry_removed(self):
-    """
-    Makes the modules.json up to date when a module
-    entry has been removed
-    """
-    # Remove the fastqc entry from the modules.json file
-    with open(os.path.join(self.pipeline_dir, "modules.json"), "r") as f:
-        mod_json = json.load(f)
-    entry = mod_json["repos"][NF_CORE_MODULES_NAME]["modules"].pop("fastqc")
-    with open(os.path.join(self.pipeline_dir, "modules.json"), "w") as f:
-        json.dump(mod_json, f, indent=4)
-
-    # Check that the modules.json file is up to date, and regenerate the entry
-    mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_obj.up_to_date()
-    mod_json = mod_json_obj.get_modules_json()
-
-    # Check that the entry has been regenerated
-    assert "fastqc" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
-    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
-    assert entry["git_sha"] == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]["git_sha"]
-
-
 def test_mod_json_up_to_date_module_removed(self):
     """
     Reinstall a module that has an entry in the modules.json
@@ -145,7 +122,7 @@ def test_mod_json_up_to_date_reinstall_fails(self):
     """
     mod_json_obj = ModulesJson(self.pipeline_dir)
     # Update the fastqc module entry to an invalid git_sha
-    mod_json_obj.update_modules_json(ModulesRepo(), "fastqc", "INVALID_GIT_SHA", False)
+    mod_json_obj.update_modules_json(ModulesRepo(), "fastqc", "INVALID_GIT_SHA", True)
 
     # Remove the fastqc module
     fastqc_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
@@ -193,7 +170,6 @@ def test_mod_json_get_module_version(self):
 def test_mod_json_get_git_url(self):
     """Tests the get_git_url function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    print(mod_json_obj.get_git_url(NF_CORE_MODULES_NAME), NF_CORE_MODULES_REMOTE)
     assert mod_json_obj.get_git_url(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_REMOTE
     assert mod_json_obj.get_git_url("INVALID_REPO") is None
 
@@ -201,7 +177,6 @@ def test_mod_json_get_git_url(self):
 def test_mod_json_get_base_path(self):
     """Tests the get_base_path function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    print(mod_json_obj.get_base_path(NF_CORE_MODULES_NAME))
     assert mod_json_obj.get_base_path(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_BASE_PATH
     assert mod_json_obj.get_base_path("INVALID_REPO") is None
 

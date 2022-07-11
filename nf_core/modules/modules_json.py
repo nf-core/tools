@@ -263,7 +263,9 @@ class ModulesJson:
                 # If it does, check if the module is in the 'modules.json' file
                 modules_path = os.path.relpath(dir, start=module_repo_name)
 
-                if modules_path not in old_modules_json["repos"][module_repo_name].get("modules", {}):
+                if module_repo_name not in old_modules_json["repos"]:
+                    missing_from_modules_json.append(dir)
+                elif modules_path not in old_modules_json["repos"][module_repo_name].get("modules", {}):
                     missing_from_modules_json.append(dir)
                 else:
                     old_modules_json["repos"][module_repo_name]["modules"].pop(modules_path)
