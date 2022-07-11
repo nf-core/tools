@@ -53,7 +53,7 @@ class ModuleUpdate(ModuleCommand):
 
         # Verify that 'modules.json' is consistent with the installed modules
         modules_json = ModulesJson(self.dir)
-        modules_json.modules_json_up_to_date()
+        modules_json.up_to_date()
 
         tool_config = nf_core.utils.load_tools_config()
         update_config = tool_config.get("update", {})

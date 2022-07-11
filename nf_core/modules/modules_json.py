@@ -32,7 +32,7 @@ class ModulesJson:
         self.modules_dir = os.path.join(self.dir, "modules")
         self.modules_json = None
 
-    def create_modules_json(self):
+    def create(self):
         """
         Creates the modules.json file from the modules installed in the pipeline directory
 
@@ -225,7 +225,7 @@ class ModulesJson:
             depth += 1
         return dirs_not_covered
 
-    def modules_json_up_to_date(self):
+    def up_to_date(self):
         """
         Checks whether the modules installed in the directory
         are consistent with the entries in the 'modules.json' file and vice versa.
