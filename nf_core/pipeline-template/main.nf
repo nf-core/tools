@@ -4,8 +4,10 @@
     {{ name }}
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Github : https://github.com/{{ name }}
+{% if branded -%}
     Website: https://nf-co.re/{{ short_name }}
     Slack  : https://nfcore.slack.com/channels/{{ short_name }}
+{% endif -%}
 ----------------------------------------------------------------------------------------
 */
 
@@ -38,7 +40,7 @@ include { {{ short_name|upper }} } from './workflows/{{ short_name }}'
 //
 // WORKFLOW: Run main {{ name }} analysis pipeline
 //
-workflow NFCORE_{{ short_name|upper }} {
+workflow {{ prefix_nodash|upper }}_{{ short_name|upper }} {
     {{ short_name|upper }} ()
 }
 
@@ -53,7 +55,7 @@ workflow NFCORE_{{ short_name|upper }} {
 // See: https://github.com/nf-core/rnaseq/issues/619
 //
 workflow {
-    NFCORE_{{ short_name|upper }} ()
+    {{ prefix_nodash|upper }}_{{ short_name|upper }} ()
 }
 
 /*
