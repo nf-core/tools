@@ -9,7 +9,11 @@ Please use the pre-filled template to save time.
 However, don't be put off by this template - other more general issues and suggestions are welcome!
 Contributions to the code are even more welcome ;)
 
+{% if branded -%}
+
 > If you need help using or modifying {{ name }} then the best place to ask is on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+
+{% endif -%}
 
 ## Contribution workflow
 
@@ -52,9 +56,13 @@ These tests are run both with the latest available version of `Nextflow` and als
 - Fix the bug, and bump version (X.Y.Z+1).
 - A PR should be made on `master` from patch to directly this particular bug.
 
+{% if branded -%}
+
 ## Getting help
 
 For further information/help, please consult the [{{ name }} documentation](https://nf-co.re/{{ short_name }}/usage) and don't hesitate to get in touch on the nf-core Slack [#{{ short_name }}](https://nfcore.slack.com/channels/{{ short_name }}) channel ([join our Slack here](https://nf-co.re/join/slack)).
+
+{% endif -%}
 
 ## Pipeline contribution conventions
 

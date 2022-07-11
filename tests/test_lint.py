@@ -32,7 +32,7 @@ class TestLint(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
+            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
         )
         self.create_obj.init_pipeline()
         # Base lint object on this directory

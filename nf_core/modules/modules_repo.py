@@ -273,7 +273,10 @@ class ModulesRepo(object):
             (bool): Whether the operation was successful or not
         """
         # Check out the repository at the requested ref
-        self.checkout(commit)
+        try:
+            self.checkout(commit)
+        except git.GitCommandError:
+            return False
 
         # Check if the module exists in the branch
         if not self.module_exists(module_name, checkout=False):
