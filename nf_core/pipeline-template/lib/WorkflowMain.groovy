@@ -88,6 +88,6 @@ class WorkflowMain {
                 return params.genomes[ params.genome ][ attribute ]
             }
         }
-        return ''
+        return null
     }
 }
