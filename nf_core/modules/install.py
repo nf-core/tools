@@ -138,5 +138,5 @@ class ModuleInstall(ModuleCommand):
         log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main'")
 
         # Update module.json with newly installed module
-        modules_json.update_modules_json(self.modules_repo, module, version)
+        modules_json.update(self.modules_repo, module, version)
         return True
