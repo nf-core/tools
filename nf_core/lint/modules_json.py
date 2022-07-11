@@ -21,7 +21,7 @@ def modules_json(self):
     # Load pipeline modules and modules.json
     modules_command = ModuleCommand(self.wf_path)
     modules_json = ModulesJson(self.wf_path)
-    modules_json.load()
+    modules_json.load_modules_json()
     modules_json_dict = modules_json.modules_json
 
     if modules_json:

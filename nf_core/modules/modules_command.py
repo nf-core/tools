@@ -95,7 +95,7 @@ class ModuleCommand:
         modules_json_path = os.path.join(self.dir, "modules.json")
         if not os.path.exists(modules_json_path):
             log.info("Creating missing 'module.json' file.")
-            ModulesJson(self.dir).create()
+            ModulesJson(self.dir).create_modules_json()
 
     def clear_module_dir(self, module_name, module_dir):
         """Removes all files in the module directory"""

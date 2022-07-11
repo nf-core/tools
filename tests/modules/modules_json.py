@@ -44,7 +44,7 @@ def test_mod_json_update(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     # Update the modules.json file
     mod_repo_obj = ModulesRepo()
-    mod_json_obj.update(mod_repo_obj, "MODULE_NAME", "GIT_SHA", False)
+    mod_json_obj.update_modules_json(mod_repo_obj, "MODULE_NAME", "GIT_SHA", False)
     mod_json = mod_json_obj.get_modules_json()
     assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
     assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]
@@ -59,7 +59,7 @@ def test_mod_json_create(self):
 
     # Create the new modules.json file
     # (There are no prompts as long as there are only nf-core modules)
-    ModulesJson(self.pipeline_dir).create()
+    ModulesJson(self.pipeline_dir).create_modules_json()
 
     # Check that the file exists
     assert os.path.exists(mod_json_path)
@@ -81,7 +81,7 @@ def test_mod_json_up_to_date(self):
     """
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json_before = mod_json_obj.get_modules_json()
-    mod_json_obj.up_to_date()
+    mod_json_obj.modules_json_up_to_date()
     mod_json_after = mod_json_obj.get_modules_json()
 
     # Check that the modules.json hasn't changed
@@ -106,7 +106,7 @@ def test_mod_json_up_to_date_module_removed(self):
 
     # Check that the modules.json file is up to date, and reinstall the module
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_obj.up_to_date()
+    mod_json_obj.modules_json_up_to_date()
     mod_json = mod_json_obj.get_modules_json()
 
     # Check that the module has been reinstalled
@@ -122,14 +122,14 @@ def test_mod_json_up_to_date_reinstall_fails(self):
     """
     mod_json_obj = ModulesJson(self.pipeline_dir)
     # Update the fastqc module entry to an invalid git_sha
-    mod_json_obj.update(ModulesRepo(), "fastqc", "INVALID_GIT_SHA", True)
+    mod_json_obj.update_modules_json(ModulesRepo(), "fastqc", "INVALID_GIT_SHA", True)
 
     # Remove the fastqc module
     fastqc_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
     shutil.rmtree(fastqc_path)
 
     # Check that the modules.json file is up to date, and remove the fastqc module entry
-    mod_json_obj.up_to_date()
+    mod_json_obj.modules_json_up_to_date()
     mod_json = mod_json_obj.get_modules_json()
 
     # Check that the module has been removed from the modules.json
@@ -139,7 +139,7 @@ def test_mod_json_up_to_date_reinstall_fails(self):
 def test_mod_json_repo_present(self):
     """Tests the repo_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_obj.load()
+    mod_json_obj.load_modules_json()
 
     assert mod_json_obj.repo_present(NF_CORE_MODULES_NAME) is True
     assert mod_json_obj.repo_present("INVALID_REPO") is False
@@ -148,7 +148,7 @@ def test_mod_json_repo_present(self):
 def test_mod_json_module_present(self):
     """Tests the module_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_obj.load()
+    mod_json_obj.load_modules_json()
 
     assert mod_json_obj.module_present("fastqc", NF_CORE_MODULES_NAME) is True
     assert mod_json_obj.module_present("INVALID_MODULE", NF_CORE_MODULES_NAME) is False
@@ -190,7 +190,7 @@ def test_mod_json_dump(self):
     os.remove(mod_json_path)
 
     # Check that the dump function creates the file
-    mod_json_obj.dump()
+    mod_json_obj.dump_modules_json()
     assert os.path.exists(mod_json_path)
 
     # Check that the dump function writes the correct content
