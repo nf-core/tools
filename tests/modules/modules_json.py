@@ -4,8 +4,14 @@ import shutil
 
 from pyrsistent import T
 
+from nf_core.lint.modules_json import modules_json
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, ModulesRepo
+from nf_core.modules.modules_repo import (
+    NF_CORE_MODULES_BASE_PATH,
+    NF_CORE_MODULES_NAME,
+    NF_CORE_MODULES_REMOTE,
+    ModulesRepo,
+)
 
 
 def test_get_modules_json(self):
@@ -178,3 +184,57 @@ def test_module_present(self):
 
 def test_get_module_version(self):
     """Test the get_module_version function"""
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+    assert (
+        mod_json_obj.get_module_version("fastqc", NF_CORE_MODULES_NAME)
+        == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]["git_sha"]
+    )
+    assert mod_json_obj.get_module_version("INVALID_MODULE", NF_CORE_MODULES_NAME) is None
+
+
+def test_get_git_url(self):
+    """Tests the get_git_url function"""
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    assert mod_json_obj.get_git_url(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_REMOTE
+    assert mod_json_obj.get_git_url("INVALID_REPO") is None
+
+
+def test_get_base_path(self):
+    """Tests the get_base_path function"""
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    assert mod_json_obj.get_base_path() == NF_CORE_MODULES_BASE_PATH
+    assert mod_json_obj.get_base_path("INVALID_REPO") is None
+
+
+def test_dump(self):
+    """Tests the dump function"""
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+    # Remove the modules.json file
+    mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
+    os.remove(mod_json_path)
+
+    # Check that the dump function creates the file
+    mod_json_obj.dump_modules_json()
+    assert os.path.exists(mod_json_path)
+
+    # Check that the dump function writes the correct content
+    with open(mod_json_path, "r") as f:
+        mod_json_new = json.load(f)
+
+    keys = ["name", "homePage"]
+    for key in keys:
+        assert key in mod_json_new
+        assert mod_json_new[key] == mod_json[key]
+
+    for repo in mod_json["repos"]:
+        assert "base_path" in mod_json_new["repos"][repo]
+        assert "modules" in mod_json_new["repos"][repo]
+        for module in mod_json["repos"][repo]["modules"]:
+            assert module in mod_json_new["repos"][repo]["modules"]
+            assert "git_sha" in mod_json_new["repos"][repo]["modules"][module]
+            assert (
+                mod_json_new["repos"][repo]["modules"][module]["git_sha"]
+                == mod_json["repos"][repo]["modules"][module]["git_sha"]
+            )
