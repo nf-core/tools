@@ -66,7 +66,8 @@ class PipelineCreate(object):
                 ".github/workflows/awstest.yml",
             ],
         }
-        self.skip_paths = {sp for k in skip_paths_keys for sp in skippable_paths[k]}
+        # Get list of files we're skipping with the supplied skip keys
+        self.skip_paths = set(sp for k in skip_paths_keys for sp in skippable_paths[k])
 
         # Set convenience variables
         self.name = self.template_params["name"]
