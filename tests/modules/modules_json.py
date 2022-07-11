@@ -22,21 +22,7 @@ def test_get_modules_json(self):
 
     # Loop through all keys that should be present and check that
     # they have the same values in the two dictionaries
-    keys = ["name", "homePage"]
-    for key in keys:
-        assert key in mod_json
-        assert mod_json[key] == mod_json_sb[key]
-
-    for repo in mod_json_sb["repos"]:
-        assert "base_path" in mod_json["repos"][repo]
-        assert "modules" in mod_json["repos"][repo]
-        for module in mod_json_sb["repos"][repo]["modules"]:
-            assert module in mod_json["repos"][repo]["modules"]
-            assert "git_sha" in mod_json["repos"][repo]["modules"][module]
-            assert (
-                mod_json["repos"][repo]["modules"][module]["git_sha"]
-                == mod_json_sb["repos"][repo]["modules"][module]["git_sha"]
-            )
+    assert mod_json == mod_json_sb
 
 
 def test_mod_json_update(self):
@@ -85,14 +71,7 @@ def test_mod_json_up_to_date(self):
     mod_json_after = mod_json_obj.get_modules_json()
 
     # Check that the modules.json hasn't changed
-    mods = ["fastqc", "multiqc"]
-    for mod in mods:
-        assert mod in mod_json_after["repos"][NF_CORE_MODULES_NAME]["modules"]
-        assert "git_sha" in mod_json_after["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
-        assert (
-            mod_json_before["repos"][NF_CORE_MODULES_NAME]["modules"][mod]["git_sha"]
-            == mod_json_after["repos"][NF_CORE_MODULES_NAME]["modules"][mod]["git_sha"]
-        )
+    assert mod_json_before == mod_json_after
 
 
 def test_mod_json_up_to_date_module_removed(self):
@@ -197,18 +176,4 @@ def test_mod_json_dump(self):
     with open(mod_json_path, "r") as f:
         mod_json_new = json.load(f)
 
-    keys = ["name", "homePage"]
-    for key in keys:
-        assert key in mod_json_new
-        assert mod_json_new[key] == mod_json[key]
-
-    for repo in mod_json["repos"]:
-        assert "base_path" in mod_json_new["repos"][repo]
-        assert "modules" in mod_json_new["repos"][repo]
-        for module in mod_json["repos"][repo]["modules"]:
-            assert module in mod_json_new["repos"][repo]["modules"]
-            assert "git_sha" in mod_json_new["repos"][repo]["modules"][module]
-            assert (
-                mod_json_new["repos"][repo]["modules"][module]["git_sha"]
-                == mod_json["repos"][repo]["modules"][module]["git_sha"]
-            )
+    assert mod_json == mod_json_new
