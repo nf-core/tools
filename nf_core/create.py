@@ -331,7 +331,10 @@ class PipelineCreate(object):
 
         # The schema is not guaranteed to follow Prettier standards
         # so we run prettier on the schema file
-        subprocess.run(["prettier", "--write", schema_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            subprocess.run(["prettier", "--write", schema_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        except FileNotFoundError:
+            log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
 
     def remove_nf_core_in_bug_report_template(self):
         """
@@ -351,7 +354,12 @@ class PipelineCreate(object):
 
         # The dumped yaml file will not follow prettier formatting rules
         # so we run prettier on the file
-        subprocess.run(["prettier", "--write", bug_report_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        try:
+            subprocess.run(
+                ["prettier", "--write", bug_report_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+            )
+        except FileNotFoundError:
+            log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
 
     def fix_linting(self):
         """
@@ -412,11 +420,16 @@ class PipelineCreate(object):
 
         # The dumped yaml file will not follow prettier formatting rules
         # so we run prettier on the file
-        subprocess.run(
-            ["prettier", "--write", os.path.join(self.outdir, ".nf-core.yml")],
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.DEVNULL,
-        )
+        try:
+            subprocess.run(
+                ["prettier", "--write", os.path.join(self.outdir, ".nf-core.yml")],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            log.warning(
+                "Prettier is not installed. Please install it and run it on the pipeline to fix linting issues."
+            )
 
     def make_pipeline_logo(self):
         """Fetch a logo for the new pipeline from the nf-core website"""
