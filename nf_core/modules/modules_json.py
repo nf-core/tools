@@ -312,7 +312,12 @@ class ModulesJson:
                         remove_from_mod_json[repo].append(module)
                         continue
                     module_dir = [self.dir, "modules", *install_folder]
-                    modules_repo.install_module(module, module_dir, sha)
+                    if not modules_repo.install_module(module, module_dir, sha):
+                        if repo not in remove_from_mod_json:
+                            remove_from_mod_json[repo] = []
+                        log.warning(f"Could not install module '{module}' in '{repo}' - removing from modules.json")
+                        remove_from_mod_json[repo].append(module)
+                        continue
 
             # If the reinstall fails, we remove those entries in 'modules.json'
             if sum(map(len, remove_from_mod_json.values())) > 0:
@@ -532,6 +537,8 @@ class ModulesJson:
         Returns:
             (bool): Whether the repo exists in the modules.json
         """
+        if self.modules_json is None:
+            self.load_modules_json()
         return repo_name in self.modules_json.get("repos", {})
 
     def module_present(self, module_name, repo_name):
@@ -543,6 +550,8 @@ class ModulesJson:
         Returns:
             (bool): Whether the module is present in the 'modules.json' file
         """
+        if self.modules_json is None:
+            self.load_modules_json()
         return module_name in self.modules_json.get("repos", {}).get(repo_name, {}).get("modules", {})
 
     def get_modules_json(self):

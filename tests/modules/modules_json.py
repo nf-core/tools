@@ -1,8 +1,51 @@
 import json
 import os
+import shutil
+
+from pyrsistent import T
 
 from nf_core.modules.modules_json import ModulesJson
-from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME
+from nf_core.modules.modules_repo import NF_CORE_MODULES_NAME, ModulesRepo
+
+
+def test_get_modules_json(self):
+    """Checks that the get_modules_json function returns the correct result"""
+    mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
+    with open(mod_json_path, "r") as fh:
+        mod_json_sb = json.load(fh)
+
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+
+    # Loop through all keys that should be present and check that
+    # they have the same values in the two dictionaries
+    keys = ["name", "homePage"]
+    for key in keys:
+        assert key in mod_json
+        assert mod_json[key] == mod_json_sb[key]
+
+    for repo in mod_json_sb["repos"]:
+        assert "base_path" in mod_json["repos"][repo]
+        assert "modules" in mod_json["repos"][repo]
+        for module in mod_json_sb["repos"][repo]["modules"]:
+            assert module in mod_json["repos"][repo]["modules"]
+            assert "git_sha" in mod_json["repos"][repo]["modules"][module]
+            assert (
+                mod_json["repos"][repo]["modules"][module]["git_sha"]
+                == mod_json_sb["repos"][repo]["modules"][module]["git_sha"]
+            )
+
+
+def test_update(self):
+    """Checks whether the update function works properly"""
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    # Update the modules.json file
+    mod_repo_obj = ModulesRepo()
+    mod_json_obj.update_modules_json(mod_repo_obj, "MODULE_NAME", "GIT_SHA", False)
+    mod_json = mod_json_obj.get_modules_json()
+    assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
+    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]
+    assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["git_sha"]
 
 
 def test_create(self):
@@ -19,7 +62,7 @@ def test_create(self):
     assert os.path.exists(mod_json_path)
 
     # Get the contents of the file
-    mod_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
+    mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
 
     mods = ["fastqc", "multiqc"]
@@ -49,7 +92,7 @@ def test_up_to_date(self):
         )
 
 
-def test__json_up_to_date_entry_removed(self):
+def test_up_to_date_entry_removed(self):
     """
     Makes the modules.json up to date when a module
     entry has been removed
@@ -70,3 +113,68 @@ def test__json_up_to_date_entry_removed(self):
     assert "fastqc" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
     assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
     assert entry["git_sha"] == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]["git_sha"]
+
+
+def test_up_to_date_module_removed(self):
+    """
+    Reinstall a module that has an entry in the modules.json
+    but is missing in the pipeline
+    """
+    # Remove the fastqc module
+    fastqc_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
+    shutil.rmtree(fastqc_path)
+
+    # Check that the modules.json file is up to date, and reinstall the module
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_obj.up_to_date()
+    mod_json = mod_json_obj.get_modules_json()
+
+    # Check that the module has been reinstalled
+    files = ["main.nf", "meta.yml"]
+    assert os.path.exists(fastqc_path)
+    for f in files:
+        assert os.path.exists(os.path.join(fastqc_path, f))
+
+
+def test_up_to_date_reinstall_fails(self):
+    """
+    Try reinstalling a module where the git_sha is invalid
+    """
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    # Update the fastqc module entry to an invalid git_sha
+    mod_json_obj.update_modules_json(ModulesRepo(), "fastqc", "INVALID_GIT_SHA", False)
+
+    # Remove the fastqc module
+    fastqc_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "fastqc")
+    shutil.rmtree(fastqc_path)
+
+    # Check that the modules.json file is up to date, and remove the fastqc module entry
+    mod_json_obj.up_to_date()
+    mod_json = mod_json_obj.get_modules_json()
+
+    # Check that the module has been removed from the modules.json
+    assert "fastqc" not in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
+
+
+def test_repo_present(self):
+    """Tests the repo_present function"""
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_obj.load_modules_json()
+
+    assert mod_json_obj.repo_present(NF_CORE_MODULES_NAME) is True
+    assert mod_json_obj.repo_present("INVALID_REPO") is False
+
+
+def test_module_present(self):
+    """Tests the module_present function"""
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_obj.load_modules_json()
+
+    assert mod_json_obj.module_present("fastqc", NF_CORE_MODULES_NAME) is True
+    assert mod_json_obj.module_present("INVALID_MODULE", NF_CORE_MODULES_NAME) is False
+    assert mod_json_obj.module_present("fastqc", "INVALID_REPO") is False
+    assert mod_json_obj.module_present("INVALID_MODULE", "INVALID_REPO") is False
+
+
+def test_get_module_version(self):
+    """Test the get_module_version function"""
