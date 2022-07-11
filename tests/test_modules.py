@@ -53,6 +53,12 @@ class TestModules(unittest.TestCase):
         self.mods_install_old = nf_core.modules.ModuleInstall(
             self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
         )
+        self.mods_install_gitlab = nf_core.modules.ModuleInstall(
+            self.pipeline_dir,
+            prompt=False,
+            force=True,
+            remote_url="https://gitlab.com/nf-core/modules-test.git",
+        )
 
         # Set up remove objects
         print("Setting up remove objects")
@@ -99,6 +105,7 @@ class TestModules(unittest.TestCase):
     )
     from .modules.install import (
         test_modules_install_emptypipeline,
+        test_modules_install_from_gitlab,
         test_modules_install_nomodule,
         test_modules_install_nopipeline,
         test_modules_install_trimgalore,
@@ -111,8 +118,10 @@ class TestModules(unittest.TestCase):
     )
     from .modules.list import (
         test_modules_install_and_list_pipeline,
+        test_modules_install_gitlab_and_list_pipeline,
         test_modules_list_pipeline,
         test_modules_list_remote,
+        test_modules_list_remote_gitlab,
     )
     from .modules.module_test import (
         test_modules_test_check_inputs,

@@ -8,5 +8,5 @@ trim_trailing_whitespace = true
 indent_size = 4
 indent_style = space
 
-[*.{md,yml,yaml,html,css,scss,js}]
+[*.{md,yml,yaml,html,css,scss,js,cff}]
 indent_size = 2
