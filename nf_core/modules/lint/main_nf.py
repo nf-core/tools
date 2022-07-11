@@ -396,7 +396,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
         elif build_type == "singularity" or build_type == "docker":
             # Check that the new url is valid
             new_url = re.search(
-                "(?:')(.+)(?:')", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
+                "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
             ).group(1)
             response_new_container = requests.get(
                 "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True

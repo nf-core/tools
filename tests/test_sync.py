@@ -24,7 +24,9 @@ class TestModules(unittest.TestCase):
         """Create a new pipeline to test"""
         self.tmp_dir = tempfile.mkdtemp()
         self.pipeline_dir = os.path.join(self.tmp_dir, "test_pipeline")
-        self.create_obj = nf_core.create.PipelineCreate("testing", "test pipeline", "tester", outdir=self.pipeline_dir)
+        self.create_obj = nf_core.create.PipelineCreate(
+            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True
+        )
         self.create_obj.init_pipeline()
 
     def tearDown(self):

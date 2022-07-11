@@ -232,6 +232,7 @@ class PipelineSync(object):
             force=True,
             outdir=self.pipeline_dir,
             author=self.wf_config["manifest.author"].strip('"').strip("'"),
+            plain=True,
         ).init_pipeline()
 
     def commit_template_changes(self):

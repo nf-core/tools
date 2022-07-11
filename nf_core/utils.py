@@ -117,6 +117,7 @@ class Pipeline(object):
         self.minNextflowVersion = None
         self.wf_path = wf_path
         self.pipeline_name = None
+        self.pipeline_prefix = None
         self.schema_obj = None
 
         try:
@@ -162,7 +163,7 @@ class Pipeline(object):
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
-        self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").replace("nf-core/", "")
+        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
 
         nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
         if nextflowVersionMatch:
