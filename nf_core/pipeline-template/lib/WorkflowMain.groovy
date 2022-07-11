@@ -59,6 +59,7 @@ class WorkflowMain {
         }
 
         // Print parameter summary log to screen
+
         log.info paramsSummaryLog(workflow, params, log)
 
         // Check that a -profile or Nextflow config has been provided to run the pipeline
@@ -78,6 +79,7 @@ class WorkflowMain {
             System.exit(1)
         }
     }
+    {% if igenomes -%}
 
     //
     // Get attribute from genome config file e.g. fasta
@@ -91,4 +93,4 @@ class WorkflowMain {
         }
         return val
     }
-}
+{% endif -%}}

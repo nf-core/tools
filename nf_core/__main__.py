@@ -260,25 +260,27 @@ def validate_wf_name_prompt(ctx, opts, value):
 @click.option(
     "-n",
     "--name",
-    prompt="Workflow Name",
-    callback=validate_wf_name_prompt,
     type=str,
     help="The name of your new pipeline",
 )
-@click.option("-d", "--description", prompt=True, type=str, help="A short description of your pipeline")
-@click.option("-a", "--author", prompt=True, type=str, help="Name of the main author(s)")
+@click.option("-d", "--description", type=str, help="A short description of your pipeline")
+@click.option("-a", "--author", type=str, help="Name of the main author(s)")
 @click.option("--version", type=str, default="1.0dev", help="The initial version number to use")
 @click.option("--no-git", is_flag=True, default=False, help="Do not initialise pipeline as new git repository")
 @click.option("-f", "--force", is_flag=True, default=False, help="Overwrite output directory if it already exists")
-@click.option("-o", "--outdir", type=str, help="Output directory for new pipeline (default: pipeline name)")
-def create(name, description, author, version, no_git, force, outdir):
+@click.option("-o", "--outdir", help="Output directory for new pipeline (default: pipeline name)")
+@click.option("-t", "--template-yaml", help="Pass a YAML file to customize the template")
+@click.option("--plain", is_flag=True, help="Use the standard nf-core template")
+def create(name, description, author, version, no_git, force, outdir, template_yaml, plain):
     """
     Create a new pipeline using the nf-core template.
 
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
-    files, boilerplate code and bfest-practices.
+    files, boilerplate code and best-practices.
     """
-    create_obj = nf_core.create.PipelineCreate(name, description, author, version, no_git, force, outdir)
+    create_obj = nf_core.create.PipelineCreate(
+        name, description, author, version, no_git, force, outdir, template_yaml, plain
+    )
     create_obj.init_pipeline()
 
 
