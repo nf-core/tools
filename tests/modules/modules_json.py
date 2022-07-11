@@ -20,8 +20,7 @@ def test_get_modules_json(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
 
-    # Loop through all keys that should be present and check that
-    # they have the same values in the two dictionaries
+    # Check that the modules.json hasn't changed
     assert mod_json == mod_json_sb
 
 
@@ -86,7 +85,6 @@ def test_mod_json_up_to_date_module_removed(self):
     # Check that the modules.json file is up to date, and reinstall the module
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json_obj.modules_json_up_to_date()
-    mod_json = mod_json_obj.get_modules_json()
 
     # Check that the module has been reinstalled
     files = ["main.nf", "meta.yml"]
@@ -100,6 +98,7 @@ def test_mod_json_up_to_date_reinstall_fails(self):
     Try reinstalling a module where the git_sha is invalid
     """
     mod_json_obj = ModulesJson(self.pipeline_dir)
+
     # Update the fastqc module entry to an invalid git_sha
     mod_json_obj.update_modules_json(ModulesRepo(), "fastqc", "INVALID_GIT_SHA", True)
 
@@ -118,7 +117,6 @@ def test_mod_json_up_to_date_reinstall_fails(self):
 def test_mod_json_repo_present(self):
     """Tests the repo_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_obj.load_modules_json()
 
     assert mod_json_obj.repo_present(NF_CORE_MODULES_NAME) is True
     assert mod_json_obj.repo_present("INVALID_REPO") is False
@@ -127,7 +125,6 @@ def test_mod_json_repo_present(self):
 def test_mod_json_module_present(self):
     """Tests the module_present function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_obj.load_modules_json()
 
     assert mod_json_obj.module_present("fastqc", NF_CORE_MODULES_NAME) is True
     assert mod_json_obj.module_present("INVALID_MODULE", NF_CORE_MODULES_NAME) is False
@@ -175,5 +172,4 @@ def test_mod_json_dump(self):
     # Check that the dump function writes the correct content
     with open(mod_json_path, "r") as f:
         mod_json_new = json.load(f)
-
     assert mod_json == mod_json_new
