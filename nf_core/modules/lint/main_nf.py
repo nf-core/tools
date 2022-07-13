@@ -281,24 +281,31 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 package, ver = bp.split("=", 1)
                 # If a new version is available and fix is True, update the version
                 if fix_version:
-                    if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
-                        progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
-                        log.debug(f"Updating package {package} {ver} -> {last_ver}")
-                        self.passed.append(
-                            (
-                                "bioconda_latest",
-                                f"Conda package has been updated to the latest available: `{bp}`",
-                                self.main_nf,
-                            )
-                        )
+                    try:
+                        fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
+                    except Exception as e:
+                        fixed = False
+                        log.debug(f"Unable to update package {package} due to error: {e.message}")
                     else:
-                        progress_bar.print(
-                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                        )
-                        log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
-                        self.warned.append(
-                            ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                        )
+                        if fixed:
+                            progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                            log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                            self.passed.append(
+                                (
+                                    "bioconda_latest",
+                                    f"Conda package has been updated to the latest available: `{bp}`",
+                                    self.main_nf,
+                                )
+                            )
+                        else:
+                            progress_bar.print(
+                                f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                            )
+                            log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                            self.warned.append(
+                                ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                            )
+                # Add available update as a warning
                 else:
                     self.warned.append(
                         ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
