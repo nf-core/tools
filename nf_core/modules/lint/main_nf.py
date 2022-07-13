@@ -285,7 +285,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                         fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
                     except Exception as e:
                         fixed = False
-                        log.debug(f"Unable to update package {package} due to error: {e.message}")
+                        log.debug(f"Unable to update package {package} due to error: {e}")
                     else:
                         if fixed:
                             progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
