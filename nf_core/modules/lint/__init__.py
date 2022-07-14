@@ -198,7 +198,7 @@ class ModuleLint(ModuleCommand):
     def set_up_pipeline_files(self):
         self.load_lint_config()
         self.modules_json = ModulesJson(self.dir)
-        self.modules_json.load_modules_json()
+        self.modules_json.load()
 
         # Only continue if a lint config has been loaded
         if self.lint_config:

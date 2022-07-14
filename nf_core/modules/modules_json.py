@@ -32,7 +32,7 @@ class ModulesJson:
         self.modules_dir = os.path.join(self.dir, "modules")
         self.modules_json = None
 
-    def create_modules_json(self):
+    def create(self):
         """
         Creates the modules.json file from the modules installed in the pipeline directory
 
@@ -225,7 +225,7 @@ class ModulesJson:
             depth += 1
         return dirs_not_covered
 
-    def modules_json_up_to_date(self):
+    def check_up_to_date(self):
         """
         Checks whether the modules installed in the directory
         are consistent with the entries in the 'modules.json' file and vice versa.
@@ -237,7 +237,7 @@ class ModulesJson:
         If a module is installed but the entry in 'modules.json' is missing we iterate through
         the commit log in the remote to try to determine the SHA.
         """
-        self.load_modules_json()
+        self.load()
         old_modules_json = copy.deepcopy(self.modules_json)
 
         # Compute the difference between the modules in the directory
@@ -462,9 +462,9 @@ class ModulesJson:
 
             shutil.move(path, local_path)
 
-        self.dump_modules_json()
+        self.dump()
 
-    def load_modules_json(self):
+    def load(self):
         """
         Loads the modules.json file into the variable 'modules_json'
 
@@ -480,7 +480,7 @@ class ModulesJson:
         except FileNotFoundError:
             raise UserWarning("File 'modules.json' is missing")
 
-    def update_modules_json(self, modules_repo, module_name, module_version, write_file=True):
+    def update(self, modules_repo, module_name, module_version, write_file=True):
         """
         Updates the 'module.json' file with new module info
 
@@ -491,7 +491,7 @@ class ModulesJson:
             write_file (bool): whether to write the updated modules.json to a file.
         """
         if self.modules_json is None:
-            self.load_modules_json()
+            self.load()
         repo_name = modules_repo.fullname
         remote_url = modules_repo.remote_url
         base_path = modules_repo.base_path
@@ -501,9 +501,9 @@ class ModulesJson:
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
-            self.dump_modules_json()
+            self.dump()
 
-    def remove_modules_json_entry(self, module_name, repo_name):
+    def remove_entry(self, module_name, repo_name):
         """
         Removes an entry from the 'modules.json' file.
 
@@ -528,7 +528,7 @@ class ModulesJson:
             log.warning(f"Module '{repo_name}/{module_name}' is missing from 'modules.json' file.")
             return False
 
-        self.dump_modules_json()
+        self.dump()
         return True
 
     def repo_present(self, repo_name):
@@ -540,7 +540,7 @@ class ModulesJson:
             (bool): Whether the repo exists in the modules.json
         """
         if self.modules_json is None:
-            self.load_modules_json()
+            self.load()
         return repo_name in self.modules_json.get("repos", {})
 
     def module_present(self, module_name, repo_name):
@@ -553,7 +553,7 @@ class ModulesJson:
             (bool): Whether the module is present in the 'modules.json' file
         """
         if self.modules_json is None:
-            self.load_modules_json()
+            self.load()
         return module_name in self.modules_json.get("repos", {}).get(repo_name, {}).get("modules", {})
 
     def get_modules_json(self):
@@ -564,7 +564,7 @@ class ModulesJson:
             (dict): A copy of the loaded modules.json
         """
         if self.modules_json is None:
-            self.load_modules_json()
+            self.load()
         return copy.deepcopy(self.modules_json)
 
     def get_module_version(self, module_name, repo_name):
@@ -579,7 +579,7 @@ class ModulesJson:
             (str): The git SHA of the module if it exists, None otherwise
         """
         if self.modules_json is None:
-            self.load_modules_json()
+            self.load()
         return (
             self.modules_json.get("repos", {})
             .get(repo_name, {})
@@ -599,7 +599,7 @@ class ModulesJson:
             (str): The git url of the repository if it exists, None otherwise
         """
         if self.modules_json is None:
-            self.load_modules_json()
+            self.load()
         return self.modules_json.get("repos", {}).get(repo_name, {}).get("git_url", None)
 
     def get_base_path(self, repo_name):
@@ -612,10 +612,10 @@ class ModulesJson:
             (str): The base path of the repository if it exists, None otherwise
         """
         if self.modules_json is None:
-            self.load_modules_json()
+            self.load()
         return self.modules_json.get("repos", {}).get(repo_name, {}).get("base_path", None)
 
-    def dump_modules_json(self):
+    def dump(self):
         """
         Sort the modules.json, and write it to file
         """
