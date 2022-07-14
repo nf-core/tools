@@ -420,10 +420,12 @@ class PipelineSchema(object):
         Common mime types: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
         """
 
-        # Check that the input parameter is defined in the right place
+        # Check that the input parameter is defined
         if "input" not in self.schema_params:
             raise LookupError(f"Parameter `input` not found in schema")
-        # Assume the input parameter is defined in the right place
+        # Check that the input parameter is defined in the right place
+        if "input" not in self.schema.get("definitions", {})("input_output_options", {}).get("properties", {}):
+            raise LookupError(f"Parameter `input` is not defined in the correct subschema (input_output_options)")
         input_entry = self.schema["definitions"]["input_output_options"]["properties"]["input"]
         if "mimetype" not in input_entry:
             return False
