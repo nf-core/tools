@@ -92,7 +92,7 @@ def schema_lint(self):
     # Check for mimetype in the 'input' parameter, warn if missing
     if self.schema_obj.schema is not None:
         try:
-            has_valid_mimetype = self.schema_obj.check_for_mimetype("input")
+            has_valid_mimetype = self.schema_obj.check_for_input_mimetype()
             if has_valid_mimetype:
                 passed.append("Input mimetype lint passed")
             else:
