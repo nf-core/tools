@@ -60,7 +60,7 @@ class ModuleRemove(ModuleCommand):
 
         # Load the modules.json file
         modules_json = ModulesJson(self.dir)
-        modules_json.load_modules_json()
+        modules_json.load()
 
         # Verify that the module is actually installed
         if not os.path.exists(module_dir):
@@ -68,13 +68,13 @@ class ModuleRemove(ModuleCommand):
 
             if modules_json.module_present(module, repo_name):
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
-                modules_json.remove_modules_json_entry(module, repo_name)
+                modules_json.remove_entry(module, repo_name)
             return False
 
         log.info(f"Removing {module}")
 
         # Remove entry from modules.json
-        modules_json.remove_modules_json_entry(module, repo_name)
+        modules_json.remove_entry(module, repo_name)
 
         # Remove the module
         return self.clear_module_dir(module_name=module, module_dir=module_dir)
