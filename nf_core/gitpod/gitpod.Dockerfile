@@ -25,12 +25,12 @@ RUN conda update -n base -c defaults conda && \
     conda config --add channels bioconda && \
     conda config --add channels conda-forge && \
     conda install \
-        openjdk=11.0.13 \
+        openjdk=11.0.15 \
         nextflow=22.04.0 \
         pytest-workflow=1.6.0 \
-        mamba=0.23.1 \
-        pip=22.0.4 \
-        black=22.1.0 \
+        mamba=0.24.0 \
+        pip=22.1.2 \
+        black=22.6.0 \
         -n base && \
     conda clean --all -f -y
 
