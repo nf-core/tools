@@ -246,15 +246,6 @@ def licences(pipeline, json):
         sys.exit(1)
 
 
-def validate_wf_name_prompt(ctx, opts, value):
-    """Force the workflow name to meet the nf-core requirements"""
-    if not re.match(r"^[a-z]+$", value):
-        log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
-        value = click.prompt(opts.prompt)
-        return validate_wf_name_prompt(ctx, opts, value)
-    return value
-
-
 # nf-core create
 @nf_core_cli.command()
 @click.option(
@@ -278,10 +269,14 @@ def create(name, description, author, version, no_git, force, outdir, template_y
     Uses the nf-core template to make a skeleton Nextflow pipeline with all required
     files, boilerplate code and best-practices.
     """
-    create_obj = nf_core.create.PipelineCreate(
-        name, description, author, version, no_git, force, outdir, template_yaml, plain
-    )
-    create_obj.init_pipeline()
+    try:
+        create_obj = nf_core.create.PipelineCreate(
+            name, description, author, version, no_git, force, outdir, template_yaml, plain
+        )
+        create_obj.init_pipeline()
+    except UserWarning as e:
+        log.error(e)
+        sys.exit(1)
 
 
 # nf-core lint
