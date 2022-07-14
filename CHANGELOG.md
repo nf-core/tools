@@ -7,6 +7,7 @@
 - Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
 - Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 - Add `CITATION.cff` [#361](https://github.com/nf-core/tools/issues/361)
+- Add Gitpod and Mamba profiles to the pipeline template ([#1673](https://github.com/nf-core/tools/pull/1673))
 
 ### Linting
 
