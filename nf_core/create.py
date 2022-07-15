@@ -85,11 +85,14 @@ class PipelineCreate(object):
         Args:
             template_yaml_path (str): Path to YAML file containing template parameters.
         """
-        if template_yaml_path is not None:
-            with open(template_yaml_path, "r") as f:
-                template_yaml = yaml.safe_load(f)
-        else:
-            template_yaml = {}
+        try:
+            if template_yaml_path is not None:
+                with open(template_yaml_path, "r") as f:
+                    template_yaml = yaml.safe_load(f)
+            else:
+                template_yaml = {}
+        except FileNotFoundError:
+            raise UserWarning(f"Template YAML file '{template_yaml_path}' not found.")
 
         param_dict = {}
         # Get the necessary parameters either from the template or command line arguments

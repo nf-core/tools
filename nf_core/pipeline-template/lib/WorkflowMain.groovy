@@ -22,7 +22,11 @@ class WorkflowMain {
     // Print help to screen if required
     //
     public static String help(workflow, params, log) {
+        {% if igenomes -%}
         def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv --genome GRCh37 -profile docker"
+        {% else -%}
+        def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv -profile docker"
+        {% endif -%}
         def help_string = ''
         help_string += NfcoreTemplate.logo(workflow, params.monochrome_logs)
         help_string += NfcoreSchema.paramsHelp(workflow, params, command)
