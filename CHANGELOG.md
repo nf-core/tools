@@ -4,6 +4,7 @@
 
 ### Template
 
+- Bumped Python version to 3.7 in the GitHub linting in the workflow template ([#1680](https://github.com/nf-core/tools/pull/1680))
 - Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
 - Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
 - Add `CITATION.cff` [#361](https://github.com/nf-core/tools/issues/361)
@@ -19,6 +20,8 @@
 
 ### General
 
+- Remove support for Python 3.6 ([#1680](https://github.com/nf-core/tools/pull/1680))
+- Add support for Python 3.9 and 3.10 ([#1680](https://github.com/nf-core/tools/pull/1680))
 - Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
 - Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
 - Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
