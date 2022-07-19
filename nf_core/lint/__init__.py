@@ -83,7 +83,7 @@ def run_linting(
     lint_obj._list_files()
 
     # Create the modules lint object
-    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, fail_warned)
+    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir)
 
     # Verify that the pipeline is correctly configured
     module_lint_obj.has_valid_directory()
