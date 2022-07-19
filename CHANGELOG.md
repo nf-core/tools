@@ -18,6 +18,7 @@
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 - Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 - Add check for mimetype in the `input` parameter. ([#1647](https://github.com/nf-core/tools/issues/1647))
+- Check that the singularity and docker tags are parsable. Add `--fail-warned` flag to `nf-core modules lint` ([#1654](https://github.com/nf-core/tools/issues/1654))
 
 ### General
 

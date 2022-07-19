@@ -70,13 +70,14 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir, remote_url=None, branch=None, no_pull=False, base_path=None):
+    def __init__(self, dir, fail_warned=False, remote_url=None, branch=None, no_pull=False, base_path=None):
         self.dir = dir
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
         except LookupError as e:
             raise UserWarning(e)
 
+        self.fail_warned = fail_warned
         self.passed = []
         self.warned = []
         self.failed = []
@@ -342,8 +343,11 @@ class ModuleLint(ModuleCommand):
         if local:
             self.main_nf(mod, fix_version, progress_bar)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
-            self.warned += [LintResult(mod, *m) for m in mod.warned]
-            self.failed += [LintResult(mod, *m) for m in mod.failed]
+            warned = [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
+            if not self.fail_warned:
+                self.warned += warned
+            else:
+                self.failed += warned
 
         # Otherwise run all the lint tests
         else:
@@ -354,7 +358,12 @@ class ModuleLint(ModuleCommand):
                     getattr(self, test_name)(mod)
 
             self.passed += [LintResult(mod, *m) for m in mod.passed]
-            self.warned += [LintResult(mod, *m) for m in mod.warned]
+            warned = [LintResult(mod, *m) for m in mod.warned]
+            if not self.fail_warned:
+                self.warned += warned
+            else:
+                self.failed += warned
+
             self.failed += [LintResult(mod, *m) for m in mod.failed]
 
     def _print_results(self, show_passed=False):
