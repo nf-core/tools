@@ -413,6 +413,33 @@ class PipelineSchema(object):
                 self.schema["description"] == desc_attr
             ), f"Schema 'description' should be '{desc_attr}'\n Found: '{self.schema['description']}'"
 
+    def check_for_input_mimetype(self):
+        """
+        Check that the input parameter has a mimetype
+
+        Common mime types: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+
+        Returns:
+            mimetype (str): The mimetype of the input parameter
+
+        Raises:
+            LookupError: If the input parameter is not found or defined in the correct place
+        """
+
+        # Check that the input parameter is defined
+        if "input" not in self.schema_params:
+            raise LookupError(f"Parameter `input` not found in schema")
+        # Check that the input parameter is defined in the right place
+        if "input" not in self.schema.get("definitions", {}).get("input_output_options", {}).get("properties", {}):
+            raise LookupError(f"Parameter `input` is not defined in the correct subschema (input_output_options)")
+        input_entry = self.schema["definitions"]["input_output_options"]["properties"]["input"]
+        if "mimetype" not in input_entry:
+            return None
+        mimetype = input_entry["mimetype"]
+        if mimetype == "" or mimetype is None:
+            return None
+        return mimetype
+
     def print_documentation(
         self,
         output_fn=None,
