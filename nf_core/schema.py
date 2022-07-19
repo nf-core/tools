@@ -418,6 +418,12 @@ class PipelineSchema(object):
         Check that the input parameter has a mimetype
 
         Common mime types: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+
+        Returns:
+            mimetype (str): The mimetype of the input parameter
+
+        Raises:
+            LookupError: If the input parameter is not found or defined in the correct place
         """
 
         # Check that the input parameter is defined
@@ -428,11 +434,11 @@ class PipelineSchema(object):
             raise LookupError(f"Parameter `input` is not defined in the correct subschema (input_output_options)")
         input_entry = self.schema["definitions"]["input_output_options"]["properties"]["input"]
         if "mimetype" not in input_entry:
-            return False
+            return None
         mimetype = input_entry["mimetype"]
         if mimetype == "" or mimetype is None:
-            return False
-        return True
+            return None
+        return mimetype
 
     def print_documentation(
         self,
