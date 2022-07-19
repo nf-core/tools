@@ -245,7 +245,7 @@ class ModuleLint(ModuleCommand):
 
             # Filter local modules
             if os.path.exists(local_modules_dir):
-                local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
+                local_modules = sorted([x for x in os.listdir(local_modules_dir) if x.endswith(".nf")])
 
         # nf-core/modules
         if self.repo_type == "modules":
@@ -342,7 +342,8 @@ class ModuleLint(ModuleCommand):
         if local:
             self.main_nf(mod, fix_version, progress_bar)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
-            self.warned += [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
+            self.warned += [LintResult(mod, *m) for m in mod.warned]
+            self.failed += [LintResult(mod, *m) for m in mod.failed]
 
         # Otherwise run all the lint tests
         else:

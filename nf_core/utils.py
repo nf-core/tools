@@ -327,6 +327,7 @@ def setup_requests_cachedir():
         "backend": "sqlite",
     }
 
+    logging.getLogger("requests_cache").setLevel(logging.WARNING)
     try:
         if not os.path.exists(cachedir):
             os.makedirs(cachedir)
