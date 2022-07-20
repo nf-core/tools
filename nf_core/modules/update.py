@@ -346,6 +346,27 @@ class ModuleUpdate(ModuleCommand):
 
             fh.write("*" * 60 + "\n")
 
+    def write_modules_json_diff(self, old_modules_json):
+        """
+        Compare the new modules.json and builds a diff
+
+        Args:
+            old_modules_json (nested dict): The old modules.json
+        """
+        modules_json_diff = difflib.unified_diff(
+            json.dumps(old_modules_json, indent=4).splitlines(keepends=True),
+            json.dumps(self.modules_json.get_modules_json(), indent=4).splitlines(keepends=True),
+            fromfile=os.path.join(self.dir, "modules.json"),
+            tofile=os.path.join(self.dir, "modules.json"),
+        )
+
+        # Save diff for modules.json to file
+        with open(self.save_diff_fn, "a") as fh:
+            fh.write("Changes in './modules.json'\n")
+            for line in modules_json_diff:
+                fh.write(line)
+            fh.write("*" * 60 + "\n")
+
     def print_diff(self, module, diffs, module_dir, current_version, new_version):
         """
         Prints the diffs between two module versions
@@ -406,6 +427,15 @@ class ModuleUpdate(ModuleCommand):
         log.debug(f"Updating module '{module}' to {new_version} from {modules_repo.fullname}")
 
     def update(self, module=None):
+        """
+        Updates all modules or a specific module in a pipeline
+
+        Args:
+            module (str): The module name to update
+
+        Returns:
+            bool: True if the update was successful, False otherwise
+        """
         self.module = module
 
         tool_config = nf_core.utils.load_tools_config(self.dir)
@@ -537,29 +567,14 @@ class ModuleUpdate(ModuleCommand):
                 self.modules_json.update(modules_repo, module, version, write_file=False)
 
         if self.save_diff_fn:
-            # Compare the new modules.json and build a diff
-            modules_json_diff = difflib.unified_diff(
-                json.dumps(old_modules_json, indent=4).splitlines(keepends=True),
-                json.dumps(self.modules_json.get_modules_json(), indent=4).splitlines(keepends=True),
-                fromfile=os.path.join(self.dir, "modules.json"),
-                tofile=os.path.join(self.dir, "modules.json"),
-            )
-
-            # Save diff for modules.json to file
-            with open(self.save_diff_fn, "a") as fh:
-                fh.write("Changes in './modules.json'\n")
-                for line in modules_json_diff:
-                    fh.write(line)
-                fh.write("*" * 60 + "\n")
-
+            # Write the modules.json diff to the file
+            self.write_modules_json_diff(old_modules_json)
             log.info(
                 f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
                 "can apply them by running the command :point_right:"
                 f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
             )
-
         else:
-
             log.info("Updates complete :sparkles:")
 
         return exit_value
