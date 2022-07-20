@@ -47,6 +47,9 @@ class ModuleUpdate(ModuleCommand):
         self.update_config = None
         self.module_json = None
 
+        # Fetch the list of pipeline modules
+        self.get_pipeline_modules()
+
     class DiffEnum(enum.Enum):
         """
         Enumeration for keeping track of
@@ -115,11 +118,10 @@ class ModuleUpdate(ModuleCommand):
             )
 
         # Verify that the provided SHA exists in the repo
-        if self.sha and not self.modules_repo.sha_exists_on_branch(self.sha):
+        if self.sha is not None and not self.modules_repo.sha_exists_on_branch(self.sha):
             log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
             return False
 
-        self.get_pipeline_modules()
         # Get the list of modules to update, and their version information
         repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
 
@@ -141,33 +143,23 @@ class ModuleUpdate(ModuleCommand):
             self.show_diff = diff_type == 1
             self.save_diff_fn = diff_type == 2
 
-        # Set up file to save diff
         if self.save_diff_fn:  # True or a string
             self.setup_diff_file()
 
+        # Loop through all modules to be updated
+        # and do the requested action on them
         exit_value = True
         for modules_repo, module, sha in repos_mods_shas:
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
-            # Check if the module we've been asked to update actually exists
-            if not modules_repo.module_exists(module):
-                warn_msg = f"Module '{module}' not found in remote '{modules_repo.fullname}' ({modules_repo.branch})"
-                if self.update_all:
-                    warn_msg += ". Skipping..."
-                log.warning(warn_msg)
-                exit_value = False
-                continue
-
             current_version = self.modules_json.get_module_version(module, modules_repo.fullname)
 
-            # Set the install folder based
-            repo_path = [self.dir, "modules"]
-            repo_path.extend(os.path.split(modules_repo.fullname))
+            # Set the temporary installation folder
             install_folder = [tempfile.mkdtemp()]
 
             # Compute the module directory
-            module_dir = os.path.join(*repo_path, module)
+            module_dir = os.path.join(self.dir, "modules", os.path.split(modules_repo.fullname), module)
 
             if sha is not None:
                 version = sha
@@ -186,13 +178,6 @@ class ModuleUpdate(ModuleCommand):
                     else:
                         log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
                     continue
-
-            if not dry_run:
-                log.info(f"Updating '{modules_repo.fullname}/{module}'")
-                log.debug(f"Updating module '{module}' to {version} from {modules_repo.remote_url}")
-
-                log.debug(f"Removing old version of module '{module}'")
-                self.clear_module_dir(module, module_dir)
 
             # Download module files
             if not self.install_module_files(module, version, modules_repo, install_folder):
@@ -311,23 +296,23 @@ class ModuleUpdate(ModuleCommand):
         skipped_modules = []
         overridden_repos = []
         overridden_modules = []
-        repos_mods_shas = {}
+        modules_info = {}
         # Loop through all the modules in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
         for repo_name, modules in self.module_names.items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
-                repos_mods_shas[repo_name] = [(module, self.sha) for module in modules]
+                modules_info[repo_name] = [(module, self.sha) for module in modules]
             elif isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual modules
                 repo_config = self.update_config[repo_name]
-                repos_mods_shas[repo_name] = []
+                modules_info[repo_name] = []
                 for module in modules:
                     if module not in repo_config or repo_config[module] is True:
-                        repos_mods_shas[repo_name].append((module, self.sha))
+                        modules_info[repo_name].append((module, self.sha))
                     elif isinstance(repo_config[module], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = repo_config[module]
-                        repos_mods_shas[repo_name].append((module, custom_sha))
+                        modules_info[repo_name].append((module, custom_sha))
                         if self.sha is not None:
                             overridden_modules.append(module)
                     elif repo_config[module] is False:
@@ -338,7 +323,7 @@ class ModuleUpdate(ModuleCommand):
             elif isinstance(self.update_config[repo_name], str):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
-                repos_mods_shas[repo_name] = [(module_name, custom_sha) for module_name in modules]
+                modules_info[repo_name] = [(module_name, custom_sha) for module_name in modules]
                 if self.sha is not None:
                     overridden_repos.append(repo_name)
             elif self.update_config[repo_name] is False:
@@ -368,19 +353,29 @@ class ModuleUpdate(ModuleCommand):
             )
 
         # Get the git urls from the modules.json
-        repos_mods_shas = [
+        modules_info = [
             (self.modules_json.get_git_url(repo_name), self.modules_json.get_base_path(repo_name), mods_shas)
-            for repo_name, mods_shas in repos_mods_shas.items()
+            for repo_name, mods_shas in modules_info.items()
         ]
 
         # Create ModulesRepo objects
-        repos_mods_shas = [
+        modules_info = [
             (ModulesRepo(remote_url=repo_url, base_path=base_path), mods_shas)
-            for repo_url, base_path, mods_shas in repos_mods_shas
+            for repo_url, base_path, mods_shas in modules_info
         ]
 
         # Flatten and return the list
-        return [(repo, mod, sha) for repo, mods_shas in repos_mods_shas for mod, sha in mods_shas]
+        modules_info = [(repo, mod, sha) for repo, mods_shas in modules_info for mod, sha in mods_shas]
+
+        # Verify that that all modules exist in their respective ModulesRepo, remove those that don't
+        i = 0
+        while i < len(modules_info):
+            repo, module, sha = modules_info[i]
+            if repo.module_exists(module):
+                i += 1
+            else:
+                log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
+                modules_info.pop(i)
 
     def setup_diff_file(self):
         if self.save_diff_fn is True:
@@ -569,6 +564,7 @@ class ModuleUpdate(ModuleCommand):
         """
         temp_module_dir = os.path.join(*install_folder, module)
         files = os.listdir(temp_module_dir)
+        log.debug(f"Removing old version of module '{module}'")
         self.clear_module_dir(module, module_dir)
         os.makedirs(module_dir)
         for file in files:
