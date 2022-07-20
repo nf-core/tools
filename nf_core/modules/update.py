@@ -47,6 +47,19 @@ class ModuleUpdate(ModuleCommand):
         self.update_config = None
         self.module_json = None
 
+    class DiffEnum(enum.Enum):
+        """
+        Enumeration for keeping track of
+        the diff status of a pair of files
+
+        Used for the --save-diff and --preview options
+        """
+
+        UNCHANGED = enum.auto()
+        CHANGED = enum.auto()
+        CREATED = enum.auto()
+        REMOVED = enum.auto()
+
     def _parameter_checks(self):
         """Check the compatibilty of the supplied parameters.
 
@@ -233,8 +246,166 @@ class ModuleUpdate(ModuleCommand):
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
-    def update(self, module=None):
+    def get_module_diffs(self, install_folder, module, module_dir):
+        """
+        Compute the diff between the current module version
+        and the new version.
 
+        Args:
+            install_folder ([str]): The folder where the module is installed
+            module (str): The module name
+            module_dir (str): The directory containing the current version of the module
+
+        Returns:
+            dict[str, (ModuleUpdate.DiffEnum, str)]: A dictionary containing
+            the diff type and the diff string (empty if no diff)
+        """
+
+        diffs = {}
+        # Get all unique filenames in the two folders.
+        # `dict.fromkeys()` is used instead of `set()` to preserve order
+        files = dict.fromkeys(os.listdir(os.path.join(*install_folder, module)))
+        files.update(dict.fromkeys(os.listdir(module_dir)))
+        files = list(files)
+
+        temp_folder = os.path.join(*install_folder, module)
+
+        # Loop through all the module files and compute their diffs if needed
+        for file in files:
+            temp_path = os.path.join(temp_folder, file)
+            curr_path = os.path.join(module_dir, file)
+            if os.path.exists(temp_path) and os.path.exists(curr_path) and os.path.isfile(temp_path):
+                with open(temp_path, "r") as fh:
+                    new_lines = fh.readlines()
+                with open(curr_path, "r") as fh:
+                    old_lines = fh.readlines()
+
+                if new_lines == old_lines:
+                    # The files are identical
+                    diffs[file] = (ModuleUpdate.DiffEnum.UNCHANGED, ())
+                else:
+                    # Compute the diff
+                    diff = difflib.unified_diff(
+                        old_lines,
+                        new_lines,
+                        fromfile=os.path.join(module_dir, file),
+                        tofile=os.path.join(module_dir, file),
+                    )
+                    diffs[file] = (ModuleUpdate.DiffEnum.CHANGED, diff)
+
+            elif os.path.exists(temp_path):
+                # The file was created
+                diffs[file] = (ModuleUpdate.DiffEnum.CREATED, ())
+
+            elif os.path.exists(curr_path):
+                # The file was removed
+                diffs[file] = (ModuleUpdate.DiffEnum.REMOVED, ())
+
+        return diffs
+
+    def append_diff_file(self, module, diffs, module_dir, current_version, new_version):
+        """
+        Writes the diffs of a module to the diff file.
+
+        Args:
+            module (str): The module name
+            diffs (dict[str, (ModuleUpdate.DiffEnum, str)]): A dictionary containing
+            the type of change and the diff (if any)
+            module_dir (str): The path to the current installation of the module
+            current_version (str): The installed version of the module
+            new_version (str): The version of the module the diff is computed against
+        """
+        log.info(f"Writing diff of '{module}' to '{self.save_diff_fn}'")
+        with open(self.save_diff_fn, "a") as fh:
+            fh.write(
+                f"Changes in module '{module}' between"
+                f" ({current_version if current_version is not None else '?'}) and"
+                f" ({new_version if new_version is not None else 'latest'})\n"
+            )
+
+            for file, (diff_status, diff) in diffs.items():
+                if diff_status == ModuleUpdate.DiffEnum.UNCHANGED:
+                    # The files are identical
+                    fh.write(f"'{os.path.join(module_dir, file)}' is unchanged\n")
+
+                elif diff_status == ModuleUpdate.DiffEnum.CREATED:
+                    # The file was created between the commits
+                    fh.write(f"'{os.path.join(module_dir, file)}' was created\n")
+
+                elif diff_status == ModuleUpdate.DiffEnum.REMOVED:
+                    # The file was removed between the commits
+                    fh.write(f"'{os.path.join(module_dir, file)}' was removed\n")
+
+                else:
+                    # The file has changed
+                    fh.write(f"Changes in '{os.path.join(module_dir, file)}':\n")
+                    # Write the diff lines to the file
+                    for line in diff:
+                        fh.write(line)
+                    fh.write("\n")
+
+            fh.write("*" * 60 + "\n")
+
+    def print_diff(self, module, diffs, module_dir, current_version, new_version):
+        """
+        Prints the diffs between two module versions
+
+        Args:
+            module (str): The module name
+            diffs (dict[str, (ModuleUpdate.DiffEnum, str)]): A dictionary containing
+            the type of change and the diff (if any)
+            module_dir (str): The path to the current installation of the module
+            current_version (str): The installed version of the module
+            new_version (str): The version of the module the diff is computed against
+        """
+        console = Console(force_terminal=nf_core.utils.rich_force_colors())
+        log.info(
+            f"Changes in module '{module}' between"
+            f" ({current_version if current_version is not None else '?'}) and"
+            f" ({new_version if new_version is not None else 'latest'})"
+        )
+
+        for file, (diff_status, diff) in diffs.items():
+            if diff_status == ModuleUpdate.DiffEnum.UNCHANGED:
+                # The files are identical
+                log.info(f"'{os.path.join(module_dir, file)}' is unchanged")
+            elif diff_status == ModuleUpdate.DiffEnum.CREATED:
+                # The file was created between the commits
+                log.info(f"'{os.path.join(module_dir, file)}' was created")
+            elif diff_status == ModuleUpdate.DiffEnum.REMOVED:
+                # The file was removed between the commits
+                log.info(f"'{os.path.join(module_dir, file)}' was removed")
+            else:
+                # The file has changed
+                log.info(f"Changes in '{os.path.join(module, file)}':")
+                # Pretty print the diff using the pygments diff lexer
+                console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
+
+    def move_files_from_tmp_dir(self, module, module_dir, install_folder, modules_repo, new_version):
+        """
+        Move the files from the temporary installation directory to the
+        module directory.
+
+        Args:
+            module (str): The module name
+            module_dir (str): The path to the module directory
+            install_folder [str]: The path to the temporary installation directory
+            modules_repo (ModulesRepo): The ModulesRepo object from which the module
+            was installed
+            new_version (str): The version of the module that was installed
+        """
+        temp_module_dir = os.path.join(*install_folder, module)
+        files = os.listdir(temp_module_dir)
+        self.clear_module_dir(module, module_dir)
+        os.makedirs(module_dir)
+        for file in files:
+            path = os.path.join(temp_module_dir, file)
+            if os.path.exists(path):
+                shutil.move(path, os.path.join(module_dir, file))
+        log.info(f"Updating '{modules_repo.fullname}/{module}'")
+        log.debug(f"Updating module '{module}' to {new_version} from {modules_repo.fullname}")
+
+    def update(self, module=None):
         self.module = module
 
         tool_config = nf_core.utils.load_tools_config(self.dir)
@@ -263,7 +434,8 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         self.get_pipeline_modules()
-        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info()]
+        # Get the list of modules to update, and their version information
+        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
 
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
@@ -346,113 +518,12 @@ class ModuleUpdate(ModuleCommand):
                 continue
 
             if dry_run:
-
-                class DiffEnum(enum.Enum):
-                    """
-                    Enumeration for keeping track of
-                    the diff status of a pair of files
-                    """
-
-                    UNCHANGED = enum.auto()
-                    CHANGED = enum.auto()
-                    CREATED = enum.auto()
-                    REMOVED = enum.auto()
-
-                diffs = {}
-
-                # Get all unique filenames in the two folders.
-                # `dict.fromkeys()` is used instead of `set()` to preserve order
-                files = dict.fromkeys(os.listdir(os.path.join(*install_folder, module)))
-                files.update(dict.fromkeys(os.listdir(module_dir)))
-                files = list(files)
-
-                temp_folder = os.path.join(*install_folder, module)
-
-                # Loop through all the module files and compute their diffs if needed
-                for file in files:
-                    temp_path = os.path.join(temp_folder, file)
-                    curr_path = os.path.join(module_dir, file)
-                    if os.path.exists(temp_path) and os.path.exists(curr_path) and os.path.isfile(temp_path):
-                        with open(temp_path, "r") as fh:
-                            new_lines = fh.readlines()
-                        with open(curr_path, "r") as fh:
-                            old_lines = fh.readlines()
-
-                        if new_lines == old_lines:
-                            # The files are identical
-                            diffs[file] = (DiffEnum.UNCHANGED, ())
-                        else:
-                            # Compute the diff
-                            diff = difflib.unified_diff(
-                                old_lines,
-                                new_lines,
-                                fromfile=os.path.join(module_dir, file),
-                                tofile=os.path.join(module_dir, file),
-                            )
-                            diffs[file] = (DiffEnum.CHANGED, diff)
-
-                    elif os.path.exists(temp_path):
-                        # The file was created
-                        diffs[file] = (DiffEnum.CREATED, ())
-
-                    elif os.path.exists(curr_path):
-                        # The file was removed
-                        diffs[file] = (DiffEnum.REMOVED, ())
-
+                # Compute the diffs for the module
+                diffs = self.get_module_diffs(install_folder, module, module_dir)
                 if self.save_diff_fn:
-                    log.info(f"Writing diff of '{module}' to '{self.save_diff_fn}'")
-                    with open(self.save_diff_fn, "a") as fh:
-                        fh.write(
-                            f"Changes in module '{module}' between"
-                            f" ({current_version if current_version is not None else '?'}) and"
-                            f" ({version if version is not None else 'latest'})\n"
-                        )
-
-                        for file, (diff_status, diff) in diffs.items():
-                            if diff_status == DiffEnum.UNCHANGED:
-                                # The files are identical
-                                fh.write(f"'{os.path.join(module_dir, file)}' is unchanged\n")
-
-                            elif diff_status == DiffEnum.CREATED:
-                                # The file was created between the commits
-                                fh.write(f"'{os.path.join(module_dir, file)}' was created\n")
-
-                            elif diff_status == DiffEnum.REMOVED:
-                                # The file was removed between the commits
-                                fh.write(f"'{os.path.join(module_dir, file)}' was removed\n")
-
-                            else:
-                                # The file has changed
-                                fh.write(f"Changes in '{os.path.join(module_dir, file)}':\n")
-                                # Write the diff lines to the file
-                                for line in diff:
-                                    fh.write(line)
-                                fh.write("\n")
-
-                        fh.write("*" * 60 + "\n")
+                    self.append_diff_file(module, diffs, module_dir, current_version, version)
                 elif self.show_diff:
-                    console = Console(force_terminal=nf_core.utils.rich_force_colors())
-                    log.info(
-                        f"Changes in module '{module}' between"
-                        f" ({current_version if current_version is not None else '?'}) and"
-                        f" ({version if version is not None else 'latest'})"
-                    )
-
-                    for file, (diff_status, diff) in diffs.items():
-                        if diff_status == DiffEnum.UNCHANGED:
-                            # The files are identical
-                            log.info(f"'{os.path.join(module, file)}' is unchanged")
-                        elif diff_status == DiffEnum.CREATED:
-                            # The file was created between the commits
-                            log.info(f"'{os.path.join(module, file)}' was created")
-                        elif diff_status == DiffEnum.REMOVED:
-                            # The file was removed between the commits
-                            log.info(f"'{os.path.join(module, file)}' was removed")
-                        else:
-                            # The file has changed
-                            log.info(f"Changes in '{os.path.join(module, file)}':")
-                            # Pretty print the diff using the pygments diff lexer
-                            console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
+                    self.print_diff(module, diffs, module_dir, current_version, version)
 
                     # Ask the user if they want to install the module
                     dry_run = not questionary.confirm(
@@ -462,14 +533,7 @@ class ModuleUpdate(ModuleCommand):
                         # The new module files are already installed.
                         # We just need to clear the directory and move the
                         # new files from the temporary directory
-                        self.clear_module_dir(module, module_dir)
-                        os.makedirs(module_dir)
-                        for file in files:
-                            path = os.path.join(temp_folder, file)
-                            if os.path.exists(path):
-                                shutil.move(path, os.path.join(module_dir, file))
-                        log.info(f"Updating '{modules_repo.fullname}/{module}'")
-                        log.debug(f"Updating module '{module}' to {version} from {modules_repo.fullname}")
+                        self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo, version)
 
             # Update modules.json with newly installed module
             if not dry_run:
