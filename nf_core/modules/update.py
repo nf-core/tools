@@ -45,7 +45,7 @@ class ModuleUpdate(ModuleCommand):
         self.save_diff_fn = save_diff_fn
         self.module = None
         self.update_config = None
-        self.module_json = None
+        self.modules_json = None
 
     class DiffEnum(enum.Enum):
         """
