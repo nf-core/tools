@@ -338,6 +338,12 @@ class ModulesRepo(object):
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
 
+    def get_latest_module_version(self, module_name):
+        """
+        Returns the latest commit in the repository
+        """
+        return list(self.get_module_git_log(module_name, depth=1))[0]["git_sha"]
+
     def sha_exists_on_branch(self, sha):
         """
         Verifies that a given commit sha exists on the branch

@@ -214,8 +214,24 @@ class ModuleUpdate(ModuleCommand):
             for repo_url, base_path, mods_shas in repos_mods_shas
         ]
 
-        # Flatten the list
-        repos_mods_shas = [(repo, mod, sha) for repo, mods_shas in repos_mods_shas for mod, sha in mods_shas]
+        # Flatten and return the list
+        return [(repo, mod, sha) for repo, mods_shas in repos_mods_shas for mod, sha in mods_shas]
+
+    def setup_diff_file(self):
+        if self.save_diff_fn is True:
+            # From questionary - no filename yet
+            self.save_diff_fn = questionary.text(
+                "Enter the filename: ", style=nf_core.utils.nfcore_question_style
+            ).unsafe_ask()
+        # Check if filename already exists (questionary or cli)
+        while os.path.exists(self.save_diff_fn):
+            if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
+                os.remove(self.save_diff_fn)
+                break
+            self.save_diff_fn = questionary.text(
+                "Enter a new filename: ",
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
 
     def update(self, module=None):
 
@@ -269,20 +285,7 @@ class ModuleUpdate(ModuleCommand):
 
         # Set up file to save diff
         if self.save_diff_fn:  # True or a string
-            # From questionary - no filename yet
-            if self.save_diff_fn is True:
-                self.save_diff_fn = questionary.text(
-                    "Enter the filename: ", style=nf_core.utils.nfcore_question_style
-                ).unsafe_ask()
-            # Check if filename already exists (questionary or cli)
-            while os.path.exists(self.save_diff_fn):
-                if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
-                    os.remove(self.save_diff_fn)
-                    break
-                self.save_diff_fn = questionary.text(
-                    "Enter a new filename: ",
-                    style=nf_core.utils.nfcore_question_style,
-                ).unsafe_ask()
+            self.setup_diff_file()
 
         exit_value = True
         for modules_repo, module, sha in repos_mods_shas:
@@ -301,31 +304,28 @@ class ModuleUpdate(ModuleCommand):
 
             current_version = self.modules_json.get_module_version(module, modules_repo.fullname)
 
-            # Set the install folder based on the repository name
-            install_folder = [self.dir, "modules"]
-            install_folder.extend(os.path.split(modules_repo.fullname))
+            # Set the install folder based
+            repo_path = [self.dir, "modules"]
+            repo_path.extend(os.path.split(modules_repo.fullname))
+            if not dry_run:
+                install_folder = repo_path
+            else:
+                install_folder = [tempfile.mkdtemp()]
 
             # Compute the module directory
-            module_dir = os.path.join(*install_folder, module)
+            module_dir = os.path.join(*repo_path, module)
 
-            if sha:
+            if sha is not None:
                 version = sha
             elif self.prompt:
-                try:
-                    version = nf_core.modules.module_utils.prompt_module_version_sha(
-                        module, modules_repo=modules_repo, installed_sha=current_version
-                    )
-                except SystemError as e:
-                    log.error(e)
-                    exit_value = False
-                    continue
+                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                    module, modules_repo=modules_repo, installed_sha=current_version
+                )
             else:
-                # Fetch the latest commit for the module
-                git_log = list(modules_repo.get_module_git_log(module, depth=1))
-                version = git_log[0]["git_sha"]
+                # Default to the latest commit for the module
+                version = modules_repo.get_latest_module_version(module)
 
             if current_version is not None and not self.force:
-                # Fetch the latest commit for the module
                 if current_version == version:
                     if self.sha or self.prompt:
                         log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
@@ -333,10 +333,7 @@ class ModuleUpdate(ModuleCommand):
                         log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
                     continue
 
-            if dry_run:
-                # Set the install folder to a temporary directory
-                install_folder = [tempfile.mkdtemp()]
-            else:
+            if not dry_run:
                 log.info(f"Updating '{modules_repo.fullname}/{module}'")
                 log.debug(f"Updating module '{module}' to {version} from {modules_repo.remote_url}")
 
