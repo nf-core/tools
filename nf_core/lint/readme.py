@@ -49,7 +49,8 @@ def readme(self):
         if match:
             nf_badge_version = match.group(1).strip("'\"")
             try:
-                assert nf_badge_version == self.minNextflowVersion
+                if nf_badge_version != self.minNextflowVersion:
+                    raise AssertionError()
             except (AssertionError, KeyError):
                 failed.append(
                     f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "
@@ -70,7 +71,8 @@ def readme(self):
     if match:
         nf_quickstart_version = match.group(1)
         try:
-            assert nf_quickstart_version == self.minNextflowVersion
+            if nf_quickstart_version != self.minNextflowVersion:
+                raise AssertionError()
         except (AssertionError, KeyError):
             failed.append(
                 f"README Nextflow minimium version in Quick Start section does not match config. README: `{nf_quickstart_version}`, Config `{self.minNextflowVersion}`"

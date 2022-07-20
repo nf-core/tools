@@ -919,7 +919,13 @@ def lint(schema_path):
 
 
 @schema.command()
-@click.argument("schema_path", type=click.Path(exists=True), required=False, metavar="<pipeline schema>")
+@click.argument(
+    "schema_path",
+    type=click.Path(exists=True),
+    default="nextflow_schema.json",
+    required=False,
+    metavar="<pipeline schema>",
+)
 @click.option("-o", "--output", type=str, metavar="<filename>", help="Output filename. Defaults to standard out.")
 @click.option(
     "-x", "--format", type=click.Choice(["markdown", "html"]), default="markdown", help="Format to output docs in."
@@ -937,22 +943,16 @@ def docs(schema_path, output, format, force, columns):
     """
     Outputs parameter documentation for a pipeline schema.
     """
-    schema_obj = nf_core.schema.PipelineSchema()
-    try:
-        # Assume we're in a pipeline dir root if schema path not set
-        if schema_path is None:
-            schema_path = "nextflow_schema.json"
-            assert os.path.exists(
-                schema_path
-            ), "Could not find 'nextflow_schema.json' in current directory. Please specify a path."
-        schema_obj.get_schema_path(schema_path)
-        schema_obj.load_schema()
-        docs = schema_obj.print_documentation(output, format, force, columns.split(","))
-        if not output:
-            print(docs)
-    except AssertionError as e:
-        log.error(e)
+    if not os.path.exists(schema_path):
+        log.error("Could not find 'nextflow_schema.json' in current directory. Please specify a path.")
         sys.exit(1)
+
+    schema_obj = nf_core.schema.PipelineSchema()
+    # Assume we're in a pipeline dir root if schema path not set
+    schema_obj.get_schema_path(schema_path)
+    schema_obj.load_schema()
+    if not output:
+        print(schema_obj.print_documentation(output, format, force, columns.split(",")))
 
 
 # nf-core bump-version
