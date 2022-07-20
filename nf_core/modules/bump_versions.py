@@ -28,8 +28,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleVersionBumper(ModuleCommand):
-    def __init__(self, pipeline_dir):
-        super().__init__(pipeline_dir)
+    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False, base_path=None):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
 
         self.up_to_date = None
         self.updated = None

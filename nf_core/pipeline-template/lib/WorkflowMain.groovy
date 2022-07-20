@@ -22,7 +22,11 @@ class WorkflowMain {
     // Print help to screen if required
     //
     public static String help(workflow, params, log) {
+        {% if igenomes -%}
         def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv --genome GRCh37 -profile docker"
+        {% else -%}
+        def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv -profile docker"
+        {% endif -%}
         def help_string = ''
         help_string += NfcoreTemplate.logo(workflow, params.monochrome_logs)
         help_string += NfcoreSchema.paramsHelp(workflow, params, command)
@@ -59,6 +63,7 @@ class WorkflowMain {
         }
 
         // Print parameter summary log to screen
+
         log.info paramsSummaryLog(workflow, params, log)
 
         // Check that a -profile or Nextflow config has been provided to run the pipeline
@@ -78,17 +83,17 @@ class WorkflowMain {
             System.exit(1)
         }
     }
+    {% if igenomes -%}
 
     //
     // Get attribute from genome config file e.g. fasta
     //
-    public static String getGenomeAttribute(params, attribute) {
-        def val = ''
+    public static Object getGenomeAttribute(params, attribute) {
         if (params.genomes && params.genome && params.genomes.containsKey(params.genome)) {
             if (params.genomes[ params.genome ].containsKey(attribute)) {
-                val = params.genomes[ params.genome ][ attribute ]
+                return params.genomes[ params.genome ][ attribute ]
             }
         }
-        return val
+        return null
     }
-}
+{% endif -%}}

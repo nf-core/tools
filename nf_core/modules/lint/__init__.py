@@ -29,6 +29,7 @@ import nf_core.utils
 from nf_core.lint.pipeline_todos import pipeline_todos
 from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ModuleCommand
+from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
@@ -69,7 +70,7 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False, base_path=None):
         self.dir = dir
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -79,7 +80,7 @@ class ModuleLint(ModuleCommand):
         self.passed = []
         self.warned = []
         self.failed = []
-        self.modules_repo = ModulesRepo()
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.lint_tests = self._get_all_lint_tests()
         # Get lists of modules install in directory
         self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
@@ -101,7 +102,16 @@ class ModuleLint(ModuleCommand):
     def _get_all_lint_tests():
         return ["main_nf", "meta_yml", "module_todos", "module_deprecations"]
 
-    def lint(self, module=None, key=(), all_modules=False, print_results=True, show_passed=False, local=False):
+    def lint(
+        self,
+        module=None,
+        key=(),
+        all_modules=False,
+        print_results=True,
+        show_passed=False,
+        local=False,
+        fix_version=False,
+    ):
         """
         Lint all or one specific module
 
@@ -118,6 +128,7 @@ class ModuleLint(ModuleCommand):
         :param module:          A specific module to lint
         :param print_results:   Whether to print the linting results
         :param show_passed:     Whether passed tests should be shown as well
+        :param fix_version:     Update the module version if a newer version is available
 
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests
@@ -174,11 +185,11 @@ class ModuleLint(ModuleCommand):
 
         # Lint local modules
         if local and len(local_modules) > 0:
-            self.lint_modules(local_modules, local=True)
+            self.lint_modules(local_modules, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
         if len(nfcore_modules) > 0:
-            self.lint_modules(nfcore_modules, local=False)
+            self.lint_modules(nfcore_modules, local=False, fix_version=fix_version)
 
         if print_results:
             self._print_results(show_passed=show_passed)
@@ -186,7 +197,8 @@ class ModuleLint(ModuleCommand):
 
     def set_up_pipeline_files(self):
         self.load_lint_config()
-        self.modules_json = self.load_modules_json()
+        self.modules_json = ModulesJson(self.dir)
+        self.modules_json.load()
 
         # Only continue if a lint config has been loaded
         if self.lint_config:
@@ -282,19 +294,21 @@ class ModuleLint(ModuleCommand):
 
         return local_modules, nfcore_modules
 
-    def lint_modules(self, modules, local=False):
+    def lint_modules(self, modules, local=False, fix_version=False):
         """
         Lint a list of modules
 
         Args:
             modules ([NFCoreModule]): A list of module objects
             local (boolean): Whether the list consist of local or nf-core modules
+            fix_version (boolean): Fix the module version if a newer version is available
         """
         progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
+            console=console,
         )
         with progress_bar:
             lint_progress = progress_bar.add_task(
@@ -305,9 +319,9 @@ class ModuleLint(ModuleCommand):
 
             for mod in modules:
                 progress_bar.update(lint_progress, advance=1, test_name=mod.module_name)
-                self.lint_module(mod, local=local)
+                self.lint_module(mod, progress_bar, local=local, fix_version=fix_version)
 
-    def lint_module(self, mod, local=False):
+    def lint_module(self, mod, progress_bar, local=False, fix_version=False):
         """
         Perform linting on one module
 
@@ -326,14 +340,17 @@ class ModuleLint(ModuleCommand):
 
         # Only check the main script in case of a local module
         if local:
-            self.main_nf(mod)
+            self.main_nf(mod, fix_version, progress_bar)
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             self.warned += [LintResult(mod, *m) for m in (mod.warned + mod.failed)]
 
         # Otherwise run all the lint tests
         else:
             for test_name in self.lint_tests:
-                getattr(self, test_name)(mod)
+                if test_name == "main_nf":
+                    getattr(self, test_name)(mod, fix_version, progress_bar)
+                else:
+                    getattr(self, test_name)(mod)
 
             self.passed += [LintResult(mod, *m) for m in mod.passed]
             self.warned += [LintResult(mod, *m) for m in mod.warned]

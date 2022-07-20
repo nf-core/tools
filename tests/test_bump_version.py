@@ -18,7 +18,7 @@ def test_bump_pipeline_version(datafiles, tmp_path):
     # Get a workflow and configs
     test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
     create_obj = nf_core.create.PipelineCreate(
-        "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir
+        "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir, plain=True
     )
     create_obj.init_pipeline()
     pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
@@ -38,7 +38,7 @@ def test_dev_bump_pipeline_version(datafiles, tmp_path):
     # Get a workflow and configs
     test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
     create_obj = nf_core.create.PipelineCreate(
-        "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir
+        "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir, plain=True
     )
     create_obj.init_pipeline()
     pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
@@ -57,14 +57,15 @@ def test_bump_nextflow_version(datafiles, tmp_path):
     # Get a workflow and configs
     test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
     create_obj = nf_core.create.PipelineCreate(
-        "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir
+        "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir, plain=True
     )
     create_obj.init_pipeline()
     pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
     pipeline_obj._load()
 
-    # Bump the version number to a specific version
-    version = "21.10.3"
+    # Bump the version number to a specific version, preferably one
+    # we're not already on
+    version = "22.04.3"
     nf_core.bump_version.bump_nextflow_version(pipeline_obj, version)
     new_pipeline_obj = nf_core.utils.Pipeline(test_pipeline_dir)
 
@@ -75,7 +76,7 @@ def test_bump_nextflow_version(datafiles, tmp_path):
     # Check .github/workflows/ci.yml
     with open(new_pipeline_obj._fp(".github/workflows/ci.yml")) as fh:
         ci_yaml = yaml.safe_load(fh)
-    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["include"][0]["NXF_VER"] == version
+    assert ci_yaml["jobs"]["test"]["strategy"]["matrix"]["NXF_VER"][0] == version
 
     # Check README.md
     with open(new_pipeline_obj._fp("README.md")) as fh:

@@ -113,19 +113,16 @@ class RowChecker:
         """
         Assert that the combination of sample name and FASTQ filename is unique.
 
-        In addition to the validation, also rename the sample if more than one sample,
-        FASTQ file combination exists.
+        In addition to the validation, also rename all samples to have a suffix of _T{n}, where n is the
+        number of times the same sample exist, but with different FASTQ files, e.g., multiple runs per experiment.
 
         """
         assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
-        if len({pair[0] for pair in self._seen}) < len(self._seen):
-            counts = Counter(pair[0] for pair in self._seen)
-            seen = Counter()
-            for row in self.modified:
-                sample = row[self._sample_col]
-                seen[sample] += 1
-                if counts[sample] > 1:
-                    row[self._sample_col] = f"{sample}_T{seen[sample]}"
+        seen = Counter()
+        for row in self.modified:
+            sample = row[self._sample_col]
+            seen[sample] += 1
+            row[self._sample_col] = f"{sample}_T{seen[sample]}"
 
 
 def read_head(handle, num_lines=10):

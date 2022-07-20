@@ -34,30 +34,34 @@ def readme(self):
     warned = []
     failed = []
 
+    # Remove field that should be ignored according to the linting config
+    ignore_configs = self.lint_config.get("readme", [])
+
     with open(os.path.join(self.wf_path, "README.md"), "r") as fh:
         content = fh.read()
 
-    # Check that there is a readme badge showing the minimum required version of Nextflow
-    # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
-    # and that it has the correct version
-    nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-%E2%89%A5([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
-    match = re.search(nf_badge_re, content)
-    if match:
-        nf_badge_version = match.group(1).strip("'\"")
-        try:
-            assert nf_badge_version == self.minNextflowVersion
-        except (AssertionError, KeyError):
-            failed.append(
-                f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "
-                f"Config: `{self.minNextflowVersion}`"
-            )
+    if "nextflow_badge" not in ignore_configs:
+        # Check that there is a readme badge showing the minimum required version of Nextflow
+        # [![Nextflow](https://img.shields.io/badge/nextflow%20DSL2-%E2%89%A521.10.3-23aa62.svg)](https://www.nextflow.io/)
+        # and that it has the correct version
+        nf_badge_re = r"\[!\[Nextflow\]\(https://img\.shields\.io/badge/nextflow%20DSL2-!?(?:%E2%89%A5|%3E%3D)([\d\.]+)-23aa62\.svg\)\]\(https://www\.nextflow\.io/\)"
+        match = re.search(nf_badge_re, content)
+        if match:
+            nf_badge_version = match.group(1).strip("'\"")
+            try:
+                assert nf_badge_version == self.minNextflowVersion
+            except (AssertionError, KeyError):
+                failed.append(
+                    f"README Nextflow minimum version badge does not match config. Badge: `{nf_badge_version}`, "
+                    f"Config: `{self.minNextflowVersion}`"
+                )
+            else:
+                passed.append(
+                    f"README Nextflow minimum version badge matched config. Badge: `{nf_badge_version}`, "
+                    f"Config: `{self.minNextflowVersion}`"
+                )
         else:
-            passed.append(
-                f"README Nextflow minimum version badge matched config. Badge: `{nf_badge_version}`, "
-                f"Config: `{self.minNextflowVersion}`"
-            )
-    else:
-        warned.append("README did not have a Nextflow minimum version badge.")
+            warned.append("README did not have a Nextflow minimum version badge.")
 
     # Check that the minimum version mentioned in the quick start section is consistent
     # Looking for: "1. Install [`Nextflow`](https://www.nextflow.io/docs/latest/getstarted.html#installation) (`>=21.10.3`)"

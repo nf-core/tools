@@ -3,6 +3,7 @@
 from logging import warn
 
 from nf_core.modules.modules_command import ModuleCommand
+from nf_core.modules.modules_json import ModulesJson
 
 
 def modules_json(self):
@@ -19,15 +20,24 @@ def modules_json(self):
 
     # Load pipeline modules and modules.json
     modules_command = ModuleCommand(self.wf_path)
-    modules_json = modules_command.load_modules_json()
+    modules_json = ModulesJson(self.wf_path)
+    modules_json.load()
+    modules_json_dict = modules_json.modules_json
 
     if modules_json:
         modules_command.get_pipeline_modules()
 
         all_modules_passed = True
 
-        for repo in modules_json["repos"].keys():
-            for key in modules_json["repos"][repo].keys():
+        for repo in modules_json_dict["repos"].keys():
+            # Check if the modules.json has been updated to keep the
+            if "modules" not in modules_json_dict["repos"][repo] or "git_url" not in modules_json_dict["repos"][repo]:
+                failed.append(
+                    f"Your `modules.json` file is outdated. Please remove it and reinstall it by running any module command"
+                )
+                continue
+
+            for key in modules_json_dict["repos"][repo]["modules"]:
                 if not key in modules_command.module_names[repo]:
                     failed.append(f"Entry for `{key}` found in `modules.json` but module is not installed in pipeline.")
                     all_modules_passed = False

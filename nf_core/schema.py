@@ -164,12 +164,13 @@ class PipelineSchema(object):
                     param = self.sanitise_param_default(param)
                     self.schema_defaults[p_key] = param["default"]
 
-    def save_schema(self):
+    def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
         num_params += sum([len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values()])
-        log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
+        if not suppress_logging:
+            log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
             fh.write("\n")
@@ -256,7 +257,9 @@ class PipelineSchema(object):
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
                 else:
-                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
+                    self.invalid_nextflow_config_default_parameters[
+                        param
+                    ] = "Not in pipeline parameters. Check `nextflow.config`."
 
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -269,7 +272,9 @@ class PipelineSchema(object):
                         param, ungrouped_properties[param], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
+                    self.invalid_nextflow_config_default_parameters[
+                        param
+                    ] = "Not in pipeline parameters. Check `nextflow.config`."
 
     def validate_config_default_parameter(self, param, schema_param, config_default):
         """
@@ -408,16 +413,46 @@ class PipelineSchema(object):
                 self.schema["description"] == desc_attr
             ), f"Schema 'description' should be '{desc_attr}'\n Found: '{self.schema['description']}'"
 
+    def check_for_input_mimetype(self):
+        """
+        Check that the input parameter has a mimetype
+
+        Common mime types: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+
+        Returns:
+            mimetype (str): The mimetype of the input parameter
+
+        Raises:
+            LookupError: If the input parameter is not found or defined in the correct place
+        """
+
+        # Check that the input parameter is defined
+        if "input" not in self.schema_params:
+            raise LookupError(f"Parameter `input` not found in schema")
+        # Check that the input parameter is defined in the right place
+        if "input" not in self.schema.get("definitions", {}).get("input_output_options", {}).get("properties", {}):
+            raise LookupError(f"Parameter `input` is not defined in the correct subschema (input_output_options)")
+        input_entry = self.schema["definitions"]["input_output_options"]["properties"]["input"]
+        if "mimetype" not in input_entry:
+            return None
+        mimetype = input_entry["mimetype"]
+        if mimetype == "" or mimetype is None:
+            return None
+        return mimetype
+
     def print_documentation(
         self,
         output_fn=None,
         format="markdown",
         force=False,
-        columns=["parameter", "description", "type,", "default", "required", "hidden"],
+        columns=None,
     ):
         """
         Prints documentation for the schema.
         """
+        if columns is None:
+            columns = ["parameter", "description", "type,", "default", "required", "hidden"]
+
         output = self.schema_to_markdown(columns)
         if format == "html":
             output = self.markdown_to_html(output)
@@ -511,10 +546,7 @@ class PipelineSchema(object):
         """Interactively build a new pipeline schema for a pipeline"""
 
         # Check if supplied pipeline directory really is one
-        try:
-            nf_core.utils.is_pipeline_directory(pipeline_dir)
-        except UserWarning:
-            raise
+        nf_core.utils.is_pipeline_directory(pipeline_dir)
 
         if no_prompts:
             self.no_prompts = True
