@@ -198,7 +198,7 @@ class ModuleUpdate(ModuleCommand):
 
             if not dry_run:
                 # Clear the module directory and move the installed files there
-                self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo, version)
+                self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo.fullname, version)
                 # Update modules.json with newly installed module
                 self.modules_json.update(modules_repo, module, version)
             else:
@@ -555,7 +555,7 @@ class ModuleUpdate(ModuleCommand):
                 # Pretty print the diff using the pygments diff lexer
                 console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
 
-    def move_files_from_tmp_dir(self, module, module_dir, install_folder, modules_repo, new_version):
+    def move_files_from_tmp_dir(self, module, module_dir, install_folder, repo_name, new_version):
         """
         Move the files from the temporary installation directory to the
         module directory.
@@ -570,12 +570,15 @@ class ModuleUpdate(ModuleCommand):
         """
         temp_module_dir = os.path.join(install_folder, module)
         files = os.listdir(temp_module_dir)
+
         log.debug(f"Removing old version of module '{module}'")
         self.clear_module_dir(module, module_dir)
+
         os.makedirs(module_dir)
         for file in files:
             path = os.path.join(temp_module_dir, file)
             if os.path.exists(path):
                 shutil.move(path, os.path.join(module_dir, file))
-        log.info(f"Updating '{modules_repo.fullname}/{module}'")
-        log.debug(f"Updating module '{module}' to {new_version} from {modules_repo.fullname}")
+
+        log.info(f"Updating '{repo_name}/{module}'")
+        log.debug(f"Updating module '{module}' to {new_version} from {repo_name}")
