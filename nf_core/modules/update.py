@@ -82,6 +82,158 @@ class ModuleUpdate(ModuleCommand):
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
+    def update(self, module=None):
+        """
+        Updates all modules or a specific module in a pipeline
+
+        Args:
+            module (str): The module name to update
+
+        Returns:
+            bool: True if the update was successful, False otherwise
+        """
+        self.module = module
+
+        tool_config = nf_core.utils.load_tools_config(self.dir)
+        self.update_config = tool_config.get("update", {})
+
+        self._parameter_checks()
+
+        # Verify that 'modules.json' is consistent with the installed modules
+        self.modules_json = ModulesJson(self.dir)
+        self.modules_json.check_up_to_date()
+
+        if not self.update_all and module is None:
+            choices = ["All modules", "Named module"]
+            self.update_all = (
+                questionary.select(
+                    "Update all modules or a single named module?",
+                    choices=choices,
+                    style=nf_core.utils.nfcore_question_style,
+                ).unsafe_ask()
+                == "All modules"
+            )
+
+        # Verify that the provided SHA exists in the repo
+        if self.sha and not self.modules_repo.sha_exists_on_branch(self.sha):
+            log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
+            return False
+
+        self.get_pipeline_modules()
+        # Get the list of modules to update, and their version information
+        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
+
+        # Save the current state of the modules.json
+        old_modules_json = self.modules_json.get_modules_json()
+
+        # Ask if we should show the diffs (unless a filename was already given on the command line)
+        if not self.save_diff_fn and self.show_diff is None:
+            diff_type = questionary.select(
+                "Do you want to view diffs of the proposed changes?",
+                choices=[
+                    {"name": "No previews, just update everything", "value": 0},
+                    {"name": "Preview diff in terminal, choose whether to update files", "value": 1},
+                    {"name": "Just write diffs to a patch file", "value": 2},
+                ],
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+
+            self.show_diff = diff_type == 1
+            self.save_diff_fn = diff_type == 2
+
+        # Set up file to save diff
+        if self.save_diff_fn:  # True or a string
+            self.setup_diff_file()
+
+        exit_value = True
+        for modules_repo, module, sha in repos_mods_shas:
+            # Are we updating the files in place or not?
+            dry_run = self.show_diff or self.save_diff_fn
+
+            # Check if the module we've been asked to update actually exists
+            if not modules_repo.module_exists(module):
+                warn_msg = f"Module '{module}' not found in remote '{modules_repo.fullname}' ({modules_repo.branch})"
+                if self.update_all:
+                    warn_msg += ". Skipping..."
+                log.warning(warn_msg)
+                exit_value = False
+                continue
+
+            current_version = self.modules_json.get_module_version(module, modules_repo.fullname)
+
+            # Set the install folder based
+            repo_path = [self.dir, "modules"]
+            repo_path.extend(os.path.split(modules_repo.fullname))
+            install_folder = [tempfile.mkdtemp()]
+
+            # Compute the module directory
+            module_dir = os.path.join(*repo_path, module)
+
+            if sha is not None:
+                version = sha
+            elif self.prompt:
+                version = nf_core.modules.module_utils.prompt_module_version_sha(
+                    module, modules_repo=modules_repo, installed_sha=current_version
+                )
+            else:
+                # Default to the latest commit for the module
+                version = modules_repo.get_latest_module_version(module)
+
+            if current_version is not None and not self.force:
+                if current_version == version:
+                    if self.sha or self.prompt:
+                        log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
+                    else:
+                        log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
+                    continue
+
+            if not dry_run:
+                log.info(f"Updating '{modules_repo.fullname}/{module}'")
+                log.debug(f"Updating module '{module}' to {version} from {modules_repo.remote_url}")
+
+                log.debug(f"Removing old version of module '{module}'")
+                self.clear_module_dir(module, module_dir)
+
+            # Download module files
+            if not self.install_module_files(module, version, modules_repo, install_folder):
+                exit_value = False
+                continue
+
+            if dry_run:
+                # Compute the diffs for the module
+                diffs = self.get_module_diffs(install_folder, module, module_dir)
+                if self.save_diff_fn:
+                    self.append_diff_file(module, diffs, module_dir, current_version, version)
+                elif self.show_diff:
+                    self.print_diff(module, diffs, module_dir, current_version, version)
+
+                    # Ask the user if they want to install the module
+                    dry_run = not questionary.confirm(
+                        f"Update module '{module}'?", default=False, style=nf_core.utils.nfcore_question_style
+                    ).unsafe_ask()
+
+            if not dry_run:
+                # Clear the module directory and move the installed files there
+                self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo, version)
+                # Update modules.json with newly installed module
+                self.modules_json.update(modules_repo, module, version)
+            else:
+                # Don't save to a file, just iteratively update the variable
+                self.modules_json.update(modules_repo, module, version, write_file=False)
+
+        if self.save_diff_fn:
+            # Write the modules.json diff to the file
+            self.write_modules_json_diff(old_modules_json)
+            log.info(
+                f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
+                "can apply them by running the command :point_right:"
+                f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
+            )
+        else:
+            log.info("Updates complete :sparkles:")
+
+        return exit_value
+
     def get_single_module_info(self, module):
         """
         Get modules repo and module verion info for a single module.
@@ -425,156 +577,3 @@ class ModuleUpdate(ModuleCommand):
                 shutil.move(path, os.path.join(module_dir, file))
         log.info(f"Updating '{modules_repo.fullname}/{module}'")
         log.debug(f"Updating module '{module}' to {new_version} from {modules_repo.fullname}")
-
-    def update(self, module=None):
-        """
-        Updates all modules or a specific module in a pipeline
-
-        Args:
-            module (str): The module name to update
-
-        Returns:
-            bool: True if the update was successful, False otherwise
-        """
-        self.module = module
-
-        tool_config = nf_core.utils.load_tools_config(self.dir)
-        self.update_config = tool_config.get("update", {})
-
-        self._parameter_checks()
-
-        # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json = ModulesJson(self.dir)
-        self.modules_json.check_up_to_date()
-
-        if not self.update_all and module is None:
-            choices = ["All modules", "Named module"]
-            self.update_all = (
-                questionary.select(
-                    "Update all modules or a single named module?",
-                    choices=choices,
-                    style=nf_core.utils.nfcore_question_style,
-                ).unsafe_ask()
-                == "All modules"
-            )
-
-        # Verify that the provided SHA exists in the repo
-        if self.sha and not self.modules_repo.sha_exists_on_branch(self.sha):
-            log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
-            return False
-
-        self.get_pipeline_modules()
-        # Get the list of modules to update, and their version information
-        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
-
-        # Save the current state of the modules.json
-        old_modules_json = self.modules_json.get_modules_json()
-
-        # Ask if we should show the diffs (unless a filename was already given on the command line)
-        if not self.save_diff_fn and self.show_diff is None:
-            diff_type = questionary.select(
-                "Do you want to view diffs of the proposed changes?",
-                choices=[
-                    {"name": "No previews, just update everything", "value": 0},
-                    {"name": "Preview diff in terminal, choose whether to update files", "value": 1},
-                    {"name": "Just write diffs to a patch file", "value": 2},
-                ],
-                style=nf_core.utils.nfcore_question_style,
-            ).unsafe_ask()
-
-            self.show_diff = diff_type == 1
-            self.save_diff_fn = diff_type == 2
-
-        # Set up file to save diff
-        if self.save_diff_fn:  # True or a string
-            self.setup_diff_file()
-
-        exit_value = True
-        for modules_repo, module, sha in repos_mods_shas:
-
-            # Are we updating the files in place or not?
-            dry_run = self.show_diff or self.save_diff_fn
-
-            # Check if the module we've been asked to update actually exists
-            if not modules_repo.module_exists(module):
-                warn_msg = f"Module '{module}' not found in remote '{modules_repo.fullname}' ({modules_repo.branch})"
-                if self.update_all:
-                    warn_msg += ". Skipping..."
-                log.warning(warn_msg)
-                exit_value = False
-                continue
-
-            current_version = self.modules_json.get_module_version(module, modules_repo.fullname)
-
-            # Set the install folder based
-            repo_path = [self.dir, "modules"]
-            repo_path.extend(os.path.split(modules_repo.fullname))
-            install_folder = [tempfile.mkdtemp()]
-
-            # Compute the module directory
-            module_dir = os.path.join(*repo_path, module)
-
-            if sha is not None:
-                version = sha
-            elif self.prompt:
-                version = nf_core.modules.module_utils.prompt_module_version_sha(
-                    module, modules_repo=modules_repo, installed_sha=current_version
-                )
-            else:
-                # Default to the latest commit for the module
-                version = modules_repo.get_latest_module_version(module)
-
-            if current_version is not None and not self.force:
-                if current_version == version:
-                    if self.sha or self.prompt:
-                        log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
-                    else:
-                        log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
-                    continue
-
-            if not dry_run:
-                log.info(f"Updating '{modules_repo.fullname}/{module}'")
-                log.debug(f"Updating module '{module}' to {version} from {modules_repo.remote_url}")
-
-                log.debug(f"Removing old version of module '{module}'")
-                self.clear_module_dir(module, module_dir)
-
-            # Download module files
-            if not self.install_module_files(module, version, modules_repo, install_folder):
-                exit_value = False
-                continue
-
-            if dry_run:
-                # Compute the diffs for the module
-                diffs = self.get_module_diffs(install_folder, module, module_dir)
-                if self.save_diff_fn:
-                    self.append_diff_file(module, diffs, module_dir, current_version, version)
-                elif self.show_diff:
-                    self.print_diff(module, diffs, module_dir, current_version, version)
-
-                    # Ask the user if they want to install the module
-                    dry_run = not questionary.confirm(
-                        f"Update module '{module}'?", default=False, style=nf_core.utils.nfcore_question_style
-                    ).unsafe_ask()
-
-            if not dry_run:
-                # Clear the module directory and move the installed files there
-                self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo, version)
-                # Update modules.json with newly installed module
-                self.modules_json.update(modules_repo, module, version)
-            else:
-                # Don't save to a file, just iteratively update the variable
-                self.modules_json.update(modules_repo, module, version, write_file=False)
-
-        if self.save_diff_fn:
-            # Write the modules.json diff to the file
-            self.write_modules_json_diff(old_modules_json)
-            log.info(
-                f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
-                "can apply them by running the command :point_right:"
-                f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
-            )
-        else:
-            log.info("Updates complete :sparkles:")
-
-        return exit_value
