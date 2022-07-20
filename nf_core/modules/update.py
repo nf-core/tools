@@ -156,7 +156,7 @@ class ModuleUpdate(ModuleCommand):
             current_version = self.modules_json.get_module_version(module, modules_repo.fullname)
 
             # Set the temporary installation folder
-            install_folder = [tempfile.mkdtemp()]
+            install_folder = tempfile.mkdtemp()
 
             # Compute the module directory
             module_dir = os.path.join(self.dir, "modules", modules_repo.fullname, module)
@@ -168,7 +168,6 @@ class ModuleUpdate(ModuleCommand):
                     module, modules_repo=modules_repo, installed_sha=current_version
                 )
             else:
-                # Default to the latest commit for the module
                 version = modules_repo.get_latest_module_version(module)
 
             if current_version is not None and not self.force:
@@ -367,7 +366,8 @@ class ModuleUpdate(ModuleCommand):
         # Flatten and return the list
         modules_info = [(repo, mod, sha) for repo, mods_shas in modules_info for mod, sha in mods_shas]
 
-        # Verify that that all modules exist in their respective ModulesRepo, remove those that don't
+        # Verify that that all modules exist in their respective ModulesRepo,
+        # don't try to update those that don't
         i = 0
         while i < len(modules_info):
             repo, module, sha = modules_info[i]
@@ -380,6 +380,10 @@ class ModuleUpdate(ModuleCommand):
         return modules_info
 
     def setup_diff_file(self):
+        """
+        Prompts for a file name if the the save diff option was choosen interactively.
+        Then creates the file for saving the diff.
+        """
         if self.save_diff_fn is True:
             # From questionary - no filename yet
             self.save_diff_fn = questionary.text(
@@ -413,11 +417,11 @@ class ModuleUpdate(ModuleCommand):
         diffs = {}
         # Get all unique filenames in the two folders.
         # `dict.fromkeys()` is used instead of `set()` to preserve order
-        files = dict.fromkeys(os.listdir(os.path.join(*install_folder, module)))
+        files = dict.fromkeys(os.listdir(os.path.join(install_folder, module)))
         files.update(dict.fromkeys(os.listdir(module_dir)))
         files = list(files)
 
-        temp_folder = os.path.join(*install_folder, module)
+        temp_folder = os.path.join(install_folder, module)
 
         # Loop through all the module files and compute their diffs if needed
         for file in files:
@@ -564,7 +568,7 @@ class ModuleUpdate(ModuleCommand):
             was installed
             new_version (str): The version of the module that was installed
         """
-        temp_module_dir = os.path.join(*install_folder, module)
+        temp_module_dir = os.path.join(install_folder, module)
         files = os.listdir(temp_module_dir)
         log.debug(f"Removing old version of module '{module}'")
         self.clear_module_dir(module, module_dir)

@@ -284,7 +284,7 @@ class ModulesRepo(object):
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_module_dir(module_name), os.path.join(*install_dir, module_name))
+        shutil.copytree(self.get_module_dir(module_name), os.path.join(install_dir, module_name))
 
         # Switch back to the tip of the branch
         self.checkout_branch()
