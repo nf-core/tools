@@ -66,7 +66,7 @@ class ModuleUpdate(ModuleCommand):
         if not self.has_valid_directory():
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
-    def update(self, module):
+    def update(self, module=None):
 
         self.module = module
 
