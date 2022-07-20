@@ -159,7 +159,7 @@ class ModuleUpdate(ModuleCommand):
             install_folder = [tempfile.mkdtemp()]
 
             # Compute the module directory
-            module_dir = os.path.join(self.dir, "modules", os.path.split(modules_repo.fullname), module)
+            module_dir = os.path.join(self.dir, "modules", modules_repo.fullname, module)
 
             if sha is not None:
                 version = sha
@@ -376,6 +376,8 @@ class ModuleUpdate(ModuleCommand):
             else:
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
+
+        return modules_info
 
     def setup_diff_file(self):
         if self.save_diff_fn is True:
