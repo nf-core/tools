@@ -479,10 +479,7 @@ class ModuleUpdate(ModuleCommand):
             # Set the install folder based
             repo_path = [self.dir, "modules"]
             repo_path.extend(os.path.split(modules_repo.fullname))
-            if not dry_run:
-                install_folder = repo_path
-            else:
-                install_folder = [tempfile.mkdtemp()]
+            install_folder = [tempfile.mkdtemp()]
 
             # Compute the module directory
             module_dir = os.path.join(*repo_path, module)
@@ -529,18 +526,14 @@ class ModuleUpdate(ModuleCommand):
                     dry_run = not questionary.confirm(
                         f"Update module '{module}'?", default=False, style=nf_core.utils.nfcore_question_style
                     ).unsafe_ask()
-                    if not dry_run:
-                        # The new module files are already installed.
-                        # We just need to clear the directory and move the
-                        # new files from the temporary directory
-                        self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo, version)
 
-            # Update modules.json with newly installed module
             if not dry_run:
+                # Clear the module directory and move the installed files there
+                self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo, version)
+                # Update modules.json with newly installed module
                 self.modules_json.update(modules_repo, module, version)
-
-            # Don't save to a file, just iteratively update the variable
             else:
+                # Don't save to a file, just iteratively update the variable
                 self.modules_json.update(modules_repo, module, version, write_file=False)
 
         if self.save_diff_fn:
