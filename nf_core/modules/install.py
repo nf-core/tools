@@ -50,7 +50,7 @@ class ModuleInstall(ModuleCommand):
 
         # Verify that 'modules.json' is consistent with the installed modules
         modules_json = ModulesJson(self.dir)
-        modules_json.modules_json_up_to_date()
+        modules_json.check_up_to_date()
 
         if self.prompt and self.sha is not None:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
@@ -138,5 +138,5 @@ class ModuleInstall(ModuleCommand):
         log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main'")
 
         # Update module.json with newly installed module
-        modules_json.update_modules_json(self.modules_repo, module, version)
+        modules_json.update(self.modules_repo, module, version)
         return True

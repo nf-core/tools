@@ -36,9 +36,10 @@ def actions_awstest(self):
 
     # Check that the action is only turned on for workflow_dispatch
     try:
-        assert "workflow_dispatch" in wf[True]
-        assert "push" not in wf[True]
-        assert "pull_request" not in wf[True]
+        if "workflow_dispatch" not in wf[True]:
+            raise AssertionError()
+        if "push" in wf[True] or "pull_request" in wf[True]:
+            raise AssertionError()
     except (AssertionError, KeyError, TypeError):
         return {"failed": ["'.github/workflows/awstest.yml' is not triggered correctly"]}
     else:

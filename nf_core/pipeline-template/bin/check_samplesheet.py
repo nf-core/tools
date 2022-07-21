@@ -78,13 +78,15 @@ class RowChecker:
 
     def _validate_sample(self, row):
         """Assert that the sample name exists and convert spaces to underscores."""
-        assert len(row[self._sample_col]) > 0, "Sample input is required."
+        if len(row[self._sample_col]) <= 0:
+            raise AssertionError("Sample input is required.")
         # Sanitize samples slightly.
         row[self._sample_col] = row[self._sample_col].replace(" ", "_")
 
     def _validate_first(self, row):
         """Assert that the first FASTQ entry is non-empty and has the right format."""
-        assert len(row[self._first_col]) > 0, "At least the first FASTQ file is required."
+        if len(row[self._first_col]) <= 0:
+            raise AssertionError("At least the first FASTQ file is required.")
         self._validate_fastq_format(row[self._first_col])
 
     def _validate_second(self, row):
@@ -96,18 +98,18 @@ class RowChecker:
         """Assert that read pairs have the same file extension. Report pair status."""
         if row[self._first_col] and row[self._second_col]:
             row[self._single_col] = False
-            assert (
-                Path(row[self._first_col]).suffixes[-2:] == Path(row[self._second_col]).suffixes[-2:]
-            ), "FASTQ pairs must have the same file extensions."
+            if Path(row[self._first_col]).suffixes[-2:] != Path(row[self._second_col]).suffixes[-2:]:
+                raise AssertionError("FASTQ pairs must have the same file extensions.")
         else:
             row[self._single_col] = True
 
     def _validate_fastq_format(self, filename):
         """Assert that a given filename has one of the expected FASTQ extensions."""
-        assert any(filename.endswith(extension) for extension in self.VALID_FORMATS), (
-            f"The FASTQ file has an unrecognized extension: {filename}\n"
-            f"It should be one of: {', '.join(self.VALID_FORMATS)}"
-        )
+        if not any(filename.endswith(extension) for extension in self.VALID_FORMATS):
+            raise AssertionError(
+                f"The FASTQ file has an unrecognized extension: {filename}\n"
+                f"It should be one of: {', '.join(self.VALID_FORMATS)}"
+            )
 
     def validate_unique_samples(self):
         """
@@ -117,7 +119,8 @@ class RowChecker:
         number of times the same sample exist, but with different FASTQ files, e.g., multiple runs per experiment.
 
         """
-        assert len(self._seen) == len(self.modified), "The pair of sample name and FASTQ must be unique."
+        if len(self._seen) != len(self.modified):
+            raise AssertionError("The pair of sample name and FASTQ must be unique.")
         seen = Counter()
         for row in self.modified:
             sample = row[self._sample_col]

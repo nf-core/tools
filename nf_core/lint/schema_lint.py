@@ -37,6 +37,7 @@ def schema_lint(self):
         * ``$id``: URL to the raw schema file, eg. ``https://raw.githubusercontent.com/YOURPIPELINE/master/nextflow_schema.json``
         * ``title``: ``YOURPIPELINE pipeline parameters``
         * ``description``: The pipeline config ``manifest.description``
+    * That the ``input`` property is defined and has a mimetype. A list of common mimetypes can be found `here <https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types>`_.
 
     For example, an *extremely* minimal schema could look like this:
 
@@ -86,6 +87,17 @@ def schema_lint(self):
             self.schema_obj.validate_schema_title_description()
             passed.append("Schema title + description lint passed")
         except AssertionError as e:
+            warned.append(str(e))
+
+    # Check for mimetype in the 'input' parameter, warn if missing
+    if self.schema_obj.schema is not None:
+        try:
+            has_valid_mimetype = self.schema_obj.check_for_input_mimetype()
+            if has_valid_mimetype is not None:
+                passed.append(f"Input mimetype lint passed: '{has_valid_mimetype}'")
+            else:
+                warned.append("Input mimetype is missing or empty")
+        except LookupError as e:
             warned.append(str(e))
 
     return {"passed": passed, "warned": warned, "failed": failed}

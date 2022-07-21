@@ -241,7 +241,6 @@ def check_process_section(self, lines, fix_version, progress_bar):
             self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
     else:
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
-
     for l in lines:
         if _container_type(l) == "bioconda":
             bioconda_packages = [b for b in l.split() if "bioconda::" in b]
@@ -249,11 +248,23 @@ def check_process_section(self, lines, fix_version, progress_bar):
         if _container_type(l) == "singularity":
             # e.g. "https://containers.biocontainers.pro/s3/SingImgsRepo/biocontainers/v1.2.0_cv1/biocontainers_v1.2.0_cv1.img' :" -> v1.2.0_cv1
             # e.g. "https://depot.galaxyproject.org/singularity/fastqc:0.11.9--0' :" -> 0.11.9--0
-            singularity_tag = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l).group(1)
+            match = re.search(r"(?:/)?(?:biocontainers_)?(?::)?([A-Za-z\d\-_.]+?)(?:\.img)?['\"]", l)
+            if match is not None:
+                singularity_tag = match.group(1)
+                self.passed.append(("singularity_tag", f"Found singularity tag: {singularity_tag}", self.main_nf))
+            else:
+                self.failed.append(("singularity_tag", "Unable to parse singularity tag", self.main_nf))
+                singularity_tag = None
         if _container_type(l) == "docker":
             # e.g. "quay.io/biocontainers/krona:2.7.1--pl526_5' }" -> 2.7.1--pl526_5
             # e.g. "biocontainers/biocontainers:v1.2.0_cv1' }" -> v1.2.0_cv1
-            docker_tag = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)['\"]", l).group(1)
+            match = re.search(r"(?:[/])?(?::)?([A-Za-z\d\-_.]+)['\"]", l)
+            if match is not None:
+                docker_tag = match.group(1)
+                self.passed.append(("docker_tag", f"Found docker tag: {docker_tag}", self.main_nf))
+            else:
+                self.failed.append(("docker_tag", "Unable to parse docker tag", self.main_nf))
+                docker_tag = None
 
     # Check that all bioconda packages have build numbers
     # Also check for newer versions
@@ -441,6 +452,15 @@ def _container_type(line):
     if re.search("bioconda::", line):
         return "bioconda"
     if line.startswith("https://containers") or line.startswith("https://depot"):
-        return "singularity"
+        # Look for a http download URL.
+        # Thanks Stack Overflow for the regex: https://stackoverflow.com/a/3809435/713980
+        url_regex = (
+            r"https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)"
+        )
+        url_match = re.search(url_regex, line, re.S)
+        if url_match:
+            return "singularity"
+        else:
+            return None
     if line.startswith("biocontainers/") or line.startswith("quay.io/"):
         return "docker"

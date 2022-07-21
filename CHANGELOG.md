@@ -4,8 +4,12 @@
 
 ### Template
 
+- Bumped Python version to 3.7 in the GitHub linting in the workflow template ([#1680](https://github.com/nf-core/tools/pull/1680))
 - Fix bug in pipeline readme logo URL ([#1590](https://github.com/nf-core/tools/pull/1590))
 - Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
+- Add `CITATION.cff` [#361](https://github.com/nf-core/tools/issues/361)
+- Add Gitpod and Mamba profiles to the pipeline template ([#1673](https://github.com/nf-core/tools/pull/1673))
+- Remove call to `getGenomeAttribute` in `main.nf` when running `nf-core create` without iGenomes ([#1670](https://github.com/nf-core/tools/issues/1670))
 
 ### Linting
 
@@ -13,9 +17,14 @@
 - Update `readme.py` nf version badge validation regexp to accept any signs before version number ([#1613](https://github.com/nf-core/tools/issues/1613))
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 - Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
+- Add check for mimetype in the `input` parameter. ([#1647](https://github.com/nf-core/tools/issues/1647))
+- Check that the singularity and docker tags are parsable. Add `--fail-warned` flag to `nf-core modules lint` ([#1654](https://github.com/nf-core/tools/issues/1654))
 
 ### General
 
+- Remove support for Python 3.6 ([#1680](https://github.com/nf-core/tools/pull/1680))
+- Add support for Python 3.9 and 3.10 ([#1680](https://github.com/nf-core/tools/pull/1680))
+- Invoking Python with optimizations no longer affects the program control flow ([#1685](https://github.com/nf-core/tools/pull/1685))
 - Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
 - Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
 - Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
@@ -23,6 +32,12 @@
 - Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
 - Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
 - Switch CI to use [setup-nextflow](https://github.com/nf-core/setup-nextflow) action to install Nextflow ([#1650](https://github.com/nf-core/tools/pull/1650))
+- Add tests for `nf-core modules update` and `ModulesJson`.
+- Add CI for GitLab remote [#1646](https://github.com/nf-core/tools/issues/1646)
+- Add `CITATION.cff` [#361](https://github.com/nf-core/tools/issues/361)
+- Allow customization of the `nf-core` pipeline template when using `nf-core create` ([#1548](https://github.com/nf-core/tools/issues/1548))
+- Add Refgenie integration: updating of nextflow config files with a refgenie database ([#1090](https://github.com/nf-core/tools/pull/1090))
+- Fix `--key` option in `nf-core lint` when supplying a module lint test name ([#1681](https://github.com/nf-core/tools/issues/1681))
 
 ### Modules
 
@@ -33,6 +48,7 @@
 - Update docs with example of custom git remote ([#1645](https://github.com/nf-core/tools/issues/1645))
 - Command `nf-core modules test` obtains module name suggestions from installed modules ([#1624](https://github.com/nf-core/tools/pull/1624))
 - Add `--base-path` flag to `nf-core modules` to specify the base path for the modules in a remote. Also refactored `modules.json` code. ([#1643](https://github.com/nf-core/tools/issues/1643))
+- Rename methods in `ModulesJson` to remove explicit reference to `modules.json`
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
