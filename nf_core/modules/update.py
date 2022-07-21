@@ -51,9 +51,7 @@ class ModuleUpdate(ModuleCommand):
         self.get_pipeline_modules()
 
     class DiffEnum(enum.Enum):
-        """
-        Enumeration for keeping track of
-        the diff status of a pair of files
+        """Enumeration to keeping track of file diffs.
 
         Used for the --save-diff and --preview options
         """
@@ -64,10 +62,10 @@ class ModuleUpdate(ModuleCommand):
         REMOVED = enum.auto()
 
     def _parameter_checks(self):
-        """Check the compatibilty of the supplied parameters.
+        """Checks the compatibilty of the supplied parameters.
 
-        Checks:
-            - Either `--preview` or `--save_diff` can be specified, not both.
+        Raises:
+            UserWarning: if any checks fail.
         """
 
         if self.save_diff_fn and self.show_diff:
@@ -86,14 +84,13 @@ class ModuleUpdate(ModuleCommand):
             raise UserWarning("The command was not run in a valid pipeline directory.")
 
     def update(self, module=None):
-        """
-        Updates all modules or a specific module in a pipeline
+        """Updates a specified module or all modules modules in a pipeline.
 
         Args:
-            module (str): The module name to update
+            module (str): The name of the module to update.
 
         Returns:
-            bool: True if the update was successful, False otherwise
+            bool: True if the update was successful, False otherwise.
         """
         self.module = module
 
@@ -219,8 +216,7 @@ class ModuleUpdate(ModuleCommand):
         return exit_value
 
     def get_single_module_info(self, module):
-        """
-        Get modules repo and module verion info for a single module.
+        """Collects the module repository, version and sha for a module.
 
         Information about the module version in the '.nf-core.yml' overrides
         the '--sha' option
@@ -281,11 +277,9 @@ class ModuleUpdate(ModuleCommand):
         return (self.modules_repo, module, sha)
 
     def get_all_modules_info(self):
-        """
-        Get modules repo and module version information for all modules.
+        """Collects the module repository, version and sha for all modules.
 
-        Information about the module version in the '.nf-core.yml' overrides
-        the '--sha' option
+        Information about the module version in the '.nf-core.yml' overrides the '--sha' option.
 
         Returns:
             [(ModulesRepo, str, str)]: A list of tuples containing a ModulesRepo object,
@@ -380,8 +374,10 @@ class ModuleUpdate(ModuleCommand):
         return modules_info
 
     def setup_diff_file(self):
-        """
-        Prompts for a file name if the the save diff option was choosen interactively.
+        """Sets up the diff file.
+
+        If the save diff option was choosen interactively, the user is asked to supply a name for the diff file.
+
         Then creates the file for saving the diff.
         """
         if self.save_diff_fn is True:
@@ -400,18 +396,16 @@ class ModuleUpdate(ModuleCommand):
             ).unsafe_ask()
 
     def get_module_diffs(self, install_folder, module, module_dir):
-        """
-        Compute the diff between the current module version
-        and the new version.
+        """Computes the diff between the current and the new module version.
 
         Args:
-            install_folder ([str]): The folder where the module is installed
-            module (str): The module name
-            module_dir (str): The directory containing the current version of the module
+            install_folder ([str]): The folder where the module is installed.
+            module (str): The module name.
+            module_dir (str): The directory containing the current version of the module.
 
         Returns:
-            dict[str, (ModuleUpdate.DiffEnum, str)]: A dictionary containing
-            the diff type and the diff string (empty if no diff)
+            dict[str, (ModuleUpdate.DiffEnum, str)]: A dictionary containing.
+            the diff type and the diff string (empty if no diff).
         """
 
         diffs = {}
@@ -457,16 +451,15 @@ class ModuleUpdate(ModuleCommand):
         return diffs
 
     def append_diff_file(self, module, diffs, module_dir, current_version, new_version):
-        """
-        Writes the diffs of a module to the diff file.
+        """Writes the diffs of a module to the diff file.
 
         Args:
-            module (str): The module name
+            module (str): The module name.
             diffs (dict[str, (ModuleUpdate.DiffEnum, str)]): A dictionary containing
-            the type of change and the diff (if any)
-            module_dir (str): The path to the current installation of the module
-            current_version (str): The installed version of the module
-            new_version (str): The version of the module the diff is computed against
+            the type of change and the diff (if any).
+            module_dir (str): The path to the current installation of the module.
+            current_version (str): The installed version of the module.
+            new_version (str): The version of the module the diff is computed against.
         """
         log.info(f"Writing diff of '{module}' to '{self.save_diff_fn}'")
         with open(self.save_diff_fn, "a") as fh:
@@ -500,8 +493,7 @@ class ModuleUpdate(ModuleCommand):
             fh.write("*" * 60 + "\n")
 
     def write_modules_json_diff(self, old_modules_json):
-        """
-        Compare the new modules.json and builds a diff
+        """Creates a diff between the old to the new modules.json and writes it to the diff file.
 
         Args:
             old_modules_json (nested dict): The old modules.json
@@ -521,16 +513,15 @@ class ModuleUpdate(ModuleCommand):
             fh.write("*" * 60 + "\n")
 
     def print_diff(self, module, diffs, module_dir, current_version, new_version):
-        """
-        Prints the diffs between two module versions
+        """Prints the diffs between two module versions.
 
         Args:
             module (str): The module name
             diffs (dict[str, (ModuleUpdate.DiffEnum, str)]): A dictionary containing
-            the type of change and the diff (if any)
-            module_dir (str): The path to the current installation of the module
-            current_version (str): The installed version of the module
-            new_version (str): The version of the module the diff is computed against
+            the type of change and the diff (if any).
+            module_dir (str): The path to the current installation of the module.
+            current_version (str): The installed version of the module.
+            new_version (str): The version of the module the diff is computed against.
         """
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         log.info(
@@ -556,17 +547,14 @@ class ModuleUpdate(ModuleCommand):
                 console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
 
     def move_files_from_tmp_dir(self, module, module_dir, install_folder, repo_name, new_version):
-        """
-        Move the files from the temporary installation directory to the
-        module directory.
+        """Move the files from the temporary to the installation directory.
 
         Args:
-            module (str): The module name
-            module_dir (str): The path to the module directory
-            install_folder [str]: The path to the temporary installation directory
-            modules_repo (ModulesRepo): The ModulesRepo object from which the module
-            was installed
-            new_version (str): The version of the module that was installed
+            module (str): The module name.
+            module_dir (str): The path to the module directory.
+            install_folder [str]: The path to the temporary installation directory.
+            modules_repo (ModulesRepo): The ModulesRepo object from which the module was installed.
+            new_version (str): The version of the module that was installed.
         """
         temp_module_dir = os.path.join(install_folder, module)
         files = os.listdir(temp_module_dir)
