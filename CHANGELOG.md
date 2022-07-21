@@ -23,7 +23,7 @@
 
 - Remove support for Python 3.6 ([#1680](https://github.com/nf-core/tools/pull/1680))
 - Add support for Python 3.9 and 3.10 ([#1680](https://github.com/nf-core/tools/pull/1680))
-- Programm control flow no longer affected when run with optimizations ([#1685](https://github.com/nf-core/tools/pull/1685))
+- Invoking Python with optimizations no longer affects the program control flow ([#1685](https://github.com/nf-core/tools/pull/1685))
 - Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
 - Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
 - Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
