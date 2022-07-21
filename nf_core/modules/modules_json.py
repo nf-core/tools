@@ -247,7 +247,7 @@ class ModulesJson:
         dirs = [
             os.path.relpath(dir_name, start=self.modules_dir)
             for dir_name, _, file_names in os.walk(self.modules_dir)
-            if "main.nf" in file_names
+            if "main.nf" in file_names and not os.path.relpath(dir_name, start=self.modules_dir).startswith("local")
         ]
 
         missing_from_modules_json = []

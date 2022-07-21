@@ -87,14 +87,17 @@ def actions_ci(self):
     # Check that the action is turned on for the correct events
     try:
         # NB: YAML dict key 'on' is evaluated to a Python dict key True
-        assert "dev" in ciwf[True]["push"]["branches"]
+        if "dev" not in ciwf[True]["push"]["branches"]:
+            raise AssertionError()
         pr_subtree = ciwf[True]["pull_request"]
-        assert (
-            pr_subtree == None
+        if not (
+            pr_subtree is None
             or ("branches" in pr_subtree and "dev" in pr_subtree["branches"])
             or ("ignore_branches" in pr_subtree and not "dev" in pr_subtree["ignore_branches"])
-        )
-        assert "published" in ciwf[True]["release"]["types"]
+        ):
+            raise AssertionError()
+        if "published" not in ciwf[True]["release"]["types"]:
+            raise AssertionError()
     except (AssertionError, KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' is not triggered on expected events")
     else:
@@ -109,7 +112,8 @@ def actions_ci(self):
         docker_build_cmd = f"docker build --no-cache . -t {docker_withtag}"
         try:
             steps = ciwf["jobs"]["test"]["steps"]
-            assert any([docker_build_cmd in step["run"] for step in steps if "run" in step.keys()])
+            if not any(docker_build_cmd in step["run"] for step in steps if "run" in step.keys()):
+                raise AssertionError()
         except (AssertionError, KeyError, TypeError):
             failed.append(f"CI is not building the correct docker image. Should be: `{docker_build_cmd}`")
         else:
@@ -119,7 +123,8 @@ def actions_ci(self):
         docker_pull_cmd = f"docker pull {docker_notag}:dev"
         try:
             steps = ciwf["jobs"]["test"]["steps"]
-            assert any([docker_pull_cmd in step["run"] for step in steps if "run" in step.keys()])
+            if not any(docker_pull_cmd in step["run"] for step in steps if "run" in step.keys()):
+                raise AssertionError()
         except (AssertionError, KeyError, TypeError):
             failed.append(f"CI is not pulling the correct docker image. Should be: `{docker_pull_cmd}`")
         else:
@@ -129,7 +134,8 @@ def actions_ci(self):
         docker_tag_cmd = f"docker tag {docker_notag}:dev {docker_withtag}"
         try:
             steps = ciwf["jobs"]["test"]["steps"]
-            assert any([docker_tag_cmd in step["run"] for step in steps if "run" in step.keys()])
+            if not any(docker_tag_cmd in step["run"] for step in steps if "run" in step.keys()):
+                raise AssertionError()
         except (AssertionError, KeyError, TypeError):
             failed.append(f"CI is not tagging docker image correctly. Should be: `{docker_tag_cmd}`")
         else:
@@ -138,7 +144,8 @@ def actions_ci(self):
     # Check that we are testing the minimum nextflow version
     try:
         nxf_ver = ciwf["jobs"]["test"]["strategy"]["matrix"]["NXF_VER"]
-        assert any([i == self.minNextflowVersion for i in nxf_ver])
+        if not any(i == self.minNextflowVersion for i in nxf_ver):
+            raise AssertionError()
     except (KeyError, TypeError):
         failed.append("'.github/workflows/ci.yml' does not check minimum NF version")
     except AssertionError:

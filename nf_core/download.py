@@ -479,7 +479,7 @@ class DownloadWorkflow(object):
 
                                     # Don't recognise this, throw a warning
                                     else:
-                                        log.error(f"[red]Cannot parse container string, skipping: [green]{match}")
+                                        log.error(f"[red]Cannot parse container string, skipping: [green]'{file}'")
 
                         if this_container:
                             containers_raw.append(this_container)

@@ -18,11 +18,13 @@
 - Add isort configuration and GitHub workflow ([#1538](https://github.com/nf-core/tools/pull/1538))
 - Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 - Add check for mimetype in the `input` parameter. ([#1647](https://github.com/nf-core/tools/issues/1647))
+- Check that the singularity and docker tags are parsable. Add `--fail-warned` flag to `nf-core modules lint` ([#1654](https://github.com/nf-core/tools/issues/1654))
 
 ### General
 
 - Remove support for Python 3.6 ([#1680](https://github.com/nf-core/tools/pull/1680))
 - Add support for Python 3.9 and 3.10 ([#1680](https://github.com/nf-core/tools/pull/1680))
+- Invoking Python with optimizations no longer affects the program control flow ([#1685](https://github.com/nf-core/tools/pull/1685))
 - Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
 - Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
 - Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
@@ -48,6 +50,7 @@
 - Add `--base-path` flag to `nf-core modules` to specify the base path for the modules in a remote. Also refactored `modules.json` code. ([#1643](https://github.com/nf-core/tools/issues/1643))
 - Rename methods in `ModulesJson` to remove explicit reference to `modules.json`
 - Fix inconsistencies in the `--save-diff` flag `nf-core modules update`. Refactor `nf-core modules update` ([#1536](https://github.com/nf-core/tools/pull/1536))
+- Fix bug in `ModulesJson.check_up_to_date` causing it to ask for the remote of local modules
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

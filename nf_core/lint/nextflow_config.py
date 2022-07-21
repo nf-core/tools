@@ -206,24 +206,24 @@ def nextflow_config(self):
     if "manifest.name" not in ignore_configs:
         # Check that the pipeline name starts with nf-core
         try:
-            assert self.nf_config.get("manifest.name", "").strip("'\"").startswith("nf-core/")
+            manifest_name = self.nf_config.get("manifest.name", "").strip("'\"")
+            if not manifest_name.startswith("nf-core/"):
+                raise AssertionError()
         except (AssertionError, IndexError):
-            failed.append(
-                "Config ``manifest.name`` did not begin with ``nf-core/``:\n    {}".format(
-                    self.nf_config.get("manifest.name", "").strip("'\"")
-                )
-            )
+            failed.append(f"Config ``manifest.name`` did not begin with ``nf-core/``:\n    {manifest_name}")
         else:
             passed.append("Config ``manifest.name`` began with ``nf-core/``")
 
     if "manifest.homePage" not in ignore_configs:
         # Check that the homePage is set to the GitHub URL
         try:
-            assert self.nf_config.get("manifest.homePage", "").strip("'\"").startswith("https://github.com/nf-core/")
+            manifest_homepage = self.nf_config.get("manifest.homePage", "").strip("'\"")
+            if not manifest_homepage.startswith("https://github.com/nf-core/"):
+                raise AssertionError()
         except (AssertionError, IndexError):
             failed.append(
                 "Config variable ``manifest.homePage`` did not begin with https://github.com/nf-core/:\n    {}".format(
-                    self.nf_config.get("manifest.homePage", "").strip("'\"")
+                    manifest_homepage
                 )
             )
         else:

@@ -327,6 +327,7 @@ def setup_requests_cachedir():
         "backend": "sqlite",
     }
 
+    logging.getLogger("requests_cache").setLevel(logging.WARNING)
     try:
         if not os.path.exists(cachedir):
             os.makedirs(cachedir)
@@ -389,7 +390,8 @@ def poll_nfcore_web_api(api_url, post_data=None):
             else:
                 try:
                     web_response = json.loads(response.content)
-                    assert "status" in web_response
+                    if "status" not in web_response:
+                        raise AssertionError()
                 except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
                     log.debug(f"Response content:\n{response.content}")
                     raise AssertionError(
@@ -877,9 +879,8 @@ def get_repo_releases_branches(pipeline, wfs):
 
             # Check that this repo existed
             try:
-                assert rel_r.json().get("message") != "Not Found"
-            except AssertionError:
-                raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+                if rel_r.json().get("message") == "Not Found":
+                    raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
                 # Success! We have a list, which doesn't work with .get() which is looking for a dict key
                 wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
