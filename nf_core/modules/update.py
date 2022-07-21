@@ -5,6 +5,7 @@ import logging
 import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import questionary
 from rich.console import Console
@@ -386,8 +387,11 @@ class ModuleUpdate(ModuleCommand):
             self.save_diff_fn = questionary.path(
                 "Enter the filename: ", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
+
+        self.save_diff_fn = Path(self.save_diff_fn)
+
         # Check if filename already exists (questionary or cli)
-        while os.path.exists(self.save_diff_fn):
+        while self.save_diff_fn.exists():
             if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
                 os.remove(self.save_diff_fn)
                 break
@@ -395,6 +399,10 @@ class ModuleUpdate(ModuleCommand):
                 "Enter a new filename: ",
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
+            self.save_diff_fn = Path(self.save_diff_fn)
+
+        # This guarantees that the file exists after calling the function
+        self.save_diff_fn.touch()
 
     def get_module_diffs(self, install_folder, module, module_dir):
         """Computes the diff between the current and the new module version.
