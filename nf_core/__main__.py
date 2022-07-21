@@ -643,10 +643,11 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
+@click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(ctx, tool, dir, key, all, local, passed, fix_version):
+def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):
     """
     Lint one or more modules in a directory.
 
@@ -659,6 +660,7 @@ def lint(ctx, tool, dir, key, all, local, passed, fix_version):
     try:
         module_lint = nf_core.modules.ModuleLint(
             dir,
+            fail_warned,
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
