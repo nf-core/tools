@@ -382,7 +382,7 @@ class ModuleUpdate(ModuleCommand):
         """
         if self.save_diff_fn is True:
             # From questionary - no filename yet
-            self.save_diff_fn = questionary.text(
+            self.save_diff_fn = questionary.path(
                 "Enter the filename: ", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
         # Check if filename already exists (questionary or cli)
@@ -390,7 +390,7 @@ class ModuleUpdate(ModuleCommand):
             if questionary.confirm(f"'{self.save_diff_fn}' exists. Remove file?").unsafe_ask():
                 os.remove(self.save_diff_fn)
                 break
-            self.save_diff_fn = questionary.text(
+            self.save_diff_fn = questionary.path(
                 "Enter a new filename: ",
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
