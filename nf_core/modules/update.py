@@ -342,7 +342,8 @@ class ModuleUpdate(ModuleCommand):
         if overridden_modules:
             overridden_str = "', '".join(overridden_modules)
             log.info(
-                f"Overriding '--sha' flag for module{plural_s(overridden_modules)} with '.nf-core.yml' entry: '{overridden_str}'"
+                f"Overriding '--sha' flag for module{plural_s(overridden_modules)} with "
+                f"'.nf-core.yml' entry: '{overridden_str}'"
             )
 
         # Get the git urls from the modules.json
