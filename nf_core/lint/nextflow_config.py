@@ -210,7 +210,7 @@ def nextflow_config(self):
             if not manifest_name.startswith("nf-core/"):
                 raise AssertionError()
         except (AssertionError, IndexError):
-            failed.append("Config ``manifest.name`` did not begin with ``nf-core/``:\n    {}".format(manifest_name))
+            failed.append(f"Config ``manifest.name`` did not begin with ``nf-core/``:\n    {manifest_name}")
         else:
             passed.append("Config ``manifest.name`` began with ``nf-core/``")
 
