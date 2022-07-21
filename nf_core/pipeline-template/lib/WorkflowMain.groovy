@@ -25,7 +25,7 @@ class WorkflowMain {
         {% if igenomes -%}
         def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv --genome GRCh37 -profile docker"
         {% else -%}
-        def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv -profile docker"
+        def command = "nextflow run ${workflow.manifest.name} --input samplesheet.csv --fasta reference.fa -profile docker"
         {% endif -%}
         def help_string = ''
         help_string += NfcoreTemplate.logo(workflow, params.monochrome_logs)
