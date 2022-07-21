@@ -46,7 +46,7 @@
 - Command `nf-core modules test` obtains module name suggestions from installed modules ([#1624](https://github.com/nf-core/tools/pull/1624))
 - Add `--base-path` flag to `nf-core modules` to specify the base path for the modules in a remote. Also refactored `modules.json` code. ([#1643](https://github.com/nf-core/tools/issues/1643))
 - Rename methods in `ModulesJson` to remove explicit reference to `modules.json`
-- Refactor `nf-core modules install`
+- The `--diff` flag of `nf-core modules update` works now as expected ([#1536](https://github.com/nf-core/tools/pull/1536))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
