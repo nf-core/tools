@@ -67,9 +67,14 @@ def run_linting(
             )
         log.info("Only running tests: '{}'".format("', '".join(key)))
 
-    # Create the lint object
-    pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode)))) if key else []
+    # Check if we were given any keys, and if they match any pipeline tests
+    if key:
+        pipeline_keys = list(set(key).intersection(set(PipelineLint._get_all_lint_tests(release_mode))))
+    else:
+        # If no key is supplied, run all tests
+        pipeline_keys = None
 
+    # Create the lint object
     lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned)
 
     # Load the various pipeline configs
@@ -172,7 +177,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 
-    def __init__(self, wf_path, release_mode=False, fix=(), key=(), fail_ignored=False, fail_warned=False):
+    def __init__(self, wf_path, release_mode=False, fix=(), key=None, fail_ignored=False, fail_warned=False):
         """Initialise linting object"""
 
         # Initialise the parent object
@@ -259,19 +264,22 @@ class PipelineLint(nf_core.utils.Pipeline):
                 )
             )
 
-        # Check that supplied test keys exist
-        bad_keys = [k for k in self.key if k not in self.lint_tests]
-        if len(bad_keys) > 0:
-            raise AssertionError(
-                "Test name{} not recognised: '{}'".format(
-                    _s(bad_keys),
-                    "', '".join(bad_keys),
+        if self.key is not None:
+            # Check that supplied test keys exist
+            bad_keys = [k for k in self.key if k not in self.lint_tests]
+            if len(bad_keys) > 0:
+                raise AssertionError(
+                    "Test name{} not recognised: '{}'".format(
+                        _s(bad_keys),
+                        "', '".join(bad_keys),
+                    )
                 )
-            )
 
-        # If -k supplied, only run these tests
-        if self.key:
+            # If -k supplied, only run these tests
             self.lint_tests = [k for k in self.lint_tests if k in self.key]
+            if len(self.lint_tests) == 0:
+                log.debug("No pipeline lint tests to run")
+                return
 
         # Check that the pipeline_dir is a clean git repo
         if len(self.fix):

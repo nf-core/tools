@@ -35,6 +35,7 @@
 - Add `CITATION.cff` [#361](https://github.com/nf-core/tools/issues/361)
 - Allow customization of the `nf-core` pipeline template when using `nf-core create` ([#1548](https://github.com/nf-core/tools/issues/1548))
 - Add Refgenie integration: updating of nextflow config files with a refgenie database ([#1090](https://github.com/nf-core/tools/pull/1090))
+- Fix `--key` option in `nf-core lint` when supplying a module lint test name ([#1681](https://github.com/nf-core/tools/issues/1681))
 
 ### Modules
 
