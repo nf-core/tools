@@ -85,11 +85,10 @@ class ModuleInstall(ModuleCommand):
         current_version = modules_json.get_module_version(module, self.modules_repo.fullname)
 
         # Set the install folder based on the repository name
-        install_folder = [self.dir, "modules"]
-        install_folder.extend(os.path.split(self.modules_repo.fullname))
+        install_folder = os.path.join(self.dir, "modules", self.modules_repo.fullname)
 
         # Compute the module directory
-        module_dir = os.path.join(*install_folder, module)
+        module_dir = os.path.join(install_folder, module)
 
         # Check that the module is not already installed
         if (current_version is not None and os.path.exists(module_dir)) and not self.force:
@@ -135,7 +134,7 @@ class ModuleInstall(ModuleCommand):
 
         # Print include statement
         module_name = "_".join(module.upper().split("/"))
-        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main'")
+        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'")
 
         # Update module.json with newly installed module
         modules_json.update(self.modules_repo, module, version)

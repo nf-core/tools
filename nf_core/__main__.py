@@ -504,7 +504,7 @@ def install(ctx, tool, dir, prompt, force, sha):
     help="Preview / no preview of changes before applying",
 )
 @click.option(
-    "-p",
+    "-D",
     "--save-diff",
     type=str,
     metavar="<filename>",
