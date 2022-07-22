@@ -199,7 +199,7 @@ class ModuleUpdate(ModuleCommand):
                         if removed_files_msg is not None:
                             log.error(removed_files_msg)
                         raise UserWarning(
-                            "Can't use '--save-diff' option when files were created or removed. Please use '--no-preview' or '--preview' options."
+                            "Can't use '--save-diff' option when files were created or removed. Please use either of '--no-preview' or '--preview' options."
                         )
 
                 elif self.show_diff:
