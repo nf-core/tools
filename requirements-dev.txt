@@ -1,6 +1,5 @@
 pytest-datafiles
 pytest-cov
-mock
 black
 refgenie
 Sphinx

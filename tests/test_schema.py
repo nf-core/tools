@@ -7,9 +7,9 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import click
-import mock
 import pytest
 import requests
 import yaml
