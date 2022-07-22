@@ -284,7 +284,7 @@ class ModulesRepo(object):
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_module_dir(module_name), os.path.join(*install_dir, module_name))
+        shutil.copytree(self.get_module_dir(module_name), os.path.join(install_dir, module_name))
 
         # Switch back to the tip of the branch
         self.checkout_branch()
@@ -337,6 +337,12 @@ class ModulesRepo(object):
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
+
+    def get_latest_module_version(self, module_name):
+        """
+        Returns the latest commit in the repository
+        """
+        return list(self.get_module_git_log(module_name, depth=1))[0]["git_sha"]
 
     def sha_exists_on_branch(self, sha):
         """
