@@ -3,8 +3,8 @@
 """
 
 import unittest
+from unittest import mock
 
-import mock
 from click.testing import CliRunner
 
 import nf_core.__main__

@@ -9,8 +9,8 @@ import time
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 
-import mock
 import pytest
 from rich.console import Console
 
