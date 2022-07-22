@@ -7,8 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
-
-import mock
+from unittest import mock
 
 import nf_core.create
 import nf_core.launch
