@@ -186,9 +186,16 @@ class ModuleUpdate(ModuleCommand):
             if dry_run:
                 # Compute the diffs for the module
                 if self.save_diff_fn:
-                    ModulesDiffer.write_diff_file(
-                        self.save_diff_fn, module, module_dir, module_install_dir, current_version, version
-                    )
+                    try:
+                        ModulesDiffer.write_diff_file(
+                            self.save_diff_fn, module, module_dir, module_install_dir, current_version, version
+                        )
+                    except UserWarning as e:
+                        log.warning(e)
+                        log.info(
+                            f"Skipping module '{Path(modules_repo.fullname, module)}'. To update use either '--preview' or '--no-preview' options"
+                        )
+                        continue
                 elif self.show_diff:
                     ModulesDiffer.print_diff(module, module_dir, module_install_dir, current_version, version)
 

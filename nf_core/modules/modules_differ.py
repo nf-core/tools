@@ -117,20 +117,25 @@ class ModulesDiffer:
             else:
                 fh.write(f"Changes in module '{module}'\n")
 
+            # Check if any files were created or removed
+            created_files = [
+                file for file, (diff_status, _) in diffs.items() if diff_status == ModulesDiffer.DiffEnum.CREATED
+            ]
+            removed_files = [
+                file for file, (diff_status, _) in diffs.items() if diff_status == ModulesDiffer.DiffEnum.REMOVED
+            ]
+            if created_files or removed_files:
+                warn_msg = ""
+                if created_files:
+                    created_files_str = "' ,'".join(created_files)
+                    warn_msg += f"File{nf_core.utils.plural_s(created_files)}  '{created_files_str}' were created. "
+                if removed_files:
+                    removed_files_str = "' ,'".join(removed_files)
+                    warn_msg += f"File{nf_core.utils.plural_s(removed_files)}  '{removed_files_str}' were removed."
+                raise UserWarning(warn_msg)
+
             for file, (diff_status, diff) in diffs.items():
-                if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
-                    # The files are identical
-                    fh.write(f"'{Path(from_dir, file)}' is unchanged\n")
-
-                elif diff_status == ModulesDiffer.DiffEnum.CREATED:
-                    # The file was created between the commits
-                    fh.write(f"'{Path(from_dir, file)}' was created\n")
-
-                elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
-                    # The file was removed between the commits
-                    fh.write(f"'{Path(from_dir, file)}' was removed\n")
-
-                else:
+                if diff_status == ModulesDiffer.DiffEnum.CHANGED:
                     # The file has changed
                     fh.write(f"Changes in '{Path(from_dir, file)}':\n")
                     # Write the diff lines to the file
