@@ -12,6 +12,7 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 import nf_core.utils
+from nf_core.utils import plural_s
 
 log = logging.getLogger(__name__)
 
@@ -128,11 +129,19 @@ class ModulesDiffer:
                 warn_msg = ""
                 if created_files:
                     created_files_str = "' ,'".join(created_files)
-                    warn_msg += f"File{nf_core.utils.plural_s(created_files)}  '{created_files_str}' were created. "
+                    created_files_str = (
+                        f"File{plural_s(created_files)} '{created_files_str}' of module '{module}' were created."
+                    )
+                else:
+                    created_files_str = None
                 if removed_files:
                     removed_files_str = "' ,'".join(removed_files)
-                    warn_msg += f"File{nf_core.utils.plural_s(removed_files)}  '{removed_files_str}' were removed."
-                raise UserWarning(warn_msg)
+                    removed_files_str = (
+                        f"File{plural_s(removed_files)} '{removed_files_str}' of module '{module}' were removed."
+                    )
+                else:
+                    removed_files_str = None
+                raise UserWarning(created_files_str, removed_files_str)
 
             for file, (diff_status, diff) in diffs.items():
                 if diff_status == ModulesDiffer.DiffEnum.CHANGED:

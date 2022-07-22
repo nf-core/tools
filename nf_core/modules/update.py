@@ -191,11 +191,17 @@ class ModuleUpdate(ModuleCommand):
                             self.save_diff_fn, module, module_dir, module_install_dir, current_version, version
                         )
                     except UserWarning as e:
-                        log.warning(e)
-                        log.info(
-                            f"Skipping module '{Path(modules_repo.fullname, module)}'. To update use either '--preview' or '--no-preview' options"
+                        # Remove the diff file
+                        os.remove(self.save_diff_fn)
+                        created_files_msg, removed_files_msg = e.args
+                        if created_files_msg is not None:
+                            log.error(created_files_msg)
+                        if removed_files_msg is not None:
+                            log.error(removed_files_msg)
+                        raise UserWarning(
+                            "Can't use '--save-diff' option when files were created or removed. Please use '--no-preview' or '--preview' options."
                         )
-                        continue
+
                 elif self.show_diff:
                     ModulesDiffer.print_diff(module, module_dir, module_install_dir, current_version, version)
 
@@ -221,11 +227,12 @@ class ModuleUpdate(ModuleCommand):
                 self.modules_json.get_modules_json(),
                 Path(self.dir, "modules.json"),
             )
-            log.info(
-                f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
-                "can apply them by running the command :point_right:"
-                f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
-            )
+            if exit_value:
+                log.info(
+                    f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
+                    "can apply them by running the command :point_right:"
+                    f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
+                )
         else:
             log.info("Updates complete :sparkles:")
 
