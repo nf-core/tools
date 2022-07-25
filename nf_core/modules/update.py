@@ -1,15 +1,12 @@
-import difflib
 import enum
-import json
 import logging
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 
 import questionary
-from rich.console import Console
-from rich.syntax import Syntax
 
 import nf_core.modules.module_utils
 import nf_core.utils
@@ -122,7 +119,7 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         # Get the list of modules to update, and their version information
-        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
+        modules_info = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
 
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
@@ -148,7 +145,7 @@ class ModuleUpdate(ModuleCommand):
         # Loop through all modules to be updated
         # and do the requested action on them
         exit_value = True
-        for modules_repo, module, sha in repos_mods_shas:
+        for modules_repo, module, sha, patch_fn in modules_info:
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
@@ -182,6 +179,9 @@ class ModuleUpdate(ModuleCommand):
             if not self.install_module_files(module, version, modules_repo, install_dir):
                 exit_value = False
                 continue
+
+            if patch_fn is not None:
+                self.try_apply_patch(module, modules_repo.fullname, patch_fn, module_dir, module_install_dir)
 
             if dry_run:
                 # Compute the diffs for the module
@@ -307,7 +307,10 @@ class ModuleUpdate(ModuleCommand):
                     log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
                 log.info(f"Updating module to ({sha})")
 
-        return (self.modules_repo, module, sha)
+        # If there is a patch file, get its filename
+        patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.fullname)
+
+        return (self.modules_repo, module, sha, patch_fn)
 
     def get_all_modules_info(self):
         """Collects the module repository, version and sha for all modules.
@@ -398,12 +401,17 @@ class ModuleUpdate(ModuleCommand):
         # don't try to update those that don't
         i = 0
         while i < len(modules_info):
-            repo, module, sha = modules_info[i]
+            repo, module, _ = modules_info[i]
             if repo.module_exists(module):
                 i += 1
             else:
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
+
+        # Add patch filenames to the modules that have them
+        modules_info = [
+            (repo, mod, sha, self.modules_json.get_patch_fn(mod, repo.fullname)) for repo, mod, sha in modules_info
+        ]
 
         return modules_info
 
@@ -460,3 +468,29 @@ class ModuleUpdate(ModuleCommand):
 
         log.info(f"Updating '{repo_name}/{module}'")
         log.debug(f"Updating module '{module}' to {new_version} from {repo_name}")
+
+    def try_apply_patch(self, module, repo_name, patch_file, module_dir, module_install_dir):
+        """
+        Try applying a patch file to the new module files
+        """
+        log.info(f"Found patch for  module '{Path(repo_name, module)}'. Trying to apply it to new files")
+
+        # Copy the installed files to a new temporary directory to preserve them if the patch fails
+        temp_dir = Path(tempfile.mkdtemp())
+        temp_module_dir = temp_dir / module
+        shutil.copytree(module_install_dir, temp_module_dir)
+
+        # Create a copy of the patch files where the file names are in the temporary directory
+        try:
+            new_diff = ModulesDiffer.rename_paths(patch_file, module_dir, temp_module_dir)
+        except LookupError as e:
+            raise UserWarning(
+                f"Patch file '{patch_file}' is invalid. Found files that are not relative to the module directory."
+            )
+        # Write the new diff to a temp file
+        temp_patch = Path(tempfile.mktemp())
+        with open(temp_patch, "w") as fh:
+            fh.write(new_diff)
+
+        print(new_diff)
+        sys.exit()

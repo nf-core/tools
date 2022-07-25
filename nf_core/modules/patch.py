@@ -60,6 +60,7 @@ class ModulePatch(ModuleCommand):
             self.modules_repo.fullname,
             module_dir,
             module_install_dir,
+            for_git=False,
             dsp_from_dir=module_dir,
             dsp_to_dir=module_dir,
         )

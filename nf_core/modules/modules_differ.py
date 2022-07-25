@@ -255,3 +255,50 @@ class ModulesDiffer:
                 log.info(f"Changes in '{Path(module, file)}':")
                 # Pretty print the diff using the pygments diff lexer
                 console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
+
+    @staticmethod
+    def rename_paths(diff_fn, org_dir, new_dir):
+        """
+        Renames all references to 'org_dir' to 'new_dir', i.e.
+
+        --- modules/nf-core/modules/fastqc/main.nf
+        +++ modules/nf-core/modules/fastqc/main.nf
+
+        will be renamed to
+
+        --- tmp/fastqc/main.nf
+        +++ tmp/fastqc/main.nf
+
+        if org_dir="modules/nf-core/modules/fastqc" and new_dir="tmp/fastqc"
+
+        Fails if paths that are not prefixed by org_dir are found
+
+        Args:
+            diff_fn (Path): The path to diff file
+            org_dir (Path): The path to be substituted
+            new_dir (Path): The substitution path
+
+        Raises
+            LookupError: If a path the is not prefixed by org_dir is found
+
+        Returns:
+            str: The file with renamed paths
+        """
+        with open(diff_fn, "r") as fh:
+            old_lines = fh.readlines()
+
+        new_lines = []
+        for ln, line in enumerate(old_lines):
+            if line.startswith("+++") or line.startswith("---"):
+                prefix, path = line.split(" ")
+                path = Path(path.strip())
+                if path.is_relative_to(org_dir):
+                    new_path = new_dir / path.relative_to(org_dir)
+                else:
+                    raise LookupError(
+                        f"Found path '{path}' on line {ln} in {diff_fn} that is not a subpath of '{org_dir}'"
+                    )
+                new_lines.append(f"{prefix} {new_path}\n")
+            else:
+                new_lines.append(line)
+        return "".join(new_lines)
