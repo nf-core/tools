@@ -190,6 +190,7 @@ class ModuleUpdate(ModuleCommand):
                         ModulesDiffer.write_diff_file(
                             self.save_diff_fn,
                             module,
+                            modules_repo.fullname,
                             module_dir,
                             module_install_dir,
                             current_version,
@@ -210,7 +211,9 @@ class ModuleUpdate(ModuleCommand):
                         )
 
                 elif self.show_diff:
-                    ModulesDiffer.print_diff(module, module_dir, module_install_dir, current_version, version)
+                    ModulesDiffer.print_diff(
+                        module, modules_repo.fullname, module_dir, module_install_dir, current_version, version
+                    )
 
                     # Ask the user if they want to install the module
                     dry_run = not questionary.confirm(

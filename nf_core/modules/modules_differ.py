@@ -93,6 +93,7 @@ class ModulesDiffer:
                 with open(temp_path, "r") as fh:
                     new_lines = fh.readlines()
                 # The file was created
+                # Show file against /dev/null
                 diff = difflib.unified_diff(
                     [],
                     new_lines,
@@ -103,6 +104,7 @@ class ModulesDiffer:
 
             elif curr_path.exists():
                 # The file was removed
+                # Show file against /dev/null
                 with open(curr_path, "r") as fh:
                     old_lines = fh.readlines()
                 diff = difflib.unified_diff(
@@ -119,6 +121,7 @@ class ModulesDiffer:
     def write_diff_file(
         diff_path,
         module,
+        repo_name,
         from_dir,
         to_dir,
         current_version,
@@ -134,6 +137,7 @@ class ModulesDiffer:
         Args:
             diff_path (str): The path to the file that should be appended
             module (str): The module name
+            repo_name (str): The name of the repo where the module resides
             from_dir (str): The directory containing the old module files
             to_dir (str): The directory containing the new module files
             diffs (dict[str, (ModulesDiffer.DiffEnum, str)]): A dictionary containing
@@ -147,9 +151,13 @@ class ModulesDiffer:
         log.info(f"Writing diff of '{module}' to '{diff_path}'")
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
-                fh.write(f"Changes in module '{module}' between" f" ({current_version}) and" f" ({new_version})\n")
+                fh.write(
+                    f"Changes in module '{Path(repo_name, module)}' between"
+                    f" ({current_version}) and"
+                    f" ({new_version})\n"
+                )
             else:
-                fh.write(f"Changes in module '{module}'\n")
+                fh.write(f"Changes in module '{Path(repo_name, module)}'\n")
 
             for file, (diff_status, diff) in diffs.items():
                 if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
@@ -197,12 +205,13 @@ class ModulesDiffer:
             fh.write("*" * 60 + "\n")
 
     @staticmethod
-    def print_diff(module, from_dir, to_dir, current_version, new_version):
+    def print_diff(module, repo_name, from_dir, to_dir, current_version, new_version):
         """
         Prints the diffs between two module versions to the terminal
 
         Args:
             module (str): The module name
+            repo_name (str): The name of the repo where the module resides
             diffs (dict[str, (ModulesDiffer.DiffEnum, str)]): A dictionary containing
             the type of change and the diff (if any)
             from_dir (str): The directory containing the old module files
@@ -214,9 +223,11 @@ class ModulesDiffer:
         diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir)
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
-            log.info(f"Changes in module '{module}' between" f" ({current_version}) and" f" ({new_version})")
+            log.info(
+                f"Changes in module '{Path(repo_name, module)}' between" f" ({current_version}) and" f" ({new_version})"
+            )
         else:
-            log.info(f"Changes in module '{module}'")
+            log.info(f"Changes in module '{Path(repo_name, module)}'")
 
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
