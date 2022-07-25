@@ -35,7 +35,7 @@ class ModulesDiffer:
         REMOVED = enum.auto()
 
     @staticmethod
-    def get_module_diffs(from_dir, to_dir, path_in_diff=None):
+    def get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir=None, dsp_to_dir=None):
         """
         Compute the diff between the current module version
         and the new version.
@@ -51,8 +51,13 @@ class ModulesDiffer:
             dict[str, (ModulesDiffer.DiffEnum, str)]: A dictionary containing
             the diff type and the diff string (empty if no diff)
         """
-        if path_in_diff is None:
-            path_in_diff = from_dir
+        if dsp_from_dir is None:
+            dsp_from_dir = from_dir
+        if dsp_to_dir is None:
+            dsp_to_dir = to_dir
+        if for_git:
+            dsp_from_dir = Path("a", dsp_from_dir)
+            dsp_to_dir = Path("b", dsp_to_dir)
 
         diffs = {}
         # Get all unique filenames in the two folders.
@@ -79,23 +84,50 @@ class ModulesDiffer:
                     diff = difflib.unified_diff(
                         old_lines,
                         new_lines,
-                        fromfile=str(Path(path_in_diff, file)),
-                        tofile=str(Path(path_in_diff, file)),
+                        fromfile=str(Path(dsp_from_dir, file)),
+                        tofile=str(Path(dsp_to_dir, file)),
                     )
                     diffs[file] = (ModulesDiffer.DiffEnum.CHANGED, diff)
 
             elif temp_path.exists():
+                with open(temp_path, "r") as fh:
+                    new_lines = fh.readlines()
                 # The file was created
-                diffs[file] = (ModulesDiffer.DiffEnum.CREATED, ())
+                diff = difflib.unified_diff(
+                    [],
+                    new_lines,
+                    fromfile=str(Path("/dev", "null")),
+                    tofile=str(Path(dsp_to_dir, file)),
+                )
+                diffs[file] = (ModulesDiffer.DiffEnum.CREATED, diff)
 
             elif curr_path.exists():
                 # The file was removed
-                diffs[file] = (ModulesDiffer.DiffEnum.REMOVED, ())
+                with open(curr_path, "r") as fh:
+                    old_lines = fh.readlines()
+                diff = difflib.unified_diff(
+                    old_lines,
+                    [],
+                    fromfile=str(Path(dsp_from_dir, file)),
+                    tofile=str(Path("/dev", "null")),
+                )
+                diffs[file] = (ModulesDiffer.DiffEnum.REMOVED, diff)
 
         return diffs
 
     @staticmethod
-    def write_diff_file(diff_path, module, from_dir, to_dir, current_version, new_version, file_action="a"):
+    def write_diff_file(
+        diff_path,
+        module,
+        from_dir,
+        to_dir,
+        current_version,
+        new_version,
+        file_action="a",
+        for_git=True,
+        dsp_from_dir=None,
+        dsp_to_dir=None,
+    ):
         """
         Writes the diffs of a module to the diff file.
 
@@ -110,7 +142,8 @@ class ModulesDiffer:
             current_version (str): The installed version of the module
             new_version (str): The version of the module the diff is computed against
         """
-        diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir)
+
+        diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
         log.info(f"Writing diff of '{module}' to '{diff_path}'")
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
@@ -118,35 +151,10 @@ class ModulesDiffer:
             else:
                 fh.write(f"Changes in module '{module}'\n")
 
-            # Check if any files were created or removed
-            created_files = [
-                file for file, (diff_status, _) in diffs.items() if diff_status == ModulesDiffer.DiffEnum.CREATED
-            ]
-            removed_files = [
-                file for file, (diff_status, _) in diffs.items() if diff_status == ModulesDiffer.DiffEnum.REMOVED
-            ]
-            if created_files or removed_files:
-                warn_msg = ""
-                if created_files:
-                    created_files_str = "' ,'".join(created_files)
-                    created_files_str = (
-                        f"File{plural_s(created_files)} '{created_files_str}' of module '{module}' were created."
-                    )
-                else:
-                    created_files_str = None
-                if removed_files:
-                    removed_files_str = "' ,'".join(removed_files)
-                    removed_files_str = (
-                        f"File{plural_s(removed_files)} '{removed_files_str}' of module '{module}' were removed."
-                    )
-                else:
-                    removed_files_str = None
-                raise UserWarning(created_files_str, removed_files_str)
-
             for file, (diff_status, diff) in diffs.items():
-                if diff_status == ModulesDiffer.DiffEnum.CHANGED:
+                if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
                     # The file has changed
-                    fh.write(f"Changes in '{Path(from_dir, file)}':\n")
+                    # fh.write(f"Changes in '{Path(from_dir, file)}':\n")
                     # Write the diff lines to the file
                     for line in diff:
                         fh.write(line)
@@ -155,7 +163,7 @@ class ModulesDiffer:
             fh.write("*" * 60 + "\n")
 
     @staticmethod
-    def append_modules_json_diff(diff_path, old_modules_json, new_modules_json, modules_json_path):
+    def append_modules_json_diff(diff_path, old_modules_json, new_modules_json, modules_json_path, for_git=True):
         """
         Compare the new modules.json and builds a diff
 
@@ -164,12 +172,21 @@ class ModulesDiffer:
             old_modules_json (nested dict): The old modules.json
             new_modules_json (nested dict): The new modules.json
             modules_json_path (str): The path to the modules.json
+            for_git (bool): indicates whether the diff file is to be
+                            compatible with `git apply`. If true it
+                            adds a/ and b/ prefixes to the file names
         """
+        fromfile = modules_json_path
+        tofile = modules_json_path
+        if for_git:
+            fromfile = Path("a", fromfile)
+            tofile = Path("b", tofile)
+
         modules_json_diff = difflib.unified_diff(
             json.dumps(old_modules_json, indent=4).splitlines(keepends=True),
             json.dumps(new_modules_json, indent=4).splitlines(keepends=True),
-            fromfile=str(modules_json_path),
-            tofile=str(modules_json_path),
+            fromfile=str(fromfile),
+            tofile=str(tofile),
         )
 
         # Save diff for modules.json to file

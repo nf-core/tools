@@ -188,7 +188,14 @@ class ModuleUpdate(ModuleCommand):
                 if self.save_diff_fn:
                     try:
                         ModulesDiffer.write_diff_file(
-                            self.save_diff_fn, module, module_dir, module_install_dir, current_version, version
+                            self.save_diff_fn,
+                            module,
+                            module_dir,
+                            module_install_dir,
+                            current_version,
+                            version,
+                            dsp_from_dir=module_dir,
+                            dsp_to_dir=module_dir,
                         )
                     except UserWarning as e:
                         # Remove the diff file
