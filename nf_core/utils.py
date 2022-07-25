@@ -456,7 +456,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
             except Exception as e:
-                ex_type, ex_value, ex_traceback = sys.exc_info()
+                ex_type, ex_value, _ = sys.exc_info()
                 output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
                 log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
@@ -732,7 +732,7 @@ def custom_yaml_dumper():
             """
             return self.represent_dict(data.items())
 
-        def increase_indent(self, flow=False, *args, **kwargs):
+        def increase_indent(self, *args, flow=False, **kwargs):
             """Indent YAML lists so that YAML validates with Prettier
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
@@ -954,7 +954,7 @@ def load_tools_config(dir="."):
 
 def sort_dictionary(d):
     """Sorts a nested dictionary recursively"""
-    result = dict()
+    result = {}
     for k, v in sorted(d.items()):
         if isinstance(v, dict):
             result[k] = sort_dictionary(v)
