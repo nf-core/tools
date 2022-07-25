@@ -9,6 +9,7 @@ from .module_utils import ModuleException
 from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
 from .mulled import MulledImageNameGenerator
+from .patch import ModulePatch
 from .remove import ModuleRemove
 from .test_yml_builder import ModulesTestYmlBuilder
 from .update import ModuleUpdate
