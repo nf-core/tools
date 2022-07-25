@@ -42,6 +42,7 @@ class ModulePatch(ModuleCommand):
 
         # Create a temporary directory for storing the unchanged version of the module
         install_dir = tempfile.mkdtemp()
+        module_install_dir = Path(install_dir, module)
         if not self.install_module_files(module, module_version, self.modules_repo, install_dir):
             raise UserWarning(
                 f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
@@ -53,7 +54,15 @@ class ModulePatch(ModuleCommand):
         patch_relpath = Path(module_dir, patch_filename)
         patch_path = Path(self.dir, patch_relpath)
 
-        ModulesDiffer.write_diff_file(patch_path, module, module_dir, install_dir, None, None)
+        ModulesDiffer.write_diff_file(
+            patch_path,
+            module,
+            self.modules_repo.fullname,
+            module_dir,
+            module_install_dir,
+            dsp_from_dir=module_dir,
+            dsp_to_dir=module_dir,
+        )
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(module, self.modules_repo.fullname, patch_relpath)

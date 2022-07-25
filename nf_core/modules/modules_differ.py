@@ -129,8 +129,8 @@ class ModulesDiffer:
         repo_name,
         from_dir,
         to_dir,
-        current_version,
-        new_version,
+        current_version=None,
+        new_version=None,
         file_action="a",
         for_git=True,
         dsp_from_dir=None,
@@ -216,7 +216,7 @@ class ModulesDiffer:
             fh.write("*" * 60 + "\n")
 
     @staticmethod
-    def print_diff(module, repo_name, from_dir, to_dir, current_version, new_version):
+    def print_diff(module, repo_name, from_dir, to_dir, current_version=None, new_version=None):
         """
         Prints the diffs between two module versions to the terminal
 
