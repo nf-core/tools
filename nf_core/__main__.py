@@ -2,7 +2,6 @@
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 import logging
 import os
-import re
 import sys
 from email.policy import default
 
