@@ -294,7 +294,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 if fix_version:
                     try:
                         fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
-                    except FileNotFoundError as e:
+                    except (FileNotFoundError, requests.exceptions.RequestException) as e:
                         fixed = False
                         log.debug(f"Unable to update package {package} due to error: {e}")
                     else:
