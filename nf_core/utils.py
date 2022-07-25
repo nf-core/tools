@@ -967,3 +967,9 @@ def plural_s(list_or_int):
     """Return an s if the input is not one or has not the length of one."""
     length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
     return "s" * (length != 1)
+
+
+def plural_y(list_or_int):
+    """Return 'ies' if the input is not one or has not the length of one, else 'y'."""
+    length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
+    return "ies" if length != 1 else "y"

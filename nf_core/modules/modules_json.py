@@ -247,7 +247,7 @@ class ModulesJson:
         dirs = [
             os.path.relpath(dir_name, start=self.modules_dir)
             for dir_name, _, file_names in os.walk(self.modules_dir)
-            if "main.nf" in file_names
+            if "main.nf" in file_names and not os.path.relpath(dir_name, start=self.modules_dir).startswith("local")
         ]
 
         missing_from_modules_json = []
@@ -301,7 +301,7 @@ class ModulesJson:
                 base_path = contents["base_path"]
 
                 modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote, base_path=base_path)
-                install_folder = os.path.split(modules_repo.fullname)
+                install_dir = os.path.join(self.dir, "modules", modules_repo.fullname)
 
                 for module, entry in modules.items():
                     sha = entry.get("git_sha")
@@ -313,8 +313,7 @@ class ModulesJson:
                         )
                         remove_from_mod_json[repo].append(module)
                         continue
-                    module_dir = [self.dir, "modules", *install_folder]
-                    if not modules_repo.install_module(module, module_dir, sha):
+                    if not modules_repo.install_module(module, install_dir, sha):
                         if repo not in remove_from_mod_json:
                             remove_from_mod_json[repo] = []
                         log.warning(f"Could not install module '{module}' in '{repo}' - removing from modules.json")

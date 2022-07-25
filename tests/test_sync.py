@@ -7,9 +7,9 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
 import git
-import mock
 
 import nf_core.create
 import nf_core.sync
