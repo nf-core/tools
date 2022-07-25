@@ -35,7 +35,7 @@ class ModulesDiffer:
         REMOVED = enum.auto()
 
     @staticmethod
-    def get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir=None, dsp_to_dir=None):
+    def get_module_diffs(from_dir, to_dir, for_git=True, dsp_from_dir=None, dsp_to_dir=None):
         """
         Compute the diff between the current module version
         and the new version.
@@ -46,6 +46,11 @@ class ModulesDiffer:
             path_in_diff (strOrPath): The directory displayed containing the module
                                       file in the diff. Added so that temporary dirs
                                       are not shown
+            for_git (bool): indicates whether the diff file is to be
+                            compatible with `git apply`. If true it
+                            adds a/ and b/ prefixes to the file paths
+            dsp_from_dir (str | Path): The from directory to display in the diff
+            dsp_to_dir (str | Path): The to directory to display in the diff
 
         Returns:
             dict[str, (ModulesDiffer.DiffEnum, str)]: A dictionary containing
@@ -135,16 +140,22 @@ class ModulesDiffer:
         Writes the diffs of a module to the diff file.
 
         Args:
-            diff_path (str): The path to the file that should be appended
+            diff_path (str | Path): The path to the file that should be appended
             module (str): The module name
             repo_name (str): The name of the repo where the module resides
-            from_dir (str): The directory containing the old module files
-            to_dir (str): The directory containing the new module files
+            from_dir (str | Path): The directory containing the old module files
+            to_dir (str | Path): The directory containing the new module files
             diffs (dict[str, (ModulesDiffer.DiffEnum, str)]): A dictionary containing
-            the type of change and the diff (if any)
-            module_dir (str): The path to the current installation of the module
+                                                              the type of change and
+                                                              the diff (if any)
+            module_dir (str | Path): The path to the current installation of the module
             current_version (str): The installed version of the module
             new_version (str): The version of the module the diff is computed against
+            for_git (bool): indicates whether the diff file is to be
+                            compatible with `git apply`. If true it
+                            adds a/ and b/ prefixes to the file paths
+            dsp_from_dir (str | Path): The from directory to display in the diff
+            dsp_to_dir (str | Path): The to directory to display in the diff
         """
 
         diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
@@ -182,7 +193,7 @@ class ModulesDiffer:
             modules_json_path (str): The path to the modules.json
             for_git (bool): indicates whether the diff file is to be
                             compatible with `git apply`. If true it
-                            adds a/ and b/ prefixes to the file names
+                            adds a/ and b/ prefixes to the file paths
         """
         fromfile = modules_json_path
         tofile = modules_json_path
