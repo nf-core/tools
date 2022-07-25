@@ -3,9 +3,6 @@ import enum
 import json
 import logging
 import os
-import re
-import shutil
-import tempfile
 from pathlib import Path
 
 from rich.console import Console
@@ -302,3 +299,120 @@ class ModulesDiffer:
             else:
                 new_lines.append(line)
         return "".join(new_lines)
+
+    @staticmethod
+    def per_file_patch(patch_fn):
+        with open(patch_fn, "r") as fh:
+            lines = fh.readlines()
+
+        patches = {}
+        i = 0
+        patch_lines = []
+        key = "preamble"
+        while i < len(lines):
+            line = lines[i]
+            if line.startswith("---"):
+                patches[key] = patch_lines
+                _, frompath = line.split(" ")
+                frompath = frompath.strip()
+                patch_lines = [line]
+                i += 1
+                line = lines[i]
+                _, topath = line.split(" ")
+                topath = topath.strip()
+                patch_lines.append(line)
+
+                if frompath == topath:
+                    key = frompath
+                elif frompath == "/dev/null":
+                    key = topath
+                else:
+                    key = frompath
+                print(frompath, topath)
+            else:
+                patch_lines.append(line)
+            i += 1
+        patches[key] = patch_lines
+
+        # Remove the 'preamble' key
+        patches.pop("preamble")
+
+        return patches
+
+    @staticmethod
+    def get_new_and_old_lines(patch):
+        old_lines = []
+        new_lines = []
+        old_partial = []
+        new_partial = []
+        # First two lines indicate the file names, the third line is the first hunk
+        for line in patch[3:]:
+            if line.startswith("@"):
+                old_lines.append(old_partial)
+                new_lines.append(new_partial)
+            elif line.startswith(" "):
+                # Line belongs to both files
+                line = line[1:]
+                old_partial.append(line)
+                new_partial.append(line)
+            elif line.startswith("+"):
+                # Line only belongs to the new file
+                line = line[1:]
+                new_partial.append(line)
+            elif line.startswith("-"):
+                # Line only belongs to the old file
+                line = line[1:]
+                old_partial.append(line)
+        old_lines.append(old_partial)
+        new_lines.append(new_partial)
+        return old_lines, new_lines
+
+    @staticmethod
+    def try_apply_patch(new_fn, patch):
+        print(new_fn)
+        print("".join(patch))
+        org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
+        print(len(org_lines), len(patch_lines))
+
+        with open(new_fn, "r") as fh:
+            new_lines = fh.readlines()
+
+        p = len(org_lines)
+        patch_indices = [None] * p
+        print(patch_indices)
+        # The patches are sorted by their order of occurence in the original
+        # file. Loop through the new file and try to find the new indices of
+        # these lines. We know they are non overlapping, and thus only need to
+        # look at the file once
+        i = 0
+        j = 0
+        n = len(new_lines)
+        while i < n and j < p:
+            m = len(org_lines[j])
+            while i < n:
+                if org_lines[j] == new_lines[i : i + m]:
+                    patch_indices[j] = (i, i + m)
+                    j += 1
+                    break
+                else:
+                    i += 1
+
+        if j != len(org_lines):
+            # Not all diffs were found before
+            # we ran out of file
+            raise UserWarning
+
+        print(patch_indices)
+        # Apply the patch to new lines by substituting
+        # the org_lines with the patch lines
+        patched_new_lines = new_lines[: patch_indices[0][0]]
+        for i in range(len(patch_indices) - 1):
+            # Add the patch lines
+            patched_new_lines.extend(patch_lines[i])
+            # Fill the spaces between the patches
+            patched_new_lines.extend(new_lines[patch_indices[i][1] : patch_indices[i + 1][0]])
+
+        # Add the remaining part of the new file
+        patched_new_lines.extend(new_lines[patch_indices[-1][1] :])
+
+        return patched_new_lines

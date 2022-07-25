@@ -2,7 +2,6 @@ import enum
 import logging
 import os
 import shutil
-import sys
 import tempfile
 from pathlib import Path
 
@@ -492,5 +491,14 @@ class ModuleUpdate(ModuleCommand):
         with open(temp_patch, "w") as fh:
             fh.write(new_diff)
 
-        print(new_diff)
-        sys.exit()
+        patches = ModulesDiffer.per_file_patch(temp_patch)
+        new_files = {}
+        for file, patch in patches.items():
+            patched_new_lines = ModulesDiffer.try_apply_patch(file, patch)
+            new_files[file] = "".join(patched_new_lines)
+
+        # Write over the newly installed module files with the patched ones
+        for file, new_content in new_files.items():
+            fn = module_install_dir / file.relative_to(temp_module_dir)
+            with open(fn, "w") as fh:
+                fh.write(new_content)
