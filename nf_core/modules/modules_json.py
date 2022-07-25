@@ -530,6 +530,35 @@ class ModulesJson:
         self.dump()
         return True
 
+    def add_patch_entry(self, module_name, repo_name, patch_filename, write_file=True):
+        """
+        Adds (or replaces) the patch entry for a module
+        """
+        if self.modules_json is None:
+            self.load()
+        if repo_name not in self.modules_json["repos"]:
+            raise LookupError(f"Repo '{repo_name}' not present in 'modules.json'")
+        if module_name not in self.modules_json["repos"][repo_name]["modules"]:
+            raise LookupError(f"Module '{repo_name}/{module_name}' not present in 'modules.json'")
+        self.modules_json["repos"][repo_name]["modules"][module_name]["patch"] = str(patch_filename)
+        if write_file:
+            self.dump()
+
+    def get_patch_fn(self, module_name, repo_name):
+        """
+        Get the patch filename of a module
+
+        Args:
+            module_name (str): The name of the module
+            repo_name (str): The name of the repository containing the module
+
+        Returns:
+            (str): The patch filename for the module, None if not present
+        """
+        if self.modules_json is None:
+            self.load()
+        return self.modules_json["repos"].get(repo_name, {}).get("modules").get(module_name, {}).get("patch")
+
     def repo_present(self, repo_name):
         """
         Checks if a repo is present in the modules.json file

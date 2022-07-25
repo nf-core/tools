@@ -539,6 +539,32 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
         sys.exit(1)
 
 
+# nf-core modules patch
+@modules.command()
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+def patch(ctx, tool, dir):
+    try:
+        module_patch = nf_core.modules.ModulePatch(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
+        module_patch.patch(tool)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
 # nf-core modules remove
 @modules.command()
 @click.pass_context
