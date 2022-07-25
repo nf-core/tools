@@ -18,6 +18,15 @@ import nf_core.utils
 from .utils import with_temporary_folder
 
 
+def test_strip_ansi_codes():
+    """Check that we can make rich text strings plain
+
+    String prints ls examplefile.zip, where examplefile.zip is red bold text
+    """
+    stripped = nf_core.utils.strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
+    assert stripped == "ls examplefile.zip"
+
+
 class TestUtils(unittest.TestCase):
     """Class for utils tests"""
 
