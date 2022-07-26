@@ -67,8 +67,14 @@ class ModulesDiffer:
         diffs = {}
         # Get all unique filenames in the two folders.
         # `dict.fromkeys()` is used instead of `set()` to preserve order
-        files = dict.fromkeys(os.listdir(to_dir))
-        files.update(dict.fromkeys(os.listdir(from_dir)))
+        files = dict.fromkeys(
+            [Path(dirpath, file).relative_to(to_dir) for dirpath, _, files in os.walk(to_dir) for file in files]
+        )
+        files.update(
+            dict.fromkeys(
+                [Path(dirpath, file).relative_to(from_dir) for dirpath, _, files in os.walk(from_dir) for file in files]
+            )
+        )
         files = list(files)
 
         # Loop through all the module files and compute their diffs if needed
