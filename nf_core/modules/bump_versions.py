@@ -66,6 +66,8 @@ class ModuleVersionBumper(ModuleCommand):
         # Get list of all modules
         _, nfcore_modules = nf_core.modules.module_utils.get_installed_modules(self.dir)
 
+        nfcore_modules1 = nfcore_modules.copy()
+
         # Load the .nf-core.yml config
         self.tools_config = nf_core.utils.load_tools_config(self.dir)
 
@@ -93,9 +95,14 @@ class ModuleVersionBumper(ModuleCommand):
                 raise nf_core.modules.module_utils.ModuleException(
                     "You cannot specify a tool and request all tools to be bumped."
                 )
+            nfcore_modules3 = [f"{m.module_name}, {m.base_dir}, {m.test_dir}" for m in nfcore_modules]
             nfcore_modules = [m for m in nfcore_modules if m.module_name == module]
+            nfcore_modules2 = nfcore_modules.copy()
+
             if len(nfcore_modules) == 0:
-                raise nf_core.modules.module_utils.ModuleException(f"Could not find the specified module: '{module}'")
+                raise nf_core.modules.module_utils.ModuleException(
+                    f"Could not find the specified module: '{module}' in {nfcore_modules1, nfcore_modules3}"
+                )
 
         progress_bar = rich.progress.Progress(
             "[bold blue]{task.description}",

@@ -54,9 +54,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
 PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
 
 USER_CACHE_DIR = Path(os.getenv("HOME")) / ".cache"
-NFCORE_CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", USER_CACHE_DIR)) / "nfcore"
-
-NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
+USER_CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", USER_CACHE_DIR))
+NFCORE_CACHE_DIR = USER_CACHE_DIR / "nfcore"
+USER_CONFIG_DIR = Path(os.getenv("HOME")) / ".config"
+USER_CONFIG_DIR = Path(os.environ.get("XDG_CONFIG_HOME", USER_CONFIG_DIR))
+NFCORE_DIR = USER_CONFIG_DIR / "nfcore"
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):

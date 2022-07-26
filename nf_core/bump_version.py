@@ -6,7 +6,7 @@ a nf-core pipeline.
 import logging
 import os
 import re
-import sys
+from pathlib import Path
 
 import rich.console
 
@@ -79,7 +79,7 @@ def bump_nextflow_version(pipeline_obj, new_version):
 
     # .github/workflows/ci.yml - Nextflow version matrix
     update_file_version(
-        os.path.join(".github", "workflows", "ci.yml"),
+        Path(".github") / "workflows" / "ci.yml",
         pipeline_obj,
         [
             (

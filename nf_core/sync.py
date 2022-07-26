@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import git
 import requests
@@ -63,7 +64,7 @@ class PipelineSync(object):
     ):
         """Initialise syncing object"""
 
-        self.pipeline_dir = os.path.abspath(pipeline_dir)
+        self.pipeline_dir = Path(pipeline_dir).absolute()
         self.from_branch = from_branch
         self.original_branch = None
         self.merge_branch = f"nf-core-template-merge-{nf_core.__version__}"
@@ -202,16 +203,16 @@ class PipelineSync(object):
         """
         # Delete everything
         log.info("Deleting all files in 'TEMPLATE' branch")
-        for the_file in os.listdir(self.pipeline_dir):
-            if the_file == ".git":
+        for item in self.pipeline_dir.iterdir():
+            if item.name == ".git":
                 continue
-            file_path = os.path.join(self.pipeline_dir, the_file)
-            log.debug(f"Deleting {file_path}")
+            item = item.absolute()
+            log.debug(f"Deleting {item}")
             try:
-                if os.path.isfile(file_path):
-                    os.unlink(file_path)
-                elif os.path.isdir(file_path):
-                    shutil.rmtree(file_path)
+                if item.is_file():
+                    os.unlink(item)
+                if item.is_dir():
+                    shutil.rmtree(item)
             except Exception as e:
                 raise SyncException(e)
 
@@ -256,7 +257,7 @@ class PipelineSync(object):
         and try to make a PR. If we don't have the auth token, try to figure out a URL
         for the PR and print this to the console.
         """
-        log.info(f"Pushing TEMPLATE branch to remote: '{os.path.basename(self.pipeline_dir)}'")
+        log.info(f"Pushing TEMPLATE branch to remote: '{self.pipeline_dir.name}'")
         try:
             self.repo.git.push()
         except git.exc.GitCommandError as e:
