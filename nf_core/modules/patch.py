@@ -1,7 +1,10 @@
+import os
 import tempfile
 from pathlib import Path
 
 import questionary
+
+import nf_core.utils
 
 from .modules_command import ModuleCommand
 from .modules_differ import ModulesDiffer
@@ -26,7 +29,9 @@ class ModulePatch(ModuleCommand):
         self.param_check(module)
 
         if module is None:
-            module = questionary.autocomplete("Tool", self.module_names[self.modules_repo.fullname]).unsafe_ask()
+            module = questionary.autocomplete(
+                "Tool", self.module_names[self.modules_repo.fullname], style=nf_core.utils.nfcore_question_style
+            ).unsafe_ask()
 
         # Verify that the module has an entry is the modules.json file
         if not self.modules_json.module_present(module, self.modules_repo.fullname):
@@ -39,6 +44,21 @@ class ModulePatch(ModuleCommand):
             raise UserWarning(
                 f"The '{module}' does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
+        # Set the diff filename based on the module name
+        patch_filename = f"{'-'.join(module.split())}.diff"
+        module_dir = Path(self.dir, "modules", self.modules_repo.fullname, module)
+        patch_relpath = Path(module_dir, patch_filename)
+        patch_path = Path(self.dir, patch_relpath)
+
+        if patch_path.exists():
+            remove = questionary.confirm(
+                f"Patch exists for module '{Path(self.modules_repo.fullname, module)}'. Do you want to regenerate it?",
+                style=nf_core.utils.nfcore_question_style,
+            ).unsafe_ask()
+            if remove:
+                os.remove(patch_path)
+            else:
+                return
 
         # Create a temporary directory for storing the unchanged version of the module
         install_dir = tempfile.mkdtemp()
@@ -47,12 +67,6 @@ class ModulePatch(ModuleCommand):
             raise UserWarning(
                 f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
             )
-
-        # Set the diff filename based on the module name
-        patch_filename = f"{'-'.join(module.split())}.diff"
-        module_dir = Path(self.dir, "modules", self.modules_repo.fullname, module)
-        patch_relpath = Path(module_dir, patch_filename)
-        patch_path = Path(self.dir, patch_relpath)
 
         ModulesDiffer.write_diff_file(
             patch_path,
@@ -67,3 +81,13 @@ class ModulePatch(ModuleCommand):
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(module, self.modules_repo.fullname, patch_relpath)
+
+        # Show the changes made to the module
+        ModulesDiffer.print_diff(
+            module,
+            self.modules_repo.fullname,
+            module_install_dir,
+            module_dir,
+            dsp_from_dir=module_dir,
+            dsp_to_dir=module_dir,
+        )

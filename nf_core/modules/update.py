@@ -472,7 +472,8 @@ class ModuleUpdate(ModuleCommand):
         """
         Try applying a patch file to the new module files
         """
-        log.info(f"Found patch for  module '{Path(repo_name, module)}'. Trying to apply it to new files")
+        module_fullname = str(Path(repo_name, module))
+        log.info(f"Found patch for  module '{module_fullname}'. Trying to apply it to new files")
 
         # Copy the installed files to a new temporary directory to preserve them if the patch fails
         temp_dir = Path(tempfile.mkdtemp())
@@ -486,6 +487,7 @@ class ModuleUpdate(ModuleCommand):
             raise UserWarning(
                 f"Patch file '{patch_file}' is invalid. Found files that are not relative to the module directory."
             )
+
         # Write the new diff to a temp file
         temp_patch = Path(tempfile.mktemp())
         with open(temp_patch, "w") as fh:
@@ -494,11 +496,33 @@ class ModuleUpdate(ModuleCommand):
         patches = ModulesDiffer.per_file_patch(temp_patch)
         new_files = {}
         for file, patch in patches.items():
-            patched_new_lines = ModulesDiffer.try_apply_patch(file, patch)
-            new_files[file] = "".join(patched_new_lines)
+            try:
+                patched_new_lines = ModulesDiffer.try_apply_patch(file, patch)
+                new_files[file] = "".join(patched_new_lines)
+            except LookupError as e:
+                log.warning(
+                    f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
+                )
+                return False
 
         # Write over the newly installed module files with the patched ones
+        patch_temp_dir = tempfile.mkdtemp()
         for file, new_content in new_files.items():
             fn = module_install_dir / file.relative_to(temp_module_dir)
             with open(fn, "w") as fh:
                 fh.write(new_content)
+
+        # Create the new patch file
+        ModulesDiffer.write_diff_file(
+            patch_file,
+            module,
+            repo_name,
+            module_install_dir,
+            module_dir,
+            file_action="w",
+            for_git=False,
+            dsp_from_dir=module_dir,
+            dsp_to_dir=module_dir,
+        )
+
+        return True

@@ -219,7 +219,9 @@ class ModulesDiffer:
             fh.write("*" * 60 + "\n")
 
     @staticmethod
-    def print_diff(module, repo_name, from_dir, to_dir, current_version=None, new_version=None):
+    def print_diff(
+        module, repo_name, from_dir, to_dir, current_version=None, new_version=None, dsp_from_dir=None, dsp_to_dir=None
+    ):
         """
         Prints the diffs between two module versions to the terminal
 
@@ -234,7 +236,9 @@ class ModulesDiffer:
             current_version (str): The installed version of the module
             new_version (str): The version of the module the diff is computed against
         """
-        diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir)
+        diffs = ModulesDiffer.get_module_diffs(
+            from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir
+        )
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
             log.info(
@@ -257,7 +261,7 @@ class ModulesDiffer:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")
                 # Pretty print the diff using the pygments diff lexer
-                console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
+                console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
 
     @staticmethod
     def rename_paths(diff_fn, org_dir, new_dir):
@@ -308,6 +312,16 @@ class ModulesDiffer:
 
     @staticmethod
     def per_file_patch(patch_fn):
+        """
+        Splits a patch file for several files into one patch per file.
+
+        Args:
+            patch_fn (str | Path): The path to the patch file
+
+        Returns:
+            dict[str, str]: A dictionary indexed by the filenames with the
+                            file patches as values
+        """
         with open(patch_fn, "r") as fh:
             lines = fh.readlines()
 
@@ -347,6 +361,17 @@ class ModulesDiffer:
 
     @staticmethod
     def get_new_and_old_lines(patch):
+        """
+        Parse a patch for a module, and return the contents
+        of the modified parts for both the old and new versions
+
+        Args:
+            patch (str): The patch in unified diff format
+
+        Returns:
+            ([[str]], [[str]]): Lists of old and new lines respectively
+                                for the modified parts of the file.
+        """
         old_lines = []
         new_lines = []
         old_partial = []
@@ -375,6 +400,24 @@ class ModulesDiffer:
 
     @staticmethod
     def try_apply_patch(new_fn, patch):
+        """
+        Tries to apply a patch to a modified file. Since the line numbers in
+        the patch does not agree if the file is modified, the old and new
+        lines in the patch are reconstructed and then we look for the old lines
+        in the modified file. If all parts of the patch are found in the file
+        it is updated with the new lines from the patch file.
+
+        Args:
+            new_fn (str | Path): Path to the modified file
+            patch (str | Path): (Outdated) patch for the file
+
+        Returns:
+            [str]: The patched lines of the file
+
+        Raises:
+            LookupError: If it fails to find the old lines from the patch in
+                         the file.
+        """
         print(new_fn)
         print("".join(patch))
         org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
@@ -386,7 +429,7 @@ class ModulesDiffer:
         p = len(org_lines)
         patch_indices = [None] * p
         print(patch_indices)
-        # The patches are sorted by their order of occurence in the original
+        # The patches are sorted by their order of occurrence in the original
         # file. Loop through the new file and try to find the new indices of
         # these lines. We know they are non overlapping, and thus only need to
         # look at the file once
@@ -406,7 +449,7 @@ class ModulesDiffer:
         if j != len(org_lines):
             # Not all diffs were found before
             # we ran out of file
-            raise UserWarning
+            raise LookupError("Failed to find lines where patch should be applied")
 
         print(patch_indices)
         # Apply the patch to new lines by substituting
