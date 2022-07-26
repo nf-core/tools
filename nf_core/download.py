@@ -796,7 +796,8 @@ class DownloadWorkflow(object):
         # Caclualte md5sum for output file
         self.validate_md5(self.output_filename)
 
-    def validate_md5(self, fname, expected=None):
+    @staticmethod
+    def validate_md5(fname, expected=None):
         """Calculates the md5sum for a file on the disk and validate with expected.
 
         Args:
