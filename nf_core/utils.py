@@ -16,6 +16,7 @@ import subprocess
 import sys
 import time
 from distutils.version import StrictVersion
+from pathlib import Path
 
 import git
 import prompt_toolkit
@@ -50,10 +51,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
-NFCORE_CACHE_DIR = os.path.join(
-    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
-    "nfcore",
-)
+PYTHON_VERSION = f"{sys.version_info.major}.{sys.version_info.minor}.{sys.version_info.micro}"
+
+USER_CACHE_DIR = Path(os.getenv("HOME")) / ".cache"
+NFCORE_CACHE_DIR = Path(os.environ.get("XDG_CACHE_HOME", USER_CACHE_DIR)) / "nfcore"
+
 NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
 
 
@@ -318,8 +320,8 @@ def setup_requests_cachedir():
     Uses requests_cache monkey patching.
     Also returns the config dict so that we can use the same setup with a Session.
     """
-    pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
+
+    cachedir = NFCORE_CACHE_DIR / f"cache_{PYTHON_VERSION}"
 
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
@@ -329,8 +331,7 @@ def setup_requests_cachedir():
 
     logging.getLogger("requests_cache").setLevel(logging.WARNING)
     try:
-        if not os.path.exists(cachedir):
-            os.makedirs(cachedir)
+        os.makedirs(cachedir, exist_ok=True)
         requests_cache.install_cache(**config)
     except PermissionError:
         pass

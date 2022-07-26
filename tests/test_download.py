@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -85,7 +86,7 @@ class DownloadTest(unittest.TestCase):
             "https://github.com/nf-core/methylseq/archive/b3e5e3b95aaf01d98391a62a10a3990c0a4de395.zip"
         )
         download_obj.download_wf_files()
-        assert os.path.exists(os.path.join(outdir, "workflow", "main.nf"))
+        assert (outdir / "workflow" / "main.nf").exists()
 
     #
     # Tests for 'download_configs'
@@ -95,7 +96,7 @@ class DownloadTest(unittest.TestCase):
         download_obj = DownloadWorkflow(pipeline="nf-core/methylseq", revision="1.6")
         download_obj.outdir = outdir
         download_obj.download_configs()
-        assert os.path.exists(os.path.join(outdir, "configs", "nfcore_custom.config"))
+        assert (outdir / "configs" / "nfcore_custom.config").exists()
 
     #
     # Tests for 'wf_use_local_configs'
@@ -103,21 +104,23 @@ class DownloadTest(unittest.TestCase):
     @with_temporary_folder
     def test_wf_use_local_configs(self, tmp_path):
         # Get a workflow and configs
-        test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
+        test_pipeline_dir = tmp_path / "nf-core-testpipeline"
         create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir, plain=True
         )
         create_obj.init_pipeline()
 
         with tempfile.TemporaryDirectory() as test_outdir:
+            test_outdir = Path(test_outdir)
             download_obj = DownloadWorkflow(pipeline="dummy", revision="1.2.0", outdir=test_outdir)
-            shutil.copytree(test_pipeline_dir, os.path.join(test_outdir, "workflow"))
+            test_workflow_dir = test_outdir / "workflow"
+            shutil.copytree(test_pipeline_dir, test_workflow_dir)
             download_obj.download_configs()
 
             # Test the function
             download_obj.wf_use_local_configs()
-            wf_config = nf_core.utils.fetch_wf_config(os.path.join(test_outdir, "workflow"), cache_config=False)
-            assert wf_config["params.custom_config_base"] == f"'{test_outdir}/workflow/../configs/'"
+            wf_config = nf_core.utils.fetch_wf_config(test_workflow_dir, cache_config=False)
+            assert wf_config["params.custom_config_base"] == f"'{test_workflow_dir}/../configs/'"
 
     #
     # Tests for 'find_container_images'
@@ -144,10 +147,10 @@ class DownloadTest(unittest.TestCase):
         test_hash.update(b"test")
         val_hash = test_hash.hexdigest()
 
-        with open(tmpfile.name, "w") as f:
+        with open(tmpfile, "w") as f:
             f.write("test")
 
-        download_obj.validate_md5(tmpfile.name, val_hash)
+        download_obj.validate_md5(tmpfile, val_hash)
 
     @with_temporary_file
     def test_mismatching_md5sums(self, tmpfile):
@@ -156,11 +159,11 @@ class DownloadTest(unittest.TestCase):
         test_hash.update(b"other value")
         val_hash = test_hash.hexdigest()
 
-        with open(tmpfile.name, "w") as f:
+        with open(tmpfile, "w") as f:
             f.write("test")
 
         with pytest.raises(IOError):
-            download_obj.validate_md5(tmpfile.name, val_hash)
+            download_obj.validate_md5(tmpfile, val_hash)
 
     #
     # Tests for 'singularity_pull_image'
@@ -176,7 +179,7 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_singularity_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
         with pytest.raises(FileNotFoundError):
-            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+            download_obj.singularity_pull_image("a-container", tmp_dir.name, None, mock_rich_progress)
 
     # If Singularity is not installed, it raises a FileNotFoundError because the singularity command can't be found.
     @pytest.mark.skipif(
@@ -188,7 +191,7 @@ class DownloadTest(unittest.TestCase):
     def test_singularity_pull_image_singularity_not_installed(self, tmp_dir, mock_rich_progress):
         download_obj = DownloadWorkflow(pipeline="dummy", outdir=tmp_dir)
         with pytest.raises(FileNotFoundError):
-            download_obj.singularity_pull_image("a-container", tmp_dir, None, mock_rich_progress)
+            download_obj.singularity_pull_image("a-container", tmp_dir.name, None, mock_rich_progress)
 
     #
     # Tests for the main entry method 'download_workflow'
@@ -201,7 +204,7 @@ class DownloadTest(unittest.TestCase):
 
         download_obj = DownloadWorkflow(
             pipeline="nf-core/methylseq",
-            outdir=os.path.join(tmp_dir, "new"),
+            outdir=tmp_dir / "new",
             container="singularity",
             revision="1.6",
             compress_type="none",

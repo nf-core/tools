@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -35,8 +36,8 @@ class TestUtils(unittest.TestCase):
 
         Use nf_core.create() to make a pipeline that we can use for testing
         """
-        self.tmp_dir = tempfile.mkdtemp()
-        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
+        self.tmp_dir = Path(tempfile.mkdtemp())
+        self.test_pipeline_dir = self.tmp_dir / "nf-core-testpipeline"
         self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
         )
@@ -45,7 +46,7 @@ class TestUtils(unittest.TestCase):
         self.pipeline_obj = nf_core.utils.Pipeline(self.test_pipeline_dir)
 
     def tearDown(self):
-        if os.path.exists(self.tmp_dir):
+        if self.tmp_dir.exists():
             shutil.rmtree(self.tmp_dir)
 
     def test_check_if_outdated_1(self):
@@ -105,24 +106,22 @@ class TestUtils(unittest.TestCase):
     def test_list_files_git(self):
         """Test listing pipeline files using `git ls`"""
         self.pipeline_obj._list_files()
-        assert os.path.join(self.test_pipeline_dir, "main.nf") in self.pipeline_obj.files
+        assert str((self.test_pipeline_dir / "main.nf").absolute()) in self.pipeline_obj.files
 
     @with_temporary_folder
     def test_list_files_no_git(self, tmpdir):
         """Test listing pipeline files without `git-ls`"""
         # Create a test file in a temporary directory
-        tmp_fn = os.path.join(tmpdir, "testfile")
-        open(tmp_fn, "a").close()
+        tmp_fn = tmpdir / "testfile"
+        tmp_fn.touch()
         pipeline_obj = nf_core.utils.Pipeline(tmpdir)
         pipeline_obj._list_files()
-        assert tmp_fn in pipeline_obj.files
+        assert str(tmp_fn.absolute()) in pipeline_obj.files
 
-    @mock.patch("os.path.exists")
     @mock.patch("os.makedirs")
-    def test_request_cant_create_cache(self, mock_mkd, mock_exists):
+    def test_request_cant_create_cache(self, mock_mkd):
         """Test that we don't get an error when we can't create cachedirs"""
         mock_mkd.side_effect = PermissionError()
-        mock_exists.return_value = False
         nf_core.utils.setup_requests_cachedir()
 
     def test_pip_package_pass(self):

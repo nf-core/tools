@@ -242,7 +242,7 @@ class ModulesTestYmlBuilder(object):
                 file_md5 = self._md5(file_path)
                 test_file["md5sum"] = file_md5
                 # Switch out the results directory path with the expected 'output' directory
-                test_file["path"] = file_path.replace(results_dir, "output")
+                test_file["path"] = file_path.replace(results_dir.name, "output")
                 test_files.append(test_file)
 
         test_files = sorted(test_files, key=operator.itemgetter("path"))

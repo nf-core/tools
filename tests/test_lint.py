@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 """Some tests covering the linting code.
 """
-import fnmatch
 import json
-import os
+
+# import os
 import shutil
-import subprocess
+
+# import subprocess
 import tempfile
 import unittest
-from unittest import mock
 
-import pytest
-import requests
+# from unittest import mock
+from pathlib import Path
+
+# import pytest
+# import requests
 import yaml
 
 import nf_core.create
@@ -29,8 +32,8 @@ class TestLint(unittest.TestCase):
         Use nf_core.create() to make a pipeline that we can use for testing
         """
 
-        self.tmp_dir = tempfile.mkdtemp()
-        self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
+        self.tmp_dir = Path(tempfile.mkdtemp())
+        self.test_pipeline_dir = self.tmp_dir / "nf-core-testpipeline"
         self.create_obj = nf_core.create.PipelineCreate(
             "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
         )
@@ -41,14 +44,14 @@ class TestLint(unittest.TestCase):
     def tearDown(self):
         """Clean up temporary files and folders"""
 
-        if os.path.exists(self.tmp_dir):
+        if self.tmp_dir.exists():
             shutil.rmtree(self.tmp_dir)
 
     def _make_pipeline_copy(self):
         """Make a copy of the test pipeline that can be edited
 
         Returns: Path to new temp directory with pipeline"""
-        new_pipeline = os.path.join(self.tmp_dir, "nf-core-testpipeline-copy")
+        new_pipeline = self.tmp_dir / "nf-core-testpipeline-copy"
         shutil.copytree(self.test_pipeline_dir, new_pipeline)
         return new_pipeline
 
@@ -60,7 +63,7 @@ class TestLint(unittest.TestCase):
 
         We don't really check any of this code as it's just a series of function calls
         and we're testing each of those individually. This is mostly to check for syntax errors."""
-        lint_obj = nf_core.lint.run_linting(self.test_pipeline_dir, False)
+        nf_core.lint.run_linting(self.test_pipeline_dir, False)
 
     def test_init_PipelineLint(self):
         """Simply create a PipelineLint object.
@@ -90,7 +93,7 @@ class TestLint(unittest.TestCase):
 
         # Make a config file listing all test names
         config_dict = {"lint": {test_name: False for test_name in lint_obj.lint_tests}}
-        with open(os.path.join(new_pipeline, ".nf-core.yml"), "w") as fh:
+        with open(new_pipeline / ".nf-core.yml", "w") as fh:
             yaml.dump(config_dict, fh)
 
         # Load the new lint config file and check
@@ -134,7 +137,7 @@ class TestLint(unittest.TestCase):
         self.lint_obj.warned.append(("test_three", "This test gave a warning"))
 
         # Make a temp dir for the JSON output
-        json_fn = os.path.join(tmp_dir, "lint_results.json")
+        json_fn = tmp_dir / "lint_results.json"
         self.lint_obj._save_json_results(json_fn)
 
         # Load created JSON file and check its contents
@@ -157,25 +160,25 @@ class TestLint(unittest.TestCase):
         """Check that we have .md files for all lint module code,
         and that there are no unexpected files (eg. deleted lint tests)"""
 
-        docs_basedir = os.path.join(
-            os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "docs", "api", "_src", "pipeline_lint_tests"
-        )
+        docs_basedir = Path(__file__).absolute().parent.parent / "docs" / "api" / "_src" / "pipeline_lint_tests"
 
         # Get list of existing .md files
         existing_docs = []
-        for fn in os.listdir(docs_basedir):
-            if fnmatch.fnmatch(fn, "*.md") and not fnmatch.fnmatch(fn, "index.md"):
-                existing_docs.append(os.path.join(docs_basedir, fn))
+        for fn in docs_basedir.glob("*.md"):
+            if fn.name != "index.md":
+                existing_docs.append(fn)
 
         # Check .md files against each test name
         lint_obj = nf_core.lint.PipelineLint("", True)
         for test_name in lint_obj.lint_tests:
-            fn = os.path.join(docs_basedir, f"{test_name}.md")
-            assert os.path.exists(fn), f"Could not find lint docs .md file: {fn}"
+            fn = docs_basedir / f"{test_name}.md"
+            assert fn.exists(), f"Could not find lint docs .md file: {fn}"
             existing_docs.remove(fn)
 
         # Check that we have no remaining .md files that we didn't expect
-        assert len(existing_docs) == 0, f"Unexpected lint docs .md files found: {', '.join(existing_docs)}"
+        assert (
+            len(existing_docs) == 0
+        ), f"Unexpected .md files found in docs: {', '.join([x.name for x in existing_docs])}"
 
     #######################
     # SPECIFIC LINT TESTS #

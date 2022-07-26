@@ -1,7 +1,5 @@
 #!/usr/bin/env python
 
-import os
-
 import yaml
 
 import nf_core.lint
@@ -21,10 +19,10 @@ def test_actions_awsfulltest_pass(self):
 
     # Edit .github/workflows/awsfulltest.yml to use -profile test_full
     new_pipeline = self._make_pipeline_copy()
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "r") as fh:
+    with open((new_pipeline / ".github" / "workflows" / "awsfulltest.yml"), "r") as fh:
         awsfulltest_yml = fh.read()
     awsfulltest_yml = awsfulltest_yml.replace("-profile test ", "-profile test_full ")
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "w") as fh:
+    with open((new_pipeline / ".github" / "workflows" / "awsfulltest.yml"), "w") as fh:
         fh.write(awsfulltest_yml)
 
     # Make lint object
@@ -46,10 +44,10 @@ def test_actions_awsfulltest_fail(self):
 
     # Edit .github/workflows/awsfulltest.yml to use -profile test_full
     new_pipeline = self._make_pipeline_copy()
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "r") as fh:
+    with open((new_pipeline / ".github" / "workflows" / "awsfulltest.yml"), "r") as fh:
         awsfulltest_yml = yaml.safe_load(fh)
     del awsfulltest_yml[True]["release"]
-    with open(os.path.join(new_pipeline, ".github", "workflows", "awsfulltest.yml"), "w") as fh:
+    with open((new_pipeline / ".github" / "workflows" / "awsfulltest.yml"), "w") as fh:
         yaml.dump(awsfulltest_yml, fh)
 
     # Make lint object

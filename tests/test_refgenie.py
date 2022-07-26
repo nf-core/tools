@@ -7,8 +7,7 @@ import shlex
 import subprocess
 import tempfile
 import unittest
-
-import nf_core.refgenie
+from pathlib import Path
 
 
 class TestRefgenie(unittest.TestCase):
@@ -18,27 +17,27 @@ class TestRefgenie(unittest.TestCase):
         """
         Prepare a refgenie config file
         """
-        self.tmp_dir = tempfile.mkdtemp()
-        self.NXF_HOME = os.path.join(self.tmp_dir, ".nextflow")
-        self.NXF_REFGENIE_PATH = os.path.join(self.NXF_HOME, "nf-core", "refgenie_genomes.config")
-        self.REFGENIE = os.path.join(self.tmp_dir, "genomes_config.yaml")
+        self.tmp_dir = Path(tempfile.mkdtemp())
+        self.NXF_HOME = self.tmp_dir / ".nextflow"
+        self.NXF_REFGENIE_PATH = self.NXF_HOME / "nf-core" / "refgenie_genomes.config"
+        self.REFGENIE = self.tmp_dir / "genomes_config.yaml"
         # Set NXF_HOME environment variable
         # avoids adding includeConfig statement to config file outside the current tmpdir
         try:
             self.NXF_HOME_ORIGINAL = os.environ["NXF_HOME"]
         except:
             self.NXF_HOME_ORIGINAL = None
-        os.environ["NXF_HOME"] = self.NXF_HOME
+        os.environ["NXF_HOME"] = str(self.NXF_HOME.absolute())
 
         # create NXF_HOME and nf-core directories
-        os.makedirs(os.path.join(self.NXF_HOME, "nf-core"), exist_ok=True)
+        os.makedirs((self.NXF_HOME / "nf-core"), exist_ok=True)
 
         # Initialize a refgenie config
         os.system(f"refgenie init -c {self.REFGENIE}")
 
         # Add NXF_REFGENIE_PATH to refgenie config
-        with open(self.REFGENIE, "a") as fh:
-            fh.write(f"nextflow_config: {os.path.join(self.NXF_REFGENIE_PATH)}\n")
+        with self.REFGENIE.open(mode="a") as fh:
+            fh.write(f"nextflow_config: {self.NXF_REFGENIE_PATH}\n")
 
     def tearDown(self) -> None:
         # Remove the tempdir again

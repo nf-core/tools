@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """Some tests covering the pipeline creation sub command.
 """
-import os
 import unittest
+from pathlib import Path
 
 import nf_core.create
 
@@ -36,4 +36,4 @@ class NfcoreCreateTest(unittest.TestCase):
 
     def test_pipeline_creation_initiation(self):
         self.pipeline.init_pipeline()
-        assert os.path.isdir(os.path.join(self.pipeline.outdir, ".git"))
+        assert (Path(self.pipeline.outdir) / ".git").is_dir()

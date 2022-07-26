@@ -3,6 +3,7 @@
 import logging
 import os
 import sys
+from pathlib import Path
 
 import rich.console
 import rich.logging
@@ -157,7 +158,7 @@ def list(keywords, sort, json, show_archived):
     "-o",
     "--params-out",
     type=click.Path(),
-    default=os.path.join(os.getcwd(), "nf-params.json"),
+    default=Path(os.getcwd()).absolute() / "nf-params.json",
     help="Path to save run parameters file",
 )
 @click.option(

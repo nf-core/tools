@@ -1,8 +1,4 @@
-import os
-import shutil
-import tempfile
-
-import pytest
+from pathlib import Path
 
 import nf_core.lint
 
@@ -17,14 +13,14 @@ def test_files_unchanged_pass(self):
 
 
 def test_files_unchanged_fail(self):
-    failing_file = os.path.join(".github", "CONTRIBUTING.md")
+    failing_file = Path(".github") / "CONTRIBUTING.md"
     new_pipeline = self._make_pipeline_copy()
-    with open(os.path.join(new_pipeline, failing_file), "a") as fh:
+    with open((new_pipeline / failing_file), "a") as fh:
         fh.write("THIS SHOULD NOT BE HERE")
 
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
     results = lint_obj.files_unchanged()
     assert len(results["failed"]) > 0
-    assert failing_file in results["failed"][0]
+    assert f"{failing_file}" in results["failed"][0]
     assert results["could_fix"]

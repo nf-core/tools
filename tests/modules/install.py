@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from ..utils import with_temporary_folder
@@ -28,8 +26,8 @@ def test_modules_install_nomodule(self):
 def test_modules_install_trimgalore(self):
     """Test installing a module - TrimGalore!"""
     assert self.mods_install.install("trimgalore") is not False
-    module_path = os.path.join(self.mods_install.dir, "modules", "nf-core", "modules", "trimgalore")
-    assert os.path.exists(module_path)
+    module_path = self.mods_install.dir / "modules" / "nf-core" / "modules" / "trimgalore"
+    assert module_path.exists()
 
 
 def test_modules_install_trimgalore_twice(self):

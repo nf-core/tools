@@ -111,7 +111,7 @@ class TestLint(unittest.TestCase):
     @mock.patch("nf_core.list.LocalWorkflow")
     def test_parse_local_workflow_and_succeed(self, mock_local_wf):
         test_path = tmp_nxf / "nf-core"
-        if not os.path.isdir(test_path):
+        if not test_path.is_dir():
             os.makedirs(test_path)
         assert os.environ["NXF_ASSETS"] == tmp_nxf_str
         with open(tmp_nxf / "nf-core/dummy-wf", "w") as f:
@@ -125,7 +125,7 @@ class TestLint(unittest.TestCase):
     @mock.patch("subprocess.check_output")
     def test_parse_local_workflow_home(self, mock_local_wf, mock_subprocess):
         test_path = tmp_nxf / "nf-core"
-        if not os.path.isdir(test_path):
+        if not test_path.is_dir():
             os.makedirs(test_path)
         assert os.environ["NXF_ASSETS"] == tmp_nxf_str
         with open(tmp_nxf / "nf-core/dummy-wf", "w") as f:

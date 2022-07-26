@@ -1,7 +1,7 @@
 import filecmp
-import os
 import shutil
 import tempfile
+from pathlib import Path
 
 import yaml
 
@@ -19,9 +19,9 @@ def test_install_and_update(self):
     update_obj = ModuleUpdate(self.pipeline_dir, show_diff=False)
 
     # Copy the module files and check that they are unaffected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "trimgalore")
+    tmpdir = Path(tempfile.mkdtemp())
+    trimgalore_tmpdir = tmpdir / "trimgalore"
+    trimgalore_path = self.pipeline_dir / "modules" / NF_CORE_MODULES_NAME / "trimgalore"
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
@@ -34,9 +34,9 @@ def test_install_at_hash_and_update(self):
     update_obj = ModuleUpdate(self.pipeline_dir, show_diff=False)
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "trimgalore")
+    tmpdir = Path(tempfile.mkdtemp())
+    trimgalore_tmpdir = tmpdir / "trimgalore"
+    trimgalore_path = self.pipeline_dir / "modules" / NF_CORE_MODULES_NAME / "trimgalore"
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
@@ -54,13 +54,13 @@ def test_install_at_hash_and_update(self):
 def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
     self.mods_install_old.install("trimgalore")
-    patch_path = os.path.join(self.pipeline_dir, "trimgalore.patch")
+    patch_path = self.pipeline_dir / "trimgalore.patch"
     update_obj = ModuleUpdate(self.pipeline_dir, save_diff_fn=patch_path)
 
     # Copy the module files and check that they are affected by the update
-    tmpdir = tempfile.mkdtemp()
-    trimgalore_tmpdir = os.path.join(tmpdir, "trimgalore")
-    trimgalore_path = os.path.join(self.pipeline_dir, "modules", NF_CORE_MODULES_NAME, "trimgalore")
+    tmpdir = Path(tempfile.mkdtemp())
+    trimgalore_tmpdir = tmpdir / "trimgalore"
+    trimgalore_path = self.pipeline_dir / "modules" / NF_CORE_MODULES_NAME / "trimgalore"
     shutil.copytree(trimgalore_path, trimgalore_tmpdir)
 
     assert update_obj.update("trimgalore") is True
@@ -94,7 +94,7 @@ def test_update_with_config_fixed_version(self):
     update_config = {"nf-core/modules": {"trimgalore": OLD_TRIMGALORE_SHA}}
     tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(self.pipeline_dir / ".nf-core.yml", "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -117,7 +117,7 @@ def test_update_with_config_dont_update(self):
     update_config = {"nf-core/modules": {"trimgalore": False}}
     tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(self.pipeline_dir / ".nf-core.yml", "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -139,7 +139,7 @@ def test_update_with_config_fix_all(self):
     update_config = {"nf-core/modules": OLD_TRIMGALORE_SHA}
     tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(self.pipeline_dir / ".nf-core.yml", "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -162,7 +162,7 @@ def test_update_with_config_no_updates(self):
     update_config = {"nf-core/modules": False}
     tools_config = nf_core.utils.load_tools_config(self.pipeline_dir)
     tools_config["update"] = update_config
-    with open(os.path.join(self.pipeline_dir, ".nf-core.yml"), "w") as f:
+    with open(self.pipeline_dir / ".nf-core.yml", "w") as f:
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
@@ -182,4 +182,4 @@ def test_update_with_config_no_updates(self):
 def cmp_module(dir1, dir2):
     """Compare two versions of the same module"""
     files = ["main.nf", "meta.yml"]
-    return all(filecmp.cmp(os.path.join(dir1, f), os.path.join(dir2, f), shallow=False) for f in files)
+    return all(filecmp.cmp((dir1 / f), (dir2 / f), shallow=False) for f in files)

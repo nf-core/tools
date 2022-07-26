@@ -2,10 +2,10 @@
 """ Tests covering the modules commands
 """
 
-import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 
 import nf_core.create
 import nf_core.modules
@@ -16,13 +16,17 @@ from .utils import OLD_TRIMGALORE_SHA
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
 
-    root_dir = os.path.join(tmp_dir, "modules")
-    os.makedirs(os.path.join(root_dir, "modules"))
-    os.makedirs(os.path.join(root_dir, "tests", "modules"))
-    os.makedirs(os.path.join(root_dir, "tests", "config"))
-    with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
+    tmp_dir = Path(tmp_dir)
+
+    root_dir = tmp_dir / "modules"
+    root_dir.mkdir()
+    (root_dir / "modules").mkdir()
+    (root_dir / "tests").mkdir()
+    (root_dir / "tests" / "modules").mkdir()
+    (root_dir / "tests" / "config").mkdir()
+    with (root_dir / "tests" / "config" / "pytest_modules.yml").open(mode="w") as fh:
         fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
-    with open(os.path.join(root_dir, ".nf-core.yml"), "w") as fh:
+    with (root_dir / ".nf-core.yml").open(mode="w") as fh:
         fh.writelines(["repository_type: modules", "\n"])
 
     # bpipe is a valid package on bioconda that is very unlikely to ever be added to nf-core/modules
@@ -37,12 +41,12 @@ class TestModules(unittest.TestCase):
 
     def setUp(self):
         """Create a new PipelineSchema and Launch objects"""
-        self.tmp_dir = tempfile.mkdtemp()
+        self.tmp_dir = Path(tempfile.mkdtemp())
 
         # Set up the schema
-        root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
-        self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
+        root_repo_dir = Path(__file__).absolute().parent.parent
+        self.template_dir = root_repo_dir / "nf_core" / "pipeline-template"
+        self.pipeline_dir = self.tmp_dir / "mypipeline"
         nf_core.create.PipelineCreate(
             "mypipeline", "it is mine", "me", outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
@@ -71,7 +75,7 @@ class TestModules(unittest.TestCase):
     def tearDown(self):
         """Clean up temporary files and folders"""
 
-        if os.path.exists(self.tmp_dir):
+        if self.tmp_dir.exists():
             shutil.rmtree(self.tmp_dir)
 
     def test_modulesrepo_class(self):

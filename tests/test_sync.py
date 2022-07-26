@@ -7,6 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import git
@@ -22,15 +23,15 @@ class TestModules(unittest.TestCase):
 
     def setUp(self):
         """Create a new pipeline to test"""
-        self.tmp_dir = tempfile.mkdtemp()
-        self.pipeline_dir = os.path.join(self.tmp_dir, "test_pipeline")
+        self.tmp_dir = Path(tempfile.mkdtemp())
+        self.pipeline_dir = self.tmp_dir / "test_pipeline"
         self.create_obj = nf_core.create.PipelineCreate(
             "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True
         )
         self.create_obj.init_pipeline()
 
     def tearDown(self):
-        if os.path.exists(self.tmp_dir):
+        if self.tmp_dir.exists():
             shutil.rmtree(self.tmp_dir)
 
     @with_temporary_folder
@@ -46,18 +47,18 @@ class TestModules(unittest.TestCase):
     def test_inspect_sync_dir_dirty(self):
         """Try syncing a pipeline with uncommitted changes"""
         # Add an empty file, uncommitted
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = self.pipeline_dir / "uncommitted"
+        test_fn.touch()
         # Try to sync, check we halt with the right error
         psync = nf_core.sync.PipelineSync(self.pipeline_dir)
         try:
             psync.inspect_sync_dir()
             raise UserWarning("Should have hit an exception")
         except nf_core.sync.SyncException as e:
-            os.remove(test_fn)
+            test_fn.unlink()
             assert e.args[0].startswith("Uncommitted changes found in pipeline directory!")
         except Exception as e:
-            os.remove(test_fn)
+            test_fn.unlink()
             raise e
 
     def test_get_wf_config_no_branch(self):
@@ -100,7 +101,8 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         psync.delete_template_branch_files()
-        assert os.listdir(self.pipeline_dir) == [".git"]
+        pipeline_dir_content = {i.name for i in self.pipeline_dir.iterdir()}
+        assert pipeline_dir_content == {".git"}
 
     def test_create_template_pipeline(self):
         """Confirm that we can delete all files in the TEMPLATE branch"""
@@ -110,11 +112,10 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         psync.delete_template_branch_files()
-        assert os.listdir(self.pipeline_dir) == [".git"]
         # Now create the new template
         psync.make_template_pipeline()
-        assert "main.nf" in os.listdir(self.pipeline_dir)
-        assert "nextflow.config" in os.listdir(self.pipeline_dir)
+        pipeline_dir_content = {i.name for i in self.pipeline_dir.iterdir()}
+        assert {"main.nf", "nextflow.config"}.issubset(pipeline_dir_content)
 
     def test_commit_template_changes_nochanges(self):
         """Try to commit the TEMPLATE branch, but no changes were made"""
@@ -134,8 +135,8 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         # Add an empty file, uncommitted
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = self.pipeline_dir / "uncommitted"
+        test_fn.touch()
         # Check that we have uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is True
         # Function returns True if no changes were made
@@ -155,8 +156,8 @@ class TestModules(unittest.TestCase):
         psync.get_wf_config()
         psync.checkout_template_branch()
         # Add an empty file and commit it
-        test_fn = os.path.join(self.pipeline_dir, "uncommitted")
-        open(test_fn, "a").close()
+        test_fn = self.pipeline_dir / "uncommitted"
+        test_fn.touch()
         psync.commit_template_changes()
         # Try to push changes
         try:

@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 """Some tests covering the bump_version code.
 """
-import os
-
 import yaml
 
 import nf_core.bump_version
@@ -16,7 +14,7 @@ def test_bump_pipeline_version(datafiles, tmp_path):
     """Test that making a release with the working example files works"""
 
     # Get a workflow and configs
-    test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
+    test_pipeline_dir = tmp_path / "nf-core-testpipeline"
     create_obj = nf_core.create.PipelineCreate(
         "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir, plain=True
     )
@@ -36,7 +34,7 @@ def test_bump_pipeline_version(datafiles, tmp_path):
 def test_dev_bump_pipeline_version(datafiles, tmp_path):
     """Test that making a release works with a dev name and a leading v"""
     # Get a workflow and configs
-    test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
+    test_pipeline_dir = tmp_path / "nf-core-testpipeline"
     create_obj = nf_core.create.PipelineCreate(
         "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir, plain=True
     )
@@ -55,7 +53,7 @@ def test_dev_bump_pipeline_version(datafiles, tmp_path):
 
 def test_bump_nextflow_version(datafiles, tmp_path):
     # Get a workflow and configs
-    test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
+    test_pipeline_dir = tmp_path / "nf-core-testpipeline"
     create_obj = nf_core.create.PipelineCreate(
         "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir, plain=True
     )

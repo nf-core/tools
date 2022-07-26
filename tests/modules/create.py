@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 import nf_core.modules
@@ -11,7 +9,7 @@ def test_modules_create_succeed(self):
         self.pipeline_dir, "trimgalore", "@author", "process_low", True, True, conda_name="trim-galore"
     )
     module_create.create()
-    assert os.path.exists(os.path.join(self.pipeline_dir, "modules", "local", "trimgalore.nf"))
+    assert (self.pipeline_dir / "modules" / "local" / "trimgalore.nf").exists()
 
 
 def test_modules_create_fail_exists(self):
@@ -29,8 +27,8 @@ def test_modules_create_nfcore_modules(self):
     """Create a module in nf-core/modules clone"""
     module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "fastqc", "@author", "process_low", False, False)
     module_create.create()
-    assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "fastqc", "main.nf"))
-    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "fastqc", "main.nf"))
+    assert (self.nfcore_modules / "modules" / "fastqc" / "main.nf").exists()
+    assert (self.nfcore_modules / "tests" / "modules" / "fastqc" / "main.nf").exists()
 
 
 def test_modules_create_nfcore_modules_subtool(self):
@@ -39,5 +37,5 @@ def test_modules_create_nfcore_modules_subtool(self):
         self.nfcore_modules, "star/index", "@author", "process_medium", False, False
     )
     module_create.create()
-    assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "star", "index", "main.nf"))
-    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "star", "index", "main.nf"))
+    assert (self.nfcore_modules / "modules" / "star" / "index" / "main.nf").exists()
+    assert (self.nfcore_modules / "tests" / "modules" / "star" / "index" / "main.nf").exists()

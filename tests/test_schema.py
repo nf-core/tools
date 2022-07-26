@@ -3,13 +3,12 @@
 """
 
 import json
-import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
-import click
 import pytest
 import requests
 import yaml
@@ -26,20 +25,19 @@ class TestSchema(unittest.TestCase):
     def setUp(self):
         """Create a new PipelineSchema object"""
         self.schema_obj = nf_core.schema.PipelineSchema()
-        self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
         # Create a test pipeline in temp directory
-        self.tmp_dir = tempfile.mkdtemp()
-        self.template_dir = os.path.join(self.tmp_dir, "wf")
+        self.tmp_dir = Path(tempfile.mkdtemp())
+        self.template_dir = self.tmp_dir / "wf"
         create_obj = nf_core.create.PipelineCreate(
             "test_pipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()
 
-        self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
+        self.template_schema = self.template_dir / "nextflow_schema.json"
 
     def tearDown(self):
-        if os.path.exists(self.tmp_dir):
+        if self.tmp_dir.exists():
             shutil.rmtree(self.tmp_dir)
 
     def test_load_lint_schema(self):
@@ -54,7 +52,7 @@ class TestSchema(unittest.TestCase):
 
     def test_load_lint_schema_notjson(self):
         """Check that linting raises properly if a non-JSON file is given"""
-        self.schema_obj.get_schema_path(os.path.join(self.template_dir, "nextflow.config"))
+        self.schema_obj.get_schema_path(self.template_dir / "nextflow.config")
         with pytest.raises(AssertionError):
             self.schema_obj.load_lint_schema()
 
@@ -64,9 +62,9 @@ class TestSchema(unittest.TestCase):
         Check that linting raises properly if a JSON file is given without any params
         """
         # write schema to a temporary file
-        with open(tmp_file.name, "w") as fh:
+        with open(tmp_file, "w") as fh:
             json.dump({"type": "fubar"}, fh)
-        self.schema_obj.get_schema_path(tmp_file.name)
+        self.schema_obj.get_schema_path(tmp_file)
         with pytest.raises(AssertionError):
             self.schema_obj.load_lint_schema()
 
@@ -120,24 +118,24 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.load_schema()
 
         # Make a temporary file to write schema to
-        self.schema_obj.schema_filename = tmp_file.name
+        self.schema_obj.schema_filename = tmp_file
         self.schema_obj.save_schema()
 
     @with_temporary_file
     def test_load_input_params_json(self, tmp_file):
         """Try to load a JSON file with params for a pipeline run"""
         # write schema to a temporary file
-        with open(tmp_file.name, "w") as fh:
+        with open(tmp_file, "w") as fh:
             json.dump({"input": "fubar"}, fh)
-        self.schema_obj.load_input_params(tmp_file.name)
+        self.schema_obj.load_input_params(tmp_file)
 
     @with_temporary_file
     def test_load_input_params_yaml(self, tmp_file):
         """Try to load a YAML file with params for a pipeline run"""
         # write schema to a temporary file
-        with open(tmp_file.name, "w") as fh:
+        with open(tmp_file, "w") as fh:
             yaml.dump({"input": "fubar"}, fh)
-        self.schema_obj.load_input_params(tmp_file.name)
+        self.schema_obj.load_input_params(tmp_file)
 
     def test_load_input_params_invalid(self):
         """Check failure when a non-existent file params file is loaded"""
@@ -325,9 +323,9 @@ class TestSchema(unittest.TestCase):
 
         Pretty much a copy of test_launch.py test_make_pipeline_schema
         """
-        test_pipeline_dir = os.path.join(tmp_dir, "wf")
+        test_pipeline_dir = Path(tmp_dir) / "wf"
         shutil.copytree(self.template_dir, test_pipeline_dir)
-        os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
+        (test_pipeline_dir / "nextflow_schema.json").unlink()
 
         param = self.schema_obj.build_schema(test_pipeline_dir, True, False, None)
 
