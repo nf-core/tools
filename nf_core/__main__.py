@@ -3,7 +3,6 @@
 import logging
 import os
 import sys
-from email.policy import default
 
 import rich.console
 import rich.logging
