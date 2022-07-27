@@ -161,7 +161,7 @@ class ModulesDiffer:
         """
 
         diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
-        log.info(f"Writing diff of '{module}' to '{diff_path}'")
+        log.debug(f"Writing diff of '{module}' to '{diff_path}'")
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
                 fh.write(
@@ -172,7 +172,7 @@ class ModulesDiffer:
             else:
                 fh.write(f"Changes in module '{Path(repo_name, module)}'\n")
 
-            for file, (diff_status, diff) in diffs.items():
+            for _, (diff_status, diff) in diffs.items():
                 if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
                     # The file has changed
                     # fh.write(f"Changes in '{Path(from_dir, file)}':\n")
