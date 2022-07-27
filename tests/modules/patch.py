@@ -2,12 +2,17 @@ import os
 import tempfile
 from pathlib import Path
 
-import pytest
-
 import nf_core.modules
 import nf_core.modules.modules_command
 
 from ..utils import GITLAB_URL
+
+"""
+Test the 'nf-core modules patch' command
+
+Uses a branch (patch-tester) in the GitLab nf-core/modules-test repo when
+testing if the update commands works correctly with patch files
+"""
 
 ORG_SHA = "22c7c12dc21e2f633c00862c1291ceda0a3b7066"
 SUCCEED_SHA = "f7d3a3894f67db2e2f3f8c9ba76f8e33356be8e0"
