@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import git
 import questionary
@@ -557,7 +558,8 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        return self.modules_json["repos"].get(repo_name, {}).get("modules").get(module_name, {}).get("patch")
+        path = self.modules_json["repos"].get(repo_name, {}).get("modules").get(module_name, {}).get("patch")
+        return Path(path) if path is not None else None
 
     def repo_present(self, repo_name):
         """

@@ -122,7 +122,6 @@ class ModulesDiffer:
                     tofile=str(Path("/dev", "null")),
                 )
                 diffs[file] = (ModulesDiffer.DiffEnum.REMOVED, diff)
-
         return diffs
 
     @staticmethod
@@ -348,7 +347,6 @@ class ModulesDiffer:
                     key = topath
                 else:
                     key = frompath
-                print(frompath, topath)
             else:
                 patch_lines.append(line)
             i += 1
@@ -381,6 +379,8 @@ class ModulesDiffer:
             if line.startswith("@"):
                 old_lines.append(old_partial)
                 new_lines.append(new_partial)
+                old_partial = []
+                new_partial = []
             elif line.startswith(" "):
                 # Line belongs to both files
                 line = line[1:]
@@ -418,21 +418,17 @@ class ModulesDiffer:
             LookupError: If it fails to find the old lines from the patch in
                          the file.
         """
-        print(new_fn)
-        print("".join(patch))
         org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
-        print(len(org_lines), len(patch_lines))
 
         with open(new_fn, "r") as fh:
             new_lines = fh.readlines()
 
-        p = len(org_lines)
-        patch_indices = [None] * p
-        print(patch_indices)
         # The patches are sorted by their order of occurrence in the original
         # file. Loop through the new file and try to find the new indices of
         # these lines. We know they are non overlapping, and thus only need to
         # look at the file once
+        p = len(org_lines)
+        patch_indices = [None] * p
         i = 0
         j = 0
         n = len(new_lines)
@@ -449,9 +445,9 @@ class ModulesDiffer:
         if j != len(org_lines):
             # Not all diffs were found before
             # we ran out of file
+            # Save the old patch file by moving it to the install dir
             raise LookupError("Failed to find lines where patch should be applied")
 
-        print(patch_indices)
         # Apply the patch to new lines by substituting
         # the org_lines with the patch lines
         patched_new_lines = new_lines[: patch_indices[0][0]]
@@ -462,6 +458,7 @@ class ModulesDiffer:
             patched_new_lines.extend(new_lines[patch_indices[i][1] : patch_indices[i + 1][0]])
 
         # Add the remaining part of the new file
+        patched_new_lines.extend(patch_lines[-1])
         patched_new_lines.extend(new_lines[patch_indices[-1][1] :])
 
         return patched_new_lines

@@ -500,29 +500,34 @@ class ModuleUpdate(ModuleCommand):
                 patched_new_lines = ModulesDiffer.try_apply_patch(file, patch)
                 new_files[file] = "".join(patched_new_lines)
             except LookupError as e:
+                # Save the patch file by moving to the install dir
+                shutil.move(patch_file, Path(module_install_dir, patch_file.relative_to(module_dir)))
                 log.warning(
                     f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
                 )
                 return False
 
-        # Write over the newly installed module files with the patched ones
-        patch_temp_dir = tempfile.mkdtemp()
+        # Write the patched files to a temporary directory
         for file, new_content in new_files.items():
-            fn = module_install_dir / file.relative_to(temp_module_dir)
+            fn = temp_module_dir / Path(file).relative_to(temp_module_dir)
             with open(fn, "w") as fh:
                 fh.write(new_content)
 
         # Create the new patch file
         ModulesDiffer.write_diff_file(
-            patch_file,
+            Path(temp_module_dir, patch_file.relative_to(module_dir)),
             module,
             repo_name,
+            temp_module_dir,
             module_install_dir,
-            module_dir,
             file_action="w",
             for_git=False,
             dsp_from_dir=module_dir,
             dsp_to_dir=module_dir,
         )
+
+        # Move the patched files to the install dir
+        shutil.rmtree(module_install_dir)
+        shutil.copytree(temp_module_dir, module_install_dir)
 
         return True
