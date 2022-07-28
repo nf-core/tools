@@ -2,6 +2,7 @@
 """Creates a nf-core pipeline matching the current
 organization's specification based on a template.
 """
+import configparser
 import imghdr
 import logging
 import os
@@ -491,14 +492,17 @@ class PipelineCreate(object):
 
     def git_init_pipeline(self):
         """Initialises the new pipeline as a Git repository and submits first commit.
-        
+
         Raises:
             UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
         """
         # Check that the default branch is not dev
-        default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
+        try:
+            default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
+        except configparser.Error:
+            default_branch = None
         log.info(default_branch)
-        if default_branch == 'dev' or default_branch == 'TEMPLATE':
+        if default_branch == "dev" or default_branch == "TEMPLATE":
             raise UserWarning(
                 f"Your Git defaultBranch is set to '{default_branch}', which is incompatible with nf-core.\n"
                 "This can be modified with the command [white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
