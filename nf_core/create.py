@@ -501,7 +501,7 @@ class PipelineCreate(object):
             default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
         except configparser.Error:
             default_branch = None
-        log.info(default_branch)
+            log.debug("Could not read init.defaultBranch")
         if default_branch == "dev" or default_branch == "TEMPLATE":
             raise UserWarning(
                 f"Your Git defaultBranch is set to '{default_branch}', which is incompatible with nf-core.\n"
