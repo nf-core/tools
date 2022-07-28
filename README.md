@@ -1215,6 +1215,10 @@ INFO     'modules/nf-core/modules/bismark/align/meta.yml' is unchanged
 INFO     Patch file of 'nf-core/modules/bismark/align' written to 'modules/nf-core/modules/bismark/align/bismark-align.diff'
 ```
 
+The generated patches work with `nf-core modules update`: when you install a new version of the module, the command tries to apply
+the patch automatically. The patch application fails if the new version of the module modifies the same lines as the patch. In this case,
+the patch new version is installed but the old patch file is preversed.
+
 ### Create a new module
 
 This command creates a new nf-core module from the nf-core module template.
