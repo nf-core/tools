@@ -10,6 +10,7 @@
 - Add `CITATION.cff` [#361](https://github.com/nf-core/tools/issues/361)
 - Add Gitpod and Mamba profiles to the pipeline template ([#1673](https://github.com/nf-core/tools/pull/1673))
 - Remove call to `getGenomeAttribute` in `main.nf` when running `nf-core create` without iGenomes ([#1670](https://github.com/nf-core/tools/issues/1670))
+- Make `nf-core create` and `nf-core lint` fail if Git default branch name is dev or TEMPLATE [#1705](https://github.com/nf-core/tools/pull/1705)
 
 ### Linting
 
