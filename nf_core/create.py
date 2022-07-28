@@ -501,7 +501,8 @@ class PipelineCreate(object):
         if default_branch == 'dev' or default_branch == 'TEMPLATE':
             raise UserWarning(
                 f"Your Git defaultBranch is set to '{default_branch}', which is incompatible with nf-core.\n"
-                "This can be modified with the command [bold magenta italic] git config --global init.defaultBranch <NAME> [/]"
+                "This can be modified with the command [white on grey23] git config --global init.defaultBranch <NAME> [/]\n"
+                "Pipeline git repository is not initialised."
             )
         # Initialise pipeline
         log.info("Initialising pipeline git repository")
