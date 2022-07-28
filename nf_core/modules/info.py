@@ -46,9 +46,7 @@ class ModuleInfo(ModuleCommand):
         Args:
             module: str: Module name to check
         """
-        if module is not None:
-            return module
-        else:
+        if module is None:
             local = questionary.confirm(
                 "Is the module locally installed?", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
@@ -69,7 +67,8 @@ class ModuleInfo(ModuleCommand):
                 module = questionary.autocomplete(
                     "Please select a new module", choices=modules, style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
-            return module
+
+        return module
 
     def get_module_info(self):
         """Given the name of a module, parse meta.yml and print usage help."""
@@ -114,7 +113,6 @@ class ModuleInfo(ModuleCommand):
                         return yaml.safe_load(fh)
 
             log.debug(f"Module '{self.module}' meta.yml not found locally")
-            return None
         else:
             module_base_path = os.path.join(self.dir, "modules")
             if self.module in os.listdir(module_base_path):
@@ -126,7 +124,8 @@ class ModuleInfo(ModuleCommand):
                         self.local_path = mod_dir
                         return yaml.safe_load(fh)
             log.debug(f"Module '{self.module}' meta.yml not found locally")
-            return None
+
+        return None
 
     def get_remote_yaml(self):
         """Attempt to get the meta.yml file from a remote repo.
