@@ -133,7 +133,7 @@ def files_unchanged(self):
 
     test_pipeline_dir = os.path.join(tmp_dir, f"{prefix}-{short_name}")
     create_obj = nf_core.create.PipelineCreate(
-        None, None, None, outdir=test_pipeline_dir, template_yaml_path=template_yaml_path
+        None, None, None, no_git=True, outdir=test_pipeline_dir, template_yaml_path=template_yaml_path
     )
     create_obj.init_pipeline()
 
