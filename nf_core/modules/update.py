@@ -44,7 +44,7 @@ class ModuleUpdate(ModuleCommand):
         self.save_diff_fn = save_diff_fn
         self.module = None
         self.update_config = None
-        self.modules_json = None
+        self.modules_json = ModulesJson(self.dir)
 
         # Fetch the list of pipeline modules
         self.get_pipeline_modules()
@@ -99,7 +99,6 @@ class ModuleUpdate(ModuleCommand):
         self._parameter_checks()
 
         # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json = ModulesJson(self.dir)
         self.modules_json.check_up_to_date()
 
         if not self.update_all and module is None:
@@ -247,7 +246,7 @@ class ModuleUpdate(ModuleCommand):
                     "can apply them by running the command :point_right:"
                     f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
                 )
-        elif patch_relpath is not None and not all_patches_successful:
+        elif not all_patches_successful:
             log.info(f"Updates complete. Please apply failed patch{plural_es(modules_info)} manually")
         else:
             log.info("Updates complete :sparkles:")
@@ -544,9 +543,7 @@ class ModuleUpdate(ModuleCommand):
         shutil.rmtree(module_install_dir)
         shutil.copytree(temp_module_dir, module_install_dir)
 
+        # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(module, repo_name, patch_relpath, write_file=True)
-        with open(Path(self.dir, "modules.json")) as fh:
-            print("Real again", self.dir)
-            print(fh.read())
 
         return True

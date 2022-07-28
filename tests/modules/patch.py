@@ -218,9 +218,6 @@ def test_create_patch_update_success(self):
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
-    with open(Path(self.pipeline_dir, "modules.json"), "r") as fh:
-        print("Real file", self.pipeline_dir)
-        print(fh.read())
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
     assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path(
@@ -277,7 +274,7 @@ def test_create_patch_update_fail(self):
         assert file in os.listdir(module_path)
         with open(module_path / file, "r") as fh:
             installed = fh.read()
-        with open(temp_dir / file, "r") as fh:
+        with open(temp_module_dir / file, "r") as fh:
             shouldbe = fh.read()
         assert installed == shouldbe
 
