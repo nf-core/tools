@@ -717,12 +717,14 @@ def get_biocontainer_tag(package, version):
                             all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
                 # Obtain common builds from Docker and Singularity images
                 common_keys = list(all_docker.keys() & all_singularity.keys())
+                current_date = None
                 for k in common_keys:
                     # Get the most recent common image
-                    if not docker_image or all_docker[k]["date"] > get_tag_date(docker_image["updated"]):
+                    date = max(get_tag_date(all_docker[k]["date"]]), get_tag_date(all_docker[k]["date"]))
+                    if docker_image is None or current_date < date:
                         docker_image = all_docker[k]["image"]
-                    if not singularity_image or all_singularity[k]["date"] > get_tag_date(singularity_image["updated"]):
                         singularity_image = all_singularity[k]["image"]
+                        current_date = date
                 return docker_image["image_name"], singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
