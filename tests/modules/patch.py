@@ -153,6 +153,15 @@ def test_create_patch_try_apply_successful(self):
     assert "-    path index\n" in patch_lines
     assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
+    # Check that 'main.nf' is updated correctly
+    with open(module_path / "main.nf", "r") as fh:
+        main_nf_lines = fh.readlines()
+    # These lines should have been removed by the patch
+    assert "    tuple val(meta), path(reads)\n" not in main_nf_lines
+    assert "    path index\n" not in main_nf_lines
+    # This line should have been added
+    assert "    tuple val(meta), path(reads), path(index)\n" in main_nf_lines
+
 
 def test_create_patch_try_apply_failed(self):
     """
@@ -233,6 +242,15 @@ def test_create_patch_update_success(self):
     assert "-    tuple val(meta), path(reads)\n" in patch_lines
     assert "-    path index\n" in patch_lines
     assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
+
+    # Check that 'main.nf' is updated correctly
+    with open(module_path / "main.nf", "r") as fh:
+        main_nf_lines = fh.readlines()
+    # These lines should have been removed by the patch
+    assert "    tuple val(meta), path(reads)\n" not in main_nf_lines
+    assert "    path index\n" not in main_nf_lines
+    # This line should have been added
+    assert "    tuple val(meta), path(reads), path(index)\n" in main_nf_lines
 
 
 def test_create_patch_update_fail(self):
