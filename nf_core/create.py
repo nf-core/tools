@@ -490,7 +490,20 @@ class PipelineCreate(object):
             break
 
     def git_init_pipeline(self):
-        """Initialises the new pipeline as a Git repository and submits first commit."""
+        """Initialises the new pipeline as a Git repository and submits first commit.
+        
+        Raises:
+            UserWarning: if Git default branch is set to 'dev' or 'TEMPLATE'.
+        """
+        # Check that the default branch is not dev
+        default_branch = git.config.GitConfigParser().get_value("init", "defaultBranch")
+        log.info(default_branch)
+        if default_branch == 'dev' or default_branch == 'TEMPLATE':
+            raise UserWarning(
+                f"Your Git defaultBranch is set to '{default_branch}', which is incompatible with nf-core.\n"
+                "This can be modified with the command [bold magenta italic] git config --global init.defaultBranch <NAME> [/]"
+            )
+        # Initialise pipeline
         log.info("Initialising pipeline git repository")
         repo = git.Repo.init(self.outdir)
         repo.git.add(A=True)
