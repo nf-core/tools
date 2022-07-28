@@ -10,7 +10,7 @@ import unittest
 import nf_core.create
 import nf_core.modules
 
-from .utils import OLD_TRIMGALORE_SHA
+from .utils import GITLAB_URL, OLD_TRIMGALORE_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -48,23 +48,19 @@ class TestModules(unittest.TestCase):
         ).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True, no_pull=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True, no_pull=True)
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
+        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA, no_pull=True
+            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
-            self.pipeline_dir,
-            prompt=False,
-            force=True,
-            remote_url="https://gitlab.com/nf-core/modules-test.git",
-            no_pull=True,
+            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL
         )
 
         # Set up remove objects
         print("Setting up remove objects")
-        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir, no_pull=True)
-        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir, no_pull=True)
+        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
+        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)

@@ -177,9 +177,7 @@ class ModulesDiffer:
 
             for _, (diff_status, diff) in diffs.items():
                 if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
-                    # The file has changed
-                    # fh.write(f"Changes in '{Path(from_dir, file)}':\n")
-                    # Write the diff lines to the file
+                    # The file has changed write the diff lines to the file
                     for line in diff:
                         fh.write(line)
                     fh.write("\n")
@@ -252,13 +250,13 @@ class ModulesDiffer:
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
                 # The files are identical
-                log.info(f"'{Path(from_dir, file)}' is unchanged")
+                log.info(f"'{Path(dsp_from_dir, file)}' is unchanged")
             elif diff_status == ModulesDiffer.DiffEnum.CREATED:
                 # The file was created between the commits
-                log.info(f"'{Path(from_dir, file)}' was created")
+                log.info(f"'{Path(dsp_from_dir, file)}' was created")
             elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
-                log.info(f"'{Path(from_dir, file)}' was removed")
+                log.info(f"'{Path(dsp_from_dir, file)}' was removed")
             else:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")

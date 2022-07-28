@@ -27,7 +27,7 @@ PATCH_BRANCH = "patch-tester"
 
 def setup_patch(pipeline_dir, modify_module):
     install_obj = nf_core.modules.ModuleInstall(
-        pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA, no_pull=True
+        pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA
     )
 
     # Install the module
@@ -58,7 +58,7 @@ def test_create_patch_no_change(self):
     setup_patch(self.pipeline_dir, False)
 
     # Try creating a patch file
-    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
     with pytest.raises(UserWarning):
         patch_obj.patch(MODULE)
 
@@ -77,7 +77,7 @@ def test_create_patch_change(self):
     setup_patch(self.pipeline_dir, True)
 
     # Try creating a patch file
-    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
     patch_obj.patch(MODULE)
 
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
@@ -110,7 +110,7 @@ def test_create_patch_try_apply_successful(self):
     module_path = Path(self.pipeline_dir, module_relpath)
 
     # Try creating a patch file
-    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
     patch_obj.patch(MODULE)
 
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
@@ -172,7 +172,7 @@ def test_create_patch_try_apply_failed(self):
     module_path = Path(self.pipeline_dir, module_relpath)
 
     # Try creating a patch file
-    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
     patch_obj.patch(MODULE)
 
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
@@ -207,7 +207,7 @@ def test_create_patch_update_success(self):
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
 
     # Try creating a patch file
-    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
     patch_obj.patch(MODULE)
 
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
@@ -261,7 +261,7 @@ def test_create_patch_update_fail(self):
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
 
     # Try creating a patch file
-    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
     patch_obj.patch(MODULE)
 
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
@@ -283,9 +283,9 @@ def test_create_patch_update_fail(self):
 
     # Check that the installed files have not been affected by the attempted patch
     temp_dir = Path(tempfile.mkdtemp())
-    nf_core.modules.modules_command.ModuleCommand(
-        self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True
-    ).install_module_files(MODULE, FAIL_SHA, update_obj.modules_repo, temp_dir)
+    nf_core.modules.modules_command.ModuleCommand(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH).install_module_files(
+        MODULE, FAIL_SHA, update_obj.modules_repo, temp_dir
+    )
 
     temp_module_dir = temp_dir / MODULE
     for file in os.listdir(temp_module_dir):
