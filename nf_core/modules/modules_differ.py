@@ -266,53 +266,6 @@ class ModulesDiffer:
                 console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
 
     @staticmethod
-    def rename_paths(diff_fn, org_dir, new_dir):
-        """
-        Renames all references to 'org_dir' to 'new_dir', i.e.
-
-        --- modules/nf-core/modules/fastqc/main.nf
-        +++ modules/nf-core/modules/fastqc/main.nf
-
-        will be renamed to
-
-        --- tmp/fastqc/main.nf
-        +++ tmp/fastqc/main.nf
-
-        if org_dir="modules/nf-core/modules/fastqc" and new_dir="tmp/fastqc"
-
-        Fails if paths that are not prefixed by org_dir are found
-
-        Args:
-            diff_fn (Path): The path to diff file
-            org_dir (Path): The path to be substituted
-            new_dir (Path): The substitution path
-
-        Raises
-            LookupError: If a path the is not prefixed by org_dir is found
-
-        Returns:
-            str: The file with renamed paths
-        """
-        with open(diff_fn, "r") as fh:
-            old_lines = fh.readlines()
-
-        new_lines = []
-        for ln, line in enumerate(old_lines):
-            if line.startswith("+++") or line.startswith("---"):
-                prefix, path = line.split(" ")
-                path = Path(path.strip())
-                if path.is_relative_to(org_dir):
-                    new_path = new_dir / path.relative_to(org_dir)
-                else:
-                    raise LookupError(
-                        f"Found path '{path}' on line {ln} in {diff_fn} that is not a subpath of '{org_dir}'"
-                    )
-                new_lines.append(f"{prefix} {new_path}\n")
-            else:
-                new_lines.append(line)
-        return "".join(new_lines)
-
-    @staticmethod
     def per_file_patch(patch_fn):
         """
         Splits a patch file for several files into one patch per file.
@@ -334,6 +287,8 @@ class ModulesDiffer:
         while i < len(lines):
             line = lines[i]
             if line.startswith("---"):
+                # New file found: add the old lines to the dictionary
+                # and determine the new filename
                 patches[key] = patch_lines
                 _, frompath = line.split(" ")
                 frompath = frompath.strip()
@@ -355,23 +310,22 @@ class ModulesDiffer:
             i += 1
         patches[key] = patch_lines
 
-        # Remove the 'preamble' key
+        # Remove the 'preamble' key (entry contains no useful information)
         patches.pop("preamble")
-
         return patches
 
     @staticmethod
     def get_new_and_old_lines(patch):
         """
-        Parse a patch for a module, and return the contents
+        Parse a patch for a file, and return the contents
         of the modified parts for both the old and new versions
 
         Args:
             patch (str): The patch in unified diff format
 
         Returns:
-            ([[str]], [[str]]): Lists of old and new lines respectively
-                                for the modified parts of the file.
+            ([[str]], [[str]]): Lists of old and new lines for each hunk
+                                (modified part the file)
         """
         old_lines = []
         new_lines = []
@@ -407,7 +361,7 @@ class ModulesDiffer:
         Tries to apply a patch to a modified file. Since the line numbers in
         the patch does not agree if the file is modified, the old and new
         lines in the patch are reconstructed and then we look for the old lines
-        in the modified file. If all parts of the patch are found in the file
+        in the modified file. If all hunk in the patch are found in the new file
         it is updated with the new lines from the patch file.
 
         Args:
@@ -446,13 +400,11 @@ class ModulesDiffer:
                     i += 1
 
         if j != len(org_lines):
-            # Not all diffs were found before
-            # we ran out of file
-            # Save the old patch file by moving it to the install dir
+            # We did not find all diffs before we ran out of file.
             raise LookupError("Failed to find lines where patch should be applied")
 
         # Apply the patch to new lines by substituting
-        # the org_lines with the patch lines
+        # the original lines with the patch lines
         patched_new_lines = new_lines[: patch_indices[0][0]]
         for i in range(len(patch_indices) - 1):
             # Add the patch lines
