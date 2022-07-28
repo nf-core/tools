@@ -9,13 +9,13 @@ import re
 from pathlib import Path
 from textwrap import dedent
 
-# import refgenconf
-from warnings import warn
-
 import rich
-from rich.logging import RichHandler
+import rich.traceback
 
 import nf_core.utils
+
+# import refgenconf
+
 
 # Set up logging
 log = logging.getLogger(__name__)
