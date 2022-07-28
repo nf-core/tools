@@ -720,7 +720,7 @@ def get_biocontainer_tag(package, version):
                 current_date = None
                 for k in common_keys:
                     # Get the most recent common image
-                    date = max(get_tag_date(all_docker[k]["date"]]), get_tag_date(all_docker[k]["date"]))
+                    date = max(get_tag_date(all_docker[k]["date"]), get_tag_date(all_docker[k]["date"]))
                     if docker_image is None or current_date < date:
                         docker_image = all_docker[k]["image"]
                         singularity_image = all_singularity[k]["image"]
