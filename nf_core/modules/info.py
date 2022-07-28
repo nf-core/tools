@@ -82,7 +82,7 @@ class ModuleInfo(ModuleCommand):
             self.meta = self.get_remote_yaml()
 
         # Could not find the meta
-        if not self.meta:
+        if self.meta is False:
             raise UserWarning(f"Could not find module '{self.module}'")
 
         return self.generate_module_info_help()
