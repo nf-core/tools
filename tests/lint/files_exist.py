@@ -2,8 +2,6 @@
 
 import os
 
-import yaml
-
 import nf_core.lint
 
 

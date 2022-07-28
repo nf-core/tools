@@ -9,13 +9,13 @@ import re
 from pathlib import Path
 from textwrap import dedent
 
-# import refgenconf
-from warnings import warn
-
 import rich
-from rich.logging import RichHandler
+import rich.traceback
 
 import nf_core.utils
+
+# import refgenconf
+
 
 # Set up logging
 log = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ def _print_nf_config(rgc):
                 pth = rgc.seek(genome, asset)
             # Catch general exception instead of refgencof exception --> no refgenconf import needed
             except Exception as e:
-                log.warn(f"{genome}/{asset} is incomplete, ignoring...")
+                log.warning(f"{genome}/{asset} is incomplete, ignoring...")
             else:
                 genomes_str += f'      {asset.ljust(20, " ")} = "{pth}"\n'
         genomes_str += "    }\n"
@@ -150,7 +150,7 @@ def update_config(rgc):
             fh.write(refgenie_genomes)
         log.info(f"Updated nf-core genomes config: {refgenie_genomes_config_file}")
     except FileNotFoundError as e:
-        log.warn(f"Could not write to {refgenie_genomes_config_file}")
+        log.warning(f"Could not write to {refgenie_genomes_config_file}")
         return False
 
     # Add include statement to NXF_HOME/config
