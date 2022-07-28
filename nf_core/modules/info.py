@@ -14,6 +14,7 @@ import nf_core.utils
 
 from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
+from .modules_repo import NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 
