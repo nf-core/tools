@@ -55,6 +55,7 @@
 - Make `nf-core modules update --save-diff` work when files were created or removed ([#1694](https://github.com/nf-core/tools/issues/1694))
 - Get the latest common build for Docker and Singularity containers of a module ([#1702](https://github.com/nf-core/tools/pull/1702))
 - Add short option for `--no-pull` option in `nf-core modules`
+- Add `nf-core modules patch` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

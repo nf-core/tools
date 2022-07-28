@@ -1,4 +1,6 @@
+import logging
 import os
+import shutil
 import tempfile
 from pathlib import Path
 
@@ -9,6 +11,8 @@ import nf_core.utils
 from .modules_command import ModuleCommand
 from .modules_differ import ModulesDiffer
 from .modules_json import ModulesJson
+
+log = logging.getLogger(__name__)
 
 
 class ModulePatch(ModuleCommand):
@@ -23,26 +27,27 @@ class ModulePatch(ModuleCommand):
             raise UserWarning()
 
         if module is not None and module not in self.module_names[self.modules_repo.fullname]:
-            raise UserWarning(f"Module '{module}' does not exist in the pipeline")
+            raise UserWarning(f"Module '{Path(self.modules_repo.fullname, module)}' does not exist in the pipeline")
 
     def patch(self, module=None):
         self.param_check(module)
 
         if module is None:
             module = questionary.autocomplete(
-                "Tool", self.module_names[self.modules_repo.fullname], style=nf_core.utils.nfcore_question_style
+                "Tool:", self.module_names[self.modules_repo.fullname], style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
+        module_fullname = str(Path(self.modules_repo.fullname, module))
 
         # Verify that the module has an entry is the modules.json file
         if not self.modules_json.module_present(module, self.modules_repo.fullname):
             raise UserWarning(
-                f"The '{module}' module does not have an entry in the 'modules.json' file. Cannot compute patch"
+                f"The '{module_fullname}' module does not have an entry in the 'modules.json' file. Cannot compute patch"
             )
 
         module_version = self.modules_json.get_module_version(module, self.modules_repo.fullname)
         if module_version is None:
             raise UserWarning(
-                f"The '{module}' does not have a valid version in the 'modules.json' file. Cannot compute patch"
+                f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
         # Set the diff filename based on the module name
         patch_filename = f"{'-'.join(module.split('/'))}.diff"
@@ -53,7 +58,7 @@ class ModulePatch(ModuleCommand):
 
         if patch_path.exists():
             remove = questionary.confirm(
-                f"Patch exists for module '{Path(self.modules_repo.fullname, module)}'. Do you want to regenerate it?",
+                f"Patch exists for module '{module_fullname}'. Do you want to regenerate it?",
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
             if remove:
@@ -66,12 +71,14 @@ class ModulePatch(ModuleCommand):
         module_install_dir = Path(install_dir, module)
         if not self.install_module_files(module, module_version, self.modules_repo, install_dir):
             raise UserWarning(
-                f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
+                f"Failed to install files of module '{module_fullname}' from remote ({self.modules_repo.remote_url})."
             )
 
+        # Write the patch to a temporary location (otherwise it is printed to the screen later)
+        patch_temp_path = tempfile.mktemp()
         try:
             ModulesDiffer.write_diff_file(
-                patch_path,
+                patch_temp_path,
                 module,
                 self.modules_repo.fullname,
                 module_install_dir,
@@ -81,7 +88,7 @@ class ModulePatch(ModuleCommand):
                 dsp_to_dir=module_relpath,
             )
         except UserWarning:
-            raise UserWarning("Module is unchanged. No patch to compute")
+            raise UserWarning(f"Module '{module_fullname}' is unchanged. No patch to compute")
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(module, self.modules_repo.fullname, patch_relpath)
@@ -95,3 +102,7 @@ class ModulePatch(ModuleCommand):
             dsp_from_dir=module_dir,
             dsp_to_dir=module_dir,
         )
+
+        # Finally move the created patch file to its final location
+        shutil.move(patch_temp_path, patch_path)
+        log.info(f"Patch file of '{module_fullname}' written to '{patch_path}'")
