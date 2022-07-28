@@ -122,6 +122,7 @@ class ModulesDiffer:
                     tofile=str(Path("/dev", "null")),
                 )
                 diffs[file] = (ModulesDiffer.DiffEnum.REMOVED, diff)
+
         return diffs
 
     @staticmethod
@@ -161,6 +162,8 @@ class ModulesDiffer:
         """
 
         diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
+        if all(diff_status == ModulesDiffer.DiffEnum.UNCHANGED for _, (diff_status, _) in diffs.items()):
+            raise UserWarning("Module is unchanged")
         log.debug(f"Writing diff of '{module}' to '{diff_path}'")
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
@@ -399,7 +402,7 @@ class ModulesDiffer:
         return old_lines, new_lines
 
     @staticmethod
-    def try_apply_patch(new_fn, patch):
+    def try_apply_patch(file_path, patch):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
         the patch does not agree if the file is modified, the old and new
@@ -420,7 +423,7 @@ class ModulesDiffer:
         """
         org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
 
-        with open(new_fn, "r") as fh:
+        with open(file_path, "r") as fh:
             new_lines = fh.readlines()
 
         # The patches are sorted by their order of occurrence in the original

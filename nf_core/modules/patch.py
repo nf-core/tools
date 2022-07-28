@@ -45,9 +45,10 @@ class ModulePatch(ModuleCommand):
                 f"The '{module}' does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
         # Set the diff filename based on the module name
-        patch_filename = f"{'-'.join(module.split())}.diff"
-        module_dir = Path(self.dir, "modules", self.modules_repo.fullname, module)
-        patch_relpath = Path(module_dir, patch_filename)
+        patch_filename = f"{'-'.join(module.split('/'))}.diff"
+        module_relpath = Path("modules", self.modules_repo.fullname, module)
+        patch_relpath = Path(module_relpath, patch_filename)
+        module_dir = Path(self.dir, module_relpath)
         patch_path = Path(self.dir, patch_relpath)
 
         if patch_path.exists():
@@ -68,16 +69,19 @@ class ModulePatch(ModuleCommand):
                 f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
             )
 
-        ModulesDiffer.write_diff_file(
-            patch_path,
-            module,
-            self.modules_repo.fullname,
-            module_install_dir,
-            module_dir,
-            for_git=False,
-            dsp_from_dir=module_dir,
-            dsp_to_dir=module_dir,
-        )
+        try:
+            ModulesDiffer.write_diff_file(
+                patch_path,
+                module,
+                self.modules_repo.fullname,
+                module_install_dir,
+                module_dir,
+                for_git=False,
+                dsp_from_dir=module_relpath,
+                dsp_to_dir=module_relpath,
+            )
+        except UserWarning:
+            raise UserWarning("Module is unchanged. No patch to compute")
 
         # Write changes to modules.json
         self.modules_json.add_patch_entry(module, self.modules_repo.fullname, patch_relpath)

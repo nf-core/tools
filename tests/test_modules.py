@@ -48,22 +48,23 @@ class TestModules(unittest.TestCase):
         ).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
-        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
-        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
+        self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True, no_pull=True)
+        self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True, no_pull=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
+            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA, no_pull=True
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
             self.pipeline_dir,
             prompt=False,
             force=True,
             remote_url="https://gitlab.com/nf-core/modules-test.git",
+            no_pull=True,
         )
 
         # Set up remove objects
         print("Setting up remove objects")
-        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
-        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
+        self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir, no_pull=True)
+        self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir, no_pull=True)
 
         # Set up the nf-core/modules repo dummy
         self.nfcore_modules = create_modules_repo_dummy(self.tmp_dir)
@@ -141,6 +142,14 @@ class TestModules(unittest.TestCase):
         test_mod_json_up_to_date_module_removed,
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,
+    )
+    from .modules.patch import (
+        test_create_patch_change,
+        test_create_patch_no_change,
+        test_create_patch_try_apply_failed,
+        test_create_patch_try_apply_successful,
+        test_create_patch_update_fail,
+        test_create_patch_update_success,
     )
     from .modules.remove import (
         test_modules_remove_trimgalore,

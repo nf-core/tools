@@ -49,7 +49,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core modules": [
         {
             "name": "For pipelines",
-            "commands": ["list", "info", "install", "update", "remove"],
+            "commands": ["list", "info", "install", "update", "remove", "patch"],
         },
         {
             "name": "Developing new modules",
@@ -552,6 +552,12 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
     help=r"Pipeline directory. [dim]\[default: current working directory][/]",
 )
 def patch(ctx, tool, dir):
+    """
+    Create a patch file for minor changes in a module
+
+    Checks if a module has been modified locally and creates a patch file
+    describing how the module has changed from the remote version
+    """
     try:
         module_patch = nf_core.modules.ModulePatch(
             dir,

@@ -1,4 +1,5 @@
 import enum
+import json
 import logging
 import os
 import shutil
@@ -145,7 +146,7 @@ class ModuleUpdate(ModuleCommand):
         # and do the requested action on them
         exit_value = True
         all_patches_successful = True
-        for modules_repo, module, sha, patch_fn in modules_info:
+        for modules_repo, module, sha, patch_relpath in modules_info:
 
             module_fullname = str(Path(modules_repo.fullname, module))
             # Are we updating the files in place or not?
@@ -182,9 +183,9 @@ class ModuleUpdate(ModuleCommand):
                 exit_value = False
                 continue
 
-            if patch_fn is not None:
+            if patch_relpath is not None:
                 patch_successful = self.try_apply_patch(
-                    module, modules_repo.fullname, patch_fn, module_dir, module_install_dir
+                    module, modules_repo.fullname, patch_relpath, module_dir, module_install_dir
                 )
                 if patch_successful:
                     log.info(f"Module '{module_fullname}' patched successfully")
@@ -193,7 +194,7 @@ class ModuleUpdate(ModuleCommand):
                 all_patches_successful &= patch_successful
 
             if dry_run:
-                if patch_fn is not None:
+                if patch_relpath is not None:
                     if patch_successful:
                         log.info(f"Current installation is compared against patched version in remote")
                     else:
@@ -246,7 +247,7 @@ class ModuleUpdate(ModuleCommand):
                     "can apply them by running the command :point_right:"
                     f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
                 )
-        elif patch_fn is not None and not all_patches_successful:
+        elif patch_relpath is not None and not all_patches_successful:
             log.info(f"Updates complete. Please apply failed patch{plural_es(modules_info)} manually")
         else:
             log.info("Updates complete :sparkles:")
@@ -474,7 +475,7 @@ class ModuleUpdate(ModuleCommand):
         log.info(f"Updating '{repo_name}/{module}'")
         log.debug(f"Updating module '{module}' to {new_version} from {repo_name}")
 
-    def try_apply_patch(self, module, repo_name, patch_file, module_dir, module_install_dir):
+    def try_apply_patch(self, module, repo_name, patch_relpath, module_dir, module_install_dir):
         """
         Try applying a patch file to the new module files
 
@@ -486,6 +487,7 @@ class ModuleUpdate(ModuleCommand):
             module_install_dir (Path | str): The directory where the new module
                                              file have been installed
         """
+        patch_path = Path(self.dir / patch_relpath)
         module_fullname = str(Path(repo_name, module))
         log.info(f"Found patch for  module '{module_fullname}'. Trying to apply it to new files")
 
@@ -494,30 +496,24 @@ class ModuleUpdate(ModuleCommand):
         temp_module_dir = temp_dir / module
         shutil.copytree(module_install_dir, temp_module_dir)
 
-        # Create a copy of the patch files where the file names are in the temporary directory
-        try:
-            log.debug("Renaming paths in patch file")
-            new_diff = ModulesDiffer.rename_paths(patch_file, module_dir, temp_module_dir)
-        except LookupError as e:
-            raise UserWarning(
-                f"Patch file '{patch_file}' is invalid. Found files that are not relative to the module directory."
-            )
-
         # Write the new diff to a temp file
         temp_patch = Path(tempfile.mktemp())
-        with open(temp_patch, "w") as fh:
-            fh.write(new_diff)
+        shutil.copy(patch_path, temp_patch)
+
+        module_relpath = Path("modules", repo_name, module)
 
         patches = ModulesDiffer.per_file_patch(temp_patch)
         new_files = {}
         for file, patch in patches.items():
             try:
                 log.debug(f"Applying patch to {Path(repo_name, module, file)}")
-                patched_new_lines = ModulesDiffer.try_apply_patch(file, patch)
-                new_files[file] = "".join(patched_new_lines)
+                file_relpath = Path(file).relative_to(module_relpath)
+                file_path = temp_module_dir / file_relpath
+                patched_new_lines = ModulesDiffer.try_apply_patch(file_path, patch)
+                new_files[file_relpath] = "".join(patched_new_lines)
             except LookupError as e:
                 # Save the patch file by moving to the install dir
-                shutil.move(patch_file, Path(module_install_dir, patch_file.relative_to(module_dir)))
+                shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
                 log.warning(
                     f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
                 )
@@ -525,27 +521,32 @@ class ModuleUpdate(ModuleCommand):
 
         # Write the patched files to a temporary directory
         for file, new_content in new_files.items():
-            fn = temp_module_dir / Path(file).relative_to(temp_module_dir)
+            fn = temp_module_dir / file
             with open(fn, "w") as fh:
                 fh.write(new_content)
 
         # Create the new patch file
         log.debug("Regenerating patch file")
         ModulesDiffer.write_diff_file(
-            Path(temp_module_dir, patch_file.relative_to(module_dir)),
+            Path(temp_module_dir, patch_path.relative_to(module_dir)),
             module,
             repo_name,
-            temp_module_dir,
             module_install_dir,
+            temp_module_dir,
             file_action="w",
             for_git=False,
-            dsp_from_dir=module_dir,
-            dsp_to_dir=module_dir,
+            dsp_from_dir=module_relpath,
+            dsp_to_dir=module_relpath,
         )
 
         # Move the patched files to the install dir
         log.debug("Overwriting installed files installed files  with patched files")
         shutil.rmtree(module_install_dir)
         shutil.copytree(temp_module_dir, module_install_dir)
+
+        self.modules_json.add_patch_entry(module, repo_name, patch_relpath, write_file=True)
+        with open(Path(self.dir, "modules.json")) as fh:
+            print("Real again", self.dir)
+            print(fh.read())
 
         return True

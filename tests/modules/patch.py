@@ -1,6 +1,9 @@
+import json
 import os
 import tempfile
 from pathlib import Path
+
+import pytest
 
 import nf_core.modules
 import nf_core.modules.modules_command
@@ -24,12 +27,7 @@ PATCH_BRANCH = "patch-tester"
 
 def setup_patch(pipeline_dir, modify_module):
     install_obj = nf_core.modules.ModuleInstall(
-        pipeline_dir,
-        prompt=False,
-        force=True,
-        remote_url=GITLAB_URL,
-        branch=PATCH_BRANCH,
-        sha=ORG_SHA,
+        pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA, no_pull=True
     )
 
     # Install the module
@@ -39,10 +37,6 @@ def setup_patch(pipeline_dir, modify_module):
         # Modify the module
         module_path = Path(pipeline_dir, "modules", REPO_NAME, MODULE)
         modify_main_nf(module_path / "main.nf")
-
-    # Try creating a patch file
-    patch_obj = nf_core.modules.ModulePatch(pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
-    patch_obj.patch(MODULE)
 
 
 def modify_main_nf(path):
@@ -63,8 +57,15 @@ def test_create_patch_no_change(self):
     """Test creating a patch when there is no change to the module"""
     setup_patch(self.pipeline_dir, False)
 
+    # Try creating a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    with pytest.raises(UserWarning):
+        patch_obj.patch(MODULE)
+
+    module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
+
     # Check that no patch file has been added to the directory
-    assert set(os.listdir(Path(self.pipeline_dir, REPO_NAME, MODULE))) == {"main.nf", "meta.yml"}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml"}
 
     # Check the 'modules.json' contains no patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
@@ -74,25 +75,30 @@ def test_create_patch_no_change(self):
 def test_create_patch_change(self):
     """Test creating a patch when there is a change to the module"""
     setup_patch(self.pipeline_dir, True)
+
+    # Try creating a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj.patch(MODULE)
+
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
 
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(Path(self.pipeline_dir, "modules", REPO_NAME, MODULE))) == {"main.nf", "meta.yml", patch_fn}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == patch_fn
+    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path("modules", REPO_NAME, MODULE, patch_fn)
 
     # Check that the correct lines are in the patch file
-    with open(patch_fn, "r") as fh:
+    with open(module_path / patch_fn, "r") as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
-    assert f"--- {module_relpath / 'main.nf'}" in patch_lines
-    assert f"+++ {module_relpath / 'main.nf'}" in patch_lines
-    assert "-    tuple val(meta), path(reads)" in patch_lines
-    assert "-    path index" in patch_lines
-    assert "+    tuple val(meta), path(reads), path(index)" in patch_lines
+    assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines, module_relpath / "main.nf"
+    assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
+    assert "-    tuple val(meta), path(reads)\n" in patch_lines
+    assert "-    path index\n" in patch_lines
+    assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
 
 def test_create_patch_try_apply_successful(self):
@@ -100,15 +106,20 @@ def test_create_patch_try_apply_successful(self):
     Test creating a patch file and applying it to a new version of the the files
     """
     setup_patch(self.pipeline_dir, True)
-    module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
+    module_relpath = Path("modules", REPO_NAME, MODULE)
+    module_path = Path(self.pipeline_dir, module_relpath)
+
+    # Try creating a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj.patch(MODULE)
 
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(Path(self.pipeline_dir, "modules", REPO_NAME, MODULE))) == {"main.nf", "meta.yml", patch_fn}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == patch_fn
+    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path("modules", REPO_NAME, MODULE, patch_fn)
 
     update_obj = nf_core.modules.ModuleUpdate(
         self.pipeline_dir, sha=SUCCEED_SHA, remote_url=GITLAB_URL, branch=PATCH_BRANCH
@@ -119,27 +130,28 @@ def test_create_patch_try_apply_successful(self):
 
     # Try applying the patch
     module_install_dir = install_dir / MODULE
-    assert update_obj.try_apply_patch(MODULE, REPO_NAME, patch_fn, module_path, module_install_dir) is True
+    patch_relpath = module_relpath / patch_fn
+    assert update_obj.try_apply_patch(MODULE, REPO_NAME, patch_relpath, module_path, module_install_dir) is True
 
     # Move the files from the temporary directory
     update_obj.move_files_from_tmp_dir(MODULE, module_path, install_dir, REPO_NAME, SUCCEED_SHA)
 
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(Path(self.pipeline_dir, "modules", REPO_NAME, MODULE))) == {"main.nf", "meta.yml", patch_fn}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == patch_fn
+    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path("modules", REPO_NAME, MODULE, patch_fn)
 
     # Check that the correct lines are in the patch file
-    with open(patch_fn, "r") as fh:
+    with open(module_path / patch_fn, "r") as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
-    assert f"--- {module_relpath / 'main.nf'}" in patch_lines
-    assert f"+++ {module_relpath / 'main.nf'}" in patch_lines
-    assert "-    tuple val(meta), path(reads)" in patch_lines
-    assert "-    path index" in patch_lines
-    assert "+    tuple val(meta), path(reads), path(index)" in patch_lines
+    assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
+    assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
+    assert "-    tuple val(meta), path(reads)\n" in patch_lines
+    assert "-    path index\n" in patch_lines
+    assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
 
 def test_create_patch_try_apply_failed(self):
@@ -147,15 +159,20 @@ def test_create_patch_try_apply_failed(self):
     Test creating a patch file and applying it to a new version of the the files
     """
     setup_patch(self.pipeline_dir, True)
-    module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
+    module_relpath = Path("modules", REPO_NAME, MODULE)
+    module_path = Path(self.pipeline_dir, module_relpath)
+
+    # Try creating a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj.patch(MODULE)
 
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(Path(self.pipeline_dir, "modules", REPO_NAME, MODULE))) == {"main.nf", "meta.yml", patch_fn}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == patch_fn
+    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path("modules", REPO_NAME, MODULE, patch_fn)
 
     update_obj = nf_core.modules.ModuleUpdate(
         self.pipeline_dir, sha=FAIL_SHA, remote_url=GITLAB_URL, branch=PATCH_BRANCH
@@ -166,7 +183,8 @@ def test_create_patch_try_apply_failed(self):
 
     # Try applying the patch
     module_install_dir = install_dir / MODULE
-    assert update_obj.try_apply_patch(MODULE, REPO_NAME, patch_fn, module_path, module_install_dir) is False
+    patch_path = module_relpath / patch_fn
+    assert update_obj.try_apply_patch(MODULE, REPO_NAME, patch_path, module_path, module_install_dir) is False
 
 
 def test_create_patch_update_success(self):
@@ -179,36 +197,45 @@ def test_create_patch_update_success(self):
     setup_patch(self.pipeline_dir, True)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
 
+    # Try creating a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj.patch(MODULE)
+
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(Path(self.pipeline_dir, "modules", REPO_NAME, MODULE))) == {"main.nf", "meta.yml", patch_fn}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == patch_fn
+    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path("modules", REPO_NAME, MODULE, patch_fn)
 
     # Update the module
     update_obj = nf_core.modules.ModuleUpdate(
-        self.pipeline_dir, sha=SUCCEED_SHA, remote_url=GITLAB_URL, branch=PATCH_BRANCH
+        self.pipeline_dir, sha=SUCCEED_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
     )
     update_obj.update(MODULE)
 
     # Check that a patch file with the correct name has been created
-    assert set(os.listdir(Path(self.pipeline_dir, "modules", REPO_NAME, MODULE))) == {"main.nf", "meta.yml", patch_fn}
+    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
+    with open(Path(self.pipeline_dir, "modules.json"), "r") as fh:
+        print("Real file", self.pipeline_dir)
+        print(fh.read())
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == patch_fn
+    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path(
+        "modules", REPO_NAME, MODULE, patch_fn
+    ), modules_json_obj.get_patch_fn(MODULE, REPO_NAME)
 
     # Check that the correct lines are in the patch file
     with open(module_path / patch_fn, "r") as fh:
         patch_lines = fh.readlines()
     module_relpath = module_path.relative_to(self.pipeline_dir)
-    assert f"--- {module_relpath / 'main.nf'}" in patch_lines
-    assert f"+++ {module_relpath / 'main.nf'}" in patch_lines
-    assert "-    tuple val(meta), path(reads)" in patch_lines
-    assert "-    path index" in patch_lines
-    assert "+    tuple val(meta), path(reads), path(index)" in patch_lines
+    assert f"--- {module_relpath / 'main.nf'}\n" in patch_lines
+    assert f"+++ {module_relpath / 'main.nf'}\n" in patch_lines
+    assert "-    tuple val(meta), path(reads)\n" in patch_lines
+    assert "-    path index\n" in patch_lines
+    assert "+    tuple val(meta), path(reads), path(index)\n" in patch_lines
 
 
 def test_create_patch_update_fail(self):
@@ -218,20 +245,24 @@ def test_create_patch_update_fail(self):
     setup_patch(self.pipeline_dir, True)
     module_path = Path(self.pipeline_dir, "modules", REPO_NAME, MODULE)
 
+    # Try creating a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH, no_pull=True)
+    patch_obj.patch(MODULE)
+
     patch_fn = f"{'-'.join(MODULE.split('/'))}.diff"
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == patch_fn
+    assert modules_json_obj.get_patch_fn(MODULE, REPO_NAME) == Path("modules", REPO_NAME, MODULE, patch_fn)
 
     # Save the file contents for downstream comparison
     with open(module_path / patch_fn, "r") as fh:
         patch_contents = fh.read()
 
     update_obj = nf_core.modules.ModuleUpdate(
-        self.pipeline_dir, sha=FAIL_SHA, remote_url=GITLAB_URL, branch=PATCH_BRANCH
+        self.pipeline_dir, sha=FAIL_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
     )
     update_obj.update(MODULE)
 

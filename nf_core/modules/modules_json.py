@@ -497,7 +497,11 @@ class ModulesJson:
         base_path = modules_repo.base_path
         if repo_name not in self.modules_json["repos"]:
             self.modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url, "base_path": base_path}
-        self.modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": module_version}
+        repo_modules_entry = self.modules_json["repos"][repo_name]["modules"]
+        if module_name not in repo_modules_entry:
+            repo_modules_entry[module_name] = {}
+        repo_modules_entry[module_name]["git_sha"] = module_version
+
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
