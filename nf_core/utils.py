@@ -701,16 +701,30 @@ def get_biocontainer_tag(package, version):
                 images = response.json()["images"]
                 singularity_image = None
                 docker_image = None
+                all_docker = {}
+                all_singularity = {}
                 for img in images:
-                    # Get most recent Docker and Singularity image
+                    # Get all Docker and Singularity images
                     if img["image_type"] == "Docker":
-                        modification_date = get_tag_date(img["updated"])
-                        if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
-                            docker_image = img
-                    if img["image_type"] == "Singularity":
-                        modification_date = get_tag_date(img["updated"])
-                        if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
-                            singularity_image = img
+                        # Obtain version and build
+                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
+                        if match is not None:
+                            all_docker[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                    elif img["image_type"] == "Singularity":
+                        # Obtain version and build
+                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
+                        if match is not None:
+                            all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                # Obtain common builds from Docker and Singularity images
+                common_keys = list(all_docker.keys() & all_singularity.keys())
+                current_date = None
+                for k in common_keys:
+                    # Get the most recent common image
+                    date = max(all_docker[k]["date"], all_docker[k]["date"])
+                    if docker_image is None or current_date < date:
+                        docker_image = all_docker[k]["image"]
+                        singularity_image = all_singularity[k]["image"]
+                        current_date = date
                 return docker_image["image_name"], singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")

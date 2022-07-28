@@ -350,6 +350,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
 )
 @click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
 @click.option(
+    "-N",
     "--no-pull",
     is_flag=True,
     default=False,
