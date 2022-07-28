@@ -9,7 +9,6 @@ import tempfile
 import unittest
 from unittest import mock
 
-import click
 import pytest
 import requests
 import yaml
