@@ -177,9 +177,7 @@ class ModulesDiffer:
 
             for _, (diff_status, diff) in diffs.items():
                 if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
-                    # The file has changed
-                    # fh.write(f"Changes in '{Path(from_dir, file)}':\n")
-                    # Write the diff lines to the file
+                    # The file has changed write the diff lines to the file
                     for line in diff:
                         fh.write(line)
                     fh.write("\n")
