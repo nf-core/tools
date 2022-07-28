@@ -191,7 +191,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     launcher = nf_core.launch.Launch(
         pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id
     )
-    if launcher.launch_pipeline() == False:
+    if not launcher.launch_pipeline():
         sys.exit(1)
 
 
