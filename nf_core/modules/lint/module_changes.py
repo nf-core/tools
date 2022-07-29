@@ -3,9 +3,6 @@ Check whether the content of a module has changed compared to the original repos
 """
 import os
 
-import requests
-import rich
-
 
 def module_changes(module_lint_object, module):
     """

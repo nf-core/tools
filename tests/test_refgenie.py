@@ -8,8 +8,6 @@ import subprocess
 import tempfile
 import unittest
 
-import nf_core.refgenie
-
 
 class TestRefgenie(unittest.TestCase):
     """Class for refgenie tests"""

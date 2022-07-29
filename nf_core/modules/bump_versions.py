@@ -7,7 +7,6 @@ or for a single module
 from __future__ import print_function
 
 import logging
-import os
 import re
 
 import questionary
