@@ -508,7 +508,9 @@ class ModuleUpdate(ModuleCommand):
                 log.debug(f"Applying patch to {Path(module_fullname, file)}")
                 file_relpath = Path(file).relative_to(module_relpath)
                 file_path = temp_module_dir / file_relpath
-                patched_new_lines = ModulesDiffer.try_apply_patch(file_path, patch)
+                with open(file_path, "r") as fh:
+                    file_lines = fh.readlines()
+                patched_new_lines = ModulesDiffer.try_apply_patch(file_lines, patch)
                 new_files[file_relpath] = "".join(patched_new_lines)
             except LookupError as e:
                 # Patch failed. Save the patch file by moving to the install dir

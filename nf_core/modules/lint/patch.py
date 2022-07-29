@@ -18,8 +18,30 @@ def patch(module_lint_obj, module: NFCoreModule):
         # Nothing to lint, just return
         return
 
+    if not check_patch_valid(module, patch_path):
+        # Test failed, just exit
+        return
 
-def check_patch_valid(module_lint_obj, module: NFCoreModule, patch_path):
+    patch_reversible(module, patch_path)
+
+
+def check_patch_valid(module, patch_path):
+    """
+    Checks whether a patch is valid. Looks for lines like
+    --- <path>
+    +++ <path>
+    @@ n,n n,n @@
+    and make sure that the come in the right order and that
+    the reported paths exists. If the patch file performs
+    file creation or deletion we issue a lint warning.
+
+    Args:
+        module (NFCoreModule): The module currently being linted
+        patch_path (Path): The absolute path to the patch file.
+
+    Returns:
+        (bool): False if any test failed, True otherwise
+    """
     with open(patch_path, "r") as fh:
         patch_lines = fh.readlines()
 
@@ -126,3 +148,33 @@ def check_patch_valid(module_lint_obj, module: NFCoreModule, patch_path):
         if passed:
             module.passed(("patch_valid", "Patch file is valid", patch_path))
         return passed
+
+
+def patch_reversible(module, patch_path):
+    """
+    Try applying a patch in reverse to see if it is up to date
+
+    Args:
+        module (NFCoreModule): The module currently being linted
+        patch_path (Path): The absolute path to the patch file.
+
+    Returns:
+        (bool): False if any test failed, True otherwise
+    """
+    # Get the patches
+    patches = ModulesDiffer.per_file_patch(patch_path)
+
+    # Try applying the patches
+    for file, patch in patches.items():
+        try:
+            file_path = module.base_dir / file
+            with open(file_path, "r") as fh:
+                file_lines = fh.readlines()
+            ModulesDiffer.try_apply_patch(file_lines, patch, reverse=True)
+        except LookupError as e:
+            # Patch failed. Save the patch file by moving to the install dir
+            module.failed.append(
+                (("patch_reversible", f"Failed to recreate remote version of '{file}' from patch", patch_path))
+            )
+            return False
+    module.passed((("patch_reversible", f"Successfully recreated remote file versions", patch_path)))

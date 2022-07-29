@@ -354,7 +354,7 @@ class ModulesDiffer:
         return old_lines, new_lines
 
     @staticmethod
-    def try_apply_patch(file_path, patch, reverse=False):
+    def try_apply_patch(file_lines, patch, reverse=False):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
         the patch does not agree if the file is modified, the old and new
@@ -378,9 +378,6 @@ class ModulesDiffer:
         if reverse:
             patch_lines, org_lines = org_lines, patch_lines
 
-        with open(file_path, "r") as fh:
-            new_lines = fh.readlines()
-
         # The patches are sorted by their order of occurrence in the original
         # file. Loop through the new file and try to find the new indices of
         # these lines. We know they are non overlapping, and thus only need to
@@ -389,11 +386,11 @@ class ModulesDiffer:
         patch_indices = [None] * p
         i = 0
         j = 0
-        n = len(new_lines)
+        n = len(file_lines)
         while i < n and j < p:
             m = len(org_lines[j])
             while i < n:
-                if org_lines[j] == new_lines[i : i + m]:
+                if org_lines[j] == file_lines[i : i + m]:
                     patch_indices[j] = (i, i + m)
                     j += 1
                     break
@@ -406,15 +403,15 @@ class ModulesDiffer:
 
         # Apply the patch to new lines by substituting
         # the original lines with the patch lines
-        patched_new_lines = new_lines[: patch_indices[0][0]]
+        patched_new_lines = file_lines[: patch_indices[0][0]]
         for i in range(len(patch_indices) - 1):
             # Add the patch lines
             patched_new_lines.extend(patch_lines[i])
             # Fill the spaces between the patches
-            patched_new_lines.extend(new_lines[patch_indices[i][1] : patch_indices[i + 1][0]])
+            patched_new_lines.extend(file_lines[patch_indices[i][1] : patch_indices[i + 1][0]])
 
         # Add the remaining part of the new file
         patched_new_lines.extend(patch_lines[-1])
-        patched_new_lines.extend(new_lines[patch_indices[-1][1] :])
+        patched_new_lines.extend(file_lines[patch_indices[-1][1] :])
 
         return patched_new_lines
