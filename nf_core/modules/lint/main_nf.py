@@ -5,6 +5,7 @@ Lint the main.nf file of a module
 
 import logging
 import re
+import sqlite3
 
 import requests
 from galaxy.tool_util.deps.mulled.util import build_target
@@ -294,7 +295,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 if fix_version:
                     try:
                         fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
-                    except (FileNotFoundError, requests.exceptions.RequestException) as e:
+                    except FileNotFoundError as e:
                         fixed = False
                         log.debug(f"Unable to update package {package} due to error: {e}")
                     else:
@@ -416,12 +417,16 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
             new_url = re.search(
                 "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
             ).group(1)
-            response_new_container = requests.get(
-                "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
-            )
-            log.debug(
-                f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
-            )
+            try:
+                response_new_container = requests.get(
+                    "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
+                )
+                log.debug(
+                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+                )
+            except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
+                log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")
+                return False
             if response_new_container.status_code != 200:
                 return False
             new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
