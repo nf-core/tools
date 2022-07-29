@@ -29,7 +29,12 @@ class TestUtils(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "This is a test pipeline", "Test McTestFace", no_git=True, outdir=self.test_pipeline_dir, plain=True
+            "testpipeline",
+            "This is a test pipeline",
+            "Test McTestFace",
+            no_git=True,
+            outdir=self.test_pipeline_dir,
+            plain=True,
         )
         self.create_obj.init_pipeline()
         # Base Pipeline object on this directory
