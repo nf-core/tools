@@ -161,20 +161,18 @@ def patch_reversible(module, patch_path):
     Returns:
         (bool): False if any test failed, True otherwise
     """
-    # Get the patches
-    patches = ModulesDiffer.per_file_patch(patch_path)
+    try:
+        ModulesDiffer.try_apply_patch(
+            module.module_name,
+            "nf-core/modules",
+            patch_path,
+            Path(module.module_dir).relative(module.base_dir),
+            reverse=True,
+        )
+    except LookupError as e:
+        # Patch failed. Save the patch file by moving to the install dir
+        module.failed.append((("patch_reversible", "Patch does not agree with module files", patch_path)))
+        return False
 
-    # Try applying the patches
-    for file, patch in patches.items():
-        try:
-            file_path = module.base_dir / file
-            with open(file_path, "r") as fh:
-                file_lines = fh.readlines()
-            ModulesDiffer.try_apply_patch(file_lines, patch, reverse=True)
-        except LookupError as e:
-            # Patch failed. Save the patch file by moving to the install dir
-            module.failed.append(
-                (("patch_reversible", f"Failed to recreate remote version of '{file}' from patch", patch_path))
-            )
-            return False
-    module.passed((("patch_reversible", f"Successfully recreated remote file versions", patch_path)))
+    module.passed((("patch_reversible", "Patch agrees with module files", patch_path)))
+    return True

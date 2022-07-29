@@ -501,24 +501,15 @@ class ModuleUpdate(ModuleCommand):
         temp_module_dir = temp_dir / module
         shutil.copytree(module_install_dir, temp_module_dir)
 
-        patches = ModulesDiffer.per_file_patch(patch_path)
-        new_files = {}
-        for file, patch in patches.items():
-            try:
-                log.debug(f"Applying patch to {Path(module_fullname, file)}")
-                file_relpath = Path(file).relative_to(module_relpath)
-                file_path = temp_module_dir / file_relpath
-                with open(file_path, "r") as fh:
-                    file_lines = fh.readlines()
-                patched_new_lines = ModulesDiffer.try_apply_patch(file_lines, patch)
-                new_files[file_relpath] = "".join(patched_new_lines)
-            except LookupError as e:
-                # Patch failed. Save the patch file by moving to the install dir
-                shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
-                log.warning(
-                    f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
-                )
-                return False
+        try:
+            new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, temp_module_dir)
+        except LookupError as e:
+            # Patch failed. Save the patch file by moving to the install dir
+            shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
+            log.warning(
+                f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
+            )
+            return False
 
         # Write the patched files to a temporary directory
         log.debug("Writing patched files")
