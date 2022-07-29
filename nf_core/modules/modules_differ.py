@@ -354,7 +354,7 @@ class ModulesDiffer:
         return old_lines, new_lines
 
     @staticmethod
-    def try_apply_patch(file_path, patch):
+    def try_apply_patch(file_path, patch, reverse=False):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
         the patch does not agree if the file is modified, the old and new
@@ -365,6 +365,7 @@ class ModulesDiffer:
         Args:
             new_fn (str | Path): Path to the modified file
             patch (str | Path): (Outdated) patch for the file
+            reverse (bool): Apply the patch in reverse
 
         Returns:
             [str]: The patched lines of the file
@@ -374,6 +375,8 @@ class ModulesDiffer:
                          the file.
         """
         org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
+        if reverse:
+            patch_lines, org_lines = org_lines, patch_lines
 
         with open(file_path, "r") as fh:
             new_lines = fh.readlines()
