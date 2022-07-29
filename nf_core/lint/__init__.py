@@ -111,8 +111,8 @@ def run_linting(
     # Run the module lint tests
     if len(module_lint_obj.all_local_modules) > 0:
         module_lint_obj.lint_modules(module_lint_obj.all_local_modules, local=True)
-    if len(module_lint_obj.all_nfcore_modules) > 0:
-        module_lint_obj.lint_modules(module_lint_obj.all_nfcore_modules, local=False)
+    if len(module_lint_obj.all_remote_modules) > 0:
+        module_lint_obj.lint_modules(module_lint_obj.all_remote_modules, local=False)
 
     # Print the results
     lint_obj._print_results(show_passed)

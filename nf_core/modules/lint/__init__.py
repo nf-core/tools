@@ -15,6 +15,7 @@ import operator
 import os
 import re
 import sys
+from pathlib import Path
 
 import questionary
 import requests
@@ -84,7 +85,7 @@ class ModuleLint(ModuleCommand):
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.lint_tests = self._get_all_lint_tests()
         # Get lists of modules install in directory
-        self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
+        self.all_local_modules, self.all_remote_modules = self.get_installed_modules()
 
         self.lint_config = None
         self.modules_json = None
@@ -149,7 +150,7 @@ class ModuleLint(ModuleCommand):
                     "name": "tool_name",
                     "message": "Tool name:",
                     "when": lambda x: x["all_modules"] == "Named module",
-                    "choices": [m.module_name for m in self.all_nfcore_modules],
+                    "choices": [m.module_name for m in self.all_remote_modules],
                 },
             ]
             answers = questionary.unsafe_prompt(questions, style=nf_core.utils.nfcore_question_style)
@@ -161,12 +162,12 @@ class ModuleLint(ModuleCommand):
             if all_modules:
                 raise ModuleLintException("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            nfcore_modules = [m for m in self.all_nfcore_modules if m.module_name == module]
+            nfcore_modules = [m for m in self.all_remote_modules if m.module_name == module]
             if len(nfcore_modules) == 0:
                 raise ModuleLintException(f"Could not find the specified module: '{module}'")
         else:
             local_modules = self.all_local_modules
-            nfcore_modules = self.all_nfcore_modules
+            nfcore_modules = self.all_remote_modules
 
         if self.repo_type == "modules":
             log.info(f"Linting modules repo: [magenta]'{self.dir}'")
@@ -225,7 +226,7 @@ class ModuleLint(ModuleCommand):
 
     def get_installed_modules(self):
         """
-        Makes lists of the local and and nf-core modules installed in this directory.
+        Makes lists of the local and remote modules installed in this directory.
 
         Returns:
             local_modules, nfcore_modules ([NfCoreModule], [NfCoreModule]):
@@ -234,56 +235,28 @@ class ModuleLint(ModuleCommand):
                 is returned.
 
         """
-        # Initialize lists
-        local_modules = []
-        nfcore_modules = []
-        local_modules_dir = None
-        nfcore_modules_dir = os.path.join(self.dir, "modules", "nf-core", "modules")
-
-        # Get local modules
+        self.get_pipeline_modules()
         if self.repo_type == "pipeline":
-            local_modules_dir = os.path.join(self.dir, "modules", "local")
-
-            # Filter local modules
-            if os.path.exists(local_modules_dir):
-                local_modules = sorted([x for x in os.listdir(local_modules_dir) if x.endswith(".nf")])
-
-        # nf-core/modules
-        if self.repo_type == "modules":
-            nfcore_modules_dir = os.path.join(self.dir, "modules")
-
-        # Get nf-core modules
-        if os.path.exists(nfcore_modules_dir):
-            for m in sorted(os.listdir(nfcore_modules_dir)):
-                if not os.path.isdir(os.path.join(nfcore_modules_dir, m)):
-                    raise ModuleLintException(
-                        f"File found in '{nfcore_modules_dir}': '{m}'! "
-                        "This directory should only contain module directories."
-                    )
-
-                module_dir = os.path.join(nfcore_modules_dir, m)
-                module_subdir = os.listdir(module_dir)
-                # Not a module, but contains sub-modules
-                if "main.nf" not in module_subdir:
-                    for path in module_subdir:
-                        module_subdir_path = os.path.join(nfcore_modules_dir, m, path)
-                        if os.path.isdir(module_subdir_path):
-                            if os.path.exists(os.path.join(module_subdir_path, "main.nf")):
-                                nfcore_modules.append(os.path.join(m, path))
-                else:
-                    nfcore_modules.append(m)
-
-        # Create NFCoreModule objects for the nf-core and local modules
-        nfcore_modules = [
-            NFCoreModule(os.path.join(nfcore_modules_dir, m), repo_type=self.repo_type, base_dir=self.dir)
-            for m in nfcore_modules
-        ]
+            remote_modules = {
+                repo_name: [
+                    NFCoreModule(Path(self.dir, "modules", repo_name, m), repo_type=self.repo_type, base_dir=self.dir)
+                    for m in modules
+                ]
+                for repo_name, modules in self.module_names.items()
+                if repo_name != "local"
+            }
+        else:
+            remote_modules = {
+                "modules": [
+                    NFCoreModule(Path(self.dir, "modules", m), repo_type=self.repo_type, base_dir=self.dir)
+                    for m in modules
+                ]
+                for modules in self.module_names["modules"]
+            }
 
         local_modules = [
-            NFCoreModule(
-                os.path.join(local_modules_dir, m), repo_type=self.repo_type, base_dir=self.dir, nf_core_module=False
-            )
-            for m in local_modules
+            NFCoreModule(Path(self.dir, "local", m), repo_type=self.repo_type, base_dir=self.dir, nf_core_module=False)
+            for m in self.module_names.get("local", [])
         ]
 
         # The local modules mustn't conform to the same file structure
@@ -293,7 +266,7 @@ class ModuleLint(ModuleCommand):
             mod.main_nf = mod.module_dir
             mod.module_name = os.path.basename(mod.module_dir)
 
-        return local_modules, nfcore_modules
+        return local_modules, remote_modules
 
     def lint_modules(self, modules, local=False, fix_version=False):
         """

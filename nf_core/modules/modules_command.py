@@ -2,6 +2,7 @@ import glob
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import yaml
 
@@ -25,7 +26,7 @@ class ModuleCommand:
         """
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.dir = dir
-        self.module_names = []
+        self.module_names = None
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -34,7 +35,7 @@ class ModuleCommand:
         except LookupError as e:
             raise UserWarning(e)
 
-    def get_pipeline_modules(self):
+    def get_pipeline_modules(self, local=False):
         """
         Get the modules installed in the current directory.
 
@@ -48,29 +49,35 @@ class ModuleCommand:
 
         self.module_names = {}
 
-        module_base_path = f"{self.dir}/modules/"
+        module_base_path = Path(self.dir, "modules")
 
         if self.repo_type == "pipeline":
-            repo_owners = (owner for owner in os.listdir(module_base_path) if owner != "local")
-            repo_names = (
-                f"{repo_owner}/{name}"
-                for repo_owner in repo_owners
-                for name in os.listdir(f"{module_base_path}/{repo_owner}")
+            module_relpaths = (
+                Path(dir).relative_to(module_base_path)
+                for dir, _, files in os.walk(module_base_path)
+                if "main.nf" in files and not Path(dir).relative_to(module_base_path).is_relative_to("local")
             )
-            for repo_name in repo_names:
-                repo_path = os.path.join(module_base_path, repo_name)
-                module_mains_path = f"{repo_path}/**/main.nf"
-                module_mains = glob.glob(module_mains_path, recursive=True)
-                if len(module_mains) > 0:
-                    self.module_names[repo_name] = [
-                        os.path.dirname(os.path.relpath(mod, repo_path)) for mod in module_mains
-                    ]
+            # The two highest directories are the repo owner and repo name. The rest is the module name
+            repos_and_modules = (("/".join(dir.parts[:2]), "/".join(dir.parts[2:])) for dir in module_relpaths)
+            for repo, module in repos_and_modules:
+                if repo not in self.module_names:
+                    self.module_names[repo] = []
+                self.module_names[repo].append(module)
+
+            local_module_dir = Path(module_base_path, "local")
+            if local and local_module_dir.exists():
+                # Get the local modules
+                self.module_names["local"] = [
+                    str(path.relative_to(local_module_dir))
+                    for path in local_module_dir.iterdir()
+                    if path.suffix == ".nf"
+                ]
 
         elif self.repo_type == "modules":
-            module_mains_path = f"{module_base_path}/**/main.nf"
-            module_mains = glob.glob(module_mains_path, recursive=True)
             self.module_names["modules"] = [
-                os.path.dirname(os.path.relpath(mod, module_base_path)) for mod in module_mains
+                str(Path(dir).relative_to(module_base_path))
+                for dir, _, files in os.walk(module_base_path)
+                if "main.nf" in files
             ]
         else:
             log.error("Directory is neither a clone of nf-core/modules nor a pipeline")
