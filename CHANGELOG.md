@@ -20,7 +20,6 @@
 - Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 - Add check for mimetype in the `input` parameter. ([#1647](https://github.com/nf-core/tools/issues/1647))
 - Check that the singularity and docker tags are parsable. Add `--fail-warned` flag to `nf-core modules lint` ([#1654](https://github.com/nf-core/tools/issues/1654))
-- Don't initialise git pipeline repository from the temporary pipeline created by `nf-core lint`
 
 ### General
 
@@ -41,7 +40,7 @@
 - Allow customization of the `nf-core` pipeline template when using `nf-core create` ([#1548](https://github.com/nf-core/tools/issues/1548))
 - Add Refgenie integration: updating of nextflow config files with a refgenie database ([#1090](https://github.com/nf-core/tools/pull/1090))
 - Fix `--key` option in `nf-core lint` when supplying a module lint test name ([#1681](https://github.com/nf-core/tools/issues/1681))
-- Add `no_git=True` when creating a new pipeline and initialising a git repository is not needed ([#1709](https://github.com/nf-core/tools/pull/1709))
+- Add `no_git=True` when creating a new pipeline and initialising a git repository is not needed in `nf-core lint` and `nf-core bump-version` ([#1709](https://github.com/nf-core/tools/pull/1709))
 
 ### Modules
 
