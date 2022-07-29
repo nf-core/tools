@@ -11,18 +11,16 @@ def patch(module_lint_obj, module: NFCoreModule):
     Checks that the file name is well formed, and that
     the patch can be applied in reverse with the correct result.
     """
-    # Check if there exists a patch file
-    patch_fn = f"{module.module_name.replace('/', '-')}.diff"
-    patch_path = Path(module.module_dir, patch_fn)
-    if not patch_path.exists():
-        # Nothing to lint, just return
+    # Check if the module is patched
+    if not module.is_patched:
+        # Nothing to do
         return
 
-    if not check_patch_valid(module, patch_path):
+    if not check_patch_valid(module, module.patch_path):
         # Test failed, just exit
         return
 
-    patch_reversible(module, patch_path)
+    patch_reversible(module, module.patch_path)
 
 
 def check_patch_valid(module, patch_path):
