@@ -111,6 +111,7 @@ class TestModules(unittest.TestCase):
     from .modules.lint import (
         test_modules_lint_empty,
         test_modules_lint_new_modules,
+        test_modules_lint_patch_invalid,
         test_modules_lint_trimgalore,
     )
     from .modules.list import (

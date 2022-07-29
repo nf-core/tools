@@ -50,11 +50,12 @@ class ModulePatch(ModuleCommand):
                 f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
         # Set the diff filename based on the module name
-        patch_filename = f"{'-'.join(module.split('/'))}.diff"
+        patch_filename = f"{module.replace('/', '-')}.diff"
         module_relpath = Path("modules", self.modules_repo.fullname, module)
         patch_relpath = Path(module_relpath, patch_filename)
         module_dir = Path(self.dir, module_relpath)
         patch_path = Path(self.dir, patch_relpath)
+        print(patch_path)
 
         if patch_path.exists():
             remove = questionary.confirm(
@@ -105,4 +106,5 @@ class ModulePatch(ModuleCommand):
 
         # Finally move the created patch file to its final location
         shutil.move(patch_temp_path, patch_path)
+        print(f"{patch_path} exists? {patch_path.exists()}")
         log.info(f"Patch file of '{module_fullname}' written to '{patch_path}'")
