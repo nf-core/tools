@@ -2,8 +2,6 @@
 
 import logging
 
-import jsonschema
-
 import nf_core.schema
 
 
