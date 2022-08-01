@@ -976,6 +976,7 @@ def plural_y(list_or_int):
 
 
 # From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+# Placed at top level as to only compile it once
 ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
