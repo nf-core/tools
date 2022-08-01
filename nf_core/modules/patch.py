@@ -55,7 +55,6 @@ class ModulePatch(ModuleCommand):
         patch_relpath = Path(module_relpath, patch_filename)
         module_dir = Path(self.dir, module_relpath)
         patch_path = Path(self.dir, patch_relpath)
-        print(patch_path)
 
         if patch_path.exists():
             remove = questionary.confirm(
