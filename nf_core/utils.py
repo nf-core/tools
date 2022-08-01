@@ -65,14 +65,14 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
         return True
     # Set and clean up the current version string
-    if current_version == None:
+    if current_version is None:
         current_version = nf_core.__version__
     current_version = re.sub(r"[^0-9\.]", "", current_version)
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = f"{source_url}?v={current_version}"
     # Fetch and clean up the remote version
-    if remote_version == None:
+    if remote_version is None:
         response = requests.get(source_url, timeout=3)
         remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
@@ -993,3 +993,16 @@ def plural_es(list_or_int):
     """Return a 'es' if the input is not one or has not the length of one."""
     length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
     return "es" * (length != 1)
+
+
+# From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+# Placed at top level as to only compile it once
+ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def strip_ansi_codes(string, replace_with=""):
+    """Strip ANSI colouring codes from a string to return plain text.
+
+    From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+    """
+    return ANSI_ESCAPE_RE.sub(replace_with, string)
