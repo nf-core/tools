@@ -2,7 +2,6 @@
 """ Tests covering the command-line code.
 """
 
-import unittest
 from unittest import mock
 
 from click.testing import CliRunner

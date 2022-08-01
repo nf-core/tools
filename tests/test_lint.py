@@ -5,13 +5,9 @@ import fnmatch
 import json
 import os
 import shutil
-import subprocess
 import tempfile
 import unittest
-from unittest import mock
 
-import pytest
-import requests
 import yaml
 
 import nf_core.create
