@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 
+from pathlib import Path
+
 import yaml
+
+from nf_core.modules.modules_differ import ModulesDiffer
 
 
 def meta_yml(module_lint_object, module):
@@ -19,19 +23,32 @@ def meta_yml(module_lint_object, module):
     """
     required_keys = ["name", "output"]
     required_keys_lists = ["input", "output"]
-    try:
-        with open(module.meta_yml, "r") as fh:
-            meta_yaml = yaml.safe_load(fh)
-        module.passed.append(("meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
-    except FileNotFoundError:
-        module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
-        return
+    # Check if we have a patch file, get original file in that case
+    meta_yaml = None
+    if module.is_patched:
+        lines = ModulesDiffer.try_apply_patch(
+            module.module_name,
+            "nf-core/modules",
+            module.patch_path,
+            Path(module.module_dir).relative_to(module.base_dir),
+            reverse=True,
+        ).get("meta.yml")
+        if lines is not None:
+            meta_yaml = yaml.safe_load("".join(lines))
+    if meta_yaml is None:
+        try:
+            with open(module.meta_yml, "r") as fh:
+                meta_yaml = yaml.safe_load(fh)
+            module.passed.append(("meta_yml_exists", "Module `meta.yml` exists", module.meta_yml))
+        except FileNotFoundError:
+            module.failed.append(("meta_yml_exists", "Module `meta.yml` does not exist", module.meta_yml))
+            return
 
     # Confirm that all required keys are given
     contains_required_keys = True
     all_list_children = True
     for rk in required_keys:
-        if not rk in meta_yaml.keys():
+        if rk not in meta_yaml.keys():
             module.failed.append(("meta_required_keys", f"`{rk}` not specified in YAML", module.meta_yml))
             contains_required_keys = False
         elif rk in meta_yaml.keys() and not isinstance(meta_yaml[rk], list) and rk in required_keys_lists:

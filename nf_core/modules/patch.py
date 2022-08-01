@@ -50,7 +50,7 @@ class ModulePatch(ModuleCommand):
                 f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
         # Set the diff filename based on the module name
-        patch_filename = f"{'-'.join(module.split('/'))}.diff"
+        patch_filename = f"{module.replace('/', '-')}.diff"
         module_relpath = Path("modules", self.modules_repo.fullname, module)
         patch_relpath = Path(module_relpath, patch_filename)
         module_dir = Path(self.dir, module_relpath)

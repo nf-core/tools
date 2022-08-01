@@ -44,7 +44,11 @@ make_docs(
 modules_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "module_lint_tests")
 make_docs(
     modules_docs_basedir,
-    nf_core.modules.lint.ModuleLint._get_all_lint_tests(),
+    list(
+        set(nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=True)).union(
+            nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=False)
+        )
+    ),
     """# {0}
 
 ```{{eval-rst}}
