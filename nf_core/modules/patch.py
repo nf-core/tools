@@ -105,5 +105,4 @@ class ModulePatch(ModuleCommand):
 
         # Finally move the created patch file to its final location
         shutil.move(patch_temp_path, patch_path)
-        print(f"{patch_path} exists? {patch_path.exists()}")
         log.info(f"Patch file of '{module_fullname}' written to '{patch_path}'")
