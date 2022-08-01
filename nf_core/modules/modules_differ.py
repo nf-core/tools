@@ -3,6 +3,9 @@ import enum
 import json
 import logging
 import os
+import re
+import shutil
+import tempfile
 from pathlib import Path
 
 from rich.console import Console
@@ -132,8 +135,8 @@ class ModulesDiffer:
         repo_name,
         from_dir,
         to_dir,
-        current_version=None,
-        new_version=None,
+        current_version,
+        new_version,
         file_action="a",
         for_git=True,
         dsp_from_dir=None,
@@ -162,9 +165,7 @@ class ModulesDiffer:
         """
 
         diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
-        if all(diff_status == ModulesDiffer.DiffEnum.UNCHANGED for _, (diff_status, _) in diffs.items()):
-            raise UserWarning("Module is unchanged")
-        log.debug(f"Writing diff of '{module}' to '{diff_path}'")
+        log.info(f"Writing diff of '{module}' to '{diff_path}'")
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
                 fh.write(
@@ -175,9 +176,11 @@ class ModulesDiffer:
             else:
                 fh.write(f"Changes in module '{Path(repo_name, module)}'\n")
 
-            for _, (diff_status, diff) in diffs.items():
+            for file, (diff_status, diff) in diffs.items():
                 if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
-                    # The file has changed write the diff lines to the file
+                    # The file has changed
+                    # fh.write(f"Changes in '{Path(from_dir, file)}':\n")
+                    # Write the diff lines to the file
                     for line in diff:
                         fh.write(line)
                     fh.write("\n")
@@ -219,9 +222,7 @@ class ModulesDiffer:
             fh.write("*" * 60 + "\n")
 
     @staticmethod
-    def print_diff(
-        module, repo_name, from_dir, to_dir, current_version=None, new_version=None, dsp_from_dir=None, dsp_to_dir=None
-    ):
+    def print_diff(module, repo_name, from_dir, to_dir, current_version, new_version):
         """
         Prints the diffs between two module versions to the terminal
 
@@ -236,9 +237,7 @@ class ModulesDiffer:
             current_version (str): The installed version of the module
             new_version (str): The version of the module the diff is computed against
         """
-        diffs = ModulesDiffer.get_module_diffs(
-            from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir
-        )
+        diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir)
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
             log.info(
@@ -250,15 +249,15 @@ class ModulesDiffer:
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
                 # The files are identical
-                log.info(f"'{Path(dsp_from_dir, file)}' is unchanged")
+                log.info(f"'{Path(from_dir, file)}' is unchanged")
             elif diff_status == ModulesDiffer.DiffEnum.CREATED:
                 # The file was created between the commits
-                log.info(f"'{Path(dsp_from_dir, file)}' was created")
+                log.info(f"'{Path(from_dir, file)}' was created")
             elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
-                log.info(f"'{Path(dsp_from_dir, file)}' was removed")
+                log.info(f"'{Path(from_dir, file)}' was removed")
             else:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")
                 # Pretty print the diff using the pygments diff lexer
-                console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
+                console.print(Syntax("".join(diff), "diff", theme="ansi_light"))

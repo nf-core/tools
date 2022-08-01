@@ -4,7 +4,6 @@ import json
 import logging
 import os
 import shutil
-from pathlib import Path
 
 import git
 import questionary
@@ -497,11 +496,7 @@ class ModulesJson:
         base_path = modules_repo.base_path
         if repo_name not in self.modules_json["repos"]:
             self.modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url, "base_path": base_path}
-        repo_modules_entry = self.modules_json["repos"][repo_name]["modules"]
-        if module_name not in repo_modules_entry:
-            repo_modules_entry[module_name] = {}
-        repo_modules_entry[module_name]["git_sha"] = module_version
-
+        self.modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": module_version}
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
         if write_file:
@@ -534,36 +529,6 @@ class ModulesJson:
 
         self.dump()
         return True
-
-    def add_patch_entry(self, module_name, repo_name, patch_filename, write_file=True):
-        """
-        Adds (or replaces) the patch entry for a module
-        """
-        if self.modules_json is None:
-            self.load()
-        if repo_name not in self.modules_json["repos"]:
-            raise LookupError(f"Repo '{repo_name}' not present in 'modules.json'")
-        if module_name not in self.modules_json["repos"][repo_name]["modules"]:
-            raise LookupError(f"Module '{repo_name}/{module_name}' not present in 'modules.json'")
-        self.modules_json["repos"][repo_name]["modules"][module_name]["patch"] = str(patch_filename)
-        if write_file:
-            self.dump()
-
-    def get_patch_fn(self, module_name, repo_name):
-        """
-        Get the patch filename of a module
-
-        Args:
-            module_name (str): The name of the module
-            repo_name (str): The name of the repository containing the module
-
-        Returns:
-            (str): The patch filename for the module, None if not present
-        """
-        if self.modules_json is None:
-            self.load()
-        path = self.modules_json["repos"].get(repo_name, {}).get("modules").get(module_name, {}).get("patch")
-        return Path(path) if path is not None else None
 
     def repo_present(self, repo_name):
         """

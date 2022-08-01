@@ -1176,45 +1176,6 @@ INFO     Removing star/align
 
 You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
-### Create a patch file for minor local changes in a module
-
-If you want to make a minor change to a module but still keep it up date with the remote version, you can create a patch file using `nf-core modules patch`.
-
-```console
-$ nf-core modules patch
-
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.5.dev0 - https://nf-co.re
-
-
-? Tool: bismark/align
-INFO     Changes in module 'nf-core/modules/bismark/align'
-INFO     Changes in 'bismark/align/main.nf':
-
- --- modules/nf-core/modules/bismark/align/main.nf
- +++ modules/nf-core/modules/bismark/align/main.nf
- @@ -19,8 +19,7 @@
-      }
-
-      input:
- -    tuple val(meta), path(reads)
- -    path index
- +    tuple val(meta), path(reads), path index
-
-      output:
-      tuple val(meta), path("*bam")       , emit: bam
-
-
-INFO     'modules/nf-core/modules/bismark/align/functions.nf' is unchanged
-INFO     'modules/nf-core/modules/bismark/align/meta.yml' is unchanged
-INFO     Patch file of 'nf-core/modules/bismark/align' written to 'modules/nf-core/modules/bismark/align/bismark-align.diff'
-```
-
 ### Create a new module
 
 This command creates a new nf-core module from the nf-core module template.
