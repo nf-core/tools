@@ -6,7 +6,6 @@ a nf-core pipeline.
 import logging
 import os
 import re
-import sys
 
 import rich.console
 

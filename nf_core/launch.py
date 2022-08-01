@@ -12,7 +12,6 @@ import subprocess
 import webbrowser
 
 import questionary
-import requests
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm

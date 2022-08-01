@@ -2,7 +2,6 @@ import logging
 import os
 
 import questionary
-import requests
 import yaml
 from rich import box
 from rich.console import Group
@@ -15,7 +14,7 @@ import nf_core.utils
 
 from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
-from .modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
+from .modules_repo import NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 

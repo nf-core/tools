@@ -7,7 +7,6 @@ import logging
 import re
 
 import requests
-from galaxy.tool_util.deps.mulled.util import build_target
 
 import nf_core
 import nf_core.modules.module_utils

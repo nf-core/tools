@@ -2,9 +2,7 @@
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 import logging
 import os
-import re
 import sys
-from email.policy import default
 
 import rich.console
 import rich.logging
@@ -350,6 +348,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
 )
 @click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
 @click.option(
+    "-N",
     "--no-pull",
     is_flag=True,
     default=False,
