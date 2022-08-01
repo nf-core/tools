@@ -1,3 +1,5 @@
+import os
+import shutil
 from pathlib import Path
 
 from ..modules_differ import ModulesDiffer
@@ -52,18 +54,19 @@ def check_patch_valid(module, patch_path):
         while True:
             line = next(it)
             if line.startswith("---"):
-                frompath = Path(line.split(" ")[1])
+                frompath = Path(line.split(" ")[1].strip("\n"))
                 line = next(it)
                 if not line.startswith("+++"):
                     module.failed.append(
                         (
                             "patch_valid",
-                            "Patch file invalid. Line starting with '---' should always be follow by line starting with '+++'",
+                            "Patch file invalid. Line starting with '---' should always be followed by line starting with '+++'",
                             patch_path,
                         )
                     )
                     passed = False
-                topath = Path(line.split(" ")[1])
+                    continue
+                topath = Path(line.split(" ")[1].strip("\n"))
                 if frompath == Path("/dev/null"):
                     paths_in_patch.append((frompath, ModulesDiffer.DiffEnum.CREATED))
                 elif topath == Path("/dev/null"):
@@ -144,7 +147,7 @@ def check_patch_valid(module, patch_path):
                 ("patch", f"Patch file performs file deletion of {path}. This is discouraged.", patch_path)
             )
         if passed:
-            module.passed(("patch_valid", "Patch file is valid", patch_path))
+            module.passed.append(("patch_valid", "Patch file is valid", patch_path))
         return passed
 
 
@@ -164,13 +167,13 @@ def patch_reversible(module, patch_path):
             module.module_name,
             "nf-core/modules",
             patch_path,
-            Path(module.module_dir).relative(module.base_dir),
+            Path(module.module_dir).relative_to(module.base_dir),
             reverse=True,
         )
     except LookupError as e:
         # Patch failed. Save the patch file by moving to the install dir
-        module.failed.append((("patch_reversible", "Patch does not agree with module files", patch_path)))
+        module.failed.append((("patch_reversible", "Patch file is outdated or edited", patch_path)))
         return False
 
-    module.passed((("patch_reversible", "Patch agrees with module files", patch_path)))
+    module.passed.append((("patch_reversible", "Patch agrees with module files", patch_path)))
     return True

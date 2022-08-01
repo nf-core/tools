@@ -75,27 +75,15 @@ class ModuleLint(ModuleCommand):
         self.warned = []
         self.failed = []
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
-        self.lint_tests = self.get_all_lint_tests()
+        self.lint_tests = self.get_all_lint_tests(self.repo_type == "pipeline")
         # Get lists of modules install in directory
         self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
 
         self.lint_config = None
         self.modules_json = None
 
-        # Add tests specific to nf-core/modules or pipelines
-        if self.repo_type == "modules":
-            self.lint_tests.append("module_tests")
-
-        if self.repo_type == "pipeline":
-            # Add as first test to load git_sha before module_changes
-            self.lint_tests.insert(0, "module_version")
-            # Add as the second test to verify the patch file before module_changes
-            self.lint_test.insert(1)
-            # Only check if modules have been changed in pipelines
-            self.lint_tests.append("module_changes")
-
     @staticmethod
-    def get_all_lint_tests(is_pipeline=True):
+    def get_all_lint_tests(is_pipeline):
         if is_pipeline:
             return [
                 "module_patch",

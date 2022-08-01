@@ -293,6 +293,8 @@ class ModulesDiffer:
                 patch_lines = [line]
                 i += 1
                 line = lines[i]
+                if not line.startswith("+++ "):
+                    raise LookupError("Missing to-file in patch file")
                 _, topath = line.split(" ")
                 topath = topath.strip()
                 patch_lines.append(line)

@@ -35,13 +35,7 @@ def module_changes(module_lint_object, module):
                 with open(tempdir / file, "w") as fh:
                     fh.writelines(lines)
         except LookupError:
-            module.failed.append(
-                (
-                    "check_local_copy",
-                    "Local copy of module out of sync with diff file",
-                    f"{module.module_dir}",
-                )
-            )
+            # This error is already reported by module_patch, so just return
             return
     else:
         tempdir = module.module_dir
