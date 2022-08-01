@@ -9,31 +9,23 @@ nf-core modules lint
 
 from __future__ import print_function
 
-import json
 import logging
 import operator
 import os
-import re
-import sys
 
 import questionary
-import requests
 import rich
-import yaml
 from rich.markdown import Markdown
-from rich.panel import Panel
 from rich.table import Table
 
 import nf_core.modules.module_utils
 import nf_core.utils
-from nf_core.lint.pipeline_todos import pipeline_todos
 from nf_core.lint_utils import console
 from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import ModulesRepo
 from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
-from nf_core.utils import rich_force_colors
 
 log = logging.getLogger(__name__)
 
@@ -66,6 +58,7 @@ class ModuleLint(ModuleCommand):
     from .meta_yml import meta_yml
     from .module_changes import module_changes
     from .module_deprecations import module_deprecations
+    from .module_patch import module_patch
     from .module_tests import module_tests
     from .module_todos import module_todos
     from .module_version import module_version
@@ -82,7 +75,7 @@ class ModuleLint(ModuleCommand):
         self.warned = []
         self.failed = []
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
-        self.lint_tests = self._get_all_lint_tests()
+        self.lint_tests = self.get_all_lint_tests()
         # Get lists of modules install in directory
         self.all_local_modules, self.all_nfcore_modules = self.get_installed_modules()
 
@@ -96,12 +89,25 @@ class ModuleLint(ModuleCommand):
         if self.repo_type == "pipeline":
             # Add as first test to load git_sha before module_changes
             self.lint_tests.insert(0, "module_version")
+            # Add as the second test to verify the patch file before module_changes
+            self.lint_test.insert(1)
             # Only check if modules have been changed in pipelines
             self.lint_tests.append("module_changes")
 
     @staticmethod
-    def _get_all_lint_tests():
-        return ["main_nf", "meta_yml", "module_todos", "module_deprecations"]
+    def get_all_lint_tests(is_pipeline=True):
+        if is_pipeline:
+            return [
+                "module_patch",
+                "module_version",
+                "main_nf",
+                "meta_yml",
+                "module_todos",
+                "module_deprecations",
+                "module_changes",
+            ]
+        else:
+            return ["main_nf", "meta_yml", "module_todos", "module_deprecations", "module_tests"]
 
     def lint(
         self,

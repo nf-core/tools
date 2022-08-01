@@ -4,7 +4,7 @@ from ..modules_differ import ModulesDiffer
 from ..nfcore_module import NFCoreModule
 
 
-def patch(module_lint_obj, module: NFCoreModule):
+def module_patch(module_lint_obj, module: NFCoreModule):
     """
     Lint a patch file found in a module
 
