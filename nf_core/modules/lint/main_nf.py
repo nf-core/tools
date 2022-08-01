@@ -5,11 +5,14 @@ Lint the main.nf file of a module
 
 import logging
 import re
+import sys
+from pathlib import Path
 
 import requests
 
 import nf_core
 import nf_core.modules.module_utils
+from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
@@ -37,14 +40,26 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
     inputs = []
     outputs = []
 
-    # Check whether file exists and load it
-    try:
-        with open(module.main_nf, "r") as fh:
-            lines = fh.readlines()
-        module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
-    except FileNotFoundError as e:
-        module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
-        return
+    # Check if we have a patch file affecting the 'main.nf' file
+    # otherwise read the lines directly from the module
+    lines = None
+    if module.is_patched:
+        lines = ModulesDiffer.try_apply_patch(
+            module.module_name,
+            "nf-core/modules",
+            module.patch_path,
+            Path(module.module_dir).relative_to(module.base_dir),
+            reverse=True,
+        ).get("main.nf")
+    if lines is None:
+        try:
+            # Check whether file exists and load it
+            with open(module.main_nf, "r") as fh:
+                lines = fh.readlines()
+            module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
+        except FileNotFoundError as e:
+            module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
+            return
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
     lines_j = "\n".join(lines)

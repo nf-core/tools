@@ -516,7 +516,7 @@ class ModuleUpdate(ModuleCommand):
         for file, new_content in new_files.items():
             fn = temp_module_dir / file
             with open(fn, "w") as fh:
-                fh.write(new_content)
+                fh.writelines(new_content)
 
         # Create the new patch file
         log.debug("Regenerating patch file")
