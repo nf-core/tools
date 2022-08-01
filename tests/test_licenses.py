@@ -1,15 +1,16 @@
 #!/usr/bin/env python
 """Some tests covering the pipeline creation sub command.
 """
-import json
-import os
-import tempfile
-import unittest
-
-import pytest
-
-import nf_core.create
-import nf_core.licences
+# import json
+# import os
+# import tempfile
+# import unittest
+#
+# import pytest
+# from rich.console import Console
+#
+# import nf_core.create
+# import nf_core.licences
 
 # TODO nf-core: Assess and strip out if no longer required for DSL2
 

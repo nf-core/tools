@@ -2,9 +2,7 @@
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 import logging
 import os
-import re
 import sys
-from email.policy import default
 
 import rich.console
 import rich.logging
@@ -191,7 +189,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     launcher = nf_core.launch.Launch(
         pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id
     )
-    if launcher.launch_pipeline() == False:
+    if not launcher.launch_pipeline():
         sys.exit(1)
 
 
@@ -350,6 +348,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
 )
 @click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
 @click.option(
+    "-N",
     "--no-pull",
     is_flag=True,
     default=False,
