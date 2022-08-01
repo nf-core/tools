@@ -181,6 +181,7 @@ class Launch(object):
         # Build and launch the `nextflow run` command
         self.build_command()
         self.launch_workflow()
+        return True
 
     def get_pipeline_schema(self):
         """Load and validate the schema from the supplied pipeline"""
