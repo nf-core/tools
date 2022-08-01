@@ -10,7 +10,7 @@ import unittest
 import nf_core.create
 import nf_core.modules
 
-from .utils import GITLAB_URL, OLD_TRIMGALORE_SHA
+from .utils import OLD_TRIMGALORE_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -57,7 +57,7 @@ class TestModules(unittest.TestCase):
             self.pipeline_dir,
             prompt=False,
             force=True,
-            remote_url=GITLAB_URL,
+            remote_url="https://gitlab.com/nf-core/modules-test.git",
         )
 
         # Set up remove objects
@@ -142,7 +142,6 @@ class TestModules(unittest.TestCase):
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,
     )
-    from .modules.patch import test_create_patch_change, test_create_patch_no_change
     from .modules.remove import (
         test_modules_remove_trimgalore,
         test_modules_remove_trimgalore_uninstalled,

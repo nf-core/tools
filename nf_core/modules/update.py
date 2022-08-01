@@ -1,3 +1,4 @@
+import difflib
 import enum
 import json
 import logging
@@ -7,6 +8,8 @@ import tempfile
 from pathlib import Path
 
 import questionary
+from rich.console import Console
+from rich.syntax import Syntax
 
 import nf_core.modules.module_utils
 import nf_core.utils
@@ -44,7 +47,7 @@ class ModuleUpdate(ModuleCommand):
         self.save_diff_fn = save_diff_fn
         self.module = None
         self.update_config = None
-        self.modules_json = ModulesJson(self.dir)
+        self.modules_json = None
 
         # Fetch the list of pipeline modules
         self.get_pipeline_modules()
@@ -99,6 +102,7 @@ class ModuleUpdate(ModuleCommand):
         self._parameter_checks()
 
         # Verify that 'modules.json' is consistent with the installed modules
+        self.modules_json = ModulesJson(self.dir)
         self.modules_json.check_up_to_date()
 
         if not self.update_all and module is None:
@@ -118,7 +122,7 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         # Get the list of modules to update, and their version information
-        modules_info = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
+        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
 
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
@@ -144,9 +148,7 @@ class ModuleUpdate(ModuleCommand):
         # Loop through all modules to be updated
         # and do the requested action on them
         exit_value = True
-        for modules_repo, module, sha in modules_info:
-
-            module_fullname = str(Path(modules_repo.fullname, module))
+        for modules_repo, module, sha in repos_mods_shas:
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
@@ -171,9 +173,9 @@ class ModuleUpdate(ModuleCommand):
             if current_version is not None and not self.force:
                 if current_version == version:
                     if self.sha or self.prompt:
-                        log.info(f"'{module_fullname}' is already installed at {version}")
+                        log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
                     else:
-                        log.info(f"'{module_fullname}' is already up to date")
+                        log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
                     continue
 
             # Download module files
@@ -184,18 +186,29 @@ class ModuleUpdate(ModuleCommand):
             if dry_run:
                 # Compute the diffs for the module
                 if self.save_diff_fn:
-                    log.info(f"Writing diff file for module '{module_fullname}' to '{self.save_diff_fn}'")
-                    ModulesDiffer.write_diff_file(
-                        self.save_diff_fn,
-                        module,
-                        modules_repo.fullname,
-                        module_dir,
-                        module_install_dir,
-                        current_version,
-                        version,
-                        dsp_from_dir=module_dir,
-                        dsp_to_dir=module_dir,
-                    )
+                    try:
+                        ModulesDiffer.write_diff_file(
+                            self.save_diff_fn,
+                            module,
+                            modules_repo.fullname,
+                            module_dir,
+                            module_install_dir,
+                            current_version,
+                            version,
+                            dsp_from_dir=module_dir,
+                            dsp_to_dir=module_dir,
+                        )
+                    except UserWarning as e:
+                        # Remove the diff file
+                        os.remove(self.save_diff_fn)
+                        created_files_msg, removed_files_msg = e.args
+                        if created_files_msg is not None:
+                            log.error(created_files_msg)
+                        if removed_files_msg is not None:
+                            log.error(removed_files_msg)
+                        raise UserWarning(
+                            "Can't use '--save-diff' option when files were created or removed. Please use either of '--no-preview' or '--preview' options."
+                        )
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
@@ -385,7 +398,7 @@ class ModuleUpdate(ModuleCommand):
         # don't try to update those that don't
         i = 0
         while i < len(modules_info):
-            repo, module, _ = modules_info[i]
+            repo, module, sha = modules_info[i]
             if repo.module_exists(module):
                 i += 1
             else:
