@@ -2,6 +2,11 @@
 Check whether the content of a module has changed compared to the original repository
 """
 import os
+import shutil
+import tempfile
+from pathlib import Path
+
+from nf_core.modules.modules_differ import ModulesDiffer
 
 
 def module_changes(module_lint_object, module):
@@ -17,8 +22,25 @@ def module_changes(module_lint_object, module):
 
     Only runs when linting a pipeline, not the modules repository
     """
+    if module.is_patched:
+        # If the module is patched, we need to apply
+        # the patch in reverse before comparing with the remote
+        tempdir = Path(tempfile.mkdtemp())
+        shutil.copytree(module.module_dir, tempdir, dirs_exist_ok=True)
+        try:
+            new_lines = ModulesDiffer.try_apply_patch(
+                module.module_name, "nf-core/modules", module.patch_path, tempdir, reverse=True
+            )
+            for file, lines in new_lines.items():
+                with open(tempdir / file, "w") as fh:
+                    fh.writelines(lines)
+        except LookupError:
+            return
+    else:
+        tempdir = module.module_dir
+
     for f, same in module_lint_object.modules_repo.module_files_identical(
-        module.module_name, module.module_dir, module.git_sha
+        module.module_name, tempdir, module.git_sha
     ).items():
         if same:
             module.passed.append(

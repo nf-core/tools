@@ -444,4 +444,5 @@ class ModulesDiffer:
             with open(file_path, "r") as fh:
                 file_lines = fh.readlines()
             patched_new_lines = ModulesDiffer.try_apply_single_patch(file_lines, patch, reverse=reverse)
-            new_files[file_relpath] = "".join(patched_new_lines)
+            new_files[file_relpath] = patched_new_lines
+            return new_files
