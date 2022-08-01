@@ -61,6 +61,7 @@
 - Add short option for `--no-pull` option in `nf-core modules`
 - Add `nf-core modules patch` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 - Add support for patch in `nf-core modules update` command ([#1312](https://github.com/nf-core/tools/issues/1312))
+- Add support for patch in `nf-core modules lint` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

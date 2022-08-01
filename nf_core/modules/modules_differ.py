@@ -293,6 +293,8 @@ class ModulesDiffer:
                 patch_lines = [line]
                 i += 1
                 line = lines[i]
+                if not line.startswith("+++ "):
+                    raise LookupError("Missing to-file in patch file")
                 _, topath = line.split(" ")
                 topath = topath.strip()
                 patch_lines.append(line)
@@ -354,7 +356,7 @@ class ModulesDiffer:
         return old_lines, new_lines
 
     @staticmethod
-    def try_apply_patch(file_path, patch):
+    def try_apply_single_patch(file_lines, patch, reverse=False):
         """
         Tries to apply a patch to a modified file. Since the line numbers in
         the patch does not agree if the file is modified, the old and new
@@ -365,6 +367,7 @@ class ModulesDiffer:
         Args:
             new_fn (str | Path): Path to the modified file
             patch (str | Path): (Outdated) patch for the file
+            reverse (bool): Apply the patch in reverse
 
         Returns:
             [str]: The patched lines of the file
@@ -374,9 +377,8 @@ class ModulesDiffer:
                          the file.
         """
         org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
-
-        with open(file_path, "r") as fh:
-            new_lines = fh.readlines()
+        if reverse:
+            patch_lines, org_lines = org_lines, patch_lines
 
         # The patches are sorted by their order of occurrence in the original
         # file. Loop through the new file and try to find the new indices of
@@ -386,11 +388,11 @@ class ModulesDiffer:
         patch_indices = [None] * p
         i = 0
         j = 0
-        n = len(new_lines)
+        n = len(file_lines)
         while i < n and j < p:
             m = len(org_lines[j])
             while i < n:
-                if org_lines[j] == new_lines[i : i + m]:
+                if org_lines[j] == file_lines[i : i + m]:
                     patch_indices[j] = (i, i + m)
                     j += 1
                     break
@@ -403,15 +405,46 @@ class ModulesDiffer:
 
         # Apply the patch to new lines by substituting
         # the original lines with the patch lines
-        patched_new_lines = new_lines[: patch_indices[0][0]]
+        patched_new_lines = file_lines[: patch_indices[0][0]]
         for i in range(len(patch_indices) - 1):
             # Add the patch lines
             patched_new_lines.extend(patch_lines[i])
             # Fill the spaces between the patches
-            patched_new_lines.extend(new_lines[patch_indices[i][1] : patch_indices[i + 1][0]])
+            patched_new_lines.extend(file_lines[patch_indices[i][1] : patch_indices[i + 1][0]])
 
         # Add the remaining part of the new file
         patched_new_lines.extend(patch_lines[-1])
-        patched_new_lines.extend(new_lines[patch_indices[-1][1] :])
+        patched_new_lines.extend(file_lines[patch_indices[-1][1] :])
 
         return patched_new_lines
+
+    @staticmethod
+    def try_apply_patch(module, repo_name, patch_path, module_dir, reverse=False):
+        """
+        Try applying a full patch file to a module
+
+        Args:
+            module (str): Name of the module
+            repo_name (str): Name of the repository where the module resides
+            patch_path (str): The absolute path to the patch file to be applied
+            module_dir (Path): The directory containing the module
+
+        Returns:
+            dict[str, str]: A dictionary with file paths (relative to the pipeline dir)
+                            as keys and the patched file contents as values
+
+        Raises:
+            LookupError: If the the patch application fails in a file
+        """
+        module_relpath = Path("modules", repo_name, module)
+        patches = ModulesDiffer.per_file_patch(patch_path)
+        new_files = {}
+        for file, patch in patches.items():
+            log.debug(f"Applying patch to {file}")
+            fn = Path(file).relative_to(module_relpath)
+            file_path = module_dir / fn
+            with open(file_path, "r") as fh:
+                file_lines = fh.readlines()
+            patched_new_lines = ModulesDiffer.try_apply_single_patch(file_lines, patch, reverse=reverse)
+            new_files[str(fn)] = patched_new_lines
+        return new_files

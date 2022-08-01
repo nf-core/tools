@@ -56,7 +56,7 @@ def run_linting(
     # Verify that the requested tests exist
     if key:
         all_tests = set(PipelineLint._get_all_lint_tests(release_mode)).union(
-            set(nf_core.modules.lint.ModuleLint._get_all_lint_tests())
+            set(nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=True))
         )
         bad_keys = [k for k in key if k not in all_tests]
         if len(bad_keys) > 0:
@@ -92,7 +92,9 @@ def run_linting(
     # Run only the tests we want
     if key:
         # Select only the module lint tests
-        module_lint_tests = list(set(key).intersection(set(nf_core.modules.lint.ModuleLint._get_all_lint_tests())))
+        module_lint_tests = list(
+            set(key).intersection(set(nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=True)))
+        )
     else:
         # If no key is supplied, run the default modules tests
         module_lint_tests = ("module_changes", "module_version")

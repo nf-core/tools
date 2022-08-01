@@ -34,6 +34,8 @@ class NFCoreModule(object):
         self.outputs = []
         self.has_meta = False
         self.git_sha = None
+        self.is_patched = False
+        self.is_patched = None
 
         if nf_core_module:
             # Initialize the important files
