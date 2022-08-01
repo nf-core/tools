@@ -5,7 +5,7 @@ Lint the main.nf file of a module
 
 import logging
 import re
-import sys
+import sqlite3
 from pathlib import Path
 
 import requests
@@ -306,24 +306,31 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 package, ver = bp.split("=", 1)
                 # If a new version is available and fix is True, update the version
                 if fix_version:
-                    if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
-                        progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
-                        log.debug(f"Updating package {package} {ver} -> {last_ver}")
-                        self.passed.append(
-                            (
-                                "bioconda_latest",
-                                f"Conda package has been updated to the latest available: `{bp}`",
-                                self.main_nf,
-                            )
-                        )
+                    try:
+                        fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
+                    except FileNotFoundError as e:
+                        fixed = False
+                        log.debug(f"Unable to update package {package} due to error: {e}")
                     else:
-                        progress_bar.print(
-                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                        )
-                        log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
-                        self.warned.append(
-                            ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                        )
+                        if fixed:
+                            progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                            log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                            self.passed.append(
+                                (
+                                    "bioconda_latest",
+                                    f"Conda package has been updated to the latest available: `{bp}`",
+                                    self.main_nf,
+                                )
+                            )
+                        else:
+                            progress_bar.print(
+                                f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                            )
+                            log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                            self.warned.append(
+                                ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                            )
+                # Add available update as a warning
                 else:
                     self.warned.append(
                         ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
@@ -423,12 +430,16 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
             new_url = re.search(
                 "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
             ).group(1)
-            response_new_container = requests.get(
-                "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
-            )
-            log.debug(
-                f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
-            )
+            try:
+                response_new_container = requests.get(
+                    "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
+                )
+                log.debug(
+                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+                )
+            except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
+                log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")
+                return False
             if response_new_container.status_code != 200:
                 return False
             new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
