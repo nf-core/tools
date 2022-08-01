@@ -24,6 +24,7 @@ import nf_core.utils
 from nf_core import __version__
 from nf_core.lint_utils import console
 from nf_core.utils import plural_s as _s
+from nf_core.utils import strip_ansi_codes
 
 log = logging.getLogger(__name__)
 
@@ -458,7 +459,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
-                        f"{self._strip_ansi_codes(msg, '`')}"
+                        f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.failed
                     ]
                 )
@@ -472,7 +473,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
-                        f"{self._strip_ansi_codes(msg, '`')}"
+                        f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.ignored
                     ]
                 )
@@ -486,7 +487,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
-                        f"{self._strip_ansi_codes(msg, '`')}"
+                        f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.fixed
                     ]
                 )
@@ -500,7 +501,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                 "\n".join(
                     [
                         f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html) - "
-                        f"{self._strip_ansi_codes(msg, '`')}"
+                        f"{strip_ansi_codes(msg, '`')}"
                         for eid, msg in self.warned
                     ]
                 )
@@ -515,7 +516,7 @@ class PipelineLint(nf_core.utils.Pipeline):
                     [
                         (
                             f"* [{eid}](https://nf-co.re/tools-docs/lint_tests/{eid}.html)"
-                            f" - {self._strip_ansi_codes(msg, '`')}"
+                            f" - {strip_ansi_codes(msg, '`')}"
                         )
                         for eid, msg in self.passed
                     ]
@@ -553,11 +554,11 @@ class PipelineLint(nf_core.utils.Pipeline):
         results = {
             "nf_core_tools_version": nf_core.__version__,
             "date_run": now.strftime("%Y-%m-%d %H:%M:%S"),
-            "tests_pass": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.passed],
-            "tests_ignored": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.ignored],
-            "tests_fixed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.fixed],
-            "tests_warned": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.warned],
-            "tests_failed": [[idx, self._strip_ansi_codes(msg)] for idx, msg in self.failed],
+            "tests_pass": [[idx, strip_ansi_codes(msg)] for idx, msg in self.passed],
+            "tests_ignored": [[idx, strip_ansi_codes(msg)] for idx, msg in self.ignored],
+            "tests_fixed": [[idx, strip_ansi_codes(msg)] for idx, msg in self.fixed],
+            "tests_warned": [[idx, strip_ansi_codes(msg)] for idx, msg in self.warned],
+            "tests_failed": [[idx, strip_ansi_codes(msg)] for idx, msg in self.failed],
             "num_tests_pass": len(self.passed),
             "num_tests_ignored": len(self.ignored),
             "num_tests_fixed": len(self.fixed),
@@ -590,11 +591,3 @@ class PipelineLint(nf_core.utils.Pipeline):
             files = [files]
         bfiles = [f"`{f}`" for f in files]
         return " or ".join(bfiles)
-
-    def _strip_ansi_codes(self, string, replace_with=""):
-        """Strip ANSI colouring codes from a string to return plain text.
-
-        Solution found on Stack Overflow: https://stackoverflow.com/a/14693789/713980
-        """
-        ansi_escape = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
-        return ansi_escape.sub(replace_with, string)

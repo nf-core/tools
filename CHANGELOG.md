@@ -40,6 +40,9 @@
 - Allow customization of the `nf-core` pipeline template when using `nf-core create` ([#1548](https://github.com/nf-core/tools/issues/1548))
 - Add Refgenie integration: updating of nextflow config files with a refgenie database ([#1090](https://github.com/nf-core/tools/pull/1090))
 - Fix `--key` option in `nf-core lint` when supplying a module lint test name ([#1681](https://github.com/nf-core/tools/issues/1681))
+- Add `no_git=True` when creating a new pipeline and initialising a git repository is not needed in `nf-core lint` and `nf-core bump-version` ([#1709](https://github.com/nf-core/tools/pull/1709))
+- Move `strip_ansi_code` function in lint to `utils.py`
+- Simplify control flow and don't use equality comparison for `None` and booleans
 
 ### Modules
 
@@ -56,6 +59,8 @@
 - Make `nf-core modules update --save-diff` work when files were created or removed ([#1694](https://github.com/nf-core/tools/issues/1694))
 - Get the latest common build for Docker and Singularity containers of a module ([#1702](https://github.com/nf-core/tools/pull/1702))
 - Add short option for `--no-pull` option in `nf-core modules`
+- Add `nf-core modules patch` command ([#1312](https://github.com/nf-core/tools/issues/1312))
+- Add support for patch in `nf-core modules update` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

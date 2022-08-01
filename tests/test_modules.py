@@ -10,7 +10,7 @@ import unittest
 import nf_core.create
 import nf_core.modules
 
-from .utils import OLD_TRIMGALORE_SHA
+from .utils import GITLAB_URL, OLD_TRIMGALORE_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -44,7 +44,7 @@ class TestModules(unittest.TestCase):
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
         nf_core.create.PipelineCreate(
-            "mypipeline", "it is mine", "me", outdir=self.pipeline_dir, plain=True
+            "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
@@ -54,10 +54,7 @@ class TestModules(unittest.TestCase):
             self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
-            self.pipeline_dir,
-            prompt=False,
-            force=True,
-            remote_url="https://gitlab.com/nf-core/modules-test.git",
+            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL
         )
 
         # Set up remove objects
@@ -141,6 +138,14 @@ class TestModules(unittest.TestCase):
         test_mod_json_up_to_date_module_removed,
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,
+    )
+    from .modules.patch import (
+        test_create_patch_change,
+        test_create_patch_no_change,
+        test_create_patch_try_apply_failed,
+        test_create_patch_try_apply_successful,
+        test_create_patch_update_fail,
+        test_create_patch_update_success,
     )
     from .modules.remove import (
         test_modules_remove_trimgalore,
