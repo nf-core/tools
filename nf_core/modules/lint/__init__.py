@@ -78,7 +78,17 @@ class ModuleLint(ModuleCommand):
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.lint_tests = self.get_all_lint_tests(self.repo_type == "pipeline")
         # Get lists of modules install in directory
-        self.all_local_modules, self.all_remote_modules = self.get_installed_modules()
+        self.get_pipeline_modules(local=True)
+
+        if self.repo_type == "pipeline":
+            if self.modules_repo.fullname in self.module_names:
+                self.all_remote_modules = self.module_names[self.modules_repo.fullname]
+            else:
+                raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
+        else:
+            self.all_remote_modules = self.module_names["modules"]
+
+        self.local_modules = self.module_names.get("local", [])
 
         self.lint_config = None
         self.modules_json = None
@@ -217,54 +227,6 @@ class ModuleLint(ModuleCommand):
 
         # If -k supplied, only run these tests
         self.lint_tests = [k for k in self.lint_tests if k in key]
-
-    def get_installed_modules(self):
-        """
-        Makes lists of the local and remote modules installed in this directory.
-
-        Returns:
-            local_modules, nfcore_modules ([NfCoreModule], [NfCoreModule]):
-                A tuple of two lists: One for local modules and one for nf-core modules.
-                In case the module contains several subtools, one path to each tool directory
-                is returned.
-
-        """
-        self.get_pipeline_modules()
-        if self.repo_type == "pipeline":
-            remote_modules = {
-                repo_name: [
-                    NFCoreModule(
-                        Path(self.dir, "modules", repo_name, m), repo_type=self.repo_type, base_dir=Path(self.dir)
-                    )
-                    for m in modules
-                ]
-                for repo_name, modules in self.module_names.items()
-                if repo_name != "local"
-            }
-        else:
-            remote_modules = {
-                "modules": [
-                    NFCoreModule(Path(self.dir, "modules", m), repo_type=self.repo_type, base_dir=Path(self.dir))
-                    for m in modules
-                ]
-                for modules in self.module_names["modules"]
-            }
-
-        local_modules = [
-            NFCoreModule(
-                Path(self.dir, "local", m), repo_type=self.repo_type, base_dir=Path(self.dir), nf_core_module=False
-            )
-            for m in self.module_names.get("local", [])
-        ]
-
-        # The local modules mustn't conform to the same file structure
-        # as the nf-core modules. We therefore only check the main script
-        # of the module
-        for mod in local_modules:
-            mod.main_nf = mod.module_dir
-            mod.module_name = os.path.basename(mod.module_dir)
-
-        return local_modules, remote_modules
 
     def lint_modules(self, modules, local=False, fix_version=False):
         """

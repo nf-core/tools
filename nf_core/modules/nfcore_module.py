@@ -52,6 +52,13 @@ class NFCoreModule(object):
             self.test_dir = Path(self.base_dir, "tests", "modules", self.module_name)
             self.test_yml = self.test_dir / "test.yml"
             self.test_main_nf = self.test_dir / "main.nf"
+
+            if self.repo_type == "pipeline":
+                patch_fn = f"{self.module_name.replace('/', '-')}.diff"
+                patch_path = Path(self.module_dir, patch_fn)
+                if patch_path.exists():
+                    self.is_patched = True
+                    self.patch_path = patch_path
         else:
             # These attributes are only used by nf-core modules
             # so just initialize them to None
