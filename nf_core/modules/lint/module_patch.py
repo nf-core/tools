@@ -77,7 +77,7 @@ def check_patch_valid(module, patch_path):
                     module.failed.append(
                         (
                             "patch_valid",
-                            "Patch file invaldi. From file '{frompath}' mismatched with to path '{topath}'",
+                            f"Patch file invaldi. From file '{frompath}' mismatched with to path '{topath}'",
                             patch_path,
                         )
                     )

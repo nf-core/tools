@@ -215,7 +215,14 @@ class ModuleUpdate(ModuleCommand):
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
-                        module, modules_repo.fullname, module_dir, module_install_dir, current_version, version
+                        module,
+                        modules_repo.fullname,
+                        module_dir,
+                        module_install_dir,
+                        current_version,
+                        version,
+                        dsp_from_dir=module_dir,
+                        dsp_to_dir=module_dir,
                     )
 
                     # Ask the user if they want to install the module

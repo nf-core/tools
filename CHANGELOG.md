@@ -56,6 +56,7 @@
 - Rename methods in `ModulesJson` to remove explicit reference to `modules.json`
 - Fix inconsistencies in the `--save-diff` flag `nf-core modules update`. Refactor `nf-core modules update` ([#1536](https://github.com/nf-core/tools/pull/1536))
 - Fix bug in `ModulesJson.check_up_to_date` causing it to ask for the remote of local modules
+- Handle errors when updating module version with `nf-core modules update --fix-version` ([#1671](https://github.com/nf-core/tools/pull/1671))
 - Make `nf-core modules update --save-diff` work when files were created or removed ([#1694](https://github.com/nf-core/tools/issues/1694))
 - Get the latest common build for Docker and Singularity containers of a module ([#1702](https://github.com/nf-core/tools/pull/1702))
 - Add short option for `--no-pull` option in `nf-core modules`
