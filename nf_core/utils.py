@@ -65,14 +65,14 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
         return True
     # Set and clean up the current version string
-    if current_version == None:
+    if current_version is None:
         current_version = nf_core.__version__
     current_version = re.sub(r"[^0-9\.]", "", current_version)
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
     source_url = f"{source_url}?v={current_version}"
     # Fetch and clean up the remote version
-    if remote_version == None:
+    if remote_version is None:
         response = requests.get(source_url, timeout=3)
         remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
@@ -701,16 +701,30 @@ def get_biocontainer_tag(package, version):
                 images = response.json()["images"]
                 singularity_image = None
                 docker_image = None
+                all_docker = {}
+                all_singularity = {}
                 for img in images:
-                    # Get most recent Docker and Singularity image
+                    # Get all Docker and Singularity images
                     if img["image_type"] == "Docker":
-                        modification_date = get_tag_date(img["updated"])
-                        if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
-                            docker_image = img
-                    if img["image_type"] == "Singularity":
-                        modification_date = get_tag_date(img["updated"])
-                        if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
-                            singularity_image = img
+                        # Obtain version and build
+                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
+                        if match is not None:
+                            all_docker[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                    elif img["image_type"] == "Singularity":
+                        # Obtain version and build
+                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
+                        if match is not None:
+                            all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                # Obtain common builds from Docker and Singularity images
+                common_keys = list(all_docker.keys() & all_singularity.keys())
+                current_date = None
+                for k in common_keys:
+                    # Get the most recent common image
+                    date = max(all_docker[k]["date"], all_docker[k]["date"])
+                    if docker_image is None or current_date < date:
+                        docker_image = all_docker[k]["image"]
+                        singularity_image = all_singularity[k]["image"]
+                        current_date = date
                 return docker_image["image_name"], singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
@@ -973,3 +987,22 @@ def plural_y(list_or_int):
     """Return 'ies' if the input is not one or has not the length of one, else 'y'."""
     length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
     return "ies" if length != 1 else "y"
+
+
+def plural_es(list_or_int):
+    """Return a 'es' if the input is not one or has not the length of one."""
+    length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
+    return "es" * (length != 1)
+
+
+# From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+# Placed at top level as to only compile it once
+ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def strip_ansi_codes(string, replace_with=""):
+    """Strip ANSI colouring codes from a string to return plain text.
+
+    From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+    """
+    return ANSI_ESCAPE_RE.sub(replace_with, string)

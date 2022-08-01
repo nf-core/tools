@@ -2,6 +2,8 @@ from rich.console import Console
 
 import nf_core.modules
 
+from ..utils import GITLAB_URL
+
 
 def test_modules_list_remote(self):
     """Test listing available modules"""
@@ -15,7 +17,7 @@ def test_modules_list_remote(self):
 
 def test_modules_list_remote_gitlab(self):
     """Test listing the modules in the remote gitlab repo"""
-    mods_list = nf_core.modules.ModuleList(None, remote=True, remote_url="https://gitlab.com/nf-core/modules-test.git")
+    mods_list = nf_core.modules.ModuleList(None, remote=True, remote_url=GITLAB_URL)
     listed_mods = mods_list.list_modules()
     console = Console(record=True)
     console.print(listed_mods)
