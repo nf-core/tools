@@ -3,9 +3,6 @@ import enum
 import json
 import logging
 import os
-import re
-import shutil
-import tempfile
 from pathlib import Path
 
 from rich.console import Console
@@ -135,8 +132,8 @@ class ModulesDiffer:
         repo_name,
         from_dir,
         to_dir,
-        current_version,
-        new_version,
+        current_version=None,
+        new_version=None,
         file_action="a",
         for_git=True,
         dsp_from_dir=None,
@@ -165,7 +162,9 @@ class ModulesDiffer:
         """
 
         diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir, for_git, dsp_from_dir, dsp_to_dir)
-        log.info(f"Writing diff of '{module}' to '{diff_path}'")
+        if all(diff_status == ModulesDiffer.DiffEnum.UNCHANGED for _, (diff_status, _) in diffs.items()):
+            raise UserWarning("Module is unchanged")
+        log.debug(f"Writing diff of '{module}' to '{diff_path}'")
         with open(diff_path, file_action) as fh:
             if current_version is not None and new_version is not None:
                 fh.write(
@@ -176,11 +175,9 @@ class ModulesDiffer:
             else:
                 fh.write(f"Changes in module '{Path(repo_name, module)}'\n")
 
-            for file, (diff_status, diff) in diffs.items():
+            for _, (diff_status, diff) in diffs.items():
                 if diff_status != ModulesDiffer.DiffEnum.UNCHANGED:
-                    # The file has changed
-                    # fh.write(f"Changes in '{Path(from_dir, file)}':\n")
-                    # Write the diff lines to the file
+                    # The file has changed write the diff lines to the file
                     for line in diff:
                         fh.write(line)
                     fh.write("\n")
@@ -222,7 +219,9 @@ class ModulesDiffer:
             fh.write("*" * 60 + "\n")
 
     @staticmethod
-    def print_diff(module, repo_name, from_dir, to_dir, current_version, new_version):
+    def print_diff(
+        module, repo_name, from_dir, to_dir, current_version=None, new_version=None, dsp_from_dir=None, dsp_to_dir=None
+    ):
         """
         Prints the diffs between two module versions to the terminal
 
@@ -237,7 +236,9 @@ class ModulesDiffer:
             current_version (str): The installed version of the module
             new_version (str): The version of the module the diff is computed against
         """
-        diffs = ModulesDiffer.get_module_diffs(from_dir, to_dir)
+        diffs = ModulesDiffer.get_module_diffs(
+            from_dir, to_dir, for_git=False, dsp_from_dir=dsp_from_dir, dsp_to_dir=dsp_to_dir
+        )
         console = Console(force_terminal=nf_core.utils.rich_force_colors())
         if current_version is not None and new_version is not None:
             log.info(
@@ -249,15 +250,168 @@ class ModulesDiffer:
         for file, (diff_status, diff) in diffs.items():
             if diff_status == ModulesDiffer.DiffEnum.UNCHANGED:
                 # The files are identical
-                log.info(f"'{Path(from_dir, file)}' is unchanged")
+                log.info(f"'{Path(dsp_from_dir, file)}' is unchanged")
             elif diff_status == ModulesDiffer.DiffEnum.CREATED:
                 # The file was created between the commits
-                log.info(f"'{Path(from_dir, file)}' was created")
+                log.info(f"'{Path(dsp_from_dir, file)}' was created")
             elif diff_status == ModulesDiffer.DiffEnum.REMOVED:
                 # The file was removed between the commits
-                log.info(f"'{Path(from_dir, file)}' was removed")
+                log.info(f"'{Path(dsp_from_dir, file)}' was removed")
             else:
                 # The file has changed
                 log.info(f"Changes in '{Path(module, file)}':")
                 # Pretty print the diff using the pygments diff lexer
-                console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
+                console.print(Syntax("".join(diff), "diff", theme="ansi_dark", padding=1))
+
+    @staticmethod
+    def per_file_patch(patch_fn):
+        """
+        Splits a patch file for several files into one patch per file.
+
+        Args:
+            patch_fn (str | Path): The path to the patch file
+
+        Returns:
+            dict[str, str]: A dictionary indexed by the filenames with the
+                            file patches as values
+        """
+        with open(patch_fn, "r") as fh:
+            lines = fh.readlines()
+
+        patches = {}
+        i = 0
+        patch_lines = []
+        key = "preamble"
+        while i < len(lines):
+            line = lines[i]
+            if line.startswith("---"):
+                # New file found: add the old lines to the dictionary
+                # and determine the new filename
+                patches[key] = patch_lines
+                _, frompath = line.split(" ")
+                frompath = frompath.strip()
+                patch_lines = [line]
+                i += 1
+                line = lines[i]
+                _, topath = line.split(" ")
+                topath = topath.strip()
+                patch_lines.append(line)
+
+                if frompath == topath:
+                    key = frompath
+                elif frompath == "/dev/null":
+                    key = topath
+                else:
+                    key = frompath
+            else:
+                patch_lines.append(line)
+            i += 1
+        patches[key] = patch_lines
+
+        # Remove the 'preamble' key (entry contains no useful information)
+        patches.pop("preamble")
+        return patches
+
+    @staticmethod
+    def get_new_and_old_lines(patch):
+        """
+        Parse a patch for a file, and return the contents
+        of the modified parts for both the old and new versions
+
+        Args:
+            patch (str): The patch in unified diff format
+
+        Returns:
+            ([[str]], [[str]]): Lists of old and new lines for each hunk
+                                (modified part the file)
+        """
+        old_lines = []
+        new_lines = []
+        old_partial = []
+        new_partial = []
+        # First two lines indicate the file names, the third line is the first hunk
+        for line in patch[3:]:
+            if line.startswith("@"):
+                old_lines.append(old_partial)
+                new_lines.append(new_partial)
+                old_partial = []
+                new_partial = []
+            elif line.startswith(" "):
+                # Line belongs to both files
+                line = line[1:]
+                old_partial.append(line)
+                new_partial.append(line)
+            elif line.startswith("+"):
+                # Line only belongs to the new file
+                line = line[1:]
+                new_partial.append(line)
+            elif line.startswith("-"):
+                # Line only belongs to the old file
+                line = line[1:]
+                old_partial.append(line)
+        old_lines.append(old_partial)
+        new_lines.append(new_partial)
+        return old_lines, new_lines
+
+    @staticmethod
+    def try_apply_patch(file_path, patch):
+        """
+        Tries to apply a patch to a modified file. Since the line numbers in
+        the patch does not agree if the file is modified, the old and new
+        lines in the patch are reconstructed and then we look for the old lines
+        in the modified file. If all hunk in the patch are found in the new file
+        it is updated with the new lines from the patch file.
+
+        Args:
+            new_fn (str | Path): Path to the modified file
+            patch (str | Path): (Outdated) patch for the file
+
+        Returns:
+            [str]: The patched lines of the file
+
+        Raises:
+            LookupError: If it fails to find the old lines from the patch in
+                         the file.
+        """
+        org_lines, patch_lines = ModulesDiffer.get_new_and_old_lines(patch)
+
+        with open(file_path, "r") as fh:
+            new_lines = fh.readlines()
+
+        # The patches are sorted by their order of occurrence in the original
+        # file. Loop through the new file and try to find the new indices of
+        # these lines. We know they are non overlapping, and thus only need to
+        # look at the file once
+        p = len(org_lines)
+        patch_indices = [None] * p
+        i = 0
+        j = 0
+        n = len(new_lines)
+        while i < n and j < p:
+            m = len(org_lines[j])
+            while i < n:
+                if org_lines[j] == new_lines[i : i + m]:
+                    patch_indices[j] = (i, i + m)
+                    j += 1
+                    break
+                else:
+                    i += 1
+
+        if j != len(org_lines):
+            # We did not find all diffs before we ran out of file.
+            raise LookupError("Failed to find lines where patch should be applied")
+
+        # Apply the patch to new lines by substituting
+        # the original lines with the patch lines
+        patched_new_lines = new_lines[: patch_indices[0][0]]
+        for i in range(len(patch_indices) - 1):
+            # Add the patch lines
+            patched_new_lines.extend(patch_lines[i])
+            # Fill the spaces between the patches
+            patched_new_lines.extend(new_lines[patch_indices[i][1] : patch_indices[i + 1][0]])
+
+        # Add the remaining part of the new file
+        patched_new_lines.extend(patch_lines[-1])
+        patched_new_lines.extend(new_lines[patch_indices[-1][1] :])
+
+        return patched_new_lines
