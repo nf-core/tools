@@ -48,7 +48,6 @@ def meta_yml(module_lint_object, module):
     contains_required_keys = True
     all_list_children = True
     for rk in required_keys:
-        print(rk)
         if rk not in meta_yaml.keys():
             module.failed.append(("meta_required_keys", f"`{rk}` not specified in YAML", module.meta_yml))
             contains_required_keys = False
