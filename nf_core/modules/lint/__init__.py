@@ -239,7 +239,9 @@ class ModuleLint(ModuleCommand):
         if self.repo_type == "pipeline":
             remote_modules = {
                 repo_name: [
-                    NFCoreModule(Path(self.dir, "modules", repo_name, m), repo_type=self.repo_type, base_dir=self.dir)
+                    NFCoreModule(
+                        Path(self.dir, "modules", repo_name, m), repo_type=self.repo_type, base_dir=Path(self.dir)
+                    )
                     for m in modules
                 ]
                 for repo_name, modules in self.module_names.items()
@@ -248,14 +250,16 @@ class ModuleLint(ModuleCommand):
         else:
             remote_modules = {
                 "modules": [
-                    NFCoreModule(Path(self.dir, "modules", m), repo_type=self.repo_type, base_dir=self.dir)
+                    NFCoreModule(Path(self.dir, "modules", m), repo_type=self.repo_type, base_dir=Path(self.dir))
                     for m in modules
                 ]
                 for modules in self.module_names["modules"]
             }
 
         local_modules = [
-            NFCoreModule(Path(self.dir, "local", m), repo_type=self.repo_type, base_dir=self.dir, nf_core_module=False)
+            NFCoreModule(
+                Path(self.dir, "local", m), repo_type=self.repo_type, base_dir=Path(self.dir), nf_core_module=False
+            )
             for m in self.module_names.get("local", [])
         ]
 

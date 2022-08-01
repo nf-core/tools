@@ -1,6 +1,7 @@
 import logging
 import os
 import urllib
+from pathlib import Path
 
 import questionary
 import rich
@@ -90,7 +91,7 @@ def get_installed_modules(dir, repo_type="modules"):
     # Make full (relative) file paths and create NFCoreModule objects
     local_modules = [os.path.join(local_modules_dir, m) for m in local_modules]
     nfcore_modules = [
-        NFCoreModule(os.path.join(nfcore_modules_dir, m), repo_type=repo_type, base_dir=dir) for m in nfcore_modules
+        NFCoreModule(Path(nfcore_modules_dir, m), repo_type=repo_type, base_dir=Path(dir)) for m in nfcore_modules
     ]
 
     return local_modules, nfcore_modules
