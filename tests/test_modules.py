@@ -44,7 +44,7 @@ class TestModules(unittest.TestCase):
         self.template_dir = os.path.join(root_repo_dir, "nf_core", "pipeline-template")
         self.pipeline_dir = os.path.join(self.tmp_dir, "mypipeline")
         nf_core.create.PipelineCreate(
-            "mypipeline", "it is mine", "me", outdir=self.pipeline_dir, plain=True
+            "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
         # Set up install objects
         print("Setting up install objects")
