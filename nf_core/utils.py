@@ -987,3 +987,16 @@ def plural_y(list_or_int):
     """Return 'ies' if the input is not one or has not the length of one, else 'y'."""
     length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
     return "ies" if length != 1 else "y"
+
+
+# From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+# Placed at top level as to only compile it once
+ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def strip_ansi_codes(string, replace_with=""):
+    """Strip ANSI colouring codes from a string to return plain text.
+
+    From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+    """
+    return ANSI_ESCAPE_RE.sub(replace_with, string)

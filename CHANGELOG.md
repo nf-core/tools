@@ -41,7 +41,8 @@
 - Add Refgenie integration: updating of nextflow config files with a refgenie database ([#1090](https://github.com/nf-core/tools/pull/1090))
 - Fix `--key` option in `nf-core lint` when supplying a module lint test name ([#1681](https://github.com/nf-core/tools/issues/1681))
 - Add `no_git=True` when creating a new pipeline and initialising a git repository is not needed in `nf-core lint` and `nf-core bump-version` ([#1709](https://github.com/nf-core/tools/pull/1709))
-- Simplify control flow and don't use equality comparision for `None` and booleans
+- Move `strip_ansi_code` function in lint to `utils.py`
+- Simplify control flow and don't use equality comparison for `None` and booleans
 
 ### Modules
 
