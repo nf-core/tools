@@ -434,7 +434,7 @@ class ModulesDiffer:
                             as keys and the patched file contents as values
 
         Raises:
-            LookupError: If the the patch application fails in a file
+            LookupError: If the patch application fails in a file
         """
         module_relpath = Path("modules", repo_name, module)
         patches = ModulesDiffer.per_file_patch(patch_path)
