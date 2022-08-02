@@ -49,7 +49,7 @@ class ModulesJson:
         if not os.path.exists(modules_dir):
             raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
-        repos = self.get_pipeline_module_repositories(modules_dir)
+        repos = self.get_pipeline_module_repositories(Path(modules_dir))
 
         # Get all module names in the repos
         repo_module_names = [
@@ -106,7 +106,7 @@ class ModulesJson:
         """
         Finds all module repositories in the modules directory. Ignores the local modules.
         Args:
-            modules_dir (str): base directory for the module files
+            modules_dir (Path): base directory for the module files
         Returns
             repos [ (str, str, str) ]: List of tuples of repo name, repo remote URL and path to modules in repo
         """
@@ -114,21 +114,22 @@ class ModulesJson:
             repos = {}
 
         # Check if there are any nf-core modules installed
-        if os.path.exists(os.path.join(modules_dir, nf_core.modules.modules_repo.NF_CORE_MODULES_NAME)):
+        if (modules_dir / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME).exists():
             repos[nf_core.modules.modules_repo.NF_CORE_MODULES_NAME] = (
                 nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE,
                 nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH,
             )
 
         # Check if there are any untracked repositories
-        dirs_not_covered = self.dir_tree_uncovered(modules_dir, [name for name in repos])
+        dirs_not_covered = self.dir_tree_uncovered(modules_dir, [Path(name) for name in repos])
         if len(dirs_not_covered) > 0:
             log.info("Found custom module repositories when creating 'modules.json'")
             # Loop until all directories in the base directory are covered by a remote
             while len(dirs_not_covered) > 0:
                 log.info(
                     "The following director{s} in the modules directory are untracked: '{l}'".format(
-                        s="ies" if len(dirs_not_covered) > 0 else "y", l="', '".join(dirs_not_covered)
+                        s="ies" if len(dirs_not_covered) > 0 else "y",
+                        l="', '".join(str(dir) for dir in dirs_not_covered),
                     )
                 )
                 nrepo_remote = questionary.text(
@@ -146,7 +147,7 @@ class ModulesJson:
 
                 # Verify that there is a directory corresponding the remote
                 nrepo_name = nf_core.modules.module_utils.path_from_remote(nrepo_remote)
-                if not os.path.exists(os.path.join(modules_dir, nrepo_name)):
+                if not (modules_dir / nrepo_name).exists():
                     log.info(
                         "The provided remote does not seem to correspond to a local directory. "
                         "The directory structure should be the same as in the remote."
@@ -155,7 +156,7 @@ class ModulesJson:
                         "Please provide the correct directory, it will be renamed. If left empty, the remote will be ignored."
                     ).unsafe_ask()
                     if dir_name:
-                        os.rename(os.path.join(modules_dir, dir_name), os.path.join(modules_dir, nrepo_name))
+                        (modules_dir, dir_name).rename(modules_dir / nrepo_name)
                     else:
                         continue
 
@@ -168,7 +169,7 @@ class ModulesJson:
                     nrepo_base_path = nf_core.modules.modules_repo.NF_CORE_MODULES_BASE_PATH
 
                 repos[nrepo_name] = (nrepo_remote, nrepo_base_path)
-                dirs_not_covered = self.dir_tree_uncovered(modules_dir, [name for name in repos])
+                dirs_not_covered = self.dir_tree_uncovered(modules_dir, [Path(name) for name in repos])
         return repos
 
     def find_correct_commit_sha(self, module_name, module_path, modules_repo):
@@ -199,26 +200,27 @@ class ModulesJson:
         subdirectories are therefore ignore.
 
         Args:
-            module_dir (str): Base path of modules in pipeline
-            repos ([ str ]): List of repos that are covered by a remote
+            module_dir (Path): Base path of modules in pipeline
+            repos ([ Path ]): List of repos that are covered by a remote
 
         Returns:
-            dirs_not_covered ([ str ]): A list of directories that are currently not covered by any remote.
+            dirs_not_covered ([ Path ]): A list of directories that are currently not covered by any remote.
         """
+
         # Initialise the FIFO queue. Note that we assume the directory to be correctly
         # configured, i.e. no files etc.
-        fifo = [os.path.join(modules_dir, subdir) for subdir in os.listdir(modules_dir) if subdir != "local"]
+        fifo = [subdir for subdir in modules_dir.iterdir() if subdir.stem != "local"]
         depth = 1
         dirs_not_covered = []
         while len(fifo) > 0:
             temp_queue = []
-            repos_at_level = {os.path.join(*os.path.split(repo)[:depth]): len(os.path.split(repo)) for repo in repos}
+            repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
             for dir in fifo:
-                rel_dir = os.path.relpath(dir, modules_dir)
+                rel_dir = dir.relative_to(modules_dir)
                 if rel_dir in repos_at_level.keys():
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
-                        temp_queue.extend([os.path.join(dir, subdir) for subdir in os.listdir(dir)])
+                        temp_queue.extend(dir.iterdir())
                 else:
                     # Otherwise add the directory to the ones not covered
                     dirs_not_covered.append(dir)
@@ -648,6 +650,22 @@ class ModulesJson:
         if self.modules_json is None:
             self.load()
         return self.modules_json.get("repos", {}).get(repo_name, {}).get("base_path", None)
+
+    def get_all_modules(self):
+        """
+        Retrieves all pipeline modules that are reported in the modules.json
+
+        Returns:
+            (dict[str, [str]]): Dictionary indexed with the repo names, with a
+                                list of modules as values
+        """
+        if self.modules_json is None:
+            self.load()
+        pipeline_modules = {}
+        for repo, repo_entry in self.modules_json.get("repos", {}).items():
+            if "modules" in repo_entry:
+                pipeline_modules[repo] = list(repo_entry["modules"])
+        return pipeline_modules
 
     def dump(self):
         """
