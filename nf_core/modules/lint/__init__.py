@@ -82,13 +82,23 @@ class ModuleLint(ModuleCommand):
 
         if self.repo_type == "pipeline":
             if self.modules_repo.fullname in self.module_names:
-                self.all_remote_modules = self.module_names[self.modules_repo.fullname]
+                module_dir = Path(self.dir, "modules", self.modules_repo.fullname)
+                self.all_remote_modules = [
+                    NFCoreModule(m, self.modules_repo.fullname, module_dir / m, self.repo_type, Path(self.dir))
+                    for m in self.module_names[self.modules_repo.fullname]
+                ]
+                local_module_dir = Path(self.dir, "modules", "local")
+                self.all_local_modules = [
+                    NFCoreModule(m, None, local_module_dir / m, self.repo_type, Path(self.dir), nf_core_module=False)
+                    for m in self.module_names.get("local", [])
+                ]
+
             else:
                 raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
         else:
-            self.all_remote_modules = self.module_names["modules"]
-
-        self.local_modules = self.module_names.get("local", [])
+            self.all_remote_modules = [
+                NFCoreModule(module_dir / m, self.repo_type, Path(self.dir)) for m in self.module_names["modules"]
+            ]
 
         self.lint_config = None
         self.modules_json = None
@@ -166,12 +176,12 @@ class ModuleLint(ModuleCommand):
             if all_modules:
                 raise ModuleLintException("You cannot specify a tool and request all tools to be linted.")
             local_modules = []
-            nfcore_modules = [m for m in self.all_remote_modules if m.module_name == module]
-            if len(nfcore_modules) == 0:
+            remote_modules = [m for m in self.all_remote_modules if m.module_name == module]
+            if len(remote_modules) == 0:
                 raise ModuleLintException(f"Could not find the specified module: '{module}'")
         else:
             local_modules = self.all_local_modules
-            nfcore_modules = self.all_remote_modules
+            remote_modules = self.all_remote_modules
 
         if self.repo_type == "modules":
             log.info(f"Linting modules repo: [magenta]'{self.dir}'")
@@ -194,8 +204,8 @@ class ModuleLint(ModuleCommand):
             self.lint_modules(local_modules, local=True, fix_version=fix_version)
 
         # Lint nf-core modules
-        if len(nfcore_modules) > 0:
-            self.lint_modules(nfcore_modules, local=False, fix_version=fix_version)
+        if len(remote_modules) > 0:
+            self.lint_modules(remote_modules, local=False, fix_version=fix_version)
 
         if print_results:
             self._print_results(show_passed=show_passed)

@@ -11,7 +11,7 @@ class NFCoreModule(object):
     Includes functionality for linting
     """
 
-    def __init__(self, module_dir, repo_type, base_dir, nf_core_module=True):
+    def __init__(self, module_name, repo_name, module_dir, repo_type, base_dir, nf_core_module=True):
         """
         Initialize the object
 
@@ -24,6 +24,8 @@ class NFCoreModule(object):
             nf_core_module (bool): Whether the module is to be treated as a
                                    nf-core or local module
         """
+        self.module_name = module_name
+        self.repo_name = repo_name
         self.module_dir = module_dir
         self.repo_type = repo_type
         self.base_dir = base_dir
@@ -41,13 +43,6 @@ class NFCoreModule(object):
             # Initialize the important files
             self.main_nf = self.module_dir / "main.nf"
             self.meta_yml = self.module_dir / "meta.yml"
-            if self.repo_type == "pipeline":
-                self.module_name = str(self.module_dir.relative_to(self.base_dir / "nf-core/modules"))
-            else:
-                if "modules/modules" in str(module_dir):
-                    self.module_name = str(self.module_dir.relative_to(self.base_dir / "modules/modules"))
-                else:
-                    self.module_name = str(self.module_dir.relative_to(self.base_dir / "modules"))
 
             self.test_dir = Path(self.base_dir, "tests", "modules", self.module_name)
             self.test_yml = self.test_dir / "test.yml"

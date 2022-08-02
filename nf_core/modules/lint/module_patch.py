@@ -22,7 +22,7 @@ def module_patch(module_lint_obj, module: NFCoreModule):
         # Test failed, just exit
         return
 
-    patch_reversible(module, module.patch_path)
+    patch_reversible(module_lint_obj, module, module.patch_path)
 
 
 def check_patch_valid(module, patch_path):
@@ -151,7 +151,7 @@ def check_patch_valid(module, patch_path):
         return passed
 
 
-def patch_reversible(module, patch_path):
+def patch_reversible(module_lint_object, module, patch_path):
     """
     Try applying a patch in reverse to see if it is up to date
 
@@ -165,7 +165,7 @@ def patch_reversible(module, patch_path):
     try:
         ModulesDiffer.try_apply_patch(
             module.module_name,
-            "nf-core/modules",
+            module_lint_object.modules_repo.fullname,
             patch_path,
             Path(module.module_dir).relative_to(module.base_dir),
             reverse=True,
