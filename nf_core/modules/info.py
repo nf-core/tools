@@ -21,8 +21,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInfo(ModuleCommand):
-    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull, base_path):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.meta = None
         self.local_path = None
         self.remote_location = None
