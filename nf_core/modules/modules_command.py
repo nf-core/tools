@@ -35,6 +35,17 @@ class ModuleCommand:
         except LookupError as e:
             raise UserWarning(e)
 
+    def get_modules_clone_modules(self):
+        """
+        Get the modules available in a clone of nf-core/modules
+        """
+        module_base_path = Path(self.dir, "modules")
+        return [
+            str(Path(dir).relative_to(module_base_path))
+            for dir, _, files in os.walk(module_base_path)
+            if "main.nf" in files
+        ]
+
     def get_pipeline_modules(self):
         """
         Get the modules installed in the current directory.

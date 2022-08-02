@@ -32,6 +32,7 @@ class ModulesJson:
         self.dir = pipeline_dir
         self.modules_dir = os.path.join(self.dir, "modules")
         self.modules_json = None
+        self.pipeline_modules = None
 
     def create(self):
         """
@@ -661,11 +662,13 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        pipeline_modules = {}
-        for repo, repo_entry in self.modules_json.get("repos", {}).items():
-            if "modules" in repo_entry:
-                pipeline_modules[repo] = list(repo_entry["modules"])
-        return pipeline_modules
+        if self.pipeline_modules is None:
+            self.pipeline_modules = {}
+            for repo, repo_entry in self.modules_json.get("repos", {}).items():
+                if "modules" in repo_entry:
+                    self.pipeline_modules[repo] = list(repo_entry["modules"])
+
+        return self.pipeline_modules
 
     def dump(self):
         """
