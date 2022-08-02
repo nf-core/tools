@@ -55,7 +55,7 @@ class ModuleCommand:
             module_relpaths = (
                 Path(dir).relative_to(module_base_path)
                 for dir, _, files in os.walk(module_base_path)
-                if "main.nf" in files and not Path(dir).relative_to(module_base_path).is_relative_to("local")
+                if "main.nf" in files and not str(Path(dir).relative_to(module_base_path)).startswith("local")
             )
             # The two highest directories are the repo owner and repo name. The rest is the module name
             repos_and_modules = (("/".join(dir.parts[:2]), "/".join(dir.parts[2:])) for dir in module_relpaths)

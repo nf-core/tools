@@ -55,10 +55,11 @@ class NFCoreModule(object):
                     self.is_patched = True
                     self.patch_path = patch_path
         else:
+            # The main file is just the local module
+            self.main_nf = self.module_dir
+            self.module_name = self.module_dir.stem
             # These attributes are only used by nf-core modules
             # so just initialize them to None
-            self.module_name = None
-            self.main_nf = None
             self.meta_yml = None
             self.test_dir = None
             self.test_yml = None
