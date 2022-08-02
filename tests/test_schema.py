@@ -9,7 +9,6 @@ import tempfile
 import unittest
 from unittest import mock
 
-import click
 import pytest
 import requests
 import yaml
@@ -305,7 +304,7 @@ class TestSchema(unittest.TestCase):
         param = self.schema_obj.build_schema_param("12")
         assert param == {"type": "integer", "default": 12}
 
-    def test_build_schema_param_int(self):
+    def test_build_schema_param_float(self):
         """Build a new schema param from a config value (float)"""
         param = self.schema_obj.build_schema_param("12.34")
         assert param == {"type": "number", "default": 12.34}

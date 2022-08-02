@@ -2,9 +2,7 @@
 """ nf-core: Helper tools for use with nf-core Nextflow pipelines. """
 import logging
 import os
-import re
 import sys
-from email.policy import default
 
 import rich.console
 import rich.logging
@@ -49,7 +47,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core modules": [
         {
             "name": "For pipelines",
-            "commands": ["list", "info", "install", "update", "remove"],
+            "commands": ["list", "info", "install", "update", "remove", "patch"],
         },
         {
             "name": "Developing new modules",
@@ -191,7 +189,7 @@ def launch(pipeline, id, revision, command_only, params_in, params_out, save_all
     launcher = nf_core.launch.Launch(
         pipeline, revision, command_only, params_in, params_out, save_all, show_hidden, url, id
     )
-    if launcher.launch_pipeline() == False:
+    if not launcher.launch_pipeline():
         sys.exit(1)
 
 
@@ -350,6 +348,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
 )
 @click.option("-b", "--branch", type=str, default=None, help="Branch of git repository hosting modules.")
 @click.option(
+    "-N",
     "--no-pull",
     is_flag=True,
     default=False,
@@ -534,6 +533,38 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
         exit_status = module_install.update(tool)
         if not exit_status and all:
             sys.exit(1)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+# nf-core modules patch
+@modules.command()
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+def patch(ctx, tool, dir):
+    """
+    Create a patch file for minor changes in a module
+
+    Checks if a module has been modified locally and creates a patch file
+    describing how the module has changed from the remote version
+    """
+    try:
+        module_patch = nf_core.modules.ModulePatch(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+            ctx.obj["modules_repo_base_path"],
+        )
+        module_patch.patch(tool)
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)

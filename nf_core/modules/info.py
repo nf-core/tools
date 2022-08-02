@@ -2,7 +2,6 @@ import logging
 import os
 
 import questionary
-import requests
 import yaml
 from rich import box
 from rich.console import Group
@@ -15,7 +14,7 @@ import nf_core.utils
 
 from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
-from .modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
+from .modules_repo import NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 
@@ -46,9 +45,7 @@ class ModuleInfo(ModuleCommand):
         Args:
             module: str: Module name to check
         """
-        if module is not None:
-            return module
-        else:
+        if module is None:
             local = questionary.confirm(
                 "Is the module locally installed?", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
@@ -69,7 +66,8 @@ class ModuleInfo(ModuleCommand):
                 module = questionary.autocomplete(
                     "Please select a new module", choices=modules, style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
-            return module
+
+        return module
 
     def get_module_info(self):
         """Given the name of a module, parse meta.yml and print usage help."""
@@ -83,7 +81,7 @@ class ModuleInfo(ModuleCommand):
             self.meta = self.get_remote_yaml()
 
         # Could not find the meta
-        if self.meta == False:
+        if self.meta is False:
             raise UserWarning(f"Could not find module '{self.module}'")
 
         return self.generate_module_info_help()
@@ -114,7 +112,6 @@ class ModuleInfo(ModuleCommand):
                         return yaml.safe_load(fh)
 
             log.debug(f"Module '{self.module}' meta.yml not found locally")
-            return None
         else:
             module_base_path = os.path.join(self.dir, "modules")
             if self.module in os.listdir(module_base_path):
@@ -126,7 +123,8 @@ class ModuleInfo(ModuleCommand):
                         self.local_path = mod_dir
                         return yaml.safe_load(fh)
             log.debug(f"Module '{self.module}' meta.yml not found locally")
-            return None
+
+        return None
 
     def get_remote_yaml(self):
         """Attempt to get the meta.yml file from a remote repo.

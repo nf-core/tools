@@ -1,4 +1,3 @@
-import difflib
 import enum
 import json
 import logging
@@ -8,14 +7,13 @@ import tempfile
 from pathlib import Path
 
 import questionary
-from rich.console import Console
-from rich.syntax import Syntax
 
 import nf_core.modules.module_utils
 import nf_core.utils
-from nf_core.utils import plural_s, plural_y
+from nf_core.utils import plural_es, plural_s, plural_y
 
 from .modules_command import ModuleCommand
+from .modules_differ import ModulesDiffer
 from .modules_json import ModulesJson
 from .modules_repo import ModulesRepo
 
@@ -46,7 +44,7 @@ class ModuleUpdate(ModuleCommand):
         self.save_diff_fn = save_diff_fn
         self.module = None
         self.update_config = None
-        self.modules_json = None
+        self.modules_json = ModulesJson(self.dir)
 
         # Fetch the list of pipeline modules
         self.get_pipeline_modules()
@@ -101,7 +99,6 @@ class ModuleUpdate(ModuleCommand):
         self._parameter_checks()
 
         # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json = ModulesJson(self.dir)
         self.modules_json.check_up_to_date()
 
         if not self.update_all and module is None:
@@ -121,7 +118,7 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         # Get the list of modules to update, and their version information
-        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
+        modules_info = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
 
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
@@ -147,14 +144,18 @@ class ModuleUpdate(ModuleCommand):
         # Loop through all modules to be updated
         # and do the requested action on them
         exit_value = True
-        for modules_repo, module, sha in repos_mods_shas:
+        all_patches_successful = True
+        for modules_repo, module, sha, patch_relpath in modules_info:
+
+            module_fullname = str(Path(modules_repo.fullname, module))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
             current_version = self.modules_json.get_module_version(module, modules_repo.fullname)
 
             # Set the temporary installation folder
-            install_folder = tempfile.mkdtemp()
+            install_dir = Path(tempfile.mkdtemp())
+            module_install_dir = install_dir / module
 
             # Compute the module directory
             module_dir = os.path.join(self.dir, "modules", modules_repo.fullname, module)
@@ -171,23 +172,58 @@ class ModuleUpdate(ModuleCommand):
             if current_version is not None and not self.force:
                 if current_version == version:
                     if self.sha or self.prompt:
-                        log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
+                        log.info(f"'{module_fullname}' is already installed at {version}")
                     else:
-                        log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
+                        log.info(f"'{module_fullname}' is already up to date")
                     continue
 
             # Download module files
-            if not self.install_module_files(module, version, modules_repo, install_folder):
+            if not self.install_module_files(module, version, modules_repo, install_dir):
                 exit_value = False
                 continue
 
+            if patch_relpath is not None:
+                patch_successful = self.try_apply_patch(
+                    module, modules_repo.fullname, patch_relpath, module_dir, module_install_dir
+                )
+                if patch_successful:
+                    log.info(f"Module '{module_fullname}' patched successfully")
+                else:
+                    log.warning(f"Failed to patch module '{module_fullname}'. Will proceed with unpatched files.")
+                all_patches_successful &= patch_successful
+
             if dry_run:
+                if patch_relpath is not None:
+                    if patch_successful:
+                        log.info(f"Current installation is compared against patched version in remote")
+                    else:
+                        log.warning(f"Current installation is compared against unpatched version in remote")
                 # Compute the diffs for the module
-                diffs = self.get_module_diffs(install_folder, module, module_dir)
                 if self.save_diff_fn:
-                    self.append_diff_file(module, diffs, module_dir, current_version, version)
+                    log.info(f"Writing diff file for module '{module_fullname}' to '{self.save_diff_fn}'")
+                    ModulesDiffer.write_diff_file(
+                        self.save_diff_fn,
+                        module,
+                        modules_repo.fullname,
+                        module_dir,
+                        module_install_dir,
+                        current_version,
+                        version,
+                        dsp_from_dir=module_dir,
+                        dsp_to_dir=module_dir,
+                    )
+
                 elif self.show_diff:
-                    self.print_diff(module, diffs, module_dir, current_version, version)
+                    ModulesDiffer.print_diff(
+                        module,
+                        modules_repo.fullname,
+                        module_dir,
+                        module_install_dir,
+                        current_version,
+                        version,
+                        dsp_from_dir=module_dir,
+                        dsp_to_dir=module_dir,
+                    )
 
                     # Ask the user if they want to install the module
                     dry_run = not questionary.confirm(
@@ -196,7 +232,7 @@ class ModuleUpdate(ModuleCommand):
 
             if not dry_run:
                 # Clear the module directory and move the installed files there
-                self.move_files_from_tmp_dir(module, module_dir, install_folder, modules_repo.fullname, version)
+                self.move_files_from_tmp_dir(module, module_dir, install_dir, modules_repo.fullname, version)
                 # Update modules.json with newly installed module
                 self.modules_json.update(modules_repo, module, version)
             else:
@@ -205,12 +241,20 @@ class ModuleUpdate(ModuleCommand):
 
         if self.save_diff_fn:
             # Write the modules.json diff to the file
-            self.write_modules_json_diff(old_modules_json)
-            log.info(
-                f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
-                "can apply them by running the command :point_right:"
-                f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
+            ModulesDiffer.append_modules_json_diff(
+                self.save_diff_fn,
+                old_modules_json,
+                self.modules_json.get_modules_json(),
+                Path(self.dir, "modules.json"),
             )
+            if exit_value:
+                log.info(
+                    f"[bold magenta italic] TIP! [/] If you are happy with the changes in '{self.save_diff_fn}', you "
+                    "can apply them by running the command :point_right:"
+                    f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
+                )
+        elif not all_patches_successful:
+            log.info(f"Updates complete. Please apply failed patch{plural_es(modules_info)} manually")
         else:
             log.info("Updates complete :sparkles:")
 
@@ -275,7 +319,10 @@ class ModuleUpdate(ModuleCommand):
                     log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
                 log.info(f"Updating module to ({sha})")
 
-        return (self.modules_repo, module, sha)
+        # If there is a patch file, get its filename
+        patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.fullname)
+
+        return (self.modules_repo, module, sha, patch_fn)
 
     def get_all_modules_info(self):
         """Collects the module repository, version and sha for all modules.
@@ -366,12 +413,17 @@ class ModuleUpdate(ModuleCommand):
         # don't try to update those that don't
         i = 0
         while i < len(modules_info):
-            repo, module, sha = modules_info[i]
+            repo, module, _ = modules_info[i]
             if repo.module_exists(module):
                 i += 1
             else:
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
+
+        # Add patch filenames to the modules that have them
+        modules_info = [
+            (repo, mod, sha, self.modules_json.get_patch_fn(mod, repo.fullname)) for repo, mod, sha in modules_info
+        ]
 
         return modules_info
 
@@ -404,157 +456,6 @@ class ModuleUpdate(ModuleCommand):
         # This guarantees that the file exists after calling the function
         self.save_diff_fn.touch()
 
-    def get_module_diffs(self, install_folder, module, module_dir):
-        """Computes the diff between the current and the new module version.
-
-        Args:
-            install_folder ([str]): The folder where the module is installed.
-            module (str): The module name.
-            module_dir (str): The directory containing the current version of the module.
-
-        Returns:
-            dict[str, (ModuleUpdate.DiffEnum, str)]: A dictionary containing.
-            the diff type and the diff string (empty if no diff).
-        """
-
-        diffs = {}
-        # Get all unique filenames in the two folders.
-        # `dict.fromkeys()` is used instead of `set()` to preserve order
-        files = dict.fromkeys(os.listdir(os.path.join(install_folder, module)))
-        files.update(dict.fromkeys(os.listdir(module_dir)))
-        files = list(files)
-
-        temp_folder = os.path.join(install_folder, module)
-
-        # Loop through all the module files and compute their diffs if needed
-        for file in files:
-            temp_path = os.path.join(temp_folder, file)
-            curr_path = os.path.join(module_dir, file)
-            if os.path.exists(temp_path) and os.path.exists(curr_path) and os.path.isfile(temp_path):
-                with open(temp_path, "r") as fh:
-                    new_lines = fh.readlines()
-                with open(curr_path, "r") as fh:
-                    old_lines = fh.readlines()
-
-                if new_lines == old_lines:
-                    # The files are identical
-                    diffs[file] = (ModuleUpdate.DiffEnum.UNCHANGED, ())
-                else:
-                    # Compute the diff
-                    diff = difflib.unified_diff(
-                        old_lines,
-                        new_lines,
-                        fromfile=os.path.join(module_dir, file),
-                        tofile=os.path.join(module_dir, file),
-                    )
-                    diffs[file] = (ModuleUpdate.DiffEnum.CHANGED, diff)
-
-            elif os.path.exists(temp_path):
-                # The file was created
-                diffs[file] = (ModuleUpdate.DiffEnum.CREATED, ())
-
-            elif os.path.exists(curr_path):
-                # The file was removed
-                diffs[file] = (ModuleUpdate.DiffEnum.REMOVED, ())
-
-        return diffs
-
-    def append_diff_file(self, module, diffs, module_dir, current_version, new_version):
-        """Writes the diffs of a module to the diff file.
-
-        Args:
-            module (str): The module name.
-            diffs (dict[str, (ModuleUpdate.DiffEnum, str)]): A dictionary containing
-            the type of change and the diff (if any).
-            module_dir (str): The path to the current installation of the module.
-            current_version (str): The installed version of the module.
-            new_version (str): The version of the module the diff is computed against.
-        """
-        log.info(f"Writing diff of '{module}' to '{self.save_diff_fn}'")
-        with open(self.save_diff_fn, "a") as fh:
-            fh.write(
-                f"Changes in module '{module}' between"
-                f" ({current_version if current_version is not None else '?'}) and"
-                f" ({new_version if new_version is not None else 'latest'})\n"
-            )
-
-            for file, (diff_status, diff) in diffs.items():
-                if diff_status == ModuleUpdate.DiffEnum.UNCHANGED:
-                    # The files are identical
-                    fh.write(f"'{os.path.join(module_dir, file)}' is unchanged\n")
-
-                elif diff_status == ModuleUpdate.DiffEnum.CREATED:
-                    # The file was created between the commits
-                    fh.write(f"'{os.path.join(module_dir, file)}' was created\n")
-
-                elif diff_status == ModuleUpdate.DiffEnum.REMOVED:
-                    # The file was removed between the commits
-                    fh.write(f"'{os.path.join(module_dir, file)}' was removed\n")
-
-                else:
-                    # The file has changed
-                    fh.write(f"Changes in '{os.path.join(module_dir, file)}':\n")
-                    # Write the diff lines to the file
-                    for line in diff:
-                        fh.write(line)
-                    fh.write("\n")
-
-            fh.write("*" * 60 + "\n")
-
-    def write_modules_json_diff(self, old_modules_json):
-        """Creates a diff between the old to the new modules.json and writes it to the diff file.
-
-        Args:
-            old_modules_json (nested dict): The old modules.json
-        """
-        modules_json_diff = difflib.unified_diff(
-            json.dumps(old_modules_json, indent=4).splitlines(keepends=True),
-            json.dumps(self.modules_json.get_modules_json(), indent=4).splitlines(keepends=True),
-            fromfile=os.path.join(self.dir, "modules.json"),
-            tofile=os.path.join(self.dir, "modules.json"),
-        )
-
-        # Save diff for modules.json to file
-        with open(self.save_diff_fn, "a") as fh:
-            fh.write("Changes in './modules.json'\n")
-            for line in modules_json_diff:
-                fh.write(line)
-            fh.write("*" * 60 + "\n")
-
-    def print_diff(self, module, diffs, module_dir, current_version, new_version):
-        """Prints the diffs between two module versions.
-
-        Args:
-            module (str): The module name
-            diffs (dict[str, (ModuleUpdate.DiffEnum, str)]): A dictionary containing
-            the type of change and the diff (if any).
-            module_dir (str): The path to the current installation of the module.
-            current_version (str): The installed version of the module.
-            new_version (str): The version of the module the diff is computed against.
-        """
-        console = Console(force_terminal=nf_core.utils.rich_force_colors())
-        log.info(
-            f"Changes in module '{module}' between"
-            f" ({current_version if current_version is not None else '?'}) and"
-            f" ({new_version if new_version is not None else 'latest'})"
-        )
-
-        for file, (diff_status, diff) in diffs.items():
-            if diff_status == ModuleUpdate.DiffEnum.UNCHANGED:
-                # The files are identical
-                log.info(f"'{os.path.join(module_dir, file)}' is unchanged")
-            elif diff_status == ModuleUpdate.DiffEnum.CREATED:
-                # The file was created between the commits
-                log.info(f"'{os.path.join(module_dir, file)}' was created")
-            elif diff_status == ModuleUpdate.DiffEnum.REMOVED:
-                # The file was removed between the commits
-                log.info(f"'{os.path.join(module_dir, file)}' was removed")
-            else:
-                # The file has changed
-                log.info(f"Changes in '{os.path.join(module, file)}':")
-                # Pretty print the diff using the pygments diff lexer
-                console.print(Syntax("".join(diff), "diff", theme="ansi_light"))
-
     def move_files_from_tmp_dir(self, module, module_dir, install_folder, repo_name, new_version):
         """Move the files from the temporary to the installation directory.
 
@@ -579,3 +480,71 @@ class ModuleUpdate(ModuleCommand):
 
         log.info(f"Updating '{repo_name}/{module}'")
         log.debug(f"Updating module '{module}' to {new_version} from {repo_name}")
+
+    def try_apply_patch(self, module, repo_name, patch_relpath, module_dir, module_install_dir):
+        """
+        Try applying a patch file to the new module files
+
+
+        Args:
+            module (str): The name of the module
+            repo_name (str): The name of the repository where the module resides
+            patch_relpath (Path | str): The path to patch file in the pipeline
+            module_dir (Path | str): The module directory in the pipeline
+            module_install_dir (Path | str): The directory where the new module
+                                             file have been installed
+
+        Returns:
+            (bool): Whether the patch application was successful
+        """
+        module_fullname = str(Path(repo_name, module))
+        log.info(f"Found patch for  module '{module_fullname}'. Trying to apply it to new files")
+
+        patch_path = Path(self.dir / patch_relpath)
+        module_relpath = Path("modules", repo_name, module)
+
+        # Copy the installed files to a new temporary directory to save them for later use
+        temp_dir = Path(tempfile.mkdtemp())
+        temp_module_dir = temp_dir / module
+        shutil.copytree(module_install_dir, temp_module_dir)
+
+        try:
+            new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, temp_module_dir)
+        except LookupError as e:
+            # Patch failed. Save the patch file by moving to the install dir
+            shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
+            log.warning(
+                f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
+            )
+            return False
+
+        # Write the patched files to a temporary directory
+        log.debug("Writing patched files")
+        for file, new_content in new_files.items():
+            fn = temp_module_dir / file
+            with open(fn, "w") as fh:
+                fh.writelines(new_content)
+
+        # Create the new patch file
+        log.debug("Regenerating patch file")
+        ModulesDiffer.write_diff_file(
+            Path(temp_module_dir, patch_path.relative_to(module_dir)),
+            module,
+            repo_name,
+            module_install_dir,
+            temp_module_dir,
+            file_action="w",
+            for_git=False,
+            dsp_from_dir=module_relpath,
+            dsp_to_dir=module_relpath,
+        )
+
+        # Move the patched files to the install dir
+        log.debug("Overwriting installed files installed files  with patched files")
+        shutil.rmtree(module_install_dir)
+        shutil.copytree(temp_module_dir, module_install_dir)
+
+        # Add the patch file to the modules.json file
+        self.modules_json.add_patch_entry(module, repo_name, patch_relpath, write_file=True)
+
+        return True

@@ -2,6 +2,7 @@
 The NFCoreModule class holds information and utility functions for a single module
 """
 import os
+from pathlib import Path
 
 
 class NFCoreModule(object):
@@ -21,11 +22,13 @@ class NFCoreModule(object):
         self.outputs = []
         self.has_meta = False
         self.git_sha = None
+        self.is_patched = False
+        self.is_patched = None
 
         if nf_core_module:
             # Initialize the important files
-            self.main_nf = os.path.join(self.module_dir, "main.nf")
-            self.meta_yml = os.path.join(self.module_dir, "meta.yml")
+            self.main_nf = str(Path(self.module_dir, "main.nf"))
+            self.meta_yml = str(Path(self.module_dir, "meta.yml"))
             if self.repo_type == "pipeline":
                 self.module_name = module_dir.split("nf-core/modules" + os.sep)[1]
             else:
@@ -37,3 +40,11 @@ class NFCoreModule(object):
             self.test_dir = os.path.join(self.base_dir, "tests", "modules", self.module_name)
             self.test_yml = os.path.join(self.test_dir, "test.yml")
             self.test_main_nf = os.path.join(self.test_dir, "main.nf")
+
+            # Check if we have a patch file
+            if self.repo_type == "pipeline":
+                patch_fn = f"{self.module_name.replace('/', '-')}.diff"
+                patch_path = Path(self.module_dir, patch_fn)
+                if patch_path.exists():
+                    self.is_patched = True
+                    self.patch_path = patch_path

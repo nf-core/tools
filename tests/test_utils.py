@@ -18,6 +18,15 @@ import nf_core.utils
 from .utils import with_temporary_folder
 
 
+def test_strip_ansi_codes():
+    """Check that we can make rich text strings plain
+
+    String prints ls examplefile.zip, where examplefile.zip is red bold text
+    """
+    stripped = nf_core.utils.strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
+    assert stripped == "ls examplefile.zip"
+
+
 class TestUtils(unittest.TestCase):
     """Class for utils tests"""
 
@@ -29,7 +38,12 @@ class TestUtils(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
+            "testpipeline",
+            "This is a test pipeline",
+            "Test McTestFace",
+            no_git=True,
+            outdir=self.test_pipeline_dir,
+            plain=True,
         )
         self.create_obj.init_pipeline()
         # Base Pipeline object on this directory
