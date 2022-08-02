@@ -46,48 +46,6 @@ class ModuleCommand:
             if "main.nf" in files
         ]
 
-    def get_pipeline_modules(self):
-        """
-        Get the modules installed in the current directory.
-
-        If the current directory is a pipeline, the `module_names`
-        field is set to a dictionary indexed by the different
-        installation repositories in the directory. If the directory
-        is a clone of nf-core/modules the filed is set to
-        `{"modules": modules_in_dir}`
-
-        """
-
-        self.module_names = {}
-
-        module_base_path = f"{self.dir}/modules/"
-
-        if self.repo_type == "pipeline":
-            repo_owners = (owner for owner in os.listdir(module_base_path) if owner != "local")
-            repo_names = (
-                f"{repo_owner}/{name}"
-                for repo_owner in repo_owners
-                for name in os.listdir(f"{module_base_path}/{repo_owner}")
-            )
-            for repo_name in repo_names:
-                repo_path = os.path.join(module_base_path, repo_name)
-                module_mains_path = f"{repo_path}/**/main.nf"
-                module_mains = glob.glob(module_mains_path, recursive=True)
-                if len(module_mains) > 0:
-                    self.module_names[repo_name] = [
-                        os.path.dirname(os.path.relpath(mod, repo_path)) for mod in module_mains
-                    ]
-
-        elif self.repo_type == "modules":
-            module_mains_path = f"{module_base_path}/**/main.nf"
-            module_mains = glob.glob(module_mains_path, recursive=True)
-            self.module_names["modules"] = [
-                os.path.dirname(os.path.relpath(mod, module_base_path)) for mod in module_mains
-            ]
-        else:
-            log.error("Directory is neither a clone of nf-core/modules nor a pipeline")
-            raise SystemError
-
     def has_valid_directory(self):
         """Check that we were given a pipeline or clone of nf-core/modules"""
         if self.repo_type == "modules":

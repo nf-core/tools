@@ -39,6 +39,7 @@ class ModuleInfo(ModuleCommand):
         self.module = self.init_mod_name(tool)
         if self.repo_type == "pipeline":
             self.modules_json = ModulesJson(self.dir)
+            self.modules_json.check_up_to_date()
         else:
             self.modules_json = None
 
