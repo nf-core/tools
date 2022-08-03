@@ -91,7 +91,7 @@ class ModulesTest(ModuleCommand):
                 raise UserWarning(
                     "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
                 )
-            if installed_modules is None:
+            if not installed_modules:
                 raise UserWarning(
                     f"No installed modules were found from '{self.modules_repo.remote_url}'.\n"
                     f"Are you running the tests inside the nf-core/modules main directory?\n"

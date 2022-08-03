@@ -130,7 +130,7 @@ class ModulesJson:
                 log.info(
                     "The following director{s} in the modules directory are untracked: '{l}'".format(
                         s="ies" if len(dirs_not_covered) > 0 else "y",
-                        l="', '".join(str(dir) for dir in dirs_not_covered),
+                        l="', '".join(str(dir.relative_to(modules_dir)) for dir in dirs_not_covered),
                     )
                 )
                 nrepo_remote = questionary.text(
