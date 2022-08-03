@@ -153,15 +153,12 @@ class ModulesRepo(object):
         else:
             self.repo = git.Repo(self.local_repo_dir)
 
-            # Verify that the requested branch exists by checking it out
-            self.setup_branch(branch)
-
             if ModulesRepo.no_pull_global:
                 ModulesRepo.update_local_repo_status(self.fullname, True)
-            # If the repo is already cloned, pull the latest changes from the remote
+            # If the repo is already cloned, fetch the latest changes from the remote
             if not ModulesRepo.local_repo_synced(self.fullname):
                 if no_progress:
-                    self.repo.remotes.origin.pull()
+                    self.repo.remotes.origin.fetch()
                 else:
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
@@ -170,10 +167,20 @@ class ModulesRepo(object):
                         transient=True,
                     )
                     with pbar:
-                        self.repo.remotes.origin.pull(
+                        self.repo.remotes.origin.fetch(
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
                         )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
+
+            # Before verifying the branch, fetch the changes
+            # Verify that the requested branch exists by checking it out
+            self.setup_branch(branch)
+
+            # Now merge the changes
+            tracking_branch = self.repo.active_branch.tracking_branch()
+            if tracking_branch is None:
+                raise LookupError(f"There is no remote tracking branch '{self.branch}' in '{self.remote_url}'")
+            self.repo.git.merge(tracking_branch.name)
 
     def setup_branch(self, branch):
         """
