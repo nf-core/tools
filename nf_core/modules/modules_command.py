@@ -26,7 +26,7 @@ class ModuleCommand:
         """
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.dir = dir
-        self.module_names = []
+        self.module_names = None
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -45,6 +45,13 @@ class ModuleCommand:
             for dir, _, files in os.walk(module_base_path)
             if "main.nf" in files
         ]
+
+    def get_local_modules(self):
+        """
+        Get the local modules in a pipeline
+        """
+        local_module_dir = Path(self.dir, "modules", "local")
+        return [str(path.relative_to(local_module_dir)) for path in local_module_dir.iterdir() if path.suffix == ".nf"]
 
     def has_valid_directory(self):
         """Check that we were given a pipeline or clone of nf-core/modules"""

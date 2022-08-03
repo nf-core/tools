@@ -17,7 +17,6 @@ from rich.table import Table
 
 import nf_core.modules.module_utils
 import nf_core.utils
-from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
 
@@ -112,7 +111,7 @@ class ModuleVersionBumper(ModuleCommand):
 
         self._print_results()
 
-    def bump_module_version(self, module: NFCoreModule):
+    def bump_module_version(self, module):
         """
         Bump the bioconda and container version of a single NFCoreModule
 

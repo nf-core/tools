@@ -46,7 +46,7 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
             module.module_name,
-            "nf-core/modules",
+            module_lint_object.modules_repo.fullname,
             module.patch_path,
             Path(module.module_dir).relative_to(module.base_dir),
             reverse=True,
