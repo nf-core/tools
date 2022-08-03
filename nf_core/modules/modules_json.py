@@ -529,7 +529,7 @@ class ModulesJson:
             else:
                 log.warning(f"Module '{repo_name}/{module_name}' is missing from 'modules.json' file.")
                 return False
-            if len(repo_entry) == 0:
+            if len(repo_entry["modules"]) == 0:
                 self.modules_json["repos"].pop(repo_name)
         else:
             log.warning(f"Module '{repo_name}/{module_name}' is missing from 'modules.json' file.")
