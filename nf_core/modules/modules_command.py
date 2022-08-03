@@ -26,7 +26,6 @@ class ModuleCommand:
         """
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.dir = dir
-        self.module_names = None
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -108,7 +107,7 @@ class ModuleCommand:
             raise LookupError(f"Nothing installed from {repo_name} in pipeline")
 
         return [
-            str(Path(dir_path).relative_to(repo_dir) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files)
+            str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
         ]
 
     def install_module_files(self, module_name, module_version, modules_repo, install_dir):
