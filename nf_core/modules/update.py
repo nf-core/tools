@@ -1,5 +1,4 @@
 import enum
-import json
 import logging
 import os
 import shutil
