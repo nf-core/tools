@@ -63,6 +63,7 @@
 - Add `nf-core modules patch` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 - Add support for patch in `nf-core modules update` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 - Add support for patch in `nf-core modules lint` command ([#1312](https://github.com/nf-core/tools/issues/1312))
+- Make `nf-core modules` commands work with arbitrary git remotes ([#1721](https://github.com/nf-core/tools/issues/1721))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
