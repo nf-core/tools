@@ -5,6 +5,7 @@ Verify that a module has a correct entry in the modules.json file
 
 import logging
 import os
+from pathlib import Path
 
 import nf_core
 import nf_core.modules.module_utils
@@ -22,7 +23,7 @@ def module_version(module_lint_object, module):
     newer version of the module available.
     """
 
-    modules_json_path = os.path.join(module_lint_object.dir, "modules.json")
+    modules_json_path = Path(module_lint_object.dir, "modules.json")
 
     # Verify that a git_sha exists in the `modules.json` file for this module
     module_version = module_lint_object.modules_json.get_module_version(

@@ -75,6 +75,7 @@ class ModuleList(ModuleCommand):
             repos_with_mods = {
                 repo_name: [mod for mod in self.module_names[repo_name] if all(k in mod for k in keywords)]
                 for repo_name in self.module_names
+                if repo_name != "local"
             }
 
             # Nothing found
