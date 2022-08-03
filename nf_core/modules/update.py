@@ -316,6 +316,20 @@ class ModuleUpdate(ModuleCommand):
                     log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
                 log.info(f"Updating module to ({sha})")
 
+        # Check if the update branch is the same as the installation branch
+        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.fullname)
+        new_branch = self.modules_repo.branch
+        if current_branch != new_branch:
+            log.warning(
+                f"You are trying to update the '{Path(self.modules_repo.fullname, module)}' module from "
+                f"the '{new_branch}' branch which was installed from the '{current_branch}'"
+            )
+            switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
+            if switch:
+                # Change the branch
+                self.modules_repo.branch = current_branch
+                self.modules_repo.setup_branch()
+
         # If there is a patch file, get its filename
         patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.fullname)
 
@@ -337,20 +351,26 @@ class ModuleUpdate(ModuleCommand):
         modules_info = {}
         # Loop through all the modules in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
-        for repo_name, modules in self.modules_json.get_all_modules().items():
+        for repo_name, modules in self.modules_json.get_all_modules(get_branch=True).items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
-                modules_info[repo_name] = [(module, self.sha) for module in modules]
+                modules_info[repo_name] = [
+                    (module, self.sha, self.modules_json.get_module_branch(module, repo_name)) for module in modules
+                ]
             elif isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual modules
                 repo_config = self.update_config[repo_name]
                 modules_info[repo_name] = []
                 for module in modules:
                     if module not in repo_config or repo_config[module] is True:
-                        modules_info[repo_name].append((module, self.sha))
+                        modules_info[repo_name].append(
+                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name))
+                        )
                     elif isinstance(repo_config[module], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = repo_config[module]
-                        modules_info[repo_name].append((module, custom_sha))
+                        modules_info[repo_name].append(
+                            (module, custom_sha, self.modules_json.get_module_branch(module, repo_name))
+                        )
                         if self.sha is not None:
                             overridden_modules.append(module)
                     elif repo_config[module] is False:
@@ -361,7 +381,10 @@ class ModuleUpdate(ModuleCommand):
             elif isinstance(self.update_config[repo_name], str):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
-                modules_info[repo_name] = [(module_name, custom_sha) for module_name in modules]
+                modules_info[repo_name] = [
+                    (module_name, custom_sha, self.modules_json.get_module_branch(module, repo_name))
+                    for module_name in modules
+                ]
                 if self.sha is not None:
                     overridden_repos.append(repo_name)
             elif self.update_config[repo_name] is False:
@@ -390,17 +413,24 @@ class ModuleUpdate(ModuleCommand):
                 f"Overriding '--sha' flag for module{plural_s(overridden_modules)} with "
                 f"'.nf-core.yml' entry: '{overridden_str}'"
             )
+        # Loop through modules_info and create on ModulesRepo object per remote and branch
+        repos_and_branches = {}
+        for repo_name, mods in modules_info.items():
+            for mod, sha, branch in mods:
+                if (repo_name, branch) not in repos_and_branches:
+                    repos_and_branches[(repo_name, branch)] = []
+                repos_and_branches[(repo_name, branch)].append((mod, sha))
 
         # Get the git urls from the modules.json
-        modules_info = [
-            (self.modules_json.get_git_url(repo_name), self.modules_json.get_base_path(repo_name), mods_shas)
-            for repo_name, mods_shas in modules_info.items()
-        ]
+        modules_info = (
+            (self.modules_json.get_git_url(repo_name), branch, self.modules_json.get_base_path(repo_name), mods_shas)
+            for (repo_name, branch), mods_shas in modules_info.items()
+        )
 
         # Create ModulesRepo objects
         modules_info = [
-            (ModulesRepo(remote_url=repo_url, base_path=base_path), mods_shas)
-            for repo_url, base_path, mods_shas in modules_info
+            (ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path), mods_shas)
+            for repo_url, branch, base_path, mods_shas in modules_info
         ]
 
         # Flatten and return the list
@@ -427,7 +457,7 @@ class ModuleUpdate(ModuleCommand):
     def setup_diff_file(self):
         """Sets up the diff file.
 
-        If the save diff option was choosen interactively, the user is asked to supply a name for the diff file.
+        If the save diff option was chosen interactively, the user is asked to supply a name for the diff file.
 
         Then creates the file for saving the diff.
         """

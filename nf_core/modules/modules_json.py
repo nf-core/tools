@@ -498,12 +498,14 @@ class ModulesJson:
         repo_name = modules_repo.fullname
         remote_url = modules_repo.remote_url
         base_path = modules_repo.base_path
+        branch = modules_repo.branch
         if repo_name not in self.modules_json["repos"]:
             self.modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url, "base_path": base_path}
         repo_modules_entry = self.modules_json["repos"][repo_name]["modules"]
         if module_name not in repo_modules_entry:
             repo_modules_entry[module_name] = {}
         repo_modules_entry[module_name]["git_sha"] = module_version
+        repo_modules_entry[module_name]["branch"] = branch
 
         # Sort the 'modules.json' repo entries
         self.modules_json["repos"] = nf_core.utils.sort_dictionary(self.modules_json["repos"])
@@ -669,6 +671,25 @@ class ModulesJson:
                     self.pipeline_modules[repo] = list(repo_entry["modules"])
 
         return self.pipeline_modules
+
+    def get_module_branch(self, module, repo_name):
+        """
+        Gets the branch from which the module was installed
+
+        Returns:
+            (str): The branch name
+        Raises:
+            LookupError: If their is no branch entry in the `modules.json`
+        """
+        if self.modules_json is None:
+            self.load()
+        branch = self.modules_json["repos"].get(repo_name, {}).get("modules", {}).get(module, {}).get("branch")
+        if branch is None:
+            raise LookupError(
+                f"Could not find branch information for module '{Path(repo_name, module)}'."
+                f"Please remove the 'modules.json' and rerun the command to recreate it"
+            )
+        return branch
 
     def dump(self):
         """
