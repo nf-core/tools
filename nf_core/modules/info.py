@@ -36,12 +36,12 @@ class ModuleInfo(ModuleCommand):
                 log.debug(f"Only showing remote info: {e}")
                 pipeline_dir = None
 
-        self.module = self.init_mod_name(tool)
         if self.repo_type == "pipeline":
             self.modules_json = ModulesJson(self.dir)
             self.modules_json.check_up_to_date()
         else:
             self.modules_json = None
+        self.module = self.init_mod_name(tool)
 
     def init_mod_name(self, module):
         """
