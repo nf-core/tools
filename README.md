@@ -31,9 +31,11 @@ A python package with helper tools for the nf-core community.
   - [`modules list` - List available modules](#list-modules)
     - [`modules list remote` - List remote modules](#list-remote-modules)
     - [`modules list local` - List installed modules](#list-installed-modules)
+  - [`modules info` - Show information about a module](#show-information-about-a-module)
   - [`modules install` - Install modules in a pipeline](#install-modules-in-a-pipeline)
   - [`modules update` - Update modules in a pipeline](#update-modules-in-a-pipeline)
   - [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
+  - [`modules patch` - Create a patch file for a module](#create-a-patch-file-for-a-module)
   - [`modules create` - Create a module from the template](#create-a-new-module)
   - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
@@ -1176,9 +1178,9 @@ INFO     Removing star/align
 
 You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
-### Create a patch file for minor local changes in a module
+### Create a patch file for a module
 
-If you want to make a minor change to a module but still keep it up date with the remote version, you can create a patch file using `nf-core modules patch`.
+If you want to make a minor change to a locally installed module but still keep it up date with the remote version, you can create a patch file using `nf-core modules patch`.
 
 ```console
 $ nf-core modules patch
@@ -1219,7 +1221,7 @@ The generated patches work with `nf-core modules update`: when you install a new
 the patch automatically. The patch application fails if the new version of the module modifies the same lines as the patch. In this case,
 the patch new version is installed but the old patch file is preversed.
 
-When linting a patched module, the patch is applied in reverse to recover the original files and then the module is linted as usual.
+When linting a patched module, the linting command will check the validity of the patch. When running other lint tests the patch is applied in reverse, and the original files are linted.
 
 ### Create a new module
 
