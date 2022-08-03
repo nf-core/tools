@@ -77,20 +77,23 @@ class ModuleLint(ModuleCommand):
         self.failed = []
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.lint_tests = self.get_all_lint_tests(self.repo_type == "pipeline")
-        # Get lists of modules install in directory
-        self.get_pipeline_modules(local=True)
 
         if self.repo_type == "pipeline":
-            if self.modules_repo.fullname in self.module_names:
+            modules_json = ModulesJson(self.dir)
+            modules_json.check_up_to_date()
+            all_pipeline_modules = modules_json.get_all_modules()
+            if self.modules_repo.fullname in all_pipeline_modules:
                 module_dir = Path(self.dir, "modules", self.modules_repo.fullname)
                 self.all_remote_modules = [
                     NFCoreModule(m, self.modules_repo.fullname, module_dir / m, self.repo_type, Path(self.dir))
-                    for m in self.module_names[self.modules_repo.fullname]
+                    for m in all_pipeline_modules[self.modules_repo.fullname]
                 ]
+                if not self.all_remote_modules:
+                    raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
                 local_module_dir = Path(self.dir, "modules", "local")
                 self.all_local_modules = [
                     NFCoreModule(m, None, local_module_dir / m, self.repo_type, Path(self.dir), nf_core_module=False)
-                    for m in self.module_names.get("local", [])
+                    for m in self.get_local_modules()
                 ]
 
             else:
@@ -99,9 +102,11 @@ class ModuleLint(ModuleCommand):
             module_dir = Path(self.dir, "modules")
             self.all_remote_modules = [
                 NFCoreModule(m, None, module_dir / m, self.repo_type, Path(self.dir))
-                for m in self.module_names["modules"]
+                for m in self.get_modules_clone_modules()
             ]
             self.all_local_modules = []
+            if not self.all_remote_modules:
+                raise LookupError("No modules in 'modules' directory")
 
         self.lint_config = None
         self.modules_json = None

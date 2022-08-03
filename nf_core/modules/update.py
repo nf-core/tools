@@ -46,9 +46,6 @@ class ModuleUpdate(ModuleCommand):
         self.update_config = None
         self.modules_json = ModulesJson(self.dir)
 
-        # Fetch the list of pipeline modules
-        self.get_pipeline_modules()
-
     class DiffEnum(enum.Enum):
         """Enumeration to keeping track of file diffs.
 
@@ -279,18 +276,18 @@ class ModuleUpdate(ModuleCommand):
         """
         # Check if there are any modules installed from the repo
         repo_name = self.modules_repo.fullname
-        if repo_name not in self.module_names:
+        if repo_name not in self.modules_json.get_all_modules():
             raise LookupError(f"No modules installed from '{repo_name}'")
 
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.module_names[repo_name],
+                choices=self.modules_json.get_all_modules()[repo_name],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check if module is installed before trying to update
-        if module not in self.module_names[repo_name]:
+        if module not in self.modules_json.get_all_modules()[repo_name]:
             raise LookupError(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
 
         # Check that the supplied name is an available module
@@ -340,7 +337,7 @@ class ModuleUpdate(ModuleCommand):
         modules_info = {}
         # Loop through all the modules in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
-        for repo_name, modules in self.module_names.items():
+        for repo_name, modules in self.modules_json.get_all_modules().items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
                 modules_info[repo_name] = [(module, self.sha) for module in modules]
             elif isinstance(self.update_config[repo_name], dict):

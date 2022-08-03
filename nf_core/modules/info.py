@@ -11,6 +11,7 @@ from rich.table import Table
 from rich.text import Text
 
 import nf_core.utils
+from nf_core.modules.modules_json import ModulesJson
 
 from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
@@ -35,7 +36,11 @@ class ModuleInfo(ModuleCommand):
                 log.debug(f"Only showing remote info: {e}")
                 pipeline_dir = None
 
-        self.get_pipeline_modules()
+        if self.repo_type == "pipeline":
+            self.modules_json = ModulesJson(self.dir)
+            self.modules_json.check_up_to_date()
+        else:
+            self.modules_json = None
         self.module = self.init_mod_name(tool)
 
     def init_mod_name(self, module):
@@ -51,9 +56,9 @@ class ModuleInfo(ModuleCommand):
             ).unsafe_ask()
             if local:
                 if self.repo_type == "modules":
-                    modules = self.module_names["modules"]
+                    modules = self.get_modules_clone_modules()
                 else:
-                    modules = self.module_names.get(self.modules_repo.fullname)
+                    modules = self.modules_json.get_all_modules().get(self.modules_repo.fullname)
                     if modules is None:
                         raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
             else:
@@ -98,7 +103,7 @@ class ModuleInfo(ModuleCommand):
             repo_name = self.modules_repo.fullname
             module_base_path = os.path.join(self.dir, "modules", repo_name)
             # Check that we have any modules installed from this repo
-            modules = self.module_names.get(repo_name)
+            modules = self.modules_json.get_all_modules().get(repo_name)
             if modules is None:
                 raise LookupError(f"No modules installed from {self.modules_repo.remote_url}")
 

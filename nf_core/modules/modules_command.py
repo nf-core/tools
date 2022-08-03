@@ -26,7 +26,6 @@ class ModuleCommand:
         """
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.dir = dir
-        self.module_names = None
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -35,53 +34,23 @@ class ModuleCommand:
         except LookupError as e:
             raise UserWarning(e)
 
-    def get_pipeline_modules(self, local=False):
+    def get_modules_clone_modules(self):
         """
-        Get the modules installed in the current directory.
-
-        If the current directory is a pipeline, the `module_names`
-        field is set to a dictionary indexed by the different
-        installation repositories in the directory. If the directory
-        is a clone of nf-core/modules the filed is set to
-        `{"modules": modules_in_dir}`
-
+        Get the modules available in a clone of nf-core/modules
         """
-
-        self.module_names = {}
-
         module_base_path = Path(self.dir, "modules")
+        return [
+            str(Path(dir).relative_to(module_base_path))
+            for dir, _, files in os.walk(module_base_path)
+            if "main.nf" in files
+        ]
 
-        if self.repo_type == "pipeline":
-            module_relpaths = (
-                Path(dir).relative_to(module_base_path)
-                for dir, _, files in os.walk(module_base_path)
-                if "main.nf" in files and not str(Path(dir).relative_to(module_base_path)).startswith("local")
-            )
-            # The two highest directories are the repo owner and repo name. The rest is the module name
-            repos_and_modules = (("/".join(dir.parts[:2]), "/".join(dir.parts[2:])) for dir in module_relpaths)
-            for repo, module in repos_and_modules:
-                if repo not in self.module_names:
-                    self.module_names[repo] = []
-                self.module_names[repo].append(module)
-
-            local_module_dir = Path(module_base_path, "local")
-            if local and local_module_dir.exists():
-                # Get the local modules
-                self.module_names["local"] = [
-                    str(path.relative_to(local_module_dir))
-                    for path in local_module_dir.iterdir()
-                    if path.suffix == ".nf"
-                ]
-
-        elif self.repo_type == "modules":
-            self.module_names["modules"] = [
-                str(Path(dir).relative_to(module_base_path))
-                for dir, _, files in os.walk(module_base_path)
-                if "main.nf" in files
-            ]
-        else:
-            log.error("Directory is neither a clone of nf-core/modules nor a pipeline")
-            raise SystemError
+    def get_local_modules(self):
+        """
+        Get the local modules in a pipeline
+        """
+        local_module_dir = Path(self.dir, "modules", "local")
+        return [str(path.relative_to(local_module_dir)) for path in local_module_dir.iterdir() if path.suffix == ".nf"]
 
     def has_valid_directory(self):
         """Check that we were given a pipeline or clone of nf-core/modules"""
@@ -122,6 +91,24 @@ class ModuleCommand:
         except OSError as e:
             log.error(f"Could not remove module: {e}")
             return False
+
+    def modules_from_repo(self, repo_name):
+        """
+        Gets the modules installed from a certain repository
+
+        Args:
+            repo_name (str): The name of the repository
+
+        Returns:
+            [str]: The names of the modules
+        """
+        repo_dir = Path(self.dir, "modules", repo_name)
+        if not repo_dir.exists():
+            raise LookupError(f"Nothing installed from {repo_name} in pipeline")
+
+        return [
+            str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
+        ]
 
     def install_module_files(self, module_name, module_version, modules_repo, install_dir):
         """
