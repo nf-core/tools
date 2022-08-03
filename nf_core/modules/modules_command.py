@@ -26,7 +26,6 @@ class ModuleCommand:
         """
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
         self.dir = dir
-        self.module_names = None
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)

@@ -34,7 +34,9 @@ class ModulePatch(ModuleCommand):
 
         if module is None:
             module = questionary.autocomplete(
-                "Tool:", self.module_names[self.modules_repo.fullname], style=nf_core.utils.nfcore_question_style
+                "Tool:",
+                self.modules_json.get_all_modules()[self.modules_repo.fullname],
+                style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         module_fullname = str(Path(self.modules_repo.fullname, module))
 
