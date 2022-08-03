@@ -20,21 +20,23 @@ class ModulePatch(ModuleCommand):
         super().__init__(dir, remote_url, branch, no_pull, base_path)
 
         self.modules_json = ModulesJson(dir)
-        self.get_pipeline_modules()
 
     def param_check(self, module):
         if not self.has_valid_directory():
             raise UserWarning()
 
-        if module is not None and module not in self.module_names[self.modules_repo.fullname]:
+        if module is not None and module not in self.modules_json.get_all_modules().get(self.modules_repo.fullname, {}):
             raise UserWarning(f"Module '{Path(self.modules_repo.fullname, module)}' does not exist in the pipeline")
 
     def patch(self, module=None):
+        self.modules_json.check_up_to_date()
         self.param_check(module)
 
         if module is None:
             module = questionary.autocomplete(
-                "Tool:", self.module_names[self.modules_repo.fullname], style=nf_core.utils.nfcore_question_style
+                "Tool:",
+                self.modules_json.get_all_modules()[self.modules_repo.fullname],
+                style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         module_fullname = str(Path(self.modules_repo.fullname, module))
 
