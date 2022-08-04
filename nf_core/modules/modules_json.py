@@ -8,7 +8,6 @@ from pathlib import Path
 
 import git
 import questionary
-import rich.progress
 
 import nf_core.modules.module_utils
 import nf_core.modules.modules_repo
@@ -45,20 +44,20 @@ class ModulesJson:
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
         modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
-        modules_dir = f"{self.dir}/modules"
+        modules_dir = Path(self.dir, "modules")
 
-        if not os.path.exists(modules_dir):
+        if not modules_dir.exists():
             raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
 
-        repos = self.get_pipeline_module_repositories(Path(modules_dir))
+        repos = self.get_pipeline_module_repositories(modules_dir)
 
         # Get all module names in the repos
         repo_module_names = [
             (
                 repo_name,
                 [
-                    os.path.relpath(dir_name, os.path.join(modules_dir, repo_name))
-                    for dir_name, _, file_names in os.walk(os.path.join(modules_dir, repo_name))
+                    str(Path(dir_name).relative_to(modules_dir / repo_name))
+                    for dir_name, _, file_names in os.walk(modules_dir / repo_name)
                     if "main.nf" in file_names
                 ],
                 repo_remote,
@@ -66,39 +65,17 @@ class ModulesJson:
             )
             for repo_name, (repo_remote, base_path) in repos.items()
         ]
-        progress_bar = rich.progress.Progress(
-            "[bold blue]{task.description}",
-            rich.progress.BarColumn(bar_width=None),
-            "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
-            transient=True,
-        )
-        with progress_bar:
-            n_total_modules = sum(len(modules) for _, modules, _, _ in repo_module_names)
-            file_progress = progress_bar.add_task(
-                "Creating 'modules.json' file", total=n_total_modules, test_name="module.json"
+
+        for repo_name, module_names, remote_url, base_path in sorted(repo_module_names):
+            modules_json["repos"][repo_name] = dict()
+            modules_json["repos"][repo_name]["git_url"] = remote_url
+            modules_json["repos"][repo_name]["modules"] = dict()
+            modules_json["repos"][repo_name]["base_path"] = base_path
+            modules_json["repos"][repo_name]["modules"] = self.determine_module_branches_and_shas(
+                repo_name, remote_url, base_path, modules_dir, module_names
             )
-            for repo_name, module_names, remote, base_path in sorted(repo_module_names):
-                try:
-                    # Create a ModulesRepo object without progress bar to not conflict with the other one
-                    modules_repo = nf_core.modules.modules_repo.ModulesRepo(
-                        remote_url=remote, base_path=base_path, no_progress=True
-                    )
-                except LookupError as e:
-                    raise UserWarning(e)
 
-                repo_path = os.path.join(modules_dir, repo_name)
-                modules_json["repos"][repo_name] = dict()
-                modules_json["repos"][repo_name]["git_url"] = remote
-                modules_json["repos"][repo_name]["modules"] = dict()
-                modules_json["repos"][repo_name]["base_path"] = base_path
-                for module_name in sorted(module_names):
-                    module_path = os.path.join(repo_path, module_name)
-                    progress_bar.update(file_progress, advance=1, test_name=f"{repo_name}/{module_name}")
-                    correct_commit_sha = self.find_correct_commit_sha(module_name, module_path, modules_repo)
-
-                    modules_json["repos"][repo_name]["modules"][module_name] = {"git_sha": correct_commit_sha}
-
-        modules_json_path = os.path.join(self.dir, "modules.json")
+        modules_json_path = Path(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
             fh.write("\n")
@@ -173,26 +150,6 @@ class ModulesJson:
                 dirs_not_covered = self.dir_tree_uncovered(modules_dir, [Path(name) for name in repos])
         return repos
 
-    def find_correct_commit_sha(self, module_name, module_path, modules_repo):
-        """
-        Returns the SHA for the latest commit where the local files are identical to the remote files
-        Args:
-            module_name (str): Name of module
-            module_path (str): Path to module in local repo
-            module_repo (str): Remote repo for module
-        Returns:
-            commit_sha (str): The latest commit SHA where local files are identical to remote files,
-                              or None if no commit is found
-        """
-        # Find the correct commit SHA for the local module files.
-        # We iterate over the commit history for the module until we find
-        # a revision that matches the file contents
-        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
-        for commit_sha in commit_shas:
-            if all(modules_repo.module_files_identical(module_name, module_path, commit_sha).values()):
-                return commit_sha
-        return None
-
     def dir_tree_uncovered(self, modules_dir, repos):
         """
         Does a BFS of the modules directory to look for directories that
@@ -207,7 +164,6 @@ class ModulesJson:
         Returns:
             dirs_not_covered ([ Path ]): A list of directories that are currently not covered by any remote.
         """
-
         # Initialise the FIFO queue. Note that we assume the directory to be correctly
         # configured, i.e. no files etc.
         fifo = [subdir for subdir in modules_dir.iterdir() if subdir.stem != "local"]
@@ -228,6 +184,126 @@ class ModulesJson:
             fifo = temp_queue
             depth += 1
         return dirs_not_covered
+
+    def determine_module_branches_and_shas(self, repo_name, remote_url, base_path, modules_dir, modules):
+        """
+        Determines what branch and commit sha each module in the pipeline belong to
+
+        Assumes all modules are installed from the default branch. If it fails to find the
+        module in the default branch, it prompts the user with the available branches
+
+        Args:
+            repo_name (str): The name of the module repository
+            remote_url (str): The url to the remote repository
+            base_path (Path): The base path in the remote
+            modules_base_path (Path): The path to the modules directory in the pipeline
+            modules ([str]): List of names of installed modules from the repository
+
+        Returns:
+            (dict[str, dict[str, str]]): The module.json entries for the modules
+                                         from the repository
+        """
+        default_modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote_url, base_path=base_path)
+        repo_path = modules_dir / repo_name
+        # Get the branches present in the repository, as well as the default branch
+        available_branches = nf_core.modules.modules_repo.ModulesRepo.get_remote_branches(remote_url)
+        sb_local = []
+        dead_modules = []
+        repo_entry = {}
+        for module in sorted(modules):
+            modules_repo = default_modules_repo
+            module_path = repo_path / module
+            correct_commit_sha = None
+            tried_branches = {default_modules_repo.branch}
+            found_sha = False
+            while True:
+                correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
+                if correct_commit_sha is None:
+                    log.info("Was unable to find matching module files in the {modules_repo.branch} branch.")
+                    choices = [{"name": "No", "value": None}] + [
+                        {"name": branch, "value": branch} for branch in (available_branches - tried_branches)
+                    ]
+                    branch = questionary.select(
+                        "Was the modules installed from a different branch in the remote?",
+                        choices=choices,
+                        style=nf_core.utils.nfcore_question_style,
+                    )
+                    if branch is None:
+                        action = questionary.select(
+                            f"Module is untracked '{module}'. Please select what action to take",
+                            choices=[
+                                {"name": "Move the directory to 'local'", "value": 0},
+                                {"name": "Remove the files", "value": 1},
+                            ],
+                            style=nf_core.utils.nfcore_question_style,
+                        )
+                        if action == 0:
+                            sb_local.append(module)
+                        else:
+                            dead_modules.append(module)
+                        break
+                    # Create a new modules repo with the selected branch, and retry find the sha
+                    modules_repo = nf_core.modules.modules_repo.ModulesRepo(
+                        remote_url=remote_url, base_path=base_path, no_pull=True, no_progress=True
+                    )
+                else:
+                    found_sha = True
+                    break
+            if found_sha:
+                repo_entry[module] = {"branch": modules_repo.branch, "git_sha": correct_commit_sha}
+        print(repo_entry)
+        # Clean up the modules we were unable to find the sha for
+        for module in sb_local:
+            log.debug(f"Moving module '{Path(repo_name, module)}' to 'local' directory")
+            self.move_module_to_local(module, repo_name, modules_dir)
+
+        for module in dead_modules:
+            log.debug(f"Removing module {Path(repo_name, module)}'")
+            shutil.rmtree(repo_path / module)
+
+        return repo_entry
+
+    def find_correct_commit_sha(self, module_name, module_path, modules_repo):
+        """
+        Returns the SHA for the latest commit where the local files are identical to the remote files
+        Args:
+            module_name (str): Name of module
+            module_path (str): Path to module in local repo
+            module_repo (str): Remote repo for module
+        Returns:
+            commit_sha (str): The latest commit SHA where local files are identical to remote files,
+                              or None if no commit is found
+        """
+        # Find the correct commit SHA for the local module files.
+        # We iterate over the commit history for the module until we find
+        # a revision that matches the file contents
+        commit_shas = (commit["git_sha"] for commit in modules_repo.get_module_git_log(module_name, depth=1000))
+        for commit_sha in commit_shas:
+            if all(modules_repo.module_files_identical(module_name, module_path, commit_sha).values()):
+                return commit_sha
+        return None
+
+    def move_module_to_local(self, module, repo_name, modules_dir):
+        """
+        Move a module to the 'local' directory
+
+        Args:
+            module (str): The name of the modules
+            repo_name (str): The name of the repository the module resides in
+            modules_dir (Path): The path to the pipeline's modules directory
+        """
+        current_path = (modules_dir / repo_name) / module
+        local_modules_dir = modules_dir / "local"
+        if not local_modules_dir.exists():
+            local_modules_dir.mkdir()
+
+        to_name = module
+        # Check if there is already a subdirectory with the name
+        while (local_modules_dir / to_name).exists():
+            # Add a time suffix to the path to make it unique
+            # (do it again and again if it didn't work out...)
+            to_name += f"-{datetime.datetime.now().strftime('%y%m%d%H%M%S')}"
+        shutil.move(current_path, local_modules_dir / to_name)
 
     def check_up_to_date(self):
         """

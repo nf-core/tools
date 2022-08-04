@@ -2,6 +2,7 @@ import filecmp
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import git
 import rich.progress
@@ -84,6 +85,31 @@ class ModulesRepo(object):
         Updates the clone/pull status of a local repo
         """
         ModulesRepo.local_repo_statuses[repo_name] = up_to_date
+
+    @staticmethod
+    def get_remote_branches(remote_url):
+        """
+        Get all branches from a remote repository
+
+        Args:
+            remote_url (str): The git url to the remote repository
+
+        Returns:
+            (set[str]): All branches found in the remote
+        """
+        try:
+            unparsed_branches = git.Git().ls_remote(remote_url)
+        except git.GitCommandError:
+            raise LookupError(f"Was unable to fetch branches from '{remote_url}'")
+        else:
+            branches = {}
+            for branch_info in unparsed_branches.split("\n"):
+                sha, name = branch_info.split("\t")
+                if name != "HEAD":
+                    # The remote branches are shown as 'ref/head/branch'
+                    branch_name = Path(name).stem
+                    branches[sha] = branch_name
+            return set(branches.values())
 
     def __init__(self, remote_url=None, branch=None, no_pull=False, base_path=None, no_progress=False):
         """
