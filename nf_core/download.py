@@ -5,6 +5,7 @@ from __future__ import print_function
 
 import concurrent.futures
 import hashlib
+import io
 import logging
 import os
 import re
@@ -12,7 +13,6 @@ import shutil
 import subprocess
 import sys
 import tarfile
-from io import BytesIO
 from zipfile import ZipFile
 
 import questionary
@@ -350,7 +350,7 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
-        zipfile = ZipFile(BytesIO(url.content))
+        zipfile = ZipFile(io.BytesIO(url.content))
         zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
@@ -370,7 +370,7 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
-        zipfile = ZipFile(BytesIO(url.content))
+        zipfile = ZipFile(io.BytesIO(url.content))
         zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
@@ -682,7 +682,7 @@ class DownloadWorkflow(object):
                         progress.start_task(task)
 
                     # Stream download
-                    for data in r.iter_content(chunk_size=4096):
+                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
                         # Check that the user didn't hit ctrl-c
                         if self.kill_with_fire:
                             raise KeyboardInterrupt
