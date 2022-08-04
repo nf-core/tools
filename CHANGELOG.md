@@ -11,6 +11,7 @@
 - Add Gitpod and Mamba profiles to the pipeline template ([#1673](https://github.com/nf-core/tools/pull/1673))
 - Remove call to `getGenomeAttribute` in `main.nf` when running `nf-core create` without iGenomes ([#1670](https://github.com/nf-core/tools/issues/1670))
 - Make `nf-core create` fail if Git default branch name is dev or TEMPLATE ([#1705](https://github.com/nf-core/tools/pull/1705))
+- Convert `console` snippets to `bash` snippets in the template where applicable ([#1729](https://github.com/nf-core/tools/pull/1729))
 
 ### Linting
 
@@ -65,6 +66,7 @@
 - Add support for patch in `nf-core modules lint` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 - Add support for custom remotes in `nf-core modules lint` ([#1715](https://github.com/nf-core/tools/issues/1715))
 - Make `nf-core modules` commands work with arbitrary git remotes ([#1721](https://github.com/nf-core/tools/issues/1721))
+- Add links in `README.md` for `info` and `patch` commands ([#1722](https://github.com/nf-core/tools/issues/1722)])
 - Fix misc. issues with `--branch` and `--base-path` ([#1726](https://github.com/nf-core/tools/issues/1726))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
