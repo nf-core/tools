@@ -144,8 +144,9 @@ class ModuleUpdate(ModuleCommand):
         # and do the requested action on them
         exit_value = True
         all_patches_successful = True
+        print(modules_info)
         for modules_repo, module, sha, patch_relpath in modules_info:
-
+            print(sha)
             module_fullname = str(Path(modules_repo.fullname, module))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
@@ -359,7 +360,7 @@ class ModuleUpdate(ModuleCommand):
         modules_info = {}
         # Loop through all the modules in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
-        for repo_name, modules in self.modules_json.get_all_modules(get_branch=True).items():
+        for repo_name, modules in self.modules_json.get_all_modules().items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
                 modules_info[repo_name] = [
                     (module, self.sha, self.modules_json.get_module_branch(module, repo_name)) for module in modules
@@ -390,7 +391,7 @@ class ModuleUpdate(ModuleCommand):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
                 modules_info[repo_name] = [
-                    (module_name, custom_sha, self.modules_json.get_module_branch(module, repo_name))
+                    (module_name, custom_sha, self.modules_json.get_module_branch(module_name, repo_name))
                     for module_name in modules
                 ]
                 if self.sha is not None:
@@ -434,7 +435,7 @@ class ModuleUpdate(ModuleCommand):
         # Get the git urls from the modules.json
         modules_info = (
             (self.modules_json.get_git_url(repo_name), branch, self.modules_json.get_base_path(repo_name), mods_shas)
-            for (repo_name, branch), mods_shas in modules_info.items()
+            for (repo_name, branch), mods_shas in repos_and_branches.items()
         )
 
         # Create ModulesRepo objects
@@ -447,13 +448,9 @@ class ModuleUpdate(ModuleCommand):
                 log.info(f"Skipping modules in '{modules_repo.fullname}'")
             else:
                 repo_objs_mods.append((modules_repo, mods_shas))
-        modules_info = [
-            (ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path), mods_shas)
-            for repo_url, branch, base_path, mods_shas in modules_info
-        ]
 
         # Flatten the list
-        modules_info = [(repo, mod, sha) for repo, mods_shas in modules_info for mod, sha in mods_shas]
+        modules_info = [(repo, mod, sha) for repo, mods_shas in repo_objs_mods for mod, sha in mods_shas]
 
         # Verify that that all modules and shas exist in their respective ModulesRepo,
         # don't try to update those that don't
@@ -463,7 +460,7 @@ class ModuleUpdate(ModuleCommand):
             if not repo.module_exists(module):
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
-            elif not repo.sha_exists_on_branch(sha):
+            elif sha is not None and not repo.sha_exists_on_branch(sha):
                 log.warning(
                     f"Git sha '{sha}' does not exists on the '{branch}' of '{repo.fullname}'. Skipping module '{mod}'"
                 )
