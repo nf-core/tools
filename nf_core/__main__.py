@@ -426,19 +426,15 @@ def local(ctx, keywords, json, dir):
     """
     List modules installed locally in a pipeline
     """
-    try:
-        module_list = nf_core.modules.ModuleList(
-            dir,
-            False,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
-            ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
-        )
-        print(module_list.list_modules(keywords, json))
-    except (UserWarning, LookupError) as e:
-        log.critical(e)
-        sys.exit(1)
+    module_list = nf_core.modules.ModuleList(
+        dir,
+        False,
+        ctx.obj["modules_repo_url"],
+        ctx.obj["modules_repo_branch"],
+        ctx.obj["modules_repo_no_pull"],
+        ctx.obj["modules_repo_base_path"],
+    )
+    print(module_list.list_modules(keywords, json))
 
 
 # nf-core modules install
