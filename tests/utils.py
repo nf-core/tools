@@ -10,6 +10,7 @@ import tempfile
 OLD_TRIMGALORE_SHA = "20d8250d9f39ddb05dfb437603aaf99b5c0b2b41"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
 GITLAB_REPO = "nf-core/modules-test"
+GITLAB_BRANCH_TEST_BRACH = "branch-test"
 
 
 def with_temporary_folder(func):

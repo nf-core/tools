@@ -5,6 +5,7 @@ import shutil
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (
     NF_CORE_MODULES_BASE_PATH,
+    NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
     ModulesRepo,
@@ -34,6 +35,7 @@ def test_mod_json_update(self):
     assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
     assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]
     assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["git_sha"]
+    assert NF_CORE_MODULES_DEFAULT_BRANCH == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["branch"]
 
 
 def test_mod_json_create(self):
@@ -57,6 +59,7 @@ def test_mod_json_create(self):
     for mod in mods:
         assert mod in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
         assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
+        assert "branch" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
 
 
 def test_mod_json_up_to_date(self):

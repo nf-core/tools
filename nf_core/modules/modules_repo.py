@@ -16,6 +16,7 @@ log = logging.getLogger(__name__)
 NF_CORE_MODULES_NAME = "nf-core/modules"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
 NF_CORE_MODULES_BASE_PATH = "modules"
+NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 class RemoteProgressbar(git.RemoteProgress):

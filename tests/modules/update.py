@@ -46,7 +46,7 @@ def test_install_at_hash_and_update(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
     # Get the up-to-date git_sha for the module from the ModulesRepo object
-    correct_git_sha = list(update_obj.modules_repo.get_module_git_log("trimgalore", depth=1))[0]["git_sha"]
+    correct_git_sha = update_obj.modules_repo.get_latest_module_version("trimgalore")
     current_git_sha = mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["trimgalore"]["git_sha"]
     assert correct_git_sha == current_git_sha
 
