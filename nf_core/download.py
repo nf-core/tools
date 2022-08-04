@@ -770,7 +770,7 @@ class DownloadWorkflow(object):
         log.debug(f"Creating archive: {self.output_filename}")
 
         # .tar.gz and .tar.bz2 files
-        if self.compress_type == "tar.gz" or self.compress_type == "tar.bz2":
+        if self.compress_type in ["tar.gz", "tar.bz2"]:
             ctype = self.compress_type.split(".")[1]
             with tarfile.open(self.output_filename, f"w:{ctype}") as tar:
                 tar.add(self.outdir, arcname=os.path.basename(self.outdir))
@@ -779,14 +779,14 @@ class DownloadWorkflow(object):
 
         # .zip files
         if self.compress_type == "zip":
-            with ZipFile(self.output_filename, "w") as zipObj:
+            with ZipFile(self.output_filename, "w") as zip_file:
                 # Iterate over all the files in directory
-                for folderName, subfolders, filenames in os.walk(self.outdir):
+                for folder_name, _, filenames in os.walk(self.outdir):
                     for filename in filenames:
                         # create complete filepath of file in directory
-                        filePath = os.path.join(folderName, filename)
+                        file_path = os.path.join(folder_name, filename)
                         # Add file to zip
-                        zipObj.write(filePath)
+                        zip_file.write(file_path)
             log.info(f"Command to extract files: [bright_magenta]unzip {self.output_filename}[/]")
 
         # Delete original files
