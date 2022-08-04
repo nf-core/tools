@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 import questionary
+from importlib_metadata import Lookup
 
 import nf_core.modules.module_utils
 import nf_core.utils
@@ -45,6 +46,7 @@ class ModuleUpdate(ModuleCommand):
         self.module = None
         self.update_config = None
         self.modules_json = ModulesJson(self.dir)
+        self.branch = branch
 
     class DiffEnum(enum.Enum):
         """Enumeration to keeping track of file diffs.
@@ -335,7 +337,7 @@ class ModuleUpdate(ModuleCommand):
 
         return (self.modules_repo, module, sha, patch_fn)
 
-    def get_all_modules_info(self):
+    def get_all_modules_info(self, branch=None):
         """Collects the module repository, version and sha for all modules.
 
         Information about the module version in the '.nf-core.yml' overrides the '--sha' option.
@@ -344,6 +346,12 @@ class ModuleUpdate(ModuleCommand):
             [(ModulesRepo, str, str)]: A list of tuples containing a ModulesRepo object,
             the module name, and the module version.
         """
+        if branch is not None:
+            use_branch = questionary.confirm(
+                "'--branch' was specified. Should this branch be used to update all modules?", default=False
+            )
+            if not use_branch:
+                branch = None
         skipped_repos = []
         skipped_modules = []
         overridden_repos = []
@@ -416,10 +424,12 @@ class ModuleUpdate(ModuleCommand):
         # Loop through modules_info and create on ModulesRepo object per remote and branch
         repos_and_branches = {}
         for repo_name, mods in modules_info.items():
-            for mod, sha, branch in mods:
-                if (repo_name, branch) not in repos_and_branches:
-                    repos_and_branches[(repo_name, branch)] = []
-                repos_and_branches[(repo_name, branch)].append((mod, sha))
+            for mod, sha, mod_branch in mods:
+                if branch is not None:
+                    mod_branch = branch
+                if (repo_name, mod_branch) not in repos_and_branches:
+                    repos_and_branches[(repo_name, mod_branch)] = []
+                repos_and_branches[(repo_name, mod_branch)].append((mod, sha))
 
         # Get the git urls from the modules.json
         modules_info = (
@@ -428,24 +438,38 @@ class ModuleUpdate(ModuleCommand):
         )
 
         # Create ModulesRepo objects
+        repo_objs_mods = []
+        for repo_url, branch, base_path, mods_shas in modules_info:
+            try:
+                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path)
+            except LookupError as e:
+                log.warning(e)
+                log.info(f"Skipping modules in '{modules_repo.fullname}'")
+            else:
+                repo_objs_mods.append((modules_repo, mods_shas))
         modules_info = [
             (ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path), mods_shas)
             for repo_url, branch, base_path, mods_shas in modules_info
         ]
 
-        # Flatten and return the list
+        # Flatten the list
         modules_info = [(repo, mod, sha) for repo, mods_shas in modules_info for mod, sha in mods_shas]
 
-        # Verify that that all modules exist in their respective ModulesRepo,
+        # Verify that that all modules and shas exist in their respective ModulesRepo,
         # don't try to update those that don't
         i = 0
         while i < len(modules_info):
             repo, module, _ = modules_info[i]
-            if repo.module_exists(module):
-                i += 1
-            else:
+            if not repo.module_exists(module):
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
+            elif not repo.sha_exists_on_branch(sha):
+                log.warning(
+                    f"Git sha '{sha}' does not exists on the '{branch}' of '{repo.fullname}'. Skipping module '{mod}'"
+                )
+                modules_info.pop(i)
+            else:
+                i += 1
 
         # Add patch filenames to the modules that have them
         modules_info = [
