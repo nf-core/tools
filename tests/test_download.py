@@ -152,7 +152,7 @@ class DownloadTest(unittest.TestCase):
         with open(tmpfile.name, "w") as f:
             f.write("test")
 
-        download_obj.validate_md5(tmpfile.name, val_hash)
+        nf_core.utils.validate_file_md5(tmpfile.name, val_hash)
 
     @with_temporary_file
     def test_mismatching_md5sums(self, tmpfile):
@@ -165,7 +165,7 @@ class DownloadTest(unittest.TestCase):
             f.write("test")
 
         with pytest.raises(IOError):
-            download_obj.validate_md5(tmpfile.name, val_hash)
+            nf_core.utils.validate_file_md5(tmpfile.name, val_hash)
 
     #
     # Tests for 'singularity_pull_image'

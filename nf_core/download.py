@@ -794,31 +794,4 @@ class DownloadWorkflow(object):
         shutil.rmtree(self.outdir)
 
         # Caclualte md5sum for output file
-        self.validate_md5(self.output_filename)
-
-    def validate_md5(self, fname, expected=None):
-        """Calculates the md5sum for a file on the disk and validate with expected.
-
-        Args:
-            fname (str): Path to a local file.
-            expected (str): The expected md5sum.
-
-        Raises:
-            IOError, if the md5sum does not match the remote sum.
-        """
-        log.debug(f"Validating image hash: {fname}")
-
-        # Calculate the md5 for the file on disk
-        hash_md5 = hashlib.md5()
-        with open(fname, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        file_hash = hash_md5.hexdigest()
-
-        if expected is None:
-            log.info(f"MD5 checksum for '{fname}': [blue]{file_hash}[/]")
-        else:
-            if file_hash == expected:
-                log.debug(f"md5 sum of image matches expected: {expected}")
-            else:
-                raise IOError(f"{fname} md5 does not match remote: {expected} - {file_hash}")
+        log.info(f"MD5 checksum for '{self.output_filename}': [blue]{nf_core.utils.file_md5(self.output_filename)}[/]")
