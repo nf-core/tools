@@ -354,7 +354,7 @@ class ModulesJson:
                     if "git_sha" not in modules[module] or "branch" not in modules[module]:
                         raise UserWarning(
                             "The 'modules.json' file is not up to date. "
-                            "Please reinstall it by removing it and rerunning the command."
+                            "You can fix it by running 'nf-core modules update'."
                         )
                     missing_installation[module_repo_name]["modules"].pop(module)
                     if len(missing_installation[module_repo_name]["modules"]) == 0:
@@ -434,7 +434,7 @@ class ModulesJson:
         if not self.has_git_url_and_base_path():
             raise UserWarning(
                 "The 'modules.json' file is not up to date. "
-                "Please reinstall it by removing it and rerunning the command."
+                "You can fix it by running 'nf-core modules update'."
             )
 
         missing_from_modules_json, missing_installation = self.unsynced_modules()
