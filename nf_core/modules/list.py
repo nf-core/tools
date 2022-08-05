@@ -102,7 +102,9 @@ class ModuleList(ModuleCommand):
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
                             message, date = ModulesRepo(
-                                remote_url=repo_entry["git_url"], base_path=repo_entry["base_path"]
+                                remote_url=repo_entry["git_url"],
+                                base_path=repo_entry["base_path"],
+                                branch=module_entry["branch"],
                             ).get_commit_info(version_sha)
                         except LookupError as e:
                             log.warning(e)

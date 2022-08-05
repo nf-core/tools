@@ -1,7 +1,6 @@
 """
 The NFCoreModule class holds information and utility functions for a single module
 """
-import os
 from pathlib import Path
 
 
