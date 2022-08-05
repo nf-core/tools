@@ -323,7 +323,7 @@ class ModuleUpdate(ModuleCommand):
         if current_branch != new_branch:
             log.warning(
                 f"You are trying to update the '{Path(self.modules_repo.fullname, module)}' module from "
-                f"the '{new_branch}' branch which was installed from the '{current_branch}'"
+                f"the '{new_branch}' branch. This module was installed from the '{current_branch}'"
             )
             switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
             if switch:
