@@ -1006,3 +1006,15 @@ def strip_ansi_codes(string, replace_with=""):
     From Stack Overflow: https://stackoverflow.com/a/14693789/713980
     """
     return ANSI_ESCAPE_RE.sub(replace_with, string)
+
+
+def is_relative_to(path1, path2):
+    """
+    Checks if a path is relative to another.
+
+    Should mimic Path.is_relative_to which not available in Python < 3.9
+
+    path1 (Path | str): The path that could be a subpath
+    path2 (Path | str): The path the could be the superpath
+    """
+    return str(path1).startswith(str(path2) + os.sep)

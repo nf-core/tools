@@ -437,7 +437,7 @@ def local(ctx, keywords, json, dir):
         )
         print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
-        log.critical(e)
+        log.error(e)
         sys.exit(1)
 
 
