@@ -433,8 +433,7 @@ class ModulesJson:
         self.load()
         if not self.has_git_url_and_base_path():
             raise UserWarning(
-                "The 'modules.json' file is not up to date. "
-                "You can fix it by running 'nf-core modules update'."
+                "The 'modules.json' file is not up to date. " "You can fix it by running 'nf-core modules update'."
             )
 
         missing_from_modules_json, missing_installation = self.unsynced_modules()
