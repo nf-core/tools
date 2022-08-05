@@ -328,8 +328,7 @@ class ModuleUpdate(ModuleCommand):
             switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
             if switch:
                 # Change the branch
-                self.modules_repo.branch = current_branch
-                self.modules_repo.setup_branch()
+                self.modules_repo.setup_branch(current_branch)
 
         # If there is a patch file, get its filename
         patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.fullname)
