@@ -1,5 +1,4 @@
 import enum
-import json
 import logging
 import os
 import shutil
@@ -7,7 +6,6 @@ import tempfile
 from pathlib import Path
 
 import questionary
-from importlib_metadata import Lookup
 
 import nf_core.modules.module_utils
 import nf_core.utils
