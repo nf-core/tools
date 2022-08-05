@@ -4,7 +4,6 @@ Verify that a module has a correct entry in the modules.json file
 """
 
 import logging
-import os
 from pathlib import Path
 
 import nf_core

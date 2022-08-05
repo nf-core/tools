@@ -1,5 +1,3 @@
-import os
-import shutil
 from pathlib import Path
 
 from ..modules_differ import ModulesDiffer
