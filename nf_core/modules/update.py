@@ -454,7 +454,7 @@ class ModuleUpdate(ModuleCommand):
                 modules_info.pop(i)
             elif sha is not None and not repo.sha_exists_on_branch(sha):
                 log.warning(
-                    f"Git sha '{sha}' does not exists on the '{repo.branch}' of '{repo.fullname}'. Skipping module '{mod}'"
+                    f"Git sha '{sha}' does not exists on the '{repo.branch}' of '{repo.fullname}'. Skipping module '{module}'"
                 )
                 modules_info.pop(i)
             else:
