@@ -15,7 +15,6 @@ import shlex
 import subprocess
 import sys
 import time
-from distutils.version import StrictVersion
 
 import git
 import prompt_toolkit
@@ -24,6 +23,7 @@ import requests
 import requests_cache
 import rich
 import yaml
+from packaging.version import Version
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -76,7 +76,7 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
         response = requests.get(source_url, timeout=3)
         remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
-    is_outdated = StrictVersion(remote_version) > StrictVersion(current_version)
+    is_outdated = Version(remote_version) > Version(current_version)
     return (is_outdated, current_version, remote_version)
 
 
