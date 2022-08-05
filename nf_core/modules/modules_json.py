@@ -402,7 +402,7 @@ class ModulesJson:
                 sha = module_entry["git_sha"]
                 if branch not in branches_and_mods:
                     branches_and_mods[branch] = []
-                branches_and_mods.append((module, sha))
+                branches_and_mods[branch].append((module, sha))
 
         for branch, modules in branches_and_mods.items():
             try:
@@ -413,7 +413,7 @@ class ModulesJson:
                 log.error(e)
                 failed_to_install.extend(modules)
             for module, sha in modules:
-                if not modules_repo.install_module(module, (self.modules_dir / repo_name) / module, sha):
+                if not modules_repo.install_module(module, (self.modules_dir / repo_name), sha):
                     log.warning(f"Could not install module '{Path(repo_name, module)}' - removing from modules.json")
                     failed_to_install.append(module)
         return failed_to_install
