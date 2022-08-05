@@ -602,9 +602,9 @@ def anaconda_package(dep, dep_channels=None):
                 )
             elif response.status_code == 404:
                 log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
-    else:
-        # We have looped through each channel and had a 404 response code on everything
-        raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
+
+    # We have looped through each channel and had a 404 response code on everything
+    raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
 
 
 def parse_anaconda_licence(anaconda_response, version=None):
@@ -807,15 +807,14 @@ def prompt_remote_pipeline_name(wfs):
             return wf.full_name
 
     # Non nf-core repo on GitHub
-    else:
-        if pipeline.count("/") == 1:
-            try:
-                gh_api.get(f"https://api.github.com/repos/{pipeline}")
-            except Exception:
-                # No repo found - pass and raise error at the end
-                pass
-            else:
-                return pipeline
+    if pipeline.count("/") == 1:
+        try:
+            gh_api.get(f"https://api.github.com/repos/{pipeline}")
+        except Exception:
+            # No repo found - pass and raise error at the end
+            pass
+        else:
+            return pipeline
 
     log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in wfs.remote_workflows])))
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
