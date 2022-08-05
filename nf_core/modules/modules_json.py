@@ -368,7 +368,7 @@ class ModulesJson:
     def has_git_url_and_base_path(self):
         """
         Check that that all repo entries in the modules.json
-        has a git url and a base_path
+        have a git url and a base_path
 
         Returns:
             (bool): True if they are found for all repos, False otherwise
