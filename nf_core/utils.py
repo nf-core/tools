@@ -1049,3 +1049,5 @@ def validate_file_md5(file_name, expected_md5hex):
         log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
     else:
         raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+
+    return True

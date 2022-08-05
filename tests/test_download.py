@@ -140,34 +140,6 @@ class DownloadTest(unittest.TestCase):
         assert download_obj.containers[0] == "cutting-edge-container"
 
     #
-    # Tests for 'validate_md5'
-    #
-    @with_temporary_file
-    def test_matching_md5sums(self, tmpfile):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        test_hash = hashlib.md5()
-        test_hash.update(b"test")
-        val_hash = test_hash.hexdigest()
-
-        with open(tmpfile.name, "w") as f:
-            f.write("test")
-
-        nf_core.utils.validate_file_md5(tmpfile.name, val_hash)
-
-    @with_temporary_file
-    def test_mismatching_md5sums(self, tmpfile):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        test_hash = hashlib.md5()
-        test_hash.update(b"other value")
-        val_hash = test_hash.hexdigest()
-
-        with open(tmpfile.name, "w") as f:
-            f.write("test")
-
-        with pytest.raises(IOError):
-            nf_core.utils.validate_file_md5(tmpfile.name, val_hash)
-
-    #
     # Tests for 'singularity_pull_image'
     #
     # If Singularity is installed, but the container can't be accessed because it does not exist or there are aceess
