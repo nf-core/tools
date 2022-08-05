@@ -36,13 +36,16 @@ def modules_json(self):
                 )
                 continue
 
-            for module in modules_json_dict["repos"][repo]["modules"]:
+            for module, module_entry in modules_json_dict["repos"][repo]["modules"].items():
                 if not Path(modules_dir, repo, module).exists():
                     failed.append(
                         f"Entry for `{Path(repo, module)}` found in `modules.json` but module is not installed in pipeline."
                     )
                     all_modules_passed = False
-
+                if module_entry.get("branch") is None:
+                    failed.append(f"Entry for `{Path(repo, module)}` is missing branch information.")
+                if module_entry.get("git_sha") is None:
+                    failed.append(f"Entry for `{Path(repo, module)}` is missing version information.")
         if all_modules_passed:
             passed.append("Only installed modules found in `modules.json`")
     else:
