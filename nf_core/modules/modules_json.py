@@ -284,7 +284,7 @@ class ModulesJson:
             if "git_url" not in values or "base_path" not in values:
                 raise UserWarning(
                     "The 'modules.json' file is not up to date. "
-                    "Please reinstall it by removing it and rerunning the command."
+                    "You can fix it by running 'nf-core modules update'."
                 )
         # If there are any modules left in 'modules.json' after all installed are removed,
         # we try to reinstall them
