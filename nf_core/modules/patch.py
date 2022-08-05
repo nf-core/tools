@@ -51,6 +51,12 @@ class ModulePatch(ModuleCommand):
             raise UserWarning(
                 f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
+        # Get the module branch and reset it in the ModulesRepo object
+        module_branch = self.modules_json.get_module_branch(module, self.modules_repo.fullname)
+        if module_branch != self.modules_repo.branch:
+            self.modules_repo.branch = module_branch
+            self.modules_repo.setup_branch()
+
         # Set the diff filename based on the module name
         patch_filename = f"{module.replace('/', '-')}.diff"
         module_relpath = Path("modules", self.modules_repo.fullname, module)
