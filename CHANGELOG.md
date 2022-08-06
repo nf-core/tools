@@ -43,7 +43,7 @@
 - Add `no_git=True` when creating a new pipeline and initialising a git repository is not needed in `nf-core lint` and `nf-core bump-version` ([#1709](https://github.com/nf-core/tools/pull/1709))
 - Move `strip_ansi_code` function in lint to `utils.py`
 - Simplify control flow and don't use equality comparison for `None` and booleans
-- Replace use of the deprecated `distutils` Version object with that from `packaging` [#1735](https://github.com/nf-core/tools/pull/1735)
+- Replace use of the deprecated `distutils` Version object with that from `packaging` ([#1735](https://github.com/nf-core/tools/pull/1735))
 
 ### Modules
 
