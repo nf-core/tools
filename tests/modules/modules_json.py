@@ -176,3 +176,16 @@ def test_mod_json_dump(self):
     with open(mod_json_path, "r") as f:
         mod_json_new = json.load(f)
     assert mod_json == mod_json_new
+
+
+def test_mod_json_with_missing_base_path_fail(self):
+    # Load module.json and remove the base_path entry
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_obj["base_path"].pop("base_path")
+    # write the new module.json and load it
+    mod_json_obj.dump()
+    mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
+    with open(mod_json_path, "r") as f:
+        mod_json_broken = json.load(f)
+    mod_json_broken.check_up_to_date()
+    assert mod_json == mod_json_broken
