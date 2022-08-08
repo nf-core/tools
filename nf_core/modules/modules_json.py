@@ -74,11 +74,12 @@ class ModulesJson:
             modules_json["repos"][repo_name]["modules"] = self.determine_module_branches_and_shas(
                 repo_name, remote_url, base_path, module_names
             )
-
+        # write the modules.json file and assign it to the object
         modules_json_path = Path(self.dir, "modules.json")
         with open(modules_json_path, "w") as fh:
             json.dump(modules_json, fh, indent=4)
             fh.write("\n")
+        self.modules_json = modules_json
 
     def get_pipeline_module_repositories(self, modules_dir, repos=None):
         """
@@ -430,11 +431,13 @@ class ModulesJson:
         If a module is installed but the entry in 'modules.json' is missing we iterate through
         the commit log in the remote to try to determine the SHA.
         """
-        self.load()
-        if not self.has_git_url_and_base_path():
+        try:
+            self.load()
+            if not self.has_git_url_and_base_path():
+                raise KeyError
+        except (UserWarning, KeyError):
             log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
             self.create()
-            self.load()
 
         missing_from_modules_json, missing_installation = self.unsynced_modules()
 
