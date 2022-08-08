@@ -86,8 +86,9 @@ def run_linting(
     # Create the modules lint object
     module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir)
 
-    # Verify that the pipeline is correctly configured
+    # Verify that the pipeline is correctly configured and has  a modules.json file
     module_lint_obj.has_valid_directory()
+    module_lint_obj.has_modules_file()
 
     # Run only the tests we want
     if key:
