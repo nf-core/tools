@@ -1,7 +1,7 @@
+import copy
 import json
 import os
 import shutil
-import copy
 
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (

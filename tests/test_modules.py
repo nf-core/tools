@@ -144,7 +144,6 @@ class TestModules(unittest.TestCase):
         test_mod_json_update,
         test_mod_json_with_missing_base_path_fail,
     )
-
     from .modules.patch import (
         test_create_patch_change,
         test_create_patch_no_change,
