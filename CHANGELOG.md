@@ -22,6 +22,7 @@
 - Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 - Add check for mimetype in the `input` parameter. ([#1647](https://github.com/nf-core/tools/issues/1647))
 - Check that the singularity and docker tags are parsable. Add `--fail-warned` flag to `nf-core modules lint` ([#1654](https://github.com/nf-core/tools/issues/1654))
+- Handle exception in `nf-core modules lint` when process name doesn't start with process ([#1733](https://github.com/nf-core/tools/issues/1733))
 
 ### General
 
@@ -70,6 +71,7 @@
 - Add links in `README.md` for `info` and `patch` commands ([#1722](https://github.com/nf-core/tools/issues/1722)])
 - Fix misc. issues with `--branch` and `--base-path` ([#1726](https://github.com/nf-core/tools/issues/1726))
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
+- Fix unbound variable issues and minor refactoring [#1742](https://github.com/nf-core/tools/pull/1742/)
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

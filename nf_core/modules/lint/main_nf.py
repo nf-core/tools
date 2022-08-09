@@ -240,19 +240,23 @@ def check_process_section(self, lines, fix_version, progress_bar):
 
     # Check that process labels are correct
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
-    process_label = [l for l in lines if "label" in l]
+    process_label = [l for l in lines if l.lstrip().startswith("label")]
     if len(process_label) > 0:
-        process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
-        if not process_label in correct_process_labels:
-            self.warned.append(
-                (
-                    "process_standard_label",
-                    f"Process label ({process_label}) is not among standard labels: `{'`,`'.join(correct_process_labels)}`",
-                    self.main_nf,
+        try:
+            process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
+        except AttributeError:
+            process_label = re.search("'([A-Za-z_-]+)'", process_label[0]).group(0)
+        finally:
+            if not process_label in correct_process_labels:
+                self.warned.append(
+                    (
+                        "process_standard_label",
+                        f"Process label ({process_label}) is not among standard labels: `{'`,`'.join(correct_process_labels)}`",
+                        self.main_nf,
+                    )
                 )
-            )
-        else:
-            self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
+            else:
+                self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
     else:
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
     for l in lines:

@@ -46,17 +46,6 @@ class ModuleUpdate(ModuleCommand):
         self.modules_json = ModulesJson(self.dir)
         self.branch = branch
 
-    class DiffEnum(enum.Enum):
-        """Enumeration to keeping track of file diffs.
-
-        Used for the --save-diff and --preview options
-        """
-
-        UNCHANGED = enum.auto()
-        CHANGED = enum.auto()
-        CREATED = enum.auto()
-        REMOVED = enum.auto()
-
     def _parameter_checks(self):
         """Checks the compatibilty of the supplied parameters.
 
@@ -431,18 +420,24 @@ class ModuleUpdate(ModuleCommand):
 
         # Get the git urls from the modules.json
         modules_info = (
-            (self.modules_json.get_git_url(repo_name), branch, self.modules_json.get_base_path(repo_name), mods_shas)
+            (
+                repo_name,
+                self.modules_json.get_git_url(repo_name),
+                branch,
+                self.modules_json.get_base_path(repo_name),
+                mods_shas,
+            )
             for (repo_name, branch), mods_shas in repos_and_branches.items()
         )
 
         # Create ModulesRepo objects
         repo_objs_mods = []
-        for repo_url, branch, base_path, mods_shas in modules_info:
+        for repo_name, repo_url, branch, base_path, mods_shas in modules_info:
             try:
                 modules_repo = ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path)
             except LookupError as e:
                 log.warning(e)
-                log.info(f"Skipping modules in '{modules_repo.fullname}'")
+                log.info(f"Skipping modules in '{repo_name}'")
             else:
                 repo_objs_mods.append((modules_repo, mods_shas))
 
@@ -453,13 +448,13 @@ class ModuleUpdate(ModuleCommand):
         # don't try to update those that don't
         i = 0
         while i < len(modules_info):
-            repo, module, _ = modules_info[i]
+            repo, module, sha = modules_info[i]
             if not repo.module_exists(module):
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
             elif sha is not None and not repo.sha_exists_on_branch(sha):
                 log.warning(
-                    f"Git sha '{sha}' does not exists on the '{branch}' of '{repo.fullname}'. Skipping module '{mod}'"
+                    f"Git sha '{sha}' does not exists on the '{repo.branch}' of '{repo.fullname}'. Skipping module '{module}'"
                 )
                 modules_info.pop(i)
             else:
