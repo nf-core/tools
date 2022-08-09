@@ -21,6 +21,40 @@ log = logging.getLogger(__name__)
 
 
 class ModuleInfo(ModuleCommand):
+    """
+    Class to print information of a module.
+
+    Attributes
+    ----------
+    meta : YAML object
+        stores the information from meta.yml file
+    local_path : str
+        path of the local modules
+    remote_location : str
+        remote repository URL
+    local : bool
+        indicates if the module is locally installed or not
+    repo_type : str
+        repository type. Can be either 'pipeline' or 'modules'
+    modules_json : ModulesJson object
+        contains 'modules.json' file information from a pipeline
+    module : str
+        name of the tool to get information from
+
+    Methods
+    -------
+    init_mod_name(module)
+        Makes sure that we have a module name
+    get_module_info()
+        Given the name of a module, parse meta.yml and print usage help
+    get_local_yaml()
+        Attempt to get the meta.yml file from a locally installed module
+    get_remote_yaml()
+        Attempt to get the meta.yml file from a remote repo
+    generate_module_info_help()
+        Take the parsed meta.yml and generate rich help
+    """
+
     def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull, base_path):
         super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.meta = None
