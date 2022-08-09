@@ -26,6 +26,7 @@ class ModuleInfo(ModuleCommand):
         self.meta = None
         self.local_path = None
         self.remote_location = None
+        self.local = None
 
         # Quietly check if this is a pipeline or not
         if pipeline_dir:
@@ -51,10 +52,10 @@ class ModuleInfo(ModuleCommand):
             module: str: Module name to check
         """
         if module is None:
-            local = questionary.confirm(
+            self.local = questionary.confirm(
                 "Is the module locally installed?", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
-            if local:
+            if self.local:
                 if self.repo_type == "modules":
                     modules = self.get_modules_clone_modules()
                 else:
@@ -78,7 +79,7 @@ class ModuleInfo(ModuleCommand):
         """Given the name of a module, parse meta.yml and print usage help."""
 
         # Running with a local install, try to find the local meta
-        if self.dir:
+        if self.local:
             self.meta = self.get_local_yaml()
 
         # Either failed locally or in remote mode
@@ -163,11 +164,11 @@ class ModuleInfo(ModuleCommand):
         elif self.remote_location:
             intro_text.append(
                 Text.from_markup(
-                   ":globe_with_meridians: Repository: "
-                   f"{ '[link={self.remote_location}]' if self.remote_location.startswith('http') else ''}"
-                   f"{self.remote_location}"
-                   f"{'[/link]' if self.remote_location.startswith('http') else '' }"
-                   "\n"
+                    ":globe_with_meridians: Repository: "
+                    f"{ '[link={self.remote_location}]' if self.remote_location.startswith('http') else ''}"
+                    f"{self.remote_location}"
+                    f"{'[/link]' if self.remote_location.startswith('http') else '' }"
+                    "\n"
                 )
             )
 
