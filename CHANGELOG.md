@@ -72,6 +72,7 @@
 - Fix misc. issues with `--branch` and `--base-path` ([#1726](https://github.com/nf-core/tools/issues/1726))
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
 - Fix unbound variable issues and minor refactoring [#1742](https://github.com/nf-core/tools/pull/1742/)
+- Recreate modules.json file instead of complaining about incorrectly formatted file. ([#1741](https://github.com/nf-core/tools/pull/1741)
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 
