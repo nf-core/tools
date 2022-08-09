@@ -1,6 +1,7 @@
 import json
 import os
 import shutil
+import copy
 
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (
@@ -181,11 +182,13 @@ def test_mod_json_dump(self):
 def test_mod_json_with_missing_base_path_fail(self):
     # Load module.json and remove the base_path entry
     mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_obj["base_path"].pop("base_path")
-    # write the new module.json and load it
+    mod_json_orig = mod_json_obj.get_modules_json()
+    mod_json = copy.deepcopy(mod_json_orig)
+    mod_json["repos"]["nf-core/modules"].pop("base_path")
+    # save the altered module.json and load it again to check if it will fix itself
+    mod_json_obj.modules_json = mod_json
     mod_json_obj.dump()
-    mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
-    with open(mod_json_path, "r") as f:
-        mod_json_broken = json.load(f)
-    mod_json_broken.check_up_to_date()
-    assert mod_json == mod_json_broken
+    mod_json_obj_new = ModulesJson(self.pipeline_dir)
+    mod_json_obj_new.check_up_to_date()
+    mod_json_new = mod_json_obj_new.get_modules_json()
+    assert mod_json_orig == mod_json_new
