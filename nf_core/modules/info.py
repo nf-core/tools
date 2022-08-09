@@ -163,9 +163,10 @@ class ModuleInfo(ModuleCommand):
         elif self.remote_location:
             intro_text.append(
                 Text.from_markup(
-                    ":globe_with_meridians: Repository: [link="
-                    f"{'' if self.remote_location.startswith('http') or self.remote_location.startswith('ssh') else 'https://github.com/'}"
-                    f"{self.remote_location}]{self.remote_location}[/link]\n"
+                   ":globe_with_meridians: Repository: "
+                   f"{ "[link={self.remote_location}]" if self.remote_location.startswith('http') else ''}"
+                   f"{self.remote_location}"
+                   f"{"[/link]\n" if self.remote_location.startswith('http') else "\n" }"
                 )
             )
 
