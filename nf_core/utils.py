@@ -213,7 +213,7 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     log.debug(f"Got '{wf_path}' as path")
 
-    config = dict()
+    config = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
@@ -967,7 +967,7 @@ def load_tools_config(dir="."):
 
 def sort_dictionary(d):
     """Sorts a nested dictionary recursively"""
-    result = dict()
+    result = {}
     for k, v in sorted(d.items()):
         if isinstance(v, dict):
             result[k] = sort_dictionary(v)

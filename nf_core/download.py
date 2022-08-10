@@ -102,7 +102,7 @@ class DownloadWorkflow(object):
         self.wf_branches = {}
         self.wf_sha = None
         self.wf_download_url = None
-        self.nf_config = dict()
+        self.nf_config = {}
         self.containers = list()
 
         # Fetch remote workflows

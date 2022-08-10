@@ -43,7 +43,7 @@ class ModulesJson:
         pipeline_config = nf_core.utils.fetch_wf_config(self.dir)
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
-        modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
+        modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
         modules_dir = Path(self.dir, "modules")
 
         if not modules_dir.exists():
@@ -67,9 +67,9 @@ class ModulesJson:
         ]
 
         for repo_name, module_names, remote_url, base_path in sorted(repo_module_names):
-            modules_json["repos"][repo_name] = dict()
+            modules_json["repos"][repo_name] = {}
             modules_json["repos"][repo_name]["git_url"] = remote_url
-            modules_json["repos"][repo_name]["modules"] = dict()
+            modules_json["repos"][repo_name]["modules"] = {}
             modules_json["repos"][repo_name]["base_path"] = base_path
             modules_json["repos"][repo_name]["modules"] = self.determine_module_branches_and_shas(
                 repo_name, remote_url, base_path, module_names

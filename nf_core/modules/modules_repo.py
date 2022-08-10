@@ -69,7 +69,7 @@ class ModulesRepo(object):
     pull a remote several times in one command.
     """
 
-    local_repo_statuses = dict()
+    local_repo_statuses = {}
     no_pull_global = False
 
     @staticmethod
