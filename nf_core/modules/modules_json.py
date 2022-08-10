@@ -303,7 +303,7 @@ class ModulesJson:
             module (str): The name of the modules
             repo_name (str): The name of the repository the module resides in
         """
-        current_path = (self.modules_dir / repo_name) / module
+        current_path = self.modules_dir / repo_name / module
         local_modules_dir = self.modules_dir / "local"
         if not local_modules_dir.exists():
             local_modules_dir.mkdir()
