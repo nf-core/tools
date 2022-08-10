@@ -2,7 +2,6 @@
 
 from pathlib import Path
 
-from nf_core.modules.modules_command import ModuleCommand
 from nf_core.modules.modules_json import ModulesJson
 
 
@@ -19,7 +18,6 @@ def modules_json(self):
     failed = []
 
     # Load pipeline modules and modules.json
-    modules_command = ModuleCommand(self.wf_path)
     modules_json = ModulesJson(self.wf_path)
     modules_json.load()
     modules_json_dict = modules_json.modules_json
