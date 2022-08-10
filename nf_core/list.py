@@ -87,9 +87,9 @@ class Workflows(object):
     """
 
     def __init__(self, filter_by=None, sort_by="release", show_archived=False):
-        self.remote_workflows = list()
-        self.local_workflows = list()
-        self.local_unmatched = list()
+        self.remote_workflows = []
+        self.local_workflows = []
+        self.local_unmatched = []
         self.keyword_filters = filter_by if filter_by is not None else []
         self.sort_workflows_by = sort_by
         self.show_archived = show_archived
