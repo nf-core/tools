@@ -267,7 +267,7 @@ class ModulesJson:
         # Clean up the modules we were unable to find the sha for
         for module in sb_local:
             log.debug(f"Moving module '{Path(repo_name, module)}' to 'local' directory")
-            self.move_module_to_local(module, repo_name, self.modules_dir)
+            self.move_module_to_local(module, repo_name)
 
         for module in dead_modules:
             log.debug(f"Removing module {Path(repo_name, module)}'")
