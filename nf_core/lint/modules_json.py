@@ -30,14 +30,16 @@ def modules_json(self):
             # Check if the modules.json has been updated to keep the
             if "modules" not in modules_json_dict["repos"][repo] or "git_url" not in modules_json_dict["repos"][repo]:
                 failed.append(
-                    f"Your `modules.json` file is outdated. Please remove it and reinstall it by running any module command"
+                    "Your `modules.json` file is outdated. "
+                    "Please remove it and reinstall it by running any module command."
                 )
                 continue
 
             for module, module_entry in modules_json_dict["repos"][repo]["modules"].items():
                 if not Path(modules_dir, repo, module).exists():
                     failed.append(
-                        f"Entry for `{Path(repo, module)}` found in `modules.json` but module is not installed in pipeline."
+                        f"Entry for `{Path(repo, module)}` found in `modules.json` but module is not installed in "
+                        "pipeline."
                     )
                     all_modules_passed = False
                 if module_entry.get("branch") is None:
