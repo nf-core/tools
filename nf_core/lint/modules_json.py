@@ -18,12 +18,12 @@ def modules_json(self):
     failed = []
 
     # Load pipeline modules and modules.json
-    modules_json = ModulesJson(self.wf_path)
-    modules_json.load()
-    modules_json_dict = modules_json.modules_json
+    _modules_json = ModulesJson(self.wf_path)
+    _modules_json.load()
+    modules_json_dict = _modules_json.modules_json
     modules_dir = Path(self.wf_path, "modules")
 
-    if modules_json:
+    if _modules_json:
         all_modules_passed = True
 
         for repo in modules_json_dict["repos"].keys():
