@@ -184,15 +184,15 @@ class ModulesJson:
         while len(fifo) > 0:
             temp_queue = []
             repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
-            for dir in fifo:
-                rel_dir = dir.relative_to(modules_dir)
+            for directory in fifo:
+                rel_dir = directory.relative_to(modules_dir)
                 if rel_dir in repos_at_level.keys():
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
-                        temp_queue.extend(dir.iterdir())
+                        temp_queue.extend(directory.iterdir())
                 else:
                     # Otherwise add the directory to the ones not covered
-                    dirs_not_covered.append(dir)
+                    dirs_not_covered.append(directory)
             fifo = temp_queue
             depth += 1
         return dirs_not_covered
