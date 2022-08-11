@@ -226,26 +226,16 @@ class ModuleVersionBumper(ModuleCommand):
         Extract the bioconda version from a module
         """
         # Check whether file exists and load it
-        bioconda_packages = None
+        bioconda_packages = False
         try:
             with open(module.main_nf, "r") as fh:
-                lines = fh.readlines()
-        except FileNotFoundError as e:
+                for l in fh:
+                    if "bioconda::" in l:
+                        bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+        except FileNotFoundError:
             log.error(f"Could not read `main.nf` of {module.module_name} module.")
-            return False
 
-        for l in lines:
-            if re.search("bioconda::", l):
-                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-            if re.search("org/singularity", l):
-                singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-            if re.search("biocontainers", l):
-                docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-
-        if bioconda_packages:
-            return bioconda_packages
-        else:
-            return False
+        return bioconda_packages
 
     def _print_results(self):
         """

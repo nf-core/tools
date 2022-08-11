@@ -377,9 +377,9 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
             else:
                 response = requests.post(url=api_url, data=post_data)
-        except (requests.exceptions.Timeout):
+        except requests.exceptions.Timeout:
             raise AssertionError(f"URL timed out: {api_url}")
-        except (requests.exceptions.ConnectionError):
+        except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200:
@@ -387,19 +387,18 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            try:
+                web_response = json.loads(response.content)
+                if "status" not in web_response:
+                    raise AssertionError()
+            except (json.decoder.JSONDecodeError, AssertionError, TypeError):
+                log.debug(f"Response content:\n{response.content}")
+                raise AssertionError(
+                    f"nf-core website API results response not recognised: {api_url}\n "
+                    "See verbose log for full response"
+                )
             else:
-                try:
-                    web_response = json.loads(response.content)
-                    if "status" not in web_response:
-                        raise AssertionError()
-                except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
-                    log.debug(f"Response content:\n{response.content}")
-                    raise AssertionError(
-                        f"nf-core website API results response not recognised: {api_url}\n "
-                        "See verbose log for full response"
-                    )
-                else:
-                    return web_response
+                return web_response
 
 
 class GitHub_API_Session(requests_cache.CachedSession):
@@ -588,20 +587,20 @@ def anaconda_package(dep, dep_channels=None):
         anaconda_api_url = f"https://api.anaconda.org/package/{ch}/{depname}"
         try:
             response = requests.get(anaconda_api_url, timeout=10)
-        except (requests.exceptions.Timeout):
+        except requests.exceptions.Timeout:
             raise LookupError(f"Anaconda API timed out: {anaconda_api_url}")
-        except (requests.exceptions.ConnectionError):
+        except requests.exceptions.ConnectionError:
             raise LookupError("Could not connect to Anaconda API")
         else:
             if response.status_code == 200:
                 return response.json()
-            elif response.status_code != 404:
+            if response.status_code != 404:
                 raise LookupError(
                     f"Anaconda API returned unexpected response code `{response.status_code}` for: "
                     f"{anaconda_api_url}\n{response}"
                 )
-            elif response.status_code == 404:
-                log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
+            # response.status_code == 404
+            log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
 
     # We have looped through each channel and had a 404 response code on everything
     raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
@@ -657,15 +656,14 @@ def pip_package(dep):
     pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
         response = requests.get(pip_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
+    except requests.exceptions.Timeout:
         raise LookupError(f"PyPI API timed out: {pip_api_url}")
-    except (requests.exceptions.ConnectionError):
+    except requests.exceptions.ConnectionError:
         raise LookupError(f"PyPI API Connection error: {pip_api_url}")
     else:
         if response.status_code == 200:
             return response.json()
-        else:
-            raise ValueError(f"Could not find pip dependency using the PyPI API: `{dep}`")
+        raise ValueError(f"Could not find pip dependency using the PyPI API: `{dep}`")
 
 
 def get_biocontainer_tag(package, version):

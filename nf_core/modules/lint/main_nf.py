@@ -197,18 +197,16 @@ def check_when_section(self, lines):
     if len(lines) == 0:
         self.failed.append(("when_exist", "when: condition has been removed", self.main_nf))
         return
-    elif len(lines) > 1:
+    if len(lines) > 1:
         self.failed.append(("when_exist", "when: condition has too many lines", self.main_nf))
         return
-    else:
-        self.passed.append(("when_exist", "when: condition is present", self.main_nf))
+    self.passed.append(("when_exist", "when: condition is present", self.main_nf))
 
     # Check the condition hasn't been changed.
     if lines[0].strip() != "task.ext.when == null || task.ext.when":
         self.failed.append(("when_condition", "when: condition has been altered", self.main_nf))
         return
-    else:
-        self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
+    self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
 def check_process_section(self, lines, fix_version, progress_bar):
@@ -222,8 +220,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
     if len(lines) == 0:
         self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
         return
-    else:
-        self.passed.append(("process_exist", "Process definition exists", self.main_nf))
+    self.passed.append(("process_exist", "Process definition exists", self.main_nf))
 
     # Checks that build numbers of bioconda, singularity and docker container are matching
     singularity_tag = "singularity"
@@ -337,10 +334,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
-    if docker_tag == singularity_tag:
-        return True
-    else:
-        return False
+    return docker_tag == singularity_tag
 
 
 def _parse_input(self, line_raw):
@@ -477,7 +471,6 @@ def _container_type(line):
         url_match = re.search(url_regex, line, re.S)
         if url_match:
             return "singularity"
-        else:
-            return None
+        return None
     if line.startswith("biocontainers/") or line.startswith("quay.io/"):
         return "docker"
