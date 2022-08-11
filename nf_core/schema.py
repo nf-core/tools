@@ -168,7 +168,7 @@ class PipelineSchema(object):
         """Save a pipeline schema to a file"""
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
-        num_params += sum([len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values()])
+        num_params += sum(len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values())
         if not suppress_logging:
             log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         with open(self.schema_filename, "w") as fh:

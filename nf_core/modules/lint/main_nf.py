@@ -232,7 +232,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
 
     # Process name should be all capital letters
     self.process_name = lines[0].split()[1]
-    if all([x.upper() for x in self.process_name]):
+    if all(x.upper() for x in self.process_name):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))

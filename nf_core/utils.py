@@ -778,7 +778,7 @@ def is_file_binary(path):
 
     # Try to detect binary files
     (ftype, encoding) = mimetypes.guess_type(path, strict=False)
-    if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+    if encoding is not None or (ftype is not None and any(ftype.startswith(ft) for ft in binary_ftypes)):
         return True
 
 
