@@ -350,8 +350,8 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
-        zipfile = ZipFile(BytesIO(url.content))
-        zipfile.extractall(self.outdir)
+        with ZipFile(BytesIO(url.content)) as zipfile:
+            zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
         gh_name = f"{self.pipeline}-{self.wf_sha}".split("/")[-1]
@@ -370,8 +370,8 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
-        zipfile = ZipFile(BytesIO(url.content))
-        zipfile.extractall(self.outdir)
+        with ZipFile(BytesIO(url.content)) as zipfile:
+            zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
         os.rename(os.path.join(self.outdir, configs_local_dir), os.path.join(self.outdir, "configs"))
