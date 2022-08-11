@@ -57,7 +57,7 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
             with open(module.main_nf, "r") as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
             return
 
@@ -226,7 +226,6 @@ def check_process_section(self, lines, fix_version, progress_bar):
         self.passed.append(("process_exist", "Process definition exists", self.main_nf))
 
     # Checks that build numbers of bioconda, singularity and docker container are matching
-    build_id = "build"
     singularity_tag = "singularity"
     docker_tag = "docker"
     bioconda_packages = []
@@ -289,9 +288,9 @@ def check_process_section(self, lines, fix_version, progress_bar):
             bioconda_version = bp.split("=")[1]
             # response = _bioconda_package(bp)
             response = nf_core.utils.anaconda_package(bp)
-        except LookupError as e:
+        except LookupError:
             self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
-        except ValueError as e:
+        except ValueError:
             self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
         else:
             # Check that required version is available at all

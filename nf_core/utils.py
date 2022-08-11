@@ -152,7 +152,7 @@ class Pipeline(object):
             # Failed, so probably not initialised as a git repository - just a list of all files
             log.debug(f"Couldn't call 'git ls-files': {e}")
             self.files = []
-            for subdir, dirs, files in os.walk(self.wf_path):
+            for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
                     self.files.append(os.path.join(subdir, fn))
 
@@ -235,7 +235,7 @@ def fetch_wf_config(wf_path, cache_config=True):
         try:
             with open(os.path.join(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             pass
     # Hash the hash
     if len(concat_hash) > 0:
@@ -353,7 +353,7 @@ def wait_cli_function(poll_func, poll_every=20):
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
-        with Live(spinner, refresh_per_second=20) as live:
+        with Live(spinner, refresh_per_second=20):
             while True:
                 if poll_func():
                     break
@@ -455,8 +455,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
                         gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
-            except Exception as e:
-                ex_type, ex_value, ex_traceback = sys.exc_info()
+            except Exception:
+                ex_type, ex_value, _ = sys.exc_info()
                 output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
                 log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
@@ -572,7 +572,7 @@ def anaconda_package(dep, dep_channels=None):
 
     # Check if each dependency is the latest available version
     if "=" in dep:
-        depname, depver = dep.split("=", 1)
+        depname, _ = dep.split("=", 1)
     else:
         depname = dep
 
@@ -653,7 +653,7 @@ def pip_package(dep):
         A LookupError, if the connection fails or times out
         A ValueError, if the package name can not be found
     """
-    pip_depname, pip_depver = dep.split("=", 1)
+    pip_depname, _ = dep.split("=", 1)
     pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
         response = requests.get(pip_api_url, timeout=10)
@@ -772,7 +772,7 @@ def is_file_binary(path):
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
     # Check common file extensions
-    filename, file_extension = os.path.splitext(path)
+    _, file_extension = os.path.splitext(path)
     if file_extension in binary_extensions:
         return True
 

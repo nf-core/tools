@@ -157,7 +157,7 @@ class PipelineSchema(object):
                 self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
-        for d_key, definition in self.schema.get("definitions", {}).items():
+        for _, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
                 self.schema_params.append(p_key)
                 if "default" in param:
@@ -581,7 +581,7 @@ class PipelineSchema(object):
             # Schema found - load and validate
             try:
                 self.load_lint_schema()
-            except AssertionError as e:
+            except AssertionError:
                 log.error(f"Existing pipeline schema found, but it is invalid: {self.schema_filename}")
                 log.info("Please fix or delete this file, then try again.")
                 return False
@@ -802,7 +802,7 @@ class PipelineSchema(object):
                 raise AssertionError(
                     f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
                 )
-        except (AssertionError) as e:
+        except AssertionError:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
                 f"Pipeline schema builder response not recognised: {self.web_schema_build_url}\n"

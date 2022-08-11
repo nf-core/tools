@@ -68,7 +68,7 @@ def get_local_wf(workflow, revision=None):
     pull_cmd = f"nextflow pull {workflow}"
     if revision is not None:
         pull_cmd += f" -r {revision}"
-    nf_pull_output = nf_core.utils.nextflow_cmd(pull_cmd)
+    nf_core.utils.nextflow_cmd(pull_cmd)
     local_wf = LocalWorkflow(workflow)
     local_wf.get_local_nf_workflow_details()
     return local_wf.local_path

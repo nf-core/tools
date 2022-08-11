@@ -492,7 +492,7 @@ class ModulesJson:
                 repo_name: (repo_entry["git_url"], repo_entry["base_path"])
                 for repo_name, repo_entry in self.modules_json["repos"].items()
             }
-            repos, renamed_dirs = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
+            repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
 
             modules_with_repos = (
                 (repo_name, str(dir.relative_to(repo_name)))

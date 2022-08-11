@@ -344,7 +344,7 @@ class ModulesRepo(object):
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
                 continue
         self.checkout_branch()
