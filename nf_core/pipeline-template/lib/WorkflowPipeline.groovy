@@ -2,6 +2,8 @@
 // This file holds several functions specific to the workflow/{{ short_name }}.nf in the {{ name }} pipeline
 //
 
+import groovy.text.SimpleTemplateEngine
+
 class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
 
     //
@@ -43,6 +45,19 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
         yaml_file_text        += "data: |\n"
         yaml_file_text        += "${summary_section}"
         return yaml_file_text
+    }
+
+    public static String methodsDescriptionText(run_workflow, mqc_methods_yaml) {
+        // Convert  to a named map so can be used as with familar NXF ${workflow} variable syntax in the MultiQC YML file
+        def meta = [:]
+        meta.workflow = run_workflow.toMap()
+
+        def methods_text = mqc_methods_yaml.text
+
+        def engine =  new SimpleTemplateEngine()
+        def description_html = engine.createTemplate(methods_text).make(meta)
+
+        return description_html
     }
 
     {%- if igenomes -%}
