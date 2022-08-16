@@ -7,8 +7,8 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
-import mock
 import pytest
 
 import nf_core.create
@@ -105,7 +105,12 @@ class DownloadTest(unittest.TestCase):
         # Get a workflow and configs
         test_pipeline_dir = os.path.join(tmp_path, "nf-core-testpipeline")
         create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=test_pipeline_dir
+            "testpipeline",
+            "This is a test pipeline",
+            "Test McTestFace",
+            no_git=True,
+            outdir=test_pipeline_dir,
+            plain=True,
         )
         create_obj.init_pipeline()
 
@@ -133,34 +138,6 @@ class DownloadTest(unittest.TestCase):
         download_obj.find_container_images()
         assert len(download_obj.containers) == 1
         assert download_obj.containers[0] == "cutting-edge-container"
-
-    #
-    # Tests for 'validate_md5'
-    #
-    @with_temporary_file
-    def test_matching_md5sums(self, tmpfile):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        test_hash = hashlib.md5()
-        test_hash.update(b"test")
-        val_hash = test_hash.hexdigest()
-
-        with open(tmpfile.name, "w") as f:
-            f.write("test")
-
-        download_obj.validate_md5(tmpfile.name, val_hash)
-
-    @with_temporary_file
-    def test_mismatching_md5sums(self, tmpfile):
-        download_obj = DownloadWorkflow(pipeline="dummy")
-        test_hash = hashlib.md5()
-        test_hash.update(b"other value")
-        val_hash = test_hash.hexdigest()
-
-        with open(tmpfile.name, "w") as f:
-            f.write("test")
-
-        with pytest.raises(IOError):
-            download_obj.validate_md5(tmpfile.name, val_hash)
 
     #
     # Tests for 'singularity_pull_image'

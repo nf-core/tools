@@ -4,12 +4,11 @@
 
 import json
 import os
-import shutil
 import tempfile
 import unittest
+from unittest import mock
 
-import mock
-
+import nf_core.create
 import nf_core.launch
 
 from .utils import with_temporary_file, with_temporary_folder
@@ -69,9 +68,12 @@ class TestLaunch(unittest.TestCase):
 
     @with_temporary_folder
     def test_make_pipeline_schema(self, tmp_path):
-        """Make a copy of the template workflow, but delete the schema file, then try to load it"""
+        """Create a workflow, but delete the schema file, then try to load it"""
         test_pipeline_dir = os.path.join(tmp_path, "wf")
-        shutil.copytree(self.template_dir, test_pipeline_dir)
+        create_obj = nf_core.create.PipelineCreate(
+            "test_pipeline", "", "", outdir=test_pipeline_dir, no_git=True, plain=True
+        )
+        create_obj.init_pipeline()
         os.remove(os.path.join(test_pipeline_dir, "nextflow_schema.json"))
         self.launcher = nf_core.launch.Launch(test_pipeline_dir, params_out=self.nf_params_fn)
         self.launcher.get_pipeline_schema()

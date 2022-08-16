@@ -4,7 +4,7 @@
 from __future__ import print_function
 
 import concurrent.futures
-import hashlib
+import io
 import logging
 import os
 import re
@@ -12,7 +12,6 @@ import shutil
 import subprocess
 import sys
 import tarfile
-from io import BytesIO
 from zipfile import ZipFile
 
 import questionary
@@ -102,8 +101,8 @@ class DownloadWorkflow(object):
         self.wf_branches = {}
         self.wf_sha = None
         self.wf_download_url = None
-        self.nf_config = dict()
-        self.containers = list()
+        self.nf_config = {}
+        self.containers = []
 
         # Fetch remote workflows
         self.wfs = nf_core.list.Workflows()
@@ -350,15 +349,15 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
-        zipfile = ZipFile(BytesIO(url.content))
-        zipfile.extractall(self.outdir)
+        with ZipFile(io.BytesIO(url.content)) as zipfile:
+            zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
         gh_name = f"{self.pipeline}-{self.wf_sha}".split("/")[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, "workflow"))
 
         # Make downloaded files executable
-        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, "workflow")):
+        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, "workflow")):
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
@@ -370,14 +369,14 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
-        zipfile = ZipFile(BytesIO(url.content))
-        zipfile.extractall(self.outdir)
+        with ZipFile(io.BytesIO(url.content)) as zipfile:
+            zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
         os.rename(os.path.join(self.outdir, configs_local_dir), os.path.join(self.outdir, "configs"))
 
         # Make downloaded files executable
-        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, "configs")):
+        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, "configs")):
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
@@ -451,7 +450,7 @@ class DownloadWorkflow(object):
                 containers_raw.append(v.strip('"').strip("'"))
 
         # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, dirs, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
+        for subdir, _, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
             for file in files:
                 if file.endswith(".nf"):
                     with open(os.path.join(subdir, file), "r") as fh:
@@ -479,7 +478,7 @@ class DownloadWorkflow(object):
 
                                     # Don't recognise this, throw a warning
                                     else:
-                                        log.error(f"[red]Cannot parse container string, skipping: [green]{match}")
+                                        log.error(f"[red]Cannot parse container string, skipping: [green]'{file}'")
 
                         if this_container:
                             containers_raw.append(this_container)
@@ -682,7 +681,7 @@ class DownloadWorkflow(object):
                         progress.start_task(task)
 
                     # Stream download
-                    for data in r.iter_content(chunk_size=4096):
+                    for data in r.iter_content(chunk_size=io.DEFAULT_BUFFER_SIZE):
                         # Check that the user didn't hit ctrl-c
                         if self.kill_with_fire:
                             raise KeyboardInterrupt
@@ -770,7 +769,7 @@ class DownloadWorkflow(object):
         log.debug(f"Creating archive: {self.output_filename}")
 
         # .tar.gz and .tar.bz2 files
-        if self.compress_type == "tar.gz" or self.compress_type == "tar.bz2":
+        if self.compress_type in ["tar.gz", "tar.bz2"]:
             ctype = self.compress_type.split(".")[1]
             with tarfile.open(self.output_filename, f"w:{ctype}") as tar:
                 tar.add(self.outdir, arcname=os.path.basename(self.outdir))
@@ -779,14 +778,14 @@ class DownloadWorkflow(object):
 
         # .zip files
         if self.compress_type == "zip":
-            with ZipFile(self.output_filename, "w") as zipObj:
+            with ZipFile(self.output_filename, "w") as zip_file:
                 # Iterate over all the files in directory
-                for folderName, subfolders, filenames in os.walk(self.outdir):
+                for folder_name, _, filenames in os.walk(self.outdir):
                     for filename in filenames:
                         # create complete filepath of file in directory
-                        filePath = os.path.join(folderName, filename)
+                        file_path = os.path.join(folder_name, filename)
                         # Add file to zip
-                        zipObj.write(filePath)
+                        zip_file.write(file_path)
             log.info(f"Command to extract files: [bright_magenta]unzip {self.output_filename}[/]")
 
         # Delete original files
@@ -794,31 +793,4 @@ class DownloadWorkflow(object):
         shutil.rmtree(self.outdir)
 
         # Caclualte md5sum for output file
-        self.validate_md5(self.output_filename)
-
-    def validate_md5(self, fname, expected=None):
-        """Calculates the md5sum for a file on the disk and validate with expected.
-
-        Args:
-            fname (str): Path to a local file.
-            expected (str): The expected md5sum.
-
-        Raises:
-            IOError, if the md5sum does not match the remote sum.
-        """
-        log.debug(f"Validating image hash: {fname}")
-
-        # Calculate the md5 for the file on disk
-        hash_md5 = hashlib.md5()
-        with open(fname, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
-                hash_md5.update(chunk)
-        file_hash = hash_md5.hexdigest()
-
-        if expected is None:
-            log.info(f"MD5 checksum for '{fname}': [blue]{file_hash}[/]")
-        else:
-            if file_hash == expected:
-                log.debug(f"md5 sum of image matches expected: {expected}")
-            else:
-                raise IOError(f"{fname} md5 does not match remote: {expected} - {file_hash}")
+        log.info(f"MD5 checksum for '{self.output_filename}': [blue]{nf_core.utils.file_md5(self.output_filename)}[/]")

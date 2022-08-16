@@ -2,9 +2,11 @@ import filecmp
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import git
 import rich.progress
+from git.exc import GitCommandError
 
 import nf_core.modules.module_utils
 import nf_core.modules.modules_json
@@ -16,6 +18,7 @@ log = logging.getLogger(__name__)
 NF_CORE_MODULES_NAME = "nf-core/modules"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
 NF_CORE_MODULES_BASE_PATH = "modules"
+NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 class RemoteProgressbar(git.RemoteProgress):
@@ -67,7 +70,7 @@ class ModulesRepo(object):
     pull a remote several times in one command.
     """
 
-    local_repo_statuses = dict()
+    local_repo_statuses = {}
     no_pull_global = False
 
     @staticmethod
@@ -83,6 +86,31 @@ class ModulesRepo(object):
         Updates the clone/pull status of a local repo
         """
         ModulesRepo.local_repo_statuses[repo_name] = up_to_date
+
+    @staticmethod
+    def get_remote_branches(remote_url):
+        """
+        Get all branches from a remote repository
+
+        Args:
+            remote_url (str): The git url to the remote repository
+
+        Returns:
+            (set[str]): All branches found in the remote
+        """
+        try:
+            unparsed_branches = git.Git().ls_remote(remote_url)
+        except git.GitCommandError:
+            raise LookupError(f"Was unable to fetch branches from '{remote_url}'")
+        else:
+            branches = {}
+            for branch_info in unparsed_branches.split("\n"):
+                sha, name = branch_info.split("\t")
+                if name != "HEAD":
+                    # The remote branches are shown as 'ref/head/branch'
+                    branch_name = Path(name).stem
+                    branches[sha] = branch_name
+            return set(branches.values())
 
     def __init__(self, remote_url=None, branch=None, no_pull=False, base_path=None, no_progress=False):
         """
@@ -146,22 +174,19 @@ class ModulesRepo(object):
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
-            except git.exc.GitCommandError:
+            except GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
             # Verify that the requested branch exists by checking it out
             self.setup_branch(branch)
         else:
             self.repo = git.Repo(self.local_repo_dir)
 
-            # Verify that the requested branch exists by checking it out
-            self.setup_branch(branch)
-
             if ModulesRepo.no_pull_global:
                 ModulesRepo.update_local_repo_status(self.fullname, True)
-            # If the repo is already cloned, pull the latest changes from the remote
+            # If the repo is already cloned, fetch the latest changes from the remote
             if not ModulesRepo.local_repo_synced(self.fullname):
                 if no_progress:
-                    self.repo.remotes.origin.pull()
+                    self.repo.remotes.origin.fetch()
                 else:
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
@@ -170,10 +195,20 @@ class ModulesRepo(object):
                         transient=True,
                     )
                     with pbar:
-                        self.repo.remotes.origin.pull(
+                        self.repo.remotes.origin.fetch(
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
                         )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
+
+            # Before verifying the branch, fetch the changes
+            # Verify that the requested branch exists by checking it out
+            self.setup_branch(branch)
+
+            # Now merge the changes
+            tracking_branch = self.repo.active_branch.tracking_branch()
+            if tracking_branch is None:
+                raise LookupError(f"There is no remote tracking branch '{self.branch}' in '{self.remote_url}'")
+            self.repo.git.merge(tracking_branch.name)
 
     def setup_branch(self, branch):
         """
@@ -209,7 +244,7 @@ class ModulesRepo(object):
         """
         try:
             self.checkout_branch()
-        except git.exc.GitCommandError:
+        except GitCommandError:
             raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
 
     def verify_branch(self):
@@ -273,7 +308,10 @@ class ModulesRepo(object):
             (bool): Whether the operation was successful or not
         """
         # Check out the repository at the requested ref
-        self.checkout(commit)
+        try:
+            self.checkout(commit)
+        except git.GitCommandError:
+            return False
 
         # Check if the module exists in the branch
         if not self.module_exists(module_name, checkout=False):
@@ -281,7 +319,7 @@ class ModulesRepo(object):
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_module_dir(module_name), os.path.join(*install_dir, module_name))
+        shutil.copytree(self.get_module_dir(module_name), os.path.join(install_dir, module_name))
 
         # Switch back to the tip of the branch
         self.checkout_branch()
@@ -307,7 +345,7 @@ class ModulesRepo(object):
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
                 continue
         self.checkout_branch()
@@ -334,6 +372,12 @@ class ModulesRepo(object):
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits
+
+    def get_latest_module_version(self, module_name):
+        """
+        Returns the latest commit in the repository
+        """
+        return list(self.get_module_git_log(module_name, depth=1))[0]["git_sha"]
 
     def sha_exists_on_branch(self, sha):
         """

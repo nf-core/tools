@@ -50,7 +50,7 @@ class ModuleInstall(ModuleCommand):
 
         # Verify that 'modules.json' is consistent with the installed modules
         modules_json = ModulesJson(self.dir)
-        modules_json.modules_json_up_to_date()
+        modules_json.check_up_to_date()
 
         if self.prompt and self.sha is not None:
             log.error("Cannot use '--sha' and '--prompt' at the same time!")
@@ -85,11 +85,10 @@ class ModuleInstall(ModuleCommand):
         current_version = modules_json.get_module_version(module, self.modules_repo.fullname)
 
         # Set the install folder based on the repository name
-        install_folder = [self.dir, "modules"]
-        install_folder.extend(os.path.split(self.modules_repo.fullname))
+        install_folder = os.path.join(self.dir, "modules", self.modules_repo.fullname)
 
         # Compute the module directory
-        module_dir = os.path.join(*install_folder, module)
+        module_dir = os.path.join(install_folder, module)
 
         # Check that the module is not already installed
         if (current_version is not None and os.path.exists(module_dir)) and not self.force:
@@ -119,8 +118,7 @@ class ModuleInstall(ModuleCommand):
                 return False
         else:
             # Fetch the latest commit for the module
-            git_log = list(self.modules_repo.get_module_git_log(module, depth=1))
-            version = git_log[0]["git_sha"]
+            version = self.modules_repo.get_latest_module_version(module)
 
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.fullname}/{module}'")
@@ -135,8 +133,8 @@ class ModuleInstall(ModuleCommand):
 
         # Print include statement
         module_name = "_".join(module.upper().split("/"))
-        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(*install_folder, module)}/main'")
+        log.info(f"Include statement: include {{ {module_name} }} from '.{os.path.join(install_folder, module)}/main'")
 
         # Update module.json with newly installed module
-        modules_json.update_modules_json(self.modules_repo, module, version)
+        modules_json.update(self.modules_repo, module, version)
         return True

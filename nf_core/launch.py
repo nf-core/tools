@@ -12,7 +12,6 @@ import subprocess
 import webbrowser
 
 import questionary
-import requests
 from rich.console import Console
 from rich.markdown import Markdown
 from rich.prompt import Confirm
@@ -182,6 +181,7 @@ class Launch(object):
         # Build and launch the `nextflow run` command
         self.build_command()
         self.launch_workflow()
+        return True
 
     def get_pipeline_schema(self):
         """Load and validate the schema from the supplied pipeline"""
@@ -301,10 +301,15 @@ class Launch(object):
         }
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_launch_url, content)
         try:
-            assert "api_url" in web_response
-            assert "web_url" in web_response
+            if "api_url" not in web_response:
+                raise AssertionError('"api_url" not in web_response')
+            if "web_url" not in web_response:
+                raise AssertionError('"web_url" not in web_response')
             # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
-            assert web_response["status"] == "recieved"
+            if web_response["status"] != "recieved":
+                raise AssertionError(
+                    f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
+                )
         except AssertionError:
             log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
@@ -369,7 +374,7 @@ class Launch(object):
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
             questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
-        for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
+        for _, definition in self.schema_obj.schema.get("definitions", {}).items():
             for param_id, param_obj in definition.get("properties", {}).items():
                 questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
@@ -597,7 +602,8 @@ class Launch(object):
                 try:
                     if val.strip() == "":
                         return True
-                    assert int(val) == float(val)
+                    if int(val) != float(val):
+                        raise AssertionError(f'Expected an integer, got "{val}"')
                 except (AssertionError, ValueError):
                     return "Must be an integer"
                 else:

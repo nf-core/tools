@@ -2,7 +2,6 @@ import logging
 import os
 
 import questionary
-import requests
 import yaml
 from rich import box
 from rich.console import Group
@@ -12,17 +11,18 @@ from rich.table import Table
 from rich.text import Text
 
 import nf_core.utils
+from nf_core.modules.modules_json import ModulesJson
 
 from .module_utils import get_repo_type
 from .modules_command import ModuleCommand
-from .modules_repo import NF_CORE_MODULES_REMOTE, ModulesRepo
+from .modules_repo import NF_CORE_MODULES_REMOTE
 
 log = logging.getLogger(__name__)
 
 
 class ModuleInfo(ModuleCommand):
-    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull)
+    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull, base_path):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
         self.meta = None
         self.local_path = None
         self.remote_location = None
@@ -36,7 +36,11 @@ class ModuleInfo(ModuleCommand):
                 log.debug(f"Only showing remote info: {e}")
                 pipeline_dir = None
 
-        self.get_pipeline_modules()
+        if self.repo_type == "pipeline":
+            self.modules_json = ModulesJson(self.dir)
+            self.modules_json.check_up_to_date()
+        else:
+            self.modules_json = None
         self.module = self.init_mod_name(tool)
 
     def init_mod_name(self, module):
@@ -46,17 +50,15 @@ class ModuleInfo(ModuleCommand):
         Args:
             module: str: Module name to check
         """
-        if module is not None:
-            return module
-        else:
+        if module is None:
             local = questionary.confirm(
                 "Is the module locally installed?", style=nf_core.utils.nfcore_question_style
             ).unsafe_ask()
             if local:
                 if self.repo_type == "modules":
-                    modules = self.module_names["modules"]
+                    modules = self.get_modules_clone_modules()
                 else:
-                    modules = self.module_names.get(self.modules_repo.fullname)
+                    modules = self.modules_json.get_all_modules().get(self.modules_repo.fullname)
                     if modules is None:
                         raise UserWarning(f"No modules installed from '{self.modules_repo.remote_url}'")
             else:
@@ -69,7 +71,8 @@ class ModuleInfo(ModuleCommand):
                 module = questionary.autocomplete(
                     "Please select a new module", choices=modules, style=nf_core.utils.nfcore_question_style
                 ).unsafe_ask()
-            return module
+
+        return module
 
     def get_module_info(self):
         """Given the name of a module, parse meta.yml and print usage help."""
@@ -83,7 +86,7 @@ class ModuleInfo(ModuleCommand):
             self.meta = self.get_remote_yaml()
 
         # Could not find the meta
-        if self.meta == False:
+        if self.meta is False:
             raise UserWarning(f"Could not find module '{self.module}'")
 
         return self.generate_module_info_help()
@@ -100,7 +103,7 @@ class ModuleInfo(ModuleCommand):
             repo_name = self.modules_repo.fullname
             module_base_path = os.path.join(self.dir, "modules", repo_name)
             # Check that we have any modules installed from this repo
-            modules = self.module_names.get(repo_name)
+            modules = self.modules_json.get_all_modules().get(repo_name)
             if modules is None:
                 raise LookupError(f"No modules installed from {self.modules_repo.remote_url}")
 
@@ -114,7 +117,6 @@ class ModuleInfo(ModuleCommand):
                         return yaml.safe_load(fh)
 
             log.debug(f"Module '{self.module}' meta.yml not found locally")
-            return None
         else:
             module_base_path = os.path.join(self.dir, "modules")
             if self.module in os.listdir(module_base_path):
@@ -126,7 +128,8 @@ class ModuleInfo(ModuleCommand):
                         self.local_path = mod_dir
                         return yaml.safe_load(fh)
             log.debug(f"Module '{self.module}' meta.yml not found locally")
-            return None
+
+        return None
 
     def get_remote_yaml(self):
         """Attempt to get the meta.yml file from a remote repo.

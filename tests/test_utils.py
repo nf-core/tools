@@ -6,8 +6,9 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
+from unittest import mock
 
-import mock
 import pytest
 import requests
 
@@ -16,6 +17,17 @@ import nf_core.list
 import nf_core.utils
 
 from .utils import with_temporary_folder
+
+TEST_DATA_DIR = Path(__file__).parent / "data"
+
+
+def test_strip_ansi_codes():
+    """Check that we can make rich text strings plain
+
+    String prints ls examplefile.zip, where examplefile.zip is red bold text
+    """
+    stripped = nf_core.utils.strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
+    assert stripped == "ls examplefile.zip"
 
 
 class TestUtils(unittest.TestCase):
@@ -29,7 +41,12 @@ class TestUtils(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
+            "testpipeline",
+            "This is a test pipeline",
+            "Test McTestFace",
+            no_git=True,
+            outdir=self.test_pipeline_dir,
+            plain=True,
         )
         self.create_obj.init_pipeline()
         # Base Pipeline object on this directory
@@ -178,3 +195,16 @@ class TestUtils(unittest.TestCase):
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
+
+
+def test_validate_file_md5():
+    # MD5(test) = d8e8fca2dc0f896fd7cb4cb0031ba249
+    test_file = TEST_DATA_DIR / "test.txt"
+    test_file_md5 = "d8e8fca2dc0f896fd7cb4cb0031ba249"
+    different_md5 = "9e7b964750cf0bb08ee960fce356b6d6"
+    non_hex_string = "s"
+    assert nf_core.utils.validate_file_md5(test_file, test_file_md5)
+    with pytest.raises(IOError):
+        nf_core.utils.validate_file_md5(test_file, different_md5)
+    with pytest.raises(ValueError):
+        nf_core.utils.validate_file_md5(test_file, non_hex_string)

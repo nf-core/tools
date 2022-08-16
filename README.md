@@ -31,9 +31,11 @@ A python package with helper tools for the nf-core community.
   - [`modules list` - List available modules](#list-modules)
     - [`modules list remote` - List remote modules](#list-remote-modules)
     - [`modules list local` - List installed modules](#list-installed-modules)
+  - [`modules info` - Show information about a module](#show-information-about-a-module)
   - [`modules install` - Install modules in a pipeline](#install-modules-in-a-pipeline)
   - [`modules update` - Update modules in a pipeline](#update-modules-in-a-pipeline)
   - [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
+  - [`modules patch` - Create a patch file for a module](#create-a-patch-file-for-a-module)
   - [`modules create` - Create a module from the template](#create-a-new-module)
   - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
@@ -445,6 +447,29 @@ Please see the [nf-core documentation](https://nf-co.re/developers/adding_pipeli
 
 Note that if the required arguments for `nf-core create` are not given, it will interactively prompt for them. If you prefer, you can supply them as command line arguments. See `nf-core create --help` for more information.
 
+### Customizing the creation of a pipeline
+
+The `nf-core create` command comes with a number of options that allow you to customize the creation of a pipeline if you intend to not publish it as an
+nf-core pipeline. This can be done in two ways: by using interactive prompts, or by supplying a `template.yml` file using the `--template-yaml <file>` option.
+Both options allow you to specify a custom pipeline prefix, as well as selecting parts of the template to be excluded during pipeline creation.
+The interactive prompts will guide you through the pipeline creation process. An example of a `template.yml` file is shown below.
+
+```yaml
+name: cool-pipe
+description: A cool pipeline
+author: me
+prefix: cool-pipes-company
+skip:
+  - ci
+  - github_badges
+  - igenomes
+  - nf_core_configs
+```
+
+This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
+
+To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
+
 ## Linting a workflow
 
 The `lint` subcommand checks a given pipeline for all nf-core community guidelines.
@@ -732,7 +757,7 @@ For example, if you want to install the `fastqc` module from the repository `nf-
 nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
 ```
 
-If the modules in your custom remote are stored in another directory than `modules`, you can specify the path by using the `--base-path <path>` flag. This will default to `modules`.
+If the modules in your custom remote are stored in another directory than `modules`, you can specify the path by using the `--base-path <path>` flag. This will default to `modules`. Note that all branches in a remote must use the same base path, otherwise the commands will fail.
 
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
@@ -908,8 +933,8 @@ There are five additional flags that you can use with this command:
 - `--force`: Reinstall module even if it appears to be up to date
 - `--prompt`: Select the module version using a cli prompt.
 - `--sha <commit_sha>`: Install the module at a specific commit from the `nf-core/modules` repository.
-- `--diff`: Show the diff between the installed files and the new version before installing.
-- `--diff-file <filename>`: Specify where the diffs between the local and remote versions of a module should be written
+- `--preview/--no-preview`: Show the diff between the installed files and the new version before installing.
+- `--save-diff <filename>`: Save diffs to a file instead of updating in place. The diffs can then be applied with `git apply <filename>`.
 - `--all`: Use this flag to run the command on all modules in the pipeline.
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module installed from `nf-core/modules` from being updated by adding the following to the `.nf-core.yml` file:
@@ -964,6 +989,51 @@ INFO     Removing star/align
 ```
 
 You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
+
+### Create a patch file for a module
+
+If you want to make a minor change to a locally installed module but still keep it up date with the remote version, you can create a patch file using `nf-core modules patch`.
+
+```console
+$ nf-core modules patch
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.5.dev0 - https://nf-co.re
+
+
+? Tool: bismark/align
+INFO     Changes in module 'nf-core/modules/bismark/align'
+INFO     Changes in 'bismark/align/main.nf':
+
+ --- modules/nf-core/modules/bismark/align/main.nf
+ +++ modules/nf-core/modules/bismark/align/main.nf
+ @@ -19,8 +19,7 @@
+      }
+
+      input:
+ -    tuple val(meta), path(reads)
+ -    path index
+ +    tuple val(meta), path(reads), path index
+
+      output:
+      tuple val(meta), path("*bam")       , emit: bam
+
+
+INFO     'modules/nf-core/modules/bismark/align/functions.nf' is unchanged
+INFO     'modules/nf-core/modules/bismark/align/meta.yml' is unchanged
+INFO     Patch file of 'nf-core/modules/bismark/align' written to 'modules/nf-core/modules/bismark/align/bismark-align.diff'
+```
+
+The generated patches work with `nf-core modules update`: when you install a new version of the module, the command tries to apply
+the patch automatically. The patch application fails if the new version of the module modifies the same lines as the patch. In this case,
+the patch new version is installed but the old patch file is preversed.
+
+When linting a patched module, the linting command will check the validity of the patch. When running other lint tests the patch is applied in reverse, and the original files are linted.
 
 ### Create a new module
 

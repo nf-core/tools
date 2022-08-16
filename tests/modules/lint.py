@@ -1,6 +1,8 @@
-import json
+import pytest
 
 import nf_core.modules
+
+from ..utils import GITLAB_URL
 
 
 def test_modules_lint_trimgalore(self):
@@ -18,11 +20,8 @@ def test_modules_lint_empty(self):
     self.mods_remove.remove("fastqc")
     self.mods_remove.remove("multiqc")
     self.mods_remove.remove("custom/dumpsoftwareversions")
-    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir)
-    module_lint.lint(print_results=False, all_modules=True)
-    assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
-    assert len(module_lint.passed) == 0
-    assert len(module_lint.warned) == 0
+    with pytest.raises(LookupError):
+        nf_core.modules.ModuleLint(dir=self.pipeline_dir)
 
 
 def test_modules_lint_new_modules(self):
@@ -30,5 +29,22 @@ def test_modules_lint_new_modules(self):
     module_lint = nf_core.modules.ModuleLint(dir=self.nfcore_modules)
     module_lint.lint(print_results=True, all_modules=True)
     assert len(module_lint.failed) == 0, f"Linting failed with {[x.__dict__ for x in module_lint.failed]}"
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+
+
+def test_modules_lint_no_gitlab(self):
+    """Test linting a pipeline with no modules installed"""
+    with pytest.raises(LookupError):
+        nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+
+
+def test_modules_lint_gitlab_modules(self):
+    """Lint modules from a different remote"""
+    self.mods_install_gitlab.install("fastqc")
+    self.mods_install_gitlab.install("multiqc")
+    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+    module_lint.lint(print_results=False, all_modules=True)
+    assert len(module_lint.failed) == 0
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0

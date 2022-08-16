@@ -7,13 +7,13 @@ import os
 import shutil
 import tempfile
 import unittest
+from unittest import mock
 
-import click
-import mock
 import pytest
 import requests
 import yaml
 
+import nf_core.create
 import nf_core.schema
 
 from .utils import with_temporary_file, with_temporary_folder
@@ -26,11 +26,15 @@ class TestSchema(unittest.TestCase):
         """Create a new PipelineSchema object"""
         self.schema_obj = nf_core.schema.PipelineSchema()
         self.root_repo_dir = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
-        # Copy the template to a temp directory so that we can use that for tests
+
+        # Create a test pipeline in temp directory
         self.tmp_dir = tempfile.mkdtemp()
         self.template_dir = os.path.join(self.tmp_dir, "wf")
-        template_dir = os.path.join(self.root_repo_dir, "nf_core", "pipeline-template")
-        shutil.copytree(template_dir, self.template_dir)
+        create_obj = nf_core.create.PipelineCreate(
+            "test_pipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
+        )
+        create_obj.init_pipeline()
+
         self.template_schema = os.path.join(self.template_dir, "nextflow_schema.json")
 
     def tearDown(self):
@@ -300,7 +304,7 @@ class TestSchema(unittest.TestCase):
         param = self.schema_obj.build_schema_param("12")
         assert param == {"type": "integer", "default": 12}
 
-    def test_build_schema_param_int(self):
+    def test_build_schema_param_float(self):
         """Build a new schema param from a config value (float)"""
         param = self.schema_obj.build_schema_param("12.34")
         assert param == {"type": "number", "default": 12.34}

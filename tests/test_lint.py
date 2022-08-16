@@ -5,13 +5,9 @@ import fnmatch
 import json
 import os
 import shutil
-import subprocess
 import tempfile
 import unittest
 
-import mock
-import pytest
-import requests
 import yaml
 
 import nf_core.create
@@ -32,7 +28,7 @@ class TestLint(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.test_pipeline_dir = os.path.join(self.tmp_dir, "nf-core-testpipeline")
         self.create_obj = nf_core.create.PipelineCreate(
-            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir
+            "testpipeline", "This is a test pipeline", "Test McTestFace", outdir=self.test_pipeline_dir, plain=True
         )
         self.create_obj.init_pipeline()
         # Base lint object on this directory
@@ -152,14 +148,6 @@ class TestLint(unittest.TestCase):
     def test_wrap_quotes(self):
         md = self.lint_obj._wrap_quotes(["one", "two", "three"])
         assert md == "`one` or `two` or `three`"
-
-    def test_strip_ansi_codes(self):
-        """Check that we can make rich text strings plain
-
-        String prints ls examplefile.zip, where examplefile.zip is red bold text
-        """
-        stripped = self.lint_obj._strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
-        assert stripped == "ls examplefile.zip"
 
     def test_sphinx_md_files(self):
         """Check that we have .md files for all lint module code,

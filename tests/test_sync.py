@@ -7,9 +7,7 @@ import os
 import shutil
 import tempfile
 import unittest
-
-import git
-import mock
+from unittest import mock
 
 import nf_core.create
 import nf_core.sync
@@ -24,7 +22,9 @@ class TestModules(unittest.TestCase):
         """Create a new pipeline to test"""
         self.tmp_dir = tempfile.mkdtemp()
         self.pipeline_dir = os.path.join(self.tmp_dir, "test_pipeline")
-        self.create_obj = nf_core.create.PipelineCreate("testing", "test pipeline", "tester", outdir=self.pipeline_dir)
+        self.create_obj = nf_core.create.PipelineCreate(
+            "testing", "test pipeline", "tester", outdir=self.pipeline_dir, plain=True
+        )
         self.create_obj.init_pipeline()
 
     def tearDown(self):
@@ -140,10 +140,6 @@ class TestModules(unittest.TestCase):
         assert psync.commit_template_changes() is True
         # Check that we don't have any uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is False
-
-    def raise_git_exception(self):
-        """Raise an exception from GitPython"""
-        raise git.exc.GitCommandError("Test")
 
     def test_push_template_branch_error(self):
         """Try pushing the changes, but without a remote (should fail)"""
