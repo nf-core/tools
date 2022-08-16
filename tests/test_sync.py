@@ -9,8 +9,6 @@ import tempfile
 import unittest
 from unittest import mock
 
-import git
-
 import nf_core.create
 import nf_core.sync
 
@@ -142,10 +140,6 @@ class TestModules(unittest.TestCase):
         assert psync.commit_template_changes() is True
         # Check that we don't have any uncommitted changes
         assert psync.repo.is_dirty(untracked_files=True) is False
-
-    def raise_git_exception(self):
-        """Raise an exception from GitPython"""
-        raise git.exc.GitCommandError("Test")
 
     def test_push_template_branch_error(self):
         """Try pushing the changes, but without a remote (should fail)"""
