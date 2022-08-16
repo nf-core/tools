@@ -6,6 +6,7 @@ from pathlib import Path
 
 import git
 import rich.progress
+from git.exc import GitCommandError
 
 import nf_core.modules.module_utils
 import nf_core.modules.modules_json
@@ -173,7 +174,7 @@ class ModulesRepo(object):
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
-            except git.exc.GitCommandError:
+            except GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
             # Verify that the requested branch exists by checking it out
             self.setup_branch(branch)
@@ -243,7 +244,7 @@ class ModulesRepo(object):
         """
         try:
             self.checkout_branch()
-        except git.exc.GitCommandError:
+        except GitCommandError:
             raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
 
     def verify_branch(self):

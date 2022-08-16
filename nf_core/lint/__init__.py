@@ -13,6 +13,7 @@ import re
 import git
 import rich
 import rich.progress
+from git.exc import InvalidGitRepositoryError
 from rich.console import group
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -289,7 +290,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Attempting to automatically fix failing tests")
             try:
                 repo = git.Repo(self.wf_path)
-            except git.exc.InvalidGitRepositoryError:
+            except InvalidGitRepositoryError:
                 raise AssertionError(
                     f"'{self.wf_path}' does not appear to be a git repository, "
                     "this is required when running with '--fix'"
