@@ -249,7 +249,7 @@ class ModulesJson:
                                 {"name": "Remove the files", "value": 1},
                             ],
                             style=nf_core.utils.nfcore_question_style,
-                        )
+                        ).unsafe_ask()
                         if action == 0:
                             sb_local.append(module)
                         else:
@@ -324,10 +324,9 @@ class ModulesJson:
         directories containing a 'main.nf' file
 
         Returns:
-            (untrack_dirs ([ Path ]),
-             missing_installation (dict)): Directories that are not tracked
-            by the modules.json file, and modules in the modules.json that
-            where the installation directory is missing
+            (untrack_dirs ([ Path ]), missing_installation (dict)): Directories that are not tracked
+            by the modules.json file, and modules in the modules.json where
+            the installation directory is missing
         """
         missing_installation = copy.deepcopy(self.modules_json["repos"])
         dirs = [
@@ -346,19 +345,19 @@ class ModulesJson:
             if module_repo_name is not None:
                 # If it does, check if the module is in the 'modules.json' file
                 module = str(dir.relative_to(module_repo_name))
+                module_repo = missing_installation[module_repo_name]
 
-                if module not in missing_installation[module_repo_name].get("modules", {}):
+                if module not in module_repo.get("modules", {}):
                     untracked_dirs.append(dir)
                 else:
                     # Check if the entry has a git sha and branch before removing
-                    modules = missing_installation[module_repo_name]["modules"]
+                    modules = module_repo["modules"]
                     if "git_sha" not in modules[module] or "branch" not in modules[module]:
-                        raise UserWarning(
-                            "The 'modules.json' file is not up to date. "
-                            "You can fix it by running 'nf-core modules update'."
+                        self.determine_module_branches_and_shas(
+                            module, module_repo["git_url"], module_repo["base_path"], [module]
                         )
-                    missing_installation[module_repo_name]["modules"].pop(module)
-                    if len(missing_installation[module_repo_name]["modules"]) == 0:
+                    module_repo["modules"].pop(module)
+                    if len(module_repo["modules"]) == 0:
                         missing_installation.pop(module_repo_name)
             else:
                 # If it is not, add it to the list of missing modules
@@ -366,7 +365,7 @@ class ModulesJson:
 
         return untracked_dirs, missing_installation
 
-    def has_git_url_and_base_path(self):
+    def has_correct_format(self):
         """
         Check that that all repo entries in the modules.json
         have a git url and a base_path
@@ -376,7 +375,12 @@ class ModulesJson:
         """
         for repo_entry in self.modules_json.get("repos", {}).values():
             if "git_url" not in repo_entry or "base_path" not in repo_entry:
-                return False
+                raise KeyError
+            for repo_name, modules in repo_entry.get("modules", {}).items():
+                if "git_sha" not in modules or "branch" not in modules:
+                    self.determine_module_branches_and_shas(
+                        repo_name, repo_entry["git_url"], repo_entry["base_path"], [repo_name]
+                    )
         return True
 
     def reinstall_repo(self, repo_name, remote_url, base_path, module_entries):
@@ -433,8 +437,7 @@ class ModulesJson:
         """
         try:
             self.load()
-            if not self.has_git_url_and_base_path():
-                raise KeyError
+            self.has_correct_format()
         except (UserWarning, KeyError):
             log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
             self.create()
