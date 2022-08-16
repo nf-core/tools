@@ -370,7 +370,7 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
-        with ZipFile(BytesIO(url.content)) as zipfile:
+        with ZipFile(io.BytesIO(url.content)) as zipfile:
             zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
