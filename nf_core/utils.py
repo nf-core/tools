@@ -5,6 +5,7 @@ Common utility functions for the nf-core python package.
 import datetime
 import errno
 import hashlib
+import io
 import json
 import logging
 import mimetypes
@@ -1015,3 +1016,47 @@ def is_relative_to(path1, path2):
     path2 (Path | str): The path the could be the superpath
     """
     return str(path1).startswith(str(path2) + os.sep)
+
+
+def file_md5(fname):
+    """Calculates the md5sum for a file on the disk.
+
+    Args:
+        fname (str): Path to a local file.
+    """
+
+    # Calculate the md5 for the file on disk
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(io.DEFAULT_BUFFER_SIZE), b""):
+            hash_md5.update(chunk)
+
+    return hash_md5.hexdigest()
+
+
+def validate_file_md5(file_name, expected_md5hex):
+    """Validates the md5 checksum of a file on disk.
+
+    Args:
+        file_name (str): Path to a local file.
+        expected (str): The expected md5sum.
+
+    Raises:
+        IOError, if the md5sum does not match the remote sum.
+    """
+    log.debug(f"Validating image hash: {file_name}")
+
+    # Make sure the expected md5 sum is a hexdigest
+    try:
+        int(expected_md5hex, 16)
+    except ValueError as ex:
+        raise ValueError(f"The supplied md5 sum must be a hexdigest but it is {expected_md5hex}") from ex
+
+    file_md5hex = file_md5(file_name)
+
+    if file_md5hex.upper() == expected_md5hex.upper():
+        log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
+    else:
+        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+
+    return True
