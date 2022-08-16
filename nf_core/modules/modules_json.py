@@ -8,6 +8,7 @@ from pathlib import Path
 
 import git
 import questionary
+from git.exc import GitCommandError
 
 import nf_core.modules.module_utils
 import nf_core.modules.modules_repo
@@ -125,7 +126,7 @@ class ModulesJson:
                     try:
                         git.Git().ls_remote(nrepo_remote)
                         break
-                    except git.exc.GitCommandError:
+                    except GitCommandError:
                         nrepo_remote = questionary.text(
                             "The provided remote does not seem to exist, please provide a new remote."
                         ).unsafe_ask()
