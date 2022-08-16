@@ -11,6 +11,8 @@
 - Add Gitpod and Mamba profiles to the pipeline template ([#1673](https://github.com/nf-core/tools/pull/1673))
 - Remove call to `getGenomeAttribute` in `main.nf` when running `nf-core create` without iGenomes ([#1670](https://github.com/nf-core/tools/issues/1670))
 - Make `nf-core create` fail if Git default branch name is dev or TEMPLATE ([#1705](https://github.com/nf-core/tools/pull/1705))
+- Convert `console` snippets to `bash` snippets in the template where applicable ([#1729](https://github.com/nf-core/tools/pull/1729))
+- Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
 
 ### Linting
 
@@ -20,6 +22,7 @@
 - Use black also to format python files in workflows ([#1563](https://github.com/nf-core/tools/pull/1563))
 - Add check for mimetype in the `input` parameter. ([#1647](https://github.com/nf-core/tools/issues/1647))
 - Check that the singularity and docker tags are parsable. Add `--fail-warned` flag to `nf-core modules lint` ([#1654](https://github.com/nf-core/tools/issues/1654))
+- Handle exception in `nf-core modules lint` when process name doesn't start with process ([#1733](https://github.com/nf-core/tools/issues/1733))
 
 ### General
 
@@ -43,6 +46,7 @@
 - Add `no_git=True` when creating a new pipeline and initialising a git repository is not needed in `nf-core lint` and `nf-core bump-version` ([#1709](https://github.com/nf-core/tools/pull/1709))
 - Move `strip_ansi_code` function in lint to `utils.py`
 - Simplify control flow and don't use equality comparison for `None` and booleans
+- Replace use of the deprecated `distutils` Version object with that from `packaging` ([#1735](https://github.com/nf-core/tools/pull/1735))
 
 ### Modules
 
@@ -64,6 +68,11 @@
 - Add support for patch in `nf-core modules update` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 - Add support for patch in `nf-core modules lint` command ([#1312](https://github.com/nf-core/tools/issues/1312))
 - Add support for custom remotes in `nf-core modules lint` ([#1715](https://github.com/nf-core/tools/issues/1715))
+- Make `nf-core modules` commands work with arbitrary git remotes ([#1721](https://github.com/nf-core/tools/issues/1721))
+- Add links in `README.md` for `info` and `patch` commands ([#1722](https://github.com/nf-core/tools/issues/1722)])
+- Fix misc. issues with `--branch` and `--base-path` ([#1726](https://github.com/nf-core/tools/issues/1726))
+- Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
+- Fix unbound variable issues and minor refactoring [#1742](https://github.com/nf-core/tools/pull/1742/)
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

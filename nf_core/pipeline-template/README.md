@@ -52,7 +52,7 @@ The results obtained from the full-sized test can be viewed on the [nf-core webs
 
 3. Download the pipeline and test it on a minimal dataset with a single command:
 
-   ```console
+   ```bash
    nextflow run {{ name }} -profile test,YOURPROFILE --outdir <OUTDIR>
    ```
 
@@ -67,7 +67,7 @@ The results obtained from the full-sized test can be viewed on the [nf-core webs
 
    <!-- TODO nf-core: Update the example "typical command" below used to run the pipeline -->
 
-   ```console
+   ```bash
    nextflow run {{ name }} --input samplesheet.csv --outdir <OUTDIR> --genome GRCh37 -profile <docker/singularity/podman/shifter/charliecloud/conda/institute>
    ```
 

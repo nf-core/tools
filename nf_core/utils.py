@@ -16,7 +16,6 @@ import shlex
 import subprocess
 import sys
 import time
-from distutils.version import StrictVersion
 
 import git
 import prompt_toolkit
@@ -25,6 +24,7 @@ import requests
 import requests_cache
 import rich
 import yaml
+from packaging.version import Version
 from rich.live import Live
 from rich.spinner import Spinner
 
@@ -77,7 +77,7 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
         response = requests.get(source_url, timeout=3)
         remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
-    is_outdated = StrictVersion(remote_version) > StrictVersion(current_version)
+    is_outdated = Version(remote_version) > Version(current_version)
     return (is_outdated, current_version, remote_version)
 
 
@@ -603,9 +603,9 @@ def anaconda_package(dep, dep_channels=None):
                 )
             elif response.status_code == 404:
                 log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
-    else:
-        # We have looped through each channel and had a 404 response code on everything
-        raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
+
+    # We have looped through each channel and had a 404 response code on everything
+    raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
 
 
 def parse_anaconda_licence(anaconda_response, version=None):
@@ -808,15 +808,14 @@ def prompt_remote_pipeline_name(wfs):
             return wf.full_name
 
     # Non nf-core repo on GitHub
-    else:
-        if pipeline.count("/") == 1:
-            try:
-                gh_api.get(f"https://api.github.com/repos/{pipeline}")
-            except Exception:
-                # No repo found - pass and raise error at the end
-                pass
-            else:
-                return pipeline
+    if pipeline.count("/") == 1:
+        try:
+            gh_api.get(f"https://api.github.com/repos/{pipeline}")
+        except Exception:
+            # No repo found - pass and raise error at the end
+            pass
+        else:
+            return pipeline
 
     log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in wfs.remote_workflows])))
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
@@ -1007,6 +1006,18 @@ def strip_ansi_codes(string, replace_with=""):
     From Stack Overflow: https://stackoverflow.com/a/14693789/713980
     """
     return ANSI_ESCAPE_RE.sub(replace_with, string)
+
+
+def is_relative_to(path1, path2):
+    """
+    Checks if a path is relative to another.
+
+    Should mimic Path.is_relative_to which not available in Python < 3.9
+
+    path1 (Path | str): The path that could be a subpath
+    path2 (Path | str): The path the could be the superpath
+    """
+    return str(path1).startswith(str(path2) + os.sep)
 
 
 def file_md5(fname):

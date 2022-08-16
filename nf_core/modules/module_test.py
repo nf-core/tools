@@ -16,6 +16,7 @@ import rich
 import nf_core.modules.module_utils
 import nf_core.utils
 from nf_core.modules.modules_command import ModuleCommand
+from nf_core.modules.modules_json import ModulesJson
 
 log = logging.getLogger(__name__)
 
@@ -61,7 +62,6 @@ class ModulesTest(ModuleCommand):
         self.pytest_args = pytest_args
 
         super().__init__(".", remote_url, branch, no_pull)
-        self.get_pipeline_modules()
 
     def run(self):
         """Run test steps"""
@@ -79,9 +79,11 @@ class ModulesTest(ModuleCommand):
 
         # Retrieving installed modules
         if self.repo_type == "modules":
-            installed_modules = self.module_names["modules"]
+            installed_modules = self.get_modules_clone_modules()
         else:
-            installed_modules = self.module_names.get(self.modules_repo.fullname)
+            modules_json = ModulesJson(self.dir)
+            modules_json.check_up_to_date()
+            installed_modules = modules_json.get_all_modules().get(self.modules_repo.fullname)
 
         # Get the tool name if not specified
         if self.module_name is None:
@@ -89,7 +91,7 @@ class ModulesTest(ModuleCommand):
                 raise UserWarning(
                     "Tool name not provided and prompts deactivated. Please provide the tool name as TOOL/SUBTOOL or TOOL."
                 )
-            if installed_modules is None:
+            if not installed_modules:
                 raise UserWarning(
                     f"No installed modules were found from '{self.modules_repo.remote_url}'.\n"
                     f"Are you running the tests inside the nf-core/modules main directory?\n"

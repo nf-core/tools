@@ -1,5 +1,4 @@
 import enum
-import json
 import logging
 import os
 import shutil
@@ -45,20 +44,7 @@ class ModuleUpdate(ModuleCommand):
         self.module = None
         self.update_config = None
         self.modules_json = ModulesJson(self.dir)
-
-        # Fetch the list of pipeline modules
-        self.get_pipeline_modules()
-
-    class DiffEnum(enum.Enum):
-        """Enumeration to keeping track of file diffs.
-
-        Used for the --save-diff and --preview options
-        """
-
-        UNCHANGED = enum.auto()
-        CHANGED = enum.auto()
-        CREATED = enum.auto()
-        REMOVED = enum.auto()
+        self.branch = branch
 
     def _parameter_checks(self):
         """Checks the compatibilty of the supplied parameters.
@@ -145,8 +131,9 @@ class ModuleUpdate(ModuleCommand):
         # and do the requested action on them
         exit_value = True
         all_patches_successful = True
+        print(modules_info)
         for modules_repo, module, sha, patch_relpath in modules_info:
-
+            print(sha)
             module_fullname = str(Path(modules_repo.fullname, module))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
@@ -279,18 +266,18 @@ class ModuleUpdate(ModuleCommand):
         """
         # Check if there are any modules installed from the repo
         repo_name = self.modules_repo.fullname
-        if repo_name not in self.module_names:
+        if repo_name not in self.modules_json.get_all_modules():
             raise LookupError(f"No modules installed from '{repo_name}'")
 
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.module_names[repo_name],
+                choices=self.modules_json.get_all_modules()[repo_name],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check if module is installed before trying to update
-        if module not in self.module_names[repo_name]:
+        if module not in self.modules_json.get_all_modules()[repo_name]:
             raise LookupError(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
 
         # Check that the supplied name is an available module
@@ -319,12 +306,25 @@ class ModuleUpdate(ModuleCommand):
                     log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
                 log.info(f"Updating module to ({sha})")
 
+        # Check if the update branch is the same as the installation branch
+        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.fullname)
+        new_branch = self.modules_repo.branch
+        if current_branch != new_branch:
+            log.warning(
+                f"You are trying to update the '{Path(self.modules_repo.fullname, module)}' module from "
+                f"the '{new_branch}' branch. This module was installed from the '{current_branch}'"
+            )
+            switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
+            if switch:
+                # Change the branch
+                self.modules_repo.setup_branch(current_branch)
+
         # If there is a patch file, get its filename
         patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.fullname)
 
         return (self.modules_repo, module, sha, patch_fn)
 
-    def get_all_modules_info(self):
+    def get_all_modules_info(self, branch=None):
         """Collects the module repository, version and sha for all modules.
 
         Information about the module version in the '.nf-core.yml' overrides the '--sha' option.
@@ -333,6 +333,12 @@ class ModuleUpdate(ModuleCommand):
             [(ModulesRepo, str, str)]: A list of tuples containing a ModulesRepo object,
             the module name, and the module version.
         """
+        if branch is not None:
+            use_branch = questionary.confirm(
+                "'--branch' was specified. Should this branch be used to update all modules?", default=False
+            )
+            if not use_branch:
+                branch = None
         skipped_repos = []
         skipped_modules = []
         overridden_repos = []
@@ -340,20 +346,26 @@ class ModuleUpdate(ModuleCommand):
         modules_info = {}
         # Loop through all the modules in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
-        for repo_name, modules in self.module_names.items():
+        for repo_name, modules in self.modules_json.get_all_modules().items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
-                modules_info[repo_name] = [(module, self.sha) for module in modules]
+                modules_info[repo_name] = [
+                    (module, self.sha, self.modules_json.get_module_branch(module, repo_name)) for module in modules
+                ]
             elif isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual modules
                 repo_config = self.update_config[repo_name]
                 modules_info[repo_name] = []
                 for module in modules:
                     if module not in repo_config or repo_config[module] is True:
-                        modules_info[repo_name].append((module, self.sha))
+                        modules_info[repo_name].append(
+                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name))
+                        )
                     elif isinstance(repo_config[module], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = repo_config[module]
-                        modules_info[repo_name].append((module, custom_sha))
+                        modules_info[repo_name].append(
+                            (module, custom_sha, self.modules_json.get_module_branch(module, repo_name))
+                        )
                         if self.sha is not None:
                             overridden_modules.append(module)
                     elif repo_config[module] is False:
@@ -364,7 +376,10 @@ class ModuleUpdate(ModuleCommand):
             elif isinstance(self.update_config[repo_name], str):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
-                modules_info[repo_name] = [(module_name, custom_sha) for module_name in modules]
+                modules_info[repo_name] = [
+                    (module_name, custom_sha, self.modules_json.get_module_branch(module_name, repo_name))
+                    for module_name in modules
+                ]
                 if self.sha is not None:
                     overridden_repos.append(repo_name)
             elif self.update_config[repo_name] is False:
@@ -393,32 +408,57 @@ class ModuleUpdate(ModuleCommand):
                 f"Overriding '--sha' flag for module{plural_s(overridden_modules)} with "
                 f"'.nf-core.yml' entry: '{overridden_str}'"
             )
+        # Loop through modules_info and create on ModulesRepo object per remote and branch
+        repos_and_branches = {}
+        for repo_name, mods in modules_info.items():
+            for mod, sha, mod_branch in mods:
+                if branch is not None:
+                    mod_branch = branch
+                if (repo_name, mod_branch) not in repos_and_branches:
+                    repos_and_branches[(repo_name, mod_branch)] = []
+                repos_and_branches[(repo_name, mod_branch)].append((mod, sha))
 
         # Get the git urls from the modules.json
-        modules_info = [
-            (self.modules_json.get_git_url(repo_name), self.modules_json.get_base_path(repo_name), mods_shas)
-            for repo_name, mods_shas in modules_info.items()
-        ]
+        modules_info = (
+            (
+                repo_name,
+                self.modules_json.get_git_url(repo_name),
+                branch,
+                self.modules_json.get_base_path(repo_name),
+                mods_shas,
+            )
+            for (repo_name, branch), mods_shas in repos_and_branches.items()
+        )
 
         # Create ModulesRepo objects
-        modules_info = [
-            (ModulesRepo(remote_url=repo_url, base_path=base_path), mods_shas)
-            for repo_url, base_path, mods_shas in modules_info
-        ]
+        repo_objs_mods = []
+        for repo_name, repo_url, branch, base_path, mods_shas in modules_info:
+            try:
+                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path)
+            except LookupError as e:
+                log.warning(e)
+                log.info(f"Skipping modules in '{repo_name}'")
+            else:
+                repo_objs_mods.append((modules_repo, mods_shas))
 
-        # Flatten and return the list
-        modules_info = [(repo, mod, sha) for repo, mods_shas in modules_info for mod, sha in mods_shas]
+        # Flatten the list
+        modules_info = [(repo, mod, sha) for repo, mods_shas in repo_objs_mods for mod, sha in mods_shas]
 
-        # Verify that that all modules exist in their respective ModulesRepo,
+        # Verify that that all modules and shas exist in their respective ModulesRepo,
         # don't try to update those that don't
         i = 0
         while i < len(modules_info):
-            repo, module, _ = modules_info[i]
-            if repo.module_exists(module):
-                i += 1
-            else:
+            repo, module, sha = modules_info[i]
+            if not repo.module_exists(module):
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
+            elif sha is not None and not repo.sha_exists_on_branch(sha):
+                log.warning(
+                    f"Git sha '{sha}' does not exists on the '{repo.branch}' of '{repo.fullname}'. Skipping module '{module}'"
+                )
+                modules_info.pop(i)
+            else:
+                i += 1
 
         # Add patch filenames to the modules that have them
         modules_info = [
@@ -430,7 +470,7 @@ class ModuleUpdate(ModuleCommand):
     def setup_diff_file(self):
         """Sets up the diff file.
 
-        If the save diff option was choosen interactively, the user is asked to supply a name for the diff file.
+        If the save diff option was chosen interactively, the user is asked to supply a name for the diff file.
 
         Then creates the file for saving the diff.
         """

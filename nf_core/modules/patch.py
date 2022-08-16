@@ -20,21 +20,23 @@ class ModulePatch(ModuleCommand):
         super().__init__(dir, remote_url, branch, no_pull, base_path)
 
         self.modules_json = ModulesJson(dir)
-        self.get_pipeline_modules()
 
     def param_check(self, module):
         if not self.has_valid_directory():
             raise UserWarning()
 
-        if module is not None and module not in self.module_names[self.modules_repo.fullname]:
+        if module is not None and module not in self.modules_json.get_all_modules().get(self.modules_repo.fullname, {}):
             raise UserWarning(f"Module '{Path(self.modules_repo.fullname, module)}' does not exist in the pipeline")
 
     def patch(self, module=None):
+        self.modules_json.check_up_to_date()
         self.param_check(module)
 
         if module is None:
             module = questionary.autocomplete(
-                "Tool:", self.module_names[self.modules_repo.fullname], style=nf_core.utils.nfcore_question_style
+                "Tool:",
+                self.modules_json.get_all_modules()[self.modules_repo.fullname],
+                style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
         module_fullname = str(Path(self.modules_repo.fullname, module))
 
@@ -49,6 +51,11 @@ class ModulePatch(ModuleCommand):
             raise UserWarning(
                 f"The '{module_fullname}' module does not have a valid version in the 'modules.json' file. Cannot compute patch"
             )
+        # Get the module branch and reset it in the ModulesRepo object
+        module_branch = self.modules_json.get_module_branch(module, self.modules_repo.fullname)
+        if module_branch != self.modules_repo.branch:
+            self.modules_repo.setup_branch(module_branch)
+
         # Set the diff filename based on the module name
         patch_filename = f"{module.replace('/', '-')}.diff"
         module_relpath = Path("modules", self.modules_repo.fullname, module)

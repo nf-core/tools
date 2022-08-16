@@ -68,14 +68,10 @@ class ModuleList(ModuleCommand):
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
 
-            # Get installed modules
-            self.get_pipeline_modules()
-
             # Filter by keywords
             repos_with_mods = {
-                repo_name: [mod for mod in self.module_names[repo_name] if all(k in mod for k in keywords)]
-                for repo_name in self.module_names
-                if repo_name != "local"
+                repo_name: [mod for mod in modules if all(k in mod for k in keywords)]
+                for repo_name, modules in modules_json.get_all_modules().items()
             }
 
             # Nothing found
@@ -106,7 +102,9 @@ class ModuleList(ModuleCommand):
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
                             message, date = ModulesRepo(
-                                remote_url=repo_entry["git_url"], base_path=repo_entry["base_path"]
+                                remote_url=repo_entry["git_url"],
+                                base_path=repo_entry["base_path"],
+                                branch=module_entry["branch"],
                             ).get_commit_info(version_sha)
                         except LookupError as e:
                             log.warning(e)

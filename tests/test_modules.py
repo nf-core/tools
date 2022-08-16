@@ -101,6 +101,8 @@ class TestModules(unittest.TestCase):
         test_modules_test_file_dict,
     )
     from .modules.install import (
+        test_modules_install_different_branch_fail,
+        test_modules_install_different_branch_succeed,
         test_modules_install_emptypipeline,
         test_modules_install_from_gitlab,
         test_modules_install_nomodule,
@@ -158,6 +160,9 @@ class TestModules(unittest.TestCase):
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,
         test_update_all,
+        test_update_different_branch_mix_modules_branch_test,
+        test_update_different_branch_mixed_modules_main,
+        test_update_different_branch_single_module,
         test_update_with_config_dont_update,
         test_update_with_config_fix_all,
         test_update_with_config_fixed_version,

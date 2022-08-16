@@ -9,7 +9,6 @@ from rich.console import Console
 from rich.syntax import Syntax
 
 import nf_core.utils
-from nf_core.utils import plural_s
 
 log = logging.getLogger(__name__)
 

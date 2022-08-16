@@ -118,8 +118,7 @@ class ModuleInstall(ModuleCommand):
                 return False
         else:
             # Fetch the latest commit for the module
-            git_log = list(self.modules_repo.get_module_git_log(module, depth=1))
-            version = git_log[0]["git_sha"]
+            version = self.modules_repo.get_latest_module_version(module)
 
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.fullname}/{module}'")
