@@ -1,4 +1,3 @@
-import enum
 import logging
 import os
 import shutil
@@ -550,7 +549,7 @@ class ModuleUpdate(ModuleCommand):
 
         try:
             new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, temp_module_dir)
-        except LookupError as e:
+        except LookupError:
             # Patch failed. Save the patch file by moving to the install dir
             shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
             log.warning(

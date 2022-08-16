@@ -86,7 +86,7 @@ class WorkflowLicences(object):
                 log.error(f"Couldn't get licence information for {dep}")
 
         for dep, data in deps_data.items():
-            depname, depver = dep.split("=", 1)
+            _, depver = dep.split("=", 1)
             self.conda_package_licences[dep] = nf_core.utils.parse_anaconda_licence(data, depver)
 
     def print_licences(self):

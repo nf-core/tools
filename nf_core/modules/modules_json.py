@@ -43,7 +43,7 @@ class ModulesJson:
         pipeline_config = nf_core.utils.fetch_wf_config(self.dir)
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
-        modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": dict()}
+        modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
         modules_dir = Path(self.dir, "modules")
 
         if not modules_dir.exists():
@@ -67,9 +67,9 @@ class ModulesJson:
         ]
 
         for repo_name, module_names, remote_url, base_path in sorted(repo_module_names):
-            modules_json["repos"][repo_name] = dict()
+            modules_json["repos"][repo_name] = {}
             modules_json["repos"][repo_name]["git_url"] = remote_url
-            modules_json["repos"][repo_name]["modules"] = dict()
+            modules_json["repos"][repo_name]["modules"] = {}
             modules_json["repos"][repo_name]["base_path"] = base_path
             modules_json["repos"][repo_name]["modules"] = self.determine_module_branches_and_shas(
                 repo_name, remote_url, base_path, module_names
@@ -184,15 +184,15 @@ class ModulesJson:
         while len(fifo) > 0:
             temp_queue = []
             repos_at_level = {Path(*repo.parts[:depth]): len(repo.parts) for repo in repos}
-            for dir in fifo:
-                rel_dir = dir.relative_to(modules_dir)
+            for directory in fifo:
+                rel_dir = directory.relative_to(modules_dir)
                 if rel_dir in repos_at_level.keys():
                     # Go the next depth if this directory is not one of the repos
                     if depth < repos_at_level[rel_dir]:
-                        temp_queue.extend(dir.iterdir())
+                        temp_queue.extend(directory.iterdir())
                 else:
                     # Otherwise add the directory to the ones not covered
-                    dirs_not_covered.append(dir)
+                    dirs_not_covered.append(directory)
             fifo = temp_queue
             depth += 1
         return dirs_not_covered
@@ -267,7 +267,7 @@ class ModulesJson:
         # Clean up the modules we were unable to find the sha for
         for module in sb_local:
             log.debug(f"Moving module '{Path(repo_name, module)}' to 'local' directory")
-            self.move_module_to_local(module, repo_name, self.modules_dir)
+            self.move_module_to_local(module, repo_name)
 
         for module in dead_modules:
             log.debug(f"Removing module {Path(repo_name, module)}'")
@@ -303,7 +303,7 @@ class ModulesJson:
             module (str): The name of the modules
             repo_name (str): The name of the repository the module resides in
         """
-        current_path = (self.modules_dir / repo_name) / module
+        current_path = self.modules_dir / repo_name / module
         local_modules_dir = self.modules_dir / "local"
         if not local_modules_dir.exists():
             local_modules_dir.mkdir()
@@ -492,7 +492,7 @@ class ModulesJson:
                 repo_name: (repo_entry["git_url"], repo_entry["base_path"])
                 for repo_name, repo_entry in self.modules_json["repos"].items()
             }
-            repos, renamed_dirs = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
+            repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
 
             modules_with_repos = (
                 (repo_name, str(dir.relative_to(repo_name)))

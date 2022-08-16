@@ -224,7 +224,7 @@ class ModulesTestYmlBuilder(object):
     def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
-        for root, dir, files in os.walk(results_dir, followlinks=True):
+        for root, _, files in os.walk(results_dir, followlinks=True):
             for filename in files:
                 # Check that the file is not versions.yml
                 if filename == "versions.yml":

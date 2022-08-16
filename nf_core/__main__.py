@@ -78,7 +78,7 @@ def run_nf_core():
         highlight=False,
     )
     try:
-        is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
+        is_outdated, _, remote_vers = nf_core.utils.check_if_outdated()
         if is_outdated:
             stderr.print(
                 f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
@@ -883,7 +883,7 @@ def validate(pipeline, params):
     schema_obj.load_input_params(params)
     try:
         schema_obj.validate_params()
-    except AssertionError as e:
+    except AssertionError:
         sys.exit(1)
 
 
@@ -947,7 +947,7 @@ def lint(schema_path):
             schema_obj.validate_schema_title_description()
         except AssertionError as e:
             log.warning(e)
-    except AssertionError as e:
+    except AssertionError:
         sys.exit(1)
 
 

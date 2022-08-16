@@ -102,8 +102,8 @@ class DownloadWorkflow(object):
         self.wf_branches = {}
         self.wf_sha = None
         self.wf_download_url = None
-        self.nf_config = dict()
-        self.containers = list()
+        self.nf_config = {}
+        self.containers = []
 
         # Fetch remote workflows
         self.wfs = nf_core.list.Workflows()
@@ -350,15 +350,15 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(self.wf_download_url)
-        zipfile = ZipFile(BytesIO(url.content))
-        zipfile.extractall(self.outdir)
+        with ZipFile(BytesIO(url.content)) as zipfile:
+            zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
         gh_name = f"{self.pipeline}-{self.wf_sha}".split("/")[-1]
         os.rename(os.path.join(self.outdir, gh_name), os.path.join(self.outdir, "workflow"))
 
         # Make downloaded files executable
-        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, "workflow")):
+        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, "workflow")):
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
@@ -370,14 +370,14 @@ class DownloadWorkflow(object):
 
         # Download GitHub zip file into memory and extract
         url = requests.get(configs_zip_url)
-        zipfile = ZipFile(BytesIO(url.content))
-        zipfile.extractall(self.outdir)
+        with ZipFile(BytesIO(url.content)) as zipfile:
+            zipfile.extractall(self.outdir)
 
         # Rename the internal directory name to be more friendly
         os.rename(os.path.join(self.outdir, configs_local_dir), os.path.join(self.outdir, "configs"))
 
         # Make downloaded files executable
-        for dirpath, subdirs, filelist in os.walk(os.path.join(self.outdir, "configs")):
+        for dirpath, _, filelist in os.walk(os.path.join(self.outdir, "configs")):
             for fname in filelist:
                 os.chmod(os.path.join(dirpath, fname), 0o775)
 
@@ -451,7 +451,7 @@ class DownloadWorkflow(object):
                 containers_raw.append(v.strip('"').strip("'"))
 
         # Recursive search through any DSL2 module files for container spec lines.
-        for subdir, dirs, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
+        for subdir, _, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
             for file in files:
                 if file.endswith(".nf"):
                     with open(os.path.join(subdir, file), "r") as fh:
@@ -781,7 +781,7 @@ class DownloadWorkflow(object):
         if self.compress_type == "zip":
             with ZipFile(self.output_filename, "w") as zipObj:
                 # Iterate over all the files in directory
-                for folderName, subfolders, filenames in os.walk(self.outdir):
+                for folderName, _, filenames in os.walk(self.outdir):
                     for filename in filenames:
                         # create complete filepath of file in directory
                         filePath = os.path.join(folderName, filename)

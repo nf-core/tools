@@ -140,7 +140,7 @@ class PipelineSync(object):
         # Check that the pipeline_dir is a git repo
         try:
             self.repo = git.Repo(self.pipeline_dir)
-        except git.exc.InvalidGitRepositoryError as e:
+        except git.exc.InvalidGitRepositoryError:
             raise SyncException(f"'{self.pipeline_dir}' does not appear to be a git repository")
 
         # get current branch so we can switch back later
