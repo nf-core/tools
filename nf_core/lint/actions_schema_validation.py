@@ -47,7 +47,7 @@ def actions_schema_validation(self):
         # yaml parses 'on' as True --> try to fix it before schema validation
         try:
             wf_json["on"] = wf_json.pop(True)
-        except Exception as e:
+        except Exception:
             failed.append("Missing 'on' keyword in {}.format(wf)")
 
         # Validate the workflow

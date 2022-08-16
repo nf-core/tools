@@ -68,7 +68,7 @@ def get_local_wf(workflow, revision=None):
     pull_cmd = f"nextflow pull {workflow}"
     if revision is not None:
         pull_cmd += f" -r {revision}"
-    nf_pull_output = nf_core.utils.nextflow_cmd(pull_cmd)
+    nf_core.utils.nextflow_cmd(pull_cmd)
     local_wf = LocalWorkflow(workflow)
     local_wf.get_local_nf_workflow_details()
     return local_wf.local_path
@@ -87,9 +87,9 @@ class Workflows(object):
     """
 
     def __init__(self, filter_by=None, sort_by="release", show_archived=False):
-        self.remote_workflows = list()
-        self.local_workflows = list()
-        self.local_unmatched = list()
+        self.remote_workflows = []
+        self.local_workflows = []
+        self.local_unmatched = []
         self.keyword_filters = filter_by if filter_by is not None else []
         self.sort_workflows_by = sort_by
         self.show_archived = show_archived
