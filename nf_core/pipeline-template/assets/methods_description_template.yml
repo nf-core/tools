@@ -1,5 +1,5 @@
 id: "${workflow.manifest.name.replace('/', '-')}-methods-description"
-description: "Suggested methods description text of pipeline usage"
+description: "Suggested methods description text of pipeline usage."
 section_name: "${ workflow.manifest.name } Methods Description"
 section_href: "https://github.com/${workflow.manifest.name}"
 plot_type: "html"
