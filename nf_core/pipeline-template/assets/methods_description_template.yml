@@ -1,25 +1,25 @@
-id: "${workflow.manifest.name.replace('/', '-')}-methods-description"
+id: "{{ name_noslash }}-methods-description"
 description: "Suggested methods description text of pipeline usage."
-section_name: "${ workflow.manifest.name } Methods Description"
-section_href: "https://github.com/${workflow.manifest.name}"
+section_name: "{{ name }} Methods Description"
+section_href: "https://github.com/{{ name }}"
 plot_type: "html"
 ## TODO nf-core: Update the HTML below to your prefered methods description, e.g. add publication citation for this pipeline
 ## You inject any metadata in the Nextflow '${workflow}' object
 data: |
-  <b>Methods</b>
-  <p>Data was processed using the ${workflow.manifest.name} (v${workflow.manifest.version}, doi: ${workflow.manifest.doi}) of the nf-core collection of workflows (Ewels et al. 2020).</p>
-  <p>The pipeline was executed with Nextflow (v${workflow.nextflow.version}; Di Tommaso et al. 2017) with the following command:</p>
+  <h4>Methods</h4>
+  <p>Data was processed using {{ name }} v${workflow.manifest.version} (DOI: <a href="https://doi.org/${workflow.manifest.doi}">${workflow.manifest.doi}</a>) of the nf-core collection of workflows (<a href="https://doi.org/10.1038/s41587-020-0439-x">Ewels <em>et al.</em>, 2020</a>).</p>
+  <p>The pipeline was executed with Nextflow v${workflow.nextflow.version} (<a href="https://doi.org/10.1038/nbt.3820">Di Tommaso <em>et al.</em>, 2017</a>) with the following command:</p>
   <pre><code>${workflow.commandLine}</code></pre>
-  <b>References</b>
+  <h4>References</h4>
   <ul>
-  <li>Di Tommaso, P., Chatzou, M., Floden, E. W., Barja, P. P., Palumbo, E., & Notredame, C. (2017). Nextflow enables reproducible computational workflows. Nature Biotechnology, 35(4), 316-319. https://doi.org/10.1038/nbt.3820 </li>
-  <li>Ewels, P. A., Peltzer, A., Fillinger, S., Patel, H., Alneberg, J., Wilm, A., Garcia, M. U., Di Tommaso, P., & Nahnsen, S. (2020). The nf-core framework for community-curated bioinformatics pipelines. Nature Biotechnology, 38(3), 276-278. https://doi.org/10.1038/s41587-020-0439-x </li>
+    <li>Di Tommaso, P., Chatzou, M., Floden, E. W., Barja, P. P., Palumbo, E., & Notredame, C. (2017). Nextflow enables reproducible computational workflows. Nature Biotechnology, 35(4), 316-319. https://doi.org/10.1038/nbt.3820 </li>
+    <li>Ewels, P. A., Peltzer, A., Fillinger, S., Patel, H., Alneberg, J., Wilm, A., Garcia, M. U., Di Tommaso, P., & Nahnsen, S. (2020). The nf-core framework for community-curated bioinformatics pipelines. Nature Biotechnology, 38(3), 276-278. https://doi.org/10.1038/s41587-020-0439-x </li>
   </ul>
   <blockquote>
-  <b>Notes:</b><br>
-  <ul>
-  <li>If present, make sure to replace the pipeline DOI with correct reference information.</li>
-  <li>The command above does not include parameters contained in any configs pr profiles that may have been used. Ensure the config file is also uploaded with your publication!</li>
-  <li>You should also cite all software used within this run. Check the "Software Versions" of this report to get version information.</li>
-  </ul>
+    <h5>Notes:</h5>
+    <ul>
+      <li>If present, make sure to replace the pipeline DOI with correct reference information.</li>
+      <li>The command above does not include parameters contained in any configs pr profiles that may have been used. Ensure the config file is also uploaded with your publication!</li>
+      <li>You should also cite all software used within this run. Check the "Software Versions" of this report to get version information.</li>
+    </ul>
   </blockquote>
