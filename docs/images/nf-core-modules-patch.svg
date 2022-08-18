@@ -34,14 +34,13 @@
 
     .terminal-4021262585-r1 { fill: #c5c8c6 }
 .terminal-4021262585-r2 { fill: #98a84b }
-.terminal-4021262585-r3 { fill: #626262 }
+.terminal-4021262585-r3 { fill: #9a9b99 }
 .terminal-4021262585-r4 { fill: #608ab1 }
 .terminal-4021262585-r5 { fill: #d0b344 }
 .terminal-4021262585-r6 { fill: #868887 }
 .terminal-4021262585-r7 { fill: #ff2627 }
 .terminal-4021262585-r8 { fill: #00823d }
 .terminal-4021262585-r9 { fill: #ff2c7a;font-weight: bold }
-.terminal-4021262585-r10 { fill: #9a9b99 }
     </style>
 
     <defs>
