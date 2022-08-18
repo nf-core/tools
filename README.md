@@ -279,7 +279,7 @@ The `nf-core download` command will download both the pipeline code and the [ins
 If run without any arguments, the download tool will interactively prompt you for the required information.
 Each option has a flag, if all are supplied then it will run without any user input needed.
 
-![`ORDER=01 nf-core download rnaseq -r 3.0 --outdir nf-core-rnaseq -x none -c none`](docs/images/nf-core-download.svg)
+![`nf-core download rnaseq -r 3.0 --outdir nf-core-rnaseq -x none -c none`](docs/images/nf-core-download.svg)
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
@@ -287,7 +287,7 @@ Once downloaded, you will see something like the following file structure for th
 after_command: rm -rf nf-core-rnaseq
 -->
 
-![`ORDER=02 tree -L 2 nf-core-rnaseq/`](docs/images/nf-core-download-tree.svg)
+![`tree -L 2 nf-core-rnaseq/`](docs/images/nf-core-download-tree.svg)
 
 You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
 
@@ -362,7 +362,7 @@ You can use the `licences` subcommand to fetch and print the software licence fr
 timeout: 10
 -->
 
-![`ORDER=03 nf-core licences deepvariant`](docs/images/nf-core-licences.svg)
+![`nf-core licences deepvariant`](docs/images/nf-core-licences.svg)
 
 ## Creating a new pipeline
 
@@ -377,7 +377,7 @@ See the [nf-core syncing docs](https://nf-co.re/developers/sync) for more inform
 working_dir: tmp
 -->
 
-![`ORDER=04  nf-core create -n nextbigthing -d "This pipeline analyses data from the next big omics technique" -a "Big Steve" --plain`](docs/images/nf-core-create.svg)
+![` nf-core create -n nextbigthing -d "This pipeline analyses data from the next big omics technique" -a "Big Steve" --plain`](docs/images/nf-core-create.svg)
 
 Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet) and push the commits from your computer using the example commands in the above log.
 You can then continue to edit, commit and push normally as you build your pipeline.
@@ -428,7 +428,7 @@ before_command: >
 fake_command: nf-core lint
 -->
 
-![`ORDER=05 nf-core lint`](docs/images/nf-core-lint.svg)
+![`nf-core lint`](docs/images/nf-core-lint.svg)
 
 You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
 
@@ -504,7 +504,7 @@ timeout: 10
 after_command: rm nf-params.json
 -->
 
-![`ORDER=06 nf-core schema validate rnaseq nf-params.json`](docs/images/nf-core-schema-validate.svg)
+![`nf-core schema validate rnaseq nf-params.json`](docs/images/nf-core-schema-validate.svg)
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
@@ -525,7 +525,7 @@ timeout: 10
 before_command: sed '25,30d' nextflow_schema.json > nextflow_schema.json.tmp && mv nextflow_schema.json.tmp nextflow_schema.json
 -->
 
-![`ORDER=07 nf-core schema build --no-prompts`](docs/images/nf-core-schema-build.svg)
+![`nf-core schema build --no-prompts`](docs/images/nf-core-schema-build.svg)
 
 There are four flags that you can use with this command:
 
@@ -545,7 +545,7 @@ Usage is `nf-core schema lint <schema>`, eg:
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`ORDER=08 nf-core schema lint nextflow_schema.json`](docs/images/nf-core-schema-lint.svg)
+![`nf-core schema lint nextflow_schema.json`](docs/images/nf-core-schema-lint.svg)
 
 ## Bumping a pipeline version number
 
@@ -559,7 +559,7 @@ Usage is `nf-core bump-version <new_version>`, eg:
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`ORDER=09 nf-core bump-version 1.1`](docs/images/nf-core-bump-version.svg)
+![`nf-core bump-version 1.1`](docs/images/nf-core-bump-version.svg)
 
 You can change the directory from the current working directory by specifying `--dir <pipeline_dir>`. To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
@@ -582,7 +582,7 @@ working_dir: tmp/nf-core-nextbigthing
 before_command: git add -A && git commit  -m "Bump version"
 -->
 
-![`ORDER=10 nf-core sync`](docs/images/nf-core-sync.svg)
+![`nf-core sync`](docs/images/nf-core-sync.svg)
 
 The sync command tries to check out the `TEMPLATE` branch from the `origin` remote or an existing local branch called `TEMPLATE`.
 It will fail if it cannot do either of these things.
@@ -649,7 +649,7 @@ working_dir: tmp/nf-core-nextbigthing
 head: 25
 -->
 
-![`ORDER=11 nf-core modules list remote`](docs/images/nf-core-modules-list-remote.svg)
+![`nf-core modules list remote`](docs/images/nf-core-modules-list-remote.svg)
 
 #### List installed modules
 
@@ -660,7 +660,7 @@ working_dir: tmp/nf-core-nextbigthing
 head: 25
 -->
 
-![`ORDER=12 nf-core modules list local`](docs/images/nf-core-modules-list-local.svg)
+![`nf-core modules list local`](docs/images/nf-core-modules-list-local.svg)
 
 ## Show information about a module
 
@@ -672,7 +672,7 @@ This shows documentation about the module on the command line, similar to what's
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`ORDER=13 nf-core modules info abacas`](docs/images/nf-core-modules-info.svg)
+![`nf-core modules info abacas`](docs/images/nf-core-modules-info.svg)
 
 ### Install modules in a pipeline
 
@@ -683,7 +683,7 @@ A module installed this way will be installed to the `./modules/nf-core/modules`
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`ORDER=14 nf-core modules install abacas`](docs/images/nf-core-modules-install.svg)
+![`nf-core modules install abacas`](docs/images/nf-core-modules-install.svg)
 
 You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
@@ -701,7 +701,7 @@ You can update modules installed from a remote repository in your pipeline using
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`ORDER=15 nf-core modules update --all --no-preview`](docs/images/nf-core-modules-update.svg)
+![`nf-core modules update --all --no-preview`](docs/images/nf-core-modules-update.svg)
 
 You can pass the module name as an optional argument to `nf-core modules update` instead of using the cli prompt, eg: `nf-core modules update fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
@@ -754,7 +754,7 @@ To delete a module from your pipeline, run `nf-core modules remove`.
 working_dir: tmp/nf-core-nextbigthing
 -->
 
-![`ORDER=16 nf-core modules remove abacas`](docs/images/nf-core-modules-remove.svg)
+![`nf-core modules remove abacas`](docs/images/nf-core-modules-remove.svg)
 
 You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
@@ -767,7 +767,7 @@ working_dir: tmp/nf-core-nextbigthing
 before_command:  sed "s/process_medium/process_low/g" modules/nf-core/modules/fastqc/main.nf > modules/nf-core/modules/fastqc/main.nf.patch && mv modules/nf-core/modules/fastqc/main.nf.patch modules/nf-core/modules/fastqc/main.nf
 -->
 
-![`ORDER=17 nf-core modules patch fastqc`](docs/images/nf-core-modules-patch.svg)
+![`nf-core modules patch fastqc`](docs/images/nf-core-modules-patch.svg)
 
 The generated patches work with `nf-core modules update`: when you install a new version of the module, the command tries to apply
 the patch automatically. The patch application fails if the new version of the module modifies the same lines as the patch. In this case,
@@ -796,9 +796,10 @@ The `nf-core modules create` command will prompt you with the relevant questions
 <!-- RICH-CODEX
 working_dir: tmp
 before_command: git clone https://github.com/nf-core/modules.git && cd modules
+fake_command: nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force
 -->
 
-![`ORDER=18 cd modules && nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-modules-create.svg)
+![`cd modules && nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-modules-create.svg)
 
 ### Create a module test config file
 
@@ -810,7 +811,7 @@ After you have written a minimal Nextflow script to test your module `modules/te
 working_dir: tmp/modules
 -->
 
-![`ORDER=19 nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
+![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
 
 ### Check a module against nf-core guidelines
 
@@ -823,7 +824,7 @@ working_dir: tmp/modules
 before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/main.nf.tmp && mv modules/multiqc/main.nf.tmp modules/multiqc/main.nf
 -->
 
-![`ORDER=20 nf-core modules lint multiqc`](docs/images/nf-core-modules-lint.svg)
+![`nf-core modules lint multiqc`](docs/images/nf-core-modules-lint.svg)
 
 ### Run the tests for a module using pytest
 
@@ -838,7 +839,7 @@ extra_env:
   PROFILE: 'conda'
 -->
 
-![`ORDER=21 nf-core modules test samtools/view --no-prompts`](docs/images/nf-core-modules-test.svg)
+![`nf-core modules test samtools/view --no-prompts`](docs/images/nf-core-modules-test.svg)
 
 ### Bump bioconda and container versions of modules in
 
@@ -848,7 +849,7 @@ If you are contributing to the `nf-core/modules` repository and want to bump bio
 working_dir: tmp/modules
 -->
 
-![`ORDER=22 nf-core modules bump-versions multiqc`](docs/images/nf-core-modules-bump-version.svg)
+![`nf-core modules bump-versions multiqc`](docs/images/nf-core-modules-bump-version.svg)
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module from being updated by adding the following to the `.nf-core.yml` file:
 
@@ -873,7 +874,7 @@ working_dir: tmp/modules
 after_command: cd ../../ && rm -rf tmp
 -->
 
-![`ORDER=23 nf-core modules mulled pysam==0.16.0.1 biopython==1.78`](docs/images/nf-core-modules-mulled.svg)
+![`nf-core modules mulled pysam==0.16.0.1 biopython==1.78`](docs/images/nf-core-modules-mulled.svg)
 
 ## Citation
 
