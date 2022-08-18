@@ -378,11 +378,11 @@ class ModulesJson:
                 log.warning(f"modules.json entry {repo_entry} does not have a git_url, base_path or modules entry")
                 return False
             elif (
-                type(repo_entry["git_url"]) != str
+                not isinstance(repo_entry["git_url"], str)
                 or repo_entry["git_url"] == ""
-                or type(repo_entry["base_path"]) != str
+                or not isinstance(repo_entry["base_path"], str)
                 or repo_entry["base_path"] == ""
-                or type(repo_entry["modules"]) != dict
+                or not isinstance(repo_entry["modules"], dict)
                 or repo_entry["modules"] == {}
             ):
                 log.warning(
@@ -447,7 +447,7 @@ class ModulesJson:
             self.load()
             if not self.has_git_url_and_modules():
                 raise UserWarning
-        except (UserWarning):
+        except UserWarning:
             log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
             self.create()
 
