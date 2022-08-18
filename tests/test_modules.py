@@ -142,8 +142,11 @@ class TestModules(unittest.TestCase):
         test_mod_json_up_to_date_module_removed,
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,
-        test_mod_json_with_missing_base_path_fail,
+        test_mod_json_with_missing_base_path_entry,
+        test_mod_json_with_empty_base_path_value,
+        test_mod_json_with_missing_modules_entry,
     )
+
     from .modules.patch import (
         test_create_patch_change,
         test_create_patch_no_change,

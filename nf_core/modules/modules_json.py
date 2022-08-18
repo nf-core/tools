@@ -366,22 +366,29 @@ class ModulesJson:
 
         return untracked_dirs, missing_installation
 
-    def has_correct_format(self):
+    def has_git_url_and_modules(self):
         """
-        Check that that all repo entries in the modules.json
-        have a git url and a base_path
-
+        Check that all repo entries in the modules.json
+        has a git url and a base_path with non-empty string values and a modules dict entry
         Returns:
             (bool): True if they are found for all repos, False otherwise
         """
         for repo_entry in self.modules_json.get("repos", {}).values():
-            if "git_url" not in repo_entry or "base_path" not in repo_entry:
-                raise KeyError
-            for repo_name, modules in repo_entry.get("modules", {}).items():
-                if "git_sha" not in modules or "branch" not in modules:
-                    self.determine_module_branches_and_shas(
-                        repo_name, repo_entry["git_url"], repo_entry["base_path"], [repo_name]
-                    )
+            if "git_url" not in repo_entry or "base_path" not in repo_entry or "modules" not in repo_entry:
+                log.warning(f"modules.json entry {repo_entry} does not have a git_url, base_path or modules entry")
+                return False
+            elif (
+                type(repo_entry["git_url"]) != str
+                or repo_entry["git_url"] == ""
+                or type(repo_entry["base_path"]) != str
+                or repo_entry["base_path"] == ""
+                or type(repo_entry["modules"]) != dict
+                or repo_entry["modules"] == {}
+            ):
+                log.warning(
+                    f"modules.json entry {repo_entry} has non-string or empty entries for git_url or base_path or modules"
+                )
+                return False
         return True
 
     def reinstall_repo(self, repo_name, remote_url, base_path, module_entries):
@@ -438,8 +445,9 @@ class ModulesJson:
         """
         try:
             self.load()
-            self.has_correct_format()
-        except (UserWarning, KeyError):
+            if not self.has_git_url_and_modules():
+                raise UserWarning
+        except (UserWarning):
             log.info("The 'modules.json' file is not up to date. Recreating the 'module.json' file.")
             self.create()
 

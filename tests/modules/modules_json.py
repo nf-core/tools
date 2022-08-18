@@ -179,12 +179,42 @@ def test_mod_json_dump(self):
     assert mod_json == mod_json_new
 
 
-def test_mod_json_with_missing_base_path_fail(self):
+def test_mod_json_with_missing_base_path_entry(self):
     # Load module.json and remove the base_path entry
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json_orig = mod_json_obj.get_modules_json()
     mod_json = copy.deepcopy(mod_json_orig)
     mod_json["repos"]["nf-core/modules"].pop("base_path")
+    # save the altered module.json and load it again to check if it will fix itself
+    mod_json_obj.modules_json = mod_json
+    mod_json_obj.dump()
+    mod_json_obj_new = ModulesJson(self.pipeline_dir)
+    mod_json_obj_new.check_up_to_date()
+    mod_json_new = mod_json_obj_new.get_modules_json()
+    assert mod_json_orig == mod_json_new
+
+
+def test_mod_json_with_empty_base_path_value(self):
+    # Load module.json and remove the base_path entry
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_orig = mod_json_obj.get_modules_json()
+    mod_json = copy.deepcopy(mod_json_orig)
+    mod_json["repos"]["nf-core/modules"]["base_path"] = ""
+    # save the altered module.json and load it again to check if it will fix itself
+    mod_json_obj.modules_json = mod_json
+    mod_json_obj.dump()
+    mod_json_obj_new = ModulesJson(self.pipeline_dir)
+    mod_json_obj_new.check_up_to_date()
+    mod_json_new = mod_json_obj_new.get_modules_json()
+    assert mod_json_orig == mod_json_new
+
+
+def test_mod_json_with_missing_modules_entry(self):
+    # Load module.json and remove the base_path entry
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_orig = mod_json_obj.get_modules_json()
+    mod_json = copy.deepcopy(mod_json_orig)
+    mod_json["repos"]["nf-core/modules"].pop("modules")
     # save the altered module.json and load it again to check if it will fix itself
     mod_json_obj.modules_json = mod_json
     mod_json_obj.dump()
