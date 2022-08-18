@@ -30,3 +30,4 @@ jobs:
             which nf-core &&
             nextflow -version &&
             nf-core --version
+            PY_COLORS=true
