@@ -4,6 +4,7 @@ import json
 import logging
 import os
 import shutil
+import tempfile
 from pathlib import Path
 
 import git
@@ -13,6 +14,8 @@ from git.exc import GitCommandError
 import nf_core.modules.module_utils
 import nf_core.modules.modules_repo
 import nf_core.utils
+
+from .modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
@@ -230,7 +233,13 @@ class ModulesJson:
             tried_branches = {default_modules_repo.branch}
             found_sha = False
             while True:
-                correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
+                # If the module is patched
+                patch_file = module_path / f"{module}.diff"
+                if patch_file.is_file():
+                    temp_module_dir = self.try_apply_patch_reverse(module, repo_name, patch_file, module_path)
+                    correct_commit_sha = self.find_correct_commit_sha(module, temp_module_dir, modules_repo)
+                else:
+                    correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
                 if correct_commit_sha is None:
                     log.info(f"Was unable to find matching module files in the {modules_repo.branch} branch.")
                     choices = [{"name": "No", "value": None}] + [
@@ -624,6 +633,42 @@ class ModulesJson:
             self.load()
         path = self.modules_json["repos"].get(repo_name, {}).get("modules").get(module_name, {}).get("patch")
         return Path(path) if path is not None else None
+
+    def try_apply_patch_reverse(self, module, repo_name, patch_relpath, module_dir):
+        """
+        Try reverse applying a patch file to the modified module files
+
+
+        Args:
+            module (str): The name of the module
+            repo_name (str): The name of the repository where the module resides
+            patch_relpath (Path | str): The path to patch file in the pipeline
+            module_dir (Path | str): The module directory in the pipeline
+
+        Returns:
+            (bool): Whether the patch application was successful
+        """
+        module_fullname = str(Path(repo_name, module))
+
+        patch_path = Path(self.dir / patch_relpath)
+        # module_relpath = Path("modules", repo_name, module)
+
+        try:
+            new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, module_dir, reverse=True)
+        except LookupError as e:
+            raise LookupError(f"Failed to apply patch in reverse for module '{module_fullname}' due to: {e}")
+
+        # Write the patched files to a temporary directory
+        log.debug("Writing patched files to tmpdir")
+        temp_dir = Path(tempfile.mkdtemp())
+        temp_module_dir = temp_dir / module
+        temp_module_dir.mkdir(parents=True, exist_ok=True)
+        for file, new_content in new_files.items():
+            fn = temp_module_dir / file
+            with open(fn, "w") as fh:
+                fh.writelines(new_content)
+
+        return temp_module_dir
 
     def repo_present(self, repo_name):
         """
