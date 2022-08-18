@@ -337,7 +337,9 @@ class PipelineCreate(object):
         # The schema is not guaranteed to follow Prettier standards
         # so we run prettier on the schema file
         try:
-            subprocess.run(["prettier", "--write", schema_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(
+                ["prettier", "--write", schema_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=False
+            )
         except FileNotFoundError:
             log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
 
@@ -361,7 +363,10 @@ class PipelineCreate(object):
         # so we run prettier on the file
         try:
             subprocess.run(
-                ["prettier", "--write", bug_report_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+                ["prettier", "--write", bug_report_path],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                check=False,
             )
         except FileNotFoundError:
             log.warning("Prettier not found. Please install it and run it on the pipeline to fix linting issues.")
@@ -430,6 +435,7 @@ class PipelineCreate(object):
                 ["prettier", "--write", os.path.join(self.outdir, ".nf-core.yml")],
                 stdout=subprocess.DEVNULL,
                 stderr=subprocess.DEVNULL,
+                check=False,
             )
         except FileNotFoundError:
             log.warning(

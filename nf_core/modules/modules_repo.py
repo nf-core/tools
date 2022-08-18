@@ -6,6 +6,7 @@ from pathlib import Path
 
 import git
 import rich.progress
+from git.exc import GitCommandError
 
 import nf_core.modules.module_utils
 import nf_core.modules.modules_json
@@ -69,7 +70,7 @@ class ModulesRepo(object):
     pull a remote several times in one command.
     """
 
-    local_repo_statuses = dict()
+    local_repo_statuses = {}
     no_pull_global = False
 
     @staticmethod
@@ -173,7 +174,7 @@ class ModulesRepo(object):
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
-            except git.exc.GitCommandError:
+            except GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
             # Verify that the requested branch exists by checking it out
             self.setup_branch(branch)
@@ -243,7 +244,7 @@ class ModulesRepo(object):
         """
         try:
             self.checkout_branch()
-        except git.exc.GitCommandError:
+        except GitCommandError:
             raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
 
     def verify_branch(self):
@@ -344,7 +345,7 @@ class ModulesRepo(object):
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
                 continue
         self.checkout_branch()

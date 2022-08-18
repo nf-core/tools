@@ -52,7 +52,7 @@ def _print_nf_config(rgc):
             try:
                 pth = rgc.seek(genome, asset)
             # Catch general exception instead of refgencof exception --> no refgenconf import needed
-            except Exception as e:
+            except Exception:
                 log.warning(f"{genome}/{asset} is incomplete, ignoring...")
             else:
                 genomes_str += f'      {asset.ljust(20, " ")} = "{pth}"\n'
@@ -149,7 +149,7 @@ def update_config(rgc):
         with open(refgenie_genomes_config_file, "w") as fh:
             fh.write(refgenie_genomes)
         log.info(f"Updated nf-core genomes config: {refgenie_genomes_config_file}")
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         log.warning(f"Could not write to {refgenie_genomes_config_file}")
         return False
 

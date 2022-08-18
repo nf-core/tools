@@ -1,5 +1,4 @@
 import logging
-import os
 from pathlib import Path
 
 import questionary
@@ -13,12 +12,6 @@ log = logging.getLogger(__name__)
 
 
 class ModuleRemove(ModuleCommand):
-    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False, base_path=None):
-        """
-        Initialise the ModulesRemove object and run remove command
-        """
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
-
     def remove(self, module):
         """
         Remove an already installed module

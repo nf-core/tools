@@ -168,7 +168,7 @@ def patch_reversible(module_lint_object, module, patch_path):
             Path(module.module_dir).relative_to(module.base_dir),
             reverse=True,
         )
-    except LookupError as e:
+    except LookupError:
         # Patch failed. Save the patch file by moving to the install dir
         module.failed.append((("patch_reversible", "Patch file is outdated or edited", patch_path)))
         return False

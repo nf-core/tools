@@ -374,7 +374,7 @@ class Launch(object):
         for param_id, param_obj in self.schema_obj.schema.get("properties", {}).items():
             questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 
-        for d_key, definition in self.schema_obj.schema.get("definitions", {}).items():
+        for _, definition in self.schema_obj.schema.get("definitions", {}).items():
             for param_id, param_obj in definition.get("properties", {}).items():
                 questionary_objects[param_id] = self.single_param_to_questionary(param_id, param_obj, print_help=False)
 

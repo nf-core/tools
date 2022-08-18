@@ -6,6 +6,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from pathlib import Path
 from unittest import mock
 
 import pytest
@@ -16,6 +17,8 @@ import nf_core.list
 import nf_core.utils
 
 from .utils import with_temporary_folder
+
+TEST_DATA_DIR = Path(__file__).parent / "data"
 
 
 def test_strip_ansi_codes():
@@ -192,3 +195,16 @@ class TestUtils(unittest.TestCase):
         wfs.get_remote_workflows()
         with pytest.raises(AssertionError):
             nf_core.utils.get_repo_releases_branches("made-up/pipeline", wfs)
+
+
+def test_validate_file_md5():
+    # MD5(test) = d8e8fca2dc0f896fd7cb4cb0031ba249
+    test_file = TEST_DATA_DIR / "test.txt"
+    test_file_md5 = "d8e8fca2dc0f896fd7cb4cb0031ba249"
+    different_md5 = "9e7b964750cf0bb08ee960fce356b6d6"
+    non_hex_string = "s"
+    assert nf_core.utils.validate_file_md5(test_file, test_file_md5)
+    with pytest.raises(IOError):
+        nf_core.utils.validate_file_md5(test_file, different_md5)
+    with pytest.raises(ValueError):
+        nf_core.utils.validate_file_md5(test_file, non_hex_string)
