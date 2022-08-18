@@ -130,9 +130,7 @@ class ModuleUpdate(ModuleCommand):
         # and do the requested action on them
         exit_value = True
         all_patches_successful = True
-        print(modules_info)
         for modules_repo, module, sha, patch_relpath in modules_info:
-            print(sha)
             module_fullname = str(Path(modules_repo.fullname, module))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
