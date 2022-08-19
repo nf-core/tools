@@ -68,7 +68,7 @@ def modify_main_nf(path):
     """Modify a file to test patch creation"""
     with open(path, "r") as fh:
         lines = fh.readlines()
-    # Modify $meat.id by $meta.single_end
+    # Modify $meta.id to $meta.single_end
     lines[1] = '    tag "$meta.single_end"\n'
     with open(path, "w") as fh:
         fh.writelines(lines)
