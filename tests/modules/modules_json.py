@@ -87,9 +87,6 @@ def test_mod_json_create_with_patch(self):
     patch_obj.patch("fastqc")
 
     patch_fn = "fastqc.diff"
-    # TO REMOVE
-    # Check that a patch file with the correct name has been created
-    assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Remove the existing modules.json file
     os.remove(mod_json_path)
