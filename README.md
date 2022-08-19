@@ -580,9 +580,10 @@ Usage is `nf-core sync`, eg:
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
 before_command: git commit -am "Bump version"
+fake_command: nf-core sync
 -->
 
-![`nf-core sync`](docs/images/nf-core-sync.svg)
+![`git commit -am "Bump version" && nf-core sync`](docs/images/nf-core-sync.svg)
 
 The sync command tries to check out the `TEMPLATE` branch from the `origin` remote or an existing local branch called `TEMPLATE`.
 It will fail if it cannot do either of these things.
