@@ -638,7 +638,6 @@ class ModulesJson:
         """
         Try reverse applying a patch file to the modified module files
 
-
         Args:
             module (str): The name of the module
             repo_name (str): The name of the repository where the module resides
@@ -646,12 +645,13 @@ class ModulesJson:
             module_dir (Path | str): The module directory in the pipeline
 
         Returns:
-            (bool): Whether the patch application was successful
+            (Path | str): The path of the folder where the module patched files are
+
+        Raises:
+            LookupError: If patch was not applied
         """
         module_fullname = str(Path(repo_name, module))
-
         patch_path = Path(self.dir / patch_relpath)
-        # module_relpath = Path("modules", repo_name, module)
 
         try:
             new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, module_dir, reverse=True)
