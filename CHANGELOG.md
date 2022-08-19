@@ -74,6 +74,7 @@
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
 - Fix broken link in `nf-core modules info`([#1745](https://github.com/nf-core/tools/pull/1745))
 - Fix unbound variable issues and minor refactoring [#1742](https://github.com/nf-core/tools/pull/1742/)
+- Add support for patch when creating `modules.json` file ([#1752](https://github.com/nf-core/tools/pull/1752))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

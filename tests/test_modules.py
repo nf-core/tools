@@ -132,6 +132,7 @@ class TestModules(unittest.TestCase):
     from .modules.modules_json import (
         test_get_modules_json,
         test_mod_json_create,
+        test_mod_json_create_with_patch,
         test_mod_json_dump,
         test_mod_json_get_git_url,
         test_mod_json_get_module_version,
