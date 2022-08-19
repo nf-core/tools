@@ -579,9 +579,10 @@ Usage is `nf-core sync`, eg:
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+before_command: git config --global user.email "nf-core_bot@example.com" && git config --global user.name "nf-core_bot" &&  git commit -am "Bump version"
 -->
 
-![`git config --global user.email "nf-core_bot@example.com" &&   git config --global user.name "nf-core_bot" &&  git commit -am "Bump version" && nf-core sync`](docs/images/nf-core-sync.svg)
+![`nf-core sync`](docs/images/nf-core-sync.svg)
 
 The sync command tries to check out the `TEMPLATE` branch from the `origin` remote or an existing local branch called `TEMPLATE`.
 It will fail if it cannot do either of these things.
