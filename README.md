@@ -579,7 +579,7 @@ Usage is `nf-core sync`, eg:
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
-before_command: git add -A && git commit  -m "Bump version"
+before_command: git commit -am "Bump version"
 -->
 
 ![`nf-core sync`](docs/images/nf-core-sync.svg)
