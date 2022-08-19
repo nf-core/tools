@@ -86,8 +86,6 @@ def test_mod_json_create_with_patch(self):
     patch_obj = ModulePatch(self.pipeline_dir)
     patch_obj.patch("fastqc")
 
-    patch_fn = "fastqc.diff"
-
     # Remove the existing modules.json file
     os.remove(mod_json_path)
 
