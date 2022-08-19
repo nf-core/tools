@@ -16,8 +16,8 @@ log = logging.getLogger(__name__)
 
 
 class ModulePatch(ModuleCommand):
-    def __init__(self, dir, remote_url=None, branch=None, no_pull=False, base_path=None):
-        super().__init__(dir, remote_url, branch, no_pull, base_path)
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
+        super().__init__(dir, remote_url, branch, no_pull)
 
         self.modules_json = ModulesJson(dir)
 
