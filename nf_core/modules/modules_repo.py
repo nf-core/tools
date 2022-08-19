@@ -249,7 +249,9 @@ class ModulesRepo(object):
         if "modules" not in dir_names:
             err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain the 'modules/' directory"
             if "software" in dir_names:
-                err_str += ".\nAs of nf-core/tools version 2.0, the 'software/' directory should be renamed to 'modules/'"
+                err_str += (
+                    ".\nAs of nf-core/tools version 2.0, the 'software/' directory should be renamed to 'modules/'"
+                )
             raise LookupError(err_str)
 
     def checkout_branch(self):
