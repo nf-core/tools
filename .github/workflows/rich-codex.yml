@@ -31,3 +31,4 @@ jobs:
             nextflow -version &&
             nf-core --version
             PY_COLORS=true
+            TERMINAL_MIN_WIDTH=100
