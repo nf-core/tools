@@ -421,7 +421,6 @@ class ModuleUpdate(ModuleCommand):
                 repo_name,
                 self.modules_json.get_git_url(repo_name),
                 branch,
-                self.modules_json.get_base_path(repo_name),
                 mods_shas,
             )
             for (repo_name, branch), mods_shas in repos_and_branches.items()
