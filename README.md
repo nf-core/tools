@@ -424,7 +424,7 @@ min_pct_diff: 15  # Progress bar changes each time - would be good to figure out
 timeout: 60
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
-  echo "lint: { pipeline_todos: false }" >> nf-core-nextbigthing/.nf-core.yml
+  echo "lint: { pipeline_todos: false }" >> .nf-core.yml
 fake_command: nf-core lint
 -->
 
