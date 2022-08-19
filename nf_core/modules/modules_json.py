@@ -63,7 +63,7 @@ class ModulesJson:
                 ],
                 repo_remote,
             )
-            for repo_name, (repo_remote) in repos.items()
+            for repo_name, repo_remote in repos.items()
         ]
 
         for repo_name, module_names, remote_url in sorted(repo_module_names):
@@ -97,9 +97,9 @@ class ModulesJson:
 
         # Check if there are any nf-core modules installed
         if (modules_dir / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME).exists():
-            repos[nf_core.modules.modules_repo.NF_CORE_MODULES_NAME] = (
-                nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE,
-            )
+            repos[
+                nf_core.modules.modules_repo.NF_CORE_MODULES_NAME
+            ] = nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE
         # The function might rename some directories, keep track of them
         renamed_dirs = {}
         # Check if there are any untracked repositories
