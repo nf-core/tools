@@ -279,14 +279,16 @@ The `nf-core download` command will download both the pipeline code and the [ins
 If run without any arguments, the download tool will interactively prompt you for the required information.
 Each option has a flag, if all are supplied then it will run without any user input needed.
 
-![`nf-core download rnaseq -r 3.0 --outdir nf-core-rnaseq -x none -c none`](docs/images/nf-core-download.svg)
+<!-- RICH-CODEX
+working_dir: tmp
+-->
+![`nf-core download rnaseq -r 3.8 --outdir nf-core-rnaseq -x none -c none`](docs/images/nf-core-download.svg)
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
 <!-- RICH-CODEX
-after_command: rm -rf nf-core-rnaseq
+working_dir: tmp
 -->
-
 ![`tree -L 2 nf-core-rnaseq/`](docs/images/nf-core-download-tree.svg)
 
 You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
@@ -499,12 +501,13 @@ This command validates such a file against the pipeline schema.
 Usage is `nf-core schema validate <pipeline> <parameter file>`, eg:
 
 <!-- RICH-CODEX
-before_command: 'nextflow pull nf-core/rnaseq && echo "{input: myfiles.csv, outdir: results}" > nf-params.json'
+working_dir: tmp/nf-core-rnaseq
+before_command: 'echo "{input: myfiles.csv, outdir: results}" > nf-params.json'
 timeout: 10
 after_command: rm nf-params.json
 -->
 
-![`nextflow pull nf-core/rnaseq && nf-core schema validate rnaseq nf-params.json`](docs/images/nf-core-schema-validate.svg)
+![`nf-core schema validate . nf-params.json`](docs/images/nf-core-schema-validate.svg)
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
