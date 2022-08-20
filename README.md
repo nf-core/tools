@@ -499,7 +499,7 @@ This command validates such a file against the pipeline schema.
 Usage is `nf-core schema validate <pipeline> <parameter file>`, eg:
 
 <!-- RICH-CODEX
-before_command: 'echo "{input: myfiles.csv, outdir: results}" > nf-params.json'
+before_command: 'nextflow pull nf-core/rnaseq && echo "{input: myfiles.csv, outdir: results}" > nf-params.json'
 timeout: 10
 after_command: rm nf-params.json
 -->

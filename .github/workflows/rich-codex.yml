@@ -24,12 +24,11 @@ jobs:
         uses: ewels/rich-codex@v1
         with:
           commit_changes: "true"
-          log_verbose: "true"
           clean_img_paths: docs/images/*.svg
+          terminal_width: 100
           before_command: >
             which nextflow &&
             which nf-core &&
             nextflow -version &&
             nf-core --version
             PY_COLORS=true
-            TERMINAL_MIN_WIDTH=100
