@@ -5,7 +5,6 @@ from pathlib import Path
 
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (
-    NF_CORE_MODULES_BASE_PATH,
     NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
@@ -199,13 +198,6 @@ def test_mod_json_get_git_url(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     assert mod_json_obj.get_git_url(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_REMOTE
     assert mod_json_obj.get_git_url("INVALID_REPO") is None
-
-
-def test_mod_json_get_base_path(self):
-    """Tests the get_base_path function"""
-    mod_json_obj = ModulesJson(self.pipeline_dir)
-    assert mod_json_obj.get_base_path(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_BASE_PATH
-    assert mod_json_obj.get_base_path("INVALID_REPO") is None
 
 
 def test_mod_json_dump(self):
