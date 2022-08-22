@@ -32,7 +32,7 @@
 - Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
 - Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
 - Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
-- Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
+- Updated the nf-core package requirements ([#1620](https://github.com/nf-core/tools/pull/1620), [#1757](https://github.com/nf-core/tools/pull/1757), [#1756](https://github.com/nf-core/tools/pull/1756))
 - Remove dependency of the mock package and use unittest.mock instead ([#1696](https://github.com/nf-core/tools/pull/1696))
 - Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
 - Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
