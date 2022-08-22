@@ -17,7 +17,6 @@ log = logging.getLogger(__name__)
 # Constants for the nf-core/modules repo used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core/modules"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_BASE_PATH = "modules"
 NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
@@ -112,7 +111,7 @@ class ModulesRepo(object):
                     branches[sha] = branch_name
             return set(branches.values())
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, base_path=None, no_progress=False):
+    def __init__(self, remote_url=None, branch=None, no_pull=False, no_progress=False):
         """
         Initializes the object and clones the git repository if it is not already present
         """
@@ -128,11 +127,6 @@ class ModulesRepo(object):
 
         self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
 
-        if base_path is None:
-            base_path = NF_CORE_MODULES_BASE_PATH
-
-        self.base_path = base_path
-
         self.setup_local_repo(remote_url, branch, no_progress)
 
         # Verify that the repo seems to be correctly configured
@@ -140,7 +134,7 @@ class ModulesRepo(object):
             self.verify_branch()
 
         # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, self.base_path)
+        self.modules_dir = os.path.join(self.local_repo_dir, "modules")
 
         self.avail_module_names = None
 
@@ -252,8 +246,12 @@ class ModulesRepo(object):
         Verifies the active branch conforms do the correct directory structure
         """
         dir_names = os.listdir(self.local_repo_dir)
-        if self.base_path not in dir_names:
-            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain the '{self.base_path}' directory"
+        if "modules" not in dir_names:
+            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain the 'modules/' directory"
+            if "software" in dir_names:
+                err_str += (
+                    ".\nAs of nf-core/tools version 2.0, the 'software/' directory should be renamed to 'modules/'"
+                )
             raise LookupError(err_str)
 
     def checkout_branch(self):
@@ -368,7 +366,7 @@ class ModulesRepo(object):
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         self.checkout_branch()
-        module_path = os.path.join(self.base_path, module_name)
+        module_path = os.path.join("modules", module_name)
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits

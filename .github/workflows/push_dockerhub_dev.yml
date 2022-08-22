@@ -5,6 +5,11 @@ on:
   push:
     branches: [dev]
 
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   push_dockerhub:
     name: Push new Docker image to Docker Hub (dev)

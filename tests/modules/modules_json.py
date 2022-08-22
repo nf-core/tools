@@ -2,15 +2,16 @@ import copy
 import json
 import os
 import shutil
+from pathlib import Path
 
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (
-    NF_CORE_MODULES_BASE_PATH,
     NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
     ModulesRepo,
 )
+from nf_core.modules.patch import ModulePatch
 
 
 def test_get_modules_json(self):
@@ -40,7 +41,7 @@ def test_mod_json_update(self):
 
 
 def test_mod_json_create(self):
-    """Test creating a modules.json file from scratch""" ""
+    """Test creating a modules.json file from scratch"""
     mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
     # Remove the existing modules.json file
     os.remove(mod_json_path)
@@ -61,6 +62,52 @@ def test_mod_json_create(self):
         assert mod in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
         assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
         assert "branch" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
+
+
+def modify_main_nf(path):
+    """Modify a file to test patch creation"""
+    with open(path, "r") as fh:
+        lines = fh.readlines()
+    # Modify $meta.id to $meta.single_end
+    lines[1] = '    tag "$meta.single_end"\n'
+    with open(path, "w") as fh:
+        fh.writelines(lines)
+
+
+def test_mod_json_create_with_patch(self):
+    """Test creating a modules.json file from scratch when there are patched modules"""
+    mod_json_path = Path(self.pipeline_dir, "modules.json")
+
+    # Modify the module
+    module_path = Path(self.pipeline_dir, "modules", "nf-core", "modules", "fastqc")
+    modify_main_nf(module_path / "main.nf")
+
+    # Try creating a patch file
+    patch_obj = ModulePatch(self.pipeline_dir)
+    patch_obj.patch("fastqc")
+
+    # Remove the existing modules.json file
+    os.remove(mod_json_path)
+
+    # Create the new modules.json file
+    ModulesJson(self.pipeline_dir).create()
+
+    # Check that the file exists
+    assert mod_json_path.is_file()
+
+    # Get the contents of the file
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+
+    # Check that fastqc is in the file
+    assert "fastqc" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
+    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
+    assert "branch" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
+
+    # Check that fastqc/main.nf maintains the changes
+    with open(module_path / "main.nf", "r") as fh:
+        lines = fh.readlines()
+    assert lines[1] == '    tag "$meta.single_end"\n'
 
 
 def test_mod_json_up_to_date(self):
@@ -154,13 +201,6 @@ def test_mod_json_get_git_url(self):
     assert mod_json_obj.get_git_url("INVALID_REPO") is None
 
 
-def test_mod_json_get_base_path(self):
-    """Tests the get_base_path function"""
-    mod_json_obj = ModulesJson(self.pipeline_dir)
-    assert mod_json_obj.get_base_path(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_BASE_PATH
-    assert mod_json_obj.get_base_path("INVALID_REPO") is None
-
-
 def test_mod_json_dump(self):
     """Tests the dump function"""
     mod_json_obj = ModulesJson(self.pipeline_dir)
@@ -179,27 +219,12 @@ def test_mod_json_dump(self):
     assert mod_json == mod_json_new
 
 
-def test_mod_json_with_missing_base_path_entry(self):
-    # Load module.json and remove the base_path entry
+def test_mod_json_with_empty_modules_value(self):
+    # Load module.json and remove the modules entry
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json_orig = mod_json_obj.get_modules_json()
     mod_json = copy.deepcopy(mod_json_orig)
-    mod_json["repos"]["nf-core/modules"].pop("base_path")
-    # save the altered module.json and load it again to check if it will fix itself
-    mod_json_obj.modules_json = mod_json
-    mod_json_obj.dump()
-    mod_json_obj_new = ModulesJson(self.pipeline_dir)
-    mod_json_obj_new.check_up_to_date()
-    mod_json_new = mod_json_obj_new.get_modules_json()
-    assert mod_json_orig == mod_json_new
-
-
-def test_mod_json_with_empty_base_path_value(self):
-    # Load module.json and remove the base_path entry
-    mod_json_obj = ModulesJson(self.pipeline_dir)
-    mod_json_orig = mod_json_obj.get_modules_json()
-    mod_json = copy.deepcopy(mod_json_orig)
-    mod_json["repos"]["nf-core/modules"]["base_path"] = ""
+    mod_json["repos"]["nf-core/modules"]["modules"] = ""
     # save the altered module.json and load it again to check if it will fix itself
     mod_json_obj.modules_json = mod_json
     mod_json_obj.dump()
@@ -210,7 +235,7 @@ def test_mod_json_with_empty_base_path_value(self):
 
 
 def test_mod_json_with_missing_modules_entry(self):
-    # Load module.json and remove the base_path entry
+    # Load module.json and remove the modules entry
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json_orig = mod_json_obj.get_modules_json()
     mod_json = copy.deepcopy(mod_json_orig)

@@ -132,8 +132,8 @@ class TestModules(unittest.TestCase):
     from .modules.modules_json import (
         test_get_modules_json,
         test_mod_json_create,
+        test_mod_json_create_with_patch,
         test_mod_json_dump,
-        test_mod_json_get_base_path,
         test_mod_json_get_git_url,
         test_mod_json_get_module_version,
         test_mod_json_module_present,
@@ -142,8 +142,8 @@ class TestModules(unittest.TestCase):
         test_mod_json_up_to_date_module_removed,
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,
-        test_mod_json_with_empty_base_path_value,
-        test_mod_json_with_missing_base_path_entry,
+        test_mod_json_with_empty_modules_value,
+        test_mod_json_with_missing_modules_entry,
         test_mod_json_with_missing_modules_entry,
     )
     from .modules.patch import (

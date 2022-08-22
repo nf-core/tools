@@ -64,7 +64,7 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir, fail_warned=False, remote_url=None, branch=None, no_pull=False, base_path=None):
+    def __init__(self, dir, fail_warned=False, remote_url=None, branch=None, no_pull=False):
         self.dir = dir
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -75,7 +75,7 @@ class ModuleLint(ModuleCommand):
         self.passed = []
         self.warned = []
         self.failed = []
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
         self.lint_tests = self.get_all_lint_tests(self.repo_type == "pipeline")
 
         if self.repo_type == "pipeline":
