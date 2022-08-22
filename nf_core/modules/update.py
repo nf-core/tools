@@ -31,9 +31,8 @@ class ModuleUpdate(ModuleCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
-        base_path=None,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -421,7 +420,6 @@ class ModuleUpdate(ModuleCommand):
                 repo_name,
                 self.modules_json.get_git_url(repo_name),
                 branch,
-                self.modules_json.get_base_path(repo_name),
                 mods_shas,
             )
             for (repo_name, branch), mods_shas in repos_and_branches.items()
@@ -429,9 +427,9 @@ class ModuleUpdate(ModuleCommand):
 
         # Create ModulesRepo objects
         repo_objs_mods = []
-        for repo_name, repo_url, branch, base_path, mods_shas in modules_info:
+        for repo_name, repo_url, branch, mods_shas in modules_info:
             try:
-                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path)
+                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch)
             except LookupError as e:
                 log.warning(e)
                 log.info(f"Skipping modules in '{repo_name}'")

@@ -55,8 +55,8 @@ class ModuleInfo(ModuleCommand):
         Take the parsed meta.yml and generate rich help
     """
 
-    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull, base_path):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+    def __init__(self, pipeline_dir, tool, remote_url, branch, no_pull):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.meta = None
         self.local_path = None
         self.remote_location = None

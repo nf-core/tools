@@ -56,7 +56,7 @@
 - Add prompt for module name to `nf-core modules info` ([#1644](https://github.com/nf-core/tools/issues/1644))
 - Update docs with example of custom git remote ([#1645](https://github.com/nf-core/tools/issues/1645))
 - Command `nf-core modules test` obtains module name suggestions from installed modules ([#1624](https://github.com/nf-core/tools/pull/1624))
-- Add `--base-path` flag to `nf-core modules` to specify the base path for the modules in a remote. Also refactored `modules.json` code. ([#1643](https://github.com/nf-core/tools/issues/1643))
+- Add `--base-path` flag to `nf-core modules` to specify the base path for the modules in a remote. Also refactored `modules.json` code. ([#1643](https://github.com/nf-core/tools/issues/1643)) Removed after ([#1754](https://github.com/nf-core/tools/pull/1754))
 - Rename methods in `ModulesJson` to remove explicit reference to `modules.json`
 - Fix inconsistencies in the `--save-diff` flag `nf-core modules update`. Refactor `nf-core modules update` ([#1536](https://github.com/nf-core/tools/pull/1536))
 - Fix bug in `ModulesJson.check_up_to_date` causing it to ask for the remote of local modules
