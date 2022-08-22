@@ -2,9 +2,11 @@ import filecmp
 import logging
 import os
 import shutil
+from pathlib import Path
 
 import git
 import rich.progress
+from git.exc import GitCommandError
 
 import nf_core.modules.module_utils
 import nf_core.modules.modules_json
@@ -15,7 +17,7 @@ log = logging.getLogger(__name__)
 # Constants for the nf-core/modules repo used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core/modules"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_BASE_PATH = "modules"
+NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
 
 class RemoteProgressbar(git.RemoteProgress):
@@ -67,7 +69,7 @@ class ModulesRepo(object):
     pull a remote several times in one command.
     """
 
-    local_repo_statuses = dict()
+    local_repo_statuses = {}
     no_pull_global = False
 
     @staticmethod
@@ -84,7 +86,32 @@ class ModulesRepo(object):
         """
         ModulesRepo.local_repo_statuses[repo_name] = up_to_date
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, base_path=None, no_progress=False):
+    @staticmethod
+    def get_remote_branches(remote_url):
+        """
+        Get all branches from a remote repository
+
+        Args:
+            remote_url (str): The git url to the remote repository
+
+        Returns:
+            (set[str]): All branches found in the remote
+        """
+        try:
+            unparsed_branches = git.Git().ls_remote(remote_url)
+        except git.GitCommandError:
+            raise LookupError(f"Was unable to fetch branches from '{remote_url}'")
+        else:
+            branches = {}
+            for branch_info in unparsed_branches.split("\n"):
+                sha, name = branch_info.split("\t")
+                if name != "HEAD":
+                    # The remote branches are shown as 'ref/head/branch'
+                    branch_name = Path(name).stem
+                    branches[sha] = branch_name
+            return set(branches.values())
+
+    def __init__(self, remote_url=None, branch=None, no_pull=False, no_progress=False):
         """
         Initializes the object and clones the git repository if it is not already present
         """
@@ -100,11 +127,6 @@ class ModulesRepo(object):
 
         self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
 
-        if base_path is None:
-            base_path = NF_CORE_MODULES_BASE_PATH
-
-        self.base_path = base_path
-
         self.setup_local_repo(remote_url, branch, no_progress)
 
         # Verify that the repo seems to be correctly configured
@@ -112,7 +134,7 @@ class ModulesRepo(object):
             self.verify_branch()
 
         # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, self.base_path)
+        self.modules_dir = os.path.join(self.local_repo_dir, "modules")
 
         self.avail_module_names = None
 
@@ -146,22 +168,19 @@ class ModulesRepo(object):
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                         )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
-            except git.exc.GitCommandError:
+            except GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
             # Verify that the requested branch exists by checking it out
             self.setup_branch(branch)
         else:
             self.repo = git.Repo(self.local_repo_dir)
 
-            # Verify that the requested branch exists by checking it out
-            self.setup_branch(branch)
-
             if ModulesRepo.no_pull_global:
                 ModulesRepo.update_local_repo_status(self.fullname, True)
-            # If the repo is already cloned, pull the latest changes from the remote
+            # If the repo is already cloned, fetch the latest changes from the remote
             if not ModulesRepo.local_repo_synced(self.fullname):
                 if no_progress:
-                    self.repo.remotes.origin.pull()
+                    self.repo.remotes.origin.fetch()
                 else:
                     pbar = rich.progress.Progress(
                         "[bold blue]{task.description}",
@@ -170,10 +189,20 @@ class ModulesRepo(object):
                         transient=True,
                     )
                     with pbar:
-                        self.repo.remotes.origin.pull(
+                        self.repo.remotes.origin.fetch(
                             progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
                         )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
+
+            # Before verifying the branch, fetch the changes
+            # Verify that the requested branch exists by checking it out
+            self.setup_branch(branch)
+
+            # Now merge the changes
+            tracking_branch = self.repo.active_branch.tracking_branch()
+            if tracking_branch is None:
+                raise LookupError(f"There is no remote tracking branch '{self.branch}' in '{self.remote_url}'")
+            self.repo.git.merge(tracking_branch.name)
 
     def setup_branch(self, branch):
         """
@@ -209,7 +238,7 @@ class ModulesRepo(object):
         """
         try:
             self.checkout_branch()
-        except git.exc.GitCommandError:
+        except GitCommandError:
             raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
 
     def verify_branch(self):
@@ -217,8 +246,12 @@ class ModulesRepo(object):
         Verifies the active branch conforms do the correct directory structure
         """
         dir_names = os.listdir(self.local_repo_dir)
-        if self.base_path not in dir_names:
-            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain the '{self.base_path}' directory"
+        if "modules" not in dir_names:
+            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain the 'modules/' directory"
+            if "software" in dir_names:
+                err_str += (
+                    ".\nAs of nf-core/tools version 2.0, the 'software/' directory should be renamed to 'modules/'"
+                )
             raise LookupError(err_str)
 
     def checkout_branch(self):
@@ -310,7 +343,7 @@ class ModulesRepo(object):
         for file in module_files:
             try:
                 files_identical[file] = filecmp.cmp(os.path.join(module_dir, file), os.path.join(base_path, file))
-            except FileNotFoundError as e:
+            except FileNotFoundError:
                 log.debug(f"Could not open file: {os.path.join(module_dir, file)}")
                 continue
         self.checkout_branch()
@@ -333,7 +366,7 @@ class ModulesRepo(object):
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         self.checkout_branch()
-        module_path = os.path.join(self.base_path, module_name)
+        module_path = os.path.join("modules", module_name)
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits

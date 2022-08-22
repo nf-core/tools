@@ -44,7 +44,7 @@ def multiqc_config(self):
     try:
         if "report_section_order" not in mqc_yml:
             raise AssertionError()
-        orders = dict()
+        orders = {}
         summary_plugin_name = f"{self.pipeline_prefix}-{self.pipeline_name}-summary"
         min_plugins = ["software_versions", summary_plugin_name]
         for plugin in min_plugins:

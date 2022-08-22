@@ -1,6 +1,3 @@
-import difflib
-import enum
-import json
 import logging
 import os
 import shutil
@@ -8,12 +5,10 @@ import tempfile
 from pathlib import Path
 
 import questionary
-from rich.console import Console
-from rich.syntax import Syntax
 
 import nf_core.modules.module_utils
 import nf_core.utils
-from nf_core.utils import plural_s, plural_y
+from nf_core.utils import plural_es, plural_s, plural_y
 
 from .modules_command import ModuleCommand
 from .modules_differ import ModulesDiffer
@@ -36,9 +31,8 @@ class ModuleUpdate(ModuleCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
-        base_path=None,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -47,21 +41,8 @@ class ModuleUpdate(ModuleCommand):
         self.save_diff_fn = save_diff_fn
         self.module = None
         self.update_config = None
-        self.modules_json = None
-
-        # Fetch the list of pipeline modules
-        self.get_pipeline_modules()
-
-    class DiffEnum(enum.Enum):
-        """Enumeration to keeping track of file diffs.
-
-        Used for the --save-diff and --preview options
-        """
-
-        UNCHANGED = enum.auto()
-        CHANGED = enum.auto()
-        CREATED = enum.auto()
-        REMOVED = enum.auto()
+        self.modules_json = ModulesJson(self.dir)
+        self.branch = branch
 
     def _parameter_checks(self):
         """Checks the compatibilty of the supplied parameters.
@@ -102,7 +83,6 @@ class ModuleUpdate(ModuleCommand):
         self._parameter_checks()
 
         # Verify that 'modules.json' is consistent with the installed modules
-        self.modules_json = ModulesJson(self.dir)
         self.modules_json.check_up_to_date()
 
         if not self.update_all and module is None:
@@ -122,7 +102,7 @@ class ModuleUpdate(ModuleCommand):
             return False
 
         # Get the list of modules to update, and their version information
-        repos_mods_shas = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
+        modules_info = self.get_all_modules_info() if self.update_all else [self.get_single_module_info(module)]
 
         # Save the current state of the modules.json
         old_modules_json = self.modules_json.get_modules_json()
@@ -148,7 +128,9 @@ class ModuleUpdate(ModuleCommand):
         # Loop through all modules to be updated
         # and do the requested action on them
         exit_value = True
-        for modules_repo, module, sha in repos_mods_shas:
+        all_patches_successful = True
+        for modules_repo, module, sha, patch_relpath in modules_info:
+            module_fullname = str(Path(modules_repo.fullname, module))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
@@ -173,9 +155,9 @@ class ModuleUpdate(ModuleCommand):
             if current_version is not None and not self.force:
                 if current_version == version:
                     if self.sha or self.prompt:
-                        log.info(f"'{modules_repo.fullname}/{module}' is already installed at {version}")
+                        log.info(f"'{module_fullname}' is already installed at {version}")
                     else:
-                        log.info(f"'{modules_repo.fullname}/{module}' is already up to date")
+                        log.info(f"'{module_fullname}' is already up to date")
                     continue
 
             # Download module files
@@ -183,36 +165,47 @@ class ModuleUpdate(ModuleCommand):
                 exit_value = False
                 continue
 
+            if patch_relpath is not None:
+                patch_successful = self.try_apply_patch(
+                    module, modules_repo.fullname, patch_relpath, module_dir, module_install_dir
+                )
+                if patch_successful:
+                    log.info(f"Module '{module_fullname}' patched successfully")
+                else:
+                    log.warning(f"Failed to patch module '{module_fullname}'. Will proceed with unpatched files.")
+                all_patches_successful &= patch_successful
+
             if dry_run:
+                if patch_relpath is not None:
+                    if patch_successful:
+                        log.info(f"Current installation is compared against patched version in remote")
+                    else:
+                        log.warning(f"Current installation is compared against unpatched version in remote")
                 # Compute the diffs for the module
                 if self.save_diff_fn:
-                    try:
-                        ModulesDiffer.write_diff_file(
-                            self.save_diff_fn,
-                            module,
-                            modules_repo.fullname,
-                            module_dir,
-                            module_install_dir,
-                            current_version,
-                            version,
-                            dsp_from_dir=module_dir,
-                            dsp_to_dir=module_dir,
-                        )
-                    except UserWarning as e:
-                        # Remove the diff file
-                        os.remove(self.save_diff_fn)
-                        created_files_msg, removed_files_msg = e.args
-                        if created_files_msg is not None:
-                            log.error(created_files_msg)
-                        if removed_files_msg is not None:
-                            log.error(removed_files_msg)
-                        raise UserWarning(
-                            "Can't use '--save-diff' option when files were created or removed. Please use either of '--no-preview' or '--preview' options."
-                        )
+                    log.info(f"Writing diff file for module '{module_fullname}' to '{self.save_diff_fn}'")
+                    ModulesDiffer.write_diff_file(
+                        self.save_diff_fn,
+                        module,
+                        modules_repo.fullname,
+                        module_dir,
+                        module_install_dir,
+                        current_version,
+                        version,
+                        dsp_from_dir=module_dir,
+                        dsp_to_dir=module_dir,
+                    )
 
                 elif self.show_diff:
                     ModulesDiffer.print_diff(
-                        module, modules_repo.fullname, module_dir, module_install_dir, current_version, version
+                        module,
+                        modules_repo.fullname,
+                        module_dir,
+                        module_install_dir,
+                        current_version,
+                        version,
+                        dsp_from_dir=module_dir,
+                        dsp_to_dir=module_dir,
                     )
 
                     # Ask the user if they want to install the module
@@ -243,6 +236,8 @@ class ModuleUpdate(ModuleCommand):
                     "can apply them by running the command :point_right:"
                     f"  [bold magenta italic]git apply {self.save_diff_fn} [/]"
                 )
+        elif not all_patches_successful:
+            log.info(f"Updates complete. Please apply failed patch{plural_es(modules_info)} manually")
         else:
             log.info("Updates complete :sparkles:")
 
@@ -267,18 +262,18 @@ class ModuleUpdate(ModuleCommand):
         """
         # Check if there are any modules installed from the repo
         repo_name = self.modules_repo.fullname
-        if repo_name not in self.module_names:
+        if repo_name not in self.modules_json.get_all_modules():
             raise LookupError(f"No modules installed from '{repo_name}'")
 
         if module is None:
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.module_names[repo_name],
+                choices=self.modules_json.get_all_modules()[repo_name],
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
         # Check if module is installed before trying to update
-        if module not in self.module_names[repo_name]:
+        if module not in self.modules_json.get_all_modules()[repo_name]:
             raise LookupError(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
 
         # Check that the supplied name is an available module
@@ -307,9 +302,25 @@ class ModuleUpdate(ModuleCommand):
                     log.info(f"Found entry in '.nf-core.yml' for module '{module}'")
                 log.info(f"Updating module to ({sha})")
 
-        return (self.modules_repo, module, sha)
+        # Check if the update branch is the same as the installation branch
+        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.fullname)
+        new_branch = self.modules_repo.branch
+        if current_branch != new_branch:
+            log.warning(
+                f"You are trying to update the '{Path(self.modules_repo.fullname, module)}' module from "
+                f"the '{new_branch}' branch. This module was installed from the '{current_branch}'"
+            )
+            switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
+            if switch:
+                # Change the branch
+                self.modules_repo.setup_branch(current_branch)
 
-    def get_all_modules_info(self):
+        # If there is a patch file, get its filename
+        patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.fullname)
+
+        return (self.modules_repo, module, sha, patch_fn)
+
+    def get_all_modules_info(self, branch=None):
         """Collects the module repository, version and sha for all modules.
 
         Information about the module version in the '.nf-core.yml' overrides the '--sha' option.
@@ -318,6 +329,12 @@ class ModuleUpdate(ModuleCommand):
             [(ModulesRepo, str, str)]: A list of tuples containing a ModulesRepo object,
             the module name, and the module version.
         """
+        if branch is not None:
+            use_branch = questionary.confirm(
+                "'--branch' was specified. Should this branch be used to update all modules?", default=False
+            )
+            if not use_branch:
+                branch = None
         skipped_repos = []
         skipped_modules = []
         overridden_repos = []
@@ -325,20 +342,26 @@ class ModuleUpdate(ModuleCommand):
         modules_info = {}
         # Loop through all the modules in the pipeline
         # and check if they have an entry in the '.nf-core.yml' file
-        for repo_name, modules in self.module_names.items():
+        for repo_name, modules in self.modules_json.get_all_modules().items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
-                modules_info[repo_name] = [(module, self.sha) for module in modules]
+                modules_info[repo_name] = [
+                    (module, self.sha, self.modules_json.get_module_branch(module, repo_name)) for module in modules
+                ]
             elif isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual modules
                 repo_config = self.update_config[repo_name]
                 modules_info[repo_name] = []
                 for module in modules:
                     if module not in repo_config or repo_config[module] is True:
-                        modules_info[repo_name].append((module, self.sha))
+                        modules_info[repo_name].append(
+                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name))
+                        )
                     elif isinstance(repo_config[module], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = repo_config[module]
-                        modules_info[repo_name].append((module, custom_sha))
+                        modules_info[repo_name].append(
+                            (module, custom_sha, self.modules_json.get_module_branch(module, repo_name))
+                        )
                         if self.sha is not None:
                             overridden_modules.append(module)
                     elif repo_config[module] is False:
@@ -349,7 +372,10 @@ class ModuleUpdate(ModuleCommand):
             elif isinstance(self.update_config[repo_name], str):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
-                modules_info[repo_name] = [(module_name, custom_sha) for module_name in modules]
+                modules_info[repo_name] = [
+                    (module_name, custom_sha, self.modules_json.get_module_branch(module_name, repo_name))
+                    for module_name in modules
+                ]
                 if self.sha is not None:
                     overridden_repos.append(repo_name)
             elif self.update_config[repo_name] is False:
@@ -378,39 +404,68 @@ class ModuleUpdate(ModuleCommand):
                 f"Overriding '--sha' flag for module{plural_s(overridden_modules)} with "
                 f"'.nf-core.yml' entry: '{overridden_str}'"
             )
+        # Loop through modules_info and create on ModulesRepo object per remote and branch
+        repos_and_branches = {}
+        for repo_name, mods in modules_info.items():
+            for mod, sha, mod_branch in mods:
+                if branch is not None:
+                    mod_branch = branch
+                if (repo_name, mod_branch) not in repos_and_branches:
+                    repos_and_branches[(repo_name, mod_branch)] = []
+                repos_and_branches[(repo_name, mod_branch)].append((mod, sha))
 
         # Get the git urls from the modules.json
-        modules_info = [
-            (self.modules_json.get_git_url(repo_name), self.modules_json.get_base_path(repo_name), mods_shas)
-            for repo_name, mods_shas in modules_info.items()
-        ]
+        modules_info = (
+            (
+                repo_name,
+                self.modules_json.get_git_url(repo_name),
+                branch,
+                mods_shas,
+            )
+            for (repo_name, branch), mods_shas in repos_and_branches.items()
+        )
 
         # Create ModulesRepo objects
-        modules_info = [
-            (ModulesRepo(remote_url=repo_url, base_path=base_path), mods_shas)
-            for repo_url, base_path, mods_shas in modules_info
-        ]
+        repo_objs_mods = []
+        for repo_name, repo_url, branch, mods_shas in modules_info:
+            try:
+                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch)
+            except LookupError as e:
+                log.warning(e)
+                log.info(f"Skipping modules in '{repo_name}'")
+            else:
+                repo_objs_mods.append((modules_repo, mods_shas))
 
-        # Flatten and return the list
-        modules_info = [(repo, mod, sha) for repo, mods_shas in modules_info for mod, sha in mods_shas]
+        # Flatten the list
+        modules_info = [(repo, mod, sha) for repo, mods_shas in repo_objs_mods for mod, sha in mods_shas]
 
-        # Verify that that all modules exist in their respective ModulesRepo,
+        # Verify that that all modules and shas exist in their respective ModulesRepo,
         # don't try to update those that don't
         i = 0
         while i < len(modules_info):
             repo, module, sha = modules_info[i]
-            if repo.module_exists(module):
-                i += 1
-            else:
+            if not repo.module_exists(module):
                 log.warning(f"Module '{module}' does not exist in '{repo.fullname}'. Skipping...")
                 modules_info.pop(i)
+            elif sha is not None and not repo.sha_exists_on_branch(sha):
+                log.warning(
+                    f"Git sha '{sha}' does not exists on the '{repo.branch}' of '{repo.fullname}'. Skipping module '{module}'"
+                )
+                modules_info.pop(i)
+            else:
+                i += 1
+
+        # Add patch filenames to the modules that have them
+        modules_info = [
+            (repo, mod, sha, self.modules_json.get_patch_fn(mod, repo.fullname)) for repo, mod, sha in modules_info
+        ]
 
         return modules_info
 
     def setup_diff_file(self):
         """Sets up the diff file.
 
-        If the save diff option was choosen interactively, the user is asked to supply a name for the diff file.
+        If the save diff option was chosen interactively, the user is asked to supply a name for the diff file.
 
         Then creates the file for saving the diff.
         """
@@ -460,3 +515,71 @@ class ModuleUpdate(ModuleCommand):
 
         log.info(f"Updating '{repo_name}/{module}'")
         log.debug(f"Updating module '{module}' to {new_version} from {repo_name}")
+
+    def try_apply_patch(self, module, repo_name, patch_relpath, module_dir, module_install_dir):
+        """
+        Try applying a patch file to the new module files
+
+
+        Args:
+            module (str): The name of the module
+            repo_name (str): The name of the repository where the module resides
+            patch_relpath (Path | str): The path to patch file in the pipeline
+            module_dir (Path | str): The module directory in the pipeline
+            module_install_dir (Path | str): The directory where the new module
+                                             file have been installed
+
+        Returns:
+            (bool): Whether the patch application was successful
+        """
+        module_fullname = str(Path(repo_name, module))
+        log.info(f"Found patch for  module '{module_fullname}'. Trying to apply it to new files")
+
+        patch_path = Path(self.dir / patch_relpath)
+        module_relpath = Path("modules", repo_name, module)
+
+        # Copy the installed files to a new temporary directory to save them for later use
+        temp_dir = Path(tempfile.mkdtemp())
+        temp_module_dir = temp_dir / module
+        shutil.copytree(module_install_dir, temp_module_dir)
+
+        try:
+            new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, temp_module_dir)
+        except LookupError:
+            # Patch failed. Save the patch file by moving to the install dir
+            shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
+            log.warning(
+                f"Failed to apply patch for module '{module_fullname}'. You will have to apply the patch manually"
+            )
+            return False
+
+        # Write the patched files to a temporary directory
+        log.debug("Writing patched files")
+        for file, new_content in new_files.items():
+            fn = temp_module_dir / file
+            with open(fn, "w") as fh:
+                fh.writelines(new_content)
+
+        # Create the new patch file
+        log.debug("Regenerating patch file")
+        ModulesDiffer.write_diff_file(
+            Path(temp_module_dir, patch_path.relative_to(module_dir)),
+            module,
+            repo_name,
+            module_install_dir,
+            temp_module_dir,
+            file_action="w",
+            for_git=False,
+            dsp_from_dir=module_relpath,
+            dsp_to_dir=module_relpath,
+        )
+
+        # Move the patched files to the install dir
+        log.debug("Overwriting installed files installed files  with patched files")
+        shutil.rmtree(module_install_dir)
+        shutil.copytree(temp_module_dir, module_install_dir)
+
+        # Add the patch file to the modules.json file
+        self.modules_json.add_patch_entry(module, repo_name, patch_relpath, write_file=True)
+
+        return True

@@ -31,9 +31,11 @@ A python package with helper tools for the nf-core community.
   - [`modules list` - List available modules](#list-modules)
     - [`modules list remote` - List remote modules](#list-remote-modules)
     - [`modules list local` - List installed modules](#list-installed-modules)
+  - [`modules info` - Show information about a module](#show-information-about-a-module)
   - [`modules install` - Install modules in a pipeline](#install-modules-in-a-pipeline)
   - [`modules update` - Update modules in a pipeline](#update-modules-in-a-pipeline)
   - [`modules remove` - Remove a module from a pipeline](#remove-a-module-from-a-pipeline)
+  - [`modules patch` - Create a patch file for a module](#create-a-patch-file-for-a-module)
   - [`modules create` - Create a module from the template](#create-a-new-module)
   - [`modules create-test-yml` - Create the `test.yml` file for a module](#create-a-module-test-config-file)
   - [`modules lint` - Check a module against nf-core guidelines](#check-a-module-against-nf-core-guidelines)
@@ -943,8 +945,6 @@ For example, if you want to install the `fastqc` module from the repository `nf-
 nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
 ```
 
-If the modules in your custom remote are stored in another directory than `modules`, you can specify the path by using the `--base-path <path>` flag. This will default to `modules`.
-
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
@@ -1175,6 +1175,51 @@ INFO     Removing star/align
 ```
 
 You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
+
+### Create a patch file for a module
+
+If you want to make a minor change to a locally installed module but still keep it up date with the remote version, you can create a patch file using `nf-core modules patch`.
+
+```console
+$ nf-core modules patch
+
+                                          ,--./,-.
+          ___     __   __   __   ___     /,-._.--~\
+    |\ | |__  __ /  ` /  \ |__) |__         }  {
+    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
+                                          `._,._,'
+
+    nf-core/tools version 2.5.dev0 - https://nf-co.re
+
+
+? Tool: bismark/align
+INFO     Changes in module 'nf-core/modules/bismark/align'
+INFO     Changes in 'bismark/align/main.nf':
+
+ --- modules/nf-core/modules/bismark/align/main.nf
+ +++ modules/nf-core/modules/bismark/align/main.nf
+ @@ -19,8 +19,7 @@
+      }
+
+      input:
+ -    tuple val(meta), path(reads)
+ -    path index
+ +    tuple val(meta), path(reads), path index
+
+      output:
+      tuple val(meta), path("*bam")       , emit: bam
+
+
+INFO     'modules/nf-core/modules/bismark/align/functions.nf' is unchanged
+INFO     'modules/nf-core/modules/bismark/align/meta.yml' is unchanged
+INFO     Patch file of 'nf-core/modules/bismark/align' written to 'modules/nf-core/modules/bismark/align/bismark-align.diff'
+```
+
+The generated patches work with `nf-core modules update`: when you install a new version of the module, the command tries to apply
+the patch automatically. The patch application fails if the new version of the module modifies the same lines as the patch. In this case,
+the patch new version is installed but the old patch file is preversed.
+
+When linting a patched module, the linting command will check the validity of the patch. When running other lint tests the patch is applied in reverse, and the original files are linted.
 
 ### Create a new module
 

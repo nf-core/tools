@@ -47,7 +47,7 @@ click.rich_click.COMMAND_GROUPS = {
     "nf-core modules": [
         {
             "name": "For pipelines",
-            "commands": ["list", "info", "install", "update", "remove"],
+            "commands": ["list", "info", "install", "update", "remove", "patch"],
         },
         {
             "name": "Developing new modules",
@@ -78,7 +78,7 @@ def run_nf_core():
         highlight=False,
     )
     try:
-        is_outdated, current_vers, remote_vers = nf_core.utils.check_if_outdated()
+        is_outdated, _, remote_vers = nf_core.utils.check_if_outdated()
         if is_outdated:
             stderr.print(
                 f"[bold bright_yellow]    There is a new version of nf-core/tools available! ({remote_vers})",
@@ -354,14 +354,8 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     default=False,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
-@click.option(
-    "--base-path",
-    type=str,
-    default=None,
-    help="Specify where the modules are stored in the remote",
-)
 @click.pass_context
-def modules(ctx, git_remote, branch, no_pull, base_path):
+def modules(ctx, git_remote, branch, no_pull):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -373,7 +367,6 @@ def modules(ctx, git_remote, branch, no_pull, base_path):
     ctx.obj["modules_repo_url"] = git_remote
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
-    ctx.obj["modules_repo_base_path"] = base_path
 
 
 # nf-core modules list subcommands
@@ -402,7 +395,6 @@ def remote(ctx, keywords, json):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
@@ -433,11 +425,10 @@ def local(ctx, keywords, json, dir):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
-        log.critical(e)
+        log.error(e)
         sys.exit(1)
 
 
@@ -470,7 +461,6 @@ def install(ctx, tool, dir, prompt, force, sha):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.install(tool)
         if not exit_status and all:
@@ -528,11 +518,41 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.update(tool)
         if not exit_status and all:
             sys.exit(1)
+    except (UserWarning, LookupError) as e:
+        log.error(e)
+        sys.exit(1)
+
+
+# nf-core modules patch
+@modules.command()
+@click.pass_context
+@click.argument("tool", type=str, required=False, metavar="<tool> or <tool/subtool>")
+@click.option(
+    "-d",
+    "--dir",
+    type=click.Path(exists=True),
+    default=".",
+    help=r"Pipeline directory. [dim]\[default: current working directory][/]",
+)
+def patch(ctx, tool, dir):
+    """
+    Create a patch file for minor changes in a module
+
+    Checks if a module has been modified locally and creates a patch file
+    describing how the module has changed from the remote version
+    """
+    try:
+        module_patch = nf_core.modules.ModulePatch(
+            dir,
+            ctx.obj["modules_repo_url"],
+            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_no_pull"],
+        )
+        module_patch.patch(tool)
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -559,7 +579,6 @@ def remove(ctx, dir, tool):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         module_remove.remove(tool)
     except (UserWarning, LookupError) as e:
@@ -663,7 +682,6 @@ def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         module_lint.lint(
             module=tool,
@@ -714,7 +732,6 @@ def info(ctx, tool, dir):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         print(module_info.get_module_info())
     except (UserWarning, LookupError) as e:
@@ -740,7 +757,6 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
@@ -851,7 +867,7 @@ def validate(pipeline, params):
     schema_obj.load_input_params(params)
     try:
         schema_obj.validate_params()
-    except AssertionError as e:
+    except AssertionError:
         sys.exit(1)
 
 
@@ -915,7 +931,7 @@ def lint(schema_path):
             schema_obj.validate_schema_title_description()
         except AssertionError as e:
             log.warning(e)
-    except AssertionError as e:
+    except AssertionError:
         sys.exit(1)
 
 

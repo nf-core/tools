@@ -17,7 +17,6 @@ from rich.table import Table
 
 import nf_core.modules.module_utils
 import nf_core.utils
-from nf_core.modules.nfcore_module import NFCoreModule
 from nf_core.utils import plural_s as _s
 from nf_core.utils import rich_force_colors
 
@@ -27,8 +26,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleVersionBumper(ModuleCommand):
-    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False, base_path=None):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+    def __init__(self, pipeline_dir, remote_url=None, branch=None, no_pull=False):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
 
         self.up_to_date = None
         self.updated = None
@@ -112,7 +111,7 @@ class ModuleVersionBumper(ModuleCommand):
 
         self._print_results()
 
-    def bump_module_version(self, module: NFCoreModule):
+    def bump_module_version(self, module):
         """
         Bump the bioconda and container version of a single NFCoreModule
 
@@ -145,7 +144,7 @@ class ModuleVersionBumper(ModuleCommand):
         if not config_version:
             try:
                 response = nf_core.utils.anaconda_package(bp)
-            except (LookupError, ValueError) as e:
+            except (LookupError, ValueError):
                 self.failed.append((f"Conda version not specified correctly: {module.main_nf}", module.module_name))
                 return False
 
@@ -227,26 +226,16 @@ class ModuleVersionBumper(ModuleCommand):
         Extract the bioconda version from a module
         """
         # Check whether file exists and load it
-        bioconda_packages = None
+        bioconda_packages = False
         try:
             with open(module.main_nf, "r") as fh:
-                lines = fh.readlines()
-        except FileNotFoundError as e:
+                for l in fh:
+                    if "bioconda::" in l:
+                        bioconda_packages = [b for b in l.split() if "bioconda::" in b]
+        except FileNotFoundError:
             log.error(f"Could not read `main.nf` of {module.module_name} module.")
-            return False
 
-        for l in lines:
-            if re.search("bioconda::", l):
-                bioconda_packages = [b for b in l.split() if "bioconda::" in b]
-            if re.search("org/singularity", l):
-                singularity_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-            if re.search("biocontainers", l):
-                docker_tag = l.split("/")[-1].replace('"', "").replace("'", "").split("--")[-1].strip()
-
-        if bioconda_packages:
-            return bioconda_packages
-        else:
-            return False
+        return bioconda_packages
 
     def _print_results(self):
         """

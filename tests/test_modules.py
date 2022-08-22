@@ -10,7 +10,7 @@ import unittest
 import nf_core.create
 import nf_core.modules
 
-from .utils import OLD_TRIMGALORE_SHA
+from .utils import GITLAB_URL, OLD_TRIMGALORE_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
@@ -54,10 +54,7 @@ class TestModules(unittest.TestCase):
             self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
-            self.pipeline_dir,
-            prompt=False,
-            force=True,
-            remote_url="https://gitlab.com/nf-core/modules-test.git",
+            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL
         )
 
         # Set up remove objects
@@ -104,6 +101,8 @@ class TestModules(unittest.TestCase):
         test_modules_test_file_dict,
     )
     from .modules.install import (
+        test_modules_install_different_branch_fail,
+        test_modules_install_different_branch_succeed,
         test_modules_install_emptypipeline,
         test_modules_install_from_gitlab,
         test_modules_install_nomodule,
@@ -113,7 +112,9 @@ class TestModules(unittest.TestCase):
     )
     from .modules.lint import (
         test_modules_lint_empty,
+        test_modules_lint_gitlab_modules,
         test_modules_lint_new_modules,
+        test_modules_lint_no_gitlab,
         test_modules_lint_trimgalore,
     )
     from .modules.list import (
@@ -131,8 +132,8 @@ class TestModules(unittest.TestCase):
     from .modules.modules_json import (
         test_get_modules_json,
         test_mod_json_create,
+        test_mod_json_create_with_patch,
         test_mod_json_dump,
-        test_mod_json_get_base_path,
         test_mod_json_get_git_url,
         test_mod_json_get_module_version,
         test_mod_json_module_present,
@@ -141,6 +142,14 @@ class TestModules(unittest.TestCase):
         test_mod_json_up_to_date_module_removed,
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,
+    )
+    from .modules.patch import (
+        test_create_patch_change,
+        test_create_patch_no_change,
+        test_create_patch_try_apply_failed,
+        test_create_patch_try_apply_successful,
+        test_create_patch_update_fail,
+        test_create_patch_update_success,
     )
     from .modules.remove import (
         test_modules_remove_trimgalore,
@@ -151,6 +160,9 @@ class TestModules(unittest.TestCase):
         test_install_at_hash_and_update,
         test_install_at_hash_and_update_and_save_diff_to_file,
         test_update_all,
+        test_update_different_branch_mix_modules_branch_test,
+        test_update_different_branch_mixed_modules_main,
+        test_update_different_branch_single_module,
         test_update_with_config_dont_update,
         test_update_with_config_fix_all,
         test_update_with_config_fixed_version,

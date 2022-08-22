@@ -149,14 +149,6 @@ class TestLint(unittest.TestCase):
         md = self.lint_obj._wrap_quotes(["one", "two", "three"])
         assert md == "`one` or `two` or `three`"
 
-    def test_strip_ansi_codes(self):
-        """Check that we can make rich text strings plain
-
-        String prints ls examplefile.zip, where examplefile.zip is red bold text
-        """
-        stripped = self.lint_obj._strip_ansi_codes("ls \x1b[00m\x1b[01;31mexamplefile.zip\x1b[00m\x1b[01;31m")
-        assert stripped == "ls examplefile.zip"
-
     def test_sphinx_md_files(self):
         """Check that we have .md files for all lint module code,
         and that there are no unexpected files (eg. deleted lint tests)"""

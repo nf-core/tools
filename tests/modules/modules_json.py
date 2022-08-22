@@ -1,14 +1,16 @@
 import json
 import os
 import shutil
+from pathlib import Path
 
 from nf_core.modules.modules_json import ModulesJson
 from nf_core.modules.modules_repo import (
-    NF_CORE_MODULES_BASE_PATH,
+    NF_CORE_MODULES_DEFAULT_BRANCH,
     NF_CORE_MODULES_NAME,
     NF_CORE_MODULES_REMOTE,
     ModulesRepo,
 )
+from nf_core.modules.patch import ModulePatch
 
 
 def test_get_modules_json(self):
@@ -34,10 +36,11 @@ def test_mod_json_update(self):
     assert "MODULE_NAME" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
     assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]
     assert "GIT_SHA" == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["git_sha"]
+    assert NF_CORE_MODULES_DEFAULT_BRANCH == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["MODULE_NAME"]["branch"]
 
 
 def test_mod_json_create(self):
-    """Test creating a modules.json file from scratch""" ""
+    """Test creating a modules.json file from scratch"""
     mod_json_path = os.path.join(self.pipeline_dir, "modules.json")
     # Remove the existing modules.json file
     os.remove(mod_json_path)
@@ -57,6 +60,53 @@ def test_mod_json_create(self):
     for mod in mods:
         assert mod in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
         assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
+        assert "branch" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"][mod]
+
+
+def modify_main_nf(path):
+    """Modify a file to test patch creation"""
+    with open(path, "r") as fh:
+        lines = fh.readlines()
+    # Modify $meta.id to $meta.single_end
+    lines[1] = '    tag "$meta.single_end"\n'
+    with open(path, "w") as fh:
+        fh.writelines(lines)
+
+
+def test_mod_json_create_with_patch(self):
+    """Test creating a modules.json file from scratch when there are patched modules"""
+    mod_json_path = Path(self.pipeline_dir, "modules.json")
+
+    # Modify the module
+    module_path = Path(self.pipeline_dir, "modules", "nf-core", "modules", "fastqc")
+    modify_main_nf(module_path / "main.nf")
+
+    # Try creating a patch file
+    patch_obj = ModulePatch(self.pipeline_dir)
+    patch_obj.patch("fastqc")
+
+    # Remove the existing modules.json file
+    os.remove(mod_json_path)
+
+    # Create the new modules.json file
+    ModulesJson(self.pipeline_dir).create()
+
+    # Check that the file exists
+    assert mod_json_path.is_file()
+
+    # Get the contents of the file
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json = mod_json_obj.get_modules_json()
+
+    # Check that fastqc is in the file
+    assert "fastqc" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]
+    assert "git_sha" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
+    assert "branch" in mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]
+
+    # Check that fastqc/main.nf maintains the changes
+    with open(module_path / "main.nf", "r") as fh:
+        lines = fh.readlines()
+    assert lines[1] == '    tag "$meta.single_end"\n'
 
 
 def test_mod_json_up_to_date(self):
@@ -148,13 +198,6 @@ def test_mod_json_get_git_url(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     assert mod_json_obj.get_git_url(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_REMOTE
     assert mod_json_obj.get_git_url("INVALID_REPO") is None
-
-
-def test_mod_json_get_base_path(self):
-    """Tests the get_base_path function"""
-    mod_json_obj = ModulesJson(self.pipeline_dir)
-    assert mod_json_obj.get_base_path(NF_CORE_MODULES_NAME) == NF_CORE_MODULES_BASE_PATH
-    assert mod_json_obj.get_base_path("INVALID_REPO") is None
 
 
 def test_mod_json_dump(self):

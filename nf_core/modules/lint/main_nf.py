@@ -5,11 +5,14 @@ Lint the main.nf file of a module
 
 import logging
 import re
+import sqlite3
+from pathlib import Path
 
 import requests
 
 import nf_core
 import nf_core.modules.module_utils
+from nf_core.modules.modules_differ import ModulesDiffer
 
 log = logging.getLogger(__name__)
 
@@ -37,14 +40,26 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
     inputs = []
     outputs = []
 
-    # Check whether file exists and load it
-    try:
-        with open(module.main_nf, "r") as fh:
-            lines = fh.readlines()
-        module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
-    except FileNotFoundError as e:
-        module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
-        return
+    # Check if we have a patch file affecting the 'main.nf' file
+    # otherwise read the lines directly from the module
+    lines = None
+    if module.is_patched:
+        lines = ModulesDiffer.try_apply_patch(
+            module.module_name,
+            module_lint_object.modules_repo.fullname,
+            module.patch_path,
+            Path(module.module_dir).relative_to(module.base_dir),
+            reverse=True,
+        ).get("main.nf")
+    if lines is None:
+        try:
+            # Check whether file exists and load it
+            with open(module.main_nf, "r") as fh:
+                lines = fh.readlines()
+            module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
+        except FileNotFoundError:
+            module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
+            return
 
     deprecated_i = ["initOptions", "saveFiles", "getSoftwareName", "getProcessName", "publishDir"]
     lines_j = "\n".join(lines)
@@ -182,18 +197,16 @@ def check_when_section(self, lines):
     if len(lines) == 0:
         self.failed.append(("when_exist", "when: condition has been removed", self.main_nf))
         return
-    elif len(lines) > 1:
+    if len(lines) > 1:
         self.failed.append(("when_exist", "when: condition has too many lines", self.main_nf))
         return
-    else:
-        self.passed.append(("when_exist", "when: condition is present", self.main_nf))
+    self.passed.append(("when_exist", "when: condition is present", self.main_nf))
 
     # Check the condition hasn't been changed.
     if lines[0].strip() != "task.ext.when == null || task.ext.when":
         self.failed.append(("when_condition", "when: condition has been altered", self.main_nf))
         return
-    else:
-        self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
+    self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
 def check_process_section(self, lines, fix_version, progress_bar):
@@ -207,37 +220,39 @@ def check_process_section(self, lines, fix_version, progress_bar):
     if len(lines) == 0:
         self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
         return
-    else:
-        self.passed.append(("process_exist", "Process definition exists", self.main_nf))
+    self.passed.append(("process_exist", "Process definition exists", self.main_nf))
 
     # Checks that build numbers of bioconda, singularity and docker container are matching
-    build_id = "build"
     singularity_tag = "singularity"
     docker_tag = "docker"
     bioconda_packages = []
 
     # Process name should be all capital letters
     self.process_name = lines[0].split()[1]
-    if all([x.upper() for x in self.process_name]):
+    if all(x.upper() for x in self.process_name):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
 
     # Check that process labels are correct
     correct_process_labels = ["process_low", "process_medium", "process_high", "process_long"]
-    process_label = [l for l in lines if "label" in l]
+    process_label = [l for l in lines if l.lstrip().startswith("label")]
     if len(process_label) > 0:
-        process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
-        if not process_label in correct_process_labels:
-            self.warned.append(
-                (
-                    "process_standard_label",
-                    f"Process label ({process_label}) is not among standard labels: `{'`,`'.join(correct_process_labels)}`",
-                    self.main_nf,
+        try:
+            process_label = re.search("process_[A-Za-z]+", process_label[0]).group(0)
+        except AttributeError:
+            process_label = re.search("'([A-Za-z_-]+)'", process_label[0]).group(0)
+        finally:
+            if not process_label in correct_process_labels:
+                self.warned.append(
+                    (
+                        "process_standard_label",
+                        f"Process label ({process_label}) is not among standard labels: `{'`,`'.join(correct_process_labels)}`",
+                        self.main_nf,
+                    )
                 )
-            )
-        else:
-            self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
+            else:
+                self.passed.append(("process_standard_label", "Correct process label", self.main_nf))
     else:
         self.warned.append(("process_standard_label", "Process label unspecified", self.main_nf))
     for l in lines:
@@ -274,9 +289,9 @@ def check_process_section(self, lines, fix_version, progress_bar):
             bioconda_version = bp.split("=")[1]
             # response = _bioconda_package(bp)
             response = nf_core.utils.anaconda_package(bp)
-        except LookupError as e:
+        except LookupError:
             self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
-        except ValueError as e:
+        except ValueError:
             self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
         else:
             # Check that required version is available at all
@@ -291,24 +306,31 @@ def check_process_section(self, lines, fix_version, progress_bar):
                 package, ver = bp.split("=", 1)
                 # If a new version is available and fix is True, update the version
                 if fix_version:
-                    if _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response):
-                        progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
-                        log.debug(f"Updating package {package} {ver} -> {last_ver}")
-                        self.passed.append(
-                            (
-                                "bioconda_latest",
-                                f"Conda package has been updated to the latest available: `{bp}`",
-                                self.main_nf,
-                            )
-                        )
+                    try:
+                        fixed = _fix_module_version(self, bioconda_version, last_ver, singularity_tag, response)
+                    except FileNotFoundError as e:
+                        fixed = False
+                        log.debug(f"Unable to update package {package} due to error: {e}")
                     else:
-                        progress_bar.print(
-                            f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
-                        )
-                        log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
-                        self.warned.append(
-                            ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
-                        )
+                        if fixed:
+                            progress_bar.print(f"[blue]INFO[/blue]\t Updating package '{package}' {ver} -> {last_ver}")
+                            log.debug(f"Updating package {package} {ver} -> {last_ver}")
+                            self.passed.append(
+                                (
+                                    "bioconda_latest",
+                                    f"Conda package has been updated to the latest available: `{bp}`",
+                                    self.main_nf,
+                                )
+                            )
+                        else:
+                            progress_bar.print(
+                                f"[blue]INFO[/blue]\t Tried to update package. Unable to update package '{package}' {ver} -> {last_ver}"
+                            )
+                            log.debug(f"Unable to update package {package} {ver} -> {last_ver}")
+                            self.warned.append(
+                                ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
+                            )
+                # Add available update as a warning
                 else:
                     self.warned.append(
                         ("bioconda_latest", f"Conda update: {package} `{ver}` -> `{last_ver}`", self.main_nf)
@@ -316,10 +338,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
-    if docker_tag == singularity_tag:
-        return True
-    else:
-        return False
+    return docker_tag == singularity_tag
 
 
 def _parse_input(self, line_raw):
@@ -408,12 +427,16 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
             new_url = re.search(
                 "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
             ).group(1)
-            response_new_container = requests.get(
-                "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
-            )
-            log.debug(
-                f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
-            )
+            try:
+                response_new_container = requests.get(
+                    "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
+                )
+                log.debug(
+                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+                )
+            except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
+                log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")
+                return False
             if response_new_container.status_code != 200:
                 return False
             new_lines.append(re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line))
@@ -452,7 +475,6 @@ def _container_type(line):
         url_match = re.search(url_regex, line, re.S)
         if url_match:
             return "singularity"
-        else:
-            return None
+        return None
     if line.startswith("biocontainers/") or line.startswith("quay.io/"):
         return "docker"

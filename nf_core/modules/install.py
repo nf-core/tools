@@ -23,19 +23,8 @@ class ModuleInstall(ModuleCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
-        base_path=None,
     ):
-        # Check if we are given a base path, otherwise look in the modules.json
-        if base_path is None:
-            try:
-                modules_json = ModulesJson(pipeline_dir)
-                repo_name = nf_core.modules.module_utils.path_from_remote(remote_url)
-                base_path = modules_json.get_base_path(repo_name)
-            except:
-                # We don't want to fail yet if the modules.json is not found
-                pass
-
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -118,8 +107,7 @@ class ModuleInstall(ModuleCommand):
                 return False
         else:
             # Fetch the latest commit for the module
-            git_log = list(self.modules_repo.get_module_git_log(module, depth=1))
-            version = git_log[0]["git_sha"]
+            version = self.modules_repo.get_latest_module_version(module)
 
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.fullname}/{module}'")
