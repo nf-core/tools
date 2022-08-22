@@ -59,15 +59,15 @@ click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
 }
 
+# Set up rich stderr console
+stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
+stdout = rich.console.Console(force_terminal=nf_core.utils.rich_force_colors())
+
+# Set up the rich traceback
+rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
+
 
 def run_nf_core():
-    # Set up rich stderr console
-    stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
-    stdout = rich.console.Console(force_terminal=nf_core.utils.rich_force_colors())
-
-    # Set up the rich traceback
-    rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
-
     # Print nf-core header
     stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
