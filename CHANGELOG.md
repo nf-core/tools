@@ -32,7 +32,7 @@
 - Update `readme` to drop `--key` option from `nf-core modules list` and add the new pattern syntax
 - Add `--fail-warned` flag to `nf-core lint` to make warnings fail ([#1593](https://github.com/nf-core/tools/pull/1593))
 - Add `--fail-warned` flag to pipeline linting workflow ([#1593](https://github.com/nf-core/tools/pull/1593))
-- Updated the package requirements to prevent defunct installations of nf-core ([#1620](https://github.com/nf-core/tools/pull/1620))
+- Updated the nf-core package requirements ([#1620](https://github.com/nf-core/tools/pull/1620), [#1757](https://github.com/nf-core/tools/pull/1757), [#1756](https://github.com/nf-core/tools/pull/1756))
 - Remove dependency of the mock package and use unittest.mock instead ([#1696](https://github.com/nf-core/tools/pull/1696))
 - Fix and improve broken test for Singularity container download ([#1622](https://github.com/nf-core/tools/pull/1622))
 - Use [`$XDG_CACHE_HOME`](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) or `~/.cache` instead of `$XDG_CONFIG_HOME` or `~/config/` as base directory for API cache
@@ -47,6 +47,7 @@
 - Move `strip_ansi_code` function in lint to `utils.py`
 - Simplify control flow and don't use equality comparison for `None` and booleans
 - Replace use of the deprecated `distutils` Version object with that from `packaging` ([#1735](https://github.com/nf-core/tools/pull/1735))
+- Add code to cancel CI run if a new run starts ([#1760](https://github.com/nf-core/tools/pull/1760))
 
 ### Modules
 
@@ -56,7 +57,7 @@
 - Add prompt for module name to `nf-core modules info` ([#1644](https://github.com/nf-core/tools/issues/1644))
 - Update docs with example of custom git remote ([#1645](https://github.com/nf-core/tools/issues/1645))
 - Command `nf-core modules test` obtains module name suggestions from installed modules ([#1624](https://github.com/nf-core/tools/pull/1624))
-- Add `--base-path` flag to `nf-core modules` to specify the base path for the modules in a remote. Also refactored `modules.json` code. ([#1643](https://github.com/nf-core/tools/issues/1643))
+- Add `--base-path` flag to `nf-core modules` to specify the base path for the modules in a remote. Also refactored `modules.json` code. ([#1643](https://github.com/nf-core/tools/issues/1643)) Removed after ([#1754](https://github.com/nf-core/tools/pull/1754))
 - Rename methods in `ModulesJson` to remove explicit reference to `modules.json`
 - Fix inconsistencies in the `--save-diff` flag `nf-core modules update`. Refactor `nf-core modules update` ([#1536](https://github.com/nf-core/tools/pull/1536))
 - Fix bug in `ModulesJson.check_up_to_date` causing it to ask for the remote of local modules
@@ -72,7 +73,9 @@
 - Add links in `README.md` for `info` and `patch` commands ([#1722](https://github.com/nf-core/tools/issues/1722)])
 - Fix misc. issues with `--branch` and `--base-path` ([#1726](https://github.com/nf-core/tools/issues/1726))
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
+- Fix broken link in `nf-core modules info`([#1745](https://github.com/nf-core/tools/pull/1745))
 - Fix unbound variable issues and minor refactoring [#1742](https://github.com/nf-core/tools/pull/1742/)
+- Add support for patch when creating `modules.json` file ([#1752](https://github.com/nf-core/tools/pull/1752))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
 

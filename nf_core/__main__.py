@@ -4,11 +4,11 @@ import logging
 import os
 import sys
 
+import rich
 import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
-from rich import print
 
 import nf_core
 import nf_core.bump_version
@@ -59,14 +59,15 @@ click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
 }
 
+# Set up rich stderr console
+stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
+stdout = rich.console.Console(force_terminal=nf_core.utils.rich_force_colors())
+
+# Set up the rich traceback
+rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
+
 
 def run_nf_core():
-    # Set up rich stderr console
-    stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
-
-    # Set up the rich traceback
-    rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
-
     # Print nf-core header
     stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
@@ -142,7 +143,7 @@ def list(keywords, sort, json, show_archived):
     Checks the web for a list of nf-core pipelines with their latest releases.
     Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
-    print(nf_core.list.list_workflows(keywords, sort, json, show_archived))
+    stdout.print(nf_core.list.list_workflows(keywords, sort, json, show_archived))
 
 
 # nf-core launch
@@ -238,7 +239,7 @@ def licences(pipeline, json):
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.as_json = json
     try:
-        print(lic.run_licences())
+        stdout.print(lic.run_licences())
     except LookupError as e:
         log.error(e)
         sys.exit(1)
@@ -354,14 +355,8 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     default=False,
     help="Do not pull in latest changes to local clone of modules repository.",
 )
-@click.option(
-    "--base-path",
-    type=str,
-    default=None,
-    help="Specify where the modules are stored in the remote",
-)
 @click.pass_context
-def modules(ctx, git_remote, branch, no_pull, base_path):
+def modules(ctx, git_remote, branch, no_pull):
     """
     Commands to manage Nextflow DSL2 modules (tool wrappers).
     """
@@ -373,7 +368,6 @@ def modules(ctx, git_remote, branch, no_pull, base_path):
     ctx.obj["modules_repo_url"] = git_remote
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
-    ctx.obj["modules_repo_base_path"] = base_path
 
 
 # nf-core modules list subcommands
@@ -402,9 +396,8 @@ def remote(ctx, keywords, json):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
-        print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -433,9 +426,8 @@ def local(ctx, keywords, json, dir):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
-        print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -470,7 +462,6 @@ def install(ctx, tool, dir, prompt, force, sha):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.install(tool)
         if not exit_status and all:
@@ -528,7 +519,6 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         exit_status = module_install.update(tool)
         if not exit_status and all:
@@ -562,7 +552,6 @@ def patch(ctx, tool, dir):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         module_patch.patch(tool)
     except (UserWarning, LookupError) as e:
@@ -591,7 +580,6 @@ def remove(ctx, dir, tool):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         module_remove.remove(tool)
     except (UserWarning, LookupError) as e:
@@ -695,7 +683,6 @@ def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         module_lint.lint(
             module=tool,
@@ -746,9 +733,8 @@ def info(ctx, tool, dir):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
-        print(module_info.get_module_info())
+        stdout.print(module_info.get_module_info())
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -772,7 +758,6 @@ def bump_versions(ctx, tool, dir, all, show_all):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
-            ctx.obj["modules_repo_base_path"],
         )
         version_bumper.bump_versions(module=tool, all_modules=all, show_uptodate=show_all)
     except nf_core.modules.module_utils.ModuleException as e:
@@ -823,7 +808,7 @@ def mulled(specifications, build_number):
         )
         sys.exit(1)
     log.info("Mulled container hash:")
-    print(image_name)
+    stdout.print(image_name)
 
 
 # nf-core modules test
@@ -985,7 +970,7 @@ def docs(schema_path, output, format, force, columns):
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
     if not output:
-        print(schema_obj.print_documentation(output, format, force, columns.split(",")))
+        stdout.print(schema_obj.print_documentation(output, format, force, columns.split(",")))
 
 
 # nf-core bump-version
