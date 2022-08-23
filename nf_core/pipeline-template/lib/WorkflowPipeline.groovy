@@ -51,6 +51,9 @@ class Workflow{{ short_name[0]|upper }}{{ short_name[1:] }} {
         // Convert  to a named map so can be used as with familar NXF ${workflow} variable syntax in the MultiQC YML file
         def meta = [:]
         meta.workflow = run_workflow.toMap()
+        meta["manifest_map"] = run_workflow.manifest.toMap()
+
+        meta["doi_text"] = meta.manifest_map.doi ? "(DOI: <a href=\'https://doi.org/${meta.manifest_map.doi}\'>${meta.manifest_map.doi}</a>)" : ""
 
         def methods_text = mqc_methods_yaml.text
 
