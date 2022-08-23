@@ -116,6 +116,7 @@ class TestModules(unittest.TestCase):
         test_modules_lint_new_modules,
         test_modules_lint_no_gitlab,
         test_modules_lint_trimgalore,
+        test_modules_lint_patched_modules,
     )
     from .modules.list import (
         test_modules_install_and_list_pipeline,

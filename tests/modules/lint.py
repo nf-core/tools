@@ -1,8 +1,9 @@
 import pytest
 
 import nf_core.modules
-
+import os
 from ..utils import GITLAB_URL
+from .patch import setup_patch, BISMARK_ALIGN, PATCH_BRANCH
 
 
 def test_modules_lint_trimgalore(self):
@@ -43,6 +44,24 @@ def test_modules_lint_gitlab_modules(self):
     """Lint modules from a different remote"""
     self.mods_install_gitlab.install("fastqc")
     self.mods_install_gitlab.install("multiqc")
+    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+    module_lint.lint(print_results=False, all_modules=True)
+    assert len(module_lint.failed) == 0
+    assert len(module_lint.passed) > 0
+    assert len(module_lint.warned) >= 0
+
+
+def test_modules_lint_patched_modules(self):
+    """
+    Test creating a patch file and applying it to a new version of the the files
+    """
+    setup_patch(self.pipeline_dir, True)
+
+    # Create a patch file
+    patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
+    patch_obj.patch(BISMARK_ALIGN)
+    # change directory to the module directory
+    os.chdir(self.pipeline_dir)
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
     assert len(module_lint.failed) == 0
