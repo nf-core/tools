@@ -62,10 +62,15 @@ def test_modules_lint_patched_modules(self):
     # Create a patch file
     patch_obj = nf_core.modules.ModulePatch(self.pipeline_dir, GITLAB_URL, PATCH_BRANCH)
     patch_obj.patch(BISMARK_ALIGN)
-    # change directory to the module directory
+
+    # change temporarily working directory to the pipeline directory
+    # to avoid error from try_apply_patch() during linting
+    wd_old = os.getcwd()
     os.chdir(self.pipeline_dir)
     module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
     module_lint.lint(print_results=False, all_modules=True)
+    os.chdir(wd_old)
+
     assert len(module_lint.failed) == 0
     assert len(module_lint.passed) > 0
     assert len(module_lint.warned) >= 0
