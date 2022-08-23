@@ -48,7 +48,7 @@
 - Simplify control flow and don't use equality comparison for `None` and booleans
 - Replace use of the deprecated `distutils` Version object with that from `packaging` ([#1735](https://github.com/nf-core/tools/pull/1735))
 - Add code to cancel CI run if a new run starts ([#1760](https://github.com/nf-core/tools/pull/1760))
-- Update to latest ubuntu version for building the API docs
+- CI for the API docs generation now uses the ubuntu-latest base image ([#1762](https://github.com/nf-core/tools/pull/1762))
 
 ### Modules
 
