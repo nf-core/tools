@@ -24,7 +24,8 @@ def module_changes(module_lint_object, module):
     if module.is_patched:
         # If the module is patched, we need to apply
         # the patch in reverse before comparing with the remote
-        tempdir = Path(tempfile.mkdtemp())
+        tempdir_parent = Path(tempfile.mkdtemp())
+        tempdir = tempdir_parent / "tmp_module_dir"
         shutil.copytree(module.module_dir, tempdir)
         try:
             new_lines = ModulesDiffer.try_apply_patch(

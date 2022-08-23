@@ -4,11 +4,11 @@ import logging
 import os
 import sys
 
+import rich
 import rich.console
 import rich.logging
 import rich.traceback
 import rich_click as click
-from rich import print
 
 import nf_core
 import nf_core.bump_version
@@ -59,14 +59,15 @@ click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
 }
 
+# Set up rich stderr console
+stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
+stdout = rich.console.Console(force_terminal=nf_core.utils.rich_force_colors())
+
+# Set up the rich traceback
+rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
+
 
 def run_nf_core():
-    # Set up rich stderr console
-    stderr = rich.console.Console(stderr=True, force_terminal=nf_core.utils.rich_force_colors())
-
-    # Set up the rich traceback
-    rich.traceback.install(console=stderr, width=200, word_wrap=True, extra_lines=1)
-
     # Print nf-core header
     stderr.print(f"\n[green]{' ' * 42},--.[grey39]/[green],-.", highlight=False)
     stderr.print("[blue]          ___     __   __   __   ___     [green]/,-._.--~\\", highlight=False)
@@ -142,7 +143,7 @@ def list(keywords, sort, json, show_archived):
     Checks the web for a list of nf-core pipelines with their latest releases.
     Shows which nf-core pipelines you have pulled locally and whether they are up to date.
     """
-    print(nf_core.list.list_workflows(keywords, sort, json, show_archived))
+    stdout.print(nf_core.list.list_workflows(keywords, sort, json, show_archived))
 
 
 # nf-core launch
@@ -238,7 +239,7 @@ def licences(pipeline, json):
     lic = nf_core.licences.WorkflowLicences(pipeline)
     lic.as_json = json
     try:
-        print(lic.run_licences())
+        stdout.print(lic.run_licences())
     except LookupError as e:
         log.error(e)
         sys.exit(1)
@@ -396,7 +397,7 @@ def remote(ctx, keywords, json):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
         log.critical(e)
         sys.exit(1)
@@ -426,7 +427,7 @@ def local(ctx, keywords, json, dir):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        print(module_list.list_modules(keywords, json))
+        stdout.print(module_list.list_modules(keywords, json))
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -733,7 +734,7 @@ def info(ctx, tool, dir):
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
         )
-        print(module_info.get_module_info())
+        stdout.print(module_info.get_module_info())
     except (UserWarning, LookupError) as e:
         log.error(e)
         sys.exit(1)
@@ -807,7 +808,7 @@ def mulled(specifications, build_number):
         )
         sys.exit(1)
     log.info("Mulled container hash:")
-    print(image_name)
+    stdout.print(image_name)
 
 
 # nf-core modules test
@@ -969,7 +970,7 @@ def docs(schema_path, output, format, force, columns):
     schema_obj.get_schema_path(schema_path)
     schema_obj.load_schema()
     if not output:
-        print(schema_obj.print_documentation(output, format, force, columns.split(",")))
+        stdout.print(schema_obj.print_documentation(output, format, force, columns.split(",")))
 
 
 # nf-core bump-version
