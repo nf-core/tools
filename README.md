@@ -503,13 +503,12 @@ This command validates such a file against the pipeline schema.
 Usage is `nf-core schema validate <pipeline> <parameter file>`, eg:
 
 <!-- RICH-CODEX
-working_dir: tmp/nf-core-rnaseq
-before_command: 'echo "{input: myfiles.csv, outdir: results}" > nf-params.json'
+before_command: 'nextflow pull nf-core/rnaseq && echo "{input: myfiles.csv, outdir: results}" > nf-params.json'
 timeout: 10
 after_command: rm nf-params.json
 -->
 
-![`nf-core schema validate . nf-params.json`](docs/images/nf-core-schema-validate.svg)
+![`nf-core schema validate rnaseq nf-params.json`](docs/images/nf-core-schema-validate.svg)
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
