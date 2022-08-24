@@ -48,6 +48,7 @@
 - Simplify control flow and don't use equality comparison for `None` and booleans
 - Replace use of the deprecated `distutils` Version object with that from `packaging` ([#1735](https://github.com/nf-core/tools/pull/1735))
 - Add code to cancel CI run if a new run starts ([#1760](https://github.com/nf-core/tools/pull/1760))
+- CI for the API docs generation now uses the ubuntu-latest base image ([#1762](https://github.com/nf-core/tools/pull/1762))
 
 ### Modules
 
@@ -75,6 +76,7 @@
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
 - Fix broken link in `nf-core modules info`([#1745](https://github.com/nf-core/tools/pull/1745))
 - Fix unbound variable issues and minor refactoring [#1742](https://github.com/nf-core/tools/pull/1742/)
+- Recreate modules.json file instead of complaining about incorrectly formatted file. ([#1741](https://github.com/nf-core/tools/pull/1741)
 - Add support for patch when creating `modules.json` file ([#1752](https://github.com/nf-core/tools/pull/1752))
 
 ## [v2.4.1 - Cobolt Koala Patch](https://github.com/nf-core/tools/releases/tag/2.4) - [2022-05-16]
