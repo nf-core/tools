@@ -62,7 +62,6 @@ class ModuleCommand:
         nf_config = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
-        self.has_modules_file()
         return True
 
     def has_modules_file(self):

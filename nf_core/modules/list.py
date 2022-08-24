@@ -91,10 +91,6 @@ class ModuleList(ModuleCommand):
                 repo_entry = modules_json["repos"].get(repo_name, {})
                 for module in sorted(modules):
                     repo_modules = repo_entry.get("modules")
-                    if repo_modules is None:
-                        raise UserWarning(
-                            "You 'modules.json' file is not up to date. Please remove it and rerun the command"
-                        )
                     module_entry = repo_modules.get(module)
 
                     if module_entry:
