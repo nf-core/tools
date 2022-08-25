@@ -810,6 +810,7 @@ After you have written a minimal Nextflow script to test your module `modules/te
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
+min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
 -->
 
 ![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
@@ -850,7 +851,7 @@ If you are contributing to the `nf-core/modules` repository and want to bump bio
 working_dir: tmp/modules
 -->
 
-![`nf-core modules bump-versions multiqc`](docs/images/nf-core-modules-bump-version.svg)
+![`nf-core modules bump-versions fastqc`](docs/images/nf-core-modules-bump-version.svg)
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module from being updated by adding the following to the `.nf-core.yml` file:
 
