@@ -178,9 +178,9 @@ class ModuleUpdate(ModuleCommand):
             if dry_run:
                 if patch_relpath is not None:
                     if patch_successful:
-                        log.info(f"Current installation is compared against patched version in remote")
+                        log.info("Current installation is compared against patched version in remote.")
                     else:
-                        log.warning(f"Current installation is compared against unpatched version in remote")
+                        log.warning("Current installation is compared against unpatched version in remote.")
                 # Compute the diffs for the module
                 if self.save_diff_fn:
                     log.info(f"Writing diff file for module '{module_fullname}' to '{self.save_diff_fn}'")
