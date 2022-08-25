@@ -415,7 +415,7 @@ def remote(ctx, keywords, json):
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def local(ctx, keywords, json, dir):
+def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
@@ -666,7 +666,7 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):
+def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):  # pylint: disable=redefined-outer-name
     """
     Lint one or more modules in a directory.
 
