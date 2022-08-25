@@ -42,5 +42,4 @@ def test_modules_test_no_installed_modules(self):
     with pytest.raises(UserWarning) as excinfo:
         meta_builder._check_inputs()
     os.chdir(cwd)
-    print(excinfo.value)
     assert "No installed modules were found" in str(excinfo.value)

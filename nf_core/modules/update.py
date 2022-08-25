@@ -1,4 +1,3 @@
-import enum
 import logging
 import os
 import shutil
@@ -32,9 +31,8 @@ class ModuleUpdate(ModuleCommand):
         remote_url=None,
         branch=None,
         no_pull=False,
-        base_path=None,
     ):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.force = force
         self.prompt = prompt
         self.sha = sha
@@ -131,9 +129,7 @@ class ModuleUpdate(ModuleCommand):
         # and do the requested action on them
         exit_value = True
         all_patches_successful = True
-        print(modules_info)
         for modules_repo, module, sha, patch_relpath in modules_info:
-            print(sha)
             module_fullname = str(Path(modules_repo.fullname, module))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
@@ -424,7 +420,6 @@ class ModuleUpdate(ModuleCommand):
                 repo_name,
                 self.modules_json.get_git_url(repo_name),
                 branch,
-                self.modules_json.get_base_path(repo_name),
                 mods_shas,
             )
             for (repo_name, branch), mods_shas in repos_and_branches.items()
@@ -432,9 +427,9 @@ class ModuleUpdate(ModuleCommand):
 
         # Create ModulesRepo objects
         repo_objs_mods = []
-        for repo_name, repo_url, branch, base_path, mods_shas in modules_info:
+        for repo_name, repo_url, branch, mods_shas in modules_info:
             try:
-                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch, base_path=base_path)
+                modules_repo = ModulesRepo(remote_url=repo_url, branch=branch)
             except LookupError as e:
                 log.warning(e)
                 log.info(f"Skipping modules in '{repo_name}'")
@@ -550,7 +545,7 @@ class ModuleUpdate(ModuleCommand):
 
         try:
             new_files = ModulesDiffer.try_apply_patch(module, repo_name, patch_path, temp_module_dir)
-        except LookupError as e:
+        except LookupError:
             # Patch failed. Save the patch file by moving to the install dir
             shutil.move(patch_path, Path(module_install_dir, patch_path.relative_to(module_dir)))
             log.warning(

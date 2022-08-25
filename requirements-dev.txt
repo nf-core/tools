@@ -1,8 +1,8 @@
-pytest-datafiles
-pytest-cov
 black
-refgenie
+isort
+myst_parser
+pre-commit
+pytest-cov
+pytest-datafiles
 Sphinx
 sphinx_rtd_theme
-isort
-pre-commit

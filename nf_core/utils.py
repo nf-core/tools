@@ -5,6 +5,7 @@ Common utility functions for the nf-core python package.
 import datetime
 import errno
 import hashlib
+import io
 import json
 import logging
 import mimetypes
@@ -152,7 +153,7 @@ class Pipeline(object):
             # Failed, so probably not initialised as a git repository - just a list of all files
             log.debug(f"Couldn't call 'git ls-files': {e}")
             self.files = []
-            for subdir, dirs, files in os.walk(self.wf_path):
+            for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
                     self.files.append(os.path.join(subdir, fn))
 
@@ -213,7 +214,7 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     log.debug(f"Got '{wf_path}' as path")
 
-    config = dict()
+    config = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
@@ -235,7 +236,7 @@ def fetch_wf_config(wf_path, cache_config=True):
         try:
             with open(os.path.join(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             pass
     # Hash the hash
     if len(concat_hash) > 0:
@@ -353,7 +354,7 @@ def wait_cli_function(poll_func, poll_every=20):
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
-        with Live(spinner, refresh_per_second=20) as live:
+        with Live(spinner, refresh_per_second=20):
             while True:
                 if poll_func():
                     break
@@ -377,9 +378,9 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
             else:
                 response = requests.post(url=api_url, data=post_data)
-        except (requests.exceptions.Timeout):
+        except requests.exceptions.Timeout:
             raise AssertionError(f"URL timed out: {api_url}")
-        except (requests.exceptions.ConnectionError):
+        except requests.exceptions.ConnectionError:
             raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200:
@@ -387,19 +388,18 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 raise AssertionError(
                     f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
                 )
+            try:
+                web_response = json.loads(response.content)
+                if "status" not in web_response:
+                    raise AssertionError()
+            except (json.decoder.JSONDecodeError, AssertionError, TypeError):
+                log.debug(f"Response content:\n{response.content}")
+                raise AssertionError(
+                    f"nf-core website API results response not recognised: {api_url}\n "
+                    "See verbose log for full response"
+                )
             else:
-                try:
-                    web_response = json.loads(response.content)
-                    if "status" not in web_response:
-                        raise AssertionError()
-                except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
-                    log.debug(f"Response content:\n{response.content}")
-                    raise AssertionError(
-                        f"nf-core website API results response not recognised: {api_url}\n "
-                        "See verbose log for full response"
-                    )
-                else:
-                    return web_response
+                return web_response
 
 
 class GitHub_API_Session(requests_cache.CachedSession):
@@ -455,8 +455,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
                         gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
-            except Exception as e:
-                ex_type, ex_value, ex_traceback = sys.exc_info()
+            except Exception:
+                ex_type, ex_value, _ = sys.exc_info()
                 output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
                 log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
@@ -572,7 +572,7 @@ def anaconda_package(dep, dep_channels=None):
 
     # Check if each dependency is the latest available version
     if "=" in dep:
-        depname, depver = dep.split("=", 1)
+        depname, _ = dep.split("=", 1)
     else:
         depname = dep
 
@@ -588,20 +588,20 @@ def anaconda_package(dep, dep_channels=None):
         anaconda_api_url = f"https://api.anaconda.org/package/{ch}/{depname}"
         try:
             response = requests.get(anaconda_api_url, timeout=10)
-        except (requests.exceptions.Timeout):
+        except requests.exceptions.Timeout:
             raise LookupError(f"Anaconda API timed out: {anaconda_api_url}")
-        except (requests.exceptions.ConnectionError):
+        except requests.exceptions.ConnectionError:
             raise LookupError("Could not connect to Anaconda API")
         else:
             if response.status_code == 200:
                 return response.json()
-            elif response.status_code != 404:
+            if response.status_code != 404:
                 raise LookupError(
                     f"Anaconda API returned unexpected response code `{response.status_code}` for: "
                     f"{anaconda_api_url}\n{response}"
                 )
-            elif response.status_code == 404:
-                log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
+            # response.status_code == 404
+            log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
 
     # We have looped through each channel and had a 404 response code on everything
     raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
@@ -653,19 +653,18 @@ def pip_package(dep):
         A LookupError, if the connection fails or times out
         A ValueError, if the package name can not be found
     """
-    pip_depname, pip_depver = dep.split("=", 1)
+    pip_depname, _ = dep.split("=", 1)
     pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
         response = requests.get(pip_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
+    except requests.exceptions.Timeout:
         raise LookupError(f"PyPI API timed out: {pip_api_url}")
-    except (requests.exceptions.ConnectionError):
+    except requests.exceptions.ConnectionError:
         raise LookupError(f"PyPI API Connection error: {pip_api_url}")
     else:
         if response.status_code == 200:
             return response.json()
-        else:
-            raise ValueError(f"Could not find pip dependency using the PyPI API: `{dep}`")
+        raise ValueError(f"Could not find pip dependency using the PyPI API: `{dep}`")
 
 
 def get_biocontainer_tag(package, version):
@@ -746,12 +745,12 @@ def custom_yaml_dumper():
             """
             return self.represent_dict(data.items())
 
-        def increase_indent(self, flow=False, *args, **kwargs):
+        def increase_indent(self, flow=False, indentless=False):
             """Indent YAML lists so that YAML validates with Prettier
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super().increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=indentless)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -772,13 +771,13 @@ def is_file_binary(path):
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
     # Check common file extensions
-    filename, file_extension = os.path.splitext(path)
+    _, file_extension = os.path.splitext(path)
     if file_extension in binary_extensions:
         return True
 
     # Try to detect binary files
     (ftype, encoding) = mimetypes.guess_type(path, strict=False)
-    if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+    if encoding is not None or (ftype is not None and any(ftype.startswith(ft) for ft in binary_ftypes)):
         return True
 
 
@@ -967,7 +966,7 @@ def load_tools_config(dir="."):
 
 def sort_dictionary(d):
     """Sorts a nested dictionary recursively"""
-    result = dict()
+    result = {}
     for k, v in sorted(d.items()):
         if isinstance(v, dict):
             result[k] = sort_dictionary(v)
@@ -1017,3 +1016,47 @@ def is_relative_to(path1, path2):
     path2 (Path | str): The path the could be the superpath
     """
     return str(path1).startswith(str(path2) + os.sep)
+
+
+def file_md5(fname):
+    """Calculates the md5sum for a file on the disk.
+
+    Args:
+        fname (str): Path to a local file.
+    """
+
+    # Calculate the md5 for the file on disk
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(io.DEFAULT_BUFFER_SIZE), b""):
+            hash_md5.update(chunk)
+
+    return hash_md5.hexdigest()
+
+
+def validate_file_md5(file_name, expected_md5hex):
+    """Validates the md5 checksum of a file on disk.
+
+    Args:
+        file_name (str): Path to a local file.
+        expected (str): The expected md5sum.
+
+    Raises:
+        IOError, if the md5sum does not match the remote sum.
+    """
+    log.debug(f"Validating image hash: {file_name}")
+
+    # Make sure the expected md5 sum is a hexdigest
+    try:
+        int(expected_md5hex, 16)
+    except ValueError as ex:
+        raise ValueError(f"The supplied md5 sum must be a hexdigest but it is {expected_md5hex}") from ex
+
+    file_md5hex = file_md5(file_name)
+
+    if file_md5hex.upper() == expected_md5hex.upper():
+        log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
+    else:
+        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+
+    return True

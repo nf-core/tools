@@ -104,7 +104,6 @@ class TestSchema(unittest.TestCase):
         self.schema_obj.schema_filename = self.template_schema
         self.schema_obj.load_schema()
         docs = self.schema_obj.print_documentation()
-        print(docs)
         assert self.schema_obj.schema["title"] in docs
         assert self.schema_obj.schema["description"] in docs
         for definition in self.schema_obj.schema.get("definitions", {}).values():
@@ -296,7 +295,6 @@ class TestSchema(unittest.TestCase):
     def test_build_schema_param_bool(self):
         """Build a new schema param from a config value (bool)"""
         param = self.schema_obj.build_schema_param("True")
-        print(param)
         assert param == {"type": "boolean", "default": True}
 
     def test_build_schema_param_int(self):

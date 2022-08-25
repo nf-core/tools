@@ -1,0 +1,34 @@
+name: Generate images for docs
+on: [push]
+jobs:
+  rich_codex:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the repo
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: 3.x
+          cache: pip
+          cache-dependency-path: setup.py
+
+      - name: Install Nextflow
+        uses: nf-core/setup-nextflow@v1
+
+      - name: Install nf-core/tools
+        run: pip install .
+
+      - name: Generate terminal images with rich-codex
+        uses: ewels/rich-codex@v1
+        with:
+          commit_changes: "true"
+          clean_img_paths: docs/images/*.svg
+          terminal_width: 100
+          before_command: >
+            which nextflow &&
+            which nf-core &&
+            nextflow -version &&
+            nf-core --version
+            PY_COLORS=true

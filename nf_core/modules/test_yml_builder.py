@@ -9,6 +9,7 @@ from __future__ import print_function
 import errno
 import gzip
 import hashlib
+import io
 import logging
 import operator
 import os
@@ -216,7 +217,7 @@ class ModulesTestYmlBuilder(object):
         """Generate md5 sum for file"""
         hash_md5 = hashlib.md5()
         with open(fname, "rb") as f:
-            for chunk in iter(lambda: f.read(4096), b""):
+            for chunk in iter(lambda: f.read(io.DEFAULT_BUFFER_SIZE), b""):
                 hash_md5.update(chunk)
         md5sum = hash_md5.hexdigest()
         return md5sum
@@ -224,7 +225,7 @@ class ModulesTestYmlBuilder(object):
     def create_test_file_dict(self, results_dir, is_repeat=False):
         """Walk through directory and collect md5 sums"""
         test_files = []
-        for root, dir, files in os.walk(results_dir, followlinks=True):
+        for root, _, files in os.walk(results_dir, followlinks=True):
             for filename in files:
                 # Check that the file is not versions.yml
                 if filename == "versions.yml":

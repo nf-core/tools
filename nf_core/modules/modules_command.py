@@ -19,11 +19,11 @@ class ModuleCommand:
     Base class for the 'nf-core modules' commands
     """
 
-    def __init__(self, dir, remote_url=None, branch=None, no_pull=False, base_path=None):
+    def __init__(self, dir, remote_url=None, branch=None, no_pull=False):
         """
         Initialise the ModulesCommand object
         """
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, base_path)
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
         self.dir = dir
         try:
             if self.dir:
@@ -62,7 +62,6 @@ class ModuleCommand:
         nf_config = os.path.join(self.dir, "nextflow.config")
         if not os.path.exists(main_nf) and not os.path.exists(nf_config):
             raise UserWarning(f"Could not find a 'main.nf' or 'nextflow.config' file in '{self.dir}'")
-        self.has_modules_file()
         return True
 
     def has_modules_file(self):

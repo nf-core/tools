@@ -13,6 +13,7 @@ import re
 import git
 import rich
 import rich.progress
+from git.exc import InvalidGitRepositoryError
 from rich.console import group
 from rich.markdown import Markdown
 from rich.panel import Panel
@@ -86,8 +87,9 @@ def run_linting(
     # Create the modules lint object
     module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir)
 
-    # Verify that the pipeline is correctly configured
+    # Verify that the pipeline is correctly configured and has  a modules.json file
     module_lint_obj.has_valid_directory()
+    module_lint_obj.has_modules_file()
 
     # Run only the tests we want
     if key:
@@ -289,7 +291,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             log.info("Attempting to automatically fix failing tests")
             try:
                 repo = git.Repo(self.wf_path)
-            except git.exc.InvalidGitRepositoryError as e:
+            except InvalidGitRepositoryError:
                 raise AssertionError(
                     f"'{self.wf_path}' does not appear to be a git repository, "
                     "this is required when running with '--fix'"

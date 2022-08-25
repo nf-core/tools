@@ -192,83 +192,22 @@ The command `nf-core list` shows all available nf-core pipelines along with thei
 
 An example of the output from the command is as follows:
 
-```console
-$ nf-core list
+<!-- RICH-CODEX head: 19 -->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│ rnafusion         │    45 │          1.2.0 │   2 weeks ago │            - │ -                     │
-│ hic               │    17 │          1.2.1 │   3 weeks ago │ 4 months ago │ No (v1.1.0)           │
-│ chipseq           │    56 │          1.2.0 │   4 weeks ago │  4 weeks ago │ No (dev - bfe7eb3)    │
-│ atacseq           │    40 │          1.2.0 │   4 weeks ago │  6 hours ago │ No (master - 79bc7c2) │
-│ viralrecon        │    20 │          1.1.0 │  1 months ago │ 1 months ago │ Yes (v1.1.0)          │
-│ sarek             │    59 │          2.6.1 │  1 months ago │            - │ -                     │
-[..truncated..]
-```
+![`nf-core list`](docs/images/nf-core-list.svg)
 
 To narrow down the list, supply one or more additional keywords to filter the pipelines based on matches in titles, descriptions and topics:
 
-```console
-$ nf-core list rna rna-seq
-
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-┏━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Pipeline Name ┃ Stars ┃ Latest Release ┃     Released ┃ Last Pulled ┃ Have latest release? ┃
-┡━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ dualrnaseq    │     3 │          1.0.0 │ 1 months ago │           - │ -                    │
-│ rnaseq        │   304 │            3.0 │ 3 months ago │ 1 years ago │ No (v1.4.2)          │
-│ rnafusion     │    56 │          1.2.0 │ 8 months ago │ 2 years ago │ No (v1.0.1)          │
-│ smrnaseq      │    18 │          1.0.0 │  1 years ago │           - │ -                    │
-│ circrna       │     1 │            dev │            - │           - │ -                    │
-│ lncpipe       │    18 │            dev │            - │           - │ -                    │
-│ scflow        │     2 │            dev │            - │           - │ -                    │
-└───────────────┴───────┴────────────────┴──────────────┴─────────────┴──────────────────────┘
-```
+![`nf-core list rna rna-seq`](docs/images/nf-core-list-rna.svg)
 
 You can sort the results by latest release (`-s release`, default),
 when you last pulled a local copy (`-s pulled`),
 alphabetically (`-s name`),
 or number of GitHub stars (`-s stars`).
 
-```console
-$ nf-core list -s stars
+<!-- RICH-CODEX head: 18 -->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-┏━━━━━━━━━━━━━━━━━━━┳━━━━━━━┳━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Pipeline Name     ┃ Stars ┃ Latest Release ┃      Released ┃  Last Pulled ┃ Have latest release?  ┃
-┡━━━━━━━━━━━━━━━━━━━╇━━━━━━━╇━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━┩
-│ rnaseq            │   207 │          1.4.2 │  9 months ago │   5 days ago │ Yes (v1.4.2)          │
-│ sarek             │    59 │          2.6.1 │  1 months ago │            - │ -                     │
-│ chipseq           │    56 │          1.2.0 │   4 weeks ago │  4 weeks ago │ No (dev - bfe7eb3)    │
-│ methylseq         │    47 │            1.5 │  4 months ago │            - │ -                     │
-│ rnafusion         │    45 │          1.2.0 │   2 weeks ago │            - │ -                     │
-│ ampliseq          │    41 │          1.1.2 │  7 months ago │            - │ -                     │
-│ atacseq           │    40 │          1.2.0 │   4 weeks ago │  6 hours ago │ No (master - 79bc7c2) │
-[..truncated..]
-```
+![`nf-core list -s stars`](docs/images/nf-core-list-stars.svg)
 
 To return results as JSON output for downstream use, use the `--json` flag.
 
@@ -290,39 +229,9 @@ This makes it easier to reuse these in the future.
 The command takes one argument - either the name of an nf-core pipeline which will be pulled automatically,
 or the path to a directory containing a Nextflow pipeline _(can be any pipeline, doesn't have to be nf-core)_.
 
-```console
-$ nf-core launch rnaseq
+<!-- RICH-CODEX trim_after: "Command line" -->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-INFO     This tool ignores any pipeline parameter defaults overwritten by Nextflow config files or profiles
-
-INFO     Using local workflow: nf-core/rnaseq (v3.0)
-INFO     [✓] Default parameters look valid
-INFO     [✓] Pipeline schema looks valid (found 85 params)
-INFO     Would you like to enter pipeline parameters using a web-based interface or a command-line wizard?
-? Choose launch method  Command line
-
-
-?  Nextflow command-line flags
-General Nextflow flags to control how the pipeline runs.
-These are not specific to the pipeline and will not be saved in any parameter file. They are just used when building the nextflow run launch command.
-(Use arrow keys)
-
- » Continue >>
-   ---------------
-   -name
-   -profile
-   -work-dir  [./work]
-   -resume  [False]
-```
+![`nf-core launch rnaseq -r 3.8.1`](docs/images/nf-core-launch-rnaseq.svg)
 
 Once complete, the wizard will ask you if you want to launch the Nextflow run.
 If not, you can copy and paste the Nextflow command with the `nf-params.json` file of your inputs.
@@ -370,73 +279,20 @@ The `nf-core download` command will download both the pipeline code and the [ins
 If run without any arguments, the download tool will interactively prompt you for the required information.
 Each option has a flag, if all are supplied then it will run without any user input needed.
 
-```console
-$ nf-core download
+<!-- RICH-CODEX
+working_dir: tmp
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-Specify the name of a nf-core pipeline or a GitHub repository name (user/repo).
-? Pipeline name: rnaseq
-? Select release / branch: 3.0  [release]
-
-In addition to the pipeline code, this tool can download software containers.
-? Download software container images: singularity
-
-Nextflow and nf-core can use an environment variable called $NXF_SINGULARITY_CACHEDIR that is a path to a directory where remote Singularity
-images are stored. This allows downloaded images to be cached in a central location.
-? Define $NXF_SINGULARITY_CACHEDIR for a shared Singularity image download folder? [y/n]: y
-? Specify the path: cachedir/
-
-So that $NXF_SINGULARITY_CACHEDIR is always defined, you can add it to your ~/.bashrc file. This will then be autmoatically set every time you open a new terminal. We can add the following line to this file for you:
-export NXF_SINGULARITY_CACHEDIR="/path/to/demo/cachedir"
-? Add to ~/.bashrc ? [y/n]: n
-
-If transferring the downloaded files to another system, it can be convenient to have everything compressed in a single file.
-This is not recommended when downloading Singularity images, as it can take a long time and saves very little space.
-? Choose compression type: none
-INFO     Saving 'nf-core/rnaseq
-          Pipeline release: '3.0'
-          Pull containers: 'singularity'
-          Using $NXF_SINGULARITY_CACHEDIR': /path/to/demo/cachedir
-          Output directory: 'nf-core-rnaseq-3.0'
-INFO     Downloading workflow files from GitHub
-INFO     Downloading centralised configs from GitHub
-INFO     Found 29 containers
-Downloading singularity images ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% • 29/29 completed
-```
+![`nf-core download rnaseq -r 3.8 --outdir nf-core-rnaseq -x none -c none`](docs/images/nf-core-download.svg)
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
-```console
-$ tree -L 2 nf-core-rnaseq-3.0/
-
-nf-core-rnaseq-3.0
-├── configs
-│   ├── ..truncated..
-│   ├── nextflow.config
-│   ├── nfcore_custom.config
-│   └── pipeline
-├── singularity-images
-│   ├── containers.biocontainers.pro-s3-SingImgsRepo-biocontainers-v1.2.0_cv1-biocontainers_v1.2.0_cv1.img.img
-│   ├── ..truncated..
-│   └── depot.galaxyproject.org-singularity-umi_tools-1.1.1--py38h0213d0e_1.img
-└── workflow
-    ├── CHANGELOG.md
-    ├── ..truncated..
-    └── main.nf
-```
+![`tree -L 2 nf-core-rnaseq/`](docs/images/nf-core-download-tree.svg)
 
 You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
 
 ```bash
-nextflow run /path/to/download/nf-core-rnaseq-3.0/workflow/ --input mydata.csv   # usual parameters here
+nextflow run /path/to/download/nf-core-rnaseq-dev/workflow/ --input mydata.csv --outdir results  # usual parameters here
 ```
 
 ### Downloaded nf-core configs
@@ -500,52 +356,13 @@ If the download speeds are much slower than your internet connection is capable 
 Sometimes it's useful to see the software licences of the tools used in a pipeline.
 You can use the `licences` subcommand to fetch and print the software licence from each conda / PyPI package used in an nf-core pipeline.
 
-> NB: Currently this command does not work for DSL2 pipelines. This will be addressed [soon](https://github.com/nf-core/tools/issues/1155).
+> ⚠️ This command does not currently work for newer DSL2 pipelines. This will hopefully be addressed [soon](https://github.com/nf-core/tools/issues/1155).
 
-```console
-$ nf-core licences rnaseq
+<!-- RICH-CODEX
+timeout: 10
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-  INFO     Fetching licence information for 25 tools
-  INFO     Warning: This tool only prints licence information for the software tools packaged using conda.
-  INFO     The pipeline may use other software and dependencies not described here.
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Package Name                      ┃ Version ┃ Licence              ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━┩
-│ stringtie                         │ 2.0     │ Artistic License 2.0 │
-│ bioconductor-summarizedexperiment │ 1.14.0  │ Artistic-2.0         │
-│ preseq                            │ 2.0.3   │ GPL                  │
-│ trim-galore                       │ 0.6.4   │ GPL                  │
-│ bioconductor-edger                │ 3.26.5  │ GPL >=2              │
-│ fastqc                            │ 0.11.8  │ GPL >=3              │
-│ bioconductor-tximeta              │ 1.2.2   │ GPLv2                │
-│ qualimap                          │ 2.2.2c  │ GPLv2                │
-│ r-gplots                          │ 3.0.1.1 │ GPLv2                │
-│ r-markdown                        │ 1.1     │ GPLv2                │
-│ rseqc                             │ 3.0.1   │ GPLv2                │
-│ bioconductor-dupradar             │ 1.14.0  │ GPLv3                │
-│ deeptools                         │ 3.3.1   │ GPLv3                │
-│ hisat2                            │ 2.1.0   │ GPLv3                │
-│ multiqc                           │ 1.7     │ GPLv3                │
-│ salmon                            │ 0.14.2  │ GPLv3                │
-│ star                              │ 2.6.1d  │ GPLv3                │
-│ subread                           │ 1.6.4   │ GPLv3                │
-│ r-base                            │ 3.6.1   │ GPLv3.0              │
-│ sortmerna                         │ 2.1b    │ LGPL                 │
-│ gffread                           │ 0.11.4  │ MIT                  │
-│ picard                            │ 2.21.1  │ MIT                  │
-│ samtools                          │ 1.9     │ MIT                  │
-│ r-data.table                      │ 1.12.4  │ MPL-2.0              │
-│ matplotlib                        │ 3.0.3   │ PSF-based            │
-└───────────────────────────────────┴─────────┴──────────────────────┘
-```
+![`nf-core licences deepvariant`](docs/images/nf-core-licences.svg)
 
 ## Creating a new pipeline
 
@@ -556,34 +373,11 @@ After creating the files, the command initialises the folder as a git repository
 This first "vanilla" commit which is identical to the output from the templating tool is important, as it allows us to keep your pipeline in sync with the base template in the future.
 See the [nf-core syncing docs](https://nf-co.re/developers/sync) for more information.
 
-```console
-$ nf-core create
+<!-- RICH-CODEX
+working_dir: tmp
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-Workflow Name: nextbigthing
-Description: This pipeline analyses data from the next big 'omics technique
-Author: Big Steve
-  INFO     Creating new nf-core pipeline: nf-core/nextbigthing
-  INFO     Initialising pipeline git repository
-  INFO     Done. Remember to add a remote and push to GitHub:
-            cd /Users/philewels/GitHub/nf-core/tools/test-create/nf-core-nextbigthing
-            git remote add origin git@github.com:USERNAME/REPO_NAME.git
-            git push --all origin
-  INFO     This will also push your newly created dev branch and the TEMPLATE branch for syncing.
-  INFO     !!!!!! IMPORTANT !!!!!!
-
-           If you are interested in adding your pipeline to the nf-core community,
-           PLEASE COME AND TALK TO US IN THE NF-CORE SLACK BEFORE WRITING ANY CODE!
-
-           Please read: https://nf-co.re/developers/adding_pipelines#join-the-community
-```
+![` nf-core create -n nextbigthing -d "This pipeline analyses data from the next big omics technique" -a "Big Steve" --plain`](docs/images/nf-core-create.svg)
 
 Once you have run the command, create a new empty repository on GitHub under your username (not the `nf-core` organisation, yet) and push the commits from your computer using the example commands in the above log.
 You can then continue to edit, commit and push normally as you build your pipeline.
@@ -625,46 +419,16 @@ This is the same test that is used on the automated continuous integration tests
 
 For example, the current version looks something like this:
 
-```console
-$ nf-core lint
+<!-- RICH-CODEX
+min_pct_diff: 15  # Progress bar changes each time - would be good to figure out how to disable it
+timeout: 60
+working_dir: tmp/nf-core-nextbigthing
+before_command: >
+  echo "lint: { pipeline_todos: false }" >> .nf-core.yml
+fake_command: nf-core lint
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-    nf-core/tools version 2.2
-
-INFO     Testing pipeline: .
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ General lint results                                                                                            │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 1 Test Warnings                                                                                             │
-├─────────────────────────────────────────────────────────────────────────────────────────────────────────────────┤
-│ pipeline_todos: TODO string in base.config: Check the defaults for all processes                                │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Module lint results                                                                                             │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 1 Test Warnings                                                                                             │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────┬──────────────────────────────────┬───────────────────────────────────╮
-│ Module name                              │ File path                        │ Test message                      │
-├──────────────────────────────────────────┼──────────────────────────────────┼───────────────────────────────────┤
-│ get_software_versions.nf                 │ modules/local/get_software_vers… │ 'options' variable not specified  │
-╰──────────────────────────────────────────┴──────────────────────────────────┴───────────────────────────────────╯
-╭───────────────────────╮
-│ LINT RESULTS SUMMARY  │
-├───────────────────────┤
-│ [✔] 183 Tests Passed  │
-│ [?]   0 Tests Ignored │
-│ [!]   2 Test Warnings │
-│ [✗]   0 Tests Failed  │
-╰───────────────────────╯
-
-```
+![`nf-core lint`](docs/images/nf-core-lint.svg)
 
 You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
 
@@ -732,26 +496,16 @@ To help developers working with pipeline schema, nf-core tools has three `schema
 Nextflow can take input parameters in a JSON or YAML file when running a pipeline using the `-params-file` option.
 This command validates such a file against the pipeline schema.
 
-Usage is `nf-core schema validate <pipeline> <parameter file>`, eg:
+`Usage is `nf-core schema validate <pipeline> <parameter file>`. eg with the pipeline downloaded [above](#download-pipeline), you can run:
 
-```console
-$ nf-core schema validate rnaseq nf-params.json
+<!-- RICH-CODEX
+working_dir: tmp
+before_command: 'echo "{input: myfiles.csv, outdir: results}" > nf-params.json'
+timeout: 10
+after_command: rm nf-params.json
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-
-INFO     Using local workflow: nf-core/rnaseq (v3.0)
-INFO     [✓] Default parameters look valid
-INFO     [✓] Pipeline schema looks valid (found 85 params)
-INFO     [✓] Input parameters look valid
-```
+![`nf-core schema validate nf-core-rnaseq/workflow nf-params.json`](docs/images/nf-core-schema-validate.svg)
 
 The `pipeline` option can be a directory containing a pipeline, a path to a schema file or the name of an nf-core pipeline (which will be downloaded using `nextflow pull`).
 
@@ -766,30 +520,13 @@ The tool checks the status of your schema on the website and once complete, save
 
 Usage is `nf-core schema build -d <pipeline_directory>`, eg:
 
-```console
-$ nf-core schema build nf-core-testpipeline
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+timeout: 10
+before_command: sed '25,30d' nextflow_schema.json > nextflow_schema.json.tmp && mv nextflow_schema.json.tmp nextflow_schema.json
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-  INFO     [✓] Default parameters look valid
-  INFO     [✓] Pipeline schema looks valid (found 25 params)
-❓ Unrecognised 'params.old_param' found in schema but not pipeline! Remove it? [y/n]: y
-❓ Unrecognised 'params.we_removed_this_too' found in schema but not pipeline! Remove it? [y/n]: y
-✨ Found 'params.input' in pipeline but not in schema. Add to pipeline schema? [y/n]: y
-✨ Found 'params.outdir' in pipeline but not in schema. Add to pipeline schema? [y/n]: y
-  INFO     Writing schema with 25 params: 'nf-core-testpipeline/nextflow_schema.json'
-🚀 Launch web builder for customisation and editing? [y/n]: y
-  INFO: Opening URL: https://nf-co.re/pipeline_schema_builder?id=1234567890_abc123def456
-  INFO: Waiting for form to be completed in the browser. Remember to click Finished when you're done.
-  INFO: Found saved status from nf-core JSON Schema builder
-  INFO: Writing JSON schema with 25 params: nf-core-testpipeline/nextflow_schema.json
-```
+![`nf-core schema build --no-prompts`](docs/images/nf-core-schema-build.svg)
 
 There are four flags that you can use with this command:
 
@@ -805,20 +542,11 @@ however sometimes it can be useful to quickly check the syntax of the JSONSchema
 
 Usage is `nf-core schema lint <schema>`, eg:
 
-```console
-$ nf-core schema lint nextflow_schema.json
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-  ERROR    [✗] Pipeline schema does not follow nf-core specs:
-            Definition subschema 'input_output_options' not included in schema 'allOf'
-```
+![`nf-core schema lint nextflow_schema.json`](docs/images/nf-core-schema-lint.svg)
 
 ## Bumping a pipeline version number
 
@@ -828,45 +556,11 @@ The command uses results from the linting process, so will only work with workfl
 
 Usage is `nf-core bump-version <new_version>`, eg:
 
-```console
-$ cd path/to/my_pipeline
-$ nf-core bump-version 1.7
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+-->
 
-    nf-core/tools version 2.2
-
-
-
-INFO     Changing version number from '1.6dev' to '1.7'
-INFO     Updated version in 'nextflow.config'
-           - version = '1.6dev'
-           + version = '1.7'
-           - process.container = 'nfcore/methylseq:dev'
-           + process.container = 'nfcore/methylseq:1.7'
-
-
-INFO     Updated version in '.github/workflows/ci.yml'
-           - run: docker build --no-cache . -t nfcore/methylseq:dev
-           + run: docker build --no-cache . -t nfcore/methylseq:1.7
-           - docker tag nfcore/methylseq:dev nfcore/methylseq:dev
-           + docker tag nfcore/methylseq:dev nfcore/methylseq:1.7
-
-
-INFO     Updated version in 'environment.yml'
-           - name: nf-core-methylseq-1.6dev
-           + name: nf-core-methylseq-1.7
-
-
-INFO     Updated version in 'Dockerfile'
-           - ENV PATH /opt/conda/envs/nf-core-methylseq-1.6dev/bin:$PATH
-           + ENV PATH /opt/conda/envs/nf-core-methylseq-1.7/bin:$PATH
-           - RUN conda env export --name nf-core-methylseq-1.6dev > nf-core-methylseq-1.6dev.yml
-           + RUN conda env export --name nf-core-methylseq-1.7 > nf-core-methylseq-1.7.yml
-```
+![`nf-core bump-version 1.1`](docs/images/nf-core-bump-version.svg)
 
 You can change the directory from the current working directory by specifying `--dir <pipeline_dir>`. To change the required version of Nextflow instead of the pipeline version number, use the flag `--nextflow`.
 
@@ -884,28 +578,12 @@ Note that pipeline synchronisation happens automatically each time nf-core/tools
 This command takes a pipeline directory and attempts to run this synchronisation.
 Usage is `nf-core sync`, eg:
 
-```console
-$ nf-core sync my_pipeline/
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+before_command: git config --global user.email "nf-core_bot@example.com" && git config --global user.name "nf-core_bot" &&  git commit -am "Bump version"
+-->
 
-    nf-core/tools version 2.2
-
-
-
-INFO     Pipeline directory: /path/to/my_pipeline/
-INFO     Original pipeline repository branch is 'master'
-INFO     Deleting all files in 'TEMPLATE' branch
-INFO     Making a new template pipeline using pipeline variables
-INFO     Committed changes to 'TEMPLATE' branch
-INFO     Checking out original branch: 'master'
-INFO     Now try to merge the updates in to your pipeline:
-           cd /path/to/my_pipeline/
-           git merge TEMPLATE
-```
+![`nf-core sync`](docs/images/nf-core-sync.svg)
 
 The sync command tries to check out the `TEMPLATE` branch from the `origin` remote or an existing local branch called `TEMPLATE`.
 It will fail if it cannot do either of these things.
@@ -945,8 +623,6 @@ For example, if you want to install the `fastqc` module from the repository `nf-
 nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
 ```
 
-If the modules in your custom remote are stored in another directory than `modules`, you can specify the path by using the `--base-path <path>` flag. This will default to `modules`. Note that all branches in a remote must use the same base path, otherwise the commands will fail.
-
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
@@ -967,57 +643,23 @@ The `nf-core modules list` command provides the subcommands `remote` and `local`
 To list all modules available on [nf-core/modules](https://github.com/nf-core/modules), you can use
 `nf-core modules list remote`, which will print all available modules to the terminal.
 
-```console
-$ nf-core modules list remote
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+head: 25
+-->
 
-    nf-core/tools version 2.2
-
-
-INFO     Modules available from nf-core/modules (master)
-
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
-┃ Module Name                    ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┩
-│ bandage/image                  │
-│ bcftools/consensus             │
-│ bcftools/filter                │
-│ bcftools/isec                  │
-│ bcftools/merge                 │
-│ bcftools/mpileup               │
-│ bcftools/stats                 │
-│ ..truncated..                  │
-└────────────────────────────────┘
-```
+![`nf-core modules list remote`](docs/images/nf-core-modules-list-remote.svg)
 
 #### List installed modules
 
 To list modules installed in a local pipeline directory you can use `nf-core modules list local`. This will list the modules install in the current working directory by default. If you want to specify another directory, use the `--dir <pipeline_dir>` flag.
 
-```console
-$ nf-core modules list local
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+head: 25
+-->
 
-    nf-core/tools version 2.2
-
-
-INFO     Modules installed in '.':
-
-┏━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
-┃ Module Name ┃ Repository      ┃ Version SHA ┃ Message                                                ┃ Date       ┃
-┡━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━┩
-│ fastqc      │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
-│ multiqc     │ nf-core/modules │ e937c79...  │ Rename software/ directory to modules/ ...truncated... │ 2021-07-07 │
-└─────────────┴─────────────────┴─────────────┴────────────────────────────────────────────────────────┴────────────┘
-```
+![`nf-core modules list local`](docs/images/nf-core-modules-list-local.svg)
 
 ## Show information about a module
 
@@ -1025,67 +667,22 @@ For quick help about how a module works, use `nf-core modules info <tool>`.
 This shows documentation about the module on the command line, similar to what's available on the
 [nf-core website](https://nf-co.re/modules).
 
-```console
-$ nf-core modules info fastqc
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.3.dev0 - https://nf-co.re
-
-
-╭─ Module: fastqc  ───────────────────────────────────────────────────────────────────────────────────────╮
-│ 🌐 Repository: nf-core/modules                                                                          │
-│ 🔧 Tools: fastqc                                                                                        │
-│ 📖 Description: Run FastQC on sequenced reads                                                           │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-               ╷                                                                                  ╷
- 📥 Inputs     │Description                                                                       │Pattern
-╺━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━╸
-  meta  (map)  │Groovy Map containing sample information e.g. [ id:'test', single_end:false ]     │
-╶──────────────┼──────────────────────────────────────────────────────────────────────────────────┼───────╴
-  reads  (file)│List of input FastQ files of size 1 and 2 for single-end and paired-end data,     │
-               │respectively.                                                                     │
-               ╵                                                                                  ╵
-                  ╷                                                                       ╷
- 📤 Outputs       │Description                                                            │        Pattern
-╺━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┿━━━━━━━━━━━━━━━╸
-  meta  (map)     │Groovy Map containing sample information e.g. [ id:'test',             │
-                  │single_end:false ]                                                     │
-╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
-  html  (file)    │FastQC report                                                          │*_{fastqc.html}
-╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
-  zip  (file)     │FastQC report archive                                                  │ *_{fastqc.zip}
-╶─────────────────┼───────────────────────────────────────────────────────────────────────┼───────────────╴
-  versions  (file)│File containing software versions                                      │   versions.yml
-                  ╵                                                                       ╵
-
- 💻  Installation command: nf-core modules install fastqc
-
-```
+![`nf-core modules info abacas`](docs/images/nf-core-modules-info.svg)
 
 ### Install modules in a pipeline
 
 You can install modules from [nf-core/modules](https://github.com/nf-core/modules) in your pipeline using `nf-core modules install`.
 A module installed this way will be installed to the `./modules/nf-core/modules` directory.
 
-```console
-$ nf-core modules install
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+-->
 
-    nf-core/tools version 2.2
-
-? Tool name: cat/fastq
-INFO     Installing cat/fastq
-INFO     Downloaded 3 files to ./modules/nf-core/modules/cat/fastq
-```
+![`nf-core modules install abacas`](docs/images/nf-core-modules-install.svg)
 
 You can pass the module name as an optional argument to `nf-core modules install` instead of using the cli prompt, eg: `nf-core modules install fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
@@ -1099,20 +696,11 @@ There are three additional flags that you can use when installing a module:
 
 You can update modules installed from a remote repository in your pipeline using `nf-core modules update`.
 
-```console
-$ nf-core modules update
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+-->
 
-    nf-core/tools version 2.2
-
-? Tool name: fastqc
-INFO     Updating 'nf-core/modules/fastqc'
-INFO     Downloaded 3 files to ./modules/nf-core/modules/fastqc
-```
+![`nf-core modules update --all --no-preview`](docs/images/nf-core-modules-update.svg)
 
 You can pass the module name as an optional argument to `nf-core modules update` instead of using the cli prompt, eg: `nf-core modules update fastqc`. You can specify a pipeline directory other than the current working directory by using the `--dir <pipeline dir>`.
 
@@ -1161,20 +749,11 @@ Note that the module versions specified in the `.nf-core.yml` file has higher pr
 
 To delete a module from your pipeline, run `nf-core modules remove`.
 
-```console
-$ nf-core modules remove
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-? Tool name: star/align
-INFO     Removing star/align
-```
+![`nf-core modules remove abacas`](docs/images/nf-core-modules-remove.svg)
 
 You can pass the module name as an optional argument to `nf-core modules remove` instead of using the cli prompt, eg: `nf-core modules remove fastqc`. To specify the pipeline directory, use `--dir <pipeline_dir>`.
 
@@ -1182,44 +761,16 @@ You can pass the module name as an optional argument to `nf-core modules remove`
 
 If you want to make a minor change to a locally installed module but still keep it up date with the remote version, you can create a patch file using `nf-core modules patch`.
 
-```console
-$ nf-core modules patch
+<!-- RICH-CODEX
+working_dir: tmp/nf-core-nextbigthing
+before_command:  sed "s/process_medium/process_low/g" modules/nf-core/modules/fastqc/main.nf > modules/nf-core/modules/fastqc/main.nf.patch && mv modules/nf-core/modules/fastqc/main.nf.patch modules/nf-core/modules/fastqc/main.nf
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.5.dev0 - https://nf-co.re
-
-
-? Tool: bismark/align
-INFO     Changes in module 'nf-core/modules/bismark/align'
-INFO     Changes in 'bismark/align/main.nf':
-
- --- modules/nf-core/modules/bismark/align/main.nf
- +++ modules/nf-core/modules/bismark/align/main.nf
- @@ -19,8 +19,7 @@
-      }
-
-      input:
- -    tuple val(meta), path(reads)
- -    path index
- +    tuple val(meta), path(reads), path index
-
-      output:
-      tuple val(meta), path("*bam")       , emit: bam
-
-
-INFO     'modules/nf-core/modules/bismark/align/functions.nf' is unchanged
-INFO     'modules/nf-core/modules/bismark/align/meta.yml' is unchanged
-INFO     Patch file of 'nf-core/modules/bismark/align' written to 'modules/nf-core/modules/bismark/align/bismark-align.diff'
-```
+![`nf-core modules patch fastqc`](docs/images/nf-core-modules-patch.svg)
 
 The generated patches work with `nf-core modules update`: when you install a new version of the module, the command tries to apply
 the patch automatically. The patch application fails if the new version of the module modifies the same lines as the patch. In this case,
-the patch new version is installed but the old patch file is preversed.
+the patch new version is installed but the old patch file is preserved.
 
 When linting a patched module, the linting command will check the validity of the patch. When running other lint tests the patch is applied in reverse, and the original files are linted.
 
@@ -1241,36 +792,13 @@ It will start in the current working directory, or whatever is specified with `-
 
 The `nf-core modules create` command will prompt you with the relevant questions in order to create all of the necessary module files.
 
-```console
-$ nf-core modules create
+<!-- RICH-CODEX
+working_dir: tmp
+before_command: git clone https://github.com/nf-core/modules.git && cd modules
+fake_command: nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-INFO     Press enter to use default values (shown in brackets) or type your own responses. ctrl+click underlined text to open links.
-Name of tool/subtool: star/align
-INFO     Using Bioconda package: 'bioconda::star=2.6.1d'
-INFO     Using Docker / Singularity container with tag: 'star:2.6.1d--0'
-GitHub Username: (@ewels):
-INFO     Provide an appropriate resource label for the process, taken from the nf-core pipeline template.
-         For example: process_low, process_medium, process_high, process_long
-? Process resource label: process_high
-INFO     Where applicable all sample-specific information e.g. 'id', 'single_end', 'read_group' MUST be provided as an input via a
-         Groovy Map called 'meta'. This information may not be required in some instances, for example indexing reference genome files.
-Will the module require a meta map of sample information? [y/n] (y): y
-INFO     Created / edited following files:
-           ./software/star/align/main.nf
-           ./software/star/align/meta.yml
-           ./tests/software/star/align/main.nf
-           ./tests/software/star/align/test.yml
-           ./tests/config/pytest_modules.yml
-```
+![`cd modules && nf-core modules create fastqc --author @nf-core-bot  --label process_low --meta --force`](docs/images/nf-core-modules-create.svg)
 
 ### Create a module test config file
 
@@ -1278,46 +806,12 @@ All modules on [nf-core/modules](https://github.com/nf-core/modules) have a stri
 To help developers build new modules, the `nf-core modules create-test-yml` command automates the creation of the yaml file required to document the output file `md5sum` and other information generated by the testing.
 After you have written a minimal Nextflow script to test your module `modules/tests/software/<tool>/<subtool>/main.nf`, this command will run the tests for you and create the `modules/tests/software/<tool>/<subtool>/test.yml` file.
 
-```console
-$ nf-core modules create-test-yml
+<!-- RICH-CODEX
+working_dir: tmp/modules
+min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-INFO     Press enter to use default values (shown in brackets) or type your own responses
-? Tool name: star/align
-Test YAML output path (- for stdout) (tests/software/star/align/test.yml):
-File exists! 'tests/software/star/align/test.yml' Overwrite? [y/n]: y
-INFO     Looking for test workflow entry points: 'tests/software/star/align/main.nf'
-──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-INFO     Building test meta for entry point 'test_star_alignment_single_end'
-Test name (star align test_star_alignment_single_end):
-Test command (nextflow run tests/software/star/align -entry test_star_alignment_single_end -c tests/config/nextflow.config):
-Test tags (comma separated) (star_alignment_single_end,star_align,star):
-Test output folder with results (leave blank to run test):
-? Choose software profile  Docker
-INFO     Running 'star/align' test with command:
-         nextflow run tests/software/star/align -entry test_star_alignment_single_end -c tests/config/nextflow.config --outdir
-         /var/folders/bq/451scswn2dn4npxhf_28lyt40000gn/T/tmp_p22f8bg
-INFO     Test workflow finished!
-──────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
-INFO     Building test meta for entry point 'test_star_alignment_paired_end'
-Test name (star align test_star_alignment_paired_end):
-Test command (nextflow run tests/software/star/align -entry test_star_alignment_paired_end -c tests/config/nextflow.config):
-Test tags (comma separated) (star_align,star_alignment_paired_end,star):
-Test output folder with results (leave blank to run test):
-INFO     Running 'star/align' test with command:
-         nextflow run tests/software/star/align -entry test_star_alignment_paired_end -c tests/config/nextflow.config --outdir
-         /var/folders/bq/451scswn2dn4npxhf_28lyt40000gn/T/tmp5qc3kfie
-INFO     Test workflow finished!
-INFO     Writing to 'tests/software/star/align/test.yml'
-```
+![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
 
 ### Check a module against nf-core guidelines
 
@@ -1325,39 +819,12 @@ Run the `nf-core modules lint` command to check modules in the current working d
 
 Use the `--all` flag to run linting on all modules found. Use `--dir <pipeline_dir>` to specify another directory than the current working directory.
 
-```console
-$ nf-core modules lint
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/modules
+before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/main.nf.tmp && mv modules/multiqc/main.nf.tmp modules/multiqc/main.nf
+-->
 
-    nf-core/tools version 2.2
-
-? Lint all modules or a single named module? Named module
-? Tool name: star/align
-INFO     Linting pipeline: .
-INFO     Linting module: star/align
-╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ Module lint results                                                                                                │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ [!] 1 Test Warning                                                                                                 │
-╰────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭───────────────────┬────────────────────────────────────────────┬───────────────────────────────────────────────────╮
-│ Module name       │ File path                                  │ Test message                                      │
-├───────────────────┼────────────────────────────────────────────┼───────────────────────────────────────────────────┤
-│ star/align        │ modules/nf-core/modules/star/align/main.nf │ Conda update: bioconda::star 2.6.1d -> 2.7.9a     │
-╰───────────────────┴────────────────────────────────────────────┴───────────────────────────────────────────────────╯
-╭──────────────────────╮
-│ LINT RESULTS SUMMARY │
-├──────────────────────┤
-│ [✔]  21 Tests Passed │
-│ [!]   1 Test Warning │
-│ [✗]   0 Test Failed  │
-╰──────────────────────╯
-```
+![`nf-core modules lint multiqc`](docs/images/nf-core-modules-lint.svg)
 
 ### Run the tests for a module using pytest
 
@@ -1365,79 +832,24 @@ To run unit tests of a module that you have installed or the test created by the
 
 You can specify the module name in the form TOOL/SUBTOOL in command line or provide it later by prompts.
 
-```console
-$ nf-core modules test fastqc
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
+<!-- RICH-CODEX
+working_dir: tmp/modules
+timeout: 30
+extra_env:
+  PROFILE: 'conda'
+-->
 
-    nf-core/tools version 2.4
-
-? Choose software profile Docker
-INFO     Setting environment variable '$PROFILE' to 'docker'
-INFO     Running pytest for module 'fastqc'
-
-=============================================================== test session starts ================================================================
-platform darwin -- Python 3.9.12, pytest-7.1.2, pluggy-1.0.0
-rootdir: ~/modules, configfile: pytest.ini
-plugins: workflow-1.6.0
-collecting ...
-collected 761 items
-
-fastqc single-end:
-        command:   nextflow run ./tests/modules/fastqc/ -entry test_fastqc_single_end -c ./tests/config/nextflow.config -c ./tests/modules/fastqc/nextflow.config -c ./tests/modules/fastqc/nextflow.config
-        directory: /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end
-        stdout:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end/log.out
-        stderr:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_single-end/log.err
-'fastqc single-end' done.
-
-fastqc paired-end:
-        command:   nextflow run ./tests/modules/fastqc/ -entry test_fastqc_paired_end -c ./tests/config/nextflow.config -c ./tests/modules/fastqc/nextflow.config -c ./tests/modules/fastqc/nextflow.config
-        directory: /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end
-        stdout:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end/log.out
-        stderr:    /var/folders/lt/b3cs9y610fg_13q14dckwcvm0000gn/T/pytest_workflow_ahvulf1v/fastqc_paired-end/log.err
-'fastqc paired-end' done.
-
-tests/test_versions_yml.py sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 17%]
-ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 38%]
-ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss [ 59%]
-sssssssssssssssssssssssssssssssssssssssssssssssssssssssssss..ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss ssss [ 80%]
-ssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss     [ 98%]
-tests/modules/fastqc/test.yml ........
-Keeping temporary directories and logs. Use '--kwd' or '--keep-workflow-wd' to disable this behaviour.
-=================================================== 10 passed, 751 skipped, 479 warnings in 50.76s ===================================================
-```
+![`nf-core modules test samtools/view --no-prompts`](docs/images/nf-core-modules-test.svg)
 
 ### Bump bioconda and container versions of modules in
 
 If you are contributing to the `nf-core/modules` repository and want to bump bioconda and container versions of certain modules, you can use the `nf-core modules bump-versions` helper tool. This will bump the bioconda version of a single or all modules to the latest version and also fetch the correct Docker and Singularity container tags.
 
-```console
-$ nf-core modules bump-versions -d modules
+<!-- RICH-CODEX
+working_dir: tmp/modules
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.2
-
-
-
-? Bump versions for all modules or a single named module?  Named module
-? Tool name: bcftools/consensus
-╭───────────────────────────╮
-│ [!] 1  Module updated     │
-╰───────────────────────────╯
-╭─────────────────────────────────────────────────────────────╮
-│ Module name               │ Update message                  │
-├───────────────────────────┤─────────────────────────────────┤
-│ bcftools/consensus        │ Module updated:  1.11 --> 1.12  │
-╰─────────────────────────────────────────────────────────────╯
-```
+![`nf-core modules bump-versions fastqc`](docs/images/nf-core-modules-bump-version.svg)
 
 If you don't want to update certain modules or want to update them to specific versions, you can make use of the `.nf-core.yml` configuration file. For example, you can prevent the `star/align` module from being updated by adding the following to the `.nf-core.yml` file:
 
@@ -1457,20 +869,12 @@ bump-versions:
 
 When you want to use an image of a multi-tool container and you know the specific dependencies and their versions of that container, for example, by looking them up in the [BioContainers hash.tsv](https://github.com/BioContainers/multi-package-containers/blob/master/combinations/hash.tsv), you can use the `nf-core modules mulled` helper tool. This tool generates the name of a BioContainers mulled image.
 
-```console
-$ nf-core modules mulled pysam==0.16.0.1 biopython==1.78
+<!-- RICH-CODEX
+working_dir: tmp/modules
+after_command: cd ../../ && rm -rf tmp
+-->
 
-                                          ,--./,-.
-          ___     __   __   __   ___     /,-._.--~\
-    |\ | |__  __ /  ` /  \ |__) |__         }  {
-    | \| |       \__, \__/ |  \ |___     \`-._,-`-,
-                                          `._,._,'
-
-    nf-core/tools version 2.4
-
-
-mulled-v2-3a59640f3fe1ed11819984087d31d68600200c3f:185a25ca79923df85b58f42deb48f5ac4481e91f-0
-```
+![`nf-core modules mulled pysam==0.16.0.1 biopython==1.78`](docs/images/nf-core-modules-mulled.svg)
 
 ## Citation
 

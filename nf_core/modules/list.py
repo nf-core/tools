@@ -11,8 +11,8 @@ log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False, base_path=None):
-        super().__init__(pipeline_dir, remote_url, branch, no_pull, base_path)
+    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
     def list_modules(self, keywords=None, print_json=False):
@@ -91,10 +91,6 @@ class ModuleList(ModuleCommand):
                 repo_entry = modules_json["repos"].get(repo_name, {})
                 for module in sorted(modules):
                     repo_modules = repo_entry.get("modules")
-                    if repo_modules is None:
-                        raise UserWarning(
-                            "You 'modules.json' file is not up to date. Please remove it and rerun the command"
-                        )
                     module_entry = repo_modules.get(module)
 
                     if module_entry:
@@ -103,7 +99,6 @@ class ModuleList(ModuleCommand):
                             # pass repo_name to get info on modules even outside nf-core/modules
                             message, date = ModulesRepo(
                                 remote_url=repo_entry["git_url"],
-                                base_path=repo_entry["base_path"],
                                 branch=module_entry["branch"],
                             ).get_commit_info(version_sha)
                         except LookupError as e:

@@ -57,7 +57,7 @@ def main_nf(module_lint_object, module, fix_version, progress_bar):
             with open(module.main_nf, "r") as fh:
                 lines = fh.readlines()
             module.passed.append(("main_nf_exists", "Module file exists", module.main_nf))
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             module.failed.append(("main_nf_exists", "Module file does not exist", module.main_nf))
             return
 
@@ -197,18 +197,16 @@ def check_when_section(self, lines):
     if len(lines) == 0:
         self.failed.append(("when_exist", "when: condition has been removed", self.main_nf))
         return
-    elif len(lines) > 1:
+    if len(lines) > 1:
         self.failed.append(("when_exist", "when: condition has too many lines", self.main_nf))
         return
-    else:
-        self.passed.append(("when_exist", "when: condition is present", self.main_nf))
+    self.passed.append(("when_exist", "when: condition is present", self.main_nf))
 
     # Check the condition hasn't been changed.
     if lines[0].strip() != "task.ext.when == null || task.ext.when":
         self.failed.append(("when_condition", "when: condition has been altered", self.main_nf))
         return
-    else:
-        self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
+    self.passed.append(("when_condition", "when: condition is unchanged", self.main_nf))
 
 
 def check_process_section(self, lines, fix_version, progress_bar):
@@ -222,18 +220,16 @@ def check_process_section(self, lines, fix_version, progress_bar):
     if len(lines) == 0:
         self.failed.append(("process_exist", "Process definition does not exist", self.main_nf))
         return
-    else:
-        self.passed.append(("process_exist", "Process definition exists", self.main_nf))
+    self.passed.append(("process_exist", "Process definition exists", self.main_nf))
 
     # Checks that build numbers of bioconda, singularity and docker container are matching
-    build_id = "build"
     singularity_tag = "singularity"
     docker_tag = "docker"
     bioconda_packages = []
 
     # Process name should be all capital letters
     self.process_name = lines[0].split()[1]
-    if all([x.upper() for x in self.process_name]):
+    if all(x.upper() for x in self.process_name):
         self.passed.append(("process_capitals", "Process name is in capital letters", self.main_nf))
     else:
         self.failed.append(("process_capitals", "Process name is not in capital letters", self.main_nf))
@@ -293,9 +289,9 @@ def check_process_section(self, lines, fix_version, progress_bar):
             bioconda_version = bp.split("=")[1]
             # response = _bioconda_package(bp)
             response = nf_core.utils.anaconda_package(bp)
-        except LookupError as e:
+        except LookupError:
             self.warned.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
-        except ValueError as e:
+        except ValueError:
             self.failed.append(("bioconda_version", "Conda version not specified correctly", self.main_nf))
         else:
             # Check that required version is available at all
@@ -342,10 +338,7 @@ def check_process_section(self, lines, fix_version, progress_bar):
             else:
                 self.passed.append(("bioconda_latest", f"Conda package is the latest available: `{bp}`", self.main_nf))
 
-    if docker_tag == singularity_tag:
-        return True
-    else:
-        return False
+    return docker_tag == singularity_tag
 
 
 def _parse_input(self, line_raw):
@@ -482,7 +475,6 @@ def _container_type(line):
         url_match = re.search(url_regex, line, re.S)
         if url_match:
             return "singularity"
-        else:
-            return None
+        return None
     if line.startswith("biocontainers/") or line.startswith("quay.io/"):
         return "docker"

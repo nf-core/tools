@@ -9,6 +9,11 @@ on:
         description: Only run on nf-core/testpipeline?
         required: true
 
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   get-pipelines:
     runs-on: ubuntu-latest
