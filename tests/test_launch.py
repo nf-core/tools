@@ -228,7 +228,6 @@ class TestLaunch(unittest.TestCase):
         assert result["message"] == ""
         assert result["choices"] == ["True", "False"]
         assert result["default"] == "True"
-        print(type(True))
         assert result["filter"]("True") == True
         assert result["filter"]("true") == True
         assert result["filter"](True) == True

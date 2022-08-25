@@ -21,8 +21,9 @@ class ModuleRemove(ModuleCommand):
             log.error("You cannot remove a module in a clone of nf-core/modules")
             return False
 
-        # Check whether pipelines is valid
+        # Check whether pipeline is valid and with a modules.json file
         self.has_valid_directory()
+        self.has_modules_file()
 
         repo_name = self.modules_repo.fullname
         if module is None:

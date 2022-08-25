@@ -47,7 +47,6 @@ class TestModules(unittest.TestCase):
             "mypipeline", "it is mine", "me", no_git=True, outdir=self.pipeline_dir, plain=True
         ).init_pipeline()
         # Set up install objects
-        print("Setting up install objects")
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
@@ -58,7 +57,6 @@ class TestModules(unittest.TestCase):
         )
 
         # Set up remove objects
-        print("Setting up remove objects")
         self.mods_remove = nf_core.modules.ModuleRemove(self.pipeline_dir)
         self.mods_remove_alt = nf_core.modules.ModuleRemove(self.pipeline_dir)
 
@@ -143,6 +141,8 @@ class TestModules(unittest.TestCase):
         test_mod_json_up_to_date_module_removed,
         test_mod_json_up_to_date_reinstall_fails,
         test_mod_json_update,
+        test_mod_json_with_empty_modules_value,
+        test_mod_json_with_missing_modules_entry,
     )
     from .modules.patch import (
         test_create_patch_change,

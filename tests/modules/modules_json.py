@@ -1,3 +1,4 @@
+import copy
 import json
 import os
 import shutil
@@ -216,3 +217,33 @@ def test_mod_json_dump(self):
     with open(mod_json_path, "r") as f:
         mod_json_new = json.load(f)
     assert mod_json == mod_json_new
+
+
+def test_mod_json_with_empty_modules_value(self):
+    # Load module.json and remove the modules entry
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_orig = mod_json_obj.get_modules_json()
+    mod_json = copy.deepcopy(mod_json_orig)
+    mod_json["repos"]["nf-core/modules"]["modules"] = ""
+    # save the altered module.json and load it again to check if it will fix itself
+    mod_json_obj.modules_json = mod_json
+    mod_json_obj.dump()
+    mod_json_obj_new = ModulesJson(self.pipeline_dir)
+    mod_json_obj_new.check_up_to_date()
+    mod_json_new = mod_json_obj_new.get_modules_json()
+    assert mod_json_orig == mod_json_new
+
+
+def test_mod_json_with_missing_modules_entry(self):
+    # Load module.json and remove the modules entry
+    mod_json_obj = ModulesJson(self.pipeline_dir)
+    mod_json_orig = mod_json_obj.get_modules_json()
+    mod_json = copy.deepcopy(mod_json_orig)
+    mod_json["repos"]["nf-core/modules"].pop("modules")
+    # save the altered module.json and load it again to check if it will fix itself
+    mod_json_obj.modules_json = mod_json
+    mod_json_obj.dump()
+    mod_json_obj_new = ModulesJson(self.pipeline_dir)
+    mod_json_obj_new.check_up_to_date()
+    mod_json_new = mod_json_obj_new.get_modules_json()
+    assert mod_json_orig == mod_json_new
