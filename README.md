@@ -623,7 +623,6 @@ For example, if you want to install the `fastqc` module from the repository `nf-
 nf-core modules --git-remote git@gitlab.com:nf-core/modules-test.git install fastqc
 ```
 
-
 Note that a custom remote must follow a similar directory structure to that of `nf-core/moduleś` for the `nf-core modules` commands to work properly.
 
 The modules commands will during initalisation try to pull changes from the remote repositories. If you want to disable this, for example
