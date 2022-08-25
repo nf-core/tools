@@ -177,19 +177,17 @@ class ModulesRepo(object):
                 ModulesRepo.update_local_repo_status(self.fullname, True)
             # If the repo is already cloned, fetch the latest changes from the remote
             if not ModulesRepo.local_repo_synced(self.fullname):
-                if hide_progress:
-                    self.repo.remotes.origin.fetch()
-                else:
-                    pbar = rich.progress.Progress(
-                        "[bold blue]{task.description}",
-                        rich.progress.BarColumn(bar_width=None),
-                        "[bold yellow]{task.fields[state]}",
-                        transient=True,
+                pbar = rich.progress.Progress(
+                    "[bold blue]{task.description}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "[bold yellow]{task.fields[state]}",
+                    transient=True,
+                    disable=hide_progress,
+                )
+                with pbar:
+                    self.repo.remotes.origin.fetch(
+                        progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
                     )
-                    with pbar:
-                        self.repo.remotes.origin.fetch(
-                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
-                        )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
 
             # Before verifying the branch, fetch the changes

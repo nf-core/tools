@@ -302,10 +302,10 @@ def create(name, description, author, version, no_git, force, outdir, template_y
 @click.option("-p", "--show-passed", is_flag=True, help="Show passing tests on the command line")
 @click.option("-i", "--fail-ignored", is_flag=True, help="Convert ignored tests to failures")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
-@click.option("--hide-progress", is_flag=True, help="Don't show progress bars")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, hide_progress, markdown, json):
+@click.option("--hide-progress", is_flag=True, help="Don't show progress bars")
+def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, hide_progress):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -327,7 +327,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, hide_pr
     # Run the lint tests!
     try:
         lint_obj, module_lint_obj = nf_core.lint.run_linting(
-            dir, release, fix, key, show_passed, fail_ignored, fail_warned, hide_progress, markdown, json
+            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, hide_progress
         )
         if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
             sys.exit(1)
@@ -663,12 +663,12 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("-d", "--dir", type=click.Path(exists=True), default=".", metavar="<pipeline/modules directory>")
 @click.option("-k", "--key", type=str, metavar="<test>", multiple=True, help="Run only these lint tests")
 @click.option("-a", "--all", is_flag=True, help="Run on all modules")
-@click.option("--hide-progress", is_flag=True, help="Don't show progress bars")
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(ctx, tool, dir, key, all, hide_progress, fail_warned, local, passed, fix_version):
+@click.option("--hide-progress", is_flag=True, help="Don't show progress bars")
+def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version, hide_progress):
     """
     Lint one or more modules in a directory.
 

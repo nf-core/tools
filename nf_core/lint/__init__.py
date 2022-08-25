@@ -86,7 +86,7 @@ def run_linting(
     lint_obj._list_files()
 
     # Create the modules lint object
-    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress)
+    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress=hide_progress)
 
     # Verify that the pipeline is correctly configured and has  a modules.json file
     module_lint_obj.has_valid_directory()
