@@ -13,6 +13,7 @@
 - Make `nf-core create` fail if Git default branch name is dev or TEMPLATE ([#1705](https://github.com/nf-core/tools/pull/1705))
 - Convert `console` snippets to `bash` snippets in the template where applicable ([#1729](https://github.com/nf-core/tools/pull/1729))
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
+- Add customisation option to remove all GitHub support with `nf-core create` ([#1766](https://github.com/nf-core/tools/pull/1766))
 
 ### Linting
 
