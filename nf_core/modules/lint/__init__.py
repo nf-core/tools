@@ -64,7 +64,15 @@ class ModuleLint(ModuleCommand):
     from .module_todos import module_todos
     from .module_version import module_version
 
-    def __init__(self, dir, fail_warned=False, remote_url=None, branch=None, no_pull=False):
+    def __init__(
+        self,
+        dir,
+        fail_warned=False,
+        remote_url=None,
+        branch=None,
+        no_pull=False,
+        hide_progress=False,
+    ):
         self.dir = dir
         try:
             self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -75,7 +83,8 @@ class ModuleLint(ModuleCommand):
         self.passed = []
         self.warned = []
         self.failed = []
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull)
+        self.hide_progress = hide_progress
+        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.lint_tests = self.get_all_lint_tests(self.repo_type == "pipeline")
 
         if self.repo_type == "pipeline":
@@ -131,6 +140,7 @@ class ModuleLint(ModuleCommand):
         module=None,
         key=(),
         all_modules=False,
+        hide_progress=False,
         print_results=True,
         show_passed=False,
         local=False,
@@ -153,6 +163,7 @@ class ModuleLint(ModuleCommand):
         :param print_results:   Whether to print the linting results
         :param show_passed:     Whether passed tests should be shown as well
         :param fix_version:     Update the module version if a newer version is available
+        :param hide_progress:   Don't show progress bars
 
         :returns:               A ModuleLint object containing information of
                                 the passed, warned and failed tests
@@ -261,6 +272,7 @@ class ModuleLint(ModuleCommand):
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
             console=console,
+            disable=self.hide_progress,
         )
         with progress_bar:
             lint_progress = progress_bar.add_task(
