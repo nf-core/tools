@@ -24,6 +24,7 @@ class ModuleCommand:
         Initialise the ModulesCommand object
         """
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
+        self.hide_progress = hide_progress
         self.dir = dir
         try:
             if self.dir:
