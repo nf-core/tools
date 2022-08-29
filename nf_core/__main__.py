@@ -680,7 +680,9 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
 @common_options
-def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version, hide_progress):  # pylint: disable=redefined-outer-name
+def lint(
+    ctx, tool, dir, key, all, fail_warned, local, passed, fix_version, hide_progress
+):  # pylint: disable=redefined-outer-name
     """
     Lint one or more modules in a directory.
 
