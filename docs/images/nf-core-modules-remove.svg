@@ -19,65 +19,66 @@
         font-weight: 700;
     }
 
-    .terminal-1679646874-matrix {
+    .terminal-1917479430-matrix {
         font-family: Fira Code, monospace;
         font-size: 20px;
         line-height: 24.4px;
         font-variant-east-asian: full-width;
     }
 
-    .terminal-1679646874-title {
+    .terminal-1917479430-title {
         font-size: 18px;
         font-weight: bold;
         font-family: arial;
     }
 
-    .terminal-1679646874-r1 { fill: #c5c8c6 }
-.terminal-1679646874-r2 { fill: #98a84b }
-.terminal-1679646874-r3 { fill: #9a9b99 }
-.terminal-1679646874-r4 { fill: #608ab1 }
-.terminal-1679646874-r5 { fill: #d0b344 }
-.terminal-1679646874-r6 { fill: #868887 }
+    .terminal-1917479430-r1 { fill: #c5c8c6 }
+.terminal-1917479430-r2 { fill: #98a84b }
+.terminal-1917479430-r3 { fill: #9a9b99 }
+.terminal-1917479430-r4 { fill: #608ab1 }
+.terminal-1917479430-r5 { fill: #d0b344 }
+.terminal-1917479430-r6 { fill: #292929;font-weight: bold }
+.terminal-1917479430-r7 { fill: #868887 }
     </style>
 
     <defs>
-    <clipPath id="terminal-1679646874-clip-terminal">
+    <clipPath id="terminal-1917479430-clip-terminal">
       <rect x="0" y="0" width="1219.0" height="316.2" />
     </clipPath>
-    <clipPath id="terminal-1679646874-line-0">
+    <clipPath id="terminal-1917479430-line-0">
     <rect x="0" y="1.5" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-1">
+<clipPath id="terminal-1917479430-line-1">
     <rect x="0" y="25.9" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-2">
+<clipPath id="terminal-1917479430-line-2">
     <rect x="0" y="50.3" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-3">
+<clipPath id="terminal-1917479430-line-3">
     <rect x="0" y="74.7" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-4">
+<clipPath id="terminal-1917479430-line-4">
     <rect x="0" y="99.1" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-5">
+<clipPath id="terminal-1917479430-line-5">
     <rect x="0" y="123.5" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-6">
+<clipPath id="terminal-1917479430-line-6">
     <rect x="0" y="147.9" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-7">
+<clipPath id="terminal-1917479430-line-7">
     <rect x="0" y="172.3" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-8">
+<clipPath id="terminal-1917479430-line-8">
     <rect x="0" y="196.7" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-9">
+<clipPath id="terminal-1917479430-line-9">
     <rect x="0" y="221.1" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-10">
+<clipPath id="terminal-1917479430-line-10">
     <rect x="0" y="245.5" width="1220" height="24.65"/>
             </clipPath>
-<clipPath id="terminal-1679646874-line-11">
+<clipPath id="terminal-1917479430-line-11">
     <rect x="0" y="269.9" width="1220" height="24.65"/>
             </clipPath>
     </defs>
@@ -89,22 +90,22 @@
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
         
-    <g transform="translate(9, 41)" clip-path="url(#terminal-1679646874-clip-terminal)">
-    
-    <g class="terminal-1679646874-matrix">
-    <text class="terminal-1679646874-r1" x="0" y="20" textLength="378.2" clip-path="url(#terminal-1679646874-line-0)">$&#160;nf-core&#160;modules&#160;remove&#160;abacas</text><text class="terminal-1679646874-r1" x="1220" y="20" textLength="12.2" clip-path="url(#terminal-1679646874-line-0)">
-</text><text class="terminal-1679646874-r1" x="1220" y="44.4" textLength="12.2" clip-path="url(#terminal-1679646874-line-1)">
-</text><text class="terminal-1679646874-r2" x="0" y="68.8" textLength="561.2" clip-path="url(#terminal-1679646874-line-2)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;,--.</text><text class="terminal-1679646874-r3" x="561.2" y="68.8" textLength="12.2" clip-path="url(#terminal-1679646874-line-2)">/</text><text class="terminal-1679646874-r2" x="573.4" y="68.8" textLength="36.6" clip-path="url(#terminal-1679646874-line-2)">,-.</text><text class="terminal-1679646874-r1" x="1220" y="68.8" textLength="12.2" clip-path="url(#terminal-1679646874-line-2)">
-</text><text class="terminal-1679646874-r4" x="0" y="93.2" textLength="500.2" clip-path="url(#terminal-1679646874-line-3)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;___&#160;&#160;&#160;&#160;&#160;__&#160;&#160;&#160;__&#160;&#160;&#160;__&#160;&#160;&#160;___&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-1679646874-r2" x="500.2" y="93.2" textLength="122" clip-path="url(#terminal-1679646874-line-3)">/,-._.--~\</text><text class="terminal-1679646874-r1" x="1220" y="93.2" textLength="12.2" clip-path="url(#terminal-1679646874-line-3)">
-</text><text class="terminal-1679646874-r4" x="0" y="117.6" textLength="500.2" clip-path="url(#terminal-1679646874-line-4)">&#160;&#160;&#160;&#160;|\&#160;|&#160;|__&#160;&#160;__&#160;/&#160;&#160;`&#160;/&#160;&#160;\&#160;|__)&#160;|__&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-1679646874-r5" x="500.2" y="117.6" textLength="85.4" clip-path="url(#terminal-1679646874-line-4)">&#160;&#160;&#160;}&#160;&#160;{</text><text class="terminal-1679646874-r1" x="1220" y="117.6" textLength="12.2" clip-path="url(#terminal-1679646874-line-4)">
-</text><text class="terminal-1679646874-r4" x="0" y="142" textLength="500.2" clip-path="url(#terminal-1679646874-line-5)">&#160;&#160;&#160;&#160;|&#160;\|&#160;|&#160;&#160;&#160;&#160;&#160;&#160;&#160;\__,&#160;\__/&#160;|&#160;&#160;\&#160;|___&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-1679646874-r2" x="500.2" y="142" textLength="122" clip-path="url(#terminal-1679646874-line-5)">\`-._,-`-,</text><text class="terminal-1679646874-r1" x="1220" y="142" textLength="12.2" clip-path="url(#terminal-1679646874-line-5)">
-</text><text class="terminal-1679646874-r2" x="0" y="166.4" textLength="610" clip-path="url(#terminal-1679646874-line-6)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;`._,._,&#x27;</text><text class="terminal-1679646874-r1" x="1220" y="166.4" textLength="12.2" clip-path="url(#terminal-1679646874-line-6)">
-</text><text class="terminal-1679646874-r1" x="1220" y="190.8" textLength="12.2" clip-path="url(#terminal-1679646874-line-7)">
-</text><text class="terminal-1679646874-r3" x="0" y="215.2" textLength="451.4" clip-path="url(#terminal-1679646874-line-8)">&#160;&#160;&#160;&#160;nf-core/tools&#160;version&#160;2.5.dev0&#160;-&#160;</text><text class="terminal-1679646874-r3" x="451.4" y="215.2" textLength="195.2" clip-path="url(#terminal-1679646874-line-8)">https://nf-co.re</text><text class="terminal-1679646874-r1" x="1220" y="215.2" textLength="12.2" clip-path="url(#terminal-1679646874-line-8)">
-</text><text class="terminal-1679646874-r1" x="1220" y="239.6" textLength="12.2" clip-path="url(#terminal-1679646874-line-9)">
-</text><text class="terminal-1679646874-r1" x="1220" y="264" textLength="12.2" clip-path="url(#terminal-1679646874-line-10)">
-</text><text class="terminal-1679646874-r1" x="1220" y="288.4" textLength="12.2" clip-path="url(#terminal-1679646874-line-11)">
-</text><text class="terminal-1679646874-r4" x="0" y="312.8" textLength="97.6" clip-path="url(#terminal-1679646874-line-12)">INFO&#160;&#160;&#160;&#160;</text><text class="terminal-1679646874-r1" x="97.6" y="312.8" textLength="976" clip-path="url(#terminal-1679646874-line-12)">&#160;Removing&#160;abacas&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-1679646874-r6" x="1073.6" y="312.8" textLength="109.8" clip-path="url(#terminal-1679646874-line-12)">remove.py</text><text class="terminal-1679646874-r6" x="1183.4" y="312.8" textLength="12.2" clip-path="url(#terminal-1679646874-line-12)">:</text><text class="terminal-1679646874-r6" x="1195.6" y="312.8" textLength="24.4" clip-path="url(#terminal-1679646874-line-12)">52</text><text class="terminal-1679646874-r1" x="1220" y="312.8" textLength="12.2" clip-path="url(#terminal-1679646874-line-12)">
+    <g transform="translate(9, 41)" clip-path="url(#terminal-1917479430-clip-terminal)">
+    <rect fill="#cc555a" x="0" y="294.3" width="97.6" height="24.65" shape-rendering="crispEdges"/>
+    <g class="terminal-1917479430-matrix">
+    <text class="terminal-1917479430-r1" x="0" y="20" textLength="378.2" clip-path="url(#terminal-1917479430-line-0)">$&#160;nf-core&#160;modules&#160;remove&#160;abacas</text><text class="terminal-1917479430-r1" x="1220" y="20" textLength="12.2" clip-path="url(#terminal-1917479430-line-0)">
+</text><text class="terminal-1917479430-r1" x="1220" y="44.4" textLength="12.2" clip-path="url(#terminal-1917479430-line-1)">
+</text><text class="terminal-1917479430-r2" x="0" y="68.8" textLength="561.2" clip-path="url(#terminal-1917479430-line-2)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;,--.</text><text class="terminal-1917479430-r3" x="561.2" y="68.8" textLength="12.2" clip-path="url(#terminal-1917479430-line-2)">/</text><text class="terminal-1917479430-r2" x="573.4" y="68.8" textLength="36.6" clip-path="url(#terminal-1917479430-line-2)">,-.</text><text class="terminal-1917479430-r1" x="1220" y="68.8" textLength="12.2" clip-path="url(#terminal-1917479430-line-2)">
+</text><text class="terminal-1917479430-r4" x="0" y="93.2" textLength="500.2" clip-path="url(#terminal-1917479430-line-3)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;___&#160;&#160;&#160;&#160;&#160;__&#160;&#160;&#160;__&#160;&#160;&#160;__&#160;&#160;&#160;___&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-1917479430-r2" x="500.2" y="93.2" textLength="122" clip-path="url(#terminal-1917479430-line-3)">/,-._.--~\</text><text class="terminal-1917479430-r1" x="1220" y="93.2" textLength="12.2" clip-path="url(#terminal-1917479430-line-3)">
+</text><text class="terminal-1917479430-r4" x="0" y="117.6" textLength="500.2" clip-path="url(#terminal-1917479430-line-4)">&#160;&#160;&#160;&#160;|\&#160;|&#160;|__&#160;&#160;__&#160;/&#160;&#160;`&#160;/&#160;&#160;\&#160;|__)&#160;|__&#160;&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-1917479430-r5" x="500.2" y="117.6" textLength="85.4" clip-path="url(#terminal-1917479430-line-4)">&#160;&#160;&#160;}&#160;&#160;{</text><text class="terminal-1917479430-r1" x="1220" y="117.6" textLength="12.2" clip-path="url(#terminal-1917479430-line-4)">
+</text><text class="terminal-1917479430-r4" x="0" y="142" textLength="500.2" clip-path="url(#terminal-1917479430-line-5)">&#160;&#160;&#160;&#160;|&#160;\|&#160;|&#160;&#160;&#160;&#160;&#160;&#160;&#160;\__,&#160;\__/&#160;|&#160;&#160;\&#160;|___&#160;&#160;&#160;&#160;&#160;</text><text class="terminal-1917479430-r2" x="500.2" y="142" textLength="122" clip-path="url(#terminal-1917479430-line-5)">\`-._,-`-,</text><text class="terminal-1917479430-r1" x="1220" y="142" textLength="12.2" clip-path="url(#terminal-1917479430-line-5)">
+</text><text class="terminal-1917479430-r2" x="0" y="166.4" textLength="610" clip-path="url(#terminal-1917479430-line-6)">&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;&#160;`._,._,&#x27;</text><text class="terminal-1917479430-r1" x="1220" y="166.4" textLength="12.2" clip-path="url(#terminal-1917479430-line-6)">
+</text><text class="terminal-1917479430-r1" x="1220" y="190.8" textLength="12.2" clip-path="url(#terminal-1917479430-line-7)">
+</text><text class="terminal-1917479430-r3" x="0" y="215.2" textLength="451.4" clip-path="url(#terminal-1917479430-line-8)">&#160;&#160;&#160;&#160;nf-core/tools&#160;version&#160;2.5.dev0&#160;-&#160;</text><text class="terminal-1917479430-r3" x="451.4" y="215.2" textLength="195.2" clip-path="url(#terminal-1917479430-line-8)">https://nf-co.re</text><text class="terminal-1917479430-r1" x="1220" y="215.2" textLength="12.2" clip-path="url(#terminal-1917479430-line-8)">
+</text><text class="terminal-1917479430-r1" x="1220" y="239.6" textLength="12.2" clip-path="url(#terminal-1917479430-line-9)">
+</text><text class="terminal-1917479430-r1" x="1220" y="264" textLength="12.2" clip-path="url(#terminal-1917479430-line-10)">
+</text><text class="terminal-1917479430-r1" x="1220" y="288.4" textLength="12.2" clip-path="url(#terminal-1917479430-line-11)">
+</text><text class="terminal-1917479430-r6" x="0" y="312.8" textLength="97.6" clip-path="url(#terminal-1917479430-line-12)">CRITICAL</text><text class="terminal-1917479430-r1" x="97.6" y="312.8" textLength="219.6" clip-path="url(#terminal-1917479430-line-12)">&#160;Could&#160;not&#160;find&#160;a&#160;</text><text class="terminal-1917479430-r2" x="317.2" y="312.8" textLength="109.8" clip-path="url(#terminal-1917479430-line-12)">&#x27;main.nf&#x27;</text><text class="terminal-1917479430-r1" x="427" y="312.8" textLength="48.8" clip-path="url(#terminal-1917479430-line-12)">&#160;or&#160;</text><text class="terminal-1917479430-r2" x="475.8" y="312.8" textLength="207.4" clip-path="url(#terminal-1917479430-line-12)">&#x27;nextflow.config&#x27;</text><text class="terminal-1917479430-r1" x="683.2" y="312.8" textLength="109.8" clip-path="url(#terminal-1917479430-line-12)">&#160;file&#160;in&#160;</text><text class="terminal-1917479430-r2" x="793" y="312.8" textLength="36.6" clip-path="url(#terminal-1917479430-line-12)">&#x27;.&#x27;</text><text class="terminal-1917479430-r7" x="1037" y="312.8" textLength="134.2" clip-path="url(#terminal-1917479430-line-12)">__main__.py</text><text class="terminal-1917479430-r7" x="1171.2" y="312.8" textLength="12.2" clip-path="url(#terminal-1917479430-line-12)">:</text><text class="terminal-1917479430-r7" x="1183.4" y="312.8" textLength="36.6" clip-path="url(#terminal-1917479430-line-12)">599</text><text class="terminal-1917479430-r1" x="1220" y="312.8" textLength="12.2" clip-path="url(#terminal-1917479430-line-12)">
 </text>
     </g>
     </g>
