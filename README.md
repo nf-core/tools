@@ -287,6 +287,10 @@ working_dir: tmp
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
+<!-- RICH-CODEX
+working_dir: tmp
+-->
+
 ![`tree -L 2 nf-core-rnaseq/`](docs/images/nf-core-download-tree.svg)
 
 You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
