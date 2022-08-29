@@ -73,18 +73,12 @@ class ModuleLint(ModuleCommand):
         no_pull=False,
         hide_progress=False,
     ):
-        self.dir = dir
-        try:
-            self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
-        except LookupError as e:
-            raise UserWarning(e)
+        super().__init__(dir=dir, remote_url=remote_url, branch=branch, no_pull=no_pull, hide_progress=False)
 
         self.fail_warned = fail_warned
         self.passed = []
         self.warned = []
         self.failed = []
-        self.hide_progress = hide_progress
-        self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.lint_tests = self.get_all_lint_tests(self.repo_type == "pipeline")
 
         if self.repo_type == "pipeline":

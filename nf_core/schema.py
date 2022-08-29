@@ -434,10 +434,10 @@ class PipelineSchema(object):
 
         # Check that the input parameter is defined
         if "input" not in self.schema_params:
-            raise LookupError(f"Parameter `input` not found in schema")
+            raise LookupError("Parameter `input` not found in schema")
         # Check that the input parameter is defined in the right place
         if "input" not in self.schema.get("definitions", {}).get("input_output_options", {}).get("properties", {}):
-            raise LookupError(f"Parameter `input` is not defined in the correct subschema (input_output_options)")
+            raise LookupError("Parameter `input` is not defined in the correct subschema (input_output_options)")
         input_entry = self.schema["definitions"]["input_output_options"]["properties"]["input"]
         if "mimetype" not in input_entry:
             return None
