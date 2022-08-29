@@ -22,6 +22,9 @@ jobs:
 
       - name: Generate terminal images with rich-codex
         uses: ewels/rich-codex@v1
+        env:
+          NFCORE_LINT_HIDE_PROGRESS: true
+          NFCORE_MODULES_LINT_HIDE_PROGRESS: true
         with:
           commit_changes: "true"
           clean_img_paths: docs/images/*.svg
@@ -31,4 +34,4 @@ jobs:
             which nf-core &&
             nextflow -version &&
             nf-core --version
-            PY_COLORS=true
+

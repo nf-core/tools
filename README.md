@@ -428,7 +428,7 @@ before_command: >
 fake_command: nf-core lint
 -->
 
-![`nf-core lint --hide-progress`](docs/images/nf-core-lint.svg)
+![`nf-core lint`](docs/images/nf-core-lint.svg)
 
 You can use the `-k` / `--key` flag to run only named tests for faster debugging, eg: `nf-core lint -k files_exist -k files_unchanged`. The `nf-core lint` command lints the current working directory by default, to specify another directory you can use `--dir <directory>`.
 
@@ -824,7 +824,7 @@ working_dir: tmp/modules
 before_command: sed 's/1.13a/1.10/g' modules/multiqc/main.nf > modules/multiqc/main.nf.tmp && mv modules/multiqc/main.nf.tmp modules/multiqc/main.nf
 -->
 
-![`nf-core modules lint multiqc --hide-progress`](docs/images/nf-core-modules-lint.svg)
+![`nf-core modules lint multiqc`](docs/images/nf-core-modules-lint.svg)
 
 ### Run the tests for a module using pytest
 
