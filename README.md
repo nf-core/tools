@@ -378,6 +378,7 @@ This first "vanilla" commit which is identical to the output from the templating
 See the [nf-core syncing docs](https://nf-co.re/developers/sync) for more information.
 
 <!-- RICH-CODEX
+min_pct_diff: 10
 working_dir: tmp
 -->
 
@@ -584,6 +585,8 @@ Usage is `nf-core sync`, eg:
 
 <!-- RICH-CODEX
 working_dir: tmp/nf-core-nextbigthing
+min_pct_diff: 10
+timeout: 10
 before_command: git config --global user.email "nf-core_bot@example.com" && git config --global user.name "nf-core_bot" &&  git commit -am "Bump version"
 -->
 
@@ -813,6 +816,7 @@ After you have written a minimal Nextflow script to test your module `modules/te
 <!-- RICH-CODEX
 working_dir: tmp/modules
 min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
+timeout: 30
 -->
 
 ![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
@@ -838,7 +842,7 @@ You can specify the module name in the form TOOL/SUBTOOL in command line or prov
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
-timeout: 30
+timeout: 60
 extra_env:
   PROFILE: 'conda'
 -->
