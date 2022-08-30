@@ -205,7 +205,10 @@ when you last pulled a local copy (`-s pulled`),
 alphabetically (`-s name`),
 or number of GitHub stars (`-s stars`).
 
-<!-- RICH-CODEX head: 18 -->
+<!-- RICH-CODEX
+head: 18
+min_pct_diff: 10
+-->
 
 ![`nf-core list -s stars`](docs/images/nf-core-list-stars.svg)
 
@@ -817,6 +820,8 @@ After you have written a minimal Nextflow script to test your module `modules/te
 working_dir: tmp/modules
 min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
 timeout: 30
+extra_env:
+  PROFILE: 'conda'
 -->
 
 ![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
