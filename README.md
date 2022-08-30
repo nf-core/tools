@@ -425,7 +425,6 @@ This is the same test that is used on the automated continuous integration tests
 For example, the current version looks something like this:
 
 <!-- RICH-CODEX
-min_pct_diff: 15  # Progress bar changes each time - would be good to figure out how to disable it
 timeout: 60
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
@@ -813,7 +812,8 @@ After you have written a minimal Nextflow script to test your module `modules/te
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
-min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
+extra_env:
+  PROFILE: 'conda'
 -->
 
 ![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)

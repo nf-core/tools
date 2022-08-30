@@ -1,9 +1,5 @@
 name: Generate images for docs
 on:
-  push:
-    branches-ignore:
-      - "master"
-      - "dev"
   workflow_dispatch:
 jobs:
   rich_codex:
@@ -11,7 +7,6 @@ jobs:
     steps:
       - name: Check out the repo
         uses: actions/checkout@v3
-
       - name: Set up Python
         uses: actions/setup-python@v3
         with:

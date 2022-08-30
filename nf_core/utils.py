@@ -409,7 +409,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
     such as automatically setting up GitHub authentication if we can.
     """
 
-    def __init__(self):
+    def __init__(self):  # pylint: disable=super-init-not-called
         self.auth_mode = None
         self.return_ok = [200, 201]
         self.return_retry = [403]
