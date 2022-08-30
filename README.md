@@ -813,6 +813,8 @@ After you have written a minimal Nextflow script to test your module `modules/te
 <!-- RICH-CODEX
 working_dir: tmp/modules
 min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
+extra_env:
+  PROFILE: 'conda'
 -->
 
 ![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)

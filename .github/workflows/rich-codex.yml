@@ -1,12 +1,11 @@
 name: Generate images for docs
 on:
-  push:
-    branches-ignore:
-      - "master"
-      - "dev"
+  pull_request_review:
+    types: [submitted]
   workflow_dispatch:
 jobs:
   rich_codex:
+    if: github.event.review.state == 'approved'
     runs-on: ubuntu-latest
     steps:
       - name: Check out the repo
