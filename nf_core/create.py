@@ -146,6 +146,9 @@ class PipelineCreate(object):
                 param_dict[t_area] = False
             else:
                 param_dict[t_area] = True
+        # If github is selected, exclude also github_badges
+        if not param_dict["github"]:
+            param_dict["github_badges"] = False
 
         # Set the last parameters based on the ones provided
         param_dict["short_name"] = (
@@ -436,7 +439,7 @@ class PipelineCreate(object):
             )
 
         # Add github badges specific configurations
-        if not self.template_params["github_badges"]:
+        if not self.template_params["github_badges"] or not self.template_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
 
         # Add the lint content to the preexisting nf-core config

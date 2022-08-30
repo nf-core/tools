@@ -406,13 +406,14 @@ description: A cool pipeline
 author: me
 prefix: cool-pipes-company
 skip:
+  - github
   - ci
   - github_badges
   - igenomes
   - nf_core_configs
 ```
 
-This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
+This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude all files required for GitHub hosting of the pipeline, the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
 
 To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
 
