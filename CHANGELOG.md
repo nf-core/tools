@@ -1,5 +1,15 @@
 # nf-core/tools: Changelog
 
+## v2.6dev
+
+### Template
+
+### Linting
+
+### General
+
+### Modules
+
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
 ### Template
