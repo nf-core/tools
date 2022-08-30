@@ -1,19 +1,18 @@
 import json
 import logging
-from os import pipe
 
 import rich
 
-import nf_core.modules.module_utils
-
 from .modules_command import ModuleCommand
+from .modules_json import ModulesJson
+from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
 class ModuleList(ModuleCommand):
-    def __init__(self, pipeline_dir, remote=True):
-        super().__init__(pipeline_dir)
+    def __init__(self, pipeline_dir, remote=True, remote_url=None, branch=None, no_pull=False):
+        super().__init__(pipeline_dir, remote_url, branch, no_pull)
         self.remote = remote
 
     def list_modules(self, keywords=None, print_json=False):
@@ -42,20 +41,13 @@ class ModuleList(ModuleCommand):
         # No pipeline given - show all remote
         if self.remote:
 
-            # Get the list of available modules
-            try:
-                self.modules_repo.get_modules_file_tree()
-            except LookupError as e:
-                log.error(e)
-                return False
-
             # Filter the modules by keywords
-            modules = [mod for mod in self.modules_repo.modules_avail_module_names if all(k in mod for k in keywords)]
+            modules = [mod for mod in self.modules_repo.get_avail_modules() if all(k in mod for k in keywords)]
 
             # Nothing found
             if len(modules) == 0:
                 log.info(
-                    f"No available modules found in {self.modules_repo.name} ({self.modules_repo.branch})"
+                    f"No available modules found in {self.modules_repo.fullname} ({self.modules_repo.branch})"
                     f"{pattern_msg(keywords)}"
                 )
                 return ""
@@ -73,15 +65,13 @@ class ModuleList(ModuleCommand):
                 return ""
 
             # Verify that 'modules.json' is consistent with the installed modules
-            self.modules_json_up_to_date()
-
-            # Get installed modules
-            self.get_pipeline_modules()
+            modules_json = ModulesJson(self.dir)
+            modules_json.check_up_to_date()
 
             # Filter by keywords
             repos_with_mods = {
-                repo_name: [mod for mod in self.module_names[repo_name] if all(k in mod for k in keywords)]
-                for repo_name in self.module_names
+                repo_name: [mod for mod in modules if all(k in mod for k in keywords)]
+                for repo_name, modules in modules_json.get_all_modules().items()
             }
 
             # Nothing found
@@ -95,17 +85,22 @@ class ModuleList(ModuleCommand):
             table.add_column("Date")
 
             # Load 'modules.json'
-            modules_json = self.load_modules_json()
+            modules_json = modules_json.modules_json
 
             for repo_name, modules in sorted(repos_with_mods.items()):
                 repo_entry = modules_json["repos"].get(repo_name, {})
                 for module in sorted(modules):
-                    module_entry = repo_entry.get(module)
+                    repo_modules = repo_entry.get("modules")
+                    module_entry = repo_modules.get(module)
+
                     if module_entry:
                         version_sha = module_entry["git_sha"]
                         try:
                             # pass repo_name to get info on modules even outside nf-core/modules
-                            message, date = nf_core.modules.module_utils.get_commit_info(version_sha, repo_name)
+                            message, date = ModulesRepo(
+                                remote_url=repo_entry["git_url"],
+                                branch=module_entry["branch"],
+                            ).get_commit_info(version_sha)
                         except LookupError as e:
                             log.warning(e)
                             date = "[red]Not Available"
@@ -122,7 +117,7 @@ class ModuleList(ModuleCommand):
 
         if self.remote:
             log.info(
-                f"Modules available from {self.modules_repo.name} ({self.modules_repo.branch})"
+                f"Modules available from {self.modules_repo.fullname} ({self.modules_repo.branch})"
                 f"{pattern_msg(keywords)}:\n"
             )
         else:

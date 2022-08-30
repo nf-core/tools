@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import yaml
+
 import nf_core.lint
 
 
@@ -13,7 +13,7 @@ def test_files_exist_missing_config(self):
 
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()
-    lint_obj.nf_config["manifest.name"] = "testpipeline"
+    lint_obj.nf_config["manifest.name"] = "nf-core/testpipeline"
 
     results = lint_obj.files_exist()
     assert results["failed"] == ["File not found: `CHANGELOG.md`"]
@@ -37,7 +37,7 @@ def test_files_exist_depreciated_file(self):
     new_pipeline = self._make_pipeline_copy()
 
     nf = os.path.join(new_pipeline, "parameters.settings.json")
-    os.system("touch {}".format(nf))
+    os.system(f"touch {nf}")
 
     lint_obj = nf_core.lint.PipelineLint(new_pipeline)
     lint_obj._load()

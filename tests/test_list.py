@@ -9,8 +9,8 @@ import time
 import unittest
 from datetime import datetime
 from pathlib import Path
+from unittest import mock
 
-import mock
 import pytest
 from rich.console import Console
 
@@ -62,12 +62,12 @@ class TestLint(unittest.TestCase):
         now_ts = time.mktime(now.timetuple())
         nf_core.list.pretty_date(now_ts)
 
-    @pytest.mark.xfail(raises=AssertionError, strict=True)
     def test_local_workflows_and_fail(self):
         """Test the local workflow class and try to get local
         Nextflow workflow information"""
         loc_wf = nf_core.list.LocalWorkflow("myWF")
-        loc_wf.get_local_nf_workflow_details()
+        with pytest.raises(AssertionError):
+            loc_wf.get_local_nf_workflow_details()
 
     def test_local_workflows_compare_and_fail_silently(self):
         """Test the workflow class and try to compare local

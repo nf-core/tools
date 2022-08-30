@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+
 import yaml
 
 
@@ -25,19 +26,20 @@ def actions_awstest(self):
     """
     fn = os.path.join(self.wf_path, ".github", "workflows", "awstest.yml")
     if not os.path.isfile(fn):
-        return {"ignored": ["'awstest.yml' workflow not found: `{}`".format(fn)]}
+        return {"ignored": [f"'awstest.yml' workflow not found: `{fn}`"]}
 
     try:
         with open(fn, "r") as fh:
             wf = yaml.safe_load(fh)
     except Exception as e:
-        return {"failed": ["Could not parse yaml file: {}, {}".format(fn, e)]}
+        return {"failed": [f"Could not parse yaml file: {fn}, {e}"]}
 
     # Check that the action is only turned on for workflow_dispatch
     try:
-        assert "workflow_dispatch" in wf[True]
-        assert "push" not in wf[True]
-        assert "pull_request" not in wf[True]
+        if "workflow_dispatch" not in wf[True]:
+            raise AssertionError()
+        if "push" in wf[True] or "pull_request" in wf[True]:
+            raise AssertionError()
     except (AssertionError, KeyError, TypeError):
         return {"failed": ["'.github/workflows/awstest.yml' is not triggered correctly"]}
     else:

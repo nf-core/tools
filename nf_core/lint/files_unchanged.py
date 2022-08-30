@@ -6,7 +6,11 @@ import os
 import shutil
 import tempfile
 
+import yaml
+
 import nf_core.create
+
+log = logging.getLogger(__name__)
 
 
 def files_unchanged(self):
@@ -45,6 +49,7 @@ def files_unchanged(self):
     Files that can have additional content but must include the template contents::
 
         .gitignore
+        .prettierignore
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -64,13 +69,18 @@ def files_unchanged(self):
     could_fix = False
 
     # Check that we have the minimum required config
+    required_pipeline_config = {"manifest.name", "manifest.description", "manifest.author"}
+    missing_pipeline_config = required_pipeline_config.difference(self.nf_config)
+    if missing_pipeline_config:
+        return {"ignored": [f"Required pipeline config not found - {missing_pipeline_config}"]}
     try:
-        self.nf_config["manifest.name"]
-        self.nf_config["manifest.description"]
-        self.nf_config["manifest.author"]
-    except KeyError as e:
-        return {"ignored": [f"Required pipeline config not found - {e}"]}
-    short_name = self.nf_config["manifest.name"].strip("\"'").replace("nf-core/", "")
+        prefix, short_name = self.nf_config["manifest.name"].strip("\"'").split("/")
+    except ValueError:
+        log.warning(
+            "Expected manifest.name to be in the format '<repo>/<pipeline>'. Will assume it is <pipeline> and default to repo 'nf-core'"
+        )
+        short_name = self.nf_config["manifest.name"].strip("\"'")
+        prefix = "nf-core"
 
     # NB: Should all be files, not directories
     # List of lists. Passes if any of the files in the sublist are found.
@@ -100,7 +110,7 @@ def files_unchanged(self):
         [os.path.join("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
-        [".gitignore", "foo"],
+        [".gitignore", ".prettierignore"],
     ]
 
     # Only show error messages from pipeline creation
@@ -109,12 +119,21 @@ def files_unchanged(self):
     # Generate a new pipeline with nf-core create that we can compare to
     tmp_dir = tempfile.mkdtemp()
 
-    test_pipeline_dir = os.path.join(tmp_dir, "nf-core-{}".format(short_name))
+    # Create a template.yaml file for the pipeline creation
+    template_yaml = {
+        "name": short_name,
+        "description": self.nf_config["manifest.description"].strip("\"'"),
+        "author": self.nf_config["manifest.author"].strip("\"'"),
+        "prefix": prefix,
+    }
+
+    template_yaml_path = os.path.join(tmp_dir, "template.yaml")
+    with open(template_yaml_path, "w") as fh:
+        yaml.dump(template_yaml, fh, default_flow_style=False)
+
+    test_pipeline_dir = os.path.join(tmp_dir, f"{prefix}-{short_name}")
     create_obj = nf_core.create.PipelineCreate(
-        self.nf_config["manifest.name"].strip("\"'"),
-        self.nf_config["manifest.description"].strip("\"'"),
-        self.nf_config["manifest.author"].strip("\"'"),
-        outdir=test_pipeline_dir,
+        None, None, None, no_git=True, outdir=test_pipeline_dir, template_yaml_path=template_yaml_path
     )
     create_obj.init_pipeline()
 
@@ -133,11 +152,11 @@ def files_unchanged(self):
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):
-            ignored.append("File ignored due to lint config: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
         elif not any([os.path.isfile(_pf(f)) for f in files]):
-            ignored.append("File does not exist: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file has an identical match
         else:
@@ -163,11 +182,11 @@ def files_unchanged(self):
         # Ignore if file specified in linting config
         ignore_files = self.lint_config.get("files_unchanged", [])
         if any([f in ignore_files for f in files]):
-            ignored.append("File ignored due to lint config: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File ignored due to lint config: {self._wrap_quotes(files)}")
 
         # Ignore if we can't find the file
         elif not any([os.path.isfile(_pf(f)) for f in files]):
-            ignored.append("File does not exist: {}".format(self._wrap_quotes(files)))
+            ignored.append(f"File does not exist: {self._wrap_quotes(files)}")
 
         # Check that the file contains the template file contents
         else:

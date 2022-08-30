@@ -1,8 +1,9 @@
 """
 Lint the tests of a module in nf-core/modules
 """
-import os
 import logging
+import os
+
 import yaml
 
 log = logging.getLogger(__name__)
@@ -41,8 +42,8 @@ def module_tests(module_lint_object, module):
                 module.passed.append(("test_pytest_yml", "correct entry in pytest_modules.yml", pytest_yml_path))
             else:
                 module.failed.append(("test_pytest_yml", "missing entry in pytest_modules.yml", pytest_yml_path))
-    except FileNotFoundError as e:
-        module.failed.append(("test_pytest_yml", f"Could not open pytest_modules.yml file", pytest_yml_path))
+    except FileNotFoundError:
+        module.failed.append(("test_pytest_yml", "Could not open pytest_modules.yml file", pytest_yml_path))
 
     # Lint the test.yml file
     try:

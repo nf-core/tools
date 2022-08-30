@@ -2,20 +2,21 @@
 """ Code to deal with pipeline JSON Schema """
 
 from __future__ import print_function
-from rich.prompt import Confirm
 
 import copy
-import copy
-import jinja2
 import json
-import jsonschema
 import logging
-import markdown
 import os
 import webbrowser
-import yaml
 
-import nf_core.list, nf_core.utils
+import jinja2
+import jsonschema
+import markdown
+import yaml
+from rich.prompt import Confirm
+
+import nf_core.list
+import nf_core.utils
 
 log = logging.getLogger(__name__)
 
@@ -49,7 +50,7 @@ class PipelineSchema(object):
         # Supplied path exists - assume a local pipeline directory or schema
         if os.path.exists(path):
             if revision is not None:
-                log.warning("Local workflow supplied, ignoring revision '{}'".format(revision))
+                log.warning(f"Local workflow supplied, ignoring revision '{revision}'")
             if os.path.isdir(path):
                 self.pipeline_dir = path
                 self.schema_filename = os.path.join(path, "nextflow_schema.json")
@@ -68,7 +69,7 @@ class PipelineSchema(object):
 
         # Check that the schema file exists
         if self.schema_filename is None or not os.path.exists(self.schema_filename):
-            error = "Could not find pipeline schema for '{}': {}".format(path, self.schema_filename)
+            error = f"Could not find pipeline schema for '{path}': {self.schema_filename}"
             log.error(error)
             raise AssertionError(error)
 
@@ -91,13 +92,13 @@ class PipelineSchema(object):
                     )
                 )
             else:
-                log.info("[green][✓] Pipeline schema looks valid[/] [dim](found {} params)".format(num_params))
+                log.info(f"[green][✓] Pipeline schema looks valid[/] [dim](found {num_params} params)")
         except json.decoder.JSONDecodeError as e:
-            error_msg = "[bold red]Could not parse schema JSON:[/] {}".format(e)
+            error_msg = f"[bold red]Could not parse schema JSON:[/] {e}"
             log.error(error_msg)
             raise AssertionError(error_msg)
         except AssertionError as e:
-            error_msg = "[red][✗] Pipeline schema does not follow nf-core specs:\n {}".format(e)
+            error_msg = f"[red][✗] Pipeline schema does not follow nf-core specs:\n {e}"
             log.error(error_msg)
             raise AssertionError(error_msg)
 
@@ -107,7 +108,7 @@ class PipelineSchema(object):
             self.schema = json.load(fh)
         self.schema_defaults = {}
         self.schema_params = []
-        log.debug("JSON file loaded: {}".format(self.schema_filename))
+        log.debug(f"JSON file loaded: {self.schema_filename}")
 
     def sanitise_param_default(self, param):
         """
@@ -156,19 +157,20 @@ class PipelineSchema(object):
                 self.schema_defaults[p_key] = param["default"]
 
         # Grouped schema properties in subschema definitions
-        for d_key, definition in self.schema.get("definitions", {}).items():
+        for _, definition in self.schema.get("definitions", {}).items():
             for p_key, param in definition.get("properties", {}).items():
                 self.schema_params.append(p_key)
                 if "default" in param:
                     param = self.sanitise_param_default(param)
                     self.schema_defaults[p_key] = param["default"]
 
-    def save_schema(self):
+    def save_schema(self, suppress_logging=False):
         """Save a pipeline schema to a file"""
         # Write results to a JSON file
         num_params = len(self.schema.get("properties", {}))
-        num_params += sum([len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values()])
-        log.info("Writing schema with {} params: '{}'".format(num_params, self.schema_filename))
+        num_params += sum(len(d.get("properties", {})) for d in self.schema.get("definitions", {}).values())
+        if not suppress_logging:
+            log.info(f"Writing schema with {num_params} params: '{self.schema_filename}'")
         with open(self.schema_filename, "w") as fh:
             json.dump(self.schema, fh, indent=4)
             fh.write("\n")
@@ -184,32 +186,29 @@ class PipelineSchema(object):
             with open(params_path, "r") as fh:
                 params = json.load(fh)
                 self.input_params.update(params)
-            log.debug("Loaded JSON input params: {}".format(params_path))
+            log.debug(f"Loaded JSON input params: {params_path}")
         except Exception as json_e:
-            log.debug("Could not load input params as JSON: {}".format(json_e))
+            log.debug(f"Could not load input params as JSON: {json_e}")
             # This failed, try to load as YAML
             try:
                 with open(params_path, "r") as fh:
                     params = yaml.safe_load(fh)
                     self.input_params.update(params)
-                    log.debug("Loaded YAML input params: {}".format(params_path))
+                    log.debug(f"Loaded YAML input params: {params_path}")
             except Exception as yaml_e:
-                error_msg = "Could not load params file as either JSON or YAML:\n JSON: {}\n YAML: {}".format(
-                    json_e, yaml_e
-                )
+                error_msg = f"Could not load params file as either JSON or YAML:\n JSON: {json_e}\n YAML: {yaml_e}"
                 log.error(error_msg)
                 raise AssertionError(error_msg)
 
     def validate_params(self):
         """Check given parameters against a schema and validate"""
-        try:
-            assert self.schema is not None
-            jsonschema.validate(self.input_params, self.schema)
-        except AssertionError:
+        if self.schema is None:
             log.error("[red][✗] Pipeline schema not found")
             return False
+        try:
+            jsonschema.validate(self.input_params, self.schema)
         except jsonschema.exceptions.ValidationError as e:
-            log.error("[red][✗] Input parameters are invalid: {}".format(e.message))
+            log.error(f"[red][✗] Input parameters are invalid: {e.message}")
             return False
         log.info("[green][✓] Input parameters look valid")
         return True
@@ -222,8 +221,9 @@ class PipelineSchema(object):
         Additional check that all parameters have defaults in nextflow.config and that
         these are valid and adhere to guidelines
         """
+        if self.schema is None:
+            log.error("[red][✗] Pipeline schema not found")
         try:
-            assert self.schema is not None
             # Make copy of schema and remove required flags
             schema_no_required = copy.deepcopy(self.schema)
             if "required" in schema_no_required:
@@ -232,10 +232,8 @@ class PipelineSchema(object):
                 if "required" in group:
                     schema_no_required["definitions"][group_key].pop("required")
             jsonschema.validate(self.schema_defaults, schema_no_required)
-        except AssertionError:
-            log.error("[red][✗] Pipeline schema not found")
         except jsonschema.exceptions.ValidationError as e:
-            raise AssertionError("Default parameters are invalid: {}".format(e.message))
+            raise AssertionError(f"Default parameters are invalid: {e.message}")
         log.info("[green][✓] Default parameters match schema validation")
 
         # Make sure every default parameter exists in the nextflow.config and is of correct type
@@ -257,7 +255,9 @@ class PipelineSchema(object):
                 if param in self.pipeline_params:
                     self.validate_config_default_parameter(param, group_properties[param], self.pipeline_params[param])
                 else:
-                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
+                    self.invalid_nextflow_config_default_parameters[
+                        param
+                    ] = "Not in pipeline parameters. Check `nextflow.config`."
 
         # Go over ungrouped params if any exist
         ungrouped_properties = self.schema.get("properties")
@@ -270,7 +270,9 @@ class PipelineSchema(object):
                         param, ungrouped_properties[param], self.pipeline_params[param]
                     )
                 else:
-                    self.invalid_nextflow_config_default_parameters[param] = "Not in pipeline parameters"
+                    self.invalid_nextflow_config_default_parameters[
+                        param
+                    ] = "Not in pipeline parameters. Check `nextflow.config`."
 
     def validate_config_default_parameter(self, param, schema_param, config_default):
         """
@@ -332,37 +334,39 @@ class PipelineSchema(object):
             jsonschema.Draft7Validator.check_schema(schema)
             log.debug("JSON Schema Draft7 validated")
         except jsonschema.exceptions.SchemaError as e:
-            raise AssertionError("Schema does not validate as Draft 7 JSON Schema:\n {}".format(e))
+            raise AssertionError(f"Schema does not validate as Draft 7 JSON Schema:\n {e}")
 
         param_keys = list(schema.get("properties", {}).keys())
         num_params = len(param_keys)
         for d_key, d_schema in schema.get("definitions", {}).items():
             # Check that this definition is mentioned in allOf
-            assert "allOf" in schema, "Schema has definitions, but no allOf key"
+            if "allOf" not in schema:
+                raise AssertionError("Schema has definitions, but no allOf key")
             in_allOf = False
             for allOf in schema["allOf"]:
-                if allOf["$ref"] == "#/definitions/{}".format(d_key):
+                if allOf["$ref"] == f"#/definitions/{d_key}":
                     in_allOf = True
-            assert in_allOf, "Definition subschema `{}` not included in schema `allOf`".format(d_key)
+            if not in_allOf:
+                raise AssertionError(f"Definition subschema `{d_key}` not included in schema `allOf`")
 
             for d_param_id in d_schema.get("properties", {}):
                 # Check that we don't have any duplicate parameter IDs in different definitions
-                assert d_param_id not in param_keys, "Duplicate parameter found in schema `definitions`: `{}`".format(
-                    d_param_id
-                )
+                if d_param_id in param_keys:
+                    raise AssertionError(f"Duplicate parameter found in schema `definitions`: `{d_param_id}`")
                 param_keys.append(d_param_id)
                 num_params += 1
 
         # Check that everything in allOf exists
         for allOf in schema.get("allOf", []):
-            assert "definitions" in schema, "Schema has allOf, but no definitions"
+            if "definitions" not in schema:
+                raise AssertionError("Schema has allOf, but no definitions")
             def_key = allOf["$ref"][14:]
-            assert def_key in schema["definitions"], "Subschema `{}` found in `allOf` but not `definitions`".format(
-                def_key
-            )
+            if def_key not in schema["definitions"]:
+                raise AssertionError(f"Subschema `{def_key}` found in `allOf` but not `definitions`")
 
         # Check that the schema describes at least one parameter
-        assert num_params > 0, "No parameters found in schema"
+        if num_params == 0:
+            raise AssertionError("No parameters found in schema")
 
         return num_params
 
@@ -377,11 +381,11 @@ class PipelineSchema(object):
             log.debug("Pipeline schema not set - skipping validation of top-level attributes")
             return None
 
-        assert "$schema" in self.schema, "Schema missing top-level `$schema` attribute"
+        if "$schema" not in self.schema:
+            raise AssertionError("Schema missing top-level `$schema` attribute")
         schema_attr = "http://json-schema.org/draft-07/schema"
-        assert self.schema["$schema"] == schema_attr, "Schema `$schema` should be `{}`\n Found `{}`".format(
-            schema_attr, self.schema["$schema"]
-        )
+        if self.schema["$schema"] != schema_attr:
+            raise AssertionError(f"Schema `$schema` should be `{schema_attr}`\n Found `{self.schema['$schema']}`")
 
         if self.pipeline_manifest == {}:
             self.get_wf_params()
@@ -389,40 +393,72 @@ class PipelineSchema(object):
         if "name" not in self.pipeline_manifest:
             log.debug("Pipeline manifest `name` not known - skipping validation of schema id and title")
         else:
-            assert "$id" in self.schema, "Schema missing top-level `$id` attribute"
-            assert "title" in self.schema, "Schema missing top-level `title` attribute"
+            if "$id" not in self.schema:
+                raise AssertionError("Schema missing top-level `$id` attribute")
+            if "title" not in self.schema:
+                raise AssertionError("Schema missing top-level `title` attribute")
             # Validate that id, title and description match the pipeline manifest
             id_attr = "https://raw.githubusercontent.com/{}/master/nextflow_schema.json".format(
                 self.pipeline_manifest["name"].strip("\"'")
             )
-            assert self.schema["$id"] == id_attr, "Schema `$id` should be `{}`\n Found `{}`".format(
-                id_attr, self.schema["$id"]
-            )
+            if self.schema["$id"] != id_attr:
+                raise AssertionError(f"Schema `$id` should be `{id_attr}`\n Found `{self.schema['$id']}`")
 
             title_attr = "{} pipeline parameters".format(self.pipeline_manifest["name"].strip("\"'"))
-            assert self.schema["title"] == title_attr, "Schema `title` should be `{}`\n Found: `{}`".format(
-                title_attr, self.schema["title"]
-            )
+            if self.schema["title"] != title_attr:
+                raise AssertionError(f"Schema `title` should be `{title_attr}`\n Found: `{self.schema['title']}`")
 
         if "description" not in self.pipeline_manifest:
             log.debug("Pipeline manifest 'description' not known - skipping validation of schema description")
         else:
-            assert "description" in self.schema, "Schema missing top-level 'description' attribute"
+            if "description" not in self.schema:
+                raise AssertionError("Schema missing top-level 'description' attribute")
             desc_attr = self.pipeline_manifest["description"].strip("\"'")
-            assert self.schema["description"] == desc_attr, "Schema 'description' should be '{}'\n Found: '{}'".format(
-                desc_attr, self.schema["description"]
-            )
+            if self.schema["description"] != desc_attr:
+                raise AssertionError(
+                    f"Schema 'description' should be '{desc_attr}'\n Found: '{self.schema['description']}'"
+                )
+
+    def check_for_input_mimetype(self):
+        """
+        Check that the input parameter has a mimetype
+
+        Common mime types: https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/MIME_types/Common_types
+
+        Returns:
+            mimetype (str): The mimetype of the input parameter
+
+        Raises:
+            LookupError: If the input parameter is not found or defined in the correct place
+        """
+
+        # Check that the input parameter is defined
+        if "input" not in self.schema_params:
+            raise LookupError("Parameter `input` not found in schema")
+        # Check that the input parameter is defined in the right place
+        if "input" not in self.schema.get("definitions", {}).get("input_output_options", {}).get("properties", {}):
+            raise LookupError("Parameter `input` is not defined in the correct subschema (input_output_options)")
+        input_entry = self.schema["definitions"]["input_output_options"]["properties"]["input"]
+        if "mimetype" not in input_entry:
+            return None
+        mimetype = input_entry["mimetype"]
+        if mimetype == "" or mimetype is None:
+            return None
+        return mimetype
 
     def print_documentation(
         self,
         output_fn=None,
         format="markdown",
         force=False,
-        columns=["parameter", "description", "type,", "default", "required", "hidden"],
+        columns=None,
     ):
         """
         Prints documentation for the schema.
         """
+        if columns is None:
+            columns = ["parameter", "description", "type,", "default", "required", "hidden"]
+
         output = self.schema_to_markdown(columns)
         if format == "html":
             output = self.markdown_to_html(output)
@@ -451,7 +487,7 @@ class PipelineSchema(object):
             out += f"{definition.get('description', '')}\n\n"
             out += "".join([f"| {column.title()} " for column in columns])
             out += "|\n"
-            out += "".join([f"|-----------" for columns in columns])
+            out += "".join(["|-----------" for columns in columns])
             out += "|\n"
             for p_key, param in definition.get("properties", {}).items():
                 for column in columns:
@@ -469,10 +505,10 @@ class PipelineSchema(object):
 
         # Top-level ungrouped parameters
         if len(self.schema.get("properties", {})) > 0:
-            out += f"\n## Other parameters\n\n"
+            out += "\n## Other parameters\n\n"
             out += "".join([f"| {column.title()} " for column in columns])
             out += "|\n"
-            out += "".join([f"|-----------" for columns in columns])
+            out += "".join(["|-----------" for columns in columns])
             out += "|\n"
 
             for p_key, param in self.schema.get("properties", {}).items():
@@ -516,10 +552,7 @@ class PipelineSchema(object):
         """Interactively build a new pipeline schema for a pipeline"""
 
         # Check if supplied pipeline directory really is one
-        try:
-            nf_core.utils.is_pipeline_directory(pipeline_dir)
-        except UserWarning:
-            raise
+        nf_core.utils.is_pipeline_directory(pipeline_dir)
 
         if no_prompts:
             self.no_prompts = True
@@ -541,15 +574,15 @@ class PipelineSchema(object):
             try:
                 self.validate_schema()
             except AssertionError as e:
-                log.error("[red]Something went wrong when building a new schema:[/] {}".format(e))
+                log.error(f"[red]Something went wrong when building a new schema:[/] {e}")
                 log.info("Please ask for help on the nf-core Slack")
                 return False
         else:
             # Schema found - load and validate
             try:
                 self.load_lint_schema()
-            except AssertionError as e:
-                log.error("Existing pipeline schema found, but it is invalid: {}".format(self.schema_filename))
+            except AssertionError:
+                log.error(f"Existing pipeline schema found, but it is invalid: {self.schema_filename}")
                 log.info("Please fix or delete this file, then try again.")
                 return False
 
@@ -670,7 +703,7 @@ class PipelineSchema(object):
                 # Remove required list if now empty
                 if "required" in schema and len(schema["required"]) == 0:
                     del schema["required"]
-                log.debug("Removing '{}' from pipeline schema".format(p_key))
+                log.debug(f"Removing '{p_key}' from pipeline schema")
                 params_removed.append(p_key)
 
         return schema, params_removed
@@ -681,7 +714,7 @@ class PipelineSchema(object):
 
         Returns True if it should be removed, False if not.
         """
-        if p_key not in self.pipeline_params.keys():
+        if p_key not in self.pipeline_params:
             if self.no_prompts or self.schema_from_scratch:
                 return True
             if Confirm.ask(
@@ -706,15 +739,14 @@ class PipelineSchema(object):
                     self.no_prompts
                     or self.schema_from_scratch
                     or Confirm.ask(
-                        ":sparkles: Found [bold]'params.{}'[/] in the pipeline config, but not in the schema. [blue]Add to pipeline schema?".format(
-                            p_key
-                        )
+                        f":sparkles: Found [bold]'params.{p_key}'[/] in the pipeline config, but not in the schema. "
+                        "[blue]Add to pipeline schema?"
                     )
                 ):
                     if "properties" not in self.schema:
                         self.schema["properties"] = {}
                     self.schema["properties"][p_key] = self.build_schema_param(p_val)
-                    log.debug("Adding '{}' to pipeline schema".format(p_key))
+                    log.debug(f"Adding '{p_key}' to pipeline schema")
                     params_added.append(p_key)
 
         return params_added
@@ -740,7 +772,7 @@ class PipelineSchema(object):
             p_val = None
 
         # Booleans
-        if p_val == "True" or p_val == "False":
+        if p_val in ["True", "False"]:
             p_val = p_val == "True"  # Convert to bool
             p_type = "boolean"
 
@@ -761,21 +793,25 @@ class PipelineSchema(object):
         }
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_url, content)
         try:
-            assert "api_url" in web_response
-            assert "web_url" in web_response
+            if "api_url" not in web_response:
+                raise AssertionError('"api_url" not in web_response')
+            if "web_url" not in web_response:
+                raise AssertionError('"web_url" not in web_response')
             # DO NOT FIX THIS TYPO. Needs to stay in sync with the website. Maintaining for backwards compatability.
-            assert web_response["status"] == "recieved"
-        except (AssertionError) as e:
-            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
-            raise AssertionError(
-                "Pipeline schema builder response not recognised: {}\n See verbose log for full response (nf-core -v schema)".format(
-                    self.web_schema_build_url
+            if web_response["status"] != "recieved":
+                raise AssertionError(
+                    f'web_response["status"] should be "recieved", but it is "{web_response["status"]}"'
                 )
+        except AssertionError:
+            log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
+            raise AssertionError(
+                f"Pipeline schema builder response not recognised: {self.web_schema_build_url}\n"
+                " See verbose log for full response (nf-core -v schema)"
             )
         else:
             self.web_schema_build_web_url = web_response["web_url"]
             self.web_schema_build_api_url = web_response["api_url"]
-            log.info("Opening URL: {}".format(web_response["web_url"]))
+            log.info(f"Opening URL: {web_response['web_url']}")
             webbrowser.open(web_response["web_url"])
             log.info("Waiting for form to be completed in the browser. Remember to click Finished when you're done.\n")
             nf_core.utils.wait_cli_function(self.get_web_builder_response)
@@ -787,24 +823,23 @@ class PipelineSchema(object):
         """
         web_response = nf_core.utils.poll_nfcore_web_api(self.web_schema_build_api_url)
         if web_response["status"] == "error":
-            raise AssertionError("Got error from schema builder: '{}'".format(web_response.get("message")))
-        elif web_response["status"] == "waiting_for_user":
+            raise AssertionError(f"Got error from schema builder: '{web_response.get('message')}'")
+        if web_response["status"] == "waiting_for_user":
             return False
-        elif web_response["status"] == "web_builder_edited":
+        if web_response["status"] == "web_builder_edited":
             log.info("Found saved status from nf-core schema builder")
             try:
                 self.schema = web_response["schema"]
                 self.remove_schema_empty_definitions()
                 self.validate_schema()
             except AssertionError as e:
-                raise AssertionError("Response from schema builder did not pass validation:\n {}".format(e))
+                raise AssertionError(f"Response from schema builder did not pass validation:\n {e}")
             else:
                 self.save_schema()
                 return True
         else:
-            log.debug("Response content:\n{}".format(json.dumps(web_response, indent=4)))
+            log.debug(f"Response content:\n{json.dumps(web_response, indent=4)}")
             raise AssertionError(
-                "Pipeline schema builder returned unexpected status ({}): {}\n See verbose log for full response".format(
-                    web_response["status"], self.web_schema_build_api_url
-                )
+                f"Pipeline schema builder returned unexpected status ({web_response['status']}): "
+                f"{self.web_schema_build_api_url}\n See verbose log for full response"
             )

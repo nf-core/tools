@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from logging import warn
 import nf_core.schema
 
 

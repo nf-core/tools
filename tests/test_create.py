@@ -2,8 +2,9 @@
 """Some tests covering the pipeline creation sub command.
 """
 import os
-import nf_core.create
 import unittest
+
+import nf_core.create
 
 from .utils import with_temporary_folder
 
@@ -24,13 +25,14 @@ class NfcoreCreateTest(unittest.TestCase):
             no_git=False,
             force=True,
             outdir=tmp_path,
+            plain=True,
         )
 
     def test_pipeline_creation(self):
-        assert self.pipeline.name == self.pipeline_name
-        assert self.pipeline.description == self.pipeline_description
-        assert self.pipeline.author == self.pipeline_author
-        assert self.pipeline.version == self.pipeline_version
+        assert self.pipeline.template_params["name"] == self.pipeline_name
+        assert self.pipeline.template_params["description"] == self.pipeline_description
+        assert self.pipeline.template_params["author"] == self.pipeline_author
+        assert self.pipeline.template_params["version"] == self.pipeline_version
 
     def test_pipeline_creation_initiation(self):
         self.pipeline.init_pipeline()

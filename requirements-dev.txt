@@ -1,7 +1,8 @@
-pytest
-pytest-datafiles
-pytest-cov
-mock
 black
+isort
+myst_parser
+pre-commit
+pytest-cov
+pytest-datafiles
 Sphinx
 sphinx_rtd_theme

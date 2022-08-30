@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-from setuptools import setup, find_packages
+from setuptools import find_packages, setup
 
-version = "2.4.1"
+version = "2.5"
 
 with open("README.md") as f:
     readme = f.read()
@@ -31,7 +31,10 @@ setup(
     author_email="phil.ewels@scilifelab.se",
     url="https://github.com/nf-core/tools",
     license="MIT",
-    entry_points={"console_scripts": ["nf-core=nf_core.__main__:run_nf_core"]},
+    entry_points={
+        "console_scripts": ["nf-core=nf_core.__main__:run_nf_core"],
+        "refgenie.hooks.post_update": ["nf-core-refgenie=nf_core.refgenie:update_config"],
+    },
     install_requires=required,
     packages=find_packages(exclude=("docs")),
     include_package_data=True,

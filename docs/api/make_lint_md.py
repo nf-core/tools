@@ -2,6 +2,7 @@
 
 import fnmatch
 import os
+
 import nf_core.lint
 import nf_core.modules.lint
 
@@ -14,7 +15,7 @@ def make_docs(docs_basedir, lint_tests, md_template):
             existing_docs.append(os.path.join(docs_basedir, fn))
 
     for test_name in lint_tests:
-        fn = os.path.join(docs_basedir, "{}.md".format(test_name))
+        fn = os.path.join(docs_basedir, f"{test_name}.md")
         if os.path.exists(fn):
             existing_docs.remove(fn)
         else:
@@ -43,7 +44,11 @@ make_docs(
 modules_docs_basedir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "_src", "module_lint_tests")
 make_docs(
     modules_docs_basedir,
-    nf_core.modules.lint.ModuleLint._get_all_lint_tests(),
+    list(
+        set(nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=True)).union(
+            nf_core.modules.lint.ModuleLint.get_all_lint_tests(is_pipeline=False)
+        )
+    ),
     """# {0}
 
 ```{{eval-rst}}

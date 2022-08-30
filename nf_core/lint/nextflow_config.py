@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
-import re
-import os
 import logging
+import os
+import re
 
 log = logging.getLogger(__name__)
 
@@ -157,31 +157,31 @@ def nextflow_config(self):
     for cfs in config_fail:
         for cf in cfs:
             if cf in ignore_configs:
-                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
                 break
             if cf in self.nf_config.keys():
-                passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
+                passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
                 break
         else:
-            failed.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
+            failed.append(f"Config variable not found: {self._wrap_quotes(cfs)}")
     for cfs in config_warn:
         for cf in cfs:
             if cf in ignore_configs:
-                ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+                ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
                 break
             if cf in self.nf_config.keys():
-                passed.append("Config variable found: {}".format(self._wrap_quotes(cf)))
+                passed.append(f"Config variable found: {self._wrap_quotes(cf)}")
                 break
         else:
-            warned.append("Config variable not found: {}".format(self._wrap_quotes(cfs)))
+            warned.append(f"Config variable not found: {self._wrap_quotes(cfs)}")
     for cf in config_fail_ifdefined:
         if cf in ignore_configs:
-            ignored.append("Config variable ignored: {}".format(self._wrap_quotes(cf)))
+            ignored.append(f"Config variable ignored: {self._wrap_quotes(cf)}")
             break
         if cf not in self.nf_config.keys():
-            passed.append("Config variable (correctly) not found: {}".format(self._wrap_quotes(cf)))
+            passed.append(f"Config variable (correctly) not found: {self._wrap_quotes(cf)}")
         else:
-            failed.append("Config variable (incorrectly) found: {}".format(self._wrap_quotes(cf)))
+            failed.append(f"Config variable (incorrectly) found: {self._wrap_quotes(cf)}")
 
     # Check and warn if the process configuration is done with deprecated syntax
     process_with_deprecated_syntax = list(
@@ -194,38 +194,40 @@ def nextflow_config(self):
         )
     )
     for pd in process_with_deprecated_syntax:
-        warned.append("Process configuration is done with deprecated_syntax: {}".format(pd))
+        warned.append(f"Process configuration is done with deprecated_syntax: {pd}")
 
     # Check the variables that should be set to 'true'
     for k in ["timeline.enabled", "report.enabled", "trace.enabled", "dag.enabled"]:
         if self.nf_config.get(k) == "true":
-            passed.append("Config ``{}`` had correct value: ``{}``".format(k, self.nf_config.get(k)))
+            passed.append(f"Config ``{k}`` had correct value: ``{self.nf_config.get(k)}``")
         else:
-            failed.append("Config ``{}`` did not have correct value: ``{}``".format(k, self.nf_config.get(k)))
+            failed.append(f"Config ``{k}`` did not have correct value: ``{self.nf_config.get(k)}``")
 
-    # Check that the pipeline name starts with nf-core
-    try:
-        assert self.nf_config.get("manifest.name", "").strip("'\"").startswith("nf-core/")
-    except (AssertionError, IndexError):
-        failed.append(
-            "Config ``manifest.name`` did not begin with ``nf-core/``:\n    {}".format(
-                self.nf_config.get("manifest.name", "").strip("'\"")
-            )
-        )
-    else:
-        passed.append("Config ``manifest.name`` began with ``nf-core/``")
+    if "manifest.name" not in ignore_configs:
+        # Check that the pipeline name starts with nf-core
+        try:
+            manifest_name = self.nf_config.get("manifest.name", "").strip("'\"")
+            if not manifest_name.startswith("nf-core/"):
+                raise AssertionError()
+        except (AssertionError, IndexError):
+            failed.append(f"Config ``manifest.name`` did not begin with ``nf-core/``:\n    {manifest_name}")
+        else:
+            passed.append("Config ``manifest.name`` began with ``nf-core/``")
 
-    # Check that the homePage is set to the GitHub URL
-    try:
-        assert self.nf_config.get("manifest.homePage", "").strip("'\"").startswith("https://github.com/nf-core/")
-    except (AssertionError, IndexError):
-        failed.append(
-            "Config variable ``manifest.homePage`` did not begin with https://github.com/nf-core/:\n    {}".format(
-                self.nf_config.get("manifest.homePage", "").strip("'\"")
+    if "manifest.homePage" not in ignore_configs:
+        # Check that the homePage is set to the GitHub URL
+        try:
+            manifest_homepage = self.nf_config.get("manifest.homePage", "").strip("'\"")
+            if not manifest_homepage.startswith("https://github.com/nf-core/"):
+                raise AssertionError()
+        except (AssertionError, IndexError):
+            failed.append(
+                "Config variable ``manifest.homePage`` did not begin with https://github.com/nf-core/:\n    {}".format(
+                    manifest_homepage
+                )
             )
-        )
-    else:
-        passed.append("Config variable ``manifest.homePage`` began with https://github.com/nf-core/")
+        else:
+            passed.append("Config variable ``manifest.homePage`` began with https://github.com/nf-core/")
 
     # Check that the DAG filename ends in ``.svg``
     if "dag.file" in self.nf_config:
@@ -241,75 +243,73 @@ def nextflow_config(self):
             passed.append("Config variable ``manifest.nextflowVersion`` started with >= or !>=")
         else:
             failed.append(
-                "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : ``{}``".format(
-                    self.nf_config.get("manifest.nextflowVersion", "")
-                ).strip("\"'")
+                "Config ``manifest.nextflowVersion`` did not start with ``>=`` or ``!>=`` : "
+                f"``{self.nf_config.get('manifest.nextflowVersion', '')}``".strip("\"'")
             )
 
     # Check that the pipeline version contains ``dev``
     if not self.release_mode and "manifest.version" in self.nf_config:
         if self.nf_config["manifest.version"].strip(" '\"").endswith("dev"):
-            passed.append(
-                "Config ``manifest.version`` ends in ``dev``: ``{}``".format(self.nf_config["manifest.version"])
-            )
+            passed.append(f"Config ``manifest.version`` ends in ``dev``: ``{self.nf_config['manifest.version']}``")
         else:
             warned.append(
-                "Config ``manifest.version`` should end in ``dev``: ``{}``".format(self.nf_config["manifest.version"])
+                f"Config ``manifest.version`` should end in ``dev``: ``{self.nf_config['manifest.version']}``"
             )
     elif "manifest.version" in self.nf_config:
         if "dev" in self.nf_config["manifest.version"]:
             failed.append(
-                "Config ``manifest.version`` should not contain ``dev`` for a release: ``{}``".format(
-                    self.nf_config["manifest.version"]
-                )
+                "Config ``manifest.version`` should not contain ``dev`` for a release: "
+                f"``{self.nf_config['manifest.version']}``"
             )
         else:
             passed.append(
-                "Config ``manifest.version`` does not contain ``dev`` for release: ``{}``".format(
-                    self.nf_config["manifest.version"]
-                )
+                "Config ``manifest.version`` does not contain ``dev`` for release: "
+                f"``{self.nf_config['manifest.version']}``"
             )
 
-    # Check if custom profile params are set correctly
-    if self.nf_config.get("params.custom_config_version", "").strip("'") == "master":
-        passed.append("Config `params.custom_config_version` is set to `master`")
-    else:
-        failed.append("Config `params.custom_config_version` is not set to `master`")
+    if "custom_config" not in ignore_configs:
+        # Check if custom profile params are set correctly
+        if self.nf_config.get("params.custom_config_version", "").strip("'") == "master":
+            passed.append("Config `params.custom_config_version` is set to `master`")
+        else:
+            failed.append("Config `params.custom_config_version` is not set to `master`")
 
-    custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/{}".format(
-        self.nf_config.get("params.custom_config_version", "").strip("'")
-    )
-    if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
-        passed.append("Config `params.custom_config_base` is set to `{}`".format(custom_config_base))
-    else:
-        failed.append("Config `params.custom_config_base` is not set to `{}`".format(custom_config_base))
-
-    # Check that lines for loading custom profiles exist
-    lines = [
-        r"// Load nf-core custom profiles from different Institutions",
-        r"try {",
-        r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
-        r"} catch (Exception e) {",
-        r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
-        r"}",
-    ]
-    path = os.path.join(self.wf_path, "nextflow.config")
-    i = 0
-    with open(path, "r") as f:
-        for line in f:
-            if lines[i] in line:
-                i += 1
-                if i == len(lines):
-                    break
-            else:
-                i = 0
-    if i == len(lines):
-        passed.append("Lines for loading custom profiles found")
-    else:
-        lines[2] = f"\t{lines[2]}"
-        lines[4] = f"\t{lines[4]}"
-        failed.append(
-            "Lines for loading custom profiles not found. File should contain: ```groovy\n{}".format("\n".join(lines))
+        custom_config_base = "https://raw.githubusercontent.com/nf-core/configs/{}".format(
+            self.nf_config.get("params.custom_config_version", "").strip("'")
         )
+        if self.nf_config.get("params.custom_config_base", "").strip("'") == custom_config_base:
+            passed.append(f"Config `params.custom_config_base` is set to `{custom_config_base}`")
+        else:
+            failed.append(f"Config `params.custom_config_base` is not set to `{custom_config_base}`")
+
+        # Check that lines for loading custom profiles exist
+        lines = [
+            r"// Load nf-core custom profiles from different Institutions",
+            r"try {",
+            r'includeConfig "${params.custom_config_base}/nfcore_custom.config"',
+            r"} catch (Exception e) {",
+            r'System.err.println("WARNING: Could not load nf-core/config profiles: ${params.custom_config_base}/nfcore_custom.config")',
+            r"}",
+        ]
+        path = os.path.join(self.wf_path, "nextflow.config")
+        i = 0
+        with open(path, "r") as f:
+            for line in f:
+                if lines[i] in line:
+                    i += 1
+                    if i == len(lines):
+                        break
+                else:
+                    i = 0
+        if i == len(lines):
+            passed.append("Lines for loading custom profiles found")
+        else:
+            lines[2] = f"\t{lines[2]}"
+            lines[4] = f"\t{lines[4]}"
+            failed.append(
+                "Lines for loading custom profiles not found. File should contain: ```groovy\n{}".format(
+                    "\n".join(lines)
+                )
+            )
 
     return {"passed": passed, "warned": warned, "failed": failed, "ignored": ignored}

@@ -9,8 +9,10 @@ on:
         description: Only run on nf-core/testpipeline?
         required: true
 
-# Uncomment if we need an edge release of Nextflow again
-# env: NXF_EDGE: 1
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   get-pipelines:
@@ -57,13 +59,9 @@ jobs:
           pip install .
 
       - name: Install Nextflow
-        env:
-          CAPSULE_LOG: none
-        run: |
-          mkdir /tmp/nextflow
-          cd /tmp/nextflow
-          wget -qO- get.nextflow.io | bash
-          sudo ln -s /tmp/nextflow/nextflow /usr/local/bin/nextflow
+        uses: nf-core/setup-nextflow@v1
+        with:
+          version: "latest-everything"
 
       - name: Run synchronisation
         if: github.repository == 'nf-core/tools'

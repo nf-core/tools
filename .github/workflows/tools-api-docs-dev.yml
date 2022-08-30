@@ -2,10 +2,15 @@ name: nf-core/tools dev API docs
 # Run on push and PR to test that docs build
 on: [pull_request, push]
 
+# Cancel if a newer run is started
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   api-docs:
     name: Build & push Sphinx API docs
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
 
     steps:
       - name: Check out source-code repository

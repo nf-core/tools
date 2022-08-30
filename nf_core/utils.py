@@ -2,31 +2,33 @@
 """
 Common utility functions for the nf-core python package.
 """
-import nf_core
-
-from distutils import version
 import datetime
 import errno
-import git
 import hashlib
+import io
 import json
 import logging
 import mimetypes
 import os
-import prompt_toolkit
-import questionary
 import random
 import re
-import requests
-import requests_cache
-import rich
 import shlex
 import subprocess
 import sys
 import time
+
+import git
+import prompt_toolkit
+import questionary
+import requests
+import requests_cache
+import rich
 import yaml
+from packaging.version import Version
 from rich.live import Live
 from rich.spinner import Spinner
+
+import nf_core
 
 log = logging.getLogger(__name__)
 
@@ -49,10 +51,11 @@ nfcore_question_style = prompt_toolkit.styles.Style(
     ]
 )
 
-NFCORE_CONFIG_DIR = os.path.join(
-    os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")),
-    "nf-core",
+NFCORE_CACHE_DIR = os.path.join(
+    os.environ.get("XDG_CACHE_HOME", os.path.join(os.getenv("HOME"), ".cache")),
+    "nfcore",
 )
+NFCORE_DIR = os.path.join(os.environ.get("XDG_CONFIG_HOME", os.path.join(os.getenv("HOME"), ".config")), "nfcore")
 
 
 def check_if_outdated(current_version=None, remote_version=None, source_url="https://nf-co.re/tools_version"):
@@ -63,18 +66,18 @@ def check_if_outdated(current_version=None, remote_version=None, source_url="htt
     if os.environ.get("NFCORE_NO_VERSION_CHECK", False):
         return True
     # Set and clean up the current version string
-    if current_version == None:
+    if current_version is None:
         current_version = nf_core.__version__
     current_version = re.sub(r"[^0-9\.]", "", current_version)
     # Build the URL to check against
     source_url = os.environ.get("NFCORE_VERSION_URL", source_url)
-    source_url = "{}?v={}".format(source_url, current_version)
+    source_url = f"{source_url}?v={current_version}"
     # Fetch and clean up the remote version
-    if remote_version == None:
+    if remote_version is None:
         response = requests.get(source_url, timeout=3)
         remote_version = re.sub(r"[^0-9\.]", "", response.text)
     # Check if we have an available update
-    is_outdated = version.StrictVersion(remote_version) > version.StrictVersion(current_version)
+    is_outdated = Version(remote_version) > Version(current_version)
     return (is_outdated, current_version, remote_version)
 
 
@@ -115,13 +118,14 @@ class Pipeline(object):
         self.minNextflowVersion = None
         self.wf_path = wf_path
         self.pipeline_name = None
+        self.pipeline_prefix = None
         self.schema_obj = None
 
         try:
             repo = git.Repo(self.wf_path)
             self.git_sha = repo.head.object.hexsha
         except:
-            log.debug("Could not find git hash for pipeline: {}".format(self.wf_path))
+            log.debug(f"Could not find git hash for pipeline: {self.wf_path}")
 
         # Overwrite if we have the last commit from the PR - otherwise we get a merge commit hash
         if os.environ.get("GITHUB_PR_COMMIT", "") != "":
@@ -144,12 +148,12 @@ class Pipeline(object):
                 if os.path.isfile(full_fn):
                     self.files.append(full_fn)
                 else:
-                    log.debug("`git ls-files` returned '{}' but could not open it!".format(full_fn))
+                    log.debug(f"`git ls-files` returned '{full_fn}' but could not open it!")
         except subprocess.CalledProcessError as e:
             # Failed, so probably not initialised as a git repository - just a list of all files
-            log.debug("Couldn't call 'git ls-files': {}".format(e))
+            log.debug(f"Couldn't call 'git ls-files': {e}")
             self.files = []
-            for subdir, dirs, files in os.walk(self.wf_path):
+            for subdir, _, files in os.walk(self.wf_path):
                 for fn in files:
                     self.files.append(os.path.join(subdir, fn))
 
@@ -160,7 +164,7 @@ class Pipeline(object):
         """
         self.nf_config = fetch_wf_config(self.wf_path)
 
-        self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").replace("nf-core/", "")
+        self.pipeline_prefix, self.pipeline_name = self.nf_config.get("manifest.name", "").strip("'").split("/")
 
         nextflowVersionMatch = re.search(r"[0-9\.]+(-edge)?", self.nf_config.get("manifest.nextflowVersion", ""))
         if nextflowVersionMatch:
@@ -210,7 +214,7 @@ def fetch_wf_config(wf_path, cache_config=True):
 
     log.debug(f"Got '{wf_path}' as path")
 
-    config = dict()
+    config = {}
     cache_fn = None
     cache_basedir = None
     cache_path = None
@@ -232,17 +236,17 @@ def fetch_wf_config(wf_path, cache_config=True):
         try:
             with open(os.path.join(wf_path, fn), "rb") as fh:
                 concat_hash += hashlib.sha256(fh.read()).hexdigest()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             pass
     # Hash the hash
     if len(concat_hash) > 0:
         bighash = hashlib.sha256(concat_hash.encode("utf-8")).hexdigest()
-        cache_fn = "wf-config-cache-{}.json".format(bighash[:25])
+        cache_fn = f"wf-config-cache-{bighash[:25]}.json"
 
     if cache_basedir and cache_fn:
         cache_path = os.path.join(cache_basedir, cache_fn)
         if os.path.isfile(cache_path):
-            log.debug("Found a config cache, loading: {}".format(cache_path))
+            log.debug(f"Found a config cache, loading: {cache_path}")
             with open(cache_path, "r") as fh:
                 config = json.load(fh)
             return config
@@ -256,7 +260,7 @@ def fetch_wf_config(wf_path, cache_config=True):
             k, v = ul.split(" = ", 1)
             config[k] = v
         except ValueError:
-            log.debug("Couldn't find key=value config pair:\n  {}".format(ul))
+            log.debug(f"Couldn't find key=value config pair:\n  {ul}")
 
     # Scrape main.nf for additional parameter declarations
     # Values in this file are likely to be complex, so don't both trying to capture them. Just get the param name.
@@ -268,7 +272,7 @@ def fetch_wf_config(wf_path, cache_config=True):
                 if match:
                     config[match.group(1)] = "null"
     except FileNotFoundError as e:
-        log.debug("Could not open {} to look for parameter declarations - {}".format(main_nf, e))
+        log.debug(f"Could not open {main_nf} to look for parameter declarations - {e}")
 
     # If we can, save a cached copy
     # HINT: during testing phase (in test_download, for example) we don't want
@@ -276,7 +280,7 @@ def fetch_wf_config(wf_path, cache_config=True):
     # will fail after the first attempt. It's better to not save temporary data
     # in others folders than tmp when doing tests in general
     if cache_path and cache_config:
-        log.debug("Saving config cache: {}".format(cache_path))
+        log.debug(f"Saving config cache: {cache_path}")
         with open(cache_path, "w") as fh:
             json.dump(config, fh, indent=4)
 
@@ -297,6 +301,15 @@ def nextflow_cmd(cmd):
         )
 
 
+def setup_nfcore_dir():
+    """Creates a directory for files that need to be kept between sessions
+
+    Currently only used for keeping local copies of modules repos
+    """
+    if not os.path.exists(NFCORE_DIR):
+        os.makedirs(NFCORE_DIR)
+
+
 def setup_requests_cachedir():
     """Sets up local caching for faster remote HTTP requests.
 
@@ -307,7 +320,7 @@ def setup_requests_cachedir():
     Also returns the config dict so that we can use the same setup with a Session.
     """
     pyversion = ".".join(str(v) for v in sys.version_info[0:3])
-    cachedir = os.path.join(NFCORE_CONFIG_DIR, f"cache_{pyversion}")
+    cachedir = os.path.join(NFCORE_CACHE_DIR, f"cache_{pyversion}")
 
     config = {
         "cache_name": os.path.join(cachedir, "github_info"),
@@ -315,6 +328,7 @@ def setup_requests_cachedir():
         "backend": "sqlite",
     }
 
+    logging.getLogger("requests_cache").setLevel(logging.WARNING)
     try:
         if not os.path.exists(cachedir):
             os.makedirs(cachedir)
@@ -340,7 +354,7 @@ def wait_cli_function(poll_func, poll_every=20):
     """
     try:
         spinner = Spinner("dots2", "Use ctrl+c to stop waiting and force exit.")
-        with Live(spinner, refresh_per_second=20) as live:
+        with Live(spinner, refresh_per_second=20):
             while True:
                 if poll_func():
                     break
@@ -364,29 +378,28 @@ def poll_nfcore_web_api(api_url, post_data=None):
                 response = requests.get(api_url, headers={"Cache-Control": "no-cache"})
             else:
                 response = requests.post(url=api_url, data=post_data)
-        except (requests.exceptions.Timeout):
-            raise AssertionError("URL timed out: {}".format(api_url))
-        except (requests.exceptions.ConnectionError):
-            raise AssertionError("Could not connect to URL: {}".format(api_url))
+        except requests.exceptions.Timeout:
+            raise AssertionError(f"URL timed out: {api_url}")
+        except requests.exceptions.ConnectionError:
+            raise AssertionError(f"Could not connect to URL: {api_url}")
         else:
             if response.status_code != 200:
-                log.debug("Response content:\n{}".format(response.content))
+                log.debug(f"Response content:\n{response.content}")
                 raise AssertionError(
-                    "Could not access remote API results: {} (HTML {} Error)".format(api_url, response.status_code)
+                    f"Could not access remote API results: {api_url} (HTML {response.status_code} Error)"
+                )
+            try:
+                web_response = json.loads(response.content)
+                if "status" not in web_response:
+                    raise AssertionError()
+            except (json.decoder.JSONDecodeError, AssertionError, TypeError):
+                log.debug(f"Response content:\n{response.content}")
+                raise AssertionError(
+                    f"nf-core website API results response not recognised: {api_url}\n "
+                    "See verbose log for full response"
                 )
             else:
-                try:
-                    web_response = json.loads(response.content)
-                    assert "status" in web_response
-                except (json.decoder.JSONDecodeError, AssertionError, TypeError) as e:
-                    log.debug("Response content:\n{}".format(response.content))
-                    raise AssertionError(
-                        "nf-core website API results response not recognised: {}\n See verbose log for full response".format(
-                            api_url
-                        )
-                    )
-                else:
-                    return web_response
+                return web_response
 
 
 class GitHub_API_Session(requests_cache.CachedSession):
@@ -396,7 +409,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
     such as automatically setting up GitHub authentication if we can.
     """
 
-    def __init__(self):
+    def __init__(self):  # pylint: disable=super-init-not-called
         self.auth_mode = None
         self.return_ok = [200, 201]
         self.return_retry = [403]
@@ -442,8 +455,8 @@ class GitHub_API_Session(requests_cache.CachedSession):
                         gh_cli_config["github.com"]["user"], gh_cli_config["github.com"]["oauth_token"]
                     )
                     self.auth_mode = f"gh CLI config: {gh_cli_config['github.com']['user']}"
-            except Exception as e:
-                ex_type, ex_value, ex_traceback = sys.exc_info()
+            except Exception:
+                ex_type, ex_value, _ = sys.exc_info()
                 output = rich.markup.escape(f"{ex_type.__name__}: {ex_value}")
                 log.debug(f"Couldn't auto-auth with GitHub CLI auth from '{gh_cli_config_fn}': [red]{output}")
 
@@ -540,7 +553,7 @@ class GitHub_API_Session(requests_cache.CachedSession):
 gh_api = GitHub_API_Session()
 
 
-def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
+def anaconda_package(dep, dep_channels=None):
     """Query conda package information.
 
     Sends a HTTP GET request to the Anaconda remote API.
@@ -554,9 +567,12 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
         A ValueError, if the package name can not be found (404)
     """
 
+    if dep_channels is None:
+        dep_channels = ["conda-forge", "bioconda", "defaults"]
+
     # Check if each dependency is the latest available version
     if "=" in dep:
-        depname, depver = dep.split("=", 1)
+        depname, _ = dep.split("=", 1)
     else:
         depname = dep
 
@@ -569,27 +585,26 @@ def anaconda_package(dep, dep_channels=["conda-forge", "bioconda", "defaults"]):
         depname = depname.split("::")[1]
 
     for ch in dep_channels:
-        anaconda_api_url = "https://api.anaconda.org/package/{}/{}".format(ch, depname)
+        anaconda_api_url = f"https://api.anaconda.org/package/{ch}/{depname}"
         try:
             response = requests.get(anaconda_api_url, timeout=10)
-        except (requests.exceptions.Timeout):
-            raise LookupError("Anaconda API timed out: {}".format(anaconda_api_url))
-        except (requests.exceptions.ConnectionError):
+        except requests.exceptions.Timeout:
+            raise LookupError(f"Anaconda API timed out: {anaconda_api_url}")
+        except requests.exceptions.ConnectionError:
             raise LookupError("Could not connect to Anaconda API")
         else:
             if response.status_code == 200:
                 return response.json()
-            elif response.status_code != 404:
+            if response.status_code != 404:
                 raise LookupError(
-                    "Anaconda API returned unexpected response code `{}` for: {}\n{}".format(
-                        response.status_code, anaconda_api_url, response
-                    )
+                    f"Anaconda API returned unexpected response code `{response.status_code}` for: "
+                    f"{anaconda_api_url}\n{response}"
                 )
-            elif response.status_code == 404:
-                log.debug("Could not find `{}` in conda channel `{}`".format(dep, ch))
-    else:
-        # We have looped through each channel and had a 404 response code on everything
-        raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
+            # response.status_code == 404
+            log.debug(f"Could not find `{dep}` in conda channel `{ch}`")
+
+    # We have looped through each channel and had a 404 response code on everything
+    raise ValueError(f"Could not find Conda dependency using the Anaconda API: '{dep}'")
 
 
 def parse_anaconda_licence(anaconda_response, version=None):
@@ -638,19 +653,18 @@ def pip_package(dep):
         A LookupError, if the connection fails or times out
         A ValueError, if the package name can not be found
     """
-    pip_depname, pip_depver = dep.split("=", 1)
-    pip_api_url = "https://pypi.python.org/pypi/{}/json".format(pip_depname)
+    pip_depname, _ = dep.split("=", 1)
+    pip_api_url = f"https://pypi.python.org/pypi/{pip_depname}/json"
     try:
         response = requests.get(pip_api_url, timeout=10)
-    except (requests.exceptions.Timeout):
-        raise LookupError("PyPI API timed out: {}".format(pip_api_url))
-    except (requests.exceptions.ConnectionError):
-        raise LookupError("PyPI API Connection error: {}".format(pip_api_url))
+    except requests.exceptions.Timeout:
+        raise LookupError(f"PyPI API timed out: {pip_api_url}")
+    except requests.exceptions.ConnectionError:
+        raise LookupError(f"PyPI API Connection error: {pip_api_url}")
     else:
         if response.status_code == 200:
             return response.json()
-        else:
-            raise ValueError("Could not find pip dependency using the PyPI API: `{}`".format(dep))
+        raise ValueError(f"Could not find pip dependency using the PyPI API: `{dep}`")
 
 
 def get_biocontainer_tag(package, version):
@@ -686,16 +700,30 @@ def get_biocontainer_tag(package, version):
                 images = response.json()["images"]
                 singularity_image = None
                 docker_image = None
+                all_docker = {}
+                all_singularity = {}
                 for img in images:
-                    # Get most recent Docker and Singularity image
+                    # Get all Docker and Singularity images
                     if img["image_type"] == "Docker":
-                        modification_date = get_tag_date(img["updated"])
-                        if not docker_image or modification_date > get_tag_date(docker_image["updated"]):
-                            docker_image = img
-                    if img["image_type"] == "Singularity":
-                        modification_date = get_tag_date(img["updated"])
-                        if not singularity_image or modification_date > get_tag_date(singularity_image["updated"]):
-                            singularity_image = img
+                        # Obtain version and build
+                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
+                        if match is not None:
+                            all_docker[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                    elif img["image_type"] == "Singularity":
+                        # Obtain version and build
+                        match = re.search(r"(?::)+([A-Za-z\d\-_.]+)", img["image_name"])
+                        if match is not None:
+                            all_singularity[match.group(1)] = {"date": get_tag_date(img["updated"]), "image": img}
+                # Obtain common builds from Docker and Singularity images
+                common_keys = list(all_docker.keys() & all_singularity.keys())
+                current_date = None
+                for k in common_keys:
+                    # Get the most recent common image
+                    date = max(all_docker[k]["date"], all_docker[k]["date"])
+                    if docker_image is None or current_date < date:
+                        docker_image = all_docker[k]["image"]
+                        singularity_image = all_singularity[k]["image"]
+                        current_date = date
                 return docker_image["image_name"], singularity_image["image_name"]
             except TypeError:
                 raise LookupError(f"Could not find docker or singularity container for {package}")
@@ -717,12 +745,12 @@ def custom_yaml_dumper():
             """
             return self.represent_dict(data.items())
 
-        def increase_indent(self, flow=False, *args, **kwargs):
+        def increase_indent(self, flow=False, indentless=False):
             """Indent YAML lists so that YAML validates with Prettier
 
             See https://github.com/yaml/pyyaml/issues/234#issuecomment-765894586
             """
-            return super().increase_indent(flow=flow, indentless=False)
+            return super().increase_indent(flow=flow, indentless=indentless)
 
         # HACK: insert blank lines between top-level objects
         # inspired by https://stackoverflow.com/a/44284819/3786245
@@ -743,13 +771,13 @@ def is_file_binary(path):
     binary_extensions = [".jpeg", ".jpg", ".png", ".zip", ".gz", ".jar", ".tar"]
 
     # Check common file extensions
-    filename, file_extension = os.path.splitext(path)
+    _, file_extension = os.path.splitext(path)
     if file_extension in binary_extensions:
         return True
 
     # Try to detect binary files
     (ftype, encoding) = mimetypes.guess_type(path, strict=False)
-    if encoding is not None or (ftype is not None and any([ftype.startswith(ft) for ft in binary_ftypes])):
+    if encoding is not None or (ftype is not None and any(ftype.startswith(ft) for ft in binary_ftypes)):
         return True
 
 
@@ -778,15 +806,14 @@ def prompt_remote_pipeline_name(wfs):
             return wf.full_name
 
     # Non nf-core repo on GitHub
-    else:
-        if pipeline.count("/") == 1:
-            try:
-                gh_api.get(f"https://api.github.com/repos/{pipeline}")
-            except Exception:
-                # No repo found - pass and raise error at the end
-                pass
-            else:
-                return pipeline
+    if pipeline.count("/") == 1:
+        try:
+            gh_api.get(f"https://api.github.com/repos/{pipeline}")
+        except Exception:
+            # No repo found - pass and raise error at the end
+            pass
+        else:
+            return pipeline
 
     log.info("Available nf-core pipelines: '{}'".format("', '".join([w.name for w in wfs.remote_workflows])))
     raise AssertionError(f"Not able to find pipeline '{pipeline}'")
@@ -864,9 +891,8 @@ def get_repo_releases_branches(pipeline, wfs):
 
             # Check that this repo existed
             try:
-                assert rel_r.json().get("message") != "Not Found"
-            except AssertionError:
-                raise AssertionError(f"Not able to find pipeline '{pipeline}'")
+                if rel_r.json().get("message") == "Not Found":
+                    raise AssertionError(f"Not able to find pipeline '{pipeline}'")
             except AttributeError:
                 # Success! We have a list, which doesn't work with .get() which is looking for a dict key
                 wf_releases = list(sorted(rel_r.json(), key=lambda k: k.get("published_at_timestamp", 0), reverse=True))
@@ -918,7 +944,7 @@ def load_tools_config(dir="."):
 
     if os.path.isfile(old_config_fn_yml) or os.path.isfile(old_config_fn_yaml):
         log.error(
-            f"Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
+            "Deprecated `nf-core-lint.yml` file found! The file will not be loaded. Please rename the file to `.nf-core.yml`."
         )
         return {}
 
@@ -940,10 +966,97 @@ def load_tools_config(dir="."):
 
 def sort_dictionary(d):
     """Sorts a nested dictionary recursively"""
-    result = dict()
+    result = {}
     for k, v in sorted(d.items()):
         if isinstance(v, dict):
             result[k] = sort_dictionary(v)
         else:
             result[k] = v
     return result
+
+
+def plural_s(list_or_int):
+    """Return an s if the input is not one or has not the length of one."""
+    length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
+    return "s" * (length != 1)
+
+
+def plural_y(list_or_int):
+    """Return 'ies' if the input is not one or has not the length of one, else 'y'."""
+    length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
+    return "ies" if length != 1 else "y"
+
+
+def plural_es(list_or_int):
+    """Return a 'es' if the input is not one or has not the length of one."""
+    length = list_or_int if isinstance(list_or_int, int) else len(list_or_int)
+    return "es" * (length != 1)
+
+
+# From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+# Placed at top level as to only compile it once
+ANSI_ESCAPE_RE = re.compile(r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
+
+
+def strip_ansi_codes(string, replace_with=""):
+    """Strip ANSI colouring codes from a string to return plain text.
+
+    From Stack Overflow: https://stackoverflow.com/a/14693789/713980
+    """
+    return ANSI_ESCAPE_RE.sub(replace_with, string)
+
+
+def is_relative_to(path1, path2):
+    """
+    Checks if a path is relative to another.
+
+    Should mimic Path.is_relative_to which not available in Python < 3.9
+
+    path1 (Path | str): The path that could be a subpath
+    path2 (Path | str): The path the could be the superpath
+    """
+    return str(path1).startswith(str(path2) + os.sep)
+
+
+def file_md5(fname):
+    """Calculates the md5sum for a file on the disk.
+
+    Args:
+        fname (str): Path to a local file.
+    """
+
+    # Calculate the md5 for the file on disk
+    hash_md5 = hashlib.md5()
+    with open(fname, "rb") as f:
+        for chunk in iter(lambda: f.read(io.DEFAULT_BUFFER_SIZE), b""):
+            hash_md5.update(chunk)
+
+    return hash_md5.hexdigest()
+
+
+def validate_file_md5(file_name, expected_md5hex):
+    """Validates the md5 checksum of a file on disk.
+
+    Args:
+        file_name (str): Path to a local file.
+        expected (str): The expected md5sum.
+
+    Raises:
+        IOError, if the md5sum does not match the remote sum.
+    """
+    log.debug(f"Validating image hash: {file_name}")
+
+    # Make sure the expected md5 sum is a hexdigest
+    try:
+        int(expected_md5hex, 16)
+    except ValueError as ex:
+        raise ValueError(f"The supplied md5 sum must be a hexdigest but it is {expected_md5hex}") from ex
+
+    file_md5hex = file_md5(file_name)
+
+    if file_md5hex.upper() == expected_md5hex.upper():
+        log.debug(f"md5 sum of image matches expected: {expected_md5hex}")
+    else:
+        raise IOError(f"{file_name} md5 does not match remote: {expected_md5hex} - {file_md5hex}")
+
+    return True

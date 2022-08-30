@@ -1,7 +1,16 @@
-import pytest
 import os
 
-from ..utils import with_temporary_folder
+import pytest
+
+from nf_core.modules.install import ModuleInstall
+from nf_core.modules.modules_json import ModulesJson
+
+from ..utils import (
+    GITLAB_BRANCH_TEST_BRANCH,
+    GITLAB_REPO,
+    GITLAB_URL,
+    with_temporary_folder,
+)
 
 
 def test_modules_install_nopipeline(self):
@@ -37,9 +46,24 @@ def test_modules_install_trimgalore_twice(self):
     assert self.mods_install.install("trimgalore") is True
 
 
-# TODO Remove comments once external repository to have same structure as nf-core/modules
-# def test_modules_install_trimgalore_alternative_source(self):
-#     """Test installing a module from a different source repository - TrimGalore!"""
-#     assert self.mods_install_alt.install("trimgalore") is not False
-#     module_path = os.path.join(self.mods_install.dir, "modules", "ewels", "nf-core-modules", "trimgalore")
-#     assert os.path.exists(module_path)
+def test_modules_install_from_gitlab(self):
+    """Test installing a module from GitLab"""
+    assert self.mods_install_gitlab.install("fastqc") is True
+
+
+def test_modules_install_different_branch_fail(self):
+    """Test installing a module from a different branch"""
+    install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
+    # The FastQC module does not exists in the branch-test branch
+    assert install_obj.install("fastqc") is False
+
+
+def test_modules_install_different_branch_succeed(self):
+    """Test installing a module from a different branch"""
+    install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH)
+    # The fastp module does exists in the branch-test branch
+    assert install_obj.install("fastp") is True
+
+    # Verify that the branch entry was added correctly
+    modules_json = ModulesJson(self.pipeline_dir)
+    assert modules_json.get_module_branch("fastp", GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH

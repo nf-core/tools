@@ -1,6 +1,3 @@
-import pytest
-import shutil
-import tempfile
 import os
 
 import nf_core.lint
