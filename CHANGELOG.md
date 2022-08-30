@@ -8,6 +8,8 @@
 
 ### General
 
+- Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
+
 ### Modules
 
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
