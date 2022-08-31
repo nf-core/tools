@@ -8,13 +8,13 @@
 
 ### General
 
-- Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
-
 ### Modules
 
 ## [v2.5 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-31]
 
-- Patch release to fix black linting in pipelines ([#1789](https://github.com/nf-core/tools/pull/1789)).
+- Patch release to fix black linting in pipelines ([#1789](https://github.com/nf-core/tools/pull/1789))
+- Add isort options to pyproject.toml ([#1792](https://github.com/nf-core/tools/pull/1792))
+- Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
 
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
