@@ -14,6 +14,7 @@
 
 - Patch release to fix black linting in pipelines ([#1789](https://github.com/nf-core/tools/pull/1789))
 - Add isort options to pyproject.toml ([#1792](https://github.com/nf-core/tools/pull/1792))
+- Lint pyproject.toml file exists and content ([#1795](https://github.com/nf-core/tools/pull/1795))
 - Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
 
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
