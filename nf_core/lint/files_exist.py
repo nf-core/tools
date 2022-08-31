@@ -73,6 +73,7 @@ def files_exist(self):
         .github/workflows/awstest.yml
         .github/workflows/awsfulltest.yml
         lib/WorkflowPIPELINE.groovy
+        pyproject.toml
 
     Files that *must not* be present:
 
@@ -174,6 +175,7 @@ def files_exist(self):
         [os.path.join(".github", "workflows", "awsfulltest.yml")],
         [os.path.join("lib", f"Workflow{short_name[0].upper()}{short_name[1:]}.groovy")],
         ["modules.json"],
+        ["pyproject.toml"],
     ]
 
     # List of strings. Fails / warns if any of the strings exist.
