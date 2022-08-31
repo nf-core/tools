@@ -10,6 +10,10 @@
 
 ### Modules
 
+## [v2.5 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-31]
+
+- Patch release to fix black linting in pipelines ([#1789](https://github.com/nf-core/tools/pull/1789)).
+
 ## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
 ### Template
