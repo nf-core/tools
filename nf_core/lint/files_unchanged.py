@@ -50,6 +50,7 @@ def files_unchanged(self):
 
         .gitignore
         .prettierignore
+        pyproject.toml
 
     .. tip:: You can configure the ``nf-core lint`` tests to ignore any of these checks by setting
              the ``files_unchanged`` key as follows in your ``.nf-core.yml`` config file. For example:
@@ -110,7 +111,7 @@ def files_unchanged(self):
         [os.path.join("lib", "NfcoreTemplate.groovy")],
     ]
     files_partial = [
-        [".gitignore", ".prettierignore"],
+        [".gitignore", ".prettierignore", "pyproject.toml"],
     ]
 
     # Only show error messages from pipeline creation
