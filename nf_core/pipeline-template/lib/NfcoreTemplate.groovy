@@ -149,7 +149,7 @@ class NfcoreTemplate {
     // Construct and send adaptive card
     // https://adaptivecards.io
     //
-    public static void adaptivecard(workflow, params, summary_params, projectDir, log, multiqc_report=[]) {
+    public static void adaptivecard(workflow, params, summary_params, projectDir, log) {
         def hook_url = params.hook_url
 
         def summary = [:]
