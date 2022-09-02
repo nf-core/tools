@@ -196,7 +196,7 @@ class NfcoreTemplate {
         post.getOutputStream().write(json_message.getBytes("UTF-8"));
         def postRC = post.getResponseCode();
         if (! postRC.equals(200)) {
-            println(post.getErrorStream().getText());
+            log.warn(post.getErrorStream().getText());
         }
     }
 
