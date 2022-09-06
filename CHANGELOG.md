@@ -9,7 +9,7 @@
 ### Linting
 
 ### General
-- Add function to enable chat notifications on teams, accompanied by `hook_url` param to enable it.
+- Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
 ### Modules
 
 ## [v2.5.1 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5.1) - [2022-08-31]
