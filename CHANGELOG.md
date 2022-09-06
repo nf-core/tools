@@ -4,6 +4,8 @@
 
 ### Template
 
+- Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
+
 ### Linting
 
 ### General
