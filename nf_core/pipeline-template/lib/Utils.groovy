@@ -40,7 +40,7 @@ class Utils {
                 "  The observed channel order is \n" +
                 "  ${channels}" +
                 "  but the following channel order is required:\n" +
-                "  ${required_channels}\n" +
+                "  ${required_channels_in_order}\n" +
                 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
         }
     }
