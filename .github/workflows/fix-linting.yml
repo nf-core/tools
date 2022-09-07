@@ -55,5 +55,5 @@ jobs:
           git config push.default upstream
           git add .
           git status
-          git commit -m "[automated] Fix linting with Prettier"
+          git commit -m "[automated] Fix code linting"
           git push
