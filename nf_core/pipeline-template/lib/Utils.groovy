@@ -38,7 +38,7 @@ class Utils {
                 "  You will need to set-up the conda-forge and bioconda channels correctly.\n" +
                 "  Please refer to https://bioconda.github.io/\n" +
                 "  The observed channel order is \n" +
-                "  ${channels}" +
+                "  ${channels}\n" +
                 "  but the following channel order is required:\n" +
                 "  ${required_channels_in_order}\n" +
                 "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
