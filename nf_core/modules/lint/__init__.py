@@ -134,7 +134,6 @@ class ModuleLint(ModuleCommand):
         module=None,
         key=(),
         all_modules=False,
-        hide_progress=False,
         print_results=True,
         show_passed=False,
         local=False,
