@@ -5,7 +5,7 @@ import os
 log = logging.getLogger(__name__)
 
 
-def module_deprecations(module_lint_object, module):
+def module_deprecations(_, module):
     """
     Check that the modules are up to the latest nf-core standard
     """
