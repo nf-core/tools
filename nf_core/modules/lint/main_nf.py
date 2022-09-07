@@ -432,7 +432,8 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
                     "https://" + new_url if not new_url.startswith("https://") else new_url, stream=True
                 )
                 log.debug(
-                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, status_code: {response_new_container.status_code}"
+                    f"Connected to URL: {'https://' + new_url if not new_url.startswith('https://') else new_url}, "
+                    f"status_code: {response_new_container.status_code}"
                 )
             except (requests.exceptions.RequestException, sqlite3.InterfaceError) as e:
                 log.debug(f"Unable to connect to url '{new_url}' due to error: {e}")
