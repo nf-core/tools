@@ -192,7 +192,7 @@ class ModulesTestYmlBuilder(object):
                     ).strip()
                     ep_test["tags"] = [t.strip() for t in prompt_tags.split(",")]
 
-        ep_test["files"] = self.get_md5_sums(entry_point, ep_test["command"])
+        ep_test["files"] = self.get_md5_sums(ep_test["command"])
 
         return ep_test
 
@@ -254,7 +254,7 @@ class ModulesTestYmlBuilder(object):
 
         return test_files
 
-    def get_md5_sums(self, entry_point, command, results_dir=None, results_dir_repeat=None):
+    def get_md5_sums(self, command, results_dir=None, results_dir_repeat=None):
         """
         Recursively go through directories and subdirectories
         and generate tuples of (<file_path>, <md5sum>)
