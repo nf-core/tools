@@ -22,7 +22,7 @@ tmp_nxf = tmp / "nxf"
 tmp_nxf_str = str(tmp_nxf)
 
 
-class TestLint(unittest.TestCase):
+class TestList(unittest.TestCase):
     """Class for list tests"""
 
     @mock.patch("subprocess.check_output")
