@@ -33,7 +33,7 @@ def print_joint_summary(lint_obj, module_lint_obj):
     console.print(table)
 
 
-def print_fixes(lint_obj, module_lint_obj):
+def print_fixes(lint_obj):
     """Prints available and applied fixes"""
 
     if len(lint_obj.could_fix):
