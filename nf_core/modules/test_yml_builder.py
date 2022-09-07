@@ -54,7 +54,8 @@ class ModulesTestYmlBuilder(object):
         """Run build steps"""
         if not self.no_prompts:
             log.info(
-                "[yellow]Press enter to use default values [cyan bold](shown in brackets) [yellow]or type your own responses"
+                "[yellow]Press enter to use default values "
+                "[cyan bold](shown in brackets) [yellow]or type your own responses"
             )
         self.check_inputs()
         self.scrape_workflow_entry_points()
@@ -166,7 +167,10 @@ class ModulesTestYmlBuilder(object):
         while ep_test["command"] == "":
             # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
             # See https://github.com/nf-core/tools/issues/1562
-            default_val = f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config  -c ./tests/modules/{self.module_name}/nextflow.config"
+            default_val = (
+                f"nextflow run ./tests/modules/{self.module_name} -entry {entry_point} "
+                f"-c ./tests/config/nextflow.config  -c ./tests/modules/{self.module_name}/nextflow.config"
+            )
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
