@@ -422,7 +422,7 @@ def _fix_module_version(self, current_version, latest_version, singularity_tag, 
         build_type = _container_type(l)
         if build_type == "bioconda":
             new_lines.append(re.sub(rf"{current_version}", f"{latest_version}", line))
-        elif build_type == "singularity" or build_type == "docker":
+        elif build_type in ("singularity", "docker"):
             # Check that the new url is valid
             new_url = re.search(
                 "(?:['\"])(.+)(?:['\"])", re.sub(rf"{singularity_tag}", f"{latest_version}--{build}", line)
