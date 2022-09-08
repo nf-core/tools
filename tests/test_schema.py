@@ -31,7 +31,7 @@ class TestSchema(unittest.TestCase):
         self.tmp_dir = tempfile.mkdtemp()
         self.template_dir = os.path.join(self.tmp_dir, "wf")
         create_obj = nf_core.create.PipelineCreate(
-            "test_pipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
+            "testpipeline", "", "", outdir=self.template_dir, no_git=True, plain=True
         )
         create_obj.init_pipeline()
 
