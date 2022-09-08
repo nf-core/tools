@@ -25,10 +25,6 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 
 ch_multiqc_config   = params.multiqc_config ? file( params.multiqc_config, checkIfExists: true ) : file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
 
-// TODO nf-core: replace empty list with path to pipeline logo. Will require adding logo file name to MultiQC config to be displayed.
-ch_multiqc_logo     = file( params.multiqc_logo, checkIfExists: true )
-
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     IMPORT LOCAL MODULES/SUBWORKFLOWS
@@ -99,8 +95,7 @@ workflow {{ short_name|upper }} {
 
     MULTIQC (
         ch_multiqc_files.collect(),
-        ch_multiqc_config,
-        ch_multiqc_logo
+        ch_multiqc_config
     )
     multiqc_report = MULTIQC.out.report.toList()
     ch_versions    = ch_versions.mix(MULTIQC.out.versions)

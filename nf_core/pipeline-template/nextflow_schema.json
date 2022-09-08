@@ -39,11 +39,6 @@
                     "type": "string",
                     "description": "MultiQC report title. Printed as page header, used for filename if not otherwise specified.",
                     "fa_icon": "fas fa-file-signature"
-                },
-                "multiqc_logo": {
-                    "type": "string",
-                    "description": "Path to custom logo for display in MultiQC report",
-                    "fa_icon": "fas fa-image"
                 }
             }
         },
