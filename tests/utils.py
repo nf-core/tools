@@ -61,5 +61,7 @@ def set_wd(path: Path):
     """
     start_wd = Path().absolute()
     os.chdir(path)
-    yield
-    os.chdir(start_wd)
+    try:
+        yield
+    finally:
+        os.chdir(start_wd)
