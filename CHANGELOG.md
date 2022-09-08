@@ -6,6 +6,8 @@
 
 - Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
 - Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
+- Check that the workflow name provided with a template doesn't contain dashes ([#1822](https://github.com/nf-core/tools/pull/1822))
+- Ask for `Name` instead of `Workflow name` when creating a pipeline with prompts ([#1822](https://github.com/nf-core/tools/pull/1822))
 
 ### Linting
 
