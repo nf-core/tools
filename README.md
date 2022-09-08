@@ -414,6 +414,7 @@ skip:
 ```
 
 This will create a pipeline called `coolpipe` in the directory `cool-pipes-company-coolpipe` (`<prefix>-<name>`) with `me` as the author. It will exclude all possible parts of the template:
+
 - `github`: removed all files required for GitHub hosting of the pipeline. Specifically the `.github` folder and `.gitignore` file.
 - `ci`: removes the GitHub continuous integration tests from the pipeline. Specifically the `.github/workflows/` folder.
 - `github_badges`: removes GitHub badges from the `README.md` file.
