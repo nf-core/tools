@@ -397,7 +397,7 @@ Note that if the required arguments for `nf-core create` are not given, it will 
 
 The `nf-core create` command comes with a number of options that allow you to customize the creation of a pipeline if you intend to not publish it as an
 nf-core pipeline. This can be done in two ways: by using interactive prompts, or by supplying a `template.yml` file using the `--template-yaml <file>` option.
-Both options allow you to specify a custom pipeline prefix, as well as selecting parts of the template to be excluded during pipeline creation.
+Both options allow you to specify a custom pipeline prefix to use instead of the common `nf-core`, as well as selecting parts of the template to be excluded during pipeline creation.
 The interactive prompts will guide you through the pipeline creation process. An example of a `template.yml` file is shown below.
 
 ```yaml
