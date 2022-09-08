@@ -106,10 +106,6 @@ class PipelineCreate(object):
         param_dict["name"] = self.get_param("name", name, template_yaml, template_yaml_path)
         param_dict["description"] = self.get_param("description", description, template_yaml, template_yaml_path)
         param_dict["author"] = self.get_param("author", author, template_yaml, template_yaml_path)
-        # Check that the pipeline name matches the requirements
-        if not re.match(r"^[a-z]+$", param_dict["name"]):
-            log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
-            sys.exit(1)
 
         if "version" in template_yaml:
             if version is not None:
@@ -165,6 +161,11 @@ class PipelineCreate(object):
         param_dict["logo_light"] = f"{param_dict['name_noslash']}_logo_light.png"
         param_dict["logo_dark"] = f"{param_dict['name_noslash']}_logo_dark.png"
         param_dict["version"] = version
+
+        # Check that the pipeline name matches the requirements
+        if not re.match(r"^[a-z]+$", param_dict["short_name"]):
+            log.error("[red]Invalid workflow name: must be lowercase without punctuation.")
+            sys.exit(1)
 
         return param_dict, skip_paths
 
