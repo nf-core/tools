@@ -1,6 +1,30 @@
 # nf-core/tools: Changelog
 
-## v2.5dev
+## v2.6dev
+
+### Template
+
+- Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
+- Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
+- Update MultiQC module, update supplying MultiQC default and custom config files to module
+- Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
+
+### Linting
+
+### General
+
+- Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
+
+### Modules
+
+## [v2.5.1 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5.1) - [2022-08-31]
+
+- Patch release to fix black linting in pipelines ([#1789](https://github.com/nf-core/tools/pull/1789))
+- Add isort options to pyproject.toml ([#1792](https://github.com/nf-core/tools/pull/1792))
+- Lint pyproject.toml file exists and content ([#1795](https://github.com/nf-core/tools/pull/1795))
+- Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
+
+## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
 ### Template
 
@@ -13,7 +37,7 @@
 - Make `nf-core create` fail if Git default branch name is dev or TEMPLATE ([#1705](https://github.com/nf-core/tools/pull/1705))
 - Convert `console` snippets to `bash` snippets in the template where applicable ([#1729](https://github.com/nf-core/tools/pull/1729))
 - Add `branch` field to module entries in `modules.json` to record what branch a module was installed from ([#1728](https://github.com/nf-core/tools/issues/1728))
-- Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
+- Add customisation option to remove all GitHub support with `nf-core create` ([#1766](https://github.com/nf-core/tools/pull/1766))
 
 ### Linting
 
@@ -50,6 +74,7 @@
 - Replace use of the deprecated `distutils` Version object with that from `packaging` ([#1735](https://github.com/nf-core/tools/pull/1735))
 - Add code to cancel CI run if a new run starts ([#1760](https://github.com/nf-core/tools/pull/1760))
 - CI for the API docs generation now uses the ubuntu-latest base image ([#1762](https://github.com/nf-core/tools/pull/1762))
+- Add option to hide progress bars in `nf-core lint` and `nf-core modules lint` with `--hide-progress`.
 
 ### Modules
 

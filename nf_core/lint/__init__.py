@@ -40,6 +40,7 @@ def run_linting(
     fail_warned=False,
     md_fn=None,
     json_fn=None,
+    hide_progress=False,
 ):
     """Runs all nf-core linting checks on a given Nextflow pipeline project
     in either `release` mode or `normal` mode (default). Returns an object
@@ -77,7 +78,7 @@ def run_linting(
         pipeline_keys = None
 
     # Create the lint object
-    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned)
+    lint_obj = PipelineLint(pipeline_dir, release_mode, fix, pipeline_keys, fail_ignored, fail_warned, hide_progress)
 
     # Load the various pipeline configs
     lint_obj._load_lint_config()
@@ -85,7 +86,7 @@ def run_linting(
     lint_obj._list_files()
 
     # Create the modules lint object
-    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir)
+    module_lint_obj = nf_core.modules.lint.ModuleLint(pipeline_dir, hide_progress=hide_progress)
 
     # Verify that the pipeline is correctly configured and has  a modules.json file
     module_lint_obj.has_valid_directory()
@@ -182,7 +183,9 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .template_strings import template_strings
     from .version_consistency import version_consistency
 
-    def __init__(self, wf_path, release_mode=False, fix=(), key=None, fail_ignored=False, fail_warned=False):
+    def __init__(
+        self, wf_path, release_mode=False, fix=(), key=None, fail_ignored=False, fail_warned=False, hide_progress=False
+    ):
         """Initialise linting object"""
 
         # Initialise the parent object
@@ -192,6 +195,7 @@ class PipelineLint(nf_core.utils.Pipeline):
         self.release_mode = release_mode
         self.fail_ignored = fail_ignored
         self.fail_warned = fail_warned
+        self.hide_progress = hide_progress
         self.failed = []
         self.ignored = []
         self.fixed = []
@@ -307,6 +311,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
+            disable=self.hide_progress,
         )
         with self.progress_bar:
             lint_progress = self.progress_bar.add_task(

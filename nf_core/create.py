@@ -58,6 +58,10 @@ class PipelineCreate(object):
         )
 
         skippable_paths = {
+            "github": [
+                ".github/",
+                ".gitignore",
+            ],
             "ci": [".github/workflows/"],
             "igenomes": ["conf/igenomes.config"],
             "branded": [
@@ -74,7 +78,9 @@ class PipelineCreate(object):
         self.name = self.template_params["name"]
 
         # Set fields used by the class methods
-        self.no_git = no_git
+        self.no_git = (
+            no_git if self.template_params["github"] else True
+        )  # Set to True if template was configured without github hosting
         self.force = force
         if outdir is None:
             outdir = os.path.join(os.getcwd(), self.template_params["name_noslash"])
@@ -110,6 +116,7 @@ class PipelineCreate(object):
         # Define the different template areas, and what actions to take for each
         # if they are skipped
         template_areas = {
+            "github": {"name": "GitHub hosting", "file": True, "content": False},
             "ci": {"name": "GitHub CI", "file": True, "content": False},
             "github_badges": {"name": "GitHub badges", "file": False, "content": True},
             "igenomes": {"name": "iGenomes config", "file": True, "content": True},
@@ -139,6 +146,9 @@ class PipelineCreate(object):
                 param_dict[t_area] = False
             else:
                 param_dict[t_area] = True
+        # If github is selected, exclude also github_badges
+        if not param_dict["github"]:
+            param_dict["github_badges"] = False
 
         # Set the last parameters based on the ones provided
         param_dict["short_name"] = (
@@ -313,9 +323,10 @@ class PipelineCreate(object):
             # Make a logo and save it, if it is a nf-core pipeline
             self.make_pipeline_logo()
         else:
-            # Remove field mentioning nf-core docs
-            # in the github bug report template
-            self.remove_nf_core_in_bug_report_template()
+            if self.template_params["github"]:
+                # Remove field mentioning nf-core docs
+                # in the github bug report template
+                self.remove_nf_core_in_bug_report_template()
 
             # Update the .nf-core.yml with linting configurations
             self.fix_linting()
@@ -395,6 +406,15 @@ class PipelineCreate(object):
             "multiqc_config": ["report_comment"],
         }
 
+        # Add GitHub hosting specific configurations
+        if not self.template_params["github"]:
+            lint_config["files_exist"].extend(
+                [
+                    ".github/ISSUE_TEMPLATE/bug_report.yml",
+                ]
+            )
+            lint_config["files_unchanged"] = [".github/ISSUE_TEMPLATE/bug_report.yml"]
+
         # Add CI specific configurations
         if not self.template_params["ci"]:
             lint_config["files_exist"].extend(
@@ -419,7 +439,7 @@ class PipelineCreate(object):
             )
 
         # Add github badges specific configurations
-        if not self.template_params["github_badges"]:
+        if not self.template_params["github_badges"] or not self.template_params["github"]:
             lint_config["readme"] = ["nextflow_badge"]
 
         # Add the lint content to the preexisting nf-core config

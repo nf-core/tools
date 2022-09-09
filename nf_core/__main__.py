@@ -90,7 +90,19 @@ def run_nf_core():
     stderr.print("\n")
 
     # Lanch the click cli
-    nf_core_cli()
+    nf_core_cli(auto_envvar_prefix="NFCORE")
+
+
+# taken from https://github.com/pallets/click/issues/108#issuecomment-194465429
+_common_options = [
+    click.option("--hide-progress", is_flag=True, default=False, help="Don't show progress bars."),
+]
+
+
+def common_options(func):
+    for option in reversed(_common_options):
+        func = option(func)
+    return func
 
 
 @click.group(context_settings=dict(help_option_names=["-h", "--help"]))
@@ -304,7 +316,8 @@ def create(name, description, author, version, no_git, force, outdir, template_y
 @click.option("-w", "--fail-warned", is_flag=True, help="Convert warn tests to failures")
 @click.option("--markdown", type=str, metavar="<filename>", help="File to write linting results to (Markdown)")
 @click.option("--json", type=str, metavar="<filename>", help="File to write linting results to (JSON)")
-def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json):
+@common_options
+def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, hide_progress):
     """
     Check pipeline code against nf-core guidelines.
 
@@ -326,7 +339,7 @@ def lint(dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdow
     # Run the lint tests!
     try:
         lint_obj, module_lint_obj = nf_core.lint.run_linting(
-            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json
+            dir, release, fix, key, show_passed, fail_ignored, fail_warned, markdown, json, hide_progress
         )
         if len(lint_obj.failed) + len(module_lint_obj.failed) > 0:
             sys.exit(1)
@@ -415,7 +428,7 @@ def remote(ctx, keywords, json):
     default=".",
     help=r"Pipeline directory. [dim]\[default: Current working directory][/]",
 )
-def local(ctx, keywords, json, dir):
+def local(ctx, keywords, json, dir):  # pylint: disable=redefined-builtin
     """
     List modules installed locally in a pipeline
     """
@@ -666,7 +679,10 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
 @click.option("--local", is_flag=True, help="Run additional lint tests for local modules")
 @click.option("--passed", is_flag=True, help="Show passed tests")
 @click.option("--fix-version", is_flag=True, help="Fix the module version if a newer version is available")
-def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):
+@common_options
+def lint(
+    ctx, tool, dir, key, all, fail_warned, local, passed, fix_version, hide_progress
+):  # pylint: disable=redefined-outer-name
     """
     Lint one or more modules in a directory.
 
@@ -683,11 +699,13 @@ def lint(ctx, tool, dir, key, all, fail_warned, local, passed, fix_version):
             ctx.obj["modules_repo_url"],
             ctx.obj["modules_repo_branch"],
             ctx.obj["modules_repo_no_pull"],
+            hide_progress,
         )
         module_lint.lint(
             module=tool,
             key=key,
             all_modules=all,
+            hide_progress=hide_progress,
             print_results=True,
             local=local,
             show_passed=passed,

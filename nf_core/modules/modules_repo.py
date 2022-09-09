@@ -111,7 +111,7 @@ class ModulesRepo(object):
                     branches[sha] = branch_name
             return set(branches.values())
 
-    def __init__(self, remote_url=None, branch=None, no_pull=False, no_progress=False):
+    def __init__(self, remote_url=None, branch=None, no_pull=False, hide_progress=False):
         """
         Initializes the object and clones the git repository if it is not already present
         """
@@ -127,7 +127,7 @@ class ModulesRepo(object):
 
         self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
 
-        self.setup_local_repo(remote_url, branch, no_progress)
+        self.setup_local_repo(remote_url, branch, hide_progress)
 
         # Verify that the repo seems to be correctly configured
         if self.fullname != NF_CORE_MODULES_NAME or self.branch:
@@ -138,7 +138,7 @@ class ModulesRepo(object):
 
         self.avail_module_names = None
 
-    def setup_local_repo(self, remote, branch, no_progress=True):
+    def setup_local_repo(self, remote, branch, hide_progress=True):
         """
         Sets up the local git repository. If the repository has been cloned previously, it
         returns a git.Repo object of that clone. Otherwise it tries to clone the repository from
@@ -152,21 +152,19 @@ class ModulesRepo(object):
         self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
         if not os.path.exists(self.local_repo_dir):
             try:
-                if no_progress:
-                    self.repo = git.Repo.clone_from(remote, self.local_repo_dir)
-                else:
-                    pbar = rich.progress.Progress(
-                        "[bold blue]{task.description}",
-                        rich.progress.BarColumn(bar_width=None),
-                        "[bold yellow]{task.fields[state]}",
-                        transient=True,
+                pbar = rich.progress.Progress(
+                    "[bold blue]{task.description}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "[bold yellow]{task.fields[state]}",
+                    transient=True,
+                    disable=hide_progress,
+                )
+                with pbar:
+                    self.repo = git.Repo.clone_from(
+                        remote,
+                        self.local_repo_dir,
+                        progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
                     )
-                    with pbar:
-                        self.repo = git.Repo.clone_from(
-                            remote,
-                            self.local_repo_dir,
-                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Cloning"),
-                        )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
             except GitCommandError:
                 raise LookupError(f"Failed to clone from the remote: `{remote}`")
@@ -179,19 +177,17 @@ class ModulesRepo(object):
                 ModulesRepo.update_local_repo_status(self.fullname, True)
             # If the repo is already cloned, fetch the latest changes from the remote
             if not ModulesRepo.local_repo_synced(self.fullname):
-                if no_progress:
-                    self.repo.remotes.origin.fetch()
-                else:
-                    pbar = rich.progress.Progress(
-                        "[bold blue]{task.description}",
-                        rich.progress.BarColumn(bar_width=None),
-                        "[bold yellow]{task.fields[state]}",
-                        transient=True,
+                pbar = rich.progress.Progress(
+                    "[bold blue]{task.description}",
+                    rich.progress.BarColumn(bar_width=None),
+                    "[bold yellow]{task.fields[state]}",
+                    transient=True,
+                    disable=hide_progress,
+                )
+                with pbar:
+                    self.repo.remotes.origin.fetch(
+                        progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
                     )
-                    with pbar:
-                        self.repo.remotes.origin.fetch(
-                            progress=RemoteProgressbar(pbar, self.fullname, self.remote_url, "Pulling")
-                        )
                 ModulesRepo.update_local_repo_status(self.fullname, True)
 
             # Before verifying the branch, fetch the changes

@@ -287,6 +287,10 @@ working_dir: tmp
 
 Once downloaded, you will see something like the following file structure for the downloaded pipeline:
 
+<!-- RICH-CODEX
+working_dir: tmp
+-->
+
 ![`tree -L 2 nf-core-rnaseq/`](docs/images/nf-core-download-tree.svg)
 
 You can run the pipeline by simply providing the directory path for the `workflow` folder to your `nextflow run` command:
@@ -402,13 +406,14 @@ description: A cool pipeline
 author: me
 prefix: cool-pipes-company
 skip:
+  - github
   - ci
   - github_badges
   - igenomes
   - nf_core_configs
 ```
 
-This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
+This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude all files required for GitHub hosting of the pipeline, the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
 
 To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
 
@@ -420,7 +425,6 @@ This is the same test that is used on the automated continuous integration tests
 For example, the current version looks something like this:
 
 <!-- RICH-CODEX
-min_pct_diff: 15  # Progress bar changes each time - would be good to figure out how to disable it
 timeout: 60
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
@@ -808,7 +812,8 @@ After you have written a minimal Nextflow script to test your module `modules/te
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
-min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
+extra_env:
+  PROFILE: 'conda'
 -->
 
 ![`nf-core modules create-test-yml fastqc --no-prompts --force`](docs/images/nf-core-modules-create-test.svg)
