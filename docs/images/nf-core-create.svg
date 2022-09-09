@@ -123,6 +123,9 @@
 <clipPath id="terminal-2135273577-line-24">
     <rect x="0" y="587.1" width="1220" height="24.65"/>
             </clipPath>
+<clipPath id="terminal-4035374311-line-32">
+    <rect x="0" y="782.3" width="976" height="24.65"/>
+            </clipPath>
     </defs>
 
     <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1236" height="682.4" rx="8"/>
@@ -131,7 +134,7 @@
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
-        
+
     <g transform="translate(9, 41)" clip-path="url(#terminal-2135273577-clip-terminal)">
     <rect fill="#9a9b99" x="109.8" y="367.5" width="48.8" height="24.65" shape-rendering="crispEdges"/><rect fill="#9a9b99" x="158.6" y="367.5" width="414.8" height="24.65" shape-rendering="crispEdges"/><rect fill="#9a9b99" x="573.4" y="367.5" width="244" height="24.65" shape-rendering="crispEdges"/><rect fill="#9a9b99" x="817.4" y="367.5" width="12.2" height="24.65" shape-rendering="crispEdges"/><rect fill="#9a9b99" x="109.8" y="391.9" width="744.2" height="24.65" shape-rendering="crispEdges"/><rect fill="#9a9b99" x="109.8" y="416.3" width="744.2" height="24.65" shape-rendering="crispEdges"/>
     <g class="terminal-2135273577-matrix">

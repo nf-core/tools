@@ -80,6 +80,9 @@
 <clipPath id="terminal-1051680509-line-11">
     <rect x="0" y="269.9" width="1220" height="24.65"/>
             </clipPath>
+<clipPath id="terminal-494498319-line-12">
+    <rect x="0" y="294.3" width="976" height="24.65"/>
+            </clipPath>
     </defs>
 
     <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1236" height="365.2" rx="8"/>
@@ -88,9 +91,9 @@
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
-        
+
     <g transform="translate(9, 41)" clip-path="url(#terminal-1051680509-clip-terminal)">
-    
+
     <g class="terminal-1051680509-matrix">
     <text class="terminal-1051680509-r1" x="0" y="20" textLength="378.2" clip-path="url(#terminal-1051680509-line-0)">$&#160;nf-core&#160;modules&#160;remove&#160;abacas</text><text class="terminal-1051680509-r1" x="1220" y="20" textLength="12.2" clip-path="url(#terminal-1051680509-line-0)">
 </text><text class="terminal-1051680509-r1" x="1220" y="44.4" textLength="12.2" clip-path="url(#terminal-1051680509-line-1)">
