@@ -18,7 +18,7 @@ data: |
   <div class="alert alert-info">
     <h5>Notes:</h5>
     <ul>
-      <li>If present, make sure to replace the pipeline DOI with correct reference information.</li>
+      ${nodoi_text}
       <li>The command above does not include parameters contained in any configs or profiles that may have been used. Ensure the config file is also uploaded with your publication!</li>
       <li>You should also cite all software used within this run. Check the "Software Versions" of this report to get version information.</li>
     </ul>
