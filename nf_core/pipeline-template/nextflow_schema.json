@@ -232,6 +232,11 @@
                     "fa_icon": "fas fa-image",
                     "hidden": true
                 },
+                "multiqc_methods_description": {
+                    "type": "string",
+                    "description": "Custom MultiQC yaml file containing HTML including a methods description.",
+                    "fa_icon": "fas fa-cog"
+                },
                 "tracedir": {
                     "type": "string",
                     "description": "Directory to keep pipeline Nextflow logs and reports.",

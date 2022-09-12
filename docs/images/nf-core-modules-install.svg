@@ -87,6 +87,9 @@
 <clipPath id="terminal-366252011-line-13">
     <rect x="0" y="318.7" width="1220" height="24.65"/>
             </clipPath>
+<clipPath id="terminal-3806371325-line-14">
+    <rect x="0" y="343.1" width="976" height="24.65"/>
+            </clipPath>
     </defs>
 
     <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1236" height="414" rx="8"/>
@@ -95,9 +98,9 @@
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
-        
+
     <g transform="translate(9, 41)" clip-path="url(#terminal-366252011-clip-terminal)">
-    
+
     <g class="terminal-366252011-matrix">
     <text class="terminal-366252011-r1" x="0" y="20" textLength="390.4" clip-path="url(#terminal-366252011-line-0)">$&#160;nf-core&#160;modules&#160;install&#160;abacas</text><text class="terminal-366252011-r1" x="1220" y="20" textLength="12.2" clip-path="url(#terminal-366252011-line-0)">
 </text><text class="terminal-366252011-r1" x="1220" y="44.4" textLength="12.2" clip-path="url(#terminal-366252011-line-1)">

@@ -88,6 +88,9 @@
 <clipPath id="terminal-3145054114-line-13">
     <rect x="0" y="318.7" width="1220" height="24.65"/>
             </clipPath>
+<clipPath id="terminal-432003830-line-16">
+    <rect x="0" y="391.9" width="976" height="24.65"/>
+            </clipPath>
     </defs>
 
     <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1236" height="414" rx="8"/>
@@ -96,9 +99,9 @@
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
-        
+
     <g transform="translate(9, 41)" clip-path="url(#terminal-3145054114-clip-terminal)">
-    
+
     <g class="terminal-3145054114-matrix">
     <text class="terminal-3145054114-r1" x="0" y="20" textLength="170.8" clip-path="url(#terminal-3145054114-line-0)">$&#160;nf-core&#160;sync</text><text class="terminal-3145054114-r1" x="1220" y="20" textLength="12.2" clip-path="url(#terminal-3145054114-line-0)">
 </text><text class="terminal-3145054114-r1" x="1220" y="44.4" textLength="12.2" clip-path="url(#terminal-3145054114-line-1)">

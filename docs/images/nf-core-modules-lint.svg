@@ -174,7 +174,7 @@
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
-        
+
     <g transform="translate(9, 41)" clip-path="url(#terminal-3614898378-clip-terminal)">
     <rect fill="#4b4e55" x="1098" y="684.7" width="48.8" height="24.65" shape-rendering="crispEdges"/><rect fill="#4b4e55" x="878.4" y="709.1" width="61" height="24.65" shape-rendering="crispEdges"/>
     <g class="terminal-3614898378-matrix">

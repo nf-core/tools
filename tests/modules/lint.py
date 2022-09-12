@@ -4,7 +4,7 @@ import pytest
 
 import nf_core.modules
 
-from ..utils import GITLAB_URL
+from ..utils import GITLAB_URL, set_wd
 from .patch import BISMARK_ALIGN, PATCH_BRANCH, setup_patch
 
 
@@ -65,11 +65,9 @@ def test_modules_lint_patched_modules(self):
 
     # change temporarily working directory to the pipeline directory
     # to avoid error from try_apply_patch() during linting
-    wd_old = os.getcwd()
-    os.chdir(self.pipeline_dir)
-    module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
-    module_lint.lint(print_results=False, all_modules=True)
-    os.chdir(wd_old)
+    with set_wd(self.pipeline_dir):
+        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+        module_lint.lint(print_results=False, all_modules=True)
 
     assert len(module_lint.failed) == 0
     assert len(module_lint.passed) > 0

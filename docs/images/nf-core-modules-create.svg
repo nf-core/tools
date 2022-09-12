@@ -119,6 +119,9 @@
 <clipPath id="terminal-430419789-line-23">
     <rect x="0" y="562.7" width="1220" height="24.65"/>
             </clipPath>
+<clipPath id="terminal-620085255-line-28">
+    <rect x="0" y="684.7" width="976" height="24.65"/>
+            </clipPath>
     </defs>
 
     <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1236" height="658" rx="8"/>
@@ -127,9 +130,9 @@
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
-        
+
     <g transform="translate(9, 41)" clip-path="url(#terminal-430419789-clip-terminal)">
-    
+
     <g class="terminal-430419789-matrix">
     <text class="terminal-430419789-r1" x="0" y="20" textLength="1085.8" clip-path="url(#terminal-430419789-line-0)">$&#160;nf-core&#160;modules&#160;create&#160;fastqc&#160;--author&#160;@nf-core-bot&#160;&#160;--label&#160;process_low&#160;--meta&#160;--force</text><text class="terminal-430419789-r1" x="1220" y="20" textLength="12.2" clip-path="url(#terminal-430419789-line-0)">
 </text><text class="terminal-430419789-r1" x="1220" y="44.4" textLength="12.2" clip-path="url(#terminal-430419789-line-1)">
