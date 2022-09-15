@@ -24,7 +24,7 @@ if (params.input) { ch_input = file(params.input) } else { exit 1, 'Input sample
 */
 
 ch_multiqc_config          = file("$projectDir/assets/multiqc_config.yml", checkIfExists: true)
-ch_multiqc_config_custom   = params.multiqc_config ? file( params.multiqc_config, checkIfExists: true ) : []
+ch_multiqc_custom_config   = params.multiqc_config ? file( params.multiqc_config, checkIfExists: true ) : []
 ch_multiqc_logo            = params.multiqc_logo   ? file( params.multiqc_logo, checkIfExists: true ) : []
 ch_multiqc_custom_methods_description = params.multiqc_methods_description ? file(params.multiqc_methods_description, checkIfExists: true) : file("$projectDir/assets/methods_description_template.yml", checkIfExists: true)
 
@@ -103,7 +103,7 @@ workflow {{ short_name|upper }} {
     MULTIQC (
         ch_multiqc_files.collect(),
         ch_multiqc_config,
-        ch_multiqc_config_custom,
+        ch_multiqc_custom_config,
         ch_multiqc_logo
     )
     multiqc_report = MULTIQC.out.report.toList()
