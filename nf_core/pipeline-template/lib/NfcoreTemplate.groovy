@@ -146,9 +146,10 @@ class NfcoreTemplate {
     }
 
     //
-    // Construct and send a web report as JSON
+    // Construct and send a notification to a web server as JSON
+    // e.g. Microsoft Teams and Slack
     //
-    public static void webreport(workflow, params, summary_params, projectDir, log) {
+    public static void IM_notification(workflow, params, summary_params, projectDir, log) {
         def hook_url = params.hook_url
 
         def summary = [:]
