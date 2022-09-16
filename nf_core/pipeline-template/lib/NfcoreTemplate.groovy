@@ -146,10 +146,9 @@ class NfcoreTemplate {
     }
 
     //
-    // Construct and send adaptive card
-    // https://adaptivecards.io
+    // Construct and send a web report as JSON
     //
-    public static void adaptivecard(workflow, params, summary_params, projectDir, log) {
+    public static void webreport(workflow, params, summary_params, projectDir, log) {
         def hook_url = params.hook_url
 
         def summary = [:]
@@ -184,7 +183,10 @@ class NfcoreTemplate {
 
         // Render the JSON template
         def engine       = new groovy.text.GStringTemplateEngine()
-        def hf = new File("$projectDir/assets/adaptivecard.json")
+        // Different JSON depending on the service provider
+        // Defaults to "Adaptive Cards" (https://adaptivecards.io), except Slack which has its own format
+        def json_path     = hook_url.contains("hooks.slack.com") ? "slackreport.json" : "adaptivecard.json"
+        def hf            = new File("$projectDir/assets/${json_path}")
         def json_template = engine.createTemplate(hf).make(msg_fields)
         def json_message  = json_template.toString()
 
