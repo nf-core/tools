@@ -18,6 +18,8 @@
 
 ### Modules
 
+- Fix questionary when updating `modules.json` file and commit sha is not found ([#1831](https://github.com/nf-core/tools/pull/1831))
+
 ## [v2.5.1 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5.1) - [2022-08-31]
 
 - Patch release to fix black linting in pipelines ([#1789](https://github.com/nf-core/tools/pull/1789))
