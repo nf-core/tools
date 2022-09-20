@@ -228,8 +228,10 @@ class ModulesJson:
                 else:
                     correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
                 if correct_commit_sha is None:
-                    log.info(f"Was unable to find matching module files in the {modules_repo.branch} branch.")
-                    choices = [{"name": "No", "value": None}] + [
+                    log.info(
+                        f"Was unable to find matching module files in the {modules_repo.branch} branch for module {module}."
+                    )
+                    choices = [{"name": "No", "value": False}] + [
                         {"name": branch, "value": branch} for branch in (available_branches - tried_branches)
                     ]
                     branch = questionary.select(
@@ -237,9 +239,9 @@ class ModulesJson:
                         choices=choices,
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
-                    if branch is None:
+                    if not branch:
                         action = questionary.select(
-                            f"Module is untracked '{module}'. Please select what action to take",
+                            f"Module '{module}' is untracked. Please select what action to take",
                             choices=[
                                 {"name": "Move the directory to 'local'", "value": 0},
                                 {"name": "Remove the files", "value": 1},
