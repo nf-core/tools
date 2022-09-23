@@ -19,8 +19,8 @@ import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
-from nf_core.modules.module_utils import get_repo_type
 import nf_core.utils
+from nf_core.modules.module_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 

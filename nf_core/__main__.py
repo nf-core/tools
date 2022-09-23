@@ -19,8 +19,8 @@ import nf_core.licences
 import nf_core.lint
 import nf_core.list
 import nf_core.modules
-import nf_core.subworkflows
 import nf_core.schema
+import nf_core.subworkflows
 import nf_core.sync
 import nf_core.utils
 
