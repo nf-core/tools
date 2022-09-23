@@ -264,7 +264,7 @@ class ModuleCreate(object):
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
                     # ruamel.yaml is used to maintain anchors in pytest_modules.yml
                     # Dumper=nf_core.utils.custom_yaml_dumper() was used to add indentation for Prettier YAML linting
-                    ruamel.yaml.dump(pytest_modules_yml_anchor, fh, Dumper=ruamel.yaml.RoundTripDumper)
+                    ruamel.yaml.dump(pytest_modules_yml, fh, Dumper=ruamel.yaml.RoundTripDumper)
             except FileNotFoundError as e:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
