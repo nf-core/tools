@@ -60,7 +60,7 @@ click.rich_click.COMMAND_GROUPS = {
             "name": "Developing new subworkflows",
             "commands": ["create"],
         },
-    ]
+    ],
 }
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
@@ -389,7 +389,8 @@ def modules(ctx, git_remote, branch, no_pull):
     ctx.obj["modules_repo_branch"] = branch
     ctx.obj["modules_repo_no_pull"] = no_pull
 
-#nf-core subworkflows click command
+
+# nf-core subworkflows click command
 @nf_core_cli.group()
 @click.option(
     "-g",
@@ -419,6 +420,7 @@ def subworkflows(ctx, git_remote, branch, no_pull):
     ctx.obj["subworkflows_repo_url"] = git_remote
     ctx.obj["subworkflows_repo_branch"] = branch
     ctx.obj["subworkflows_repo_no_pull"] = no_pull
+
 
 # nf-core modules list subcommands
 @modules.group()
@@ -885,6 +887,7 @@ def test_module(ctx, tool, no_prompts, pytest_args):
         log.critical(e)
         sys.exit(1)
 
+
 # nf-core subworkflows create
 @subworkflows.command("create")
 @click.pass_context
@@ -905,9 +908,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
 
     # Run function
     try:
-        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(
-            dir, subworkflow, author, force
-        )
+        subworkflow_create = nf_core.subworkflows.SubworkflowCreate(dir, subworkflow, author, force)
         subworkflow_create.create()
     except UserWarning as e:
         log.critical(e)
@@ -915,6 +916,7 @@ def create_subworkflow(ctx, subworkflow, dir, author, force):
     except LookupError as e:
         log.error(e)
         sys.exit(1)
+
 
 # nf-core schema subcommands
 @nf_core_cli.group()
