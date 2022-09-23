@@ -12,6 +12,7 @@
 
 ### Linting
 
+- Make `nf-core schema lint` and `nf-core lint` consistently not requiring positional path arguments
 ### General
 
 - Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
