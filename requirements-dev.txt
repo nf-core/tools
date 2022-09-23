@@ -6,4 +6,3 @@ pytest-cov
 pytest-datafiles
 Sphinx
 sphinx_rtd_theme
-ruamel.yaml

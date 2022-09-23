@@ -16,3 +16,4 @@ requests_cache
 rich-click>=1.0.0
 rich>=10.7.0
 tabulate
+ruamel.yaml
