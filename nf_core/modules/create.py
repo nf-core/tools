@@ -15,6 +15,7 @@ import subprocess
 import jinja2
 import questionary
 import rich
+import ruamel.yaml
 import yaml
 from packaging.version import parse as parse_version
 
@@ -247,7 +248,8 @@ class ModuleCreate(object):
             # Add entry to pytest_modules.yml
             try:
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
-                    pytest_modules_yml = yaml.safe_load(fh)
+                    # ruamel.yaml is used to maintain anchors in pytest_modules.yml
+                    pytest_modules_yml = ruamel.yaml.load(fh, Loader=ruamel.yaml.RoundTripLoader)
                 if self.subtool:
                     pytest_modules_yml[self.tool_name] = [
                         f"modules/{self.tool}/{self.subtool}/**",
@@ -260,7 +262,9 @@ class ModuleCreate(object):
                     ]
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
-                    yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
+                    # ruamel.yaml is used to maintain anchors in pytest_modules.yml
+                    # Dumper=nf_core.utils.custom_yaml_dumper() was used to add indentation for Prettier YAML linting
+                    ruamel.yaml.dump(pytest_modules_yml_anchor, fh, Dumper=ruamel.yaml.RoundTripDumper)
             except FileNotFoundError as e:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
