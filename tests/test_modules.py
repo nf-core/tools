@@ -87,6 +87,7 @@ class TestModules(unittest.TestCase):
     )
     from .modules.create import (
         test_modules_create_fail_exists,
+        test_modules_create_maintain_pytestyml,
         test_modules_create_nfcore_modules,
         test_modules_create_nfcore_modules_subtool,
         test_modules_create_succeed,
