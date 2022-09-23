@@ -406,13 +406,14 @@ description: A cool pipeline
 author: me
 prefix: cool-pipes-company
 skip:
+  - github
   - ci
   - github_badges
   - igenomes
   - nf_core_configs
 ```
 
-This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
+This will create a pipeline called `cool-pipe` in the directory `cool-pipes-company-cool-pipe` with `me` as the author. It will exclude all files required for GitHub hosting of the pipeline, the GitHub CI from the pipeline, remove GitHub badges from the `README.md` file, remove pipeline options related to iGenomes and exclude `nf_core/configs` options.
 
 To run the pipeline creation silently (i.e. without any prompts) with the nf-core template, you can use the `--plain` option.
 
@@ -424,7 +425,6 @@ This is the same test that is used on the automated continuous integration tests
 For example, the current version looks something like this:
 
 <!-- RICH-CODEX
-min_pct_diff: 15  # Progress bar changes each time - would be good to figure out how to disable it
 timeout: 60
 working_dir: tmp/nf-core-nextbigthing
 before_command: >
@@ -812,7 +812,6 @@ After you have written a minimal Nextflow script to test your module `modules/te
 
 <!-- RICH-CODEX
 working_dir: tmp/modules
-min_pct_diff: 15 # the tmp file path changes in the output, but that shouldn't trigger a new image.
 extra_env:
   PROFILE: 'conda'
 -->

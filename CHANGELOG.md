@@ -1,6 +1,32 @@
 # nf-core/tools: Changelog
 
-## v2.5dev
+## v2.6dev
+
+### Template
+
+- Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
+- Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
+- Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
+- Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
+- Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
+
+### Linting
+
+### General
+
+- Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
+- Use contextlib to temporarily change working directories ([#1819](https://github.com/nf-core/tools/pull/1819))
+
+### Modules
+
+## [v2.5.1 - Gold Otter Patch](https://github.com/nf-core/tools/releases/tag/2.5.1) - [2022-08-31]
+
+- Patch release to fix black linting in pipelines ([#1789](https://github.com/nf-core/tools/pull/1789))
+- Add isort options to pyproject.toml ([#1792](https://github.com/nf-core/tools/pull/1792))
+- Lint pyproject.toml file exists and content ([#1795](https://github.com/nf-core/tools/pull/1795))
+- Update GitHub PyPI package release action to v1 ([#1785](https://github.com/nf-core/tools/pull/1785))
+
+## [v2.5 - Gold Otter](https://github.com/nf-core/tools/releases/tag/2.5) - [2022-08-30]
 
 ### Template
 
