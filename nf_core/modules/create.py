@@ -16,7 +16,6 @@ import jinja2
 import questionary
 import rich
 import ruamel.yaml
-import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
