@@ -136,7 +136,7 @@ class ModuleCreate(object):
 
         self.tool_name_underscore = self.tool_name.replace("/", "_")
 
-        # Check existance of directories early for fast-fail
+        # Check existence of directories early for fast-fail
         self.file_paths = self.get_module_dirs()
 
         # Try to find a bioconda package for 'tool'
@@ -240,7 +240,7 @@ class ModuleCreate(object):
                 "[violet]Will the module require a meta map of sample information?", default=True
             )
 
-        # Create module template with cokiecutter
+        # Create module template with jinja
         self.render_template()
 
         if self.repo_type == "modules":

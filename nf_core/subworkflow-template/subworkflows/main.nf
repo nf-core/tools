@@ -4,7 +4,7 @@
 //               https://nf-co.re/join
 // TODO nf-core: A subworkflow SHOULD only import modules not other subworkflows
 
-workflow {{ subworkflow_name_underscore|upper }} {
+workflow {{ subworkflow_name|upper }} {
 
     take:
     // TODO nf-core: edit input (take) channels
