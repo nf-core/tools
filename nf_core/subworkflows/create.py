@@ -50,8 +50,6 @@ class SubworkflowCreate(object):
 
         If <directory> is a pipeline, this function creates a file called:
         '<directory>/subworkflows/local/subworkflow_name.nf'
-            OR
-        '<directory>/subworkflows/local/subworkflow_name.nf'
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
@@ -192,7 +190,7 @@ class SubworkflowCreate(object):
                 raise UserWarning(f"Subworkflow file exists already: '{subworkflow_file}'. Use '--force' to overwrite")
 
             # Set file paths
-            file_paths[os.path.join("subworkflows", f"{self.subworkflow_name}.nf")] = subworkflow_file
+            file_paths[os.path.join("subworkflows", "main.nf")] = subworkflow_file
 
         if self.repo_type == "modules":
             subworkflow_path = os.path.join(self.directory, "subworkflows", "nf-core", self.subworkflow_dir)
