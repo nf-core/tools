@@ -46,46 +46,46 @@ def test_modules_create_nfcore_modules_subtool(self):
 
 def test_modules_create_maintain_pytestyml(self):
     """Create a new tool/subtool and check if pytest_modules.yml has the proper structure"""
-    yml = """
-    abacas:
-    - modules/abacas/**
-    - tests/modules/abacas/**
+    yml = (
+        "abacas:\n"
+        "- modules/abacas/**\n"
+        "- tests/modules/abacas/**\n\n"
+        "subworkflows/bam_stats_samtools: &subworkflows_bam_stats_samtools\n"
+        "- subworkflows/nf-core/bam_stats_samtools/**\n"
+        "- tests/subworkflows/nf-core/bam_stats_samtools/**\n\n"
+        "~anchors:\n"
+        "- *subworkflows_bam_stats_samtools\n"
+    )
 
-    subworkflows/bam_stats_samtools: &subworkflows_bam_stats_samtools
-    - subworkflows/nf-core/bam_stats_samtools/**
-    - tests/subworkflows/nf-core/bam_stats_samtools/**
+    new_yml = (
+        "abacas:\n"
+        "- modules/abacas/**\n"
+        "- tests/modules/abacas/**\n\n"
+        "fastqc:\n"
+        "- modules/fastqc/**\n"
+        "- tests/modules/fastqc/**\n\n"
+        "subworkflows/bam_stats_samtools: &subworkflows_bam_stats_samtools\n"
+        "- subworkflows/nf-core/bam_stats_samtools/**\n"
+        "- tests/subworkflows/nf-core/bam_stats_samtools/**\n\n"
+        "~anchors:\n"
+        "- *subworkflows_bam_stats_samtools\n"
+    )
 
-    __anchors__:
-    - *subworkflows_bam_stats_samtools
-    """
-
-    new_yml = """
-    abacas:
-    - modules/abacas/**
-    - tests/modules/abacas/**
-
-    fastqc:
-    - modules/fastqc/**
-    - tests/modules/fastqc/**
-
-    subworkflows/bam_stats_samtools: &subworkflows_bam_stats_samtools
-    - subworkflows/nf-core/bam_stats_samtools/**
-    - tests/subworkflows/nf-core/bam_stats_samtools/**
-
-    __anchors__:
-    - *subworkflows_bam_stats_samtools
-    """
-
-    with open(os.path.join(self.nfcore_modules, "tests", "config", "pytest_modules.yml"), "r") as fh:
+    with open(os.path.join(self.nfcore_modules, "tests", "config", "pytest_modules.yml"), "w") as fh:
         fh.write(yml)
 
-    with open(os.path.join(self.nfcore_modules, "tests", "config", "pytest_modules_updated.yml"), "r") as fh:
+    with open(os.path.join(self.nfcore_modules, "tests", "config", "pytest_modules_updated.yml"), "w") as fh:
         fh.write(new_yml)
 
     module_create = nf_core.modules.ModuleCreate(
         self.nfcore_modules, "fastqc", "@author", "process_medium", False, False
     )
     module_create.create()
+
+    with open(os.path.join(self.nfcore_modules, "tests", "config", "pytest_modules.yml"), "r") as fh:
+        print(fh.read())
+    with open(os.path.join(self.nfcore_modules, "tests", "config", "pytest_modules_updated.yml"), "r") as fh:
+        print(fh.read())
 
     assert filecmp.cmp(
         os.path.join(self.nfcore_modules, "tests", "config", "pytest_modules.yml"),
