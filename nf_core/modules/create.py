@@ -72,10 +72,10 @@ class ModuleCreate(object):
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
-        modules/modules/tool/subtool/
+        modules/modules/nf-core/tool/subtool/
             * main.nf
             * meta.yml
-        modules/tests/modules/tool/subtool/
+        modules/tests/modules/nf-core/tool/subtool/
             * main.nf
             * test.yml
             * nextflow.config
@@ -250,13 +250,13 @@ class ModuleCreate(object):
                     pytest_modules_yml = yaml.safe_load(fh)
                 if self.subtool:
                     pytest_modules_yml[self.tool_name] = [
-                        f"modules/{self.tool}/{self.subtool}/**",
-                        f"tests/modules/{self.tool}/{self.subtool}/**",
+                        f"modules/nf-core/{self.tool}/{self.subtool}/**",
+                        f"tests/modules/nf-core/{self.tool}/{self.subtool}/**",
                     ]
                 else:
                     pytest_modules_yml[self.tool_name] = [
-                        f"modules/{self.tool}/**",
-                        f"tests/modules/{self.tool}/**",
+                        f"modules/nf-core/{self.tool}/**",
+                        f"tests/modules/nf-core/{self.tool}/**",
                     ]
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:

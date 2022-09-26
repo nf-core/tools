@@ -204,7 +204,7 @@ class ModulesJson:
 
         Returns:
             (dict[str, dict[str, str]]): The module.json entries for the modules
-                                         from the repository
+                                        from the repository
         """
         default_modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote_url)
         repo_path = self.modules_dir / repo_name
