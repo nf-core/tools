@@ -26,6 +26,8 @@ class ModuleCommand:
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self.dir = dir
+        self.default_modules_path = Path("modules", "nf-core")
+        self.default_tests_path = Path("tests", "modules", "nf-core")
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)

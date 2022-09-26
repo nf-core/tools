@@ -25,12 +25,13 @@ from rich.syntax import Syntax
 
 import nf_core.utils
 
+from .modules_command import ModuleCommand
 from .modules_repo import ModulesRepo
 
 log = logging.getLogger(__name__)
 
 
-class ModulesTestYmlBuilder(object):
+class ModulesTestYmlBuilder(ModuleCommand):
     def __init__(
         self,
         module_name=None,
@@ -39,6 +40,7 @@ class ModulesTestYmlBuilder(object):
         force_overwrite=False,
         no_prompts=False,
     ):
+        super().__init__(".")
         self.module_name = module_name
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path
@@ -75,8 +77,8 @@ class ModulesTestYmlBuilder(object):
                 choices=modules_repo.get_avail_modules(),
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
-        self.module_dir = os.path.join("modules", "nf-core", *self.module_name.split("/"))
-        self.module_test_main = os.path.join("tests", "modules", "nf-core", *self.module_name.split("/"), "main.nf")
+        self.module_dir = os.path.join(self.default_modules_path, *self.module_name.split("/"))
+        self.module_test_main = os.path.join(self.default_tests_path, *self.module_name.split("/"), "main.nf")
 
         # First, sanity check that the module directory exists
         if not os.path.isdir(self.module_dir):

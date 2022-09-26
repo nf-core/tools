@@ -22,10 +22,12 @@ import nf_core
 import nf_core.modules.module_utils
 import nf_core.utils
 
+from .modules_command import ModuleCommand
+
 log = logging.getLogger(__name__)
 
 
-class ModuleCreate(object):
+class ModuleCreate(ModuleCommand):
     def __init__(
         self,
         directory=".",
@@ -38,6 +40,7 @@ class ModuleCreate(object):
         conda_version=None,
         repo_type=None,
     ):
+        super().__init__(directory)
         self.directory = directory
         self.tool = tool
         self.author = author
@@ -320,11 +323,11 @@ class ModuleCreate(object):
                 )
 
             # Set file paths
-            file_paths[os.path.join("modules", "nf-core", "main.nf")] = module_file
+            file_paths[os.path.join(self.default_modules_path, "main.nf")] = module_file
 
         if self.repo_type == "modules":
-            software_dir = os.path.join(self.directory, "modules", "nf-core", self.tool_dir)
-            test_dir = os.path.join(self.directory, "tests", "modules", "nf-core", self.tool_dir)
+            software_dir = os.path.join(self.directory, self.default_modules_path, self.tool_dir)
+            test_dir = os.path.join(self.directory, self.default_tests_path, self.tool_dir)
 
             # Check if module directories exist already
             if os.path.exists(software_dir) and not self.force_overwrite:
@@ -334,8 +337,8 @@ class ModuleCreate(object):
                 raise UserWarning(f"Module test directory exists: '{test_dir}'. Use '--force' to overwrite")
 
             # If a subtool, check if there is a module called the base tool name already
-            parent_tool_main_nf = os.path.join(self.directory, "modules", "nf-core", self.tool, "main.nf")
-            parent_tool_test_nf = os.path.join(self.directory, "tests", "modules", "nf-core", self.tool, "main.nf")
+            parent_tool_main_nf = os.path.join(self.directory, self.default_modules_path, self.tool, "main.nf")
+            parent_tool_test_nf = os.path.join(self.directory, self.default_tests_path, self.tool, "main.nf")
             if self.subtool and os.path.exists(parent_tool_main_nf):
                 raise UserWarning(
                     f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.tool_name}'"
@@ -346,7 +349,7 @@ class ModuleCreate(object):
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob(f"{os.path.join(self.directory, 'modules', 'nf-core', self.tool)}/*/main.nf")
+            tool_glob = glob.glob(f"{os.path.join(self.directory, self.default_modules_path, self.tool)}/*/main.nf")
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.tool_name}'"
