@@ -5,7 +5,10 @@ Helper functions for tests
 """
 
 import functools
+import os
 import tempfile
+from contextlib import contextmanager
+from pathlib import Path
 
 OLD_TRIMGALORE_SHA = "20d8250d9f39ddb05dfb437603aaf99b5c0b2b41"
 GITLAB_URL = "https://gitlab.com/nf-core/modules-test.git"
@@ -44,3 +47,21 @@ def with_temporary_file(func):
             return func(*args, tmpfile, **kwargs)
 
     return wrapper
+
+
+@contextmanager
+def set_wd(path: Path):
+    """Sets the working directory for this context.
+
+    Arguments
+    ---------
+
+    path : Path
+        Path to the working directory to be used iside this context.
+    """
+    start_wd = Path().absolute()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(start_wd)

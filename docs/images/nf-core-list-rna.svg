@@ -114,6 +114,9 @@
 <clipPath id="terminal-2458374773-line-22">
     <rect x="0" y="538.3" width="1220" height="24.65"/>
             </clipPath>
+<clipPath id="terminal-2157336188-line-23">
+    <rect x="0" y="562.7" width="976" height="24.65"/>
+            </clipPath>
     </defs>
 
     <rect fill="#292929" stroke="rgba(255,255,255,0.35)" stroke-width="1" x="1" y="1" width="1236" height="633.6" rx="8"/>
@@ -122,9 +125,9 @@
             <circle cx="22" cy="0" r="7" fill="#febc2e"/>
             <circle cx="44" cy="0" r="7" fill="#28c840"/>
             </g>
-        
+
     <g transform="translate(9, 41)" clip-path="url(#terminal-2458374773-clip-terminal)">
-    
+
     <g class="terminal-2458374773-matrix">
     <text class="terminal-2458374773-r1" x="0" y="20" textLength="317.2" clip-path="url(#terminal-2458374773-line-0)">$&#160;nf-core&#160;list&#160;rna&#160;rna-seq</text><text class="terminal-2458374773-r1" x="1220" y="20" textLength="12.2" clip-path="url(#terminal-2458374773-line-0)">
 </text><text class="terminal-2458374773-r1" x="1220" y="44.4" textLength="12.2" clip-path="url(#terminal-2458374773-line-1)">
