@@ -54,6 +54,12 @@ click.rich_click.COMMAND_GROUPS = {
             "commands": ["create", "create-test-yml", "lint", "bump-versions", "mulled", "test"],
         },
     ],
+    "nf-core subworkflows": [
+        {
+            "name": "Developing new modules",
+            "commands": ["create"],
+        },
+    ],
 }
 click.rich_click.OPTION_GROUPS = {
     "nf-core modules list local": [{"options": ["--dir", "--json", "--help"]}],
