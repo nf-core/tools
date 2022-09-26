@@ -83,10 +83,10 @@ class SubworkflowCreate(object):
         # Collect module info via prompt if empty or invalid
         if self.subworkflow is None:
             self.subworkflow = ""
-        while self.subworkflow == "" or re.search(r"[^a-z\d/]", self.subworkflow) or self.subworkflow.count("/") > 0:
+        while self.subworkflow == "" or re.search(r"[^a-z\d_/]", self.subworkflow) or self.subworkflow.count("/") > 0:
 
-            # Check + auto-fix for invalid chacters
-            if re.search(r"[^a-z\d/]", self.subworkflow):
+            # Check + auto-fix for invalid characters
+            if re.search(r"[^a-z\d_/]", self.subworkflow):
                 log.warning("Subworkflow name must be lower-case letters only, with no punctuation")
                 subworkflow_clean = re.sub(r"[^a-z\d/]", "", self.subworkflow.lower())
                 if rich.prompt.Confirm.ask(f"[violet]Change '{self.subworkflow}' to '{subworkflow_clean}'?"):
