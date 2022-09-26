@@ -19,8 +19,8 @@ import yaml
 from packaging.version import parse as parse_version
 
 import nf_core
-from nf_core.modules.module_utils import get_repo_type
 import nf_core.utils
+from nf_core.modules.module_utils import get_repo_type
 
 log = logging.getLogger(__name__)
 
@@ -32,12 +32,14 @@ class SubworkflowCreate(object):
         subworkflow="",
         author=None,
         force=False,
+        repo_type=None,
     ):
         self.directory = directory
         self.subworkflow = subworkflow
         self.author = author
         self.force_overwrite = force
         self.file_paths = {}
+        self.repo_type = repo_type
 
     def create(self):
         """
@@ -60,7 +62,7 @@ class SubworkflowCreate(object):
             * main.nf
             * test.yml
             * nextflow.config
-        tests/config/pytest_subworkflows.yml
+        tests/config/pytest_modules.yml
 
         """
 
@@ -127,17 +129,17 @@ class SubworkflowCreate(object):
         self.render_template()
 
         if self.repo_type == "modules":
-            # Add entry to pytest_subworkflows.yml
+            # Add entry to pytest_modules.yml
             try:
-                with open(os.path.join(self.directory, "tests", "config", "pytest_subworkflows.yml"), "r") as fh:
-                    pytest_subworkflows_yml = yaml.safe_load(fh)
-                    pytest_subworkflows_yml[self.subworkflow_name] = [
+                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "r") as fh:
+                    pytest_modules_yml = yaml.safe_load(fh)
+                    pytest_modules_yml[self.subworkflow] = [
                         f"subworkflows/{self.subworkflow}/**",
                         f"tests/subworkflows/{self.subworkflow}/**",
                     ]
-                pytest_subworkflows_yml = dict(sorted(pytest_subworkflows_yml.items()))
-                with open(os.path.join(self.directory, "tests", "config", "pytest_subworkflows.yml"), "w") as fh:
-                    yaml.dump(pytest_subworkflows_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
+                pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
+                with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
+                    yaml.dump(pytest_modules_yml, fh, sort_keys=True, Dumper=nf_core.utils.custom_yaml_dumper())
             except FileNotFoundError as e:
                 raise UserWarning("Could not open 'tests/config/pytest_modules.yml' file!")
 
@@ -193,8 +195,8 @@ class SubworkflowCreate(object):
             file_paths[os.path.join("subworkflows", f"{self.subworkflow_name}.nf")] = subworkflow_file
 
         if self.repo_type == "modules":
-            subworkflow_path = os.path.join(self.directory, "subworkflows", self.subworkflow_dir)
-            test_dir = os.path.join(self.directory, "tests", "subworkflows", self.subworkflow_dir)
+            subworkflow_path = os.path.join(self.directory, "subworkflows", "nf-core", self.subworkflow_dir)
+            test_dir = os.path.join(self.directory, "tests", "subworkflows", "nf-core", self.subworkflow_dir)
 
             # Check if module directories exist already
             if os.path.exists(subworkflow_path) and not self.force_overwrite:
