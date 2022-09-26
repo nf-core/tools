@@ -11,6 +11,7 @@
 ### General
 
 - Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
+- Schema: Remove `allOf` if no definition groups are left.
 
 ### Modules
 

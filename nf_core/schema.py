@@ -667,6 +667,15 @@ class PipelineSchema(object):
             if allOf in self.schema.get("allOf", []):
                 self.schema["allOf"].remove(allOf)
 
+        # If we don't have anything left in "allOf", remove it
+        if self.schema.get("allOf") == []:
+            del self.schema["allOf"]
+
+        # If we don't have anything left in "definitions", remove it
+        if self.schema.get("definitions") == {}:
+            del self.schema["definitions"]
+
+
     def remove_schema_notfound_configs(self):
         """
         Go through top-level schema and all definitions sub-schemas to remove
