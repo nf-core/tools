@@ -12,6 +12,8 @@
 
 ### Linting
 
+- The `process_single` label is now allowed
+
 ### General
 
 - Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
