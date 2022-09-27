@@ -17,6 +17,7 @@
 - Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
 - Schema: Remove `allOf` if no definition groups are left.
 - Use contextlib to temporarily change working directories ([#1819](https://github.com/nf-core/tools/pull/1819))
+- More helpful error messages if `nf-core download` can't parse a singularity image download
 
 ### Modules
 
