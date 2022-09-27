@@ -12,6 +12,7 @@ import shutil
 import subprocess
 import sys
 import tarfile
+import textwrap
 from zipfile import ZipFile
 
 import questionary
@@ -453,7 +454,8 @@ class DownloadWorkflow(object):
         for subdir, _, files in os.walk(os.path.join(self.outdir, "workflow", "modules")):
             for file in files:
                 if file.endswith(".nf"):
-                    with open(os.path.join(subdir, file), "r") as fh:
+                    file_path = os.path.join(subdir, file)
+                    with open(file_path, "r") as fh:
                         # Look for any lines with `container = "xxx"`
                         this_container = None
                         contents = fh.read()
@@ -478,7 +480,9 @@ class DownloadWorkflow(object):
 
                                     # Don't recognise this, throw a warning
                                     else:
-                                        log.error(f"[red]Cannot parse container string, skipping: [green]'{file}'")
+                                        log.error(
+                                            f"[red]Cannot parse container string in '{file_path}':\n\n{textwrap.indent(match, '    ')}\n\n:warning: Skipping this singularity image.."
+                                        )
 
                         if this_container:
                             containers_raw.append(this_container)
