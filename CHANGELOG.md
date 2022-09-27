@@ -12,6 +12,11 @@
 
 ### Linting
 
+- Pipelines: Check that the old renamed `lib` files are not still present:
+  - `Checks.groovy` -> `Utils.groovy`
+  - `Completion.groovy` -> `NfcoreTemplate.groovy`
+  - `Workflow.groovy` -> `WorkflowMain.groovy`
+
 ### General
 
 - Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.

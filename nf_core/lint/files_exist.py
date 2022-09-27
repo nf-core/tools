@@ -75,7 +75,7 @@ def files_exist(self):
         lib/WorkflowPIPELINE.groovy
         pyproject.toml
 
-    Files that *must not* be present:
+    Files that *must not* be present, due to being renamed or removed in the template:
 
     .. code-block:: bash
 
@@ -90,6 +90,9 @@ def files_exist(self):
         docs/images/nf-core-PIPELINE_logo.png
         .markdownlint.yml
         .yamllint.yml
+        lib/Checks.groovy
+        lib/Completion.groovy
+        lib/Workflow.groovy
 
     Files that *should not* be present:
 
@@ -191,6 +194,9 @@ def files_exist(self):
         os.path.join("docs", "images", f"nf-core-{short_name}_logo.png"),
         ".markdownlint.yml",
         ".yamllint.yml",
+        os.path.join("lib", "Checks.groovy"),
+        os.path.join("lib", "Completion.groovy"),
+        os.path.join("lib", "Workflow.groovy"),
     ]
     files_warn_ifexists = [".travis.yml"]
 
