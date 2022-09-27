@@ -43,7 +43,7 @@ class NFCoreModule(object):
             self.main_nf = self.module_dir / "main.nf"
             self.meta_yml = self.module_dir / "meta.yml"
 
-            self.test_dir = Path(self.base_dir, "tests", "modules", self.module_name)
+            self.test_dir = Path(self.base_dir, "tests", self.module_dir)
             self.test_yml = self.test_dir / "test.yml"
             self.test_main_nf = self.test_dir / "main.nf"
 

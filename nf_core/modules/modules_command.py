@@ -40,7 +40,7 @@ class ModuleCommand:
         """
         Get the modules available in a clone of nf-core/modules
         """
-        module_base_path = Path(self.dir, "modules")
+        module_base_path = Path(self.dir, self.default_modules_path)
         return [
             str(Path(dir).relative_to(module_base_path))
             for dir, _, files in os.walk(module_base_path)
