@@ -108,14 +108,12 @@ class ModulesTest(ModuleCommand):
 
     def _validate_folder_structure(self):
         """Validate that the modules follow the correct folder structure to run the tests:
-        - modules/TOOL/SUBTOOL/
-        - tests/modules/TOOL/SUBTOOL/
+        - modules/nf-core/TOOL/SUBTOOL/
+        - tests/modules/nf-core/TOOL/SUBTOOL/
 
         """
-        basedir = "modules/nf-core"
-
-        module_path = Path(basedir) / self.module_name
-        test_path = Path(f"tests/{basedir}") / self.module_name
+        module_path = Path(self.default_modules_path) / self.module_name
+        test_path = Path(self.default_tests_path) / self.module_name
 
         if not (self.dir / module_path).is_dir():
             raise UserWarning(

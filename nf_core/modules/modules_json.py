@@ -60,7 +60,12 @@ class ModulesJson:
             (
                 repo_name,
                 [
-                    str(Path(dir_name).relative_to(modules_dir / repo_name))
+                    str(Path(dir_name).relative_to(modules_dir / repo_name).parts[0])
+                    for dir_name, _, file_names in os.walk(modules_dir / repo_name)
+                    if "main.nf" in file_names
+                ],
+                [
+                    str(Path(dir_name).relative_to(modules_dir / repo_name).parts[1:])
                     for dir_name, _, file_names in os.walk(modules_dir / repo_name)
                     if "main.nf" in file_names
                 ],
@@ -69,12 +74,12 @@ class ModulesJson:
             for repo_name, repo_remote in repos.items()
         ]
 
-        for repo_name, module_names, remote_url in sorted(repo_module_names):
+        for repo_name, dir_names, module_names, remote_url in sorted(repo_module_names):
             modules_json["repos"][repo_name] = {}
             modules_json["repos"][repo_name]["git_url"] = remote_url
-            modules_json["repos"][repo_name]["modules"] = {}
-            modules_json["repos"][repo_name]["modules"] = self.determine_module_branches_and_shas(
-                repo_name, remote_url, module_names
+            modules_json["repos"][repo_name]["modules"][dir_names] = {}
+            modules_json["repos"][repo_name]["modules"][dir_names] = self.determine_module_branches_and_shas(
+                Path(repo_name / dir_names), remote_url, module_names
             )
         # write the modules.json file and assign it to the object
         modules_json_path = Path(self.dir, "modules.json")
@@ -204,7 +209,7 @@ class ModulesJson:
 
         Returns:
             (dict[str, dict[str, str]]): The module.json entries for the modules
-                                        from the repository
+                                         from the repository
         """
         default_modules_repo = nf_core.modules.modules_repo.ModulesRepo(remote_url=remote_url)
         repo_path = self.modules_dir / repo_name
@@ -447,7 +452,8 @@ class ModulesJson:
             missing_but_in_mod_json = [
                 f"'{repo}/{module}'"
                 for repo, contents in missing_installation.items()
-                for module in contents["modules"]
+                for module_dir in contents["modules"].keys()
+                for module in contents["modules"][module_dir]
             ]
             log.info(
                 f"Reinstalling modules found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
