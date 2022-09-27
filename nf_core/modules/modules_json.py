@@ -331,7 +331,6 @@ class ModulesJson:
         ]
         untracked_dirs = []
         for dir in dirs:
-            print(f"check if {dir} is installed")
             # Check if the modules directory exists
             module_repo_name = None
             git_url = None

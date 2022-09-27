@@ -85,11 +85,11 @@ class ModuleLint(ModuleCommand):
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
             all_pipeline_modules = modules_json.get_all_modules()
-            if self.modules_repo.fullname in all_pipeline_modules:
-                module_dir = Path(self.dir, "modules", self.modules_repo.fullname)
+            if self.modules_repo.remote_url in all_pipeline_modules:
+                module_dir = Path(self.dir, "modules", "nf-core")
                 self.all_remote_modules = [
                     NFCoreModule(m, self.modules_repo.fullname, module_dir / m, self.repo_type, Path(self.dir))
-                    for m in all_pipeline_modules[self.modules_repo.fullname]
+                    for m in all_pipeline_modules[self.modules_repo.remote_url]
                 ]
                 if not self.all_remote_modules:
                     raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
