@@ -69,10 +69,6 @@ def get_installed_modules(dir, repo_type="modules"):
             local_modules = os.listdir(local_modules_dir)
             local_modules = sorted([x for x in local_modules if x.endswith(".nf")])
 
-    # nf-core/modules
-    if repo_type == "modules":
-        nfcore_modules_dir = os.path.join(dir, "modules")
-
     # Get nf-core modules
     if os.path.exists(nfcore_modules_dir):
         for m in sorted([m for m in os.listdir(nfcore_modules_dir) if not m == "lib"]):
