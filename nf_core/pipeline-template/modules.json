@@ -15,7 +15,7 @@
                 },
                 "multiqc": {
                     "branch": "master",
-                    "git_sha": "16eee433b87b303bda650131ac5a0b1ad725e166"
+                    "git_sha": "4b1d4bf401d4cf65ebc4f604bc8c8e7551109db3"
                 }
             }
         }
