@@ -33,7 +33,7 @@ class ModulesJson:
             pipeline_dir (str): The pipeline directory
         """
         self.dir = pipeline_dir
-        self.modules_dir = Path(self.dir, "modules")
+        self.modules_dir = Path(self.dir, "modules", "nf-core")
         self.modules_json = None
         self.pipeline_modules = None
 
@@ -48,7 +48,7 @@ class ModulesJson:
         pipeline_name = pipeline_config.get("manifest.name", "")
         pipeline_url = pipeline_config.get("manifest.homePage", "")
         modules_json = {"name": pipeline_name.strip("'"), "homePage": pipeline_url.strip("'"), "repos": {}}
-        modules_dir = Path(self.dir, "modules")
+        modules_dir = Path(self.dir, "modules/nf-core")
 
         if not modules_dir.exists():
             raise UserWarning("Can't find a ./modules directory. Is this a DSL2 pipeline?")
@@ -60,12 +60,7 @@ class ModulesJson:
             (
                 repo_name,
                 [
-                    str(Path(dir_name).relative_to(modules_dir / repo_name).parts[0])
-                    for dir_name, _, file_names in os.walk(modules_dir / repo_name)
-                    if "main.nf" in file_names
-                ],
-                [
-                    str(Path(dir_name).relative_to(modules_dir / repo_name).parts[1:])
+                    str(Path(dir_name).relative_to(modules_dir / repo_name))
                     for dir_name, _, file_names in os.walk(modules_dir / repo_name)
                     if "main.nf" in file_names
                 ],
@@ -74,12 +69,11 @@ class ModulesJson:
             for repo_name, repo_remote in repos.items()
         ]
 
-        for repo_name, dir_names, module_names, remote_url in sorted(repo_module_names):
-            modules_json["repos"][repo_name] = {}
-            modules_json["repos"][repo_name]["git_url"] = remote_url
-            modules_json["repos"][repo_name]["modules"][dir_names] = {}
-            modules_json["repos"][repo_name]["modules"][dir_names] = self.determine_module_branches_and_shas(
-                Path(repo_name / dir_names), remote_url, module_names
+        for repo_name, module_names, remote_url in sorted(repo_module_names):
+            modules_json["repos"][remote_url] = {}
+            modules_json["repos"][remote_url]["modules/nf-core"] = {}
+            modules_json["repos"][remote_url]["modules/nf-core"] = self.determine_module_branches_and_shas(
+                repo_name, remote_url, module_names
             )
         # write the modules.json file and assign it to the object
         modules_json_path = Path(self.dir, "modules.json")
@@ -156,7 +150,7 @@ class ModulesJson:
                     else:
                         continue
 
-                repos[nrepo_name] = (nrepo_remote, "modules")
+                repos[nrepo_name] = (nrepo_remote, "modules/nf-core")
                 dirs_not_covered = self.dir_tree_uncovered(modules_dir, [Path(name) for name in repos])
         return repos, renamed_dirs
 
@@ -337,29 +331,30 @@ class ModulesJson:
         ]
         untracked_dirs = []
         for dir in dirs:
+            print(f"check if {dir} is installed")
             # Check if the modules directory exists
             module_repo_name = None
+            git_url = None
             for repo in missing_installation:
-                if str(dir).startswith(repo + os.sep):
-                    module_repo_name = repo
+                for dir_name in missing_installation[repo]:
+                    module_repo_name = dir_name
+                    git_url = repo
                     break
             if module_repo_name is not None:
                 # If it does, check if the module is in the 'modules.json' file
-                module = str(dir.relative_to(module_repo_name))
-                module_repo = missing_installation[module_repo_name]
+                module = str(dir)
+                module_repo = missing_installation[git_url]
 
-                if module not in module_repo.get("modules", {}):
+                if module not in module_repo["modules/nf-core"].keys():
                     untracked_dirs.append(dir)
                 else:
                     # Check if the entry has a git sha and branch before removing
-                    modules = module_repo["modules"]
+                    modules = module_repo["modules/nf-core"]
                     if "git_sha" not in modules[module] or "branch" not in modules[module]:
-                        self.determine_module_branches_and_shas(
-                            module, module_repo["git_url"], module_repo["base_path"], [module]
-                        )
-                    module_repo["modules"].pop(module)
-                    if len(module_repo["modules"]) == 0:
-                        missing_installation.pop(module_repo_name)
+                        self.determine_module_branches_and_shas(module, git_url, module_repo["base_path"], [module])
+                    module_repo["modules/nf-core"].pop(module)
+                    if len(module_repo["modules/nf-core"]) == 0:
+                        missing_installation.pop(git_url)
             else:
                 # If it is not, add it to the list of missing modules
                 untracked_dirs.append(dir)
@@ -373,15 +368,15 @@ class ModulesJson:
         Returns:
             (bool): True if they are found for all repos, False otherwise
         """
-        for repo_entry in self.modules_json.get("repos", {}).values():
-            if "git_url" not in repo_entry or "modules" not in repo_entry:
-                log.warning(f"modules.json entry {repo_entry} does not have a git_url or modules entry")
+        for repo_url, repo_entry in self.modules_json.get("repos", {}).items():
+            if "modules/nf-core" not in repo_entry:
+                log.warning(f"modules.json entry {repo_entry} does not have a modules entry")
                 return False
             elif (
-                not isinstance(repo_entry["git_url"], str)
-                or repo_entry["git_url"] == ""
-                or not isinstance(repo_entry["modules"], dict)
-                or repo_entry["modules"] == {}
+                not isinstance(repo_url, str)
+                or repo_url == ""
+                or not isinstance(repo_entry["modules/nf-core"], dict)
+                or repo_entry["modules/nf-core"] == {}
             ):
                 log.warning(f"modules.json entry {repo_entry} has non-string or empty entries for git_url or modules")
                 return False
@@ -419,7 +414,7 @@ class ModulesJson:
                 log.error(e)
                 failed_to_install.extend(modules)
             for module, sha in modules:
-                if not modules_repo.install_module(module, (self.modules_dir / repo_name), sha):
+                if not modules_repo.install_module(module, self.modules_dir, sha):
                     log.warning(f"Could not install module '{Path(repo_name, module)}' - removing from modules.json")
                     failed_to_install.append(module)
         return failed_to_install
@@ -450,10 +445,9 @@ class ModulesJson:
         # we try to reinstall them
         if len(missing_installation) > 0:
             missing_but_in_mod_json = [
-                f"'{repo}/{module}'"
-                for repo, contents in missing_installation.items()
-                for module_dir in contents["modules"].keys()
-                for module in contents["modules"][module_dir]
+                f"'modules/nf-core/{module}'"
+                for repo_url, contents in missing_installation.items()
+                for module in contents["modules/nf-core"]
             ]
             log.info(
                 f"Reinstalling modules found in 'modules.json' but missing from directory: {', '.join(missing_but_in_mod_json)}"
@@ -461,8 +455,8 @@ class ModulesJson:
 
             remove_from_mod_json = {}
             for repo, contents in missing_installation.items():
-                module_entries = contents["modules"]
-                remote_url = contents["git_url"]
+                module_entries = contents["modules/nf-core"]
+                remote_url = repo
                 remove_from_mod_json[repo] = self.reinstall_repo(repo, remote_url, module_entries)
 
             # If the reinstall fails, we remove those entries in 'modules.json'
@@ -479,8 +473,8 @@ class ModulesJson:
 
                 for repo, module_entries in remove_from_mod_json.items():
                     for module in module_entries:
-                        self.modules_json["repos"][repo]["modules"].pop(module)
-                    if len(self.modules_json["repos"][repo]["modules"]) == 0:
+                        self.modules_json["repos"][repo]["modules/nf-core"].pop(module)
+                    if len(self.modules_json["repos"][repo]["modules/nf-core"]) == 0:
                         self.modules_json["repos"].pop(repo)
 
         # If some modules didn't have an entry in the 'modules.json' file
@@ -495,9 +489,7 @@ class ModulesJson:
                 )
 
             # Get the remotes we are missing
-            tracked_repos = {
-                repo_name: (repo_entry["git_url"]) for repo_name, repo_entry in self.modules_json["repos"].items()
-            }
+            tracked_repos = {repo_name: (remote_url) for repo_name, repo_entry in self.modules_json["repos"].items()}
             repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
 
             modules_with_repos = (
@@ -517,11 +509,10 @@ class ModulesJson:
                 remote_url = repos[repo_name]
                 repo_entry = self.determine_module_branches_and_shas(repo_name, remote_url, modules)
                 if repo_name in self.modules_json["repos"]:
-                    self.modules_json["repos"][repo_name]["modules"].update(repo_entry)
+                    self.modules_json["repos"][repo_name]["modules/nf-core"].update(repo_entry)
                 else:
                     self.modules_json["repos"][repo_name] = {
-                        "git_url": remote_url,
-                        "modules": repo_entry,
+                        "modules/nf-core": repo_entry,
                     }
 
         self.dump()
@@ -558,8 +549,8 @@ class ModulesJson:
         remote_url = modules_repo.remote_url
         branch = modules_repo.branch
         if repo_name not in self.modules_json["repos"]:
-            self.modules_json["repos"][repo_name] = {"modules": {}, "git_url": remote_url}
-        repo_modules_entry = self.modules_json["repos"][repo_name]["modules"]
+            self.modules_json["repos"][repo_name] = {"modules/nf-core": {}}
+        repo_modules_entry = self.modules_json["repos"][repo_name]["modules/nf-core"]
         if module_name not in repo_modules_entry:
             repo_modules_entry[module_name] = {}
         repo_modules_entry[module_name]["git_sha"] = module_version
@@ -584,12 +575,12 @@ class ModulesJson:
             return False
         if repo_name in self.modules_json.get("repos", {}):
             repo_entry = self.modules_json["repos"][repo_name]
-            if module_name in repo_entry.get("modules", {}):
-                repo_entry["modules"].pop(module_name)
+            if module_name in repo_entry.get("modules/nf-core", {}):
+                repo_entry["modules/nf-core"].pop(module_name)
             else:
                 log.warning(f"Module '{repo_name}/{module_name}' is missing from 'modules.json' file.")
                 return False
-            if len(repo_entry["modules"]) == 0:
+            if len(repo_entry["modules/nf-core"]) == 0:
                 self.modules_json["repos"].pop(repo_name)
         else:
             log.warning(f"Module '{repo_name}/{module_name}' is missing from 'modules.json' file.")
@@ -606,9 +597,9 @@ class ModulesJson:
             self.load()
         if repo_name not in self.modules_json["repos"]:
             raise LookupError(f"Repo '{repo_name}' not present in 'modules.json'")
-        if module_name not in self.modules_json["repos"][repo_name]["modules"]:
+        if module_name not in self.modules_json["repos"][repo_name]["modules/nf-core"]:
             raise LookupError(f"Module '{repo_name}/{module_name}' not present in 'modules.json'")
-        self.modules_json["repos"][repo_name]["modules"][module_name]["patch"] = str(patch_filename)
+        self.modules_json["repos"][repo_name]["modules/nf-core"][module_name]["patch"] = str(patch_filename)
         if write_file:
             self.dump()
 
@@ -625,7 +616,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        path = self.modules_json["repos"].get(repo_name, {}).get("modules").get(module_name, {}).get("patch")
+        path = self.modules_json["repos"].get(repo_name, {}).get("modules/nf-core").get(module_name, {}).get("patch")
         return Path(path) if path is not None else None
 
     def try_apply_patch_reverse(self, module, repo_name, patch_relpath, module_dir):
@@ -687,7 +678,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        return module_name in self.modules_json.get("repos", {}).get(repo_name, {}).get("modules", {})
+        return module_name in self.modules_json.get("repos", {}).get(repo_name, {}).get("modules/nf-core", {})
 
     def get_modules_json(self):
         """
@@ -716,24 +707,24 @@ class ModulesJson:
         return (
             self.modules_json.get("repos", {})
             .get(repo_name, {})
-            .get("modules", {})
+            .get("modules/nf-core", {})
             .get(module_name, {})
             .get("git_sha", None)
         )
 
-    def get_git_url(self, repo_name):
-        """
-        Returns the git url of a repo
+    # def get_git_url(self, repo_name):
+    #    """
+    #    Returns the git url of a repo
 
-        Args:
-            repo_name (str): Name of the repository
+    #    Args:
+    #        repo_name (str): Name of the repository
 
-        Returns:
-            (str): The git url of the repository if it exists, None otherwise
-        """
-        if self.modules_json is None:
-            self.load()
-        return self.modules_json.get("repos", {}).get(repo_name, {}).get("git_url", None)
+    #    Returns:
+    #        (str): The git url of the repository if it exists, None otherwise
+    #    """
+    #    if self.modules_json is None:
+    #        self.load()
+    #    return self.modules_json.get("repos", {}).get(repo_name, {}).get("git_url", None)
 
     def get_all_modules(self):
         """
@@ -748,8 +739,8 @@ class ModulesJson:
         if self.pipeline_modules is None:
             self.pipeline_modules = {}
             for repo, repo_entry in self.modules_json.get("repos", {}).items():
-                if "modules" in repo_entry:
-                    self.pipeline_modules[repo] = list(repo_entry["modules"])
+                if "modules/nf-core" in repo_entry:
+                    self.pipeline_modules[repo] = list(repo_entry["modules/nf-core"])
 
         return self.pipeline_modules
 
@@ -764,7 +755,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        branch = self.modules_json["repos"].get(repo_name, {}).get("modules", {}).get(module, {}).get("branch")
+        branch = self.modules_json["repos"].get(repo_name, {}).get("modules/nf-core", {}).get(module, {}).get("branch")
         if branch is None:
             raise LookupError(
                 f"Could not find branch information for module '{Path(repo_name, module)}'."
