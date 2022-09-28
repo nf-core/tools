@@ -5,6 +5,7 @@
 ### Template
 
 - Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
+- Add `prettier` as a requirement to Gitpod Dockerimage
 - Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
