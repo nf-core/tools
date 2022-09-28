@@ -16,7 +16,7 @@
   - `Checks.groovy` -> `Utils.groovy`
   - `Completion.groovy` -> `NfcoreTemplate.groovy`
   - `Workflow.groovy` -> `WorkflowMain.groovy`
-- The `process_single` label is now allowed
+- Modules using a `process_single` label will not throw a warning
 
 ### General
 
