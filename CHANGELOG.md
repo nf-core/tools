@@ -6,6 +6,7 @@
 
 - Add template for subworkflows
 - Add `actions/upload-artifact` step to the awstest workflows, to expose the debug log file
+- Add `prettier` as a requirement to Gitpod Dockerimage
 - Bioconda incompatible conda channel setups now result in more informative error messages ([#1812](https://github.com/nf-core/tools/pull/1812))
 - Update MultiQC module, update supplying MultiQC default and custom config and logo files to module
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
@@ -13,10 +14,17 @@
 
 ### Linting
 
+- Pipelines: Check that the old renamed `lib` files are not still present:
+  - `Checks.groovy` -> `Utils.groovy`
+  - `Completion.groovy` -> `NfcoreTemplate.groovy`
+  - `Workflow.groovy` -> `WorkflowMain.groovy`
+
 ### General
 
 - Add function to enable chat notifications on MS Teams, accompanied by `hook_url` param to enable it.
+- Schema: Remove `allOf` if no definition groups are left.
 - Use contextlib to temporarily change working directories ([#1819](https://github.com/nf-core/tools/pull/1819))
+- More helpful error messages if `nf-core download` can't parse a singularity image download
 
 ### Modules
 
