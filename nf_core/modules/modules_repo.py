@@ -15,7 +15,7 @@ from nf_core.utils import NFCORE_DIR
 log = logging.getLogger(__name__)
 
 # Constants for the nf-core/modules repo used throughout the module files
-NF_CORE_MODULES_NAME = "nf-core/modules"
+NF_CORE_MODULES_NAME = "nf-core"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
 NF_CORE_MODULES_DEFAULT_BRANCH = "master"
 
@@ -149,7 +149,7 @@ class ModulesRepo(object):
             branch (str): name of branch to use
         Sets self.repo
         """
-        self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
+        self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname, "modules")
         if not os.path.exists(self.local_repo_dir):
             try:
                 pbar = rich.progress.Progress(
@@ -313,7 +313,7 @@ class ModulesRepo(object):
             return False
 
         # Copy the files from the repo to the install folder
-        shutil.copytree(self.get_module_dir(module_name), os.path.join(install_dir, module_name))
+        shutil.copytree(self.get_module_dir(module_name), Path(install_dir, module_name))
 
         # Switch back to the tip of the branch
         self.checkout_branch()

@@ -93,19 +93,19 @@ class ModuleCommand:
             log.error(f"Could not remove module: {e}")
             return False
 
-    def modules_from_repo(self, repo_name):
+    def modules_from_repo(self, install_dir):
         """
         Gets the modules installed from a certain repository
 
         Args:
-            repo_name (str): The name of the repository
+            install_dir (str): The name of the directory where modules are installed
 
         Returns:
             [str]: The names of the modules
         """
-        repo_dir = Path(self.dir, "modules", repo_name)
+        repo_dir = Path(self.dir, "modules", install_dir)
         if not repo_dir.exists():
-            raise LookupError(f"Nothing installed from {repo_name} in pipeline")
+            raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
         return [
             str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files

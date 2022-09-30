@@ -66,4 +66,6 @@ def test_modules_install_different_branch_succeed(self):
 
     # Verify that the branch entry was added correctly
     modules_json = ModulesJson(self.pipeline_dir)
-    assert modules_json.get_module_branch("fastp", GITLAB_URL) == GITLAB_BRANCH_TEST_BRANCH
+    assert (
+        modules_json.get_module_branch("fastp", GITLAB_URL) == GITLAB_BRANCH_TEST_BRANCH
+    )  # TODO module, repo_url, install_dir

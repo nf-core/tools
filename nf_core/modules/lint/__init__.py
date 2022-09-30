@@ -144,7 +144,7 @@ class ModuleLint(ModuleCommand):
         Lint all or one specific module
 
         First gets a list of all local modules (in modules/local/process) and all modules
-        installed from nf-core (in modules/nf-core/modules)
+        installed from nf-core (in modules/nf-core)
 
         For all nf-core modules, the correct file structure is assured and important
         file content is verified. If directory subject to linting is a clone of 'nf-core/modules',

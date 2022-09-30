@@ -69,7 +69,7 @@ def test_create_patch_no_change(self):
 
     # Check the 'modules.json' contains no patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) is None
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) is None  # TODO module_name, repo_url, install_dir
 
 
 def test_create_patch_change(self):
@@ -88,7 +88,7 @@ def test_create_patch_change(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(  # TODO module_name, repo_url, install_dir
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -121,7 +121,7 @@ def test_create_patch_try_apply_successful(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(  # TODO module_name, repo_url, install_dir
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -145,7 +145,7 @@ def test_create_patch_try_apply_successful(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(  # TODO module_name, repo_url, install_dir
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -187,7 +187,7 @@ def test_create_patch_try_apply_failed(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(  # TODO module_name, repo_url, install_dir
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -224,7 +224,7 @@ def test_create_patch_update_success(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(  # TODO module_name, repo_url, install_dir
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
@@ -239,9 +239,11 @@ def test_create_patch_update_success(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(  # TODO module_name, repo_url, install_dir
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
-    ), modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME)
+    ), modules_json_obj.get_patch_fn(  # TODO module_name, repo_url, install_dir
+        BISMARK_ALIGN, REPO_NAME
+    )  # TODO module_name, repo_url, install_dir
 
     # Check that the correct lines are in the patch file
     with open(module_path / patch_fn, "r") as fh:
@@ -280,7 +282,7 @@ def test_create_patch_update_fail(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_NAME) == Path(  # TODO module_name, repo_url, install_dir
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 

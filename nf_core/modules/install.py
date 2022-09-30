@@ -71,7 +71,9 @@ class ModuleInstall(ModuleCommand):
             log.warning(warn_msg)
             return False
 
-        current_version = modules_json.get_module_version(module, self.modules_repo.remote_url)
+        current_version = modules_json.get_module_version(
+            module, self.modules_repo.remote_url, self.modules_repo.fullname
+        )
 
         # Set the install folder based on the repository name
         install_folder = os.path.join(self.dir, "modules", self.modules_repo.fullname)

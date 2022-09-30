@@ -26,7 +26,7 @@ def module_version(module_lint_object, module):
 
     # Verify that a git_sha exists in the `modules.json` file for this module
     version = module_lint_object.modules_json.get_module_version(
-        module.module_name, module_lint_object.modules_repo.remote_url
+        module.module_name, module_lint_object.modules_repo.remote_url, module_lint_object.modules_repo.fullname
     )
     if version is None:
         module.failed.append(("git_sha", "No git_sha entry in `modules.json`", modules_json_path))

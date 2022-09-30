@@ -3,18 +3,20 @@
     "homePage": "https://github.com/{{ name }}",
     "repos": {
         "https://github.com/nf-core/modules.git": {
-            "modules/nf-core": {
-                "custom/dumpsoftwareversions": {
-                    "branch": "master",
-                    "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
-                },
-                "fastqc": {
-                    "branch": "master",
-                    "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
-                },
-                "multiqc": {
-                    "branch": "master",
-                    "git_sha": "4b1d4bf401d4cf65ebc4f604bc8c8e7551109db3"
+            "modules": {
+                "nf-core": {
+                    "custom/dumpsoftwareversions": {
+                        "branch": "master",
+                        "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+                    },
+                    "fastqc": {
+                        "branch": "master",
+                        "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+                    },
+                    "multiqc": {
+                        "branch": "master",
+                        "git_sha": "4b1d4bf401d4cf65ebc4f604bc8c8e7551109db3"
+                    }
                 }
             }
         }

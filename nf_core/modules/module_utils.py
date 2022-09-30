@@ -30,14 +30,20 @@ def path_from_remote(remote_url):
         path = path.path
         # Remove the intial '/'
         path = path[1:]
+        # Remove extension
         path = os.path.splitext(path)[0]
+        # Remove repo name "modules"
+        path = os.path.split(path)[0]
     else:
         # Remove the initial `git@``
         path = remote_url.split("@")
         path = path[-1] if len(path) > 1 else path[0]
         path = urllib.parse.urlparse(path)
         path = path.path
+        # Remove extension
         path = os.path.splitext(path)[0]
+        # Remove repo name "modules"
+        path = os.path.split(path)[0]
     return path
 
 

@@ -130,11 +130,13 @@ class ModuleUpdate(ModuleCommand):
         exit_value = True
         all_patches_successful = True
         for modules_repo, module, sha, patch_relpath in modules_info:
-            module_fullname = str(Path(modules_repo.fullname, module))
+            module_fullname = str(Path("modules", modules_repo.fullname, module))
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
-            current_version = self.modules_json.get_module_version(module, modules_repo.remote_url)
+            current_version = self.modules_json.get_module_version(
+                module, modules_repo.remote_url, modules_repo.fullname
+            )
 
             # Set the temporary installation folder
             install_dir = Path(tempfile.mkdtemp())
@@ -261,19 +263,24 @@ class ModuleUpdate(ModuleCommand):
             UserWarning: If the '.nf-core.yml' entry is not valid.
         """
         # Check if there are any modules installed from the repo
-        repo_name = self.modules_repo.fullname
-        if repo_name not in self.modules_json.get_all_modules():
-            raise LookupError(f"No modules installed from '{repo_name}'")
+        repo_url = self.modules_repo.remote_url
+        modules = self.modules_json.get_all_modules().get(repo_url)
+        choices = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
+        if repo_url not in self.modules_json.get_all_modules():
+            raise LookupError(f"No modules installed from '{repo_url}'")
 
         if module is None:
+            choices = [module if dir == "nf-core" else f"{dir}/{module}" for dir, module in modules]
             module = questionary.autocomplete(
                 "Tool name:",
-                choices=self.modules_json.get_all_modules()[repo_name],
+                choices=choices,
                 style=nf_core.utils.nfcore_question_style,
             ).unsafe_ask()
 
+        install_dir = [dir for dir, m in modules if module == m][0]
+
         # Check if module is installed before trying to update
-        if module not in self.modules_json.get_all_modules()[repo_name]:
+        if module not in choices:
             raise LookupError(f"Module '{module}' is not installed in pipeline and could therefore not be updated")
 
         # Check that the supplied name is an available module
@@ -303,11 +310,11 @@ class ModuleUpdate(ModuleCommand):
                 log.info(f"Updating module to ({sha})")
 
         # Check if the update branch is the same as the installation branch
-        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.remote_url)
+        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.remote_url, install_dir)
         new_branch = self.modules_repo.branch
         if current_branch != new_branch:
             log.warning(
-                f"You are trying to update the '{Path(self.modules_repo.fullname, module)}' module from "
+                f"You are trying to update the '{Path(install_dir, module)}' module from "
                 f"the '{new_branch}' branch. This module was installed from the '{current_branch}'"
             )
             switch = questionary.confirm(f"Do you want to update using the '{current_branch}' instead?").unsafe_ask()
@@ -316,7 +323,7 @@ class ModuleUpdate(ModuleCommand):
                 self.modules_repo.setup_branch(current_branch)
 
         # If there is a patch file, get its filename
-        patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.fullname)
+        patch_fn = self.modules_json.get_patch_fn(module, self.modules_repo.remote_url, install_dir)
 
         return (self.modules_repo, module, sha, patch_fn)
 
@@ -344,36 +351,72 @@ class ModuleUpdate(ModuleCommand):
         # and check if they have an entry in the '.nf-core.yml' file
         for repo_name, modules in self.modules_json.get_all_modules().items():
             if repo_name not in self.update_config or self.update_config[repo_name] is True:
-                modules_info[repo_name] = [
-                    (module, self.sha, self.modules_json.get_module_branch(module, repo_name)) for module in modules
-                ]
+                for module_dir, module in modules:
+                    try:
+                        modules_info[repo_name][module_dir].append(
+                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name, module_dir))
+                        )
+                    except KeyError:
+                        modules_info[repo_name][module_dir] = [
+                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name, module_dir))
+                        ]
             elif isinstance(self.update_config[repo_name], dict):
                 # If it is a dict, then there are entries for individual modules
                 repo_config = self.update_config[repo_name]
-                modules_info[repo_name] = []
-                for module in modules:
+                modules_info[repo_name] = {}
+                for module_dir, module in modules:
                     if module not in repo_config or repo_config[module] is True:
-                        modules_info[repo_name].append(
-                            (module, self.sha, self.modules_json.get_module_branch(module, repo_name))
-                        )
+                        try:
+                            modules_info[repo_name][module_dir].append(
+                                (
+                                    module,
+                                    self.sha,
+                                    self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                )
+                            )
+                        except KeyError:
+                            modules_info[repo_name][module_dir] = [
+                                (
+                                    module,
+                                    self.sha,
+                                    self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                )
+                            ]
                     elif isinstance(repo_config[module], str):
                         # If a string is given it is the commit SHA to which we should update to
                         custom_sha = repo_config[module]
-                        modules_info[repo_name].append(
-                            (module, custom_sha, self.modules_json.get_module_branch(module, repo_name))
-                        )
+                        try:
+                            modules_info[repo_name][module_dir].append(
+                                (
+                                    module,
+                                    custom_sha,
+                                    self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                )
+                            )
+                        except KeyError:
+                            modules_info[repo_name][module_dir].append(
+                                (
+                                    module,
+                                    custom_sha,
+                                    self.modules_json.get_module_branch(module, repo_name, module_dir),
+                                )
+                            )
                         if self.sha is not None:
                             overridden_modules.append(module)
                     elif repo_config[module] is False:
                         # Otherwise the entry must be 'False' and we should ignore the module
-                        skipped_modules.append(f"{repo_name}/{module}")
+                        skipped_modules.append(f"{module_dir}/{module}")
                     else:
-                        raise UserWarning(f"Module '{module}' in '{repo_name}' has an invalid entry in '.nf-core.yml'")
+                        raise UserWarning(f"Module '{module}' in '{module_dir}' has an invalid entry in '.nf-core.yml'")
             elif isinstance(self.update_config[repo_name], str):
                 # If a string is given it is the commit SHA to which we should update to
                 custom_sha = self.update_config[repo_name]
-                modules_info[repo_name] = [
-                    (module_name, custom_sha, self.modules_json.get_module_branch(module_name, repo_name))
+                modules_info[repo_name]["nf-core"] = [
+                    (
+                        module_name,
+                        custom_sha,
+                        self.modules_json.get_module_branch(module_name, repo_name, "nf-core"),
+                    )
                     for module_name in modules
                 ]
                 if self.sha is not None:
@@ -406,33 +449,23 @@ class ModuleUpdate(ModuleCommand):
             )
         # Loop through modules_info and create on ModulesRepo object per remote and branch
         repos_and_branches = {}
-        for repo_name, mods in modules_info.items():
-            for mod, sha, mod_branch in mods:
-                if branch is not None:
-                    mod_branch = branch
-                if (repo_name, mod_branch) not in repos_and_branches:
-                    repos_and_branches[(repo_name, mod_branch)] = []
-                repos_and_branches[(repo_name, mod_branch)].append((mod, sha))
-
-        # Get the git urls from the modules.json
-        modules_info = (
-            (
-                repo_name,
-                self.modules_json.get_git_url(repo_name),
-                branch,
-                mods_shas,
-            )
-            for (repo_name, branch), mods_shas in repos_and_branches.items()
-        )
+        for repo_name, repo_content in modules_info.items():
+            for module_dir, mods in repo_content.items():
+                for mod, sha, mod_branch in mods:
+                    if branch is not None:
+                        mod_branch = branch
+                    if (repo_name, mod_branch) not in repos_and_branches:
+                        repos_and_branches[(repo_name, mod_branch)] = []
+                    repos_and_branches[(repo_name, mod_branch)].append((mod, sha))
 
         # Create ModulesRepo objects
         repo_objs_mods = []
-        for repo_name, repo_url, branch, mods_shas in modules_info:
+        for repo_url, branch, mods_shas in repos_and_branches.items():
             try:
                 modules_repo = ModulesRepo(remote_url=repo_url, branch=branch)
             except LookupError as e:
                 log.warning(e)
-                log.info(f"Skipping modules in '{repo_name}'")
+                log.info(f"Skipping modules in '{repo_url}'")
             else:
                 repo_objs_mods.append((modules_repo, mods_shas))
 
@@ -457,7 +490,8 @@ class ModuleUpdate(ModuleCommand):
 
         # Add patch filenames to the modules that have them
         modules_info = [
-            (repo, mod, sha, self.modules_json.get_patch_fn(mod, repo.fullname)) for repo, mod, sha in modules_info
+            (repo, mod, sha, self.modules_json.get_patch_fn(mod, repo.remote_url, repo.fullname))
+            for repo, mod, sha in modules_info  # TODO module_name, repo_url, install_dir
         ]
 
         return modules_info
@@ -580,6 +614,8 @@ class ModuleUpdate(ModuleCommand):
         shutil.copytree(temp_module_dir, module_install_dir)
 
         # Add the patch file to the modules.json file
-        self.modules_json.add_patch_entry(module, repo_name, patch_relpath, write_file=True)
+        self.modules_json.add_patch_entry(
+            module, repo_name, patch_relpath, write_file=True
+        )  # module_name, repo_url, install_dir
 
         return True
