@@ -2,9 +2,8 @@
     "name": "{{ name }}",
     "homePage": "https://github.com/{{ name }}",
     "repos": {
-        "nf-core/modules": {
-            "git_url": "https://github.com/nf-core/modules.git",
-            "modules": {
+        "https://github.com/nf-core/modules.git": {
+            "modules/nf-core": {
                 "custom/dumpsoftwareversions": {
                     "branch": "master",
                     "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"

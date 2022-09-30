@@ -188,10 +188,10 @@ def test_mod_json_get_module_version(self):
     mod_json_obj = ModulesJson(self.pipeline_dir)
     mod_json = mod_json_obj.get_modules_json()
     assert (
-        mod_json_obj.get_module_version("fastqc", NF_CORE_MODULES_NAME)
-        == mod_json["repos"][NF_CORE_MODULES_NAME]["modules"]["fastqc"]["git_sha"]
+        mod_json_obj.get_module_version("fastqc", NF_CORE_MODULES_REMOTE)
+        == mod_json["repos"][NF_CORE_MODULES_REMOTE]["modules"]["fastqc"]["git_sha"]
     )
-    assert mod_json_obj.get_module_version("INVALID_MODULE", NF_CORE_MODULES_NAME) is None
+    assert mod_json_obj.get_module_version("INVALID_MODULE", NF_CORE_MODULES_REMOTE) is None
 
 
 def test_mod_json_get_git_url(self):

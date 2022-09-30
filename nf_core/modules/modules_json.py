@@ -690,13 +690,13 @@ class ModulesJson:
             self.load()
         return copy.deepcopy(self.modules_json)
 
-    def get_module_version(self, module_name, repo_name):
+    def get_module_version(self, module_name, repo_url):
         """
         Returns the version of a module
 
         Args:
             module_name (str): Name of the module
-            repo_name (str): Name of the repository
+            repo_url (str): URL of the repository
 
         Returns:
             (str): The git SHA of the module if it exists, None otherwise
@@ -705,7 +705,7 @@ class ModulesJson:
             self.load()
         return (
             self.modules_json.get("repos", {})
-            .get(repo_name, {})
+            .get(repo_url, {})
             .get("modules/nf-core", {})
             .get(module_name, {})
             .get("git_sha", None)
@@ -743,7 +743,7 @@ class ModulesJson:
 
         return self.pipeline_modules
 
-    def get_module_branch(self, module, repo_name):
+    def get_module_branch(self, module, repo_url):
         """
         Gets the branch from which the module was installed
 
@@ -754,10 +754,10 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        branch = self.modules_json["repos"].get(repo_name, {}).get("modules/nf-core", {}).get(module, {}).get("branch")
+        branch = self.modules_json["repos"].get(repo_url, {}).get("modules/nf-core", {}).get(module, {}).get("branch")
         if branch is None:
             raise LookupError(
-                f"Could not find branch information for module '{Path(repo_name, module)}'."
+                f"Could not find branch information for module '{Path('modules/nf-core', module)}'."
                 f"Please remove the 'modules.json' and rerun the command to recreate it"
             )
         return branch

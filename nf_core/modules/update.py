@@ -134,7 +134,7 @@ class ModuleUpdate(ModuleCommand):
             # Are we updating the files in place or not?
             dry_run = self.show_diff or self.save_diff_fn
 
-            current_version = self.modules_json.get_module_version(module, modules_repo.fullname)
+            current_version = self.modules_json.get_module_version(module, modules_repo.remote_url)
 
             # Set the temporary installation folder
             install_dir = Path(tempfile.mkdtemp())
@@ -303,7 +303,7 @@ class ModuleUpdate(ModuleCommand):
                 log.info(f"Updating module to ({sha})")
 
         # Check if the update branch is the same as the installation branch
-        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.fullname)
+        current_branch = self.modules_json.get_module_branch(module, self.modules_repo.remote_url)
         new_branch = self.modules_repo.branch
         if current_branch != new_branch:
             log.warning(
