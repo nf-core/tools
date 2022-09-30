@@ -25,6 +25,7 @@
 - Schema: Remove `allOf` if no definition groups are left.
 - Use contextlib to temporarily change working directories ([#1819](https://github.com/nf-core/tools/pull/1819))
 - More helpful error messages if `nf-core download` can't parse a singularity image download
+- Add `nf-core subworkflows create` command
 
 ### Modules
 

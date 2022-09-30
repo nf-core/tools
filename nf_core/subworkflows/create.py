@@ -53,10 +53,10 @@ class SubworkflowCreate(object):
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
-        subworkflows/subworkflow_name/
+        subworkflows/nf-core/subworkflow_name/
             * main.nf
             * meta.yml
-        tests/subworkflows/subworkflow_name/
+        tests/subworkflows/nf-core/subworkflow_name/
             * main.nf
             * test.yml
             * nextflow.config
