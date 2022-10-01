@@ -91,7 +91,7 @@ workflow {{ short_name|upper }} {
     workflow_summary    = Workflow{{ short_name[0]|upper }}{{ short_name[1:] }}.paramsSummaryMultiqc(workflow, summary_params)
     ch_workflow_summary = Channel.value(workflow_summary)
 
-    methods_description    = WorkflowTestpipeline.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
+    methods_description    = Workflow{{ short_name[0]|upper }}{{ short_name[1:] }}.methodsDescriptionText(workflow, ch_multiqc_custom_methods_description)
     ch_methods_description = Channel.value(methods_description)
 
     ch_multiqc_files = Channel.empty()
