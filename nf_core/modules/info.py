@@ -136,7 +136,7 @@ class ModuleInfo(ModuleCommand):
 
         if self.repo_type == "pipeline":
             # Try to find and load the meta.yml file
-            repo_name = self.modules_repo.fullname
+            repo_name = self.modules_repo.repo_path
             module_base_path = os.path.join(self.dir, "modules")
             # Check that we have any modules installed from this repo
             modules = self.modules_json.get_all_modules().get(self.modules_repo.remote_url)

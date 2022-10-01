@@ -94,7 +94,7 @@ class ModulePatch(ModuleCommand):
             ModulesDiffer.write_diff_file(
                 patch_temp_path,
                 module,
-                self.modules_repo.fullname,
+                self.modules_repo.repo_path,
                 module_install_dir,
                 module_current_dir,
                 for_git=False,
@@ -112,7 +112,7 @@ class ModulePatch(ModuleCommand):
         # Show the changes made to the module
         ModulesDiffer.print_diff(
             module,
-            self.modules_repo.fullname,
+            self.modules_repo.repo_path,
             module_install_dir,
             module_current_dir,
             dsp_from_dir=module_current_dir,

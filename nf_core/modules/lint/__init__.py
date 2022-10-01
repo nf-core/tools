@@ -88,9 +88,9 @@ class ModuleLint(ModuleCommand):
             if self.modules_repo.remote_url in all_pipeline_modules:
                 module_dir = Path(self.dir, "modules", "nf-core")
                 self.all_remote_modules = [
-                    NFCoreModule(m, self.modules_repo.fullname, module_dir / m, self.repo_type, Path(self.dir))
+                    NFCoreModule(m[1], self.modules_repo.remote_url, module_dir / m[1], self.repo_type, Path(self.dir))
                     for m in all_pipeline_modules[self.modules_repo.remote_url]
-                ]
+                ]  # m = (module_dir, module_name)
                 if not self.all_remote_modules:
                     raise LookupError(f"No modules from {self.modules_repo.remote_url} installed in pipeline.")
                 local_module_dir = Path(self.dir, "modules", "local")

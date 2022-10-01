@@ -10,7 +10,7 @@ class NFCoreModule(object):
     Includes functionality for linting
     """
 
-    def __init__(self, module_name, repo_name, module_dir, repo_type, base_dir, nf_core_module=True):
+    def __init__(self, module_name, repo_url, module_dir, repo_type, base_dir, nf_core_module=True):
         """
         Initialize the object
 
@@ -24,7 +24,7 @@ class NFCoreModule(object):
                                    nf-core or local module
         """
         self.module_name = module_name
-        self.repo_name = repo_name
+        self.repo_url = repo_url
         self.module_dir = module_dir
         self.repo_type = repo_type
         self.base_dir = base_dir

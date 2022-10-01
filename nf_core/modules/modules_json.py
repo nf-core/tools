@@ -559,7 +559,7 @@ class ModulesJson:
         """
         if self.modules_json is None:
             self.load()
-        repo_name = modules_repo.fullname
+        repo_name = modules_repo.repo_path
         remote_url = modules_repo.remote_url
         branch = modules_repo.branch
         if remote_url not in self.modules_json["repos"]:
@@ -745,8 +745,8 @@ class ModulesJson:
         Retrieves all pipeline modules that are reported in the modules.json
 
         Returns:
-            (dict[str, [str]]): Dictionary indexed with the repo names, with a
-                                list of modules as values
+            (dict[str, [(str, str)]]): Dictionary indexed with the repo urls, with a
+                                list of tuples (module_dir, module) as values
         """
         if self.modules_json is None:
             self.load()

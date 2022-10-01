@@ -117,7 +117,7 @@ class ModuleCommand:
 
         Args:
             module_name (str): The name of the module
-            module_versioN (str): Git SHA for the version of the module to be installed
+            module_version (str): Git SHA for the version of the module to be installed
             modules_repo (ModulesRepo): A correctly configured ModulesRepo object
             install_dir (str): The path to where the module should be installed (should be the 'modules/' dir of the pipeline)
 

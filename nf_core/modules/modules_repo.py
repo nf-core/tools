@@ -2,6 +2,7 @@ import filecmp
 import logging
 import os
 import shutil
+from importlib.resources import path
 from pathlib import Path
 
 import git
@@ -17,7 +18,7 @@ log = logging.getLogger(__name__)
 # Constants for the nf-core/modules repo used throughout the module files
 NF_CORE_MODULES_NAME = "nf-core"
 NF_CORE_MODULES_REMOTE = "https://github.com/nf-core/modules.git"
-NF_CORE_MODULES_DEFAULT_BRANCH = "master"
+NF_CORE_MODULES_DEFAULT_BRANCH = "restructure"
 
 
 class RemoteProgressbar(git.RemoteProgress):
@@ -125,16 +126,17 @@ class ModulesRepo(object):
 
         self.remote_url = remote_url
 
-        self.fullname = nf_core.modules.module_utils.path_from_remote(self.remote_url)
+        self.repo_path = nf_core.modules.module_utils.path_from_remote(self.remote_url)
+        self.fullname = nf_core.modules.module_utils.repo_full_name_from_remote(self.remote_url)
 
         self.setup_local_repo(remote_url, branch, hide_progress)
 
         # Verify that the repo seems to be correctly configured
-        if self.fullname != NF_CORE_MODULES_NAME or self.branch:
+        if self.repo_path != NF_CORE_MODULES_NAME or self.branch:
             self.verify_branch()
 
         # Convenience variable
-        self.modules_dir = os.path.join(self.local_repo_dir, "modules")
+        self.modules_dir = os.path.join(self.local_repo_dir, "modules", self.repo_path)
 
         self.avail_module_names = None
 
@@ -149,7 +151,7 @@ class ModulesRepo(object):
             branch (str): name of branch to use
         Sets self.repo
         """
-        self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname, "modules")
+        self.local_repo_dir = os.path.join(NFCORE_DIR, self.fullname)
         if not os.path.exists(self.local_repo_dir):
             try:
                 pbar = rich.progress.Progress(
@@ -210,8 +212,8 @@ class ModulesRepo(object):
         """
         if branch is None:
             # Don't bother fetching default branch if we're using nf-core
-            if self.fullname == NF_CORE_MODULES_NAME:
-                self.branch = "master"
+            if self.remote_url == NF_CORE_MODULES_REMOTE:
+                self.branch = "restructure"
             else:
                 self.branch = self.get_default_branch()
         else:
@@ -235,7 +237,7 @@ class ModulesRepo(object):
         try:
             self.checkout_branch()
         except GitCommandError:
-            raise LookupError(f"Branch '{self.branch}' not found in '{self.fullname}'")
+            raise LookupError(f"Branch '{self.branch}' not found in '{self.remote_url}'")
 
     def verify_branch(self):
         """
@@ -243,7 +245,7 @@ class ModulesRepo(object):
         """
         dir_names = os.listdir(self.local_repo_dir)
         if "modules" not in dir_names:
-            err_str = f"Repository '{self.fullname}' ({self.branch}) does not contain the 'modules/' directory"
+            err_str = f"Repository '{self.remote_url}' ({self.branch}) does not contain the 'modules/' directory"
             if "software" in dir_names:
                 err_str += (
                     ".\nAs of nf-core/tools version 2.0, the 'software/' directory should be renamed to 'modules/'"
@@ -308,8 +310,8 @@ class ModulesRepo(object):
             return False
 
         # Check if the module exists in the branch
-        if not self.module_exists(module_name, checkout=False):
-            log.error(f"The requested module does not exists in the '{self.branch}' of {self.fullname}'")
+        if not self.module_exists(module_name):
+            log.error(f"The requested module does not exists in the '{self.branch}' of {self.remote_url}'")
             return False
 
         # Copy the files from the repo to the install folder
@@ -398,7 +400,7 @@ class ModulesRepo(object):
                 date_obj = commit.committed_datetime
                 date = str(date_obj.date())
                 return message, date
-        raise LookupError(f"Commit '{sha}' not found in the '{self.fullname}'")
+        raise LookupError(f"Commit '{sha}' not found in the '{self.remote_url}'")
 
     def get_avail_modules(self, checkout=True):
         """
@@ -411,6 +413,10 @@ class ModulesRepo(object):
         if checkout:
             self.checkout_branch()
         # Module directories are characterized by having a 'main.nf' file
+        print(self.modules_dir)
+        print(os.path.exists(Path(self.modules_dir)))
+        print(os.listdir(self.modules_dir))
+        print(list(os.walk(self.modules_dir)))
         avail_module_names = [
             os.path.relpath(dirpath, start=self.modules_dir)
             for dirpath, _, file_names in os.walk(self.modules_dir)

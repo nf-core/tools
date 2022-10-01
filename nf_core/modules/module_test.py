@@ -83,7 +83,7 @@ class ModulesTest(ModuleCommand):
         else:
             modules_json = ModulesJson(self.dir)
             modules_json.check_up_to_date()
-            installed_modules = modules_json.get_all_modules().get(self.modules_repo.fullname)
+            installed_modules = modules_json.get_all_modules().get(self.modules_repo.remote_url)
 
         # Get the tool name if not specified
         if self.module_name is None:
