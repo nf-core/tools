@@ -226,7 +226,9 @@ def test_update_different_branch_mixed_modules_main(self):
 
     # Install MultiQC from gitlab default branch
     install_obj = ModuleInstall(self.pipeline_dir, remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH, force=True)
-    assert install_obj.install("multiqc")  # Force as the same module is installed from github nf-core modules repo
+    assert install_obj.install(
+        "multiqc"
+    )  # Force as the same module is installed from github nf-core modules repo by default
 
     # Try updating
     update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=False)

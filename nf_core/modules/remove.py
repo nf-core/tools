@@ -45,7 +45,7 @@ class ModuleRemove(ModuleCommand):
         if not module_dir.exists():
             log.error(f"Module directory does not exist: '{module_dir}'")
 
-            if modules_json.module_present(module, self.modules_repo.remote_url):
+            if modules_json.module_present(module, self.modules_repo.remote_url, repo_path):
                 log.error(f"Found entry for '{module}' in 'modules.json'. Removing...")
                 modules_json.remove_entry(module, self.modules_repo.remote_url, repo_path)
             return False

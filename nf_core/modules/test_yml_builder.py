@@ -35,12 +35,13 @@ class ModulesTestYmlBuilder(ModuleCommand):
     def __init__(
         self,
         module_name=None,
+        directory=".",
         run_tests=False,
         test_yml_output_path=None,
         force_overwrite=False,
         no_prompts=False,
     ):
-        super().__init__(".")
+        super().__init__(directory)
         self.module_name = module_name
         self.run_tests = run_tests
         self.test_yml_output_path = test_yml_output_path

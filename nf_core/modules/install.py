@@ -114,6 +114,16 @@ class ModuleInstall(ModuleCommand):
         if self.force:
             log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{module}'")
             self.clear_module_dir(module, module_dir)
+            for repo_url, repo_content in modules_json.modules_json["repos"].items():
+                for dir, dir_modules in repo_content["modules"].items():
+                    for name, _ in dir_modules.items():
+                        if name == module and dir == self.modules_repo.repo_path:
+                            repo_to_remove = repo_url
+                            log.info(
+                                f"Removing module '{self.modules_repo.repo_path}/{module}' from repo '{repo_to_remove}' from modules.json"
+                            )
+                            modules_json.remove_entry(module, repo_to_remove, self.modules_repo.repo_path)
+                            break
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{module}'")
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")

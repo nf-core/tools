@@ -652,7 +652,7 @@ class ModuleUpdate(ModuleCommand):
 
         # Add the patch file to the modules.json file
         self.modules_json.add_patch_entry(
-            module, repo_path, patch_relpath, write_file=True
-        )  # module_name, repo_url, install_dir
+            module, self.modules_repo.remote_url, repo_path, patch_relpath, write_file=True
+        )
 
         return True

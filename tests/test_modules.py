@@ -10,15 +10,15 @@ import unittest
 import nf_core.create
 import nf_core.modules
 
-from .utils import GITLAB_URL, OLD_TRIMGALORE_SHA
+from .utils import GITLAB_DEFAULT_BRANCH, GITLAB_URL, OLD_TRIMGALORE_SHA
 
 
 def create_modules_repo_dummy(tmp_dir):
     """Create a dummy copy of the nf-core/modules repo"""
 
     root_dir = os.path.join(tmp_dir, "modules")
-    os.makedirs(os.path.join(root_dir, "modules"))
-    os.makedirs(os.path.join(root_dir, "tests", "modules"))
+    os.makedirs(os.path.join(root_dir, "modules", "nf-core"))
+    os.makedirs(os.path.join(root_dir, "tests", "modules", "nf-core"))
     os.makedirs(os.path.join(root_dir, "tests", "config"))
     with open(os.path.join(root_dir, "tests", "config", "pytest_modules.yml"), "w") as fh:
         fh.writelines(["test:", "\n  - modules/test/**", "\n  - tests/modules/test/**"])
@@ -53,7 +53,7 @@ class TestModules(unittest.TestCase):
             self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA
         )
         self.mods_install_gitlab = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL
+            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH
         )
 
         # Set up remove objects
@@ -133,7 +133,6 @@ class TestModules(unittest.TestCase):
         test_mod_json_create,
         test_mod_json_create_with_patch,
         test_mod_json_dump,
-        test_mod_json_get_git_url,
         test_mod_json_get_module_version,
         test_mod_json_module_present,
         test_mod_json_repo_present,

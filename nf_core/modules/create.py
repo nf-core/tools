@@ -323,7 +323,7 @@ class ModuleCreate(ModuleCommand):
                 )
 
             # Set file paths
-            file_paths[os.path.join(self.default_modules_path, "main.nf")] = module_file
+            file_paths[os.path.join("modules", "main.nf")] = module_file
 
         if self.repo_type == "modules":
             software_dir = os.path.join(self.directory, self.default_modules_path, self.tool_dir)

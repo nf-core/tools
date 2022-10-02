@@ -29,8 +29,8 @@ def test_modules_create_nfcore_modules(self):
     """Create a module in nf-core/modules clone"""
     module_create = nf_core.modules.ModuleCreate(self.nfcore_modules, "fastqc", "@author", "process_low", False, False)
     module_create.create()
-    assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "fastqc", "main.nf"))
-    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "fastqc", "main.nf"))
+    assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "fastqc", "main.nf"))
+    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "nf-core", "fastqc", "main.nf"))
 
 
 def test_modules_create_nfcore_modules_subtool(self):
@@ -39,5 +39,5 @@ def test_modules_create_nfcore_modules_subtool(self):
         self.nfcore_modules, "star/index", "@author", "process_medium", False, False
     )
     module_create.create()
-    assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "star", "index", "main.nf"))
-    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "star", "index", "main.nf"))
+    assert os.path.exists(os.path.join(self.nfcore_modules, "modules", "nf-core", "star", "index", "main.nf"))
+    assert os.path.exists(os.path.join(self.nfcore_modules, "tests", "modules", "nf-core", "star", "index", "main.nf"))

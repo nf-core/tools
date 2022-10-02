@@ -398,7 +398,9 @@ def list(ctx):
 @click.pass_context
 @click.argument("keywords", required=False, nargs=-1, metavar="<filter keywords>")
 @click.option("-j", "--json", is_flag=True, help="Print as JSON to stdout")
-def remote(ctx, keywords, json):
+@click.option("-u", "--url", help="Remote repository url to list from")
+@click.option("-b", "--branch", help="Remote repository branch to list")
+def remote(ctx, keywords, json, url, branch):
     """
     List modules in a remote GitHub repo [dim i](e.g [link=https://github.com/nf-core/modules]nf-core/modules[/])[/].
     """
@@ -406,8 +408,8 @@ def remote(ctx, keywords, json):
         module_list = nf_core.modules.ModuleList(
             None,
             True,
-            ctx.obj["modules_repo_url"],
-            ctx.obj["modules_repo_branch"],
+            ctx.obj["modules_repo_branch"] if url is None else url,
+            ctx.obj["modules_repo_branch"] if branch is None else branch,
             ctx.obj["modules_repo_no_pull"],
         )
         stdout.print(module_list.list_modules(keywords, json))
@@ -661,7 +663,13 @@ def create_test_yml(ctx, tool, run_tests, output, force, no_prompts):
     the required `test.yml` file based on the output files.
     """
     try:
-        meta_builder = nf_core.modules.ModulesTestYmlBuilder(tool, run_tests, output, force, no_prompts)
+        meta_builder = nf_core.modules.ModulesTestYmlBuilder(
+            module_name=tool,
+            run_tests=run_tests,
+            test_yml_output_path=output,
+            force_overwrite=force,
+            no_prompts=no_prompts,
+        )
         meta_builder.run()
     except (UserWarning, LookupError) as e:
         log.critical(e)

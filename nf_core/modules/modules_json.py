@@ -60,21 +60,26 @@ class ModulesJson:
             (
                 repo_url,
                 [
-                    str(Path(module_name).relative_to(modules_dir / dir))
-                    for module_name, _, file_names in os.walk(modules_dir / dir)
+                    str(
+                        Path(module_name).relative_to(
+                            modules_dir / nf_core.modules.module_utils.path_from_remote(repo_url)
+                        )
+                    )
+                    for module_name, _, file_names in os.walk(
+                        modules_dir / nf_core.modules.module_utils.path_from_remote(repo_url)
+                    )
                     if "main.nf" in file_names
                 ],
-                dir,
+                nf_core.modules.module_utils.path_from_remote(repo_url),
             )
-            for dir, modules in repo_dict["modules"].items()
-            for repo_url, repo_dict in repos.items()
+            for repo_url in repos
         ]
 
         for repo_url, module_names, install_dir in sorted(repo_module_names):
             modules_json["repos"][repo_url] = {}
             modules_json["repos"][repo_url]["modules"] = {}
             modules_json["repos"][repo_url]["modules"][install_dir] = {}
-            modules_json["repos"][repo_url]["modules"] = self.determine_module_branches_and_shas(
+            modules_json["repos"][repo_url]["modules"][install_dir] = self.determine_module_branches_and_shas(
                 install_dir, repo_url, module_names
             )
         # write the modules.json file and assign it to the object
@@ -107,7 +112,7 @@ class ModulesJson:
         renamed_dirs = {}
         # Check if there are any untracked repositories
         dirs_not_covered = self.dir_tree_uncovered(
-            modules_dir, [Path(name) for url in repos for name in repos[url][modules_dir]]
+            modules_dir, [Path(nf_core.modules.module_utils.path_from_remote(url)) for url in repos]
         )
         if len(dirs_not_covered) > 0:
             log.info("Found custom module repositories when creating 'modules.json'")

@@ -413,10 +413,6 @@ class ModulesRepo(object):
         if checkout:
             self.checkout_branch()
         # Module directories are characterized by having a 'main.nf' file
-        print(self.modules_dir)
-        print(os.path.exists(Path(self.modules_dir)))
-        print(os.listdir(self.modules_dir))
-        print(list(os.walk(self.modules_dir)))
         avail_module_names = [
             os.path.relpath(dirpath, start=self.modules_dir)
             for dirpath, _, file_names in os.walk(self.modules_dir)
