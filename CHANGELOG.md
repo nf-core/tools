@@ -11,6 +11,7 @@
 - Add a 'recommend' methods description text to MultiQC to help pipeline users report pipeline usage in publications ([#1749](https://github.com/nf-core/tools/pull/1749))
 - Fix template spacing modified by JINJA ([#1830](https://github.com/nf-core/tools/pull/1830))
 - Fix MultiQC execution on template [#1855](https://github.com/nf-core/tools/pull/1855)
+- Don't skip including `base.config` when skipping nf-core/configs
 
 ### Linting
 
