@@ -86,7 +86,7 @@ def test_mod_json_create_with_patch(self):
     modify_main_nf(module_path / "main.nf")
 
     # Try creating a patch file
-    patch_obj = ModulePatch(self.pipeline_dir)
+    patch_obj = ModulePatch(self.pipeline_dir, NF_CORE_MODULES_REMOTE, NF_CORE_MODULES_DEFAULT_BRANCH)
     patch_obj.patch("fastqc")
 
     # Remove the existing modules.json file

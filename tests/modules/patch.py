@@ -17,9 +17,9 @@ Uses a branch (patch-tester) in the GitLab nf-core/modules-test repo when
 testing if the update commands works correctly with patch files
 """
 
-ORG_SHA = "22c7c12dc21e2f633c00862c1291ceda0a3b7066"
-SUCCEED_SHA = "f7d3a3894f67db2e2f3f8c9ba76f8e33356be8e0"
-FAIL_SHA = "b4596169055700533865cefb7542108418f53100"
+ORG_SHA = "775fcd090fb776a0be695044f8ab1af8896c8452"
+SUCCEED_SHA = "f1566140c752e9c68fffc189fbe8cb9ee942b3ca"
+FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
 BISMARK_ALIGN = "bismark/align"
 REPO_NAME = "nf-core"
 PATCH_BRANCH = "patch-tester-restructure"
@@ -28,7 +28,7 @@ REPO_URL = "https://gitlab.com/nf-core/modules-test.git"
 
 def setup_patch(pipeline_dir, modify_module):
     install_obj = nf_core.modules.ModuleInstall(
-        pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA
+        pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=ORG_SHA
     )
 
     # Install the module
@@ -48,8 +48,12 @@ def modify_main_nf(path):
     # -    tuple val(meta), path(reads)
     # -    path index
     # +    tuple val(meta), path(reads), path(index)
-    lines[10] = "    tuple val(meta), path(reads), path(index)\n"
-    lines.pop(11)
+    for line_index in range(len(lines)):
+        if lines[line_index] == "    tuple val(meta), path(reads)\n":
+            lines[line_index] = "    tuple val(meta), path(reads), path(index)\n"
+        elif lines[line_index] == "    path index\n":
+            to_pop = line_index
+    lines.pop(to_pop)
     with open(path, "w") as fh:
         fh.writelines(lines)
 

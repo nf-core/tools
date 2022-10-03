@@ -85,7 +85,7 @@ class ModulePatch(ModuleCommand):
         module_install_dir = Path(install_dir, module)
         if not self.install_module_files(module, module_version, self.modules_repo, install_dir):
             raise UserWarning(
-                f"Failed to install files of module '{module_fullname}' from remote ({self.modules_repo.remote_url})."
+                f"Failed to install files of module '{module}' from remote ({self.modules_repo.remote_url})."
             )
 
         # Write the patch to a temporary location (otherwise it is printed to the screen later)

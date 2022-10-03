@@ -7,15 +7,15 @@
                 "nf-core": {
                     "custom/dumpsoftwareversions": {
                         "branch": "restructure",
-                        "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+                        "git_sha": "86e32684ce5b13ca8173a78cd2250131ca9b1c0f"
                     },
                     "fastqc": {
                         "branch": "restructure",
-                        "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+                        "git_sha": "86e32684ce5b13ca8173a78cd2250131ca9b1c0f"
                     },
                     "multiqc": {
                         "branch": "restructure",
-                        "git_sha": "4b1d4bf401d4cf65ebc4f604bc8c8e7551109db3"
+                        "git_sha": "86e32684ce5b13ca8173a78cd2250131ca9b1c0f"
                     }
                 }
             }

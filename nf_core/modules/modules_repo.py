@@ -310,8 +310,8 @@ class ModulesRepo(object):
             return False
 
         # Check if the module exists in the branch
-        if not self.module_exists(module_name):
-            log.error(f"The requested module does not exists in the '{self.branch}' of {self.remote_url}'")
+        if not self.module_exists(module_name, checkout=False):
+            log.error(f"The requested module does not exists in the branch '{self.branch}' of {self.remote_url}'")
             return False
 
         # Copy the files from the repo to the install folder
@@ -364,7 +364,7 @@ class ModulesRepo(object):
             ( dict ): Iterator of commit SHAs and associated (truncated) message
         """
         self.checkout_branch()
-        module_path = os.path.join("modules", module_name)
+        module_path = os.path.join("modules", self.repo_path, module_name)
         commits = self.repo.iter_commits(max_count=depth, paths=module_path)
         commits = ({"git_sha": commit.hexsha, "trunc_message": commit.message.partition("\n")[0]} for commit in commits)
         return commits

@@ -428,13 +428,13 @@ class ModuleUpdate(ModuleCommand):
                                         )
                                     )
                                 except KeyError:
-                                    modules_info[repo_name][module_dir].append(
+                                    modules_info[repo_name][module_dir] = [
                                         (
                                             module,
                                             custom_sha,
                                             self.modules_json.get_module_branch(module, repo_name, module_dir),
                                         )
-                                    )
+                                    ]
                                 if self.sha is not None:
                                     overridden_modules.append(module)
                             elif dir_config[module] is False:
@@ -574,15 +574,16 @@ class ModuleUpdate(ModuleCommand):
         """
         temp_module_dir = os.path.join(install_folder, module)
         files = os.listdir(temp_module_dir)
+        pipeline_path = os.path.join(self.dir, "modules", repo_path, module)
 
         log.debug(f"Removing old version of module '{module}'")
-        self.clear_module_dir(module, repo_path)
+        self.clear_module_dir(module, pipeline_path)
 
-        os.makedirs(repo_path)
+        os.makedirs(pipeline_path)
         for file in files:
             path = os.path.join(temp_module_dir, file)
             if os.path.exists(path):
-                shutil.move(path, os.path.join(repo_path, file))
+                shutil.move(path, os.path.join(pipeline_path, file))
 
         log.info(f"Updating '{repo_path}/{module}'")
         log.debug(f"Updating module '{module}' to {new_version} from {repo_path}")
