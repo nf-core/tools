@@ -18,6 +18,7 @@ testing if the update commands works correctly with patch files
 """
 
 ORG_SHA = "775fcd090fb776a0be695044f8ab1af8896c8452"
+CORRECT_SHA = "335cd32405568ca3b6d4c05ab1e8a98c21e18a4d"
 SUCCEED_SHA = "f1566140c752e9c68fffc189fbe8cb9ee942b3ca"
 FAIL_SHA = "1fc8b0f953d915d66ee40d28bc337ff0998d05bd"
 BISMARK_ALIGN = "bismark/align"
@@ -229,24 +230,28 @@ def test_create_patch_update_success(self):
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
     )
 
+    with open(os.path.join(module_path, "main.nf"), "r") as fh:
+        print(fh.readlines())
     # Update the module
     update_obj = nf_core.modules.ModuleUpdate(
         self.pipeline_dir, sha=SUCCEED_SHA, show_diff=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH
     )
-    update_obj.update(BISMARK_ALIGN)
+    assert update_obj.update(BISMARK_ALIGN)
+    with open(os.path.join(module_path, "main.nf"), "r") as fh:
+        print(fh.readlines())
 
     # Check that a patch file with the correct name has been created
     assert set(os.listdir(module_path)) == {"main.nf", "meta.yml", patch_fn}
 
     # Check the 'modules.json' contains a patch file for the module
     modules_json_obj = nf_core.modules.modules_json.ModulesJson(self.pipeline_dir)
-    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME) == Path(
+    assert modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME) == Path(
         "modules", REPO_NAME, BISMARK_ALIGN, patch_fn
-    ), modules_json_obj.get_patch_fn(BISMARK_ALIGN, REPO_URL, REPO_NAME)
+    ), modules_json_obj.get_patch_fn(BISMARK_ALIGN, GITLAB_URL, REPO_NAME)
 
     # Check that the correct lines are in the patch file
     with open(module_path / patch_fn, "r") as fh:
