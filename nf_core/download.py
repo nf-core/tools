@@ -459,7 +459,7 @@ class DownloadWorkflow(object):
                         # Look for any lines with `container = "xxx"`
                         this_container = None
                         contents = fh.read()
-                        matches = re.findall(r"container\s*\"([^\"]*)\"", contents, re.S)
+                        matches = re.findall(r"container\s*['\"]([^'\"]*)['\"]", contents, re.S)
                         if matches:
                             for match in matches:
                                 # Look for a http download URL.
