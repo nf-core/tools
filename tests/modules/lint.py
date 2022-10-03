@@ -6,7 +6,7 @@ import pytest
 import nf_core.modules
 
 from ..utils import GITLAB_URL, set_wd
-from .patch import BISMARK_ALIGN, PATCH_BRANCH, CORRECT_SHA, REPO_NAME, modify_main_nf
+from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
 
 
 def setup_patch(pipeline_dir, modify_module):
