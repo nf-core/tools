@@ -11,12 +11,12 @@ import nf_core.create
 import nf_core.modules
 
 from .utils import (
-    GITLAB_DEFAULT_BRANCH,
-    GITLAB_URL,
-    OLD_TRIMGALORE_SHA,
-    OLD_TRIMGALORE_BRANCH,
     GITLAB_BRANCH_TEST_BRANCH,
     GITLAB_BRANCH_TEST_OLD_SHA,
+    GITLAB_DEFAULT_BRANCH,
+    GITLAB_URL,
+    OLD_TRIMGALORE_BRANCH,
+    OLD_TRIMGALORE_SHA,
 )
 
 
@@ -57,7 +57,12 @@ class TestModules(unittest.TestCase):
         self.mods_install = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=False, force=True)
         self.mods_install_alt = nf_core.modules.ModuleInstall(self.pipeline_dir, prompt=True, force=True)
         self.mods_install_old = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=False, sha=OLD_TRIMGALORE_SHA, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+            self.pipeline_dir,
+            prompt=False,
+            force=False,
+            sha=OLD_TRIMGALORE_SHA,
+            remote_url=GITLAB_URL,
+            branch=OLD_TRIMGALORE_BRANCH,
         )
         self.mods_install_trimgalore = nf_core.modules.ModuleInstall(
             self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
@@ -66,7 +71,12 @@ class TestModules(unittest.TestCase):
             self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=GITLAB_DEFAULT_BRANCH
         )
         self.mods_install_gitlab_old = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=True, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH, sha=GITLAB_BRANCH_TEST_OLD_SHA
+            self.pipeline_dir,
+            prompt=False,
+            force=True,
+            remote_url=GITLAB_URL,
+            branch=GITLAB_BRANCH_TEST_BRANCH,
+            sha=GITLAB_BRANCH_TEST_OLD_SHA,
         )
 
         # Set up remove objects

@@ -18,8 +18,8 @@ from ..utils import (
     GITLAB_DEFAULT_BRANCH,
     GITLAB_REPO,
     GITLAB_URL,
-    OLD_TRIMGALORE_SHA,
     OLD_TRIMGALORE_BRANCH,
+    OLD_TRIMGALORE_SHA,
 )
 
 
@@ -57,9 +57,7 @@ def test_install_at_hash_and_update(self):
     mod_json = mod_json_obj.get_modules_json()
     # Get the up-to-date git_sha for the module from the ModulesRepo object
     correct_git_sha = update_obj.modules_repo.get_latest_module_version("trimgalore")
-    current_git_sha = mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"][
-        "git_sha"
-    ]
+    current_git_sha = mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
     assert correct_git_sha == current_git_sha
 
 
@@ -67,7 +65,13 @@ def test_install_at_hash_and_update_and_save_diff_to_file(self):
     """Installs an old version of a module in the pipeline and updates it"""
     self.mods_install_old.install("trimgalore")
     patch_path = os.path.join(self.pipeline_dir, "trimgalore.patch")
-    update_obj = ModuleUpdate(self.pipeline_dir, save_diff_fn=patch_path, sha=OLD_TRIMGALORE_SHA, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH)
+    update_obj = ModuleUpdate(
+        self.pipeline_dir,
+        save_diff_fn=patch_path,
+        sha=OLD_TRIMGALORE_SHA,
+        remote_url=GITLAB_URL,
+        branch=OLD_TRIMGALORE_BRANCH,
+    )
 
     # Copy the module files and check that they are affected by the update
     tmpdir = tempfile.mkdtemp()
@@ -110,17 +114,16 @@ def test_update_with_config_fixed_version(self):
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
-    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=False, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH)
+    update_obj = ModuleUpdate(
+        self.pipeline_dir, update_all=True, show_diff=False, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+    )
     assert update_obj.update() is True
 
     # Check that the git sha for trimgalore is correctly downgraded
     mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
     assert "trimgalore" in mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]
     assert "git_sha" in mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]
-    assert (
-        mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
-        == OLD_TRIMGALORE_SHA
-    )
+    assert mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"] == OLD_TRIMGALORE_SHA
 
 
 def test_update_with_config_dont_update(self):
@@ -136,17 +139,21 @@ def test_update_with_config_dont_update(self):
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
-    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=False, sha=OLD_TRIMGALORE_SHA, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH)
+    update_obj = ModuleUpdate(
+        self.pipeline_dir,
+        update_all=True,
+        show_diff=False,
+        sha=OLD_TRIMGALORE_SHA,
+        remote_url=GITLAB_URL,
+        branch=OLD_TRIMGALORE_BRANCH,
+    )
     assert update_obj.update() is True
 
     # Check that the git sha for trimgalore is correctly downgraded
     mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
     assert "trimgalore" in mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]
     assert "git_sha" in mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]
-    assert (
-        mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
-        == OLD_TRIMGALORE_SHA
-    )
+    assert mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"] == OLD_TRIMGALORE_SHA
 
 
 def test_update_with_config_fix_all(self):
@@ -161,16 +168,15 @@ def test_update_with_config_fix_all(self):
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
-    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=False, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH)
+    update_obj = ModuleUpdate(
+        self.pipeline_dir, update_all=True, show_diff=False, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH
+    )
     assert update_obj.update() is True
 
     # Check that the git sha for trimgalore is correctly downgraded
     mod_json = ModulesJson(self.pipeline_dir).get_modules_json()
     assert "git_sha" in mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]
-    assert (
-        mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"]
-        == OLD_TRIMGALORE_SHA
-    )
+    assert mod_json["repos"][GITLAB_URL]["modules"][GITLAB_REPO]["trimgalore"]["git_sha"] == OLD_TRIMGALORE_SHA
 
 
 def test_update_with_config_no_updates(self):
@@ -186,7 +192,14 @@ def test_update_with_config_no_updates(self):
         yaml.dump(tools_config, f)
 
     # Update all modules in the pipeline
-    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=False, sha=OLD_TRIMGALORE_SHA, remote_url=GITLAB_URL, branch=OLD_TRIMGALORE_BRANCH)
+    update_obj = ModuleUpdate(
+        self.pipeline_dir,
+        update_all=True,
+        show_diff=False,
+        sha=OLD_TRIMGALORE_SHA,
+        remote_url=GITLAB_URL,
+        branch=OLD_TRIMGALORE_BRANCH,
+    )
     assert update_obj.update() is True
 
     # Check that the git sha for trimgalore is correctly downgraded and none of the modules has changed
@@ -202,7 +215,12 @@ def test_update_with_config_no_updates(self):
 def test_update_different_branch_single_module(self):
     """Try updating a module in a specific branch"""
     install_obj = nf_core.modules.ModuleInstall(
-            self.pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH, sha=GITLAB_BRANCH_TEST_OLD_SHA
+        self.pipeline_dir,
+        prompt=False,
+        force=False,
+        remote_url=GITLAB_URL,
+        branch=GITLAB_BRANCH_TEST_BRANCH,
+        sha=GITLAB_BRANCH_TEST_OLD_SHA,
     )
     assert install_obj.install("fastp")
 
@@ -240,9 +258,18 @@ def test_update_different_branch_mixed_modules_main(self):
 def test_update_different_branch_mix_modules_branch_test(self):
     """Try updating all modules where MultiQC is installed from branch-test branch"""
     # Install multiqc from the branch-test branch
-    assert self.mods_install_gitlab_old.install("multiqc")  # Force as the same module is installed from github nf-core modules repo
+    assert self.mods_install_gitlab_old.install(
+        "multiqc"
+    )  # Force as the same module is installed from github nf-core modules repo
     modules_json = ModulesJson(self.pipeline_dir)
-    update_obj = ModuleUpdate(self.pipeline_dir, update_all=True, show_diff=False, remote_url=GITLAB_URL, branch=GITLAB_BRANCH_TEST_BRANCH, sha=GITLAB_BRANCH_TEST_NEW_SHA)
+    update_obj = ModuleUpdate(
+        self.pipeline_dir,
+        update_all=True,
+        show_diff=False,
+        remote_url=GITLAB_URL,
+        branch=GITLAB_BRANCH_TEST_BRANCH,
+        sha=GITLAB_BRANCH_TEST_NEW_SHA,
+    )
     assert update_obj.update()
 
     assert modules_json.get_module_branch("multiqc", GITLAB_URL, GITLAB_REPO) == GITLAB_BRANCH_TEST_BRANCH
