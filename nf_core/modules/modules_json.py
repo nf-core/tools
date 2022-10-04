@@ -235,12 +235,12 @@ class ModulesJson:
                 else:
                     correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
                 if correct_commit_sha is None:
-                    log.info(f"Was unable to find matching module {module} files in the {modules_repo.branch} branch.")
+                    log.info(f"Was unable to find matching module files in the {modules_repo.branch} branch.")
                     choices = [{"name": "No", "value": False}] + [
                         {"name": branch, "value": branch} for branch in (available_branches - tried_branches)
                     ]
                     branch = questionary.select(
-                        f"Was the module '{module}' installed from a different branch in the remote?",
+                        f"Was the module '{module}' installed from a different branch in the remote?\nSelect 'No' for a local module",
                         choices=choices,
                         style=nf_core.utils.nfcore_question_style,
                     ).unsafe_ask()
