@@ -26,6 +26,8 @@ class ModuleCommand:
         self.modules_repo = ModulesRepo(remote_url, branch, no_pull, hide_progress)
         self.hide_progress = hide_progress
         self.dir = dir
+        self.default_modules_path = Path("modules", "nf-core")
+        self.default_tests_path = Path("tests", "modules", "nf-core")
         try:
             if self.dir:
                 self.dir, self.repo_type = nf_core.modules.module_utils.get_repo_type(self.dir)
@@ -38,7 +40,7 @@ class ModuleCommand:
         """
         Get the modules available in a clone of nf-core/modules
         """
-        module_base_path = Path(self.dir, "modules")
+        module_base_path = Path(self.dir, self.default_modules_path)
         return [
             str(Path(dir).relative_to(module_base_path))
             for dir, _, files in os.walk(module_base_path)
@@ -91,19 +93,19 @@ class ModuleCommand:
             log.error(f"Could not remove module: {e}")
             return False
 
-    def modules_from_repo(self, repo_name):
+    def modules_from_repo(self, install_dir):
         """
         Gets the modules installed from a certain repository
 
         Args:
-            repo_name (str): The name of the repository
+            install_dir (str): The name of the directory where modules are installed
 
         Returns:
             [str]: The names of the modules
         """
-        repo_dir = Path(self.dir, "modules", repo_name)
+        repo_dir = Path(self.dir, "modules", install_dir)
         if not repo_dir.exists():
-            raise LookupError(f"Nothing installed from {repo_name} in pipeline")
+            raise LookupError(f"Nothing installed from {install_dir} in pipeline")
 
         return [
             str(Path(dir_path).relative_to(repo_dir)) for dir_path, _, files in os.walk(repo_dir) if "main.nf" in files
@@ -115,7 +117,7 @@ class ModuleCommand:
 
         Args:
             module_name (str): The name of the module
-            module_versioN (str): Git SHA for the version of the module to be installed
+            module_version (str): Git SHA for the version of the module to be installed
             modules_repo (ModulesRepo): A correctly configured ModulesRepo object
             install_dir (str): The path to where the module should be installed (should be the 'modules/' dir of the pipeline)
 

@@ -48,7 +48,7 @@ class ModuleInstall(ModuleCommand):
         # Verify that the provided SHA exists in the repo
         if self.sha:
             if not self.modules_repo.sha_exists_on_branch(self.sha):
-                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.fullname}'")
+                log.error(f"Commit SHA '{self.sha}' doesn't exist in '{self.modules_repo.remote_url}'")
                 return False
 
         if module is None:
@@ -71,10 +71,12 @@ class ModuleInstall(ModuleCommand):
             log.warning(warn_msg)
             return False
 
-        current_version = modules_json.get_module_version(module, self.modules_repo.fullname)
+        current_version = modules_json.get_module_version(
+            module, self.modules_repo.remote_url, self.modules_repo.repo_path
+        )
 
         # Set the install folder based on the repository name
-        install_folder = os.path.join(self.dir, "modules", self.modules_repo.fullname)
+        install_folder = os.path.join(self.dir, "modules", self.modules_repo.repo_path)
 
         # Compute the module directory
         module_dir = os.path.join(install_folder, module)
@@ -84,7 +86,7 @@ class ModuleInstall(ModuleCommand):
 
             log.error("Module is already installed.")
             repo_flag = (
-                "" if self.modules_repo.fullname == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
+                "" if self.modules_repo.repo_path == NF_CORE_MODULES_NAME else f"-g {self.modules_repo.remote_url} "
             )
             branch_flag = "" if self.modules_repo.branch == "master" else f"-b {self.modules_repo.branch} "
 
@@ -110,8 +112,18 @@ class ModuleInstall(ModuleCommand):
             version = self.modules_repo.get_latest_module_version(module)
 
         if self.force:
-            log.info(f"Removing installed version of '{self.modules_repo.fullname}/{module}'")
+            log.info(f"Removing installed version of '{self.modules_repo.repo_path}/{module}'")
             self.clear_module_dir(module, module_dir)
+            for repo_url, repo_content in modules_json.modules_json["repos"].items():
+                for dir, dir_modules in repo_content["modules"].items():
+                    for name, _ in dir_modules.items():
+                        if name == module and dir == self.modules_repo.repo_path:
+                            repo_to_remove = repo_url
+                            log.info(
+                                f"Removing module '{self.modules_repo.repo_path}/{module}' from repo '{repo_to_remove}' from modules.json"
+                            )
+                            modules_json.remove_entry(module, repo_to_remove, self.modules_repo.repo_path)
+                            break
 
         log.info(f"{'Rei' if self.force else 'I'}nstalling '{module}'")
         log.debug(f"Installing module '{module}' at modules hash {version} from {self.modules_repo.remote_url}")

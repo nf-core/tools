@@ -102,7 +102,7 @@ jobs:
         run: nf-core --log-file log.txt modules install fastqc --dir nf-core-testpipeline/ --force
 
       - name: nf-core modules install gitlab
-        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git install fastqc --dir nf-core-testpipeline/
+        run: nf-core --log-file log.txt modules --git-remote https://gitlab.com/nf-core/modules-test.git --branch main-restructure install fastqc --force --dir nf-core-testpipeline/
 
       - name: nf-core modules list local
         run: nf-core --log-file log.txt modules list local --dir nf-core-testpipeline/

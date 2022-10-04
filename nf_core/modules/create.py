@@ -22,10 +22,12 @@ import nf_core
 import nf_core.modules.module_utils
 import nf_core.utils
 
+from .modules_command import ModuleCommand
+
 log = logging.getLogger(__name__)
 
 
-class ModuleCreate(object):
+class ModuleCreate(ModuleCommand):
     def __init__(
         self,
         directory=".",
@@ -38,6 +40,7 @@ class ModuleCreate(object):
         conda_version=None,
         repo_type=None,
     ):
+        super().__init__(directory)
         self.directory = directory
         self.tool = tool
         self.author = author
@@ -72,10 +75,10 @@ class ModuleCreate(object):
 
         If <directory> is a clone of nf-core/modules, it creates or modifies the following files:
 
-        modules/modules/tool/subtool/
+        modules/modules/nf-core/tool/subtool/
             * main.nf
             * meta.yml
-        modules/tests/modules/tool/subtool/
+        modules/tests/modules/nf-core/tool/subtool/
             * main.nf
             * test.yml
             * nextflow.config
@@ -213,7 +216,7 @@ class ModuleCreate(object):
                 default=author_default,
             )
 
-        process_label_defaults = ["process_low", "process_medium", "process_high", "process_long"]
+        process_label_defaults = ["process_single", "process_low", "process_medium", "process_high", "process_long"]
         if self.process_label is None:
             log.info(
                 "Provide an appropriate resource label for the process, taken from the "
@@ -225,7 +228,7 @@ class ModuleCreate(object):
                 "Process resource label:",
                 choices=process_label_defaults,
                 style=nf_core.utils.nfcore_question_style,
-                default="process_low",
+                default="process_single",
             ).unsafe_ask()
 
         if self.has_meta is None:
@@ -250,13 +253,13 @@ class ModuleCreate(object):
                     pytest_modules_yml = yaml.safe_load(fh)
                 if self.subtool:
                     pytest_modules_yml[self.tool_name] = [
-                        f"modules/{self.tool}/{self.subtool}/**",
-                        f"tests/modules/{self.tool}/{self.subtool}/**",
+                        f"modules/nf-core/{self.tool}/{self.subtool}/**",
+                        f"tests/modules/nf-core/{self.tool}/{self.subtool}/**",
                     ]
                 else:
                     pytest_modules_yml[self.tool_name] = [
-                        f"modules/{self.tool}/**",
-                        f"tests/modules/{self.tool}/**",
+                        f"modules/nf-core/{self.tool}/**",
+                        f"tests/modules/nf-core/{self.tool}/**",
                     ]
                 pytest_modules_yml = dict(sorted(pytest_modules_yml.items()))
                 with open(os.path.join(self.directory, "tests", "config", "pytest_modules.yml"), "w") as fh:
@@ -323,8 +326,8 @@ class ModuleCreate(object):
             file_paths[os.path.join("modules", "main.nf")] = module_file
 
         if self.repo_type == "modules":
-            software_dir = os.path.join(self.directory, "modules", self.tool_dir)
-            test_dir = os.path.join(self.directory, "tests", "modules", self.tool_dir)
+            software_dir = os.path.join(self.directory, self.default_modules_path, self.tool_dir)
+            test_dir = os.path.join(self.directory, self.default_tests_path, self.tool_dir)
 
             # Check if module directories exist already
             if os.path.exists(software_dir) and not self.force_overwrite:
@@ -334,8 +337,8 @@ class ModuleCreate(object):
                 raise UserWarning(f"Module test directory exists: '{test_dir}'. Use '--force' to overwrite")
 
             # If a subtool, check if there is a module called the base tool name already
-            parent_tool_main_nf = os.path.join(self.directory, "modules", self.tool, "main.nf")
-            parent_tool_test_nf = os.path.join(self.directory, "tests", "modules", self.tool, "main.nf")
+            parent_tool_main_nf = os.path.join(self.directory, self.default_modules_path, self.tool, "main.nf")
+            parent_tool_test_nf = os.path.join(self.directory, self.default_tests_path, self.tool, "main.nf")
             if self.subtool and os.path.exists(parent_tool_main_nf):
                 raise UserWarning(
                     f"Module '{parent_tool_main_nf}' exists already, cannot make subtool '{self.tool_name}'"
@@ -346,7 +349,7 @@ class ModuleCreate(object):
                 )
 
             # If no subtool, check that there isn't already a tool/subtool
-            tool_glob = glob.glob(f"{os.path.join(self.directory, 'modules', self.tool)}/*/main.nf")
+            tool_glob = glob.glob(f"{os.path.join(self.directory, self.default_modules_path, self.tool)}/*/main.nf")
             if not self.subtool and tool_glob:
                 raise UserWarning(
                     f"Module subtool '{tool_glob[0]}' exists already, cannot make tool '{self.tool_name}'"
