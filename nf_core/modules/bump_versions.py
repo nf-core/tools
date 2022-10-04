@@ -7,8 +7,8 @@ or for a single module
 from __future__ import print_function
 
 import logging
+import os
 import re
-from pathlib import Path
 
 import questionary
 import rich
@@ -104,6 +104,7 @@ class ModuleVersionBumper(ModuleCommand):
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
+            disable=os.environ.get("HIDE_PROGRESS", None) is not None,
         )
         with progress_bar:
             bump_progress = progress_bar.add_task(

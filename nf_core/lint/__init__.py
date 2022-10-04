@@ -8,7 +8,7 @@ the nf-core community guidelines.
 import datetime
 import json
 import logging
-import re
+import os
 
 import git
 import rich
@@ -313,7 +313,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             rich.progress.BarColumn(bar_width=None),
             "[magenta]{task.completed} of {task.total}[reset] » [bold yellow]{task.fields[test_name]}",
             transient=True,
-            disable=self.hide_progress,
+            disable=self.hide_progress or os.environ.get("HIDE_PROGRESS", None) is not None,
         )
         with self.progress_bar:
             lint_progress = self.progress_bar.add_task(
