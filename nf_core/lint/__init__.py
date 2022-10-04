@@ -172,6 +172,7 @@ class PipelineLint(nf_core.utils.Pipeline):
     from .files_unchanged import files_unchanged
     from .merge_markers import merge_markers
     from .modules_json import modules_json
+    from .modules_structure import modules_structure
     from .multiqc_config import multiqc_config
     from .nextflow_config import nextflow_config
     from .pipeline_name_conventions import pipeline_name_conventions
@@ -227,6 +228,7 @@ class PipelineLint(nf_core.utils.Pipeline):
             "merge_markers",
             "modules_json",
             "multiqc_config",
+            "modules_structure",
         ] + (["version_consistency"] if release_mode else [])
 
     def _load(self):
