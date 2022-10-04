@@ -169,7 +169,7 @@ class ModulesTestYmlBuilder(ModuleCommand):
         while ep_test["command"] == "":
             # Don't think we need the last `-c` flag, but keeping to avoid having to update 100s modules.
             # See https://github.com/nf-core/tools/issues/1562
-            default_val = f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config  -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
+            default_val = f"nextflow run ./tests/modules/nf-core/{self.module_name} -entry {entry_point} -c ./tests/config/nextflow.config -c ./tests/modules/nf-core/{self.module_name}/nextflow.config"
             if self.no_prompts:
                 ep_test["command"] = default_val
             else:
