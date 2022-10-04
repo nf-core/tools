@@ -1,11 +1,26 @@
 import os
+from pathlib import Path
 
 import pytest
 
 import nf_core.modules
 
 from ..utils import GITLAB_URL, set_wd
-from .patch import BISMARK_ALIGN, PATCH_BRANCH, setup_patch
+from .patch import BISMARK_ALIGN, CORRECT_SHA, PATCH_BRANCH, REPO_NAME, modify_main_nf
+
+
+def setup_patch(pipeline_dir, modify_module):
+    install_obj = nf_core.modules.ModuleInstall(
+        pipeline_dir, prompt=False, force=False, remote_url=GITLAB_URL, branch=PATCH_BRANCH, sha=CORRECT_SHA
+    )
+
+    # Install the module
+    install_obj.install(BISMARK_ALIGN)
+
+    if modify_module:
+        # Modify the module
+        module_path = Path(pipeline_dir, "modules", REPO_NAME, BISMARK_ALIGN)
+        modify_main_nf(module_path / "main.nf")
 
 
 def test_modules_lint_trimgalore(self):
@@ -66,7 +81,7 @@ def test_modules_lint_patched_modules(self):
     # change temporarily working directory to the pipeline directory
     # to avoid error from try_apply_patch() during linting
     with set_wd(self.pipeline_dir):
-        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL)
+        module_lint = nf_core.modules.ModuleLint(dir=self.pipeline_dir, remote_url=GITLAB_URL, branch=PATCH_BRANCH)
         module_lint.lint(print_results=False, all_modules=True)
 
     assert len(module_lint.failed) == 0

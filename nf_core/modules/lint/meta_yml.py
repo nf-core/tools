@@ -28,7 +28,7 @@ def meta_yml(module_lint_object, module):
     if module.is_patched:
         lines = ModulesDiffer.try_apply_patch(
             module.module_name,
-            module_lint_object.modules_repo.fullname,
+            module_lint_object.modules_repo.repo_path,
             module.patch_path,
             Path(module.module_dir).relative_to(module.base_dir),
             reverse=True,
