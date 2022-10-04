@@ -538,7 +538,7 @@ def update(ctx, tool, dir, force, prompt, sha, all, preview, save_diff):
             sys.exit(1)
     except (UserWarning, LookupError) as e:
         log.error(e)
-        sys.exit(1)
+        raise
 
 
 # nf-core modules patch

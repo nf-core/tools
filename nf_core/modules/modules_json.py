@@ -104,7 +104,6 @@ class ModulesJson:
         """
         if repos is None:
             repos = {}
-
         # Check if there are any nf-core modules installed
         if (modules_dir / nf_core.modules.modules_repo.NF_CORE_MODULES_NAME).exists():
             repos[nf_core.modules.modules_repo.NF_CORE_MODULES_REMOTE] = {}
@@ -509,11 +508,13 @@ class ModulesJson:
             repos, _ = self.get_pipeline_module_repositories(self.modules_dir, tracked_repos)
 
             modules_with_repos = (
-                (install_dir, str(dir.relative_to(install_dir)))
+                (
+                    nf_core.modules.module_utils.path_from_remote(repo_url),
+                    str(dir.relative_to(nf_core.modules.module_utils.path_from_remote(repo_url))),
+                )
                 for dir in missing_from_modules_json
-                for repo_url, repo_content in repos.items()
-                for install_dir, modules in repo_content["modules"].items()
-                if nf_core.utils.is_relative_to(dir, install_dir)
+                for repo_url in repos
+                if nf_core.utils.is_relative_to(dir, nf_core.modules.module_utils.path_from_remote(repo_url))
             )
 
             repos_with_modules = {}
