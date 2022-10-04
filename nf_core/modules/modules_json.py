@@ -234,6 +234,11 @@ class ModulesJson:
                     correct_commit_sha = self.find_correct_commit_sha(module, temp_module_dir, modules_repo)
                 else:
                     correct_commit_sha = self.find_correct_commit_sha(module, module_path, modules_repo)
+                    if correct_commit_sha is None:
+                        # Check in the old path
+                        correct_commit_sha = self.find_correct_commit_sha(
+                            module, repo_path / "modules" / module, modules_repo
+                        )
                 if correct_commit_sha is None:
                     log.info(f"Was unable to find matching module files in the {modules_repo.branch} branch.")
                     choices = [{"name": "No", "value": False}] + [
