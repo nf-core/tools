@@ -147,3 +147,34 @@ class ModuleCommand:
                 self.lint_config = yaml.safe_load(fh)
         except FileNotFoundError:
             log.debug(f"No lint config file found: {config_fn}")
+
+    def check_modules_structure(self, hide_progress):
+        """
+        Check that the structure of the modules directory in a pipeline is the correct one:
+            'modules/nf-core/TOOL/SUBTOOL
+        """
+        if self.repo_type == "pipeline":
+            wrong_location_modules = []
+            for directory, _, files in os.walk(Path(self.dir, "modules")):
+                if "main.nf" in files:
+                    module_path = Path(directory).relative_to(Path(self.dir, "modules"))
+                    parts = module_path.parts
+                    # Check that there are modules installed directly under the 'modules' directory
+                    if len(parts) <= 3 and parts[0] != self.modules_repo.repo_path and parts[0] != "local":
+                        wrong_location_modules.append(module_path.parent)
+            # If there are modules installed in the wrong location
+            if len(wrong_location_modules) > 0:
+                # Remove the local copy of the modules repository
+                log.info(f"Removing '{self.modules_repo.local_repo_dir}'")
+                shutil.rmtree(self.modules_repo.local_repo_dir)
+                self.modules_repo.setup_local_repo(
+                    self.modules_repo.remote_url, self.modules_repo.branch, hide_progress
+                )
+                # Move wrong modules to the right directory
+                for module in wrong_location_modules:
+                    correct_dir = Path("modules", self.modules_repo.repo_path, module)
+                    wrong_dir = Path("modules", module)
+                    wrong_dir.rename(correct_dir)
+                    log.info(f"Moved {wrong_dir} to {correct_dir}.")
+                # Regenerate modules.json file
+                ModulesJson(self.dir).check_up_to_date()
