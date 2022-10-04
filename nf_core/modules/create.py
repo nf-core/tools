@@ -228,7 +228,7 @@ class ModuleCreate(ModuleCommand):
                 "Process resource label:",
                 choices=process_label_defaults,
                 style=nf_core.utils.nfcore_question_style,
-                default="process_low",
+                default="process_single",
             ).unsafe_ask()
 
         if self.has_meta is None:
